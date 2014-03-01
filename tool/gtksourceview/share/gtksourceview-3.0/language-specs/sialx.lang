@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ This file is part of ACES4
+
+ Author: Nakul Jindal <nakul02@gmail.com>
+ Latest Revision: 6 February 2013
+ Modified fortran.lang and followed these guides : 
+ https://wiki.gnome.org/Apps/Gedit/NewLanguage
+ https://developer.gnome.org/gtksourceview/unstable/lang-tutorial.html
+
+-->
+<language id="sialx" _name="SIALX" version="2.0" _section="Sources">
+  <metadata>
+    <property name="mimetypes">text/x-sialx</property>
+    <property name="globs">*.sial;*.sialx</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="floating-point" _name="Floating Point" map-to="def:floating-point"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+    <style id="statement" _name="Statement" map-to="def:statement"/>
+    <style id="decimal" _name="Decimal" map-to="def:decimal"/>
+    <style id="type" _name="Data Type" map-to="def:type"/>
+    <style id="note" _name="Note" map-to="def:note"/>
+    <style id="special" _name="Special" map-to="def:underlined"/>
+    <style id="preprocessor" _name="Preprocessor" map-to="def:preprocessor"/>
+    <style id="function" _name="Function" map-to="def:function"/>
+    <style id="builtin" _name="Builtin" map-to="def:builtin"/>
+    <style id="identifier" _name="Identifier" map-to="def:identifier"/>
+    <style id="constant" _name="Constant" map-to="def:constant"/>
+  </styles>
+
+  <default-regex-options case-sensitive="false"/>
+
+  <definitions>
+
+    <!-- Note: contains an hack to avoid considering ^COMMON a comment -->
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+      <start>#</start>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:in-line-comment"/>
+        <context ref="note"/>
+      </include>
+    </context>
+
+
+    <context id="note" style-ref="note">
+      <keyword>VFL</keyword>
+      <keyword>TODO</keyword>
+      <keyword>FIXME</keyword>
+    </context>
+
+    <context id="modifier" style-ref="preprocessor">
+      <keyword>sip_consistent</keyword>
+      <keyword>predefined</keyword>
+      <keyword>persistent</keyword>
+      <keyword>scoped_extent</keyword>
+      <keyword>contiguous</keyword>
+      <keyword>auto_allocate</keyword>
+    </context>
+
+    <context id="declaration" style-ref="type">
+      <keyword>temp</keyword>
+      <keyword>local</keyword>
+      <keyword>distributed</keyword>
+      <keyword>served</keyword>
+      <keyword>aoindex</keyword>
+      <keyword>moindex</keyword>
+      <keyword>moaindex</keyword>
+      <keyword>mobindex</keyword>
+      <keyword>index</keyword>
+      <keyword>laindex</keyword>
+      <keyword>special</keyword>
+      <keyword>scalar</keyword>
+      <keyword>static</keyword>
+      <keyword>import</keyword>
+    </context>
+
+    <context id="function" style-ref="function">
+      <keyword>proc</keyword>
+      <keyword>endproc</keyword>
+      <keyword>sial</keyword>
+      <keyword>endsial</keyword>
+    </context>
+
+    <context id="statement" style-ref="keyword">
+      <keyword>return</keyword>
+      <keyword>call</keyword>
+      <keyword>in</keyword>
+      <keyword>where</keyword>
+      <keyword>exit</keyword>
+      <keyword>cycle</keyword>
+      <keyword>do</keyword>
+      <keyword>enddo</keyword>
+      <keyword>pardo</keyword>
+      <keyword>endpardo</keyword>
+      <keyword>if</keyword>
+      <keyword>endif</keyword>
+      <keyword>else</keyword>
+    </context>
+    
+    <context id="super-instruction" style-ref="statement">
+      <keyword>allocate</keyword>
+      <keyword>deallocate</keyword>
+      <keyword>create</keyword>
+      <keyword>delete</keyword>
+      <keyword>put</keyword>
+      <keyword>get</keyword>
+      <keyword>prepare</keyword>
+      <keyword>request</keyword>
+      <keyword>collective</keyword>
+      <keyword>destroy</keyword>
+      <keyword>create</keyword>
+      <keyword>delete</keyword>
+      <keyword>println</keyword>
+      <keyword>print_index</keyword>
+      <keyword>print_scalar</keyword>
+      <keyword>execute</keyword>
+      <keyword>gpu_on</keyword>
+      <keyword>gpu_off</keyword>
+      <keyword>gpu_allocate</keyword>
+      <keyword>gpu_free</keyword>
+      <keyword>gpu_put</keyword>
+      <keyword>gpu_get</keyword>
+      <keyword>set_persistent</keyword>
+      <keyword>restore_persistent</keyword>
+    </context>
+
+
+    <context id="special" style-ref="special">
+      <keyword>sip_barrier</keyword>
+      <keyword>server_barrier</keyword>
+    </context>
+
+    <context id="floating-point-number" style-ref="floating-point">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [+-]?
+        ((\.[0-9]+ | [0-9]+\.[0-9]*) ([ed][+-]?[0-9]*)? |
+         ([0-9]+[ed][+-]?[0-9]*))
+         ([_]([0-9]+|[a-z][\w_]*))?
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="decimal" style-ref="decimal">
+      <match extended="true">
+        (?&lt;![\w\.])
+        [+-]? ([1-9][0-9]*|0)
+        ([_]([0-9]+|[a-z][\w_]*))?
+        (?![\w\.])
+      </match>
+    </context>
+
+    <context id="block" style-ref="identifier">
+      <match>[a-zA-Z_0-9]+\s*\((s*[a-zA-Z_0-9]+\s*,)+[a-zA-Z_0-9]+\)</match>
+    </context>
+
+    <context id="range-definition" style-ref="constant">
+      <match>\s*=\s*[a-zA-Z_0-9]+\s*,\s*[a-zA-Z_0-9]+</match>
+    </context>
+
+
+    <context id="sialx" class="no-spell-check">
+      <include>
+        <context ref="floating-point-number"/>
+        <context ref="decimal"/>
+        <context ref="def:string"/>
+        <context ref="line-comment"/>
+        <context ref="modifier"/>
+        <context ref="function"/>
+        <context ref="declaration"/>
+        <context ref="statement"/>
+        <context ref="super-instruction"/>
+        <context ref="special"/>
+        <context ref="range-definition"/>
+        <context ref="block"/>
+      </include>
+    </context>
+
+  </definitions>
+</language>

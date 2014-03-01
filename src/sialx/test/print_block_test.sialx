@@ -1,0 +1,19 @@
+sial print_block_test
+predefined int norb
+special fill_block_sequential wr
+special print_block r
+aoindex i = 1,norb
+aoindex j = 1,norb
+local a(j,i)
+local b(i)
+do i
+execute fill_block_sequential b(i) 1000.0
+execute print_block b(i)
+do j
+execute fill_block_sequential a(j,i) 2.0
+execute print_block a(j,i)
+enddo j
+enddo i
+
+println "end of print_block_test"
+endsial print_block_test

@@ -1,0 +1,34 @@
+sial contraction_small
+	special print_block r
+	special fill_block_cyclic wr
+	aoindex i = 1,1
+	aoindex j = 1,1
+	aoindex k = 1,1
+	aoindex l = 1,1
+	aoindex m = 1,1
+	
+	temp a(i, j, k, l)
+	temp b(j, k)
+	local c(i, l)
+
+	
+	do k
+		do j
+			#b (j, k) = 1.0
+			execute fill_block_cyclic b (j, k) 1.0
+			#execute print_block b (j, k)
+			do i
+				do l
+					allocate c(i, l)
+					execute fill_block_cyclic a(i, j, k, l) 1.0			
+					execute print_block  a(i, j, k, l)
+					c(i, l) = a(i, j, k, l) * b(j, k)
+					execute print_block c(i,l)
+					
+				enddo l
+			enddo i
+		enddo j
+	enddo k 
+
+
+endsial contraction_small

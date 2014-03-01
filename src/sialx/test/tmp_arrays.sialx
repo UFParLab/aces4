@@ -1,0 +1,17 @@
+sial tmp_arrays
+	predefined int norb
+	aoindex i = 1,norb
+	aoindex j = 1,norb
+	temp a(i,j)
+	temp b(i,j)
+	
+	do i
+		do j
+			a(i,j) = 42.0
+			b(i,j) = a(i,j)
+		enddo j
+	enddo i
+	
+	println "end of tmp_arrays"
+	
+endsial tmp_arrays

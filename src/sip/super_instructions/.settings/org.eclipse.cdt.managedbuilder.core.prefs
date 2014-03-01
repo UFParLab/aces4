@@ -1,0 +1,8 @@
+eclipse.preferences.version=1
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/CPATH/delimiter=\:
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/CPATH/operation=replace
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/CPATH/value=/opt/intel/composerxe/mkl/include\:/opt/intel/composerxe/mkl/include\:/opt/intel/composerxe/tbb/include
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/C_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/C_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/append=true
+environment/buildEnvironmentInclude/photran.managedbuild.config.intel.fortran.ar.x86_64.debug.306104071/appendContributed=true

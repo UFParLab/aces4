@@ -1,0 +1,50 @@
+sial assign_to_static_array_test
+	predefined int norb
+	special fill_block_sequential wr
+	special print_block r
+	special print_static_array r
+	special swap_blocks uu
+	aoindex i = 1,norb
+	aoindex j = 1,norb
+	static a(i,j)
+	static b(i,j)
+	distributed d(i,j)
+
+	do i
+		do j
+			execute fill_block_sequential d(i,j) 1.0
+			execute fill_block_sequential b(i,j) 1001.0
+		enddo j
+	enddo i
+	
+	do i
+		do j
+			a(i,j) = d(i,j)
+		enddo j
+	enddo i
+	
+	
+	do i
+		do j
+			a(i,j) *= 2
+			execute swap_blocks a(i,j) a(i,j)
+		enddo j
+	enddo i
+	
+	println "static array a"
+	execute print_static_array a
+	
+	#println "static array b"
+	#execute print_static_array b
+	
+	#println "printing blocks of d"
+	#do i
+	#do j
+	#execute print_block d(i,j)
+	#enddo j
+	#enddo i
+	
+	println " "
+	println "finished assigning_to_static_array_test"
+
+endsial assign_to_static_array_test

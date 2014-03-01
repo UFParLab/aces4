@@ -1,0 +1,13 @@
+BlockId is an index into the array table + a MAXDIM sized array values that identify the block.
+Given the Id, we can compute the shape using the segment table and the 
+Block has an Id and a possibly null pointer to data
+BlockSelector is an array of sial indices, represented by their index into the index table.  A selector
+can be turned into an ID by pairing it with a compatible array, and getting the current values of the index.
+a[i,j] = b[k,l]
+
+Index VALUES are visible in sial.
+j = 1,4
+k= 5,9
+Index SELECTORS are not, and start at 0.
+
+

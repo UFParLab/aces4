@@ -1,0 +1,4 @@
+sial no_arg_user_sub
+special print_something
+execute print_something
+endsial no_arg_user_sub

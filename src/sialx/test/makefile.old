@@ -1,0 +1,41 @@
+
+ACES4_DIR=/home/basbas/aces4
+#Compiler flags
+SIALFLAGS=-sp .
+
+SIAL_COMPILER_JAR=$(ACES4_DIR)/compiler/SialCompiler.jar
+SIO_DIR=../siox_test
+SP=.
+
+#Search for all the .sial files in current directory as well as in sub directories upto 3 levels deep
+SIAL_SOURCE := $(wildcard *.sialx)
+SIAL_SOURCE += $(wildcard */*.sialx)
+SIAL_SOURCE += $(wildcard */*/*.sialx)
+SIAL_SOURCE += $(wildcard */*/*/*.sialx)
+SIO_OBJS=$(SIAL_SOURCE:.sialx=.siox)
+
+all: tabula_rasa java_prep  $(SIO_OBJS)  java_restore
+	@echo ' using jar file $(SIAL_COMPILER_JAR)'
+
+tabula_rasa: ;
+	rm -f make.out make.err
+
+java_prep: ;
+	@bash -c "unset _JAVA_OPTIONS"
+
+java_restore: ;
+	@bash -c 'export _JAVA_OPTIONS="-Xms128m -Xmx1024m"'
+
+binclean clean distclean: % : ;
+	find . -type f -name "*.siox" -exec rm -f '{}' \;
+
+
+$(SIO_DIR)/default_jobflows: default_jobflows
+	cp default_jobflows $(SIO_DIR)
+
+.SUFFIXES: .sialx .siox
+
+.sialx.siox:
+	@echo 'Building target: $@'
+	@-java -ea -Xms128m -Xmx1024m  -jar $(SIAL_COMPILER_JAR) $< 1>>make.out 2>>make.err  && cp $@ $(SIO_DIR)
+

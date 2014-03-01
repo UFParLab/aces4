@@ -1,0 +1,4 @@
+*.o
+/build
+/BUILD
+Makefile.in

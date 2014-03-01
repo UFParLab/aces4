@@ -1,0 +1,25 @@
+Syntax highlighting in Vim
+
+HOW TO INSTALL
+--------------
+
+Copy the ftdetect & syntax folders in $HOME/.vim
+
+After doing this, your directory should look like so:
+
++$HOME
+|
+|---.vim
+     |
+     |----syntax
+     |      |
+     |      |----sial.vim
+     |      |----.... (other files)
+     |
+     |---ftdetect
+            |
+            |----sial.vim
+            |----....(other files)
+
+
+

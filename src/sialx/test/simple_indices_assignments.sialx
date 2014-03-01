@@ -1,0 +1,64 @@
+sial simple_indices_assignments
+    predefined int norb
+    special fill_block_sequential wr
+    special fill_block_cyclic wr
+    special print_block r
+    special print_static_array r
+    aoindex i = 1,2
+    aoindex j = 1,2
+    index k = 1,4
+    index l = 1,2
+    temp  a1(i,j,k)
+    temp b1(i,j)
+    temp a2(i,j,k)
+    temp b2(i,j)
+    local c(k,l)
+    scalar x
+    scalar y
+    scalar z
+    x = 0.0
+
+    do i
+        do j
+            b2(i,j) = 0
+            execute fill_block_sequential b1(i,j) x
+            x = x + 1
+            println "printing block b1(i,j)"
+            execute print_block b1(i,j)
+            do k
+                println "performing assignment a1(i,j,k) = b1(i,j)"
+                a1(i,j,k) = b1(i,j)
+                println "performing assignment b2(i,j)= a1(i,j,k)"
+                b2(i,j) = a1(i,j,k)
+                execute print_block a1(i,j,k)
+            enddo k
+            execute print_block b2(i,j)
+        enddo j
+    enddo i
+
+    println "allocating c(*,*)"
+    allocate c(*,*)
+
+    y = 42
+
+    do k
+        do l
+            print_scalar y
+            c(k,l) = y
+            execute print_block c(k,l)
+            y = y + 1
+        enddo l
+    enddo k
+
+    println "filled c(k,l)"
+    do k
+        do l
+            x = c(k,l)
+            print_scalar x
+        enddo l
+    enddo k
+
+    println " finished simple_indices_assignments"
+
+    endsial simple_indices_assignments
+

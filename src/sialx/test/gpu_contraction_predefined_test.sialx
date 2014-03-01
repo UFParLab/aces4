@@ -1,0 +1,36 @@
+ sial gpu_contraction_predefined
+	special print_block r
+	special fill_block_cyclic wr  
+	
+	
+	#these are predefined in the index table         
+	aoindex a = 1, 1  
+	aoindex b = 1, 1   
+	
+	predefined static ca(a, b) 
+	
+	aoindex mu = 1, 1
+	aoindex nu = 1, 1
+	
+	scalar v1
+	temp v2(mu, nu) 
+	
+	
+	
+	do mu
+	    do nu
+	    	execute fill_block_cyclic v2(mu, nu) 1.0
+			gpu_on    	
+	    	ca(mu, nu) = 1.0
+	        v1 = v2(mu, nu) * ca (mu, nu)
+	        
+	        execute print_block v2(mu, nu)
+	        execute print_block ca(mu, nu)
+	        print_scalar v1 
+	     	gpu_off 
+	         
+	    enddo nu
+	enddo mu
+
+
+endsial gpu_contraction_predefined

@@ -1,0 +1,8 @@
+--langdef=SIALX
+--langmap=SIALX:.sialx
+--regex-SIALX=/[\t ]*proc[ \t]*([a-zA-Z0-9_]+)/\1/p,procedure definition/i
+--regex-SIALX=/[\t ]*(index|aoindex|moaindex|mobindex)[ \t]*([a-zA-Z0-9_]+)/\2/i,index definition/i
+--regex-SIALX=/[\t ]*(distributed|served|static|temp|local)[ \t]*([a-zA-Z0-9_]+)/\2/a,array definition/i
+--regex-SIALX=/[\t ]*(scalar)[ \t]*([a-zA-Z0-9_]+)/\2/s,scalar definition/i
+
+

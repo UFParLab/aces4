@@ -1,0 +1,332 @@
+#DO NOT MODIFY THIS FILE.  
+#In the current implementation of the SIA, correct functioning of ACESII depends on these definitions in this order.
+#If you accidently modify the file, delete it and it will be regenerated.
+
+sial aces_defs
+
+#These values are inserted into the sip's symbolic__table.
+predefined  int norb #total number of atomic orbital segments 
+predefined  int nocc  # number of occupied molecular orbital segments (no spin)
+predefined  int nvirt # number of unoccupied or virtual orbital segments (no spin)
+predefined  int bocc  # begin of occupied orbital segment range (no spin)
+predefined  int eocc  # end occupied orbital segment range (no spin)
+predefined  int bvirt  # begin of virtual orbital segment range (no spin)
+predefined  int evirt  # end of virtual orbital segment range (no spin)
+predefined  int naocc # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc # number of occupied molecular orbital segments (beta)
+predefined  int navirt # number of unoccupied or virtual orbital segments (alpha)
+predefined  int nbvirt # number of unoccupied or virtual orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc  # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+predefined  int noccorb #  TODO used in any code?
+predefined  int nvirtorb #  TODO used in code?
+predefined  int boccorb
+predefined  int eoccorb
+predefined  int bvirtorb
+predefined  int evirtorb
+predefined  int naoccorb
+predefined  int nboccorb
+predefined  int navirtorb
+predefined  int nbvirtorb
+predefined  int baoccorb
+predefined  int bboccorb
+predefined  int eaoccorb
+predefined  int eboccorb
+predefined  int bavirtorb
+predefined  int bbvirtorb
+predefined  int eavirtorb
+predefined  int ebvirtorb
+predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+predefined  int cc_hist  # value of CC_MAXORDER from ZMAT.
+predefined  int cc_beg  #  equal to 2, there is no ZMAT parameter corresponding to this .
+predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
+predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
+predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+predefined  int natoms
+predefined  int itrips  # Starting occupied orbital to process in the triples codes.
+predefined  int itripe  # Ending occupied orbital to process in the triples codes.     
+predefined  int ihess1  # Beginning Hessian component to process.
+predefined  int ihess2  # Ending Hessian component to process.
+predefined  int jhess1  # Beginning Hessian component to process.
+predefined  int jhess2  # Ending Hessian component to process.
+predefined  int subb  # Beginning sub_index range used in triples codes.
+predefined  int sube  # Ending sub_index range used in triples codes.      
+predefined  int sip_sub_segsize
+predefined  int sip_sub_occ_segsize
+predefined  int sip_sub_virt_segsize
+predefined  int sip_sub_ao_segsize      
+
+
+#these are predefined in the index table         
+moindex aces_defs_p = 1, norb   
+moaindex aces_defs_pa = 1,norb  
+mobindex aces_defs_pb = 1, norb  
+aoindex aces_defs_mu = 1, norb  
+
+
+#these s are predefined in the array and scalar tables
+predefined static c(aces_defs_mu,aces_defs_p)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+predefined static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
+predefined static cb(aces_defs_mu,aces_defs_pb)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+
+predefined scalar scfeneg  # ????   
+predefined scalar totenerg  #Total energy read in from JOBARC.
+          
+predefined static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
+
+predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
+
+predefined static fock_a(aces_defs_pa, aces_defs_pa)
+predefined static fock_b(aces_defs_pb, aces_defs_pb)
+
+predefined static oed_nai(aces_defs_mu,aces_defs_mu)
+predefined static oed_kin(aces_defs_mu,aces_defs_mu)
+predefined static oed_ovl(aces_defs_mu,aces_defs_mu)
+
+predefined scalar damp #value of DAMPSCF from ZMAT
+predefined scalar cc_conv  # value of CC_CONV from ZMAT.
+predefined scalar scf_conv  # value of SCF_CONV from ZMAT
+
+predefined static fockrohf_a(aces_defs_mu,aces_defs_mu)
+predefined static fockrohf_b(aces_defs_mu,aces_defs_mu)
+
+predefined scalar stabvalue  #this is used only in guess_scf_uhf_finish.sial.  It is not a 
+
+predefined scalar eom_tol
+predefined scalar eom_roots
+
+predefined scalar excite
+
+#sial hardcoded_sipdefs
+# Do not modify this file.  It contains the special instructions in the order
+# that the sip expects.  It was taken from 
+# sip_shared/load_pre_defined_routines_compile_time.f, including commented out 
+# functions
+
+special aceshack_sip_barrier #0TODO AcesHack to match current sip binary
+special energy_denominator  w
+special energy_product       #2
+special energy_reg_denominator
+special energy_reg_product
+special energy_denominator_reg_deriv
+#special print_scalar
+special trace_on
+special trace_off
+special dump_block
+special load_balance_on
+special load_balance_off
+special blocks_to_list r
+special list_to_blocks w
+# special fmult
+special der_int_setup
+special compute_derivative_integrals 
+special aceshack_server_barrier #TODO AcesHack to match current sip binary
+special scont1
+special hcont1
+special dcont2
+special eig rw
+special eig_inv
+special eig_sr
+special eig_sr_inv rw
+special copy_fock
+
+special diis_setup w
+special compute_diis
+special write_blocks_to_list
+special read_list_to_blocks
+special remove_diagonal
+special return_diagonal
+special fock_denominator
+special set_flags
+special set_flags2 w
+special der2_comp
+special fock_der
+special overlap_der
+special scontxy
+special hcontxy
+special compute_sderivative_integrals
+special read_hess
+special return_h1 w
+
+special smon_on
+special smon_off
+special scf_rhf
+special array_copy wr
+special energy_adenominator
+
+special energy_bdenominator
+
+special energy_abdenominator
+
+special read_grad
+special udenominator
+# special set_index
+special remove_xs
+special remove_xd
+special remove_ds
+special remove_ss
+special remove_dd
+special removeoo_dd
+special removevv_dd
+special remove_sd
+special remove_sx
+special remove_dx
+special copy_ff
+special dump_amp
+# special comp_ovl3c
+special check_dconf rw
+special dropmo_expand_basis
+special square_root
+special norm_fac
+special return_sval ww
+special return_diagonal4
+special symm_force_a
+special symm_force_i
+special place_sval
+special place_one
+special place_one2
+special place_one3
+special place_one4
+special place_one5
+special place_one6
+special place_oneb
+special place_one2b
+special place_one3b
+special place_one4b
+special place_one5b
+special place_one6b
+special place_one_dip 
+special place_one_dip_2 
+special place_one_dip_3 
+special place_one_dip_4 
+special place_one_dip_5 
+special place_one_dip_6 
+special place_one_dip_7 
+special place_one_dip_8 
+special place_one_dea 
+special place_one_dea_2 
+special place_one_dea_3 
+special place_one_dea_4 
+special place_one_dea_5 
+special place_one_dea_6 
+special place_one_dea_7 
+special place_one_dea_8 
+special eomroot_print 
+# special smooth
+# special smooth4
+special eig_nonsymm
+special apply_den2
+special apply_den4
+special apply_den4_nodiag
+special energy_tdenominator
+
+special compute_aabb_batch w
+special compute_abcd_batch
+special compute_no4c_batch
+special remove_atom_rud1
+special remove_atom_rud2
+special der4_comp
+special set_flags4
+special timestamp
+special c1_print
+special c1b_print
+special c2aa_print
+special c2ab_print
+special c2bb_print
+special pardo_sects
+special get_ijk
+special set_ijk_aaa
+special stripi
+special sum_64ss
+special set_ijk_aab
+special get_my_rank w
+special broadcast_array
+special checkpoint
+special get_restart_status
+special commit_checkpoint
+special crash
+
+
+#             ...Watson: XYZ moment integrals
+
+special second_moment
+special nuc_dipole_moment
+
+special return_x
+special return_y
+special return_z
+
+# special return_xx
+# special return_yy
+# special return_zz
+
+# special return_xy
+# special return_xz
+# special return_yz
+
+special print_eom_dens_info
+
+# --------------------------------------------------------------------
+# VFl scf integral routines
+# --------------------------------------------------------------------
+
+special compute_batch1 w
+special compute_batch2 w
+special compute_batch3 w
+special compute_batch4 w
+special compute_batch5 w
+special compute_batch6 w
+special compute_batch7 w
+special compute_batch8 w
+
+special compute_ubatch1 w
+special compute_ubatch2 w
+special compute_ubatch3 w
+special compute_ubatch4 w
+special compute_ubatch5 w
+special compute_ubatch6 w
+special compute_ubatch7 w
+special compute_ubatch8 w
+
+
+special form_iad
+special form_ibd
+
+# special set_itol
+# special fassign
+
+# --------------------------------------------------------------------
+# VFL Instructions needed to perform 'super' T calculations
+# --------------------------------------------------------------------
+
+# special set_t3blocks_a
+# special set_t3blocks_i
+# special compt3_a
+# special compt3_i
+special prefetch_on
+special prefetch_off
+
+# --------------------------------------------------------------------
+# VFL Instruction needed to perform atomic density guess
+# --------------------------------------------------------------------
+
+special scf_atom r
+
+special return_1st_mom
+special return_2nd_mom
+special eomroot_print_new
+special energy_ty_denominator
+special reorder_energy
+special print_rel_info wr
+special compute_integrals w
+
+endsial aces_defs
+
+

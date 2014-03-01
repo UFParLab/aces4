@@ -1,0 +1,218 @@
+#  Copyright (c) 2003-2010 University of Florida
+import "scf_frag_defs.sialx"
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  The GNU General Public License is included in this distribution
+#  in the file COPYRIGHT.
+#
+                           SIAL SCF_FRAGMENT 
+#
+# ----------------------------------------------------------------------------
+#
+# Declare indeces 
+# --------------- 
+#
+      index   kiter  = 1, scf_iter  
+      index   katom  = 1, 9 # Nfrags  
+      index   jatom  = 1, 9 # Nfrags  
+
+      aoindex mu = 1, norb 
+      aoindex nu = 1, norb 
+#
+      moaindex i = baocc, eaocc  
+      moaindex i1= baocc, eaocc  
+#
+      mobindex j = bbocc, ebocc  
+      mobindex j1= bbocc, ebocc  
+#
+      moaindex p = baocc, eavirt
+      moaindex p1= baocc, eavirt
+#
+      mobindex q = bbocc, ebvirt
+      mobindex q1= bbocc, ebvirt
+#
+      temp Txx(mu,nu) 
+      temp txp(mu,p)  
+      temp txq(mu,q)  
+      temp tpp(p,p1)  
+      temp tqq(q,q1)  
+      distributed Da(mu,nu) 
+      distributed Db(mu,nu) 
+      distributed Nai_d(mu,nu) 
+      static atom(katom,jatom) 
+      temp tatom(katom,jatom) 
+      distributed DCa(mu,p) 
+      distributed DCb(mu,q) 
+      distributed Dfock_a(p,p1) 
+      distributed Dfock_b(q,q1) 
+
+      static Ca(mu,p) 
+      static Cb(mu,q) 
+      static Fock_a(p, p1) 
+      static Fock_b(q, q1) 
+#
+# Declare scalars 
+# --------------- 
+#
+      scalar etemp 
+      scalar one 
+      scalar two 
+      scalar rank 
+      scalar nfrags 
+      scalar fcount 
+#
+# ---------------------------------------------------------------------------- 
+#
+      PROC IGUESS   
+#     ----------- 
+#
+#     Determine the number of fragments  
+#     --------------------------------- 
+####      execute set_frag nfrags
+
+       etemp = 0.0 
+       DO katom 
+       DO jatom 
+         IF katom == jatom 
+          etemp             = etemp + 1.0  
+          atom(katom,jatom) = etemp 
+         endif 
+       ENDDO jatom 
+       ENDDO katom 
+      print_scalar etemp  
+
+      sip_barrier 
+
+      PARDO katom  
+            DO jatom 
+               IF katom == jatom  
+
+                  tatom(katom,jatom) = atom(katom,jatom) 
+                  execute return_sval tatom(katom,jatom) etemp   
+                  print_scalar etemp 
+                  execute scf_frag etemp Ca Cb Fock_a Fock_b  
+ 
+              ENDIF # katom == jatom  
+            ENDDO jatom 
+      ENDPARDO katom   
+#
+      ENDPROC IGUESS   
+#     -------------- 
+#
+# -----------------------------------------------------------------------------
+#
+#     Compute the fragment SCF  
+#     ------------------------- 
+#
+      create DCa 
+      create DCb 
+      create Dfock_a 
+      create Dfock_b 
+      sip_barrier 
+      CALL IGUESS  
+      sip_barrier
+
+      DO mu  
+      DO p 
+         txp(mu,p)      = ca(mu,p) 
+         PUT DCa(mu,p) += txp(mu,p) 
+      ENDDO p 
+      ENDDO mu  
+      sip_barrier
+
+      DO mu  
+      DO p 
+         GET        DCa(mu,p) 
+         ca(mu,p) = DCa(mu,p) 
+      ENDDO p 
+      ENDDO mu  
+      sip_barrier
+
+      DO mu  
+      DO q 
+         txq(mu,q)      = cb(mu,q) 
+         PUT DCb(mu,q) += txq(mu,q) 
+      ENDDO q 
+      ENDDO mu  
+      sip_barrier
+
+      DO mu  
+      DO q 
+         GET        DCb(mu,q) 
+         cb(mu,q) = DCb(mu,q) 
+      ENDDO q 
+      ENDDO mu  
+      sip_barrier
+
+      DO p  
+      DO p1
+         tpp(p,p1)          = fock_a(p,p1) 
+         PUT Dfock_a(p,p1) += tpp(p,p1) 
+      ENDDO p1
+      ENDDO p  
+      sip_barrier
+
+      DO p  
+      DO p1
+         GET            Dfock_a(p,p1) 
+         fock_a(p,p1) = Dfock_a(p,p1) 
+      ENDDO p1
+      ENDDO p  
+      sip_barrier
+
+      DO q  
+      DO q1
+         tqq(q,q1)          = fock_b(q,q1) 
+         PUT Dfock_b(q,q1) += tqq(q,q1) 
+      ENDDO q1
+      ENDDO q  
+      sip_barrier
+
+      DO q  
+      DO q1
+         GET            Dfock_b(q,q1) 
+         fock_b(q,q1) = Dfock_b(q,q1) 
+      ENDDO q1
+      ENDDO q  
+
+      sip_barrier
+
+      set_persistent ca "ca" 
+      set_persistent Fock_a "fock_a"
+
+#     DO p    
+#     DO p1    
+#        tpp(p,p1)      = fock_a(p,p1) 
+#        execute dump_amp tpp  
+#     ENDDO p1    
+#     ENDDO p     
+
+#     PARDO q, q1    
+#        tqq(q,q1)      = fock_b(q,q1) 
+#        execute dump_amp tqq  
+#     ENDPARDO q, q1    
+
+#     PARDO mu, p   
+#        txp(mu,p)      = ca(mu,p) 
+#        execute dump_amp txp  
+#     ENDPARDO mu, p   
+
+#     PARDO mu, q 
+#        txq(mu,q) = cb(mu,q) 
+#        execute dump_amp txq 
+#     ENDPARDO mu, q 
+#
+# -----------------------------------------------------------------------------
+#
+                           ENDSIAL SCF_FRAGMENT 
+#
+###############################################################################

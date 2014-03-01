@@ -1,0 +1,203 @@
+This README is meant primarily for people contributing to aces4.
+It is a short guide to interacting with the autotools systems currently in use.
+
+***********************************************************************
+I highly recommend you to read through all of this and look at some of the references, just to know where to find stuff if no one is around to help. If you don't have the inclination to do this, read through the sections titled 
+HOW TO DO YOUR OWN DEVELOPMENT 
+and
+WHAT MAKE TARGETS WE SUPPORT, HOW YOU SHOULD BUILD YOUR PROJECT
+***********************************************************************
+
+The 2 most important files in the root directory of the project are 
+Makefile.am
+configure.ac
+
+Makefile.am contains commands/directives for automake to generate Makefiles from.
+configure.ac contains commands/directives for autoconf to generate configure from.
+
+
+Somewhat Detailed explanation of Makefile.am
+============================================
+In the Makefile.am file, you will see certain special variable of the form:
+prefix_PRIMARY = ....
+
+To the right is a name or a list of file or flags or options. 
+
+PRIMARY can be 
+a) PROGRAMS 	- an executable to be generated
+b) LIBRARIES 	- a static library (.a) file is to be generated
+c) LTLIBRARIES 	- a Libtool library (.la) file is to be generated. (For linux, I've seen this to be a wrapped around a .a file. These are platform independant.
+d) others that are not used in our project.
+
+There is a special variable that is used in our project called EXTRA_DIST. This variable tells automake that when a distribution tarball is created, include these files.
+
+In our main file, there is EXTRA_DIST = doxygen.cfg. This tells automake to include this file when you say "make dist".
+
+
+Building PROGRAMS
+-----------------
+Here is an example of executable PROGRAMS as used in our program:
+(Due to code restructuring and refactorings, some of these examples may be obsolete; nonetheless, they are useful in understanding the ideas used in our build system).
+
+bin_PROGRAMS = aces4 testsetup 
+Explanation : 2 executable are to be created called aces4 & testsetup.
+
+aces4_SOURCES = $(ACES_SOURCEFILES) ./src/aces_main/main.cpp
+Explanation : The source files that are needed to build aces4 are main.cpp and $(ACES_SOURCEFILES).
+Note here that ACES_SOURCEFILES is a regular make variable that you can refer to. Automake figures out which compiler to use based on the extension of the file. If there is something creative like ".com" or ".par", it doesn't compile it. Anything listed here is distributed by default when you do a "make dist".
+
+aces4_CPPFLAGS = ...
+Though not present in our Makefile.am, this would set the C pre processor flags to be used when compiling aces4.
+
+aces4_LDADD = libtensordil.a src/special_instruction_f/libinstr.la
+This tells automake link aces4 to libtensordil.a and libinstr.la
+
+Note the format of these variables - <executable_name>_PRIMARY. You can imagine the same set of variables for testsetup.
+If instead of <executable_name>, you were to say AM_CPPFLAGS or AM_LDADD, then those pre-processor flags or libraries would apply to all executables in this Makefile.am
+
+
+Building libraries
+------------------
+We can make use of _LIBRARIES and _LTLIBRARIES primaries to do this. In our Makefile.am, we build a library out of Dmitry's tensor package using these variables:
+
+noinst_LIBRARIES = libtensordil.a
+Explanation : Build a static library called libtensordil.a. Do not install it (noinst) when someone says "make install".
+
+libtensordil_a_SOURCES = ...
+Explanation : These are the sources to build the library libtensordil.a. Note how the name in canonicalized. The "." is replaced with an "_". If there were a "/", that would be converted to an "_" also.
+
+libtensordil_a_FFLAGS = ...
+Explanation : Compile each fortran file in the SOURCES for libtensordil.a with these flags. You can also specify these for executables. Automake also accepts other compiler flags (FFLAGS, FCFLAGS, CFLAGS, etc).
+
+
+Tests
+-----
+We build our tests with the special variable TESTS. These are the relevant variables:
+
+TESTS = src/master_test/master_test_main
+Explanation : The list of programs to run for testing
+
+check_PROGRAMS = src/master_test/master_test_main
+Explanation : master_test_main is built only when you say "make check"
+
+src_master_test_master_test_main_SOURCES = ...
+Explanation : Sources to build master_test_main. Note how the entire path is canonicalized.
+
+src_master_test_master_test_main_LDADD = ...
+Explanation : Libraries to link master_test_main with
+
+src_master_test_master_test_main_LDFLAGS = ...
+Explanation : linked flags.
+
+src_master_test_master_test_main_CFLAGS = ...
+Explanation CLFAGS for master_test_main
+
+
+Compiling SIALX Files
+---------------------
+It is not straightforward to compile a file not directly supported by GNU Autotools. To compile SIALX files, we use the method described here : http://stackoverflow.com/questions/8039196/automake-automatic-dependencies-custom-language-scripts.
+
+The makefile rule 
+.sialx.siox:
+	java -jar $(SIAL_COMPILER_JAR) -sp $(SIALX_DIR) $<
+	$(MKDIR_P) `dirname $@`
+	-mv -f $(patsubst %.sialx, %.siox, $<) $@
+
+
+compiles the SIALX file using our compiler, makes the directory to put the compiled sialx file in and then moves the compiled file.
+
+
+SUBDIRS
+-------
+We have another Makefile.am to build a library of the superinstructions in src/special_instruction_f. To build targets contained in that Makefile.am, we use the special variable:
+SUBDIRS = src/special_instruction_f
+
+include
+-------
+At the top of Makefile.am, we include $(top_srcdir)/aminclude.am. This includes the contents of the makefile aminclude.am into this Makefile.am. $(top_srcdir) points to the root of the top source directory. Other special variables are also available. (http://www.gnu.org/prep/standards/html_node/Directory-Variables.html#Directory-Variables).
+
+
+Brief Explanation of Configure.ac
+=============================================
+Autoconf uses M4 Macros. The m4 macros that are "standard" usually begin with AC_... You can look at what each of these does in the official documentation. You can also include your own macros. We've gotten a few macros from the autoconf archive (http://www.gnu.org/software/autoconf-archive/The-Macros.html#The-Macros) and used them here.
+Most of the sections in our autoconf is commented. 
+In the configure.ac file, one would also "initialize" the options to be passed when invoking autoconf (AC_INIT), automake(AM_INIT_AUTOMAKE) and so forth.
+
+Autoconf must be given a list of Makefile.am locations (or Makefile.in location for projects that dont use automake) in the AC_CONFIG_FILES macro. This is done in our own configure.ac as:
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([src/special_instruction_f/Makefile])
+To populate the final Makefile for building the project with the accumulated configuration information, the macro AC_OUTPUT is used.
+
+In our configure.ac, we figure out the compiler to use, set doxygen options, figure out the compiler vendor and add in specific compiler flags to each language, check for libraries (openmp & pthread), header, determine the need for fortran 77, fortran wrappers (calling Fortran subroutines from C), flags and if a main function is needed.
+
+
+
+
+HOW TO DO YOUR OWN DEVELOPMENT
+==============================
+To add in a SIALX File:
+please add it to the list of sialx files in Makefile.am defined in the EXTRA_DIST variable and the corresponding BUILT_SOURCES variable.
+
+To add in a regular fortran, c, cpp file:
+please add it to the list of sources that this file needs to be a part of. If it is a library, add it to the sources of the library. If it is an executable, add it to the sources of the executable. Please also read the "BUILDING Programs" section if you haven't already done so.
+
+
+To add in a .h or other header file:
+Add it to the sources of the executable or library. If this directory is not pointed to in the CPPFLAGS of the executable or library, please add that in as well. Examples of this are in the variables
+AM_CPPFLAGS & in libinstr_la_CPPFLAGS in src/special_instruction_f/Makefile.am.
+
+To add in a directory with its own Makefile:
+Look at the Makefile.am in the directory src/special_instruction_f/. This creates a library from the files listed in the ..._SOURCES variable. My guess is that you probably want to do the same. 
+You would then need to modify the top level makefile:
+Add the directory into the SUBDIRS variable.
+Add the generated library to be linked with whichever exectuable you've made it for. Examples are in aces4_LDADD.
+Add the Makefile in configure.ac using the AC_CONFIG_FILES macro.
+
+After making changes to Makefile.am or configure.ac or if accessing your directory from a different machine, please call 'autoreconf -ifv'.
+
+
+
+
+WHAT MAKE TARGETS WE SUPPORT, HOW YOU SHOULD BUILD YOUR PROJECT
+================================================================
+Here is the list of standard Makefile targets : (http://www.gnu.org/prep/standards/html_node/Standard-Targets.html). Because of using automake and autoconf, we get a lot of these targets for free. We also get the VPATH functionality (my personal favorite). Here is what I typically do:
+
+autoreconf -ifv
+Explanation : reads in Makfile.am, configure.ac to generate Makefile.in and configure. Installs the missing files(-i), forces everything to be regenerated(-f) and is verbose(-v).
+
+mkdir BUILD
+Explanation : We want to build in this directory so as to not pollute our source tree.
+
+../configure --prefix=${PWD} -C
+Explanation : We are now configuring the project. It does all the checks, creates the needed directory structure in the current directory to place compiled / generated files. The --prefix options sets the install directory to the current directory. By default it is /usr. When "make install" is called, a "bin" directory is created and all executables are placed there. The "-C" options caches the configuration it figures out. That way, when you call configure again, directly or indirectly, time isn't wasted doing it again.
+configure also supports a list of other options that can be found out through 
+../configure --help.
+
+make
+Explanation : This calls "make all". This will build all the executables.
+
+make install
+Explanation : This will install the executables in a "bin" directory in the directory you passed via the --prefix option.
+
+make check
+Explanation : This will run the tests.
+
+make doxygen-doc
+Explanation : This will run doxygen and create a directory called doxygen-doc. Here, there will be a html directory containing the documentation in html and a pdf. For the pdf, latex needs to be installed.
+
+make dist
+Explanation : This will make a tarball of your sources and call it <project-name>-<version>.tar.gz. The project name and version are got from the AC_INIT call in the configure.ac file. 
+
+
+
+References:
+Highly recommended:
+http://www.amazon.com/Autotools-Practioners-Autoconf-Automake-Libtool/dp/1593272065
+
+The official manuals are great and have the most up-to-date information:
+http://www.gnu.org/software/automake/manual/automake.html
+http://www.gnu.org/software/autoconf/manual/autoconf.html
+
+This project does not make much use of libtool, but here is the reference anyways:
+http://www.gnu.org/software/libtool/manual/libtool.html
+

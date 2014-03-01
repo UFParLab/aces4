@@ -1,0 +1,28 @@
+sial restore_persistent_test
+
+	special list_block_map
+	special print_block r
+	predefined int norb
+	
+	aoindex k = 1,1
+	aoindex l = 1,1
+	local a(k,l)
+	distributed b(k,l)
+	distributed c(k,l)
+	predefined static ca2(k, l)
+	
+	restore_persistent c "arr1"
+	restore_persistent b "arr2"
+	restore_persistent ca2 "arr3"
+	
+	do k
+		do l
+			execute print_block c(k,l)
+			execute print_block b(k,l)
+			execute print_block ca2(k,l)
+		enddo l
+	enddo k
+	
+	println "end of sial program restore_persistent_test"
+	
+endsial restore_persistent_test

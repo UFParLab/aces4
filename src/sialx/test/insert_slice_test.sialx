@@ -1,0 +1,32 @@
+sial insert_slice_test
+predefined int norb
+special fill_block_sequential wr
+special print_block r
+aoindex i = 1,norb
+aoindex j = 1,norb
+subindex ii of i
+subindex jj of j
+local a(i,j)
+local c(i,j)
+local asub1(ii,j)
+#local asub2(i,jj)
+#local asub3(ii,jj)
+do i
+do j
+execute fill_block_sequential a(i,j) 0.0
+c(i,j) = 99.99
+execute print_block a(i,j)
+execute print_block c(i,j)
+do ii in i
+asub1(ii,j) = a(ii,j)
+c(ii,j) = asub1(ii,j)
+enddo ii in i
+print "c(i,j)"
+print_index i
+print_index j
+execute print_block c(i,j)
+enddo j
+enddo i
+
+println "end of insert_slice_test"
+endsial insert_slice_test

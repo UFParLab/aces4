@@ -1,0 +1,5 @@
+sial scalarTable
+print "hello world"
+println "hello world"
+print "there are only two string literals in this prog"
+endsial scalarTable

@@ -1,0 +1,38 @@
+sial sum_op_test
+
+predefined int norb
+special fill_block_sequential wr
+special print_block r
+
+aoindex i = 1,1
+aoindex j = 1,1
+local a(i,j)
+local c(i,j)
+local d(i,j)
+local e(i,j)
+
+println "d(i,j) = a(i,j) + c(i,j)"
+do i
+	do j
+		allocate a(i, j)
+		allocate c(i, j)
+		allocate d(i, j)
+		allocate e(i, j)
+		
+		execute fill_block_sequential a(i,j) 100.0
+		execute fill_block_sequential c(i,j) 50.0
+		d(i,j) = a(i,j) + c(i,j)
+		println  "*******"
+		print_index i
+		print_index j
+		execute print_block d(i,j)
+		println "++++++++"
+		e(i,j) = d(i,j) - c(i,j)
+		execute print_block e(i,j)
+		
+	enddo j
+enddo i
+
+println "end of fill_sequential_test"
+
+endsial sum_op_test

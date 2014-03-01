@@ -1,0 +1,20 @@
+sial ifelse
+index i = 1,5
+index j=7,10
+index k = 30,33
+index aa = 1,4
+index bb = 1,6
+
+println "starting if loop"
+do aa 
+do bb 
+where bb <= aa 
+ if aa == bb
+    print_index aa 
+    print_index bb 
+endif
+enddo bb 
+enddo aa
+
+
+endsial ifelse

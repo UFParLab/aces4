@@ -1,0 +1,14 @@
+sial get_scalar_array_test
+    special get_and_print_scalar_array_dummy w
+
+    aoindex mu = 1, 1
+    local c(mu)
+
+    do mu
+        allocate c(mu)
+        execute get_and_print_scalar_array_dummy c(mu)
+        println "get_scalar_array_test"
+
+    enddo mu
+        
+endsial get_scalar_array_test

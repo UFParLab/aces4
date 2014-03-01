@@ -1,0 +1,15 @@
+      interface
+      subroutine set_scalar(cname, value) bind(C)
+                use, intrinsic :: ISO_C_BINDING
+      character, dimension(*), intent(in):: cname
+      real(C_DOUBLE), value, intent(in)::value
+      end subroutine set_scalar
+      end interface
+
+      interface
+      integer(c_int) function current_line() bind(C)
+      use, intrinsic :: ISO_C_BINDING
+      end function current_line
+      end interface
+   
+    

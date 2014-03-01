@@ -1,0 +1,28 @@
+sial self_multiply_test
+
+predefined int norb
+special fill_block_sequential wr
+special print_block r
+
+aoindex i = 1,1
+aoindex j = 1,1
+local a(i,j)
+
+do i
+	do j
+		allocate a(i, j)
+		execute fill_block_sequential a(i,j) 100.0
+		a(i, j) *= 2.0
+	enddo j
+enddo i
+
+do i
+	do j
+		a(i, j) *= 1.5
+		execute print_block a(i, j)
+	enddo j
+enddo i
+
+println "end of self_multiply_test"
+
+endsial self_multiply_test

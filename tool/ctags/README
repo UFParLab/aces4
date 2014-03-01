@@ -1,0 +1,10 @@
+Adds CTAGS support for SIAL.
+
+CTAGS in the Build System
+-------------------------
+In your BUILD directory, say "make ctags". The "tags" file will be generated. 
+In vi (or VIM), set the tags file in .vimrc or in the command mode by saying set tags=/path/to/tags.
+
+CTAGS using your own .ctags file
+--------------------------------
+You can also use the provided ctags file. Copy its contents to ~/.ctags, then say "ctags -R" in the base source directory to create the "tags" file.

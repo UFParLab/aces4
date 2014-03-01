@@ -1,0 +1,16 @@
+Syntax highlighting for Gtk Source View
+
+This will enable syntax highlighting in Gedit.
+
+
+HOW TO INSTALL
+--------------
+
+Copy the share folders in $HOME/.local
+
+Go into ~/.local/share and run the following:
+update-mime-database mime
+
+
+
+
