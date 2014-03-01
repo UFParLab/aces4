@@ -339,6 +339,5 @@ AM_CONDITIONAL([WORKING_NVCC], [test "x$cuda_enable" = "xyes"])
 AM_INIT_AUTOMAKE([foreign -Wall tar-ustar])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/sip/super_instructions/Makefile])
-AC_CONFIG_FILES([test/Makefile])
 AC_OUTPUT
 
