@@ -32,7 +32,7 @@ doxygen to make documentation.
 Timer resolution can be improved with PAPI (http://icl.cs.utk.edu/papi/). 
 Can also use TAU (http://www.cs.uoregon.edu/research/tau) for detailed profile & trace information.
 
-Google tests v1.7 is required to run tests for single node aces4).
+Google tests v1.7 is required to run tests.
 Get it from http://googletest.googlecode.com/files/gtest-1.7.0.zip
 Unzip it into the test/ directory.
 
@@ -59,7 +59,7 @@ make doxygen-run
 MPI
 ---
 There are 2 versions of ACES4 - a single node and a MPI multinode version.
-By default, if an MPI compiler can be detected, the mpi version will be compiled. "make check" will not work for this version as the tests have been written for a single node version.
+By default, if an MPI compiler can be detected, the mpi version will be compiled. 
 
 To disable this default behaviour, use the 
 --with-mpi=no 

@@ -164,13 +164,13 @@ int main(int argc, char* argv[]) {
 #else
 			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
 #endif
-			SIP_MASTER_LOG(std::cout << "SIAL PROGRAM OUTPUT" << std::endl);
+			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
 			if (0 != sip::DataManager::scope_count) {
 				std::cout << "Error, did not run as expected!.";
 				return -1;
 			}
-			SIP_MASTER_LOG(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
+			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 			std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 			sialxTimer.mpi_reduce_timers();

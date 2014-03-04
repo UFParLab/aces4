@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 	TAU_STATIC_PHASE_START("SIP Main");
 #endif
 
-	printf("Running main() from master_test_main.cpp\n");
+	printf("Running main() from test_qm.cpp\n");
 	testing::InitGoogleTest(&argc, argv);
 	int result = RUN_ALL_TESTS();
 

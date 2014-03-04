@@ -25,12 +25,15 @@
 	#define SIP_LOG(x) x
 	#ifdef HAVE_MPI
 		#define SIP_MASTER_LOG(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) x;
+		#define SIP_MASTER(x) SIP_MASTER_LOG(x)
 	#else
 		#define SIP_MASTER_LOG(x) x
+		#define SIP_MASTER(x) x
 	#endif
 #else
 	#define SIP_LOG(x) ;
 	#define SIP_MASTER_LOG(x) ;
+	#define SIP_MASTER(x) x
 #endif
 
 
