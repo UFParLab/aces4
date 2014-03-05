@@ -28,11 +28,11 @@ libtool
 
 You will need ```doxygen ``` to make documentation.
 
-Timer resolution can be improved with ```PAPI (http://icl.cs.utk.edu/papi/)```. 
-Can also use ```TAU (http://www.cs.uoregon.edu/research/tau)``` for detailed profile & trace information.
+Timer resolution can be improved with ```PAPI``` (http://icl.cs.utk.edu/papi/). 
+Can also use ```TAU``` (http://www.cs.uoregon.edu/research/tau) for detailed profile & trace information.
 
 Google tests v1.7 is required to run tests. 
-Get it from ```http://googletest.googlecode.com/files/gtest-1.7.0.zip```. 
+Get it from http://googletest.googlecode.com/files/gtest-1.7.0.zip. 
 Unzip it into the ```test/``` directory.
 
 
