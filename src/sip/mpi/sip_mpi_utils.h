@@ -59,14 +59,14 @@ public:
 	 */
 	static void send_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPtr bptr, int rank, int size_tag, int data_tag);
 
-	/**
-	 * Sends a string to another rank
-	 * @param rank
-	 * @param str
-	 * @param len
-	 * @param tag
-	 */
-	static void send_str_to_rank(const int rank, char *str, const int len, const int tag);
+//	/**
+//	 * Sends a string to another rank
+//	 * @param rank
+//	 * @param str
+//	 * @param len
+//	 * @param tag
+//	 */
+//	static void send_str_to_rank(const int rank, char *str, const int len, const int tag);
 
 
 	/**

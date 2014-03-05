@@ -15,21 +15,39 @@ bool RankDistribution::is_server(int rank, int size){
 	return three_to_one_server(rank, size);
 }
 
+int RankDistribution::local_server_to_communicate(int rank, int size){
+	return three_to_one_local_server_to_communicate(rank, size);
+}
+
+bool RankDistribution::is_local_worker_to_communicate(int rank, int size){
+	return is_three_to_one_local_worker_to_communicate(rank, size);
+}
+
 bool RankDistribution::three_to_one_server(int rank, int size){
 
 	assert (size >= 2);
 
-	if (size >= 3){
-		if (2 == rank % 3)
-			return true;
-		else
-			return false;
-	} else {
-		if (1 == rank)
-			return true;
-		else
-			return false;
-	}
+	if (size >= 3)
+		return 2 == rank % 3;	// Every third rank is a server
+	else
+		return 1 == rank;
+
+}
+
+
+bool RankDistribution::is_three_to_one_local_worker_to_communicate(int rank, int size){
+	if (size >= 3)
+		return 0 == rank % 3;	// Every 1 out of 3 is the worker that shall communicate with the server
+	else
+		return 0 == rank;
+}
+
+int RankDistribution::three_to_one_local_server_to_communicate(int rank, int size){
+	if (size < 3)
+		return 1;
+
+	int server_rank = ((rank / 3) + 1) * 3 - 1;
+	return (server_rank < size) ? (server_rank) : (-1);
 }
 
 

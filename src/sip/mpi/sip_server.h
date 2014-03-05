@@ -73,7 +73,7 @@ private:
 	 * @param
 	 * @return
 	 */
-	int get_array_id(const int);
+	int get_int_from_rank(const int);
 
 	/**
 	 * Send integer to other servers (from master server)
@@ -90,12 +90,12 @@ private:
 	 */
 	void send_to_other_servers(const char *str, int len, int tag);
 
-	/**
-	 * Gets a string from the given rank.
-	 * @param rank [in]
-	 * @param size [out]
-	 */
-	std::string get_string_from(int rank, int &size);
+//	/**
+//	 * Gets a string from the given rank.
+//	 * @param rank [in]
+//	 * @param size [out]
+//	 */
+//	std::string get_string_from(int rank, int &size);
 
 	/**
 	 * Any work to be done before server exits
@@ -125,13 +125,8 @@ private:
 	void handle_DELETE(int mpi_source);
 	void handle_BARRIER();
 	void handle_END_PROGRAM();
-	void handle_SERVER_DELETE(int mpi_source);
-	void handle_SERVER_END_PROGRAM();
-	void handle_SERVER_BARRIER();
 	void handle_SAVE_PERSISTENT(int mpi_source);
 	void handle_RESTORE_PERSISTENT(int mpi_source);
-	void handle_SERVER_SAVE_PERSISTENT(int mpi_source);
-	void handle_SERVER_RESTORE_PERSISTENT(int mpi_source);
 };
 
 } /* namespace sip */

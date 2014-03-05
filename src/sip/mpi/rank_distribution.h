@@ -18,7 +18,30 @@ namespace sip {
 class RankDistribution {
 public:
 
+	/**
+	 * Is this rank a server?
+	 * @param rank
+	 * @param size
+	 * @return
+	 */
 	static bool is_server(int rank, int size);
+
+	/**
+	 * Which local server should this worker communicate with.
+	 * If server rank to be communicated with is more than size, -1 is returned.
+	 * @param rank
+	 * @param size
+	 * @return
+	 */
+	static int local_server_to_communicate(int rank, int size);
+
+	/**
+	 * Is this the worker that should communicate with the local server.
+	 * @param rank
+	 * @param size
+	 * @return
+	 */
+	static bool is_local_worker_to_communicate(int rank, int size);
 
 private:
 	/**
@@ -29,6 +52,11 @@ private:
 	 * @return
 	 */
 	static bool three_to_one_server(int rank, int size);
+
+	static int three_to_one_local_server_to_communicate(int rank, int size);
+
+	static bool is_three_to_one_local_worker_to_communicate(int rank, int size);
+
 
 };
 

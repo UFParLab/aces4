@@ -571,7 +571,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 
-			data_manager_.set_persistent_array(array_slot, name);
+			data_manager_.set_persistent_array(array_slot, name, string_slot);
 
 			++pc;
 		}
@@ -585,7 +585,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 
-			data_manager_.restore_persistent_array(array_slot, name);
+			data_manager_.restore_persistent_array(array_slot, name, string_slot);
 
 			++pc;
 		}
@@ -614,12 +614,18 @@ void Interpreter::post_sial_program(){
 	data_manager_.save_persistent_arrays();
 #ifdef HAVE_MPI
 	// Send end of program message to server
-	if (sip_mpi_attr_.is_company_master()){
+	int global_rank = sip_mpi_attr_.global_rank();
+	int global_size = sip_mpi_attr_.global_size();
+	bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+
+	if (am_worker_to_communicate){
 		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning END_PROGRAM "<< std::endl);
 		int to_send = sip::SIPMPIData::END_PROGRAM;
-		int server_master = sip_mpi_attr_.server_master();
-		sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, server_master, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
-		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with END_PROGRAM "<< std::endl);
+		int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
+		if (local_server > -1){
+			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
+			SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with END_PROGRAM "<< std::endl);
+		}
 	}
 	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
 #endif

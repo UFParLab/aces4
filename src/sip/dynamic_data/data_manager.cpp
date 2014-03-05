@@ -6,6 +6,7 @@
  */
 
 #include "data_manager.h"
+#include "config.h"
 #include <assert.h>
 #include <sstream>
 #include <climits>
@@ -288,24 +289,40 @@ void DataManager::collective_sum(int source_array_slot,
 }
 
 
-void DataManager::set_persistent_array(int array_id, std::string name){
+void DataManager::set_persistent_array(int array_id, std::string name, int slot){
 #ifdef HAVE_MPI
 	bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
 	if (is_remote){
-		if (sip_mpi_attr_.is_company_master()){	// Only worker master sends
-			// Send SAVE_PERSISTENT to server master
+
+		int global_rank = sip_mpi_attr_.global_rank();
+		int global_size = sip_mpi_attr_.global_size();
+		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+
+		if (am_worker_to_communicate){
+			// Send SAVE_PERSISTENT to local master
 			int to_send = sip::SIPMPIData::SAVE_PERSISTENT;
-			int server_master = sip_mpi_attr_.server_master();
-			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, server_master, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
 
-			// Send array_id to server master
-			sip::SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, server_master, sip::SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT, MPI_COMM_WORLD));
+			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
+			if (local_server > -1){
+				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending SET_PERSISTENT to server "<< local_server<< std::endl);
 
-			// Send name to server_master
-			int len = name.length() + 1;
-			const char * str = name.c_str();
-			sip::SIPMPIUtils::send_str_to_rank(server_master, const_cast<char*>(str), len, sip::SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT_ARRAY_IDENT);
-			SIPMPIUtils::expect_ack_from_rank(server_master, SIPMPIData::SAVE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_SAVE_PERSISTENT_ACK);
+				sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
+
+				// Send array_id
+				sip::SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT, MPI_COMM_WORLD));
+
+				// Send slot with label
+				sip::SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT_ARRAY_IDENT, MPI_COMM_WORLD));
+
+				// Send name to local_server
+//				int len = name.length() + 1;
+//				const char * str = name.c_str();
+//				sip::SIPMPIUtils::send_str_to_rank(local_server, const_cast<char*>(str), len, sip::SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT_ARRAY_IDENT);
+
+				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::SAVE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_SAVE_PERSISTENT_ACK);
+				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
+
+			}
 		}
 	} else {
 		pbm_write_.mark_persistent_array(array_id, name);
@@ -315,7 +332,7 @@ void DataManager::set_persistent_array(int array_id, std::string name){
 #endif
 }
 
-void DataManager::restore_persistent_array(int array_id, std::string name){
+void DataManager::restore_persistent_array(int array_id, std::string name, int slot){
 
 	bool is_contig = sipTables_.is_contiguous(array_id);
 	if (is_contig){
@@ -327,20 +344,35 @@ void DataManager::restore_persistent_array(int array_id, std::string name){
 #ifdef HAVE_MPI
 		bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
 		sip::check (is_remote, "Trying to restore an array that is neither contiguous, nor remote!");
-		if (sip_mpi_attr_.is_company_master()){	// Only worker master sends
-			// Send RESTORE_PERSISTENT to server master
+
+		int global_rank = sip_mpi_attr_.global_rank();
+		int global_size = sip_mpi_attr_.global_size();
+		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+
+		if (am_worker_to_communicate){
+			// Send RESTORE_PERSISTENT to local server
 			int to_send = sip::SIPMPIData::RESTORE_PERSISTENT;
-			int server_master = sip_mpi_attr_.server_master();
-			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, server_master, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
+			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
+			if (local_server > -1){
+				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending RESTORE_PERSISTENT to server "<< local_server<< std::endl);
 
-			// Send array_id to server master
-			sip::SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, server_master, sip::SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT, MPI_COMM_WORLD));
+				sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server,SIPMPIData::WORKER_TO_SERVER_MESSAGE,MPI_COMM_WORLD));
 
-			// Send name to server_master
-			int len = name.length() + 1;
-			const char * str = name.c_str();
-			sip::SIPMPIUtils::send_str_to_rank(server_master, const_cast<char*>(str), len, sip::SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_IDENT);
-			SIPMPIUtils::expect_ack_from_rank(server_master, SIPMPIData::RESTORE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_RESTORE_PERSISTENT_ACK);
+				// Send array_id to server master
+				sip::SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT, MPI_COMM_WORLD));
+
+				// Send slot with label
+				sip::SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_IDENT, MPI_COMM_WORLD));
+
+				// Send name to server_master
+//				int len = name.length() + 1;
+//				const char * str = name.c_str();
+//				sip::SIPMPIUtils::send_str_to_rank(local_server, const_cast<char*>(str), len, sip::SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_IDENT);
+
+				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::RESTORE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_RESTORE_PERSISTENT_ACK);
+
+				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
+			}
 
 		}
 

@@ -136,11 +136,11 @@ void SIPMPIUtils::send_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPt
 	//SIP_LOG(std::cout<<"Sent block ptr : " << *bptr << std::endl);
 }
 
-void SIPMPIUtils::send_str_to_rank(const int rank, char *str, const int len, const int tag) {
-	sip::check(len < SIPMPIData::MAX_STRING, "Trying to send a very large string to other servers !");
-	check_err(MPI_Send(str, len, MPI_CHAR, rank, tag, MPI_COMM_WORLD));
-
-}
+//void SIPMPIUtils::send_str_to_rank(const int rank, char *str, const int len, const int tag) {
+//	sip::check(len < SIPMPIData::MAX_STRING, "Trying to send a very large string to other servers !");
+//	check_err(MPI_Send(str, len, MPI_CHAR, rank, tag, MPI_COMM_WORLD));
+//
+//}
 
 
 void SIPMPIUtils::send_ack_to_rank(const int rank, int ack, const int tag){
