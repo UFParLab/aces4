@@ -111,7 +111,7 @@ Block::BlockPtr ContiguousArrayManager::create_contiguous_array(int array_id, Bl
 	ContiguousArrayMap::iterator it = contiguous_array_map_.find(array_id);
 	if (it != contiguous_array_map_.end()){
 		if (block_ptr->get_data() != it->second->get_data()){
-			sip::check_and_warn(false, std::string("attempting to create contiguous array that already exists"), current_line());
+			SIP_LOG(sip::check_and_warn(false, std::string("attempting to create contiguous array that already exists"), current_line()));
 			sip::check(it->second != NULL, "Trying to delete NULL block !", current_line());
 			delete it->second;
 			contiguous_array_map_.erase(array_id);

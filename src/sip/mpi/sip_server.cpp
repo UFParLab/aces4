@@ -45,8 +45,6 @@ SIPServer::~SIPServer() {
 
 // Get rid of blocks from given array
 void SIPServer::delete_array(int array_id) {
-	//BlockMap::iterator it = block_map_.find(array_id);
-
 	// Only delete if the block map contains this array.
 	IdBlockMapPtr bid_map = block_map_[array_id];
 	if (bid_map != NULL){
@@ -54,67 +52,38 @@ void SIPServer::delete_array(int array_id) {
 			sip::Block::BlockPtr bptr = it->second;
 			delete bptr;
 		}
-		//delete block_map_[array_id];
 		delete bid_map;
 		block_map_[array_id] = NULL;
 	}
 }
 
-int SIPServer::get_array_id(const int rank) {
-	// From the servers master
-	// Receieve the ID of the array to delete
-	// Inform other servers
-	int array_id = -1;
-	MPI_Status array_id_status;
-	sip::SIPMPIUtils::check_err(MPI_Recv(&array_id, 1, MPI_INT, rank, MPI_ANY_TAG, MPI_COMM_WORLD, &array_id_status));
-	int id_msg_size_;
-	sip::SIPMPIUtils::check_err(MPI_Get_count(&array_id_status, MPI_INT, &id_msg_size_));
-	sip::check(1 == id_msg_size_, "Received more than 1 byte at SIP Server !");
-	return array_id;
+int SIPServer::get_int_from_rank(const int rank) {
+	int data = -1;
+	MPI_Status status;
+	sip::SIPMPIUtils::check_err(MPI_Recv(&data, 1, MPI_INT, rank, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
+	int msg_size_;
+	sip::SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_INT, &msg_size_));
+	sip::check(1 == msg_size_, "Received more than 1 byte at SIP Server !");
+	return data;
 }
 
-
-void SIPServer::send_to_other_servers(int to_send, int tag) {
-	const std::vector<int>& server_ranks = sip_mpi_attr_.server_ranks();
-	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it) {
-		const int server_rank = *it;
-		if (server_rank != sip_mpi_attr_.global_rank()) {
-			SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Sending "<<to_send<<" to server "<<server_rank<<std::endl);
-			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, server_rank, tag, MPI_COMM_WORLD));
-		}
-	}
-}
-
-void SIPServer::send_to_other_servers(const char *str, int len, int tag) {
-	sip::check(len < SIPMPIData::MAX_STRING, "Trying to send a very large string to other servers !");
-	const std::vector<int>& server_ranks = sip_mpi_attr_.server_ranks();
-	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it) {
-		const int server_rank = *it;
-		if (server_rank != sip_mpi_attr_.global_rank()) {
-			SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Sending String"<<std::string(str)<<" to server "<<server_rank<<std::endl);
-			MPI_Send(const_cast<char*>(str), len, MPI_CHAR, server_rank, tag, MPI_COMM_WORLD);
-		}
-	}
-}
-
-std::string SIPServer::get_string_from(int rank, int &size) {
-	MPI_Status str_status;
-	char str[SIPMPIData::MAX_STRING];
-	sip::SIPMPIUtils::check_err(MPI_Recv(str, SIPMPIData::MAX_STRING, MPI_CHAR, rank, MPI_ANY_TAG,
-			MPI_COMM_WORLD, &str_status));
-	int len = 0;
-	sip::SIPMPIUtils::check_err(MPI_Get_count(&str_status, MPI_CHAR, &len));
-	size = len;
-	std::string recvd_string = std::string(str);
-	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Got String "<<" from rank "<<str_status.MPI_SOURCE<<std::endl);
-	return recvd_string;
-}
+//std::string SIPServer::get_string_from(int rank, int &size) {
+//	MPI_Status str_status;
+//	char str[SIPMPIData::MAX_STRING];
+//	sip::SIPMPIUtils::check_err(MPI_Recv(str, SIPMPIData::MAX_STRING, MPI_CHAR, rank, MPI_ANY_TAG,
+//			MPI_COMM_WORLD, &str_status));
+//	int len = 0;
+//	sip::SIPMPIUtils::check_err(MPI_Get_count(&str_status, MPI_CHAR, &len));
+//	size = len;
+//	std::string recvd_string = std::string(str);
+//	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Got String "<<" from rank "<<str_status.MPI_SOURCE<<std::endl);
+//	return recvd_string;
+//}
 
 void SIPServer::post_program_processing() {
 
 	// Save all the arrays marked as persistent
 	int num_arrs = block_map_.size();
-//	for (BlockMap::iterator it = block_map_begin(); it != block_map_.end(); ++it) {
 	for(int i=0; i<num_arrs; i++){
 		if (pbm_write_.is_array_persistent(i)) {
 			IdBlockMapPtr bid_map = block_map_[i];
@@ -177,22 +146,15 @@ void SIPServer::handle_GET(int mpi_source) {
 		bptr = new sip::Block(shape);
 		IdBlockMapPtr bid_map = block_map_[array_id];
 
-		std::pair<sip::BlockId, sip::Block::BlockPtr> bid_pair = std::pair<
-				sip::BlockId, sip::Block::BlockPtr>(bid, bptr);
+		std::pair<sip::BlockId, sip::Block::BlockPtr> bid_pair = std::pair<sip::BlockId, sip::Block::BlockPtr>(bid, bptr);
 		std::pair<IdBlockMap::iterator, bool> ret = bid_map->insert(bid_pair);
-		sip::check(ret.second,
-				std::string(
-						"attempting to create an empty block that already exists"));
+		sip::check(ret.second, "attempting to create an empty block that already exists");
 	} else { // Block requested exists.
 		bptr = it2->second;
 	}
 	// Send the size, then the block.
-	SIPMPIUtils::send_bptr_to_rank(bid, bptr, mpi_source,
-			SIPMPIData::SERVER_TO_WORKER_BLOCK_SIZE,
-			SIPMPIData::SERVER_TO_WORKER_BLOCK_DATA);
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank() << " : Done GET for rank "
-					<< mpi_source << std::endl);
+	SIPMPIUtils::send_bptr_to_rank(bid, bptr, mpi_source, SIPMPIData::SERVER_TO_WORKER_BLOCK_SIZE, SIPMPIData::SERVER_TO_WORKER_BLOCK_DATA);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Done GET for rank "	<< mpi_source << std::endl);
 }
 
 void SIPServer::handle_PUT(int mpi_source) {
@@ -272,203 +234,62 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source) {
 }
 
 void SIPServer::handle_DELETE(int mpi_source) {
-	// Worker master sends a delete to server master. The server master sends it to other servers.
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : In DELETE at server " << std::endl);
-	sip::check(sip_mpi_attr_.is_company_master(),
-			" Delete sent to server other than a server master !");
+	// Message sent to all servers from their corresponding local workers
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
+
 	// From the servers master
 	// Receieve the ID of the array to delete
 	// Inform other servers
-	int array_id = get_array_id(mpi_source);
-	if (sip_mpi_attr_.num_servers() > 1) {
-		int to_send1 = SIPMPIData::SERVER_DELETE;
-		int tag1 = SIPMPIData::SERVER_TO_SERVER_DELETE;
-		int to_send2 = array_id;
-		int tag2 = SIPMPIData::SERVER_TO_SERVER_DELETE_ARRAY_ID;
-		//Send SERVER_DELETE & array_id to other servers.
-		send_to_other_servers(to_send1, tag1);
-		send_to_other_servers(to_send2, tag2);
-	}
+	int array_id = get_int_from_rank(mpi_source);
+
 	// Get rid of blocks from given array
 	delete_array(array_id);
 
 	// Send Ack
 	SIPMPIUtils::send_ack_to_rank(mpi_source, SIPMPIData::DELETE_ACK, SIPMPIData::SERVER_TO_WORKER_DELETE_ACK);
 
-
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank() << " : Done with DELETE "
-					<< std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Done with DELETE "<< std::endl);
 }
 
-//void SIPServer::handle_BARRIER() {
-//	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : In BARRIER at server " << std::endl);
-//	// Worker master sends a barrier to server master. The server master sends it to other servers.
-//	// Then all the workers and servers go into a global barrier.
-//	sip::check(sip_mpi_attr_.is_company_master(),
-//			" Barrier sent to server other than a server master !");
-//	//Send SERVER_BARRIER to other servers.
-//	if (sip_mpi_attr_.num_servers() > 1) {
-//		int to_send = SIPMPIData::SERVER_BARRIER;
-//		int tag = SIPMPIData::SERVER_TO_SERVER_BARRIER;
-//		send_to_other_servers(to_send, tag);
-//	}
-//	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
-//
-//	// Global Barrier
-//	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
-//	SIP_LOG(
-//			std::cout << sip_mpi_attr_.global_rank() << " : Done with BARRIER "
-//					<< std::endl);
-//}
 
 void SIPServer::handle_END_PROGRAM() {
-	// Worker master sends a END_PROGRAM to server master. The server master sends it to other servers.
+	// Message sent to all servers from their corresponding local workers
 	// All servers return from this method.
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : In END_PROGRAM at server " << std::endl);
-	sip::check(sip_mpi_attr_.is_company_master(),
-			" End program sent to server other than a server master !");
-	if (sip_mpi_attr_.num_servers() > 1) {
-		int to_send = SIPMPIData::SERVER_END_PROGRAM;
-		int tag = SIPMPIData::SERVER_TO_SERVER_END_PROGRAM;
-		send_to_other_servers(to_send, tag);
-	}
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : In END_PROGRAM at server " << std::endl);
 	post_program_processing();
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with END_PROGRAM " << std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Done with END_PROGRAM " << std::endl);
 }
 
-void SIPServer::handle_SERVER_DELETE(int mpi_source) {
-	// Get rid of blocks from given array. Must not be the server master itself.
-	sip::check(!sip_mpi_attr_.is_company_master(),
-			" SERVER_DELETE sent to master server!");
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got SERVER_DELETE from server master " << std::endl);
-	int array_id = get_array_id(mpi_source);
-	delete_array(array_id);
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with SERVER_DELETE " << std::endl);
-}
-
-void SIPServer::handle_SERVER_END_PROGRAM() {
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got SERVER_END_PROGRAM from server master "
-					<< std::endl);
-	post_program_processing();
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with SERVER_END_PROGRAM " << std::endl);
-}
-
-void SIPServer::handle_SERVER_BARRIER() {
-	// Global Barrier
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got SERVER_BARRIER from server master "
-					<< std::endl);
-	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
-	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with SERVER_BARRIER " << std::endl);
-}
 
 void SIPServer::handle_SAVE_PERSISTENT(int mpi_source) {
-	// Worker master sends SAVE_PERSISTENT to server master. Server master sends it to other servers.
+	// Message sent to all servers from their corresponding local workers
 	// All servers save given array as persistent array.
-	sip::check(sip_mpi_attr_.is_company_master(),
-			" SAVE_PERSISTENT sent to server other than a server master !");
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got SAVE_PERSISTENT " << std::endl);
-	int to_send1 = SIPMPIData::SERVER_SAVE_PERSISTENT;
-	int tag1 = SIPMPIData::SERVER_TO_SERVER_SAVE_PERSISTENT;
-	int array_id = get_array_id(mpi_source);
-	int to_send2 = array_id;
-	int tag2 = SIPMPIData::SERVER_TO_SERVER_SAVE_PERSISTENT_ARRAY_ID;
-	int label_len;
-	std::string array_label = get_string_from(mpi_source, label_len);
-	int tag3 = SIPMPIData::SERVER_TO_SERVER_SAVE_PERSISTENT_ARRAY_IDENT;
-	// Send SAVE_PERSISTENT, array_id & array_ident to other servers.
-	send_to_other_servers(to_send1, tag1);
-	send_to_other_servers(to_send2, tag2);
-	send_to_other_servers(array_label.c_str(), label_len, tag3);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Got SAVE_PERSISTENT " << std::endl);
+	int array_id = get_int_from_rank(mpi_source);
+	int label_slot = get_int_from_rank(mpi_source);
+	std::string array_label = sip_tables_.string_literal(label_slot);
+
 	// mark persistent array
 	pbm_write_.mark_persistent_array(array_id, array_label);
 
 	// Send Ack
 	SIPMPIUtils::send_ack_to_rank(mpi_source, SIPMPIData::SAVE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_SAVE_PERSISTENT_ACK);
 
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with SAVE_PERSISTENT for array "<<array_id<<" with label "  <<array_label << std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Done with SAVE_PERSISTENT for array "<<array_id<<" with label "  <<array_label << std::endl);
 }
 
 void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source) {
-	sip::check(sip_mpi_attr_.is_company_master(),
-			" RESTORE_PERSISTENT sent to server other than a server master !");
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got RESTORE_PERSISTENT " << std::endl);
-	int array_id = get_array_id(mpi_source);
-	int label_len;
-	std::string array_label = get_string_from(mpi_source, label_len);
-	// Send SAVE_PERSISTENT, array_id & array_ident to other servers.
-	send_to_other_servers(SIPMPIData::SERVER_RESTORE_PERSISTENT,
-			SIPMPIData::SERVER_TO_SERVER_RESTORE_PERSISTENT);
-	send_to_other_servers(array_id,
-			SIPMPIData::SERVER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_ID);
-	send_to_other_servers(array_label.c_str(), label_len,
-			SIPMPIData::SERVER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_IDENT);
-	// restore persistent array
+	// Message sent to all servers from their corresponding local workers
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
+	int array_id = get_int_from_rank(mpi_source);
+	int label_slot = get_int_from_rank(mpi_source);
+	std::string array_label = sip_tables_.string_literal(label_slot);
 	restore_persistent_array(array_label, array_id);
 
 	// Send Ack
 	SIPMPIUtils::send_ack_to_rank(mpi_source, SIPMPIData::RESTORE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_RESTORE_PERSISTENT_ACK);
 
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with RESTORE_PERSISTENT for array "<<array_label << std::endl);
-}
-
-void SIPServer::handle_SERVER_SAVE_PERSISTENT(int mpi_source) {
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got SERVER_SAVE_PERSISTENT from server master "
-					<< std::endl);
-	// Get array id & array_ident from SERVER master
-	int array_id = get_array_id(mpi_source);
-	int label_len;
-	std::string array_ident_str = get_string_from(mpi_source, label_len);
-	// mark persistent array
-	pbm_write_.mark_persistent_array(array_id, array_ident_str);
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with SERVER_SAVE_PERSISTENT for array "<< array_id << " with label "<<array_ident_str<< std::endl);
-}
-
-void SIPServer::handle_SERVER_RESTORE_PERSISTENT(int mpi_source) {
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Got SERVER_RESTORE_PERSISTENT from server master "
-					<< std::endl);
-	// Get array id & array_ident from SERVER master
-	int array_id = get_array_id(mpi_source);
-	int label_len;
-	std::string array_ident_str = get_string_from(mpi_source, label_len);
-	// restore persistent array
-	restore_persistent_array(array_ident_str, array_id);
-	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()
-					<< " : Done with SERVER_RESTORE_PERSISTENT for array " << array_ident_str << std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Done with RESTORE_PERSISTENT for array "<<array_label << std::endl);
 }
 
 void SIPServer::run(){
@@ -494,12 +315,7 @@ void SIPServer::run(){
 		sip::check(1 == tlevel_size_, "Received more than 1 byte at SIP Server !");
 		int mpi_source = status.MPI_SOURCE;
 
-		bool correct_tag = status.MPI_TAG == SIPMPIData::WORKER_TO_SERVER_MESSAGE ||
-				//status.MPI_TAG == SIPMPIData::SERVER_TO_SERVER_BARRIER ||
-				status.MPI_TAG == SIPMPIData::SERVER_TO_SERVER_DELETE ||
-				status.MPI_TAG == SIPMPIData::SERVER_TO_SERVER_END_PROGRAM ||
-				status.MPI_TAG == SIPMPIData::SERVER_TO_SERVER_SAVE_PERSISTENT ||
-				status.MPI_TAG == SIPMPIData::SERVER_TO_SERVER_RESTORE_PERSISTENT;
+		bool correct_tag = status.MPI_TAG == SIPMPIData::WORKER_TO_SERVER_MESSAGE;
 		sip::check(correct_tag, "Server got message with incorrect tag ! : " + status.MPI_TAG);
 
 		switch (received) {
@@ -524,64 +340,26 @@ void SIPServer::run(){
 		}
 			break;
 		case SIPMPIData::DELETE:{
-			// Worker master sends a delete to server master. The server master sends it to other servers.
-
 			handle_DELETE(mpi_source);
 		}
 			break;
-//		case SIPMPIData::BARRIER:{
-//
-//			handle_BARRIER();
-//		}
-//			break;
-		case SIPMPIData::END_PROGRAM: {
-			// Worker master sends a END_PROGRAM to server master. The server master sends it to other servers.
-			// All servers return from this method.
 
+		case SIPMPIData::END_PROGRAM: {
 			handle_END_PROGRAM();
 			return;
 		}
 			break;
-		case SIPMPIData::SERVER_DELETE:{
-			// Get rid of blocks from given array. Must not be the server master itself.
-			handle_SERVER_DELETE(mpi_source);
-		}
-			break;
-		case SIPMPIData::SERVER_END_PROGRAM:{
-			handle_SERVER_END_PROGRAM();
-			return;
-		}
-			break;
-//		case SIPMPIData::SERVER_BARRIER:{
-//			// Global Barrier
-//			handle_SERVER_BARRIER();
-//		}
-//			break;
 
 		case SIPMPIData::SAVE_PERSISTENT:{
-			// Worker master sends SAVE_PERSISTENT to server master. Server master sends it to other servers.
-			// All servers save given array as persistent array.
 			handle_SAVE_PERSISTENT(mpi_source);
 		}
 			break;
 
 		case SIPMPIData::RESTORE_PERSISTENT:{
-
 			handle_RESTORE_PERSISTENT(mpi_source);
 		}
 			break;
 
-		case SIPMPIData::SERVER_SAVE_PERSISTENT:{
-
-			handle_SERVER_SAVE_PERSISTENT(mpi_source);
-		}
-			break;
-
-		case SIPMPIData::SERVER_RESTORE_PERSISTENT:{
-
-			handle_SERVER_RESTORE_PERSISTENT(mpi_source);
-		}
-			break;
 		default:
 			sip::fail("Received unexpected message in SIP Server !");
 			break;

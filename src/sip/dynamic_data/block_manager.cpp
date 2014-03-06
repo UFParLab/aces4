@@ -245,21 +245,30 @@ void BlockManager::delete_distributed(int array_to_destroy) {
 #ifdef HAVE_MPI
 
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning DELETE "<< std::endl);
-	SIP_LOG(if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : I am company master, sending DELETE to server !" << std::endl);
 
-	// Delete remotely, only worker master sends message to server master
-	if (sip_mpi_attr_.is_company_master()){
-		int server_master_rank = sip_mpi_attr_.server_master();
-		int to_send_message = sip::SIPMPIData::DELETE;
-		sip::SIPMPIUtils::check_err(MPI_Send(&to_send_message, 1, MPI_INT, server_master_rank,
-				sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
-		// Send array_id to server master
-		sip::SIPMPIUtils::check_err(
-				MPI_Send(&array_to_destroy, 1, MPI_INT, server_master_rank,
-						sip::SIPMPIData::WORKER_TO_SERVER_DELETE,
-						MPI_COMM_WORLD));
+	// Delete remotely, only local servers are sent messages
+	int global_rank = sip_mpi_attr_.global_rank();
+	int global_size = sip_mpi_attr_.global_size();
+	bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
 
-	SIPMPIUtils::expect_ack_from_rank(server_master_rank, SIPMPIData::DELETE_ACK, SIPMPIData::SERVER_TO_WORKER_DELETE_ACK);
+	if (am_worker_to_communicate){
+		int local_server_rank = RankDistribution::local_server_to_communicate(global_rank, global_size);
+		if (local_server_rank > -1){
+			SIP_LOG(if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<<  local_server_rank<< std::endl);
+
+			int to_send_message = sip::SIPMPIData::DELETE;
+			sip::SIPMPIUtils::check_err(MPI_Send(&to_send_message, 1, MPI_INT, local_server_rank,
+					sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
+			// Send array_id to server master
+			sip::SIPMPIUtils::check_err(
+					MPI_Send(&array_to_destroy, 1, MPI_INT, local_server_rank,
+							sip::SIPMPIData::WORKER_TO_SERVER_DELETE,
+							MPI_COMM_WORLD));
+
+			SIPMPIUtils::expect_ack_from_rank(local_server_rank,
+					SIPMPIData::DELETE_ACK,
+					SIPMPIData::SERVER_TO_WORKER_DELETE_ACK);
+		}
 	}
 
 

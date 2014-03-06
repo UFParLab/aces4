@@ -92,14 +92,18 @@ public:
 	/**
 	 * Sets an array to be persistent upto the next SIAL Program
 	 * @param array_id
+	 * @param name
+	 * @param slot
 	 */
-	void set_persistent_array(int array_id, std::string name);
+	void set_persistent_array(int array_id, std::string name, int slot);
 
 	/**
 	 * Restores a previously saved persistent array.
 	 * @param array_id
+	 * @param name
+	 * @param slot
 	 */
-	void restore_persistent_array(int array_id, std::string name);
+	void restore_persistent_array(int array_id, std::string name, int slot);
 
 	/**
 	 * Saves persistent arrays to the persistent block manager.
