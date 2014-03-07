@@ -18,10 +18,10 @@ namespace sip {
 
 class SIPServer {
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr &, sip::PersistentArrayManager&, sip::PersistentArrayManager&);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr &, PersistentArrayManager&, PersistentArrayManager&);
 	~SIPServer();
 
-	typedef std::map<sip::BlockId, sip::Block::BlockPtr> IdBlockMap;
+	typedef std::map<BlockId, Block::BlockPtr> IdBlockMap;
 	typedef IdBlockMap* IdBlockMapPtr;
 	typedef std::vector<IdBlockMapPtr> BlockMap;
 
@@ -50,17 +50,49 @@ private:
 	/**
 	 * persistent block manager instance to read data from previous sial file.
 	 */
-	sip::PersistentArrayManager& pbm_read_;
+	PersistentArrayManager& pbm_read_;
 
 	/**
 	 * persistent block manager instance to read data from previous sial file.
 	 */
-	sip::PersistentArrayManager& pbm_write_;
+	PersistentArrayManager& pbm_write_;
 
 	/**
 	 * Stores distributed blocks
 	 */
 	BlockMap block_map_;
+
+	/**
+	 * Last pardo section for which a request was served.
+	 * The invariant for correctness is
+	 * section(any_incoming_request) > section_number_
+	 */
+	int section_number_;
+
+	/**
+	 * Auxiliary structure to keep track of data for pending puts & put_accumulates
+	 */
+	class TagInfo {
+	public:
+		int from;
+		int section_number;
+		int message_number;
+		TagInfo(int f, int s, int m): from(f), section_number(s), message_number(m){}
+		bool operator< (const TagInfo &other) const {
+			if (from < other.from) return true;
+			if (section_number < other.section_number) return true;
+			if (message_number < other.message_number) return true;
+			return false;
+		}
+	};
+
+	/**
+	 * Keeps track of block data for pending puts & put_accumulates.
+	 */
+	typedef std::pair<BlockId, Block::BlockPtr> IdBlockPair;
+	typedef std::map<TagInfo, IdBlockPair> TagInfoIdBlockPairMap;
+	TagInfoIdBlockPairMap outstanding_put_data_map_;
+
 
 	/**
 	 * Deletes all blocks from given array
@@ -69,11 +101,12 @@ private:
 	void delete_array(int array_id);
 
 	/**
-	 * Get array id from a blocking receive from given rank
-	 * @param
+	 * Get array id from a blocking receive from given rank.
+	 * @param rank
+	 * @param tag
 	 * @return
 	 */
-	int get_int_from_rank(const int);
+	int get_int_from_rank(const int rank, int *tag);
 
 	/**
 	 * Send integer to other servers (from master server)
@@ -121,10 +154,12 @@ private:
 	// Handles messages received by the server
 	void handle_GET(int mpi_source);
 	void handle_PUT(int mpi_source);
+	void handle_PUT_DATA(int mpi_source, int size, int tag);
 	void handle_PUT_ACCUMULATE(int mpi_source);
+	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int size, int tag);
 	void handle_DELETE(int mpi_source);
 	void handle_BARRIER();
-	void handle_END_PROGRAM();
+	void handle_END_PROGRAM(int mpi_source);
 	void handle_SAVE_PERSISTENT(int mpi_source);
 	void handle_RESTORE_PERSISTENT(int mpi_source);
 };

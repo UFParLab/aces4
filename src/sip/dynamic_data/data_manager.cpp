@@ -23,25 +23,26 @@ const int DataManager::undefined_index_value = INT_MIN;
 int DataManager::scope_count = 0;
 
 #ifdef HAVE_MPI
-DataManager::DataManager(SipTables& sipTables, sip::PersistentArrayManager &pbm_read, sip::PersistentArrayManager &pbm_write,
-		sip::SIPMPIAttr& sip_mpi_attr, sip::DataDistribution& data_distribution):
+DataManager::DataManager(SipTables& sipTables, PersistentArrayManager &pbm_read, PersistentArrayManager &pbm_write,
+		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, int &section_number, int &message_number):
 		pbm_read_(pbm_read), pbm_write_(pbm_write),
 		sipTables_(sipTables), scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
 		index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-        block_manager_(sipTables, pbm_read, pbm_write, sip_mpi_attr, data_distribution),
+        block_manager_(sipTables, pbm_read, pbm_write, sip_mpi_attr, data_distribution, section_number, message_number),
         scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
         contiguous_array_manager_(sipTables, sipTables.setup_reader(),pbm_read, pbm_write),
-        sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution)
+        sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
+        section_number_(section_number), message_number_(message_number)
         {
 		for (int i = 0; i < sipTables_.array_table_.entries_.size(); ++i) {
 			if (sipTables_.is_scalar(i)) {
-				scalar_blocks_[i] = new sip::Block(scalar_address(i));
+				scalar_blocks_[i] = new Block(scalar_address(i));
 			}
 		}
 }
 
 #else
-DataManager::DataManager(SipTables& sipTables, sip::PersistentArrayManager &pbm_read, sip::PersistentArrayManager &pbm_write):
+DataManager::DataManager(SipTables& sipTables, PersistentArrayManager &pbm_read, PersistentArrayManager &pbm_write):
 		pbm_read_(pbm_read), pbm_write_(pbm_write),
 		sipTables_(sipTables), scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
 		index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
@@ -52,7 +53,7 @@ DataManager::DataManager(SipTables& sipTables, sip::PersistentArrayManager &pbm_
 
 	    for (int i = 0; i < sipTables_.array_table_.entries_.size(); ++i){
 	    	if (sipTables_.is_scalar(i) ){
-	    		scalar_blocks_[i] = new sip::Block(scalar_address(i));
+	    		scalar_blocks_[i] = new Block(scalar_address(i));
 	    	}
 	    }
 }
@@ -97,9 +98,9 @@ void DataManager::set_scalar_value(const std::string& name, double value) {
 }
 
 
-sip::Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
-	sip::Block::BlockPtr b = scalar_blocks_.at(array_table_slot);
-	sip::check(b != NULL, "scalar in block wrapper not found");
+Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
+	Block::BlockPtr b = scalar_blocks_.at(array_table_slot);
+	check(b != NULL, "scalar in block wrapper not found");
 	return b;
 }
 
@@ -132,38 +133,38 @@ void DataManager::set_index_undefined(int index_table_slot) {
 }
 
 //for arrays and blocks
-sip::BlockId DataManager::block_id(const sip::BlockSelector& selector) {
+BlockId DataManager::block_id(const BlockSelector& selector) {
 	int array_id = selector.array_id_;
 	int rank = sipTables_.array_table_.rank(array_id);
-	sip::index_value_array_t index_values;
+	index_value_array_t index_values;
 	for (int i = 0; i < MAX_RANK; ++i) {
 		int index_slot = selector.index_ids_[i];
-		if (index_slot == sip::wild_card_slot){
-			index_values[i] = sip::wild_card_value;
+		if (index_slot == wild_card_slot){
+			index_values[i] = wild_card_value;
 		}
-		else if (index_slot == sip::unused_index_slot) {
-			index_values[i] = sip::unused_index_value;
+		else if (index_slot == unused_index_slot) {
+			index_values[i] = unused_index_value;
 		} else {
 			index_values[i] = index_values_[selector.index_ids_[i]];
 		}
 	}
 	if (is_subblock(selector)){
-		return sip::BlockId(array_id, index_values, super_block_id(selector));
+		return BlockId(array_id, index_values, super_block_id(selector));
 	}
-	return sip::BlockId(array_id, index_values);
+	return BlockId(array_id, index_values);
 }
 
 
 /** Determine if selected block  is a subblock */
-bool DataManager::is_subblock(const sip::BlockSelector& selector){
+bool DataManager::is_subblock(const BlockSelector& selector){
 	int array_id = selector.array_id_;
 	int rank = sipTables_.array_table_.rank(array_id);
 	for (int i = 0; i < rank; ++i){
 		int slot = selector.index_ids_[i];
-		int index_slot = (slot == sip::wild_card_slot) ?
+		int index_slot = (slot == wild_card_slot) ?
 				sipTables_.array_table_.index_selectors(array_id)[i]:
 				slot;
-		if (sipTables_.index_table_.index_type(index_slot) == sip::subindex) return true;
+		if (sipTables_.index_table_.index_type(index_slot) == subindex) return true;
 	}
 	return false;
 }
@@ -171,44 +172,44 @@ bool DataManager::is_subblock(const sip::BlockSelector& selector){
 /** Determines if selected block is a block of a static array.  This will be the case if the
  * selector rank is 0 while the declared rank > 0
  */
-bool DataManager::is_complete_contiguous_array(const sip::BlockSelector& selector){
+bool DataManager::is_complete_contiguous_array(const BlockSelector& selector){
 	int array_id = selector.array_id_;
 	int rank = sipTables_.array_table_.rank(array_id);
 	return selector.rank_== 0 && rank > 0;
 }
 
 /** The current implementation only allows one level of nesting for subblocks */
-sip::BlockId DataManager::super_block_id(const sip::BlockSelector& subblock_selector){
+BlockId DataManager::super_block_id(const BlockSelector& subblock_selector){
 	int array_id = subblock_selector.array_id_;
 	int rank = sipTables_.array_table_.rank(array_id);
 	int index_values[MAX_RANK];
 	for (int i = 0; i < MAX_RANK; ++i) {
 		int index_slot = subblock_selector.index_ids_[i];
-			if (index_slot == sip::unused_index_slot) {
-				index_values[i] = sip::unused_index_value;
-			} else if (sipTables_.index_table_.index_type(index_slot) != sip::subindex){ //this index is not a subindex
+			if (index_slot == unused_index_slot) {
+				index_values[i] = unused_index_value;
+			} else if (sipTables_.index_table_.index_type(index_slot) != subindex){ //this index is not a subindex
 					index_values[i] = index_values_[index_slot]; //just lookup the  value, should be the same as the subblock id
 			}
 			else{  //this is a subindex, look up the parent index's current value
 				int parent_index_slot = sipTables_.index_table_.parent(index_slot);
-				sip::check(sipTables_.index_table_.index_type(parent_index_slot) != sip::subindex, "current implementation only supports one level of subindices");
+				check(sipTables_.index_table_.index_type(parent_index_slot) != subindex, "current implementation only supports one level of subindices");
 				index_values[i] = index_values_[parent_index_slot];
 		     }
 	}
-	return sip::BlockId(array_id, index_values);
+	return BlockId(array_id, index_values);
 
 }
 //    void get_subblock_offsets_and_shape(const array::BlockShape& super_block_shape, const array::BlockSelector& subblock_selector,
 //array::offset_array_t& offsets, array::BlockShape& subblock_shape);
 
-void DataManager::get_subblock_offsets_and_shape(sip::Block::BlockPtr super_block, const sip::BlockSelector& subblock_selector,
-		sip::offset_array_t& offsets, sip::BlockShape& subblock_shape){
-	   sip::BlockShape super_block_shape = super_block->shape();
+void DataManager::get_subblock_offsets_and_shape(Block::BlockPtr super_block, const BlockSelector& subblock_selector,
+		offset_array_t& offsets, BlockShape& subblock_shape){
+	   BlockShape super_block_shape = super_block->shape();
 	   int sub_array_id = subblock_selector.array_id_;
 	   int rank = sipTables_.array_table_.rank(sub_array_id);
 	   for (int i = 0; i < rank; ++i){
 		   int index_slot = subblock_selector.index_ids_[i];
-		   if (sipTables_.index_table_.index_type(index_slot) != sip::subindex){ //not a subindex
+		   if (sipTables_.index_table_.index_type(index_slot) != subindex){ //not a subindex
 			   offsets[i] = 0;
 			   subblock_shape.segment_sizes_[i]  = super_block_shape.segment_sizes_[i];
 		   }
@@ -278,7 +279,7 @@ void DataManager::collective_sum(int source_array_slot,
 	if (sip_mpi_attr_.num_workers() > 1) {
 		double to_send = val_source + val_dest;
 		MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
-		sip::SIPMPIUtils::check_err(MPI_Allreduce(&to_send, &summed, 1, MPI_DOUBLE, MPI_SUM, worker_comm));
+		SIPMPIUtils::check_err(MPI_Allreduce(&to_send, &summed, 1, MPI_DOUBLE, MPI_SUM, worker_comm));
 	} else {
 		summed = val_source + val_dest;
 	}
@@ -299,27 +300,20 @@ void DataManager::set_persistent_array(int array_id, std::string name, int slot)
 		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
 
 		if (am_worker_to_communicate){
-			// Send SAVE_PERSISTENT to local master
-			int to_send = sip::SIPMPIData::SAVE_PERSISTENT;
 
 			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
 			if (local_server > -1){
 				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending SET_PERSISTENT to server "<< local_server<< std::endl);
 
-				sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
+				int save_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT, section_number_, message_number_);
 
-				// Send array_id
-				sip::SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT, MPI_COMM_WORLD));
+				// Send array_id & label
+				SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
+				SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
 
-				// Send slot with label
-				sip::SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT_ARRAY_IDENT, MPI_COMM_WORLD));
-
-				// Send name to local_server
-//				int len = name.length() + 1;
-//				const char * str = name.c_str();
-//				sip::SIPMPIUtils::send_str_to_rank(local_server, const_cast<char*>(str), len, sip::SIPMPIData::WORKER_TO_SERVER_SAVE_PERSISTENT_ARRAY_IDENT);
-
-				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::SAVE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_SAVE_PERSISTENT_ACK);
+				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT_ACK, section_number_, message_number_);
+				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::SAVE_PERSISTENT_ACK, ack_tag);
+				message_number_++;
 				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
 
 			}
@@ -336,40 +330,32 @@ void DataManager::restore_persistent_array(int array_id, std::string name, int s
 
 	bool is_contig = sipTables_.is_contiguous(array_id);
 	if (is_contig){
-		sip::Block::BlockPtr bptr = pbm_read_.get_saved_contiguous_array(name);
-		sip::check_and_warn(bptr != NULL, "Contiguous Array null when restoring !");
-		sip::Block::BlockPtr bptr_clone = bptr->clone();
+		Block::BlockPtr bptr = pbm_read_.get_saved_contiguous_array(name);
+		check_and_warn(bptr != NULL, "Contiguous Array null when restoring !");
+		Block::BlockPtr bptr_clone = bptr->clone();
 		contiguous_array_manager_.create_contiguous_array(array_id, bptr_clone);
 	} else {
 #ifdef HAVE_MPI
 		bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
-		sip::check (is_remote, "Trying to restore an array that is neither contiguous, nor remote!");
+		check (is_remote, "Trying to restore an array that is neither contiguous, nor remote!");
 
 		int global_rank = sip_mpi_attr_.global_rank();
 		int global_size = sip_mpi_attr_.global_size();
 		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
 
 		if (am_worker_to_communicate){
-			// Send RESTORE_PERSISTENT to local server
-			int to_send = sip::SIPMPIData::RESTORE_PERSISTENT;
 			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
 			if (local_server > -1){
 				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending RESTORE_PERSISTENT to server "<< local_server<< std::endl);
 
-				sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server,SIPMPIData::WORKER_TO_SERVER_MESSAGE,MPI_COMM_WORLD));
+				// Send array_id  & slot to server master
+				int restore_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT, section_number_, message_number_);
+				SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
+				SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
 
-				// Send array_id to server master
-				sip::SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT, MPI_COMM_WORLD));
-
-				// Send slot with label
-				sip::SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_IDENT, MPI_COMM_WORLD));
-
-				// Send name to server_master
-//				int len = name.length() + 1;
-//				const char * str = name.c_str();
-//				sip::SIPMPIUtils::send_str_to_rank(local_server, const_cast<char*>(str), len, sip::SIPMPIData::WORKER_TO_SERVER_RESTORE_PERSISTENT_ARRAY_IDENT);
-
-				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::RESTORE_PERSISTENT_ACK, SIPMPIData::SERVER_TO_WORKER_RESTORE_PERSISTENT_ACK);
+				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT_ACK, section_number_, message_number_);
+				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::RESTORE_PERSISTENT_ACK, ack_tag);
+				message_number_++;
 
 				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
 			}
@@ -377,7 +363,7 @@ void DataManager::restore_persistent_array(int array_id, std::string name, int s
 		}
 
 #else
-		sip::BlockManager::IdBlockMapPtr bid_map = pbm_read_.get_saved_dist_array(name);
+		BlockManager::IdBlockMapPtr bid_map = pbm_read_.get_saved_dist_array(name);
 		block_manager_.restore_distributed(array_id, bid_map);
 #endif
 	}

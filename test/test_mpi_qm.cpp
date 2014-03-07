@@ -87,9 +87,12 @@ int main(int argc, char **argv) {
 	TAU_STATIC_PHASE_START("SIP Main");
 #endif
 
+	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+
 	int num_procs;
 	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
-
 
 	if (num_procs < 2){
 		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;

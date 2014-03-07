@@ -33,22 +33,23 @@ void SIPMPIUtils::check_err(int err){
 	    MPI_Error_string(err, estring, &len);
 	    printf("Error %d: %s\n", eclass, estring);
 	    fflush(stdout);
-        sip::fail("MPI Error !\n");
+        fail("MPI Error !\n");
 	}
 }
 
-void SIPMPIUtils::get_block_params(const int rank, const int size_tag, sip::BlockId& bid, sip::BlockShape& shape, int &data_size) {
+void SIPMPIUtils::get_block_params(const int rank, int *tag, BlockId* bid, BlockShape* shape, int *data_size) {
 
 	// Get BlockId, shape, size
-	MPI_Status blk_size_status;
-	int int_size = 1 + MAX_RANK + MAX_RANK + 1;
-	int *to_send = new int[int_size];
+	MPI_Status status;
+	int size = 1 + MAX_RANK + MAX_RANK + 1;
+	int *to_send = new int[size];
 
-	check_err(MPI_Recv(to_send, int_size, MPI_INT, rank, size_tag, MPI_COMM_WORLD,
-					&blk_size_status));
+	check_err(MPI_Recv(to_send, size, MPI_INT, rank, MPI_ANY_TAG, MPI_COMM_WORLD,
+					&status));
+	*tag = status.MPI_TAG;
 	int array_id_;
-	sip::index_value_array_t index_values_;
-	sip::segment_size_array_t segment_sizes_;
+	index_value_array_t index_values_;
+	segment_size_array_t segment_sizes_;
 	int size_;
 
 	memcpy(&array_id_, to_send, sizeof(array_id_));
@@ -61,40 +62,37 @@ void SIPMPIUtils::get_block_params(const int rank, const int size_tag, sip::Bloc
 //	std::copy(to_send + 1 + MAX_RANK, to_send + MAX_RANK, &segment_sizes_);
 //	std::copy(to_send + 1 + MAX_RANK + MAX_RANK, to_send + 1, &size_);
 
-	bid.array_id_ = array_id_;
-	std::copy(index_values_ + 0, index_values_ + MAX_RANK, bid.index_values_);
-	std::copy(segment_sizes_ + 0, segment_sizes_ + MAX_RANK, shape.segment_sizes_);
-	data_size = size_;
+	bid->array_id_ = array_id_;
+	std::copy(index_values_ + 0, index_values_ + MAX_RANK, bid->index_values_);
+	std::copy(segment_sizes_ + 0, segment_sizes_ + MAX_RANK, shape->segment_sizes_);
+	*data_size = size_;
 }
 
-void SIPMPIUtils::get_bptr_from_rank(int rank, int data_tag, int size, sip::Block::BlockPtr bptr) {
+void SIPMPIUtils::get_bptr_data_from_rank(int rank, int *tag, int size, Block::BlockPtr bptr) {
 
-	sip::check(bptr != NULL, "Block Pointer into which data is to be received is NULL !", current_line());
-	MPI_Status blk_data_status;
-	check_err(MPI_Recv(bptr->data_, size, MPI_DOUBLE, rank, data_tag, MPI_COMM_WORLD, &blk_data_status));
+	check(bptr != NULL, "Block Pointer into which data is to be received is NULL !", current_line());
+	MPI_Status status;
+	check_err(MPI_Recv(bptr->data_, size, MPI_DOUBLE, rank, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
+	*tag = status.MPI_TAG;
+	SIP_LOG(std::cout<< "W " << SIPMPIAttr::get_instance().global_rank() << " : Got Block Data with tag : "<< *tag << " from rank " << rank << std::endl);
 	//SIP_LOG(std::cout<<"Got block ptr : " << *bptr << std::endl);
 }
 
-void SIPMPIUtils::send_block_id_to_rank(const sip::BlockId& id, int rank, int tag) {
-	int size = -1;
-	int* send_bytes = sip::BlockId::serialize(id, size);
-	sip::SIPMPIUtils::check_err(MPI_Send(send_bytes, size, MPI_INT, rank, tag, MPI_COMM_WORLD));
-	delete [] send_bytes;
-}
-
-sip::BlockId SIPMPIUtils::get_block_id_from_rank(int rank, int block_id_tag) {
+BlockId SIPMPIUtils::get_block_id_from_rank(int rank, int *tag) {
 	// Receive a message with the block being requested - blockid
-	int bid_int_size = sip::BlockId::serialized_size();
+	int bid_int_size = BlockId::serialized_size();
 	int* recv  = new int[bid_int_size];
 	MPI_Status get_status;
-	check_err(MPI_Recv(recv, bid_int_size, MPI_INT, rank, block_id_tag, MPI_COMM_WORLD, &get_status));
+	check_err(MPI_Recv(recv, bid_int_size, MPI_INT, rank, MPI_ANY_TAG, MPI_COMM_WORLD, &get_status));
+
 	int blkid_msg_size_;
 	check_err(MPI_Get_count(&get_status, MPI_INT, &blkid_msg_size_));
-	sip::check(bid_int_size == blkid_msg_size_, "Expected block Id size not correct !");
+	check(bid_int_size == blkid_msg_size_, "Expected block Id size not correct !");
 
-	sip::BlockId bid = sip::BlockId::deserialize(recv);
+	*tag = get_status.MPI_TAG;
 
-	SIP_LOG(std::cout<<sip::SIPMPIAttr::get_instance().global_rank()<<" : Got block id : " << bid << std::endl);
+	BlockId bid = BlockId::deserialize(recv);
+	SIP_LOG(std::cout<<SIPMPIAttr::get_instance().global_rank()<<" : Got block id : " << bid << std::endl);
 
 	delete [] recv;
 
@@ -102,16 +100,19 @@ sip::BlockId SIPMPIUtils::get_block_id_from_rank(int rank, int block_id_tag) {
 }
 
 
-void SIPMPIUtils::send_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPtr bptr, int rank, int size_tag, int data_tag) {
-	int blk_size;
-	//char* send_bytes = array::Block::serialize(bptr, blk_size);
+void SIPMPIUtils::send_block_id_to_rank(const BlockId& id, int rank, int tag) {
+	int size = -1;
+	int* send_bytes = BlockId::serialize(id, size);
+	SIPMPIUtils::check_err(MPI_Send(send_bytes, size, MPI_INT, rank, tag, MPI_COMM_WORLD));
+	delete [] send_bytes;
+}
 
-	//check_err(MPI_Send(&blk_size, 1, MPI_INT, rank, size_tag, MPI_COMM_WORLD));
-	//check_err(MPI_Send(send_bytes, blk_size, MPI_BYTE, rank, data_tag, MPI_COMM_WORLD));
-	//delete [] send_bytes;
+
+void SIPMPIUtils::send_bid_and_bptr_to_rank(const BlockId& bid, Block::BlockPtr bptr, int rank, int size_tag, int data_tag) {
+	int blk_size;
 
 	// Send BlockID, data size, shape
-	sip::check(bptr != NULL, "Block to send is NULL!", current_line());
+	check(bptr != NULL, "Block to send is NULL!", current_line());
 	//int size_bytes = sizeof(int) + sizeof(array::index_value_array_t) + sizeof(array::segment_size_array_t) + sizeof(int);
 	//int size = size_bytes / sizeof(int);
 
@@ -126,33 +127,73 @@ void SIPMPIUtils::send_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPt
 //	_ts = std::copy(&(bptr->shape_.segment_sizes_), &(bptr->shape_.segment_sizes_) + MAX_RANK, _ts);
 //	_ts = std::copy(&(bptr->size_), &(bptr->size_) + 1, _ts);
 
+	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Sending Block Info with tag : "<< size_tag << " to rank " << rank << std::endl);
 	check_err(MPI_Send(to_send, int_size, MPI_INT, rank, size_tag, MPI_COMM_WORLD));
 
 	// Send double precision data
 	double * ddata = bptr->data_;
+	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Sending Block Data with tag : "<< data_tag << " to rank " << rank << std::endl);
 	check_err(MPI_Send(ddata, bptr->size_, MPI_DOUBLE, rank, data_tag, MPI_COMM_WORLD));
 
 	delete [] to_send;
 	//SIP_LOG(std::cout<<"Sent block ptr : " << *bptr << std::endl);
 }
 
+
+MPI_Request SIPMPIUtils::isend_block_data_to_rank(Block::dataPtr data, int size, int rank, int tag){
+	MPI_Request request;
+	check_err(MPI_Isend(data, size, MPI_DOUBLE, rank, tag, MPI_COMM_WORLD, &request));
+	//check_err(MPI_Send(data, size, MPI_DOUBLE, rank, tag, MPI_COMM_WORLD));
+}
+
+
 //void SIPMPIUtils::send_str_to_rank(const int rank, char *str, const int len, const int tag) {
-//	sip::check(len < SIPMPIData::MAX_STRING, "Trying to send a very large string to other servers !");
+//	check(len < SIPMPIData::MAX_STRING, "Trying to send a very large string to other servers !");
 //	check_err(MPI_Send(str, len, MPI_CHAR, rank, tag, MPI_COMM_WORLD));
 //
 //}
 
 
 void SIPMPIUtils::send_ack_to_rank(const int rank, int ack, const int tag){
+	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Sending Ack with tag : "<< tag << " to rank " << rank << std::endl);
 	check_err(MPI_Send(&ack, 1, MPI_INT, rank, tag, MPI_COMM_WORLD));
 }
 
 void SIPMPIUtils::expect_ack_from_rank(const int rank, int ack, const int tag){
 	int recvd_ack;
 	MPI_Status status;
-	check_err(MPI_Recv(&recvd_ack, 1, MPI_INT, rank, tag, MPI_COMM_WORLD, &status));
-	sip::check(recvd_ack == ack, "Did not receive expected ACK !", current_line());
+	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Expecting Ack with tag : "<< tag << " from rank " << rank << std::endl);
+	check_err(MPI_Recv(&recvd_ack, 1, MPI_INT, rank, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
+	int recvd_tag = status.MPI_TAG;
+	check(recvd_ack == ack, "Did not receive expected ACK !", current_line());
+	check(recvd_tag == tag, "Did not receive expected Tag !", current_line());
 }
 
+
+SIPMPIData::MessageType_t SIPMPIUtils::get_message_type(int mpi_tag){
+	SIPMPITagBitFieldConverter bc;
+	bc.i = mpi_tag;
+	return SIPMPIData::intToMessageType(bc.bf.message_type);
+}
+
+int SIPMPIUtils::get_section_number(int mpi_tag){
+	SIPMPITagBitFieldConverter bc;
+	bc.i = mpi_tag;
+	return bc.bf.section_number;
+}
+
+int SIPMPIUtils::get_message_number(int mpi_tag){
+	SIPMPITagBitFieldConverter bc;
+	bc.i = mpi_tag;
+	return bc.bf.message_number;
+}
+
+int SIPMPIUtils::make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int message_number){
+	SIPMPITagBitFieldConverter bc;
+	bc.bf.message_type = message_type;
+	bc.bf.section_number = section_number;
+	bc.bf.message_number = message_number;
+	return bc.i;
+}
 
 } /* namespace sip */

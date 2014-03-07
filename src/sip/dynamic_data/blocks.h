@@ -159,10 +159,10 @@ private:
 	index_value_array_t  index_values_;  //these are visible in sial.  Unused slots have value unused_index_value
 	BlockId * parent_id_ptr_;
 
-	friend class sip::Interpreter;
+	friend class Interpreter;
 	friend class BlockManager;
-	friend class sip::SIPServer;
-	friend class sip::SIPMPIUtils;
+	friend class SIPServer;
+	friend class SIPMPIUtils;
 
 };
 
@@ -256,7 +256,6 @@ public:
     dataPtr get_data();
     dataPtr fill(double value);
     dataPtr scale(double value);
-//    dataPtr copy_data(BlockPtr source);
     dataPtr copy_data_(BlockPtr source_block, int offset = 0);
     dataPtr transpose_copy(BlockPtr source, int rank, permute_t&);
     dataPtr accumulate_data(BlockPtr source);
@@ -323,21 +322,6 @@ public:
 
 #endif
 
-//    /**
-//     * serializes a BlockPtr, returns the size through a parameter and the serialized data.
-//     * @param
-//     * @param
-//     * @return
-//     */
-//    static char* serialize(BlockPtr, int &);
-//
-//    /**
-//     * Deserializes bytes to a BlockPtr
-//     * @param
-//     * @param size
-//     * @return
-//     */
-//    static BlockPtr deserialize(char*, int);
 
 private:
 
@@ -360,9 +344,10 @@ private:
 
 
 	friend class BlockManager;
-	friend class sip::Interpreter;
+	friend class Interpreter;
 	friend class ContiguousArrayManager;
-	friend class sip::SIPMPIUtils;
+	friend class SIPMPIUtils;
+	friend class SIPServer;
 
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
@@ -370,46 +355,6 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(Block);
 
 };
-
-
-///**
-// * Blocks on GPU. Much like array::Block
-// */
-//class GPUBlock {
-//public:
-//
-//	typedef GPUBlock* GPUBlockPtr;
-//	typedef double * dataPtr;
-//	typedef int permute_t[MAX_RANK];
-//
-//	/** Constructs a new Block with the given shape and data
-//	 *
-//	 * @param  shape
-//	 * @param  pointer to data
-//	 */
-//	GPUBlock(BlockShape, dataPtr);
-//
-//    int size();
-//    dataPtr get_data();
-//    BlockShape shape();
-//
-//	~GPUBlock();
-//
-//private:
-//	BlockShape shape_;
-//	int size_;
-//	dataPtr data_;
-//
-//	friend class sip::Interpreter;
-//	friend class GPUBlockManager;
-//
-//	// Explicitly disallow comparing blocks.
-//	bool operator==(const GPUBlock& rhs) const;
-//
-//	DISALLOW_COPY_AND_ASSIGN(GPUBlock);
-//
-//
-//};
 
 } /* namespace sip */
 

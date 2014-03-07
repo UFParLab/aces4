@@ -10,8 +10,10 @@
 
 #include "blocks.h"
 #include "mpi.h"
+#include "sip_mpi_data.h"
 
 namespace sip {
+
 
 /**
  * Utility methods for MPI communication
@@ -33,31 +35,40 @@ public:
 
 	/**
 	 * Gets array::BlockId from another MPI rank and returns it.
-	 * @param rank
-	 * @param block_id_tag
+	 * @param rank [in]
+	 * @param tag [out]
 	 * @return
 	 */
-	static sip::BlockId get_block_id_from_rank(int rank, int block_id_tag);
+	static sip::BlockId get_block_id_from_rank(int rank, int *tag);
 
 	/**
 	 * Gets double precision data from another MPI rank and copies it into the passed BlockPtr
 	 * @param rank
-	 * @param size_tag
-	 * @param data_tag
-	 * @param bid
-	 * @return
+	 * @param tag [out]
+	 * @param size
+	 * @param bptr [inout]
 	 */
-	static void get_bptr_from_rank(int rank, int data_tag, int size, sip::Block::BlockPtr bptr);
+	static void get_bptr_data_from_rank(int rank, int *tag, int size, sip::Block::BlockPtr bptr);
 
 	/**
-	 * Send a block to another MPI rank
+	 * Send a block id and a block to another MPI rank
 	 * @param bid
 	 * @param bptr
 	 * @param rank
 	 * @param size_tag
 	 * @param data_tag
 	 */
-	static void send_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPtr bptr, int rank, int size_tag, int data_tag);
+	static void send_bid_and_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPtr bptr, int rank, int size_tag, int data_tag);
+
+	/**
+	 * Send a double array to another MPI rank.
+	 * @param data
+	 * @param size
+	 * @param rank
+	 * @param tag
+	 */
+	static MPI_Request isend_block_data_to_rank(Block::dataPtr data, int size, int rank, int tag);
+
 
 //	/**
 //	 * Sends a string to another rank
@@ -72,12 +83,12 @@ public:
 	/**
 	 * Gets the block id, shape & data size from another MPI Rank
 	 * @param rank
-	 * @param size_tag
-	 * @param bid
-	 * @param shape
-	 * @param data_size
+	 * @param tag [out]
+	 * @param bid [out]
+	 * @param shape [out]
+	 * @param data_size [out]
 	 */
-	static void get_block_params(const int rank, const int size_tag, sip::BlockId& bid, sip::BlockShape& shape, int &data_size);
+	static void get_block_params(const int rank, int *tag, sip::BlockId *bid, sip::BlockShape *shape, int *data_size);
 
 
 	/**
@@ -103,6 +114,55 @@ public:
 	 * @param tag
 	 */
 	static void expect_ack_from_rank(const int rank, int ack, const int tag);
+
+	/**
+	 * Each tag (a 32 bit integer) contains these fields
+	 */
+	typedef struct {
+		unsigned int message_type : 4;
+		unsigned int section_number : 12;
+		unsigned int message_number : 16;
+	} SIPMPITagBitField;
+
+	/**
+	 * Convenience union to convert bits from the bitfield to an int and back
+	 */
+	typedef union {
+		SIPMPITagBitField bf;
+		int i;
+	} SIPMPITagBitFieldConverter;
+
+	/**
+	 * Extracts the type of message from an MPI_TAG (right most byte).
+	 * @param mpi_tag
+	 * @return
+	 */
+	static SIPMPIData::MessageType_t get_message_type(int mpi_tag);
+
+	/**
+	 * Gets the section number from an MPI_TAG.
+	 * @param mpi_tag
+	 * @return
+	 */
+	static int get_section_number(int mpi_tag);
+
+	/**
+	 * Extracts the message number from an MPI_TAG.
+	 * @param mpi_tag
+	 * @return
+	 */
+	static int get_message_number(int mpi_tag);
+
+	/**
+	 * Constructs a tag from its constituent parts
+	 * @param message_type
+	 * @param section_number
+	 * @param message_number
+	 * @return
+	 */
+	static int make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int message_number);
+
+private:
 
 
 };
