@@ -34,7 +34,7 @@ public:
 	typedef std::vector<sip::Block::BlockPtr>  ScalarBlockTable;
 
 #ifdef HAVE_MPI
-	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&);
+	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&, int&, int&);
 #else
 	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&);
 #endif
@@ -128,6 +128,16 @@ private:
 
 
 #ifdef HAVE_MPI
+	/**
+	 * Reference to a the Interpreter's Section Number
+	 */
+	int & section_number_;
+
+	/**
+	 * Reference to the interpreter's Message Number.
+	 */
+	int & message_number_;
+
 	/**
 	 * MPI Attributes of the SIP for this rank
 	 */

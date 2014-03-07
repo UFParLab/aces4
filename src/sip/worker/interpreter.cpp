@@ -55,9 +55,10 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::Per
 		sip::SIPMPIAttr& sip_mpi_attr, sip::DataDistribution& data_distribution) :
 	pbm_read_(pbm_read), pbm_write_(pbm_write),
 	sip_tables_(sipTables), sialx_timers_(sialx_timer),
-	data_manager_(sipTables, pbm_read, pbm_write, sip_mpi_attr, data_distribution),
+	data_manager_(sipTables, pbm_read, pbm_write, sip_mpi_attr, data_distribution, section_number_, message_number_),
 	op_table_(sipTables.op_table_),
-	sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution){
+	sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
+	section_number_(0), message_number_(0){
 
 	//data_manager_ = new sip::DataManager(sipTables, pbm_read, pbm_write);
 	_init(sipTables);
@@ -67,7 +68,7 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::Per
 	pbm_read_(pbm_read), pbm_write_(pbm_write),
 	sip_tables_(sipTables), sialx_timers_(sialx_timer),
 	data_manager_(sipTables, pbm_read, pbm_write),
-	op_table_(sipTables.op_table_){
+	op_table_(sipTables.op_table_), section_number_(0), message_number_(0){
 
 	//data_manager_ = new sip::DataManager(sipTables, pbm_read, pbm_write);
 	_init(sipTables);
@@ -495,6 +496,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case server_barrier_op: {
 			sialx_timers_.start_timer(line_number());
 			data_manager_.block_manager_.barrier();
+			section_number_++; message_number_ = 0;
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -623,7 +625,8 @@ void Interpreter::post_sial_program(){
 		int to_send = sip::SIPMPIData::END_PROGRAM;
 		int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
 		if (local_server > -1){
-			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
+			int end_program_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, message_number_);
+			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, end_program_tag, MPI_COMM_WORLD));
 			SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with END_PROGRAM "<< std::endl);
 		}
 	}

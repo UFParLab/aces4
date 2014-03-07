@@ -174,6 +174,16 @@ private:
 	 */
 	bool gpu_enabled_;
 
+	/**
+	 * Records the pardo section number in the SIAL program currently being executed.
+	 */
+	int section_number_;
+
+	/**
+	 * Keeps track of the message sent to the server (in a section).
+	 */
+	int message_number_;
+
     /**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
 	void handle_assignment_op(int pc);

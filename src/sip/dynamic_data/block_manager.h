@@ -41,7 +41,7 @@ public:
 	typedef std::vector<BlockId> BlockList;
 
 #ifdef HAVE_MPI
-	BlockManager(sip::SipTables&, PersistentArrayManager&, PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&);
+	BlockManager(sip::SipTables&, PersistentArrayManager&, PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&, int&, int&);
 #else
 	BlockManager(sip::SipTables&, PersistentArrayManager&, PersistentArrayManager&);
 #endif
@@ -265,6 +265,17 @@ private:
 	sip::PersistentArrayManager & pbm_write_;
 
 #ifdef HAVE_MPI
+
+	/**
+	 * Reference to a the Interpreter's Section Number
+	 */
+	int & section_number_;
+
+	/**
+	 * Reference to the interpreter's Message Number.
+	 */
+	int & message_number_;
+
 	/**
 	 * MPI Attributes of the SIP for this rank
 	 */

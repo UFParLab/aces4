@@ -89,7 +89,8 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/data_distribution.h \
 ./src/sip/mpi/sip_mpi_utils.h \
 ./src/sip/mpi/sip_mpi_utils.cpp \
-./src/sip/mpi/sip_mpi_data.h
+./src/sip/mpi/sip_mpi_data.h\
+./src/sip/mpi/sip_mpi_data.cpp
 
 endif
 

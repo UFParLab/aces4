@@ -43,11 +43,12 @@
 namespace sip {
 
 #ifdef HAVE_MPI
-BlockManager::BlockManager(sip::SipTables& sipTables, PersistentArrayManager& pbm_read, PersistentArrayManager& pbm_write,
-		sip::SIPMPIAttr& sip_mpi_attr, sip::DataDistribution& data_distribution) :
+BlockManager::BlockManager(SipTables& sipTables, PersistentArrayManager& pbm_read, PersistentArrayManager& pbm_write,
+		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, int &section_number, int &message_number) :
 		pbm_read_(pbm_read), pbm_write_(pbm_write),
 		sip_tables_(sipTables), block_map_(sipTables.num_arrays()),
-		sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution)
+		sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
+		section_number_(section_number), message_number_(message_number)
 		{
 	// Initialize the Block Map to all NULLs
 	int num_arrs = block_map_.size();
@@ -59,7 +60,7 @@ BlockManager::BlockManager(sip::SipTables& sipTables, PersistentArrayManager& pb
 
 
 #else
-BlockManager::BlockManager(sip::SipTables& sipTables, PersistentArrayManager& pbm_read, PersistentArrayManager& pbm_write) :
+BlockManager::BlockManager(SipTables& sipTables, PersistentArrayManager& pbm_read, PersistentArrayManager& pbm_write) :
 		pbm_read_(pbm_read), pbm_write_(pbm_write),
 		sip_tables_(sipTables), block_map_(sipTables.num_arrays()){
 	// Initialize the Block Map to all NULLs
@@ -75,7 +76,7 @@ BlockManager::BlockManager(sip::SipTables& sipTables, PersistentArrayManager& pb
  * Delete blocks being managed by the block manager.
  */
 BlockManager::~BlockManager() {
-	sip::check(temp_block_list_stack_.size() == 0, "temp_block_list_stack not empty when destroying data manager!");
+	check(temp_block_list_stack_.size() == 0, "temp_block_list_stack not empty when destroying data manager!");
 	//int num_arrs = block_map_.size();
 
 //	std::set<int> array_set;
@@ -122,23 +123,6 @@ void BlockManager::barrier() {
 	SIP_LOG(if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : I am company master sending BARRIER to server !" << std::endl);
 
 	// Clear out cached distributed & served blocks.
-//	std::set<int> array_set;
-//	for (BlockMap::iterator it = block_map_.begin(); it != block_map_.end(); ++it){
-//		if (sip_tables_.is_distributed(it->first) || sip_tables_.is_served(it->first)){
-//			IdBlockMap &bid_map = it->second;
-//			for (IdBlockMap::iterator it2 = bid_map.begin(); it2 != bid_map.end(); ++it2){
-//				delete it2->second;	// Delete the block being pointed to.
-//			}
-//			array_set.insert(it->first);
-//		}
-//	}
-//
-//	// Delete array
-//	for (std::set<int>::iterator it = array_set.begin(); it != array_set.end(); ++it){
-//		block_map_.erase(*it);
-//	}
-
-	// Clear out cached distributed & served blocks.
 	for (int i=0; i<block_map_.size(); i++){
 		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i)){
 			if (block_map_[i] != NULL){
@@ -154,17 +138,7 @@ void BlockManager::barrier() {
 	}
 
 	// Workers do barrier amongst themselves
-	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
-
-	// Worker Master sends barrier to Server Master
-//	if (sip_mpi_attr_.is_company_master()){
-//		int to_send = sip::SIPMPIData::BARRIER;
-//		int server_master = sip_mpi_attr_.server_master();
-//		sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, server_master, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
-//	}
-
-	// Global Barrier
-//	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
+	SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
 
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
 
@@ -174,6 +148,8 @@ void BlockManager::barrier() {
 void BlockManager::create_distributed(int array_id) {
 	/*For single-node version, this is a nop.  We will add blocks as needed.
 	 * For the MPI version, the same behavior is implemented*/
+
+	// NO op for multinode version
 }
 
 /**
@@ -214,22 +190,10 @@ void BlockManager::delete_distributed(int array_to_destroy) {
 
 	//BlockMap::iterator it = block_map_.find(array_to_destroy);
 	BlockManager::IdBlockMapPtr bid_map = block_map_[array_to_destroy];
-#ifndef HAVE_MPI
-	//sip::check(it != block_map_.end(), "Could not find distributed array to destroy !");
-	sip::check_and_warn(bid_map != NULL, "Could not find distributed array to destroy !");
-#endif
 
-//	if (it != block_map_.end()){
-//		int array_id = array_to_destroy;
-//		IdBlockMap &bid_map = it->second;
-//		//;
-//		for (IdBlockMap::iterator it = bid_map.begin(); it != bid_map.end(); ++it) {
-//			Block::BlockPtr bptr = it->second;
-//			delete bptr;
-//		}
-//		bid_map.clear();
-//		block_map_.erase(array_to_destroy);
-//	}
+#ifndef HAVE_MPI
+	SIP_LOG(check_and_warn(bid_map != NULL, "Could not find distributed array to destroy !"));
+#endif
 
 	if (bid_map != NULL){
 		for (IdBlockMap::iterator it = bid_map->begin(); it != bid_map->end(); ++it){
@@ -240,7 +204,6 @@ void BlockManager::delete_distributed(int array_to_destroy) {
 		delete block_map_[array_to_destroy];
 		block_map_[array_to_destroy] = NULL;
 	}
-
 
 #ifdef HAVE_MPI
 
@@ -256,18 +219,12 @@ void BlockManager::delete_distributed(int array_to_destroy) {
 		if (local_server_rank > -1){
 			SIP_LOG(if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<<  local_server_rank<< std::endl);
 
-			int to_send_message = sip::SIPMPIData::DELETE;
-			sip::SIPMPIUtils::check_err(MPI_Send(&to_send_message, 1, MPI_INT, local_server_rank,
-					sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
 			// Send array_id to server master
-			sip::SIPMPIUtils::check_err(
-					MPI_Send(&array_to_destroy, 1, MPI_INT, local_server_rank,
-							sip::SIPMPIData::WORKER_TO_SERVER_DELETE,
-							MPI_COMM_WORLD));
-
-			SIPMPIUtils::expect_ack_from_rank(local_server_rank,
-					SIPMPIData::DELETE_ACK,
-					SIPMPIData::SERVER_TO_WORKER_DELETE_ACK);
+			int delete_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::DELETE, section_number_, message_number_);
+			SIPMPIUtils::check_err(MPI_Send(&array_to_destroy, 1, MPI_INT, local_server_rank, delete_tag, MPI_COMM_WORLD));
+			int delete_ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::DELETE_ACK, section_number_, message_number_);
+			SIPMPIUtils::expect_ack_from_rank(local_server_rank, SIPMPIData::DELETE_ACK, delete_ack_tag);
+			message_number_++;
 		}
 	}
 
@@ -290,23 +247,6 @@ void BlockManager::get(const BlockId& block_id) {
 
 }
 
-#ifdef HAVE_MPI
-void BlockManager::send_block_to_server(int server_rank, int to_send_message, const BlockId& bid,
-		Block::BlockPtr bptr) {
-
-	// Send Message (PUT, PUT_ACCUMULATE, etc) to server
-	sip::SIPMPIUtils::check_err(MPI_Send(&to_send_message, 1, MPI_INT, server_rank,
-			sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
-	// Send Block id to server
-	int size = -1;
-
-	// Send block to server
-	sip::SIPMPIUtils::send_bptr_to_rank(bid, bptr, server_rank,
-			sip::SIPMPIData::WORKER_TO_SERVER_BLOCK_SIZE,
-			sip::SIPMPIData::WORKER_TO_SERVER_BLOCK_DATA);
-
-}
-#endif
 
 void BlockManager::put_replace(const BlockId& target,
 		const Block::BlockPtr source_ptr) {
@@ -316,14 +256,17 @@ void BlockManager::put_replace(const BlockId& target,
 
 #ifdef HAVE_MPI
 	int server_rank = data_distribution_.get_server_rank(target);
-	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending PUT for block " << target << " to server rank " << server_rank << std::endl);
 
-	int to_send_message = sip::SIPMPIData::PUT;
 	target_ptr->copy_data_(source_ptr);
-	send_block_to_server(server_rank, to_send_message, target, target_ptr);
 
-	SIPMPIUtils::expect_ack_from_rank(server_rank, SIPMPIData::PUT_ACK, SIPMPIData::SERVER_TO_WORKER_PUT_ACK);
+	int put_block_info_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT, section_number_, message_number_);
+	int put_data_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, message_number_);
+	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending PUT for block with tags "<<put_block_info_tag<< " and "<< put_data_tag << ", "<< target << " to server rank " << server_rank << std::endl);
+	SIPMPIUtils::send_bid_and_bptr_to_rank(target, target_ptr, server_rank, put_block_info_tag, put_data_tag);
 
+	int put_ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_DATA_ACK, section_number_, message_number_);
+	SIPMPIUtils::expect_ack_from_rank(server_rank, SIPMPIData::PUT_DATA_ACK, put_ack_tag);
+	message_number_++;
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT for block " << target << " to server rank " << server_rank << std::endl);
 
 
@@ -339,14 +282,19 @@ void BlockManager::put_accumulate(const BlockId& lhs_id,
 #ifdef HAVE_MPI
 
 	int server_rank = data_distribution_.get_server_rank(lhs_id);
-	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending PUT_ACCUMULATE for block " << lhs_id << " to server rank " << server_rank << std::endl);
-
-	int to_send_message = sip::SIPMPIData::PUT_ACCUMULATE;
+	int to_send_message = SIPMPIData::PUT_ACCUMULATE;
 	target_ptr->copy_data_(source_ptr);
-	send_block_to_server(server_rank, to_send_message, lhs_id, target_ptr);
 
-	SIPMPIUtils::expect_ack_from_rank(server_rank, SIPMPIData::PUT_ACCUMULATE_ACK, SIPMPIData::SERVER_TO_WORKER_PUT_ACCUMULATE_ACK);
+	//send_block_to_server(server_rank, to_send_message, lhs_id, target_ptr);
+	int put_acc_block_info_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_ACCUMULATE, section_number_, message_number_);
+	int put_acc_data_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, message_number_);
+	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending PUT for block with tags "<<put_acc_block_info_tag<< " and "<< put_acc_data_tag << ", "<< lhs_id << " to server rank " << server_rank << std::endl);
 
+	SIPMPIUtils::send_bid_and_bptr_to_rank(lhs_id, target_ptr, server_rank, put_acc_block_info_tag, put_acc_data_tag);
+
+	int put_acc_ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA_ACK, section_number_, message_number_);
+	SIPMPIUtils::expect_ack_from_rank(server_rank, SIPMPIData::PUT_ACCUMULATE_DATA_ACK, put_acc_ack_tag);
+	message_number_++;
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT_ACCUMULATE for block " << lhs_id << " to server rank " << server_rank << std::endl);
 
 #else
@@ -363,7 +311,7 @@ void BlockManager::request(const BlockId& block_id) {
 	get(block_id);
 }
 void BlockManager::prequest(const BlockId&, const BlockId&) {
-	sip::fail("PREQUEST Not supported !");
+	fail("PREQUEST Not supported !");
 }
 void BlockManager::prepare(const BlockId& lhs_id,
 		const Block::BlockPtr source_ptr) {
@@ -448,34 +396,33 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 		// Fetch remote block (not is cache).
 		int server_rank = data_distribution_.get_server_rank(id);
 
-		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending GET for block " << id << " to server rank " << server_rank << std::endl);
-
-		// Send GET message
-		int to_send_message = sip::SIPMPIData::GET;
-		sip::SIPMPIUtils::check_err(MPI_Send(&to_send_message, 1, MPI_INT, server_rank, sip::SIPMPIData::WORKER_TO_SERVER_MESSAGE, MPI_COMM_WORLD));
-
 		// Send block id to fetch
-		sip::SIPMPIUtils::send_block_id_to_rank(id, server_rank, sip::SIPMPIData::WORKER_TO_SERVER_BLOCKID);
+		int get_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::GET, section_number_, message_number_);
+		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending GET with tag " << get_tag <<" for block " << id << " to server rank " << server_rank << std::endl);
+		SIPMPIUtils::send_block_id_to_rank(id, server_rank, get_tag);
 
 		// Receive block id, shape & size
-		BlockId bid;
-		BlockShape shape;
-		int data_size;
-		sip::SIPMPIUtils::get_block_params(server_rank, sip::SIPMPIData::SERVER_TO_WORKER_BLOCK_SIZE, bid, shape, data_size);
-		sip::check(bid == id, "Received Block Id did not match expected BlockId", current_line());
+		BlockShape shape = sip_tables_.shape(id);
+		int data_size = shape.num_elems();
 
 		// Receive block double precision data
 		blk = new Block(shape);
-		sip::SIPMPIUtils::get_bptr_from_rank(server_rank, sip::SIPMPIData::SERVER_TO_WORKER_BLOCK_DATA, data_size, blk);
+		int block_tag;
+		SIPMPIUtils::get_bptr_data_from_rank(server_rank, &block_tag, data_size, blk);
+		int msg_no = SIPMPIUtils::get_message_number(block_tag);
+		int sect_no = SIPMPIUtils::get_section_number(block_tag);
+		check(msg_no == message_number_, "Message number not consistent in GET !", current_line());
+		check(sect_no == section_number_, "Section number not consistent in GET !", current_line());
 
 		insert_into_blockmap(id, blk);
+		message_number_++;
 
-		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() <<"Done with GET for block " << id << " from server rank " << server_rank << std::endl);
+		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() <<" : Done with GET for block " << id << " from server rank " << server_rank << std::endl);
 
 	}
 #endif
 
-	sip::check(blk != NULL, "attempting to read non-existent block", current_line());
+	check(blk != NULL, "attempting to read non-existent block", current_line());
 
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
@@ -488,7 +435,7 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 /* gets block for reading and writing.  The block should already exist.*/
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	sip::check(blk != NULL, "attempting to update non-existent block", current_line());
+	check(blk != NULL, "attempting to update non-existent block", current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_update_on_host(blk);
@@ -555,7 +502,7 @@ std::ostream& operator<<(std::ostream& os, const BlockManager& obj) {
 				const BlockManager::IdBlockMapPtr bid_map = obj.block_map_[i];
 				BlockManager::IdBlockMap::const_iterator it2;
 				for (it2 = bid_map->begin(); it2 != bid_map->end(); ++it2) {
-					sip::check(it2->second != NULL, "Trying to print NULL blockPtr !");
+					check(it2->second != NULL, "Trying to print NULL blockPtr !");
 					SIP_LOG(if(it2->second == NULL) std::cout<<it2->first<<" is NULL!"<<std::endl;);
 					os << it2 -> first << std::endl;
 				}
@@ -584,11 +531,10 @@ Block::BlockPtr BlockManager::block(const BlockId& id) {
 //	BlockMap::iterator it = block_map_.find(array_id);
 	if (block_map_[array_id] == NULL){
 		block_map_[array_id] = new IdBlockMap();
-		//sip::check_and_warn(false, "Could not find distributed array, creating a new one...");
+		//check_and_warn(false, "Could not find distributed array, creating a new one...");
 	}
 
-
-	//sip::check(&block_map_[array_id] != NULL, "map containing blocks for array is null!", current_line());
+	//check(&block_map_[array_id] != NULL, "map containing blocks for array is null!", current_line());
 	IdBlockMap *bid_map = block_map_[array_id];
 	IdBlockMap::iterator b = bid_map->find(id);
 	if (b != bid_map->end()) {
@@ -601,25 +547,21 @@ Block::BlockPtr BlockManager::block(const BlockId& id) {
  * It is an error to try to create a new block if a block with that id already exists
  * exists.
  */
-void BlockManager::insert_into_blockmap(const BlockId& block_id,
-		Block::BlockPtr block_ptr) {
-	sip::check(block_ptr != NULL, "Trying to insert NULL block into BlockMap !", current_line());
+void BlockManager::insert_into_blockmap(const BlockId& block_id, Block::BlockPtr block_ptr) {
+	check(block_ptr != NULL, "Trying to insert NULL block into BlockMap !", current_line());
 	std::pair<IdBlockMap::iterator, bool> ret;
 	int array_id = block_id.array_id_;
 	IdBlockMap *bid_map = block_map_[array_id];
-	std::pair<BlockId, Block::BlockPtr> bid_pair = std::pair<BlockId,
-			Block::BlockPtr>(block_id, block_ptr);
+	std::pair<BlockId, Block::BlockPtr> bid_pair = std::pair<BlockId, Block::BlockPtr>(block_id, block_ptr);
 	ret = bid_map->insert(bid_pair);
-	sip::check(ret.second,
-			std::string("attempting to create block that already exists"));
+	check(ret.second, std::string("attempting to create block that already exists"));
 }
 
 /** creates a new block with the given Id and inserts it into the block map.
  * It is an error to try to create a new block if a block with that id already exists
  * exists.
  */
-Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
-		const BlockShape& shape) {
+Block::BlockPtr BlockManager::create_block(const BlockId& block_id, const BlockShape& shape) {
 	Block::BlockPtr block_ptr = new Block(shape);
 	insert_into_blockmap(block_id, block_ptr);
 	return block_ptr;
@@ -629,11 +571,11 @@ void BlockManager::remove_block(const BlockId& block_id) {
 	int array_id = block_id.array_id_;
 
 //	BlockMap::iterator it = block_map_.find(array_id);
-//	sip::check(it != block_map_.end(), "Could not find distributed array to remove block from !");
+//	check(it != block_map_.end(), "Could not find distributed array to remove block from !");
 
 
 	IdBlockMap *bid_map = block_map_[array_id];
-	sip::check(bid_map != NULL,"Could not find distributed array " + sip_tables_.array_name(array_id) + " to remove block from !", current_line());
+	check(bid_map != NULL,"Could not find distributed array " + sip_tables_.array_name(array_id) + " to remove block from !", current_line());
 	Block::BlockPtr block_to_remove = bid_map->at(block_id);
 	bid_map->erase(block_id);
 	delete block_to_remove;
@@ -691,7 +633,7 @@ Block::BlockPtr BlockManager::get_gpu_block_for_writing(const BlockId& id, bool 
 }
 Block::BlockPtr BlockManager::get_gpu_block_for_updating(const BlockId& id){
 	Block::BlockPtr blk = block(id);
-	sip::check(blk != NULL, "attempting to update non-existent block");
+	check(blk != NULL, "attempting to update non-existent block");
 
 	// Lazy copying of data from host to gpu if needed.
 	lazy_gpu_update_on_device(blk);
@@ -700,7 +642,7 @@ Block::BlockPtr BlockManager::get_gpu_block_for_updating(const BlockId& id){
 }
 Block::BlockPtr BlockManager::get_gpu_block_for_reading(const BlockId& id){
 	Block::BlockPtr blk = block(id);
-	sip::check(blk != NULL, "attempting to read non-existent gpu block", current_line());
+	check(blk != NULL, "attempting to read non-existent gpu block", current_line());
 
 	// Lazy copying of data from host to gpu if needed.
 	lazy_gpu_read_on_device(blk);
@@ -728,14 +670,14 @@ Block::BlockPtr BlockManager::create_gpu_block(const BlockId& block_id,
 
 void BlockManager::lazy_gpu_read_on_device(Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		sip::fail("block allocated neither on host or gpu", current_line());
+		fail("block allocated neither on host or gpu", current_line());
 	} else if (!blk->is_on_gpu()) {
 		blk->allocate_gpu_data();
 		_gpu_host_to_device(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_host()) {
 		_gpu_host_to_device(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_all()) {
-		sip::fail("block dirty on host & gpu !", current_line());
+		fail("block dirty on host & gpu !", current_line());
 	}
 	blk->set_on_gpu();
 	blk->unset_dirty_on_host();
@@ -754,7 +696,7 @@ void BlockManager::lazy_gpu_write_on_device(Block::BlockPtr& blk, const BlockId 
 	} else if (blk->is_dirty_on_host()) {
 		_gpu_host_to_device(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_all()) {
-		sip::fail("block dirty on host & gpu !", current_line());
+		fail("block dirty on host & gpu !", current_line());
 	}
 	blk->set_on_gpu();
 	blk->set_dirty_on_gpu();
@@ -763,14 +705,14 @@ void BlockManager::lazy_gpu_write_on_device(Block::BlockPtr& blk, const BlockId 
 
 void BlockManager::lazy_gpu_update_on_device(Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()){
-			sip::fail("block allocated neither on host or gpu", current_line());
+			fail("block allocated neither on host or gpu", current_line());
 		} else if (!blk->is_on_gpu()){
 			blk->allocate_gpu_data();
 			_gpu_host_to_device(blk->get_data(), blk->get_gpu_data(), blk->size());
 		} else if (blk->is_dirty_on_host()){
 			_gpu_host_to_device(blk->get_data(), blk->get_gpu_data(), blk->size());
 		} else if (blk->is_dirty_on_all()){
-			sip::fail("block dirty on host & gpu !", current_line());
+			fail("block dirty on host & gpu !", current_line());
 		}
 		blk->set_on_gpu();
 		blk->unset_dirty_on_host();
@@ -779,14 +721,14 @@ void BlockManager::lazy_gpu_update_on_device(Block::BlockPtr& blk){
 
 void BlockManager::lazy_gpu_read_on_host(Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		sip::fail("block allocated neither on host or gpu", current_line());
+		fail("block allocated neither on host or gpu", current_line());
 	} else if (!blk->is_on_host()) {
 		blk->allocate_host_data();
 		_gpu_device_to_host(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_gpu()) {
 		_gpu_device_to_host(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_all()) {
-		sip::fail("block dirty on host & gpu !", current_line());
+		fail("block dirty on host & gpu !", current_line());
 	}
 	blk->set_on_host();
 	blk->unset_dirty_on_gpu();
@@ -805,7 +747,7 @@ void BlockManager::lazy_gpu_write_on_host(Block::BlockPtr& blk, const BlockId &i
 	} else if (blk->is_dirty_on_gpu()) {
 		_gpu_device_to_host(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_all()) {
-		sip::fail("block dirty on host & gpu !", current_line());
+		fail("block dirty on host & gpu !", current_line());
 	}
 	blk->set_on_host();
 	blk->set_dirty_on_host();
@@ -815,14 +757,14 @@ void BlockManager::lazy_gpu_write_on_host(Block::BlockPtr& blk, const BlockId &i
 
 void BlockManager::lazy_gpu_update_on_host(Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		sip::fail("block allocated neither on host or gpu", current_line());
+		fail("block allocated neither on host or gpu", current_line());
 	} else if (!blk->is_on_host()) {
 		blk->allocate_host_data();
 		_gpu_device_to_host(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_gpu()) {
 		_gpu_device_to_host(blk->get_data(), blk->get_gpu_data(), blk->size());
 	} else if (blk->is_dirty_on_all()) {
-		sip::fail("block dirty on host & gpu !", current_line());
+		fail("block dirty on host & gpu !", current_line());
 	}
 	blk->set_on_host();
 	blk->unset_dirty_on_gpu();

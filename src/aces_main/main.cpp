@@ -74,6 +74,11 @@ int main(int argc, char* argv[]) {
 #endif
 
 
+	// Check sizes of data types.
+	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+
 	// Default initialization file is data.dat
 	char *init_file = "data.dat";
 	// Default directory for compiled sialx files is "."
