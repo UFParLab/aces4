@@ -21,6 +21,7 @@
 #ifdef HAVE_MPI
 #include "sip_mpi_attr.h"
 #include "data_distribution.h"
+#define MAX_POSTED_ASYNC 65536 // = 2^16. 16 bits for message number in mpi tag (sip_mpi_utils).
 #endif
 
 namespace sip {
@@ -39,6 +40,8 @@ public:
 	typedef IdBlockMap* IdBlockMapPtr;
 	typedef std::vector<IdBlockMapPtr> BlockMap;
 	typedef std::vector<BlockId> BlockList;
+
+	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
 #ifdef HAVE_MPI
 	BlockManager(sip::SipTables&, PersistentArrayManager&, PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&, int&, int&);
@@ -266,31 +269,40 @@ private:
 
 #ifdef HAVE_MPI
 
-	/**
-	 * Reference to a the Interpreter's Section Number
-	 */
-	int & section_number_;
+	int & section_number_;	// Reference to a the Interpreter's Section Number
+	int & message_number_;  // Reference to the interpreter's Message Number.
 
-	/**
-	 * Reference to the interpreter's Message Number.
-	 */
-	int & message_number_;
+	sip::SIPMPIAttr & sip_mpi_attr_; // MPI Attributes of the SIP for this rank
+	sip::DataDistribution &data_distribution_; // Data distribution scheme
 
-	/**
-	 * MPI Attributes of the SIP for this rank
-	 */
-	sip::SIPMPIAttr & sip_mpi_attr_;
+	MPI_Request posted_async_[MAX_POSTED_ASYNC]; // posted asynchronous receives/sends
+	int num_posted_async_; // number of posted asynchronous receives/sends
 
-	/**
-	 * Data distribution scheme
-	 */
-	sip::DataDistribution &data_distribution_;
+	BlockIdToIndexMap blocks_in_transit_; // block_id -> index into posted_receives_
+
+	int posted_acks_[MAX_POSTED_ASYNC];	// posted acks
 
 	/**
 	 * Helper function to send a block to the server that "owns" it.
 	 */
-	void send_block_to_server(int server_rank, int to_send_message, const BlockId& bid,
-			Block::BlockPtr bptr);
+	void send_block_to_server(int server_rank, int to_send_message, const BlockId& bid, Block::BlockPtr bptr);
+
+	/**
+	 * Requests a block from a server. Initiates a request and posts a receive for the block.
+	 * If the block is cached or owned by this worker, no request is sent.
+	 */
+	void request_block_from_server(const BlockId& id);
+
+	/**
+	 * Blocks till requested block arrives.
+	 */
+	void wait_for_block_in_transit(const BlockId& id);
+
+	/**
+	 * Blocks till any one of the requested blocks arrive.
+	 */
+	void free_any_posted_receive();
+
 #endif
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
@@ -300,8 +312,7 @@ private:
 	 * @param block_id
 	 * @param block_ptr
 	 */
-	void insert_into_blockmap(const BlockId& block_id,
-			Block::BlockPtr block_ptr);
+	void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr);
 
 };
 
