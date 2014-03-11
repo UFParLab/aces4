@@ -149,6 +149,11 @@ void compute_ubatch8(int& array_slot_0, int& rank_0, int * index_values_0, int& 
 void compute_integral_batch(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 
+void aoladder_contraction(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+
 void scf_frag(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
@@ -341,6 +346,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["compute_ubatch7"]=(fp0)&compute_ubatch7;
     procmap_["compute_ubatch8"]=(fp0)&compute_ubatch8;
     procmap_["compute_integral_batch"]=(fp0)&compute_integral_batch;
+    procmap_["aoladder_contraction"]=(fp0)&aoladder_contraction;
     procmap_["scf_frag"]=(fp0)&scf_frag;
     procmap_["set_frag"]=(fp0)&set_frag;
     procmap_["frag_index_range"]=(fp0)&frag_index_range;

@@ -26,6 +26,7 @@ libinstr_la_CPPFLAGS=\
 
 # Quantum Methods
 QM_SOURCE_FILES=\
+./qm/aoladder_contraction.F\
 ./qm/int_gen_parms.hf\
 ./qm/sip_interface.hf\
 ./qm/compute_aabb_batch.F\
