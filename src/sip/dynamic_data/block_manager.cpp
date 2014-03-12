@@ -773,7 +773,7 @@ Block::BlockPtr BlockManager::create_gpu_block(const BlockId& block_id,
 }
 
 
-void BlockManager::lazy_gpu_read_on_device(Block::BlockPtr& blk){
+void BlockManager::lazy_gpu_read_on_device(const Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
 		fail("block allocated neither on host or gpu", current_line());
 	} else if (!blk->is_on_gpu()) {
@@ -808,7 +808,7 @@ void BlockManager::lazy_gpu_write_on_device(Block::BlockPtr& blk, const BlockId 
 	blk->unset_dirty_on_host();
 }
 
-void BlockManager::lazy_gpu_update_on_device(Block::BlockPtr& blk){
+void BlockManager::lazy_gpu_update_on_device(const Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()){
 			fail("block allocated neither on host or gpu", current_line());
 		} else if (!blk->is_on_gpu()){
@@ -824,7 +824,7 @@ void BlockManager::lazy_gpu_update_on_device(Block::BlockPtr& blk){
 		blk->set_dirty_on_gpu();
 }
 
-void BlockManager::lazy_gpu_read_on_host(Block::BlockPtr& blk){
+void BlockManager::lazy_gpu_read_on_host(const Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
 		fail("block allocated neither on host or gpu", current_line());
 	} else if (!blk->is_on_host()) {
@@ -860,7 +860,7 @@ void BlockManager::lazy_gpu_write_on_host(Block::BlockPtr& blk, const BlockId &i
 
 }
 
-void BlockManager::lazy_gpu_update_on_host(Block::BlockPtr& blk){
+void BlockManager::lazy_gpu_update_on_host(const Block::BlockPtr& blk){
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
 		fail("block allocated neither on host or gpu", current_line());
 	} else if (!blk->is_on_host()) {

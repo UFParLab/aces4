@@ -134,7 +134,7 @@ public:
 	 * @param
 	 * @return
 	 */
-	void lazy_gpu_read_on_device(Block::BlockPtr& blk);
+	void lazy_gpu_read_on_device(const Block::BlockPtr& blk);
 	/**
 	 * Lazily copy block from host to device for writing to if needed
 	 * @param
@@ -148,7 +148,7 @@ public:
 	 * @param
 	 * @return
 	 */
-	void lazy_gpu_update_on_device(Block::BlockPtr& blk);
+	void lazy_gpu_update_on_device(const Block::BlockPtr& blk);
 
 	/**
  	 * Lazily copy block from device to host for reading if needed
@@ -156,7 +156,7 @@ public:
 	 * @param
 	 * @return
 	 */
-	void lazy_gpu_read_on_host(Block::BlockPtr& blk);
+	void lazy_gpu_read_on_host(const Block::BlockPtr& blk);
 	/**
 	 * Lazily copy block from device to host for writing to if needed
 	 * @param
@@ -170,7 +170,7 @@ public:
 	 * @param
 	 * @return
 	 */
-	void lazy_gpu_update_on_host(Block::BlockPtr& blk);
+	void lazy_gpu_update_on_host(const Block::BlockPtr& blk);
 
 #endif
 

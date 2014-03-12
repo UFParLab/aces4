@@ -56,6 +56,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.393052691" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -83,6 +84,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -148,6 +150,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2107047516" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -175,8 +178,105 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+		<cconfiguration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" moduleId="org.eclipse.cdt.core.settings" name="CUDA">
+				<externalSettings>
+					<externalSetting/>
+				</externalSettings>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.MachO64" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.PE" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.Cygwin_PE" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.linuxtools.cdt.autotools.core.buildArtefactType.autotools" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.linuxtools.cdt.autotools.core.buildArtefactType.autotools" cleanCommand="rm -rf" description="Single Node CUDA" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" name="CUDA" parent="org.eclipse.linuxtools.cdt.autotools.core.configuration.build">
+					<folderInfo id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971." name="/" resourcePath="">
+						<toolChain id="org.eclipse.linuxtools.cdt.autotools.core.toolChain.1478225367" name="GNU Autotools Toolchain" resourceTypeBasedDiscovery="true" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolChain">
+							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1782543334" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
+							<builder buildPath="${workspace_loc:/aces4nj}/CUDA" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.1540544695" keepEnvironmentInBuildfile="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
+								<outputEntries>
+									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="BUILD"/>
+								</outputEntries>
+							</builder>
+							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.620063565" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
+								<option id="org.eclipse.linuxtools.cdt.autotools.core.option.configure.name.323079378" name="Name" superClass="org.eclipse.linuxtools.cdt.autotools.core.option.configure.name" value="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" valueType="string"/>
+							</tool>
+							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.autogen.43140914" name="autogen.sh" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.autogen"/>
+							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1627214728" name="GCC C Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc">
+								<option id="gnu.c.compiler.option.include.paths.680652976" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/include"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
+									<listOptionValue builtIn="false" value="/usr/include/"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.2.0/include/"/>
+									<listOptionValue builtIn="false" value="/home/jindal/papi-5.2.0/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/cuda}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/dynamic_data}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.135808611" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.588821536" name="GCC C++ Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp">
+								<option id="gnu.cpp.compiler.option.include.paths.2030216628" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/usr/local/include"/>
+									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
+									<listOptionValue builtIn="false" value="/usr/include/"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.2.0/include/"/>
+									<listOptionValue builtIn="false" value="/home/jindal/papi-5.2.0/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/cuda}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/dynamic_data}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/tensor_algebra}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
@@ -193,6 +293,9 @@
 		<project id="aces4nj.org.eclipse.linuxtools.cdt.autotools.core.projectType.162926165" name="GNU Autotools" projectType="org.eclipse.linuxtools.cdt.autotools.core.projectType"/>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="CUDA">
+			<resource resourceType="PROJECT" workspacePath="/aces4nj"/>
+		</configuration>
 		<configuration configurationName="Build (MPI)">
 			<resource resourceType="PROJECT" workspacePath="/aces4nj"/>
 		</configuration>
@@ -201,36 +304,6 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1475934365;cdt.managedbuild.tool.gnu.c.compiler.input.193571014">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1059494594;cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1626266652;cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855">
-			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile"/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1157370729;cdt.managedbuild.tool.gnu.cpp.compiler.input.1970198297">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.216318066;cdt.managedbuild.tool.gnu.c.compiler.input.393052691">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.227217647;cdt.managedbuild.tool.gnu.cpp.compiler.input.1286748977">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.312534423;cdt.managedbuild.tool.gnu.c.compiler.input.926606536">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1140591414;cdt.managedbuild.tool.gnu.c.compiler.input.2107047516">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
 			<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
@@ -1145,6 +1218,22 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="sip_mpi_data.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sip_mpi_data.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="sip_mpi_data.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sip_mpi_data.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="sip_mpi_utils.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1386,5 +1475,41 @@
 				<runAllBuilders>false</runAllBuilders>
 			</target>
 		</buildTargets>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1627214728;cdt.managedbuild.tool.gnu.c.compiler.input.135808611">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1475934365;cdt.managedbuild.tool.gnu.c.compiler.input.193571014">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1059494594;cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1626266652;cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855">
+			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1157370729;cdt.managedbuild.tool.gnu.cpp.compiler.input.1970198297">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.588821536;cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.216318066;cdt.managedbuild.tool.gnu.c.compiler.input.393052691">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.227217647;cdt.managedbuild.tool.gnu.cpp.compiler.input.1286748977">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.312534423;cdt.managedbuild.tool.gnu.c.compiler.input.926606536">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1140591414;cdt.managedbuild.tool.gnu.c.compiler.input.2107047516">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>
