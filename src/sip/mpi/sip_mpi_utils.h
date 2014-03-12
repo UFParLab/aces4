@@ -36,32 +36,33 @@ public:
 	/**
 	 * Gets array::BlockId from another MPI rank and returns it.
 	 * @param rank [in]
-	 * @param tag [out]
+	 * @param tag [in]
 	 * @return
 	 */
-	static sip::BlockId get_block_id_from_rank(int rank, int *tag);
+	static sip::BlockId get_block_id_from_rank(int rank, int tag);
 
 	/**
 	 * Gets double precision data from another MPI rank and copies it into the passed BlockPtr
 	 * @param rank
-	 * @param tag [out]
+	 * @param tag [int]
 	 * @param size
 	 * @param bptr [inout]
 	 */
-	static void get_bptr_data_from_rank(int rank, int *tag, int size, sip::Block::BlockPtr bptr);
+	static void get_bptr_data_from_rank(int rank, int tag, int size, sip::Block::BlockPtr bptr);
 
 	/**
-	 * Send a block id and a block to another MPI rank
+	 * Asynchronously sends a block id and a block to another MPI rank
 	 * @param bid
 	 * @param bptr
 	 * @param rank
 	 * @param size_tag
 	 * @param data_tag
+	 * @param request
 	 */
-	static void send_bid_and_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPtr bptr, int rank, int size_tag, int data_tag);
+	static void isend_bid_and_bptr_to_rank(const sip::BlockId& bid, sip::Block::BlockPtr bptr, int rank, int size_tag, int data_tag, MPI_Request *request);
 
 	/**
-	 * Send a double array to another MPI rank.
+	 * Asynchronously send a double array to another MPI rank.
 	 * @param data
 	 * @param size
 	 * @param rank
@@ -82,13 +83,13 @@ public:
 
 	/**
 	 * Gets the block id, shape & data size from another MPI Rank
-	 * @param rank
-	 * @param tag [out]
+	 * @param rank [in]
+	 * @param tag [in]
 	 * @param bid [out]
 	 * @param shape [out]
 	 * @param data_size [out]
 	 */
-	static void get_block_params(const int rank, int *tag, sip::BlockId *bid, sip::BlockShape *shape, int *data_size);
+	static void get_block_params(const int rank, int tag, sip::BlockId *bid, sip::BlockShape *shape, int *data_size);
 
 
 	/**
@@ -114,6 +115,16 @@ public:
 	 * @param tag
 	 */
 	static void expect_ack_from_rank(const int rank, int ack, const int tag);
+
+
+	/**
+	 * Post an asynchronous receive for an ack message with a given tag from a specific rank
+	 * @param rank
+	 * @param ack
+	 * @param tag
+	 * @param request
+	 */
+	static void expect_async_ack_from_rank(const int rank, int ack, const int tag, MPI_Request *request);
 
 	/**
 	 * Each tag (a 32 bit integer) contains these fields

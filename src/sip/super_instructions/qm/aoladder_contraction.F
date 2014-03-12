@@ -1,5 +1,7 @@
-      subroutine compute_integral_batch(
+      subroutine aoladder_contraction(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
+     c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
+     c array_slot_2, rank_2, index_values_2, size_2, extents_2, data_2,
      c  ierr) BIND(C)
       use, intrinsic :: ISO_C_BINDING
       implicit none
@@ -9,13 +11,29 @@ c Interface added BUT should be include NOT added in the future
       include 'sip_interface.f'
       include 'imemory.h'
 
-!     argument array
+!     first argument array --> integrals 
       integer(C_INT), intent(in)::array_slot_0
       integer(C_INT), intent(in)::rank_0
       integer(C_INT), intent(in)::index_values_0(1:rank_0)
       integer(C_INT), intent(in)::size_0
       integer(C_INT), intent(in)::extents_0(1:rank_0)
       real(C_DOUBLE), intent(out)::data_0(1:size_0)
+
+!     second argument array --> 'old' amplitude block  
+      integer(C_INT), intent(in)::array_slot_1
+      integer(C_INT), intent(in)::rank_1
+      integer(C_INT), intent(in)::index_values_1(1:rank_1)
+      integer(C_INT), intent(in)::size_1
+      integer(C_INT), intent(in)::extents_1(1:rank_1)
+      real(C_DOUBLE), intent(out)::data_1(1:size_1)
+
+!     third argument array --> 'new' amplitude block  
+      integer(C_INT), intent(in)::array_slot_2
+      integer(C_INT), intent(in)::rank_2
+      integer(C_INT), intent(in)::index_values_2(1:rank_2)
+      integer(C_INT), intent(in)::size_2
+      integer(C_INT), intent(in)::extents_2(1:rank_2)
+      real(C_DOUBLE), intent(out)::data_2(1:size_2)
 
       integer(C_INT), intent(out)::ierr
 
@@ -191,6 +209,8 @@ c     niscr = 5000000
       call scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr]) 
 
+c Set offsets for the integral array. These also set the offsets for the
+c ao indices of the amplitude arrays. 
       offset_1 = 0 
       offset_2 = 0 
       offset_3 = 0 
@@ -200,17 +220,19 @@ c     niscr = 5000000
       if (index_values_0(3).gt.1) offset_3=paosegs(index_values_0(3)-1) 
       if (index_values_0(4).gt.1) offset_4=paosegs(index_values_0(4)-1)
 c
-      call compute_integrals(1+offset_1, extents_0(1)+offset_1,
-     *                         1+offset_2, extents_0(2)+offset_2,
-     *                         1+offset_3, extents_0(3)+offset_3,
-     *                         1+offset_4, extents_0(4)+offset_4,
-     *                         data_0, !integrals data_0,  
-     *                         scr, ! scratch spaces for integrals data_0,  
+      call compute_aoladder(1+offset_1, extents_0(1)+offset_1,
+     *                      1+offset_2, extents_0(2)+offset_2,
+     *                      1+offset_3, extents_0(3)+offset_3,
+     *                      1+offset_4, extents_0(4)+offset_4,
+     *                      data_0, !     integrals data_0  
+     *                      extents_1(1), extents_1(2), extents_1(3), 
+     *                      extents_1(4), data_1, !old amplitudes data_1  
+     *                      extents_2(1), extents_2(2), extents_2(3), 
+     *                      extents_2(4), data_2, !new amplitudes data_2  
 c 
-     *                         iscr, ! integer scratch spaces for integrals 
-     *                         pcoords, ptcoords, 
-     *                         ppcoeffs, pixpcoeffs, palphas, pixalphas,
-     *                         pccbeg, pccend)
+     *                      pcoords, ptcoords, 
+     *                      ppcoeffs, pixpcoeffs, palphas, pixalphas,
+     *                      pccbeg, pccend)
 c 
 c ----------------------------------------------------------------------
 c
@@ -239,8 +261,10 @@ C  GNU General Public License for more details.
 
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
-      subroutine compute_integrals(a1,a2,b1,b2,c1,c2,d1,d2,aoint, 
-     *                 scr, iscr, coords, tcoords ,coeffs, 
+      subroutine compute_aoladder(a1,a2,b1,b2,c1,c2,d1,d2,integrals, 
+     *                 i1, i2, j1, j2, t2old, 
+     *                 ii1, ii2, jj1, jj2, t2new, 
+     *                 coords, tcoords ,coeffs, 
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend)
 c---------------------------------------------------------------------------
@@ -260,11 +284,14 @@ c Interface added but should be included instead
 c---------------------------------------------------------------------------
 
       integer a1, a2, b1, b2, c1, c2, d1, d2 
+      integer i1, i2, j1, j2 
+      integer ii1, ii2, jj1, jj2 
       integer aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
       integer adim, bdim, cdim, ddim  
       integer m1, m2, n1, n2, r1, r2, s1, s2
       integer i, j, n, m, r, s
       integer a,b,c,d
+      integer iout, jout 
 
       integer num_to_do
       integer nints 
@@ -275,13 +302,6 @@ c---------------------------------------------------------------------------
 
       integer imin, zmin, iblk, zblk
 
-      logical skip
-      logical mn_symmetry
-      logical rs_symmetry
-      logical mn_rs_symmetry
-      logical*8 l8true, l8spherical
-      logical spherical
-
       double precision x1,y1,z1
       double precision x2,y2,z2
       double precision x3,y3,z3
@@ -290,10 +310,12 @@ c---------------------------------------------------------------------------
       double precision coords(3,*), coeffs(*), alphas(*)
       double precision tcoords(3,*)
       double precision integrals(a1:a2,b1:b2,c1:c2,d1:d2) 
-      double precision aoint(*) 
+      double precision t2old(a1:a2,1:i2,c1:c2,1:j2) 
+      double precision t2new(b1:b2,1:ii2,d1:d2,1:jj2) 
+      double precision max_int, etemp   
 
-      double precision scr(*)   
-      integer iscr(*)
+c     double precision scr(*)   
+c     integer iscr(*)
 
       integer ccbeg(*), ccend(*)
       integer ixalpha(*), ixpcoef(*) 
@@ -310,11 +332,11 @@ c VFL TO BE COMPLETED       common /Imax_com/sz_max(nshells,nshells), delta
       double precision sz_max, delta
       double precision itol, bmax, dtemp, emax    
 
-      common /d2int_com/jatom, jx, jcenter
-      integer jatom, jx, jcenter  
+c     common /d2int_com/jatom, jx, jcenter
+c     integer jatom, jx, jcenter  
       integer one 
 
-      integer (C_INT) nshells, ncenters, nalpha_occupied, nbeta_occupied
+      integer (C_INT) nshells, nalpha_occupied, nbeta_occupied
       integer (C_INT) nalpha_virtual, nbeta_virtual
       integer (C_INT) intSpherical  
 
@@ -361,9 +383,6 @@ c ----------------------------------------------------------------------
       bdim = b2-b1+1
       cdim = c2-c1+1
       ddim = d2-d1+1 
-      l8true = .true.
-      jx = 2 
-c     spherical = (ispherical .eq. 1)
 
 c Get the predefined data 
 
@@ -419,31 +438,11 @@ c     write(6,*) ' IVANGMOMOM', ishells(1), (ivangmom(i), i=1,
 c    *                                           ishells(1))  
 c ----------------------------------------------------------------------
 
-      ncenters = int_constant("ncenters"//C_NULL_CHAR)
       nshells = int_constant("nshells"//C_NULL_CHAR)
-      nalpha_occupied = int_constant("nalpha_occupied"//C_NULL_CHAR)
-      nbeta_occupied = int_constant("nbeta_occupied"//C_NULL_CHAR)
-      nalpha_virtual = int_constant("nalpha_virtual"//C_NULL_CHAR)
-      nbeta_virtual = int_constant("nbeta_virtual"//C_NULL_CHAR)
-
-      intSpherical = int_constant("intspherical"//C_NULL_CHAR)
-      spherical = .true.
-      if (intSpherical .ne. 1) spherical = .false. 
-
-c     intmax = 100**4 ! VER BAD HACK  
-c     zmax = 2*intmax  
- 
-      i = 0
-      do d = d1, d2 
-      do c = c1, c2 
-      do b = b1, b2 
-      do a = a1, a2 
-         i = i + 1 
-         integrals(a,b,c,d) = 0.0 
-      enddo 
-      enddo 
-      enddo 
-      enddo 
+c     nalpha_occupied = int_constant("nalpha_occupied"//C_NULL_CHAR)
+c     nbeta_occupied = int_constant("nbeta_occupied"//C_NULL_CHAR)
+c     nalpha_virtual = int_constant("nalpha_virtual"//C_NULL_CHAR)
+c     nbeta_virtual = int_constant("nbeta_virtual"//C_NULL_CHAR)
 
 c Set the integral tolerance 
 
@@ -451,9 +450,6 @@ c Skip screening for now
 c     call set_itol(delta,itol)
       itol = -1000. 
 
-c     write(6,*) ' DELTA = ', delta, itol  
-c     itol = delta ! 1.0d-9 
-  
 c-----------------------------------------------------------------------
 c   Find the shell blocks for which we shall loop through.
 c-----------------------------------------------------------------------
@@ -466,16 +462,6 @@ c-----------------------------------------------------------------------
          call lookup_shell(end_nfps, nshells, c2, r2)
          call lookup_shell(end_nfps, nshells, d1, s1)
          call lookup_shell(end_nfps, nshells, d2, s2)
-
-c        write(6,*) 'VFL ', a1,a2,':',m1,m2 
-c        write(6,*) 'VFL ', b1,b2,':',n1,n2 
-c        write(6,*) 'VFL ', c1,c2,':',r1,r2 
-c        write(6,*) 'VFL ', d1,d2,':',s1,s2 
-c        write(6,*) 'VFL ncemters = ', ncenters 
-c        write(6,*) 'VFL '
-c        write(6,*) ' COORDS :', (coords(1,i),coords(2,i),coords(3,i), 
-c    *                i=1, ncenters)  
-c        return 
 
          do m = m1, m2
             if (m .eq. 1) then
@@ -522,72 +508,69 @@ c-----------------------------------------------------------------------
 c   Determine the largest density element.
 c-----------------------------------------------------------------------
 
-            emax = 1.0 
-            bmax = 1000000.0 ! VFL TO DO 
+c           emax = 1.0 
+c           bmax = 1000000.0 ! VFL TO DO 
 c           bmax = sz_max(m,n)*sz_max(r,s) 
 c           bmax = dsqrt(bmax)*emax  
 
-            if (bmax .lt. itol) go to 30 
+c           if (bmax .lt. itol) go to 30 
                x4 = tcoords(1,s)
                y4 = tcoords(2,s)
                z4 = tcoords(3,s)
-               call pack_coeffs(alphas, ixalpha, coeffs, ixpcoef, 
-     *                          ncfps, npfps, m, n, 
-     *                          r, s, alpha_pack, nalpha_pack, 
-     *                          pcoeff_pack, npcoeff_pack, 
-     *                          ccbeg, ccend, indx_cc,
-     *                          ccbeg_pack, ccend_pack) 
 
 c---------------------------------------------------------------------------
-c   Calling sequence for ERD version 2.
+c   Determine the maximum integral in the shell quad  
 c---------------------------------------------------------------------------
 
-               ncsum = ncfps(m) + ncfps(n) + ncfps(r) + ncfps(s)
-
-              call ERD__GENER_ERI_BATCH(imax, zmax,
-     *                nalpha_pack, npcoeff_pack, ncsum, 
-     *                ncfps(m),ncfps(n), ncfps(r), ncfps(s),
-     *                npfps(m),npfps(n), npfps(r), npfps(s),
-     *                ivangmom(m), ivangmom(n), 
-     *                ivangmom(r), ivangmom(s), x1,y1,z1,
-     *                x2,y2,z2,x3,y3,z3,x4,y4,z4, alpha_pack,
-     *                pcoeff_pack, ccbeg_pack, ccend_pack,
-     *                spherical, .true., iscr, nints, 
-     *                nfirst, scr)    
-
-c---------------------------------------------------------------------------
-c   Move the integrals into the output block.  
-c---------------------------------------------------------------------------
-
-           if (nints .gt. 0) then
- 
-              jx = 2 
-              call return_int(nalpha_occupied, nbeta_occupied, jx,  
-     *                             a1,a2,b1,b2,
-     *                             c1,c2,d1,d2,
-     *                             integrals, 
-     *                             scr(nfirst),   
-     *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
-     *                             )
- 
-      i = 0
+      max_int = 0.0 
       do d = d1, d2 
       do c = c1, c2 
       do b = b1, b2 
       do a = a1, a2 
-         i = i + 1 
          if ((a .ge. aa1 .and. a .le. aa2) .and.
      *       (b .ge. bb1 .and. b .le. bb2) .and.
      *       (c .ge. cc1 .and. c .le. cc2) .and.
      *       (d .ge. dd1 .and. d .le. dd2)) then  
-             aoint(i) = integrals(a,b,c,d)  
+             if (dabs(integrals(a,b,c,d)) .gt. max_int) 
+     *                 max_int = dabs(integrals(a,b,c,d))  
          endif 
       enddo 
       enddo 
       enddo 
       enddo 
 
-            endif
+c     write(6,*) ' MAX_INT = ', max_int
+
+c             call return_maxint(nalpha_occupied, nbeta_occupied, 
+c    *                             a1,a2,b1,b2,
+c    *                             c1,c2,d1,d2,
+c    *                             integrals, 
+c    *                             scr(nfirst),   
+c    *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
+c    *                             )
+ 
+      do d = d1, d2 
+      do c = c1, c2 
+      do b = b1, b2 
+      do a = a1, a2 
+         if ((a .ge. aa1 .and. a .le. aa2) .and.
+     *       (b .ge. bb1 .and. b .le. bb2) .and.
+     *       (c .ge. cc1 .and. c .le. cc2) .and.
+     *       (d .ge. dd1 .and. d .le. dd2) .and. 
+     *       (max_int .gt. 1.0d-15)) then  
+             etemp = integrals(a,b,c,d) 
+             do iout = 1, i2 
+             do jout = 1, j2 
+                t2new(b,iout,d,jout) = t2new(b,iout,d,jout) 
+     *                               + etemp * t2old(a,iout,c,jout) 
+c    *          + integrals(a,b,c,d) * t2old(a,iout,c,jout) 
+             enddo 
+             enddo 
+         endif 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
 
 30       continue 
          enddo   ! s
@@ -599,26 +582,5 @@ c---------------------------------------------------------------------------
 100      continue 
          enddo   ! m
  
-c     i = 0
-c     do d = d1, d2 
-c     do c = c1, c2 
-c     do b = b1, b2 
-c     do a = a1, a2 
-c        i = i + 1 
-c        write(6,*) a, b, c, d, aoint(i) 
-c     enddo 
-c     enddo 
-c     enddo 
-c     enddo 
-c     stop 
-
-c     write(6,*) ' Fock_a inside' 
-c     write(6,*) ' -------------' 
-c     do b = nc1, nc2
-c     do a = nc1, nc2
-c        write(6,*) a, b, Fa(a,b) 
-c     enddo
-c     enddo 
-
       return
       end

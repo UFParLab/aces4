@@ -329,6 +329,7 @@
 # --------------------- 
 #
       temp AOINT(mu,nu,lambda,sigma) 
+      local LTAO_ab(lambda,i,sigma,i1) 
       scalar ncount1
       scalar ncount2
       scalar jcount 
@@ -1385,10 +1386,196 @@
       ENDPROC T2NEWAB    
 #     ---------------
 #
+#    ------------------------------------------------------------------------ 
+#
+     PROC AOLADDER_GPU   
+#
+#    ------------------------------------------------------------------------ 
+#
+#    First create and zero-out intermediate arrays
+#    ---------------------------------------------
+#
+     PARDO mu, nu, i, j
+           Txixj(mu,i,nu,j)           = 0.0
+           PREPARE TAO_ab(mu,i,nu,j)  = Txixj(mu,i,nu,j)
+           PREPARE T2AO_ab(mu,i,nu,j) = Txixj(mu,i,nu,j)
+     ENDPARDO mu, nu, i, j
+#
+     server_barrier 
+#
+#    Form Half back transformed cluster arrays  
+#    -----------------------------------------
+#
+#    AB spin combination
+#     -------------------
+#
+     PARDO b, a, j, i
+#
+           REQUEST Tau_ab(a,i,b,j) a
+#
+           DO mu
+#
+              Taixj(a,i,mu,j) = Tau_ab(a,i,b,j)*ca(mu,b)
+#
+              DO nu
+#
+                 Txixj(nu,i,mu,j)           = Taixj(a,i,mu,j)*ca(nu,a)
+                 PREPARE TAO_ab(nu,i,mu,j) += Txixj(nu,i,mu,j)
+#
+              ENDDO nu
+#
+           ENDDO mu
+#
+      ENDPARDO b, a, j, i
+#
+     create t1a_ax 
+     server_barrier   
+#
+#    Contract AOINT with half back transformed Amplitudes 
+#    ----------------------------------------------------    
+#
+     PARDO lambda, sigma
+        allocate LTAO_ab(lambda,*,sigma,*) 
+        DO i
+        DO j
+           REQUEST                     TAO_ab(lambda,i,sigma,j) j
+           LTAO_ab(lambda,i,sigma,j) = TAO_ab(lambda,i,sigma,j)  
+        ENDDO j
+        ENDDO i
+
+        DO mu 
+        DO nu
+        WHERE mu < nu 
+           execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
+           DO i
+           DO j
+              Yab(mu,i,nu,j)              = 0.0  
+              execute aoladder_contraction aoint(lambda,mu,sigma,nu) LTAO_ab(lambda,i,sigma,j) Yab(mu,i,nu,j) 
+              Y1ab(nu,j,mu,i)             = Yab(mu,i,nu,j)
+#
+              PREPARE T2AO_ab(mu,i,nu,j) += Yab(mu,i,nu,j)
+              PREPARE T2AO_ab(nu,j,mu,i) += Y1ab(nu,j,mu,i)
+#
+           ENDDO j
+           ENDDO i
+#
+        ENDDO nu
+        ENDDO mu 
+        deallocate LTAO_ab(lambda,*,sigma,*) 
+     ENDPARDO lambda, sigma
+#
+     PARDO lambda, sigma
+        allocate LTAO_ab(lambda,*,sigma,*) 
+        DO i
+        DO j
+           REQUEST                     TAO_ab(lambda,i,sigma,j) j
+           LTAO_ab(lambda,i,sigma,j) = TAO_ab(lambda,i,sigma,j)  
+        ENDDO j
+        ENDDO i
+        DO mu 
+        DO nu
+        WHERE mu == nu 
+#
+           execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
+#
+           DO i
+           DO j
+              Yab(mu,i,nu,j)              = 0.0  
+              execute aoladder_contraction aoint(lambda,mu,sigma,nu) LTAO_ab(lambda,i,sigma,j) Yab(mu,i,nu,j) 
+              PREPARE T2AO_ab(mu,i,nu,j) += Yab(mu,i,nu,j)
+           ENDDO j
+           ENDDO i
+#
+        ENDDO nu
+        ENDDO mu 
+        deallocate LTAO_ab(lambda,*,sigma,*) 
+     ENDPARDO lambda, sigma
+#
+#    Half transform the t1 arrays. 
+#    ----------------------------- 
+#
+     PARDO a, mu
+#
+           tpx(a,mu) = 0.0 
+#
+           DO i  
+#
+              GET          t1a_old(a,i) 
+              t1px(a,mu) = t1a_old(a,i)*ca(mu,i) 
+              tpx(a,mu) += t1px(a,mu) 
+#
+           ENDDO i  
+#
+           PUT t1a_ax(a,mu) = tpx(a,mu) 
+#
+     ENDPARDO a, mu
+#
+     server_barrier  
+#
+#    Perform final transformation
+#    ----------------------------
+#
+        PARDO nu, i, j
+#
+              allocate LDaixj(*,i,nu,j)
+#
+              DO mu
+#
+                 REQUEST T2AO_ab(mu,i,nu,j) j
+#
+                 DO a
+                    Taixj(a,i,nu,j)   = T2AO_ab(mu,i,nu,j)*ca(mu,a)
+                    LDaixj(a,i,nu,j) += Taixj(a,i,nu,j)
+                 ENDDO a
+#
+              ENDDO mu
+#
+              DO a
+                 PREPARE TDaixj(a,i,nu,j) = LDaixj(a,i,nu,j)
+              ENDDO a
+#
+              deallocate LDaixj(*,i,nu,j)
+#
+        ENDPARDO nu, i, j
+        server_barrier
+#
+        PARDO a, i, j, nu
+#
+              REQUEST TDaixj(a,i,nu,j) a
+#
+              DO b
+#
+                 GET                          t1a_ax(b,nu)
+#
+                 Taibj(a,i,b,j)             = TDaixj(a,i,nu,j)*ca(nu,b)
+                 T1aibj(a,i,b,j)            = TDaixj(a,i,nu,j)*t1a_ax(b,nu)
+                 T1aibj(a,i,b,j)           *= -1.0
+                 T2aibj(b,j,a,i)            = T1aibj(a,i,b,j)
+#
+                 PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j)
+                 PREPARE T2new_ab(a,i,b,j) += T1aibj(a,i,b,j)
+                 PREPARE T2new_ab(b,j,a,i) += T2aibj(b,j,a,i)
+#
+              ENDDO b
+#
+        ENDPARDO a, i, j, nu
+#
+        sip_barrier
+#
+     delete t1a_ax 
+#
+#    ------------------------------------------------------------------------ 
+#
+     ENDPROC AOLADDER_GPU   
+#
+#    ------------------------------------------------------------------------ 
+#
+#
 # PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP 
 #
 #    ------------------------------------------------------------------------ 
 #
+
      PROC AOLADDER  
 #
 #    ------------------------------------------------------------------------ 
@@ -1438,7 +1625,6 @@
      PARDO mu, nu, lambda, sigma
         WHERE mu < nu 
 #
-          #execute compute_ubatch6 aoint(lambda,mu,sigma,nu) zz zz zz zz  
            execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
 #
            DO i
@@ -1459,7 +1645,6 @@
      PARDO mu, nu, lambda, sigma
         WHERE mu == nu 
 #
-          #execute compute_ubatch6 aoint(lambda,mu,sigma,nu) zz zz zz zz  
            execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
 #
            DO i
@@ -2678,7 +2863,7 @@
          CALL T2NEWAB  
 #
          CALL WMINJ 
-         CALL AOLADDER 
+         CALL AOLADDER_GPU 
          CALL WAEBF  
          CALL WMEBJ 
 #

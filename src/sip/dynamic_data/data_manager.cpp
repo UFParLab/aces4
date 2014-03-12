@@ -308,8 +308,10 @@ void DataManager::set_persistent_array(int array_id, std::string name, int slot)
 				int save_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT, section_number_, message_number_);
 
 				// Send array_id & label
-				SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
-				SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
+				int send_buffer[2];
+				send_buffer[0] = array_id;
+				send_buffer[1] = slot;
+				SIPMPIUtils::check_err(MPI_Send(send_buffer, 2, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
 
 				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT_ACK, section_number_, message_number_);
 				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::SAVE_PERSISTENT_ACK, ack_tag);
@@ -349,9 +351,11 @@ void DataManager::restore_persistent_array(int array_id, std::string name, int s
 				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending RESTORE_PERSISTENT to server "<< local_server<< std::endl);
 
 				// Send array_id  & slot to server master
+				int send_buffer[2];
+				send_buffer[0] = array_id;
+				send_buffer[1] = slot;
 				int restore_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT, section_number_, message_number_);
-				SIPMPIUtils::check_err(MPI_Send(&array_id, 1, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
-				SIPMPIUtils::check_err(MPI_Send(&slot, 1, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
+				SIPMPIUtils::check_err(MPI_Send(send_buffer, 2, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
 
 				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT_ACK, section_number_, message_number_);
 				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::RESTORE_PERSISTENT_ACK, ack_tag);

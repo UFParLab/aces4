@@ -33,6 +33,11 @@ public:
 private:
 
 	/**
+	 * Keeps track of block data for pending puts & put_accumulates.
+	 */
+	Block::BlockPtr *outstanding_put_data_arr_;
+
+	/**
 	 * MPI Attributes of the SIP for this rank
 	 */
 	SIPMPIAttr & sip_mpi_attr_;
@@ -69,30 +74,6 @@ private:
 	 */
 	int section_number_;
 
-	/**
-	 * Auxiliary structure to keep track of data for pending puts & put_accumulates
-	 */
-	class TagInfo {
-	public:
-		int from;
-		int section_number;
-		int message_number;
-		TagInfo(int f, int s, int m): from(f), section_number(s), message_number(m){}
-		bool operator< (const TagInfo &other) const {
-			if (from < other.from) return true;
-			if (section_number < other.section_number) return true;
-			if (message_number < other.message_number) return true;
-			return false;
-		}
-	};
-
-	/**
-	 * Keeps track of block data for pending puts & put_accumulates.
-	 */
-	typedef std::pair<BlockId, Block::BlockPtr> IdBlockPair;
-	typedef std::map<TagInfo, IdBlockPair> TagInfoIdBlockPairMap;
-	TagInfoIdBlockPairMap outstanding_put_data_map_;
-
 
 	/**
 	 * Deletes all blocks from given array
@@ -106,7 +87,7 @@ private:
 	 * @param tag
 	 * @return
 	 */
-	int get_int_from_rank(const int rank, int *tag);
+	int get_int_from_rank(const int rank, int tag);
 
 	/**
 	 * Send integer to other servers (from master server)
@@ -152,16 +133,15 @@ private:
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
 	// Handles messages received by the server
-	void handle_GET(int mpi_source);
-	void handle_PUT(int mpi_source);
+	void handle_GET(int mpi_source, int tag);
+	void handle_PUT(int mpi_source, int tag);
 	void handle_PUT_DATA(int mpi_source, int size, int tag);
-	void handle_PUT_ACCUMULATE(int mpi_source);
+	void handle_PUT_ACCUMULATE(int mpi_source, int tag);
 	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int size, int tag);
-	void handle_DELETE(int mpi_source);
-	void handle_BARRIER();
-	void handle_END_PROGRAM(int mpi_source);
-	void handle_SAVE_PERSISTENT(int mpi_source);
-	void handle_RESTORE_PERSISTENT(int mpi_source);
+	void handle_DELETE(int mpi_source, int tag);
+	void handle_END_PROGRAM(int mpi_source, int tag);
+	void handle_SAVE_PERSISTENT(int mpi_source, int tag);
+	void handle_RESTORE_PERSISTENT(int mpi_source, int tag);
 };
 
 } /* namespace sip */

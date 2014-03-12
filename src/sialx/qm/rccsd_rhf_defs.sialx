@@ -40,6 +40,7 @@ special energy_denominator_rhf ur
 special return_sval rw
 special compute_diis u
 special print_block r
+special aoladder_contraction rru 
 #     NOT PORTED 
 special get_my_rank w
 
