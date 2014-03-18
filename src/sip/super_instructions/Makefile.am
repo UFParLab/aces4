@@ -27,6 +27,7 @@ libinstr_la_CPPFLAGS=\
 # Quantum Methods
 QM_SOURCE_FILES=\
 ./qm/aoladder_contraction.F\
+./qm/compute_nn_repulsion.F\
 ./qm/int_gen_parms.hf\
 ./qm/sip_interface.hf\
 ./qm/compute_aabb_batch.F\
@@ -39,6 +40,7 @@ QM_SOURCE_FILES=\
 ./qm/check_dconf.F\
 ./qm/compute_diis.F\
 ./qm/return_ovl.F\
+./qm/scf_atom.F\
 ./qm/compute_int_scratchmem.F\
 ./qm/imemory.h\
 ./qm/energy_denominator_rhf.F\
@@ -75,6 +77,7 @@ QM_SOURCE_FILES=\
 ./qm/direct_integral/pack_coeffs_oed.f\
 ./qm/direct_integral/comp_return_h1.F\
 ./qm/direct_integral/comp_return_ovl.F\
+./qm/direct_integral/comp_return_frag_h0.F\
 ./qm/erd_scratch_mem_calc.F\
 ./qm/do_rhf_den4.F\
 ./qm/do_rhf_den2.F\

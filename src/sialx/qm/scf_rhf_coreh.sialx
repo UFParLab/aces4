@@ -200,6 +200,7 @@ import "scf_defs.sialx"
       scalar pcount 
       scalar zmax 
       scalar imax 
+      scalar repulsion
 #
 # Declare scalars 
 # --------------- 
@@ -597,7 +598,7 @@ import "scf_defs.sialx"
 
        esum *= 0.5 
        collective energy += esum 
-       energy += scfeneg 
+       energy += repulsion 
 #
        #print_scalar esum  
         print_scalar energy 
@@ -1120,8 +1121,13 @@ import "scf_defs.sialx"
       etemp += damp  
       damp1  = 1.0/etemp         # 1/(1+damp)  
       pcount = 0.0 
-       print_scalar damp 
-       print_scalar damp1
+      print_scalar damp 
+      print_scalar damp1
+#
+#     Compute the nuclear-nuclear repulsion energy  
+#     -------------------------------------------- 
+      execute compute_nn_repulsion repulsion
+      print_scalar repulsion 
 #
 #     New HF density 
 #     -------------- 
@@ -1594,6 +1600,7 @@ import "scf_defs.sialx"
 
       set_persistent ca "ca" 
       set_persistent Fock_a "fock_a" 
+#     set_persistent energy "energy" 
 
       scfeneg  = energy2
       totenerg = scfeneg

@@ -85,6 +85,7 @@ special compute_ubatch6 wrruu
 special compute_ubatch7 wrruu
 special compute_ubatch8 wrruu
 special compute_int_scratchmem uuu
+special compute_nn_repulsion u 
 #     NOT PORTED 
 special blocks_to_list r
 special diis_setup w

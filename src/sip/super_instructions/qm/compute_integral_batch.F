@@ -570,24 +570,24 @@ c---------------------------------------------------------------------------
      *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
      *                             )
  
-      i = 0
-      do d = d1, d2 
-      do c = c1, c2 
-      do b = b1, b2 
-      do a = a1, a2 
-         i = i + 1 
-         if ((a .ge. aa1 .and. a .le. aa2) .and.
-     *       (b .ge. bb1 .and. b .le. bb2) .and.
-     *       (c .ge. cc1 .and. c .le. cc2) .and.
-     *       (d .ge. dd1 .and. d .le. dd2)) then  
-             aoint(i) = integrals(a,b,c,d)  
-         endif 
-      enddo 
-      enddo 
-      enddo 
-      enddo 
+              i = 0
+              do d = d1, d2 
+              do c = c1, c2 
+              do b = b1, b2 
+              do a = a1, a2 
+                 i = i + 1 
+                 if ((a .ge. aa1 .and. a .le. aa2) .and.
+     *               (b .ge. bb1 .and. b .le. bb2) .and.
+     *               (c .ge. cc1 .and. c .le. cc2) .and.
+     *               (d .ge. dd1 .and. d .le. dd2)) then  
+                     aoint(i) = integrals(a,b,c,d)  
+                 endif 
+              enddo 
+              enddo 
+              enddo 
+              enddo 
 
-            endif
+           endif
 
 30       continue 
          enddo   ! s
@@ -598,27 +598,6 @@ c---------------------------------------------------------------------------
          enddo   ! n
 100      continue 
          enddo   ! m
- 
-c     i = 0
-c     do d = d1, d2 
-c     do c = c1, c2 
-c     do b = b1, b2 
-c     do a = a1, a2 
-c        i = i + 1 
-c        write(6,*) a, b, c, d, aoint(i) 
-c     enddo 
-c     enddo 
-c     enddo 
-c     enddo 
-c     stop 
-
-c     write(6,*) ' Fock_a inside' 
-c     write(6,*) ' -------------' 
-c     do b = nc1, nc2
-c     do a = nc1, nc2
-c        write(6,*) a, b, Fa(a,b) 
-c     enddo
-c     enddo 
 
       return
       end

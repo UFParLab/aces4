@@ -64,6 +64,8 @@ c--------------------------------------------------------------------------
       integer(C_INT) one, nfrags, i, istart, iend    
       real(C_DOUBLE) x2, wfrag  
 
+      nfrags = int_constant("nfrags"//C_NULL_CHAR)  
+
       wfrag = data_0(1)   
       x2    = data_1(1) 
 
@@ -72,6 +74,8 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_AO,pn_ao_segs)
+         call find_frag_index_range(wfrag, x2, w_frag_AO, pn_ao_segs) 
+
       endif 
 
       if (x2 .eq. 6.0) then ! get alpha occ fragment ranges 
@@ -79,6 +83,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_aocc,pn_ao_segs)
+         call find_frag_index_range(wfrag, x2, w_frag_aocc, pn_ao_segs) 
       endif 
 
       if (x2 .eq. 9.0) then ! get beta occ fragment ranges 
@@ -86,6 +91,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_bocc,pn_ao_segs)
+         call find_frag_index_range(wfrag, x2, w_frag_bocc, pn_ao_segs) 
       endif 
 
       if (x2 .eq. 7.0) then ! get alpha virt fragment ranges 
@@ -93,6 +99,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_avirt,pn_ao_segs)
+         call find_frag_index_range(wfrag, x2, w_frag_avirt, pn_ao_segs) 
       endif 
 
       if (x2 .eq. 10.0) then ! get beta virt fragment ranges 
@@ -100,144 +107,63 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_bvirt,pn_ao_segs)
+         call find_frag_index_range(wfrag, x2, w_frag_bvirt, pn_ao_segs) 
       endif 
+c     write(6,*) 'VFL Nfrags = ', nfrags, wfrag, x2 
 
-      nfrags = int_constant("nfrags"//C_NULL_CHAR)  
-      write(6,*) 'VFL Nfrags = ', nfrags, wfrag, x2 
+c     call find_frag_index_range(wfrag, x2, w_frag_AO, w_frag_aocc,
+c    *                      w_frag_avirt, w_frag_bocc, w_frag_bvirt,
+c    *                      nfrags)
+
+      data_0(1) = wfrag  
+      data_1(1) = x2  
+
       return 
+      end
 
-      if (x2 .eq. 1.0) then 
-         istart = 0 
-         iend   = 0 
-         if (wfrag .eq. 1) then 
-            istart = 1 
-            go to 10 
-         endif 
-         do i = 2, nfrags  
-            if ((w_frag_AO(i) .eq. wfrag) .and.
-     *          (w_frag_AO(i-1) .ne. wfrag)) then 
-                istart = i
-                go to 10 
-            endif 
-         enddo 
-10       continue 
-         do i = istart, nfrags  
-            if ((w_frag_AO(i-1) .eq. wfrag) .and.
-     *          (w_frag_AO(i) .ne. wfrag)) then 
-                iend = i-1 
-                go to 20 
-            endif 
-         enddo 
-20       continue 
+
+      subroutine find_frag_index_range(r_wfrag,x2,w_frag_AO,nfrags)
+      implicit none 
+      double precision x2, r_wfrag
+      integer w_frag_AO(nfrags) 
+      integer i, istart, iend, nfrags   
+      integer wfrag 
+
+      wfrag = r_wfrag 
+
+c     write(6,*) ' NFRAGS ', nfrags 
+c     do i = 1, nfrags
+c        write(6,*) '   ', i, w_frag_ao(i) 
+c     enddo 
+
+
+      istart = 0 
+      iend   = 0 
+      if (wfrag .eq. 1) then 
+         istart = 1 
+         go to 10 
       endif 
-
-      if (x2 .eq. 6.0) then 
-         istart = 0 
-         iend   = 0 
-         if (wfrag .eq. 1) then 
-            istart = 1 
-            go to 11 
+      do i = 2, nfrags  
+         if ((w_frag_AO(i) .eq. wfrag) .and.
+     *       (w_frag_AO(i-1) .ne. wfrag)) then 
+             istart = i
+             go to 10 
          endif 
-         do i = 2, nfrags  
-            if ((w_frag_aocc(i) .eq. wfrag) .and.
-     *          (w_frag_aocc(i-1) .ne. wfrag)) then 
-                istart = i
-                go to 11 
-            endif 
-         enddo 
-11       continue 
-         do i = istart, nfrags  
-            if ((w_frag_aocc(i-1) .eq. wfrag) .and.
-     *          (w_frag_aocc(i) .ne. wfrag)) then 
-                iend = i-1  
-                go to 21 
-            endif 
-         enddo 
-21       continue 
-      endif 
-
-      if (x2 .eq. 9.0) then 
-         istart = 0 
-         iend   = 0 
-         if (wfrag .eq. 1) then 
-            istart = 1 
-            go to 12 
+      enddo 
+10    continue 
+      do i = istart, nfrags  
+         if ((w_frag_AO(i-1) .eq. wfrag) .and.
+     *       (w_frag_AO(i) .ne. wfrag)) then 
+             iend = i-1 
+             go to 20 
          endif 
-         do i = 2, nfrags  
-            if ((w_frag_bocc(i) .eq. wfrag) .and.
-     *          (w_frag_bocc(i-1) .ne. wfrag)) then 
-                istart = i
-                go to 12 
-            endif 
-         enddo 
-12       continue 
-         do i = istart, nfrags  
-            if ((w_frag_bocc(i-1) .eq. wfrag) .and.
-     *          (w_frag_bocc(i) .ne. wfrag)) then 
-                iend = i-1  
-                go to 22 
-            endif 
-         enddo 
-22       continue 
-      endif 
+      enddo 
+20    continue 
 
-      if (x2 .eq. 7.0) then 
-         istart = 0 
-         iend   = 0 
-         if (wfrag .eq. 1) then 
-            istart = 1 
-            go to 13 
-         endif 
-         do i = 2, nfrags  
-            if ((w_frag_avirt(i) .eq. wfrag) .and.
-     *          (w_frag_avirt(i-1) .ne. wfrag)) then 
-                istart = i
-                go to 13 
-            endif 
-         enddo 
-13       continue 
-         do i = istart, nfrags  
-            if ((w_frag_avirt(i-1) .eq. wfrag) .and.
-     *          (w_frag_avirt(i) .ne. wfrag)) then 
-                iend = i-1  
-                go to 23 
-            endif 
-         enddo 
-23       continue 
-      endif 
+      write(6,*) 'FRAG TYPE:',wfrag,x2,' START END :', istart, iend 
 
-      if (x2 .eq. 10.0) then 
-         istart = 0 
-         iend   = 0 
-         if (wfrag .eq. 1) then 
-            istart = 1 
-            go to 14 
-         endif 
-         do i = 2, nfrags  
-            if ((w_frag_bvirt(i) .eq. wfrag) .and.
-     *          (w_frag_bvirt(i-1) .ne. wfrag)) then 
-                istart = i
-                go to 14 
-            endif 
-         enddo 
-14       continue 
-         do i = istart, nfrags  
-            if ((w_frag_bvirt(i-1) .eq. wfrag) .and.
-     *          (w_frag_bvirt(i) .ne. wfrag)) then 
-                iend = i-1  
-                go to 24 
-            endif 
-         enddo 
-24       continue 
-      endif 
-
-c     x1 = istart 
-c     x2 = iend 
-
-      data_0(1) = istart 
-      data_1(1) = iend 
-
-c     write(6,*) ' AOSTART AOEND IN FRAG:', x1, x2 
+      wfrag = istart 
+      x2    = iend 
 
       return
       end

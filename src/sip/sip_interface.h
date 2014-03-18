@@ -18,6 +18,8 @@ void predefined_scalar_array(const char*aname, int& num_dims, int **dims, double
 void predefined_int_array(const char*aname, int& num_dims, int **dims, int **values);
 void scratch_array(int& num_elements, double **array);
 void delete_scratch_array(double **array);
+void integer_scratch_array(int& num_elements, int **array);
+void delete_integer_scratch_array(int **array);
 
 int int_constant(const char*cname);
 double scalar_constant(const char*cname);
