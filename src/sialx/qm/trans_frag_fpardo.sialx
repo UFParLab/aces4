@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 9 # Nfragments   
-      index  jjfrag  = 1, 9 # Nfragments   
-      index   kfrag  = 1, 9 # Nfragments   
-      index  kkfrag  = 1, 9 # Nfragments   
+      index   jfrag  = 1, 29 # Nfragments   
+      index  jjfrag  = 1, 29 # Nfragments   
+      index   kfrag  = 1, 29 # Nfragments   
+      index  kkfrag  = 1, 29 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -510,7 +510,7 @@ import "trans_frag_defs.sialx"
 #
       DO nu
             x1(nu)     = wAO_frag(nu)     
-            execute return_sval x1(mu)  m  
+            execute return_sval x1(nu)  m  
             if m == icount  
       DO i
             xi(i)      = wOccA_frag(i) 
@@ -757,7 +757,8 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == jcount  
 
-                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  aoint(mu,nu,lambda,sigma)  = 0.0 
+                  #VFL execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
 
                   DO j 
                      xj(j)             = wOccB_frag(j) 
@@ -830,7 +831,7 @@ import "trans_frag_defs.sialx"
             if m == icount  
          DO nu
             x2(nu)     = wAO_frag(nu)     
-            execute return_sval x1(nu)  n  
+            execute return_sval x2(nu)  n  
             if n == icount  
 
          DO a
@@ -953,7 +954,8 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == jcount  
 
-                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  aoint(mu,nu,lambda,sigma)  = 0.0 
+                 #VFL execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
 
                   DO j 
                      xj(j)             = wOccB_frag(j) 
@@ -1500,7 +1502,7 @@ import "trans_frag_defs.sialx"
                   GET                         Vaibj(a,i,b,j,ii)  
                   tppqq(a,i,b,j)            = Vaibj(a,i,b,j,ii) 
                   t1ppqq(a,i,b,j)           = Vaibj(a,i,b,j,ii) 
-                  execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
+                 #VFL execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t1ppqq(a,i,b,j)  
                   t20disp(ifrag,jfrag)      = etemp 
                   PUT e20disp(ifrag,jfrag) += t20disp(ifrag,jfrag) 
@@ -1517,7 +1519,7 @@ import "trans_frag_defs.sialx"
                   t1ppqq(a,i,b,j)           = t3ppqq(a,j,b,i) 
                   tppqq(a,i,b,j)           *= 2.0  
                   tppqq(a,i,b,j)           -= t1ppqq(a,i,b,j)   
-                  execute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
+                 #VFLexecute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t2ppqq(a,i,b,j)  
                   t20disp(ifrag,jfrag)      = etemp 
                   PUT e20disp(ifrag,jfrag) += t20disp(ifrag,jfrag) 
@@ -2474,7 +2476,8 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == icount  
 
-                 execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
+                 aoint(lambda,mu,sigma,nu)  = 0.0 
+                #VFL execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
 
                  DO i 
                      xi(i)             = wOccA_frag(i) 
@@ -3044,6 +3047,17 @@ import "trans_frag_defs.sialx"
       set_persistent ca "ca" 
       set_persistent Fock_a "fock_a"
 
+#     Get memory requirements from integral calculation 
+#     ------------------------------------------------- 
+     #imax = 0.0  
+     #zmax = 0.0  
+     #DO mu 
+     #DO nu 
+     #   txx(mu,nu) = 0.0
+     #   execute compute_int_scratchmem txx(mu,nu) zmax imax 
+     #ENDDO nu 
+     #ENDDO mu 
+
       mone = -1.0 
       ecrit = cc_conv 
 #
@@ -3072,20 +3086,20 @@ import "trans_frag_defs.sialx"
 #     Form the electrostatic potential(complete) of all fragments  
 #     ----------------------------------------------------------- 
 #
-      CALL FORM_ELSTPOT 
+     #CALL FORM_ELSTPOT 
       sip_barrier 
 #
 #     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
 #
-      CALL FORM_T1 
+     #CALL FORM_T1 
       sip_barrier 
 #
 #     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
-      CALL FORM_T2_GUESS 
+     #CALL FORM_T2_GUESS 
       sip_barrier 
-      CALL FORM_T2_ITERS 
+     #CALL FORM_T2_ITERS 
       sip_barrier 
 #
 #

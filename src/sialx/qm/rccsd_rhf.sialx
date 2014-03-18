@@ -343,6 +343,7 @@
       scalar five
       scalar six
       scalar seven
+      scalar energy 
 #
 # Arrays needed for AOLADDER contribution
 # ---------------------------------------
@@ -458,7 +459,6 @@
       scalar ecrit 
       scalar ediff 
       scalar mp2_energy
-      scalar restart
 #
 # Arrays/Scalars used exclusively in DIIS procedure. 
 # -------------------------------------------------- 
@@ -485,20 +485,7 @@
       restore_persistent Viaai  "Viaai"
       restore_persistent Vaaai  "VSaaai"
       restore_persistent Vpiqj  "Vpiqj"
-
-     #DO mu 
-     #DO p 
-     #   GET        DCa(mu,p) 
-     #   ca(mu,p) = Dca(mu,p) 
-     #ENDDO p 
-     #ENDDO mu 
-
-     #DO p 
-     #DO p1 
-     #   GET            Fta(p,p1) 
-     #   fock_a(p,p1) = Fta(p,p1) 
-     #ENDDO p1 
-     #ENDDO p 
+     #restore_persistent energy  "energy"
 
       server_barrier
 #
@@ -2863,6 +2850,7 @@
          CALL T2NEWAB  
 #
          CALL WMINJ 
+        #CALL AOLADDER 
          CALL AOLADDER_GPU 
          CALL WAEBF  
          CALL WMEBJ 
@@ -2924,17 +2912,15 @@
 #
       server_barrier 
       totenerg  = ecorrT  
-      totenerg += scfeneg  
+      totenerg += energy  
       print_scalar totenerg  
 #
 ######CALL WRITE_2EL   
 #
-     #set_persistent Fta "fock_a" 
-     #set_persistent DCa "ca" 
       set_persistent t1a_old "t1a_old"
       set_persistent T2old_aa "T2old_aa"
       set_persistent T2old_ab "T2old_ab"
-     #execute write_blocks_to_list
+     #set_persistent energy "energy"
 #
                            ENDSIAL CCSD_RHF_SV1    
 #

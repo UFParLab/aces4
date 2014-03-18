@@ -87,6 +87,14 @@ void return_h1(int & array_slot, int& rank, int * index_values, int& size, int *
 
 void return_ovl(int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
+void scf_atom(
+int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
+int & array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5, 
+int& ierr);
+
 void compute_int_scratchmem(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
 
@@ -153,6 +161,9 @@ void aoladder_contraction(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
         int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+
+void compute_nn_repulsion(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 
 void scf_frag(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
@@ -330,6 +341,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["compute_diis"]=(fp0)&compute_diis;
 	procmap_["return_h1"]=(fp0)&return_h1;
 	procmap_["return_ovl"]=(fp0)&return_ovl;
+	procmap_["scf_atom"]=(fp0)&scf_atom;
 	procmap_["compute_int_scratchmem"]=(fp0)&compute_int_scratchmem;
 	procmap_["energy_denominator_rhf"]=(fp0)&energy_denominator_rhf;
 	procmap_["eig_sr_inv"]=(fp0)&eig_sr_inv;
@@ -347,6 +359,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["compute_ubatch8"]=(fp0)&compute_ubatch8;
     procmap_["compute_integral_batch"]=(fp0)&compute_integral_batch;
     procmap_["aoladder_contraction"]=(fp0)&aoladder_contraction;
+    procmap_["compute_nn_repulsion"]=(fp0)&compute_nn_repulsion;
     procmap_["scf_frag"]=(fp0)&scf_frag;
     procmap_["set_frag"]=(fp0)&set_frag;
     procmap_["frag_index_range"]=(fp0)&frag_index_range;

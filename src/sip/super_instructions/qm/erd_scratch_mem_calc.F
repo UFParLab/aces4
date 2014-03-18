@@ -409,6 +409,9 @@ c------------------------------------------------------------------------
       enddo
       enddo
 
+c     write(6,*) ' IMAX = ', imax 
+c     write(6,*) ' ZMAX = ', zmax 
+
 c-------------------------------------------------------------------------
 c   Add correction for memory needed in the HRR transformation.
 c-------------------------------------------------------------------------
@@ -417,6 +420,9 @@ c-------------------------------------------------------------------------
      *                  spherical, ihrr, zhrr)
       imax = imax + ihrr
       zmax = zmax + zhrr  
+
+c     write(6,*) ' F_IMAX = ', imax 
+c     write(6,*) ' F_ZMAX = ', zmax 
 
       return
       end

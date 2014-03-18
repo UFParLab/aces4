@@ -22,8 +22,8 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 9 # Nfrags  
-      index   jatom  = 1, 9 # Nfrags  
+      index   katom  = 1, 29 # Nfrags  
+      index   jatom  = 1, 29 # Nfrags  
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -99,7 +99,7 @@ import "scf_frag_defs.sialx"
                   tatom(katom,jatom) = atom(katom,jatom) 
                   execute return_sval tatom(katom,jatom) etemp   
                   print_scalar etemp 
-                  execute scf_frag etemp Ca Cb Fock_a Fock_b  
+                  execute scf_atom etemp Ca Cb Fock_a Fock_b  
  
               ENDIF # katom == jatom  
             ENDDO jatom 
