@@ -50,12 +50,13 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/blocks.cpp\
 ./src/sip/dynamic_data/block_manager.h\
 ./src/sip/dynamic_data/block_manager.cpp\
-./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/contiguous_array_manager.h\
-./src/sip/dynamic_data/persistent_array_manager.cpp\
-./src/sip/dynamic_data/persistent_array_manager.h\
+./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/data_manager.h\
-./src/sip/dynamic_data/data_manager.cpp
+./src/sip/dynamic_data/data_manager.cpp\
+./src/sip/dynamic_data/persistent_array_manager.h\
+./src/sip/dynamic_data/id_block_map.h
+#only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.cpp\
@@ -90,7 +91,9 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/sip_mpi_utils.h \
 ./src/sip/mpi/sip_mpi_utils.cpp \
 ./src/sip/mpi/sip_mpi_data.h\
-./src/sip/mpi/sip_mpi_data.cpp
+./src/sip/mpi/sip_mpi_data.cpp\
+./src/sip/mpi/barrier_support.h\
+./src/sip/mpi/barrier_support.cpp
 
 endif
 

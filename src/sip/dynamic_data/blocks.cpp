@@ -29,6 +29,13 @@ BlockId::BlockId(int array_id, const index_value_array_t& index_values) :
 //			<< '@' << this << std::endl;
 
 }
+
+BlockId::BlockId(const mpi_block_id_t buffer):
+	array_id_(buffer[0]),
+	parent_id_ptr_(NULL){
+	std::copy(buffer+1, buffer + MAX_RANK + 1, index_values_);
+}
+
 BlockId::BlockId(int array_id, const index_value_array_t& index_values, const BlockId& parent_id_ptr) :
 		array_id_(array_id),
 		parent_id_ptr_(new BlockId(parent_id_ptr)) {
@@ -71,9 +78,10 @@ BlockId BlockId::operator=(BlockId tmp) { //param passed by value, makes a copy.
 	std::swap(array_id_, tmp.array_id_);
 	std::swap(index_values_, tmp.index_values_);
 	std::swap(parent_id_ptr_, tmp.parent_id_ptr_);
-	return *this;  //but this is probably making another copy anyway--or is it?
+	return *this;
 }
 
+//TODO subindices: check delete.  Can there be multiple children of the parent?  Is this correct?
 BlockId::~BlockId() {
 //	std::cout << "~BlockId()  "<< *this << '@' << this << std::endl;
 	if (parent_id_ptr_ != NULL)
@@ -127,33 +135,33 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	return false;
 }
 
-int* BlockId::serialize(const BlockId& obj, int &size){
-	int * to_return;
-	size = 1 + MAX_RANK;
-	to_return = new int[size];
-	sip::check (size == serialized_size(), "serialized_size and caclulated size don't match!");
-	memcpy(to_return + 0, &obj.array_id_, sizeof(obj.array_id_));
-	memcpy(to_return + 1, obj.index_values_, sizeof (obj.index_values_));
-
-	return to_return;
-}
-
-BlockId BlockId::deserialize(const int* obj){
-	int array_id_;
-	index_value_array_t  index_values_;
-	memcpy(&array_id_, obj, sizeof (array_id_));
-	memcpy(&(index_values_[0]), obj + 1, sizeof(index_values_));
-	BlockId bid(array_id_, index_values_);
-	return bid;
-}
-
-
-int BlockId::serialized_size(){
-	int size = 1 + MAX_RANK;
-	return size;
-}
-
-
+//int* BlockId::serialize(const BlockId& obj, int &size){
+//	int * to_return;
+//	size = 1 + MAX_RANK;
+//	to_return = new int[size];
+//	sip::check (size == serialized_size(), "serialized_size and caclulated size don't match!");
+//	memcpy(to_return + 0, &obj.array_id_, sizeof(obj.array_id_));
+//	memcpy(to_return + 1, obj.index_values_, sizeof (obj.index_values_));
+//
+//	return to_return;
+//}
+//
+//BlockId BlockId::deserialize(const int* obj){
+//	int array_id_;
+//	index_value_array_t  index_values_;
+//	memcpy(&array_id_, obj, sizeof (array_id_));
+//	memcpy(&(index_values_[0]), obj + 1, sizeof(index_values_));
+//	BlockId bid(array_id_, index_values_);
+//	return bid;
+//}
+//
+//
+//int BlockId::serialized_size(){
+//	int size = 1 + MAX_RANK;
+//	return size;
+//}
+//
+//
 
 
 std::ostream& operator<<(std::ostream& os, const BlockId& id) {
@@ -675,7 +683,29 @@ Block::dataPtr Block::gpu_scale(double value){
 
 #endif
 
+/**
+ * ROUTINES FOR SERVER Blocks
+ *
+ */
+std::ostream& operator<<(std::ostream& os, const ServerBlock& block) {
+	os << "SIZE=" << block.size_ << std::endl;
+	int i = 0;
+	int MAX_TO_PRINT = 800;
+	int size = block.size_;
+	int output_row_size = 30;  //size of first dimension (really a column, but displayed as a row)
+	if (block.data_ == NULL) {
+		os << " data_ = NULL";
+	} else {
+		while (i < size && i < MAX_TO_PRINT) {
+			for (int j = 0; j < output_row_size && i < size; ++j) {
+				os << block.data_[i++] << "  ";
 
-
+			}
+			os << '\n';
+		}
+	}
+	os << "END OF SERVER BLOCK" << std::endl;
+	return os;
+}
 
 } /* namespace sip */

@@ -51,34 +51,28 @@ void Interpreter::_init(SipTables& sipTables) {
 }
 
 #ifdef HAVE_MPI
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::PersistentArrayManager &pbm_read, sip::PersistentArrayManager &pbm_write,
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::PersistentArrayManager<Block>& persistent_array_manager,
 		sip::SIPMPIAttr& sip_mpi_attr, sip::DataDistribution& data_distribution) :
-	pbm_read_(pbm_read), pbm_write_(pbm_write),
+	persistent_array_manager_(persistent_array_manager),
 	sip_tables_(sipTables), sialx_timers_(sialx_timer),
-	data_manager_(sipTables, pbm_read, pbm_write, sip_mpi_attr, data_distribution, section_number_, message_number_),
+	data_manager_(sipTables,  sip_mpi_attr, data_distribution),
 	op_table_(sipTables.op_table_),
-	sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
-	section_number_(0), message_number_(0){
-
-	//data_manager_ = new sip::DataManager(sipTables, pbm_read, pbm_write);
+	sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution){
 	_init(sipTables);
 }
 #else
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::PersistentArrayManager &pbm_read, sip::PersistentArrayManager &pbm_write) :
-	pbm_read_(pbm_read), pbm_write_(pbm_write),
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::PersistentArrayManager<Block>& persistent_data_manager ) :
+	persistent_data_manager_(persistent_data_manager),
 	sip_tables_(sipTables), sialx_timers_(sialx_timer),
-	data_manager_(sipTables, pbm_read, pbm_write),
-	op_table_(sipTables.op_table_), section_number_(0), message_number_(0){
+	data_manager_(sipTables),
+	op_table_(sipTables.op_table_){
 
-	//data_manager_ = new sip::DataManager(sipTables, pbm_read, pbm_write);
 	_init(sipTables);
 }
 
 #endif
 
-Interpreter::~Interpreter() {
-	//delete data_manager_;
-}
+Interpreter::~Interpreter() {}
 
 
 
@@ -496,7 +490,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case server_barrier_op: {
 			sialx_timers_.start_timer(line_number());
 			data_manager_.block_manager_.barrier();
-			section_number_++; message_number_ = 0;
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -567,28 +560,26 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case set_persistent_op:{
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
-			std::string name = string_literal(string_slot);
-
 			// DEBUG
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-
-			data_manager_.set_persistent_array(array_slot, name, string_slot);
-
+			if (is_scalar(array_slot))
+			    persistent_array_manager_.set_persistent_scalar(array_slot, string_slot);
+			else if (is_contiguous(array_slot))
+				persistent_array_manager_.set_persistent_contiguous(array_slot, string_slot);
+			else
+				persistent_array_manager_.set_persistent_distributed(array_slot, string_slot);
 			++pc;
 		}
 		break;
 		case restore_persistent_op:{
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
-			std::string name = string_literal(string_slot);
-
 			// DEBUG
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 
-			data_manager_.restore_persistent_array(array_slot, name, string_slot);
-
+			persistent_array_manager_.restore_persistent(array_slot, string_slot, &(data_manager_.block_manager_.block_map_));
 			++pc;
 		}
 		break;
@@ -604,12 +595,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 }
 
-int Interpreter::line_number() {
-	if (pc < op_table_.size())
-		return op_table_.line_number(pc);
-	else
-		return -1;// Past the end of the program. Probably being called by a test.
-}
+
 
 void Interpreter::post_sial_program(){
 	data_manager_.block_manager_.barrier();	// Implicit Barrier at the end of a SIAL program

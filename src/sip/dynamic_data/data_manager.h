@@ -14,13 +14,15 @@
 #include "config.h"
 #include "sip.h"
 #include "sip_tables.h"
+#include "blocks.h"
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
 #include "special_instructions.h"
 
 
+
 namespace sip {
-class PersistentArrayManager;
+class PersistentArrayManager<Block>;
 }
 
 namespace sip {
@@ -34,9 +36,13 @@ public:
 	typedef std::vector<sip::Block::BlockPtr>  ScalarBlockTable;
 
 #ifdef HAVE_MPI
-	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&, int&, int&);
+	DataManager(SipTables&,
+//			sip::PersistentArrayManager<Block>&, sip::PersistentArrayManager<Block>&,
+			sip::SIPMPIAttr&, sip::DataDistribution&);
 #else
-	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&);
+	DataManager(SipTables&,
+//			sip::PersistentArrayManager&, sip::PersistentArrayManager&
+			);
 #endif
 
 
@@ -120,11 +126,11 @@ private:
 	//static data for convenience
 	SipTables& sipTables_;
 
-	/**
-	 * Read and write persistent data between programs.
-	 */
-	sip::PersistentArrayManager & pbm_read_;
-	sip::PersistentArrayManager & pbm_write_;
+//	/**
+//	 * Read and write persistent data between programs.
+//	 */
+//	sip::PersistentArrayManager<Block> & pbm_read_;
+//	sip::PersistentArrayManager<Block> & pbm_write_;
 
 
 #ifdef HAVE_MPI

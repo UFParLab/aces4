@@ -7,16 +7,19 @@
 
 #include "persistent_array_manager.h"
 #include "blocks.h"
+#include "id_block_map.h"
 
 namespace sip {
 
-PersistentArrayManager::PersistentArrayManager() {}
+template <class BLOCK_TYPE>
+PersistentArrayManager<BLOCK_TYPE>::PersistentArrayManager() {}
 
-PersistentArrayManager::~PersistentArrayManager() {
+template <class BLOCK_TYPE>
+PersistentArrayManager<BLOCK_TYPE>::~PersistentArrayManager() {
 	// Clear distributed arrays.
 	for(DistributedLabelArrayMap::iterator it = distributed_array_map_.begin(); it != distributed_array_map_.end(); ++it){
 		SIP_LOG(std::cout<<"Now deleting distributed array with label \""<<it->first<<"\" from Persistent Block Manager");
-		BlockManager::IdBlockMapPtr bid_map = it->second;
+		IdBlockMap<BLOCK_TYPE>* bid_map = it->second;
 		sip::check(bid_map != NULL, "Block map for dist. array " + it->first + " is NULL");
 		for (BlockManager::IdBlockMap::iterator it2 = bid_map->begin(); it2 != bid_map->end(); ++it2){
 			sip::check(it2->second != NULL, "Block of array " + it->first + " is NULL");
@@ -34,29 +37,32 @@ PersistentArrayManager::~PersistentArrayManager() {
 	}
 
 }
-
-void PersistentArrayManager::mark_persistent_array(int array_id, std::string label) {
+template <class BLOCK_TYPE>
+void PersistentArrayManager<BLOCK_TYPE>::mark_persistent_array(int array_id, std::string label) {
 	persistent_array_map_.insert(std::pair<int, std::string>(array_id, label));
 }
 
-bool PersistentArrayManager::is_array_persistent(int array_id){
+template<class BLOCK_TYPE>
+bool PersistentArrayManager<BLOCK_TYPE>::is_array_persistent(int array_id){
 	ArrIdLabelMap::iterator it = persistent_array_map_.find(array_id);
 	if (it != persistent_array_map_.end())
 		return true;
 	return false;
 }
 
-Block::BlockPtr PersistentArrayManager::get_saved_contiguous_array(std::string label){
+template <class BLOCK_TYPE>
+Block::BlockPtr PersistentArrayManager<BLOCK_TYPE>::get_saved_contiguous_array(std::string label){
 	ContigLabelArrayMap::iterator it = contiguous_array_map_.find(label);
 	sip::check (it != contiguous_array_map_.end(), "Could not get previously saved contiguous array named " + label, current_line());
 	Block::BlockPtr bptr = it->second;
 	return bptr;
 }
 
-BlockManager::IdBlockMapPtr PersistentArrayManager::get_saved_dist_array(std::string label){
+template <class BLOCK_TYPE>
+IdBlockMap<BLOCK_TYPE>* PersistentArrayManager<BLOCK_TYPE>::get_saved_dist_array(std::string label){
 	DistributedLabelArrayMap::iterator it = distributed_array_map_.find(label);
 	sip::check(it != distributed_array_map_.end(), "Could not get previously saved distributed array named " + label, current_line());
-	BlockManager::IdBlockMapPtr bid_map = it->second;
+	IdBlockMap<BLOCK_TYPE>* bid_map = it->second;
 	return bid_map;
 }
 
@@ -66,7 +72,8 @@ BlockManager::IdBlockMapPtr PersistentArrayManager::get_saved_dist_array(std::st
  * @param array_id
  * @param bptr
  */
-void PersistentArrayManager::save_contiguous_array(int array_id, Block::BlockPtr bptr){
+template <class BLOCK_TYPE>
+void PersistentArrayManager<BLOCK_TYPE>::save_contiguous_array(int array_id, Block::BlockPtr bptr){
 	ArrIdLabelMap::iterator it = persistent_array_map_.find(array_id);
 	sip::check(it != persistent_array_map_.end(), "Array wasn't marked as persistent", current_line());
 	std::string &name = it->second;
@@ -80,12 +87,13 @@ void PersistentArrayManager::save_contiguous_array(int array_id, Block::BlockPtr
 
 }
 
-std::string PersistentArrayManager::get_label_of_marked_array(int array_id){
+template <class BLOCK_TYPE>
+std::string PersistentArrayManager<BLOCK_TYPE>::get_label_of_marked_array(int array_id){
 	return persistent_array_map_.at(array_id);
 }
 
-
-void PersistentArrayManager::clear_marked_arrays(){
+template <class BLOCK_TYPE>
+void PersistentArrayManager<BLOCK_TYPE>::clear_marked_arrays(){
 	persistent_array_map_.clear();
 }
 
@@ -95,7 +103,8 @@ void PersistentArrayManager::clear_marked_arrays(){
  * @param array_id
  * @param bid_map
  */
-void PersistentArrayManager::save_dist_array(int array_id, BlockManager::IdBlockMapPtr bid_map){
+template <class BLOCK_TYPE>
+void PersistentArrayManager<BLOCK_TYPE>::save_dist_array(int array_id, typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* bid_map){
 	ArrIdLabelMap::iterator it = persistent_array_map_.find(array_id);
 	sip::check(it != persistent_array_map_.end(), "Array wasn't marked as persistent", current_line());
 	std::string &name = it->second;
@@ -103,7 +112,7 @@ void PersistentArrayManager::save_dist_array(int array_id, BlockManager::IdBlock
 
 	DistributedLabelArrayMap::iterator it2 = distributed_array_map_.find(name);
 	if (it2 != distributed_array_map_.end()){
-		BlockManager::IdBlockMapPtr bid_map2 = it2->second;
+		IdBlockMap<BLOCK_TYPE>* bid_map2 = it2->second;
 		sip::check(bid_map2 != NULL, "entry for " + it2->first + " has a NULL map");
 		if (bid_map != bid_map2){
 			for (BlockManager::IdBlockMap::iterator it2 = bid_map2->begin(); it2 != bid_map2->end(); ++it2){
@@ -115,14 +124,15 @@ void PersistentArrayManager::save_dist_array(int array_id, BlockManager::IdBlock
 		}
 	}
 
-	distributed_array_map_.insert(std::pair<std::string, BlockManager::IdBlockMapPtr>(name, bid_map));
+	distributed_array_map_.insert(std::pair<std::string, IdBlockMap<BLOCK_TYPE>*>(name, bid_map));
 
 }
 
-std::ostream& operator<<(std::ostream& os, const PersistentArrayManager& obj) {
+template <class BLOCK_TYPE>
+std::ostream& operator<<(std::ostream& os, const PersistentArrayManager<BLOCK_TYPE>& obj) {
 	os << "persistent_array_map_:" << std::endl;
 	{
-		sip::PersistentArrayManager::ArrIdLabelMap::const_iterator it;
+		sip::PersistentArrayManager<BLOCK_TYPE>::ArrIdLabelMap::const_iterator it;
 		for (it = obj.persistent_array_map_.begin(); it != obj.persistent_array_map_.end(); ++it) {
 			os << it->first << "\t" << it->second << std::endl;  //print the array id & associated string
 		}
@@ -130,7 +140,7 @@ std::ostream& operator<<(std::ostream& os, const PersistentArrayManager& obj) {
 
 	os << "contiguous_array_map_:" << std::endl;
 	{
-		sip::PersistentArrayManager::ContigLabelArrayMap::const_iterator it;
+		sip::PersistentArrayManager<BLOCK_TYPE>::ContigLabelArrayMap::const_iterator it;
 		for (it = obj.contiguous_array_map_.begin(); it != obj.contiguous_array_map_.end(); ++it){
 //			os << it->first << "\t" << *(it->second) << std::endl;
 			os << it->first << std::endl;
@@ -139,7 +149,7 @@ std::ostream& operator<<(std::ostream& os, const PersistentArrayManager& obj) {
 
 	os << "distributed_array_map_:" << std::endl;
 	{
-		sip::PersistentArrayManager::DistributedLabelArrayMap::const_iterator it;
+		sip::PersistentArrayManager<BLOCK_TYPE>::DistributedLabelArrayMap::const_iterator it;
 		for (it = obj.distributed_array_map_.begin(); it != obj.distributed_array_map_.end(); ++it){
 			os << it->first << std::endl;
 			const BlockManager::IdBlockMap *bid_map = it -> second;

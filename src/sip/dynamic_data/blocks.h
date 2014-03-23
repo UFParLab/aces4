@@ -59,6 +59,11 @@ namespace sip {
  */
 class BlockId {
 public:
+
+	static const int mpi_count = MAX_RANK+1;
+	typedef int mpi_block_id_t[mpi_count];
+
+
 	BlockId();
 
 	/** Constructor for normal blocks.  parent_id_is set to NULL.
@@ -67,6 +72,18 @@ public:
 	 * @param index_values
 	 */
 	BlockId(int array_id, const index_value_array_t& index_values);
+
+	/** Constructor for normal blocks with null parent_id.
+	 * Values are in an MAX_RANK + 1 length array were element 0
+	 * is the array_id and the rest are the index_values.
+	 *
+	 * Typically, this constructor is used when the BlockId has been
+	 * sent in an MPI message.
+	 *
+	 * @param buffer
+	 */
+
+	BlockId(const mpi_block_id_t buffer);
 
 	/** Constructor for subblocks
 	 *
@@ -132,26 +149,26 @@ public:
 
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
 
-	/**
-	 * Serialize to send over the network
-	 * @param [in]
-	 * @param [out]
-	 * @return
-	 */
-	static int* serialize(const BlockId&, int&);
-	/**
-	 * Deserialize and construct a BlockId object.
-	 * @param
-	 * @return
-	 */
-	static BlockId deserialize(const int*);
-
-
-	/**
-	 * Returns the serialized size
-	 * @return
-	 */
-	static int serialized_size();
+//	/**
+//	 * Serialize to send over the network
+//	 * @param [in]
+//	 * @param [out]
+//	 * @return
+//	 */
+//	static int* serialize(const BlockId&, int&);
+//	/**
+//	 * Deserialize and construct a BlockId object.
+//	 * @param
+//	 * @return
+//	 */
+//	static BlockId deserialize(const int*);
+//
+//
+//	/**
+//	 * Returns the serialized size
+//	 * @return
+//	 */
+//	static int serialized_size();
 
 
 private:
@@ -355,6 +372,56 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(Block);
 
 };
+
+
+/** This is a container for block data held by a server
+ *
+ */
+class ServerBlock {
+public:
+	typedef double * dataPtr;
+	typedef size_t size_type;
+
+	ServerBlock():
+		size_(0), data_(NULL){
+	}
+
+	ServerBlock(size_type size, bool initialize = true):
+			size_(size){
+		if (initialize) data_ = new double[size]();
+		else data_ = new double[size];
+	}
+
+	ServerBlock(size_type size, dataPtr data):
+				size_(size),
+				data_(data){
+	}
+
+	~ServerBlock(){
+		if (data_ != NULL) delete [] data_;
+	}
+
+	size_t size(){return size_;}
+	dataPtr get_data(){return data_;}
+
+    dataPtr accumulate_data(size_t size, dataPtr to_add){
+    	check(size_ == size, "accumulating blocks of unequal size");
+    	for (unsigned i = 0; i < size; ++i){
+    		data_[i] += to_add[i];
+    	}
+    	return data_;
+    }
+
+    friend std::ostream& operator<<(std::ostream&, const ServerBlock &);
+
+private:
+	size_t size_;
+	dataPtr data_;
+
+	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
+};
+
+
 
 } /* namespace sip */
 

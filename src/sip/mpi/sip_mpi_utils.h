@@ -42,13 +42,22 @@ public:
 	static sip::BlockId get_block_id_from_rank(int rank, int tag);
 
 	/**
-	 * Gets double precision data from another MPI rank and copies it into the passed BlockPtr
+	 * Gets double precision data from another MPI rank and copies it into the passed Block
 	 * @param rank
 	 * @param tag [int]
 	 * @param size
 	 * @param bptr [inout]
 	 */
-	static void get_bptr_data_from_rank(int rank, int tag, int size, sip::Block::BlockPtr bptr);
+	static void get_bptr_data_from_rank(int rank, int tag, int size, Block* bptr);
+
+	/**
+	 * Gets double precision data from another MPI rank and copies it into the passed ServerBlock
+	 * @param rank
+	 * @param tag [int]
+	 * @param size
+	 * @param bptr [inout]
+	 */
+	static void get_bptr_data_from_rank(int rank, int tag, int size, ServerBlock* bptr);
 
 	/**
 	 * Asynchronously sends a block id and a block to another MPI rank
@@ -111,10 +120,9 @@ public:
 	/**
 	 * Expects an ack message with a given tag from a specific rank
 	 * @param rank
-	 * @param ack
 	 * @param tag
 	 */
-	static void expect_ack_from_rank(const int rank, int ack, const int tag);
+	static void expect_ack_from_rank(const int rank, const int tag);
 
 
 	/**
@@ -126,52 +134,52 @@ public:
 	 */
 	static void expect_async_ack_from_rank(const int rank, int ack, const int tag, MPI_Request *request);
 
-	/**
-	 * Each tag (a 32 bit integer) contains these fields
-	 */
-	typedef struct {
-		unsigned int message_type : 4;
-		unsigned int section_number : 12;
-		unsigned int message_number : 16;
-	} SIPMPITagBitField;
-
-	/**
-	 * Convenience union to convert bits from the bitfield to an int and back
-	 */
-	typedef union {
-		SIPMPITagBitField bf;
-		int i;
-	} SIPMPITagBitFieldConverter;
-
-	/**
-	 * Extracts the type of message from an MPI_TAG (right most byte).
-	 * @param mpi_tag
-	 * @return
-	 */
-	static SIPMPIData::MessageType_t get_message_type(int mpi_tag);
-
-	/**
-	 * Gets the section number from an MPI_TAG.
-	 * @param mpi_tag
-	 * @return
-	 */
-	static int get_section_number(int mpi_tag);
-
-	/**
-	 * Extracts the message number from an MPI_TAG.
-	 * @param mpi_tag
-	 * @return
-	 */
-	static int get_message_number(int mpi_tag);
-
-	/**
-	 * Constructs a tag from its constituent parts
-	 * @param message_type
-	 * @param section_number
-	 * @param message_number
-	 * @return
-	 */
-	static int make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int message_number);
+//	/**
+//	 * Each tag (a 32 bit integer) contains these fields
+//	 */
+//	typedef struct {
+//		unsigned int message_type : 4;
+//		unsigned int section_number : 12;
+//		unsigned int message_number : 16;
+//	} SIPMPITagBitField;
+//
+//	/**
+//	 * Convenience union to convert bits from the bitfield to an int and back
+//	 */
+//	typedef union {
+//		SIPMPITagBitField bf;
+//		int i;
+//	} SIPMPITagBitFieldConverter;
+//
+//	/**
+//	 * Extracts the type of message from an MPI_TAG (right most byte).
+//	 * @param mpi_tag
+//	 * @return
+//	 */
+//	static SIPMPIData::MessageType_t get_message_type(int mpi_tag);
+//
+//	/**
+//	 * Gets the section number from an MPI_TAG.
+//	 * @param mpi_tag
+//	 * @return
+//	 */
+//	static int get_section_number(int mpi_tag);
+//
+//	/**
+//	 * Extracts the message number from an MPI_TAG.
+//	 * @param mpi_tag
+//	 * @return
+//	 */
+//	static int get_message_number(int mpi_tag);
+//
+//	/**
+//	 * Constructs a tag from its constituent parts
+//	 * @param message_type
+//	 * @param section_number
+//	 * @param message_number
+//	 * @return
+//	 */
+//	static int make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int message_number);
 
 private:
 

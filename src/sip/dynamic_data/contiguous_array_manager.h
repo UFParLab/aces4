@@ -32,7 +32,6 @@
 #include <vector>
 #include <stack>
 #include "blocks.h"
-#include "persistent_array_manager.h"
 
 namespace sip {
 class SipTables;
@@ -44,7 +43,6 @@ class SetupReader;
 
 namespace sip {
 
-class PersistentArrayManager;
 
 /** Objects of this class record the information necessary for the interpreter to write modified subblocks back into
  * the enclosing contiguous block.
@@ -80,14 +78,14 @@ public:
 	 *
 	 * @param sipTables
 	 */
-	explicit ContiguousArrayManager(sip::SipTables&, setup::SetupReader&, PersistentArrayManager&, PersistentArrayManager&);
+	ContiguousArrayManager(sip::SipTables&, setup::SetupReader&);
 	~ContiguousArrayManager();
 
 	Block::BlockPtr create_contiguous_array(int array_id, Block::BlockPtr block);
 
 	/**
 	 * Allocates memory for a new contiguous array with the given id, and records it in the contiguous_array_map.
-	 * The shape of the array, is obtained from the sipTables.
+	 * The shape of the array is obtained from the sipTables.
 	 * The contents are initialized to zero.
 	 *
 	 * Requires that this array does not already exist in the map.
@@ -186,11 +184,12 @@ private:
 	ContiguousArrayMap contiguous_array_map_;
 	sip::SipTables & sipTables_;
 	setup::SetupReader & setup_reader_;
-	/**
-	 * Read and write persistent data between programs.
-	 */
-	sip::PersistentArrayManager & pbm_read_;
-	sip::PersistentArrayManager & pbm_write_;
+
+//	/**
+//	 * Read and write persistent data between programs.
+//	 */
+//	sip::PersistentArrayManager<Block> & pbm_read_;
+//	sip::PersistentArrayManager<Block> & pbm_write_;
 
 	DISALLOW_COPY_AND_ASSIGN(ContiguousArrayManager);
 };

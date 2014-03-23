@@ -15,6 +15,14 @@ namespace sip{
 class SIPMPIData {
 public:
 
+	//TODO  rename this to SIPMPIConstants
+
+/*Note that if we need to add more message types while keeping
+ * the tag length to four bits, we can use the same tag for
+ * the message and its ack.  There is no ambiguity since
+ * messages go from worker to server, and acks from server to
+ * worker.
+ */
 
 #define SIP_MESSAGE_TYPES \
 SIP_MESSAGE(DELETE, 0, "DELETE")\
@@ -27,11 +35,11 @@ SIP_MESSAGE(PUT_ACCUMULATE, 6, "PUT_ACCUMULATE")\
 SIP_MESSAGE(PUT_ACCUMULATE_DATA, 7, "PUT_ACCUMULATE_DATA")\
 SIP_MESSAGE(BARRIER, 8, "BARRIER")\
 SIP_MESSAGE(END_PROGRAM, 9, "END_PROGRAM")\
-SIP_MESSAGE(SAVE_PERSISTENT, 10, "SAVE_PERSISTENT")\
+SIP_MESSAGE(SET_PERSISTENT, 10, "SET_PERSISTENT")\
 SIP_MESSAGE(RESTORE_PERSISTENT, 11, "RESTORE_PERSISTENT")\
 SIP_MESSAGE(PUT_DATA_ACK, 12, "PUT_DATA_ACK")\
 SIP_MESSAGE(PUT_ACCUMULATE_DATA_ACK, 13, "PUT_ACCUMULATE_DATA_ACK")\
-SIP_MESSAGE(SAVE_PERSISTENT_ACK, 14, "SAVE_PERSISTENT_ACK")\
+SIP_MESSAGE(SET_PERSISTENT_ACK, 14, "SET_PERSISTENT_ACK")\
 SIP_MESSAGE(RESTORE_PERSISTENT_ACK, 15, "RESTORE_PERSISTENT_ACK")
 // Type of message allocated 4 bits only.
 

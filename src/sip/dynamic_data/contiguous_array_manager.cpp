@@ -41,8 +41,7 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 	return os;
 }
 
-ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sipTables, setup::SetupReader& setup_reader, PersistentArrayManager& pbm_read, PersistentArrayManager &pbm_write) :
-		pbm_read_(pbm_read), pbm_write_(pbm_write),
+ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sipTables, setup::SetupReader& setup_reader) :
 		sipTables_(sipTables),
 		setup_reader_(setup_reader){
 	//create static arrays in sial program
@@ -94,11 +93,11 @@ ContiguousArrayManager::~ContiguousArrayManager() {
 	ContiguousArrayMap::iterator it;
 	for (it=contiguous_array_map_.begin(); it!= contiguous_array_map_.end(); ++it){
 		int i = it->first;
-		if (!pbm_write_.is_array_persistent(i) && it->second != NULL){
-			SIP_LOG(std::cout<<"Deleting contiguous array : "<<sipTables_.array_name(i)<<std::endl);
-			delete it->second;
-			it->second = NULL;
-		}
+//		if (!pbm_write_.is_array_persistent(i) && it->second != NULL){
+//			SIP_LOG(std::cout<<"Deleting contiguous array : "<<sipTables_.array_name(i)<<std::endl);
+//			delete it->second;
+//			it->second = NULL;
+//		}
 	}
 	contiguous_array_map_.clear();
 }
@@ -248,15 +247,15 @@ void ContiguousArrayManager::get_block(const BlockId& block_id, int& rank, Block
 
 
 void ContiguousArrayManager::save_persistent_contig_arrays(){
-	ContiguousArrayMap::iterator it;
-	for (it=contiguous_array_map_.begin(); it!= contiguous_array_map_.end(); ++it){
-		int i = it->first;
-		if (pbm_write_.is_array_persistent(i)){
-			pbm_write_.save_contiguous_array(i, it->second);
-			it->second = NULL;
-		}
-
-	}
+//	ContiguousArrayMap::iterator it;
+//	for (it=contiguous_array_map_.begin(); it!= contiguous_array_map_.end(); ++it){
+//		int i = it->first;
+//		if (pbm_write_.is_array_persistent(i)){
+//			pbm_write_.save_contiguous_array(i, it->second);
+//			it->second = NULL;
+//		}
+//
+//	}
 }
 
 

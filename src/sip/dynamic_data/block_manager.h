@@ -17,6 +17,9 @@
 #include <vector>
 #include <stack>
 #include "blocks.h"
+#include "id_block_map.h"
+#include "persistent_array_manager.h"
+#include "barrier_support.h"
 
 #ifdef HAVE_MPI
 #include "sip_mpi_attr.h"
@@ -26,27 +29,22 @@
 
 namespace sip {
 class SipTables;
-}
-
-namespace sip {
-
-class PersistentArrayManager;
+//class PersistentArrayManager<Block>;
 
 class BlockManager {
 public:
 
 
-	typedef std::map<BlockId, Block::BlockPtr> IdBlockMap;
-	typedef IdBlockMap* IdBlockMapPtr;
-	typedef std::vector<IdBlockMapPtr> BlockMap;
+//	typedef std::map<BlockId, Block::BlockPtr> IdBlockMap;
+//	typedef IdBlockMap* IdBlockMapPtr;
+//	typedef std::vector<IdBlockMapPtr> BlockMap;
 	typedef std::vector<BlockId> BlockList;
-
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
 #ifdef HAVE_MPI
-	BlockManager(sip::SipTables&, PersistentArrayManager&, PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&, int&, int&);
+	BlockManager(sip::SipTables&, SIPMPIAttr&, DataDistribution&, BarrierSupport&);
 #else
-	BlockManager(sip::SipTables&, PersistentArrayManager&, PersistentArrayManager&);
+	BlockManager(sip::SipTables&);
 #endif
 	~BlockManager();
 
@@ -55,7 +53,7 @@ public:
 
 	/*! SIAL operations on arrays */
 	void create_distributed(int array_id);
-	void restore_distributed(int array_id, BlockManager::IdBlockMapPtr bid_map);
+	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
 	void delete_distributed(int array_id);
 	void get(const BlockId&);
 	void put_replace(const BlockId&, const Block::BlockPtr);
@@ -115,11 +113,6 @@ public:
 	 * then deletes the scope's temp Block list
 	 */
 	void leave_scope();
-
-	/**
-	 * Saves the persistent distributed arrays to the persistent block manager.
-	 */
-	void save_persistent_dist_arrays();
 
 #ifdef HAVE_CUDA
 	// GPU
@@ -185,7 +178,22 @@ private:
 	 * @param BlockId of desired block
 	 * @return pointer to given block, or NULL if it is not in the map.
 	 */
-	Block::BlockPtr block(const BlockId&);
+	Block::BlockPtr block(const BlockId& id){return block_map_.block(id);}
+
+	/**
+	 * Helper function to insert newly created block into block map.
+	 * @param block_id
+	 * @param block_ptr
+	 */
+     void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr){block_map_.insert_block(block_id, block_ptr);}
+	/**
+	 * Removes the given Block from the map and frees its data. It is a fatal error
+	 * to try to delete a block that doesn't exist.
+	 *
+	 * @param BlockId of block to remove
+	 */
+	void delete_block(const BlockId& id){block_map_.delete_block(id);}
+
 
 	/** Creates and returns a new block with the given shape and records it in the block_map_ with the given BlockId.
 	 * Requires the block with given id does not already exist.
@@ -206,14 +214,6 @@ private:
 	 * @return pointer to newly created block.
 	 */
 	Block::BlockPtr create_gpu_block(const BlockId&, const BlockShape& shape);
-
-	/**
-	 * Removes the given Block from the map and frees its data. It is a fatal error
-	 * to try to delete a block that doesn't exist.
-	 *
-	 * @param BlockId of block to remove
-	 */
-	void remove_block(const BlockId&);
 
 	/**
 	 * Creates a list of concrete BlockIds from the given BlockId, which may contain wild card slots
@@ -246,8 +246,8 @@ private:
 	 */
 	bool has_wild_slot(const index_selector_t& selector);
 
-	/** Vector of map of blocks> */
-	BlockMap block_map_;
+	/** Map from block id's to blocks */
+	IdBlockMap<Block> block_map_;
 
 	/** Conceptually, a stack of lists of temp blocks.  Each list corresponds to a scope, and the entries in the
 	 * list are blocks that should be deleted when that scope is exited.  The enter_scope and leave_scope methods
@@ -258,22 +258,15 @@ private:
 													//contents.
 
 	/** Pointer to static data */
-	sip::SipTables& sip_tables_;  //TODO only needed to look up shape. Perhaps refactor to eliminate
+	SipTables& sip_tables_;  //TODO only needed to look up shape. Perhaps refactor to eliminate
 	                             //this dependency?
-
-	/**
-	 * Read and write persistent data between programs.
-	 */
-	sip::PersistentArrayManager & pbm_read_;
-	sip::PersistentArrayManager & pbm_write_;
 
 #ifdef HAVE_MPI
 
-	int & section_number_;	// Reference to a the Interpreter's Section Number
-	int & message_number_;  // Reference to the interpreter's Message Number.
+    BarrierSupport& barrier_support_;
 
-	sip::SIPMPIAttr & sip_mpi_attr_; // MPI Attributes of the SIP for this rank
-	sip::DataDistribution &data_distribution_; // Data distribution scheme
+	SIPMPIAttr & sip_mpi_attr_; // MPI Attributes of the SIP for this rank
+	DataDistribution &data_distribution_; // Data distribution scheme
 
 	MPI_Request posted_async_[MAX_POSTED_ASYNC]; // posted asynchronous receives/sends
 	int num_posted_async_; // number of posted asynchronous receives/sends
@@ -305,14 +298,8 @@ private:
 
 #endif
 
-	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 
-	/**
-	 * Helper function to insert newly created block into block map.
-	 * @param block_id
-	 * @param block_ptr
-	 */
-	void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr);
+	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 
 };
 

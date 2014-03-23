@@ -71,12 +71,26 @@ void SIPMPIUtils::get_block_params(const int rank, int tag, BlockId* bid, BlockS
 	delete [] to_send;
 }
 
-void SIPMPIUtils::get_bptr_data_from_rank(int rank, int tag, int size, Block::BlockPtr bptr) {
-
-	check(bptr != NULL, "Block Pointer into which data is to be received is NULL !", current_line());
+void SIPMPIUtils::get_bptr_data_from_rank(int mpi_rank, int tag, int size, Block* bptr) {
+//	check(bptr != NULL, "Block Pointer into which data is to be received is NULL !", current_line());
 	MPI_Status status;
-	check_err(MPI_Recv(bptr->data_, size, MPI_DOUBLE, rank, tag, MPI_COMM_WORLD, &status));
-	SIP_LOG(std::cout<< "W " << SIPMPIAttr::get_instance().global_rank() << " : Got Block Data with tag : "<< tag << " from rank " << rank << std::endl);
+	check_err(MPI_Recv(bptr->data_, size, MPI_DOUBLE, mpi_rank, tag, MPI_COMM_WORLD, &status));
+	SIP_LOG(std::cout<< "W " << SIPMPIAttr::get_instance().global_rank() << " : Got Block Data with tag : "<< tag << " from rank " << mpi_rank << std::endl);
+	//SIP_LOG(std::cout<<"Got block ptr : " << *bptr << std::endl);
+}
+
+/**
+ * Gets double precision data from another MPI rank and copies it into the passed BlockPtr
+ * @param rank
+ * @param tag [int]
+ * @param size
+ * @param bptr [inout]
+ */
+void SIPMPIUtils::get_bptr_data_from_rank(int mpi_rank, int tag, int size, ServerBlock* bptr) {
+//	check(bptr != NULL, "Block Pointer into which data is to be received is NULL !", current_line());
+	MPI_Status status;
+	check_err(MPI_Recv(bptr->data_, size, MPI_DOUBLE, mpi_rank, tag, MPI_COMM_WORLD, &status));
+	SIP_LOG(std::cout<< "W " << SIPMPIAttr::get_instance().global_rank() << " : Got Block Data with tag : "<< tag << " from rank " << mpi_rank << std::endl);
 	//SIP_LOG(std::cout<<"Got block ptr : " << *bptr << std::endl);
 }
 
@@ -158,14 +172,13 @@ MPI_Request SIPMPIUtils::isend_block_data_to_rank(Block::dataPtr data, int size,
 
 void SIPMPIUtils::send_ack_to_rank(const int rank, int ack, const int tag){
 	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Sending Ack with tag : "<< tag << " to rank " << rank << std::endl);
-	check_err(MPI_Send(&ack, 1, MPI_INT, rank, tag, MPI_COMM_WORLD));
+	check_err(MPI_Send(0, 0, MPI_INT, rank, tag, MPI_COMM_WORLD));
 }
 
-void SIPMPIUtils::expect_ack_from_rank(const int rank, int ack, const int tag){
-	int recvd_ack;
+void SIPMPIUtils::expect_ack_from_rank(const int mpi_rank, const int tag){
 	MPI_Status status;
 	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Expecting Ack with tag : "<< tag << " from rank " << rank << std::endl);
-	check_err(MPI_Recv(&recvd_ack, 1, MPI_INT, rank, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
+	check_err(MPI_Recv(0, 0, MPI_INT, mpi_rank, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
 	int recvd_tag = status.MPI_TAG;
 	check(recvd_ack == ack, "Did not receive expected ACK !", current_line());
 	check(recvd_tag == tag, "Did not receive expected Tag !", current_line());
@@ -179,30 +192,30 @@ void SIPMPIUtils::expect_async_ack_from_rank(const int rank, int ack, const int 
 
 
 
-SIPMPIData::MessageType_t SIPMPIUtils::get_message_type(int mpi_tag){
-	SIPMPITagBitFieldConverter bc;
-	bc.i = mpi_tag;
-	return SIPMPIData::intToMessageType(bc.bf.message_type);
-}
-
-int SIPMPIUtils::get_section_number(int mpi_tag){
-	SIPMPITagBitFieldConverter bc;
-	bc.i = mpi_tag;
-	return bc.bf.section_number;
-}
-
-int SIPMPIUtils::get_message_number(int mpi_tag){
-	SIPMPITagBitFieldConverter bc;
-	bc.i = mpi_tag;
-	return bc.bf.message_number;
-}
-
-int SIPMPIUtils::make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int message_number){
-	SIPMPITagBitFieldConverter bc;
-	bc.bf.message_type = message_type;
-	bc.bf.section_number = section_number;
-	bc.bf.message_number = message_number;
-	return bc.i;
-}
+//SIPMPIData::MessageType_t SIPMPIUtils::get_message_type(int mpi_tag){
+//	SIPMPITagBitFieldConverter bc;
+//	bc.i = mpi_tag;
+//	return SIPMPIData::intToMessageType(bc.bf.message_type);
+//}
+//
+//int SIPMPIUtils::get_section_number(int mpi_tag){
+//	SIPMPITagBitFieldConverter bc;
+//	bc.i = mpi_tag;
+//	return bc.bf.section_number;
+//}
+//
+//int SIPMPIUtils::get_message_number(int mpi_tag){
+//	SIPMPITagBitFieldConverter bc;
+//	bc.i = mpi_tag;
+//	return bc.bf.message_number;
+//}
+//
+//int SIPMPIUtils::make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int message_number){
+//	SIPMPITagBitFieldConverter bc;
+//	bc.bf.message_type = message_type;
+//	bc.bf.section_number = section_number;
+//	bc.bf.message_number = message_number;
+//	return bc.i;
+//}
 
 } /* namespace sip */
