@@ -327,7 +327,7 @@ c  CHARGES
       real(C_DOUBLE), pointer :: pcharge(:)
 c scratch space 
       real(C_DOUBLE), pointer :: scr_i(:)
-      real(C_DOUBLE), pointer :: iscr_i(:)
+      integer(C_INT), pointer :: iscr_i(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
 
@@ -509,7 +509,7 @@ c   Set scratch space
       niscr = 5000000 ! imax 
       call scratch_array(nscr, cscr)
       call c_f_pointer(cscr, scr_i, [nscr])
-      call scratch_array(niscr, ciscr)
+      call integer_scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr_i, [niscr])
 
       call comp_return_frag_h0(H0T, n_apf, iatom, nc1, nc2, nd1, nd2,
@@ -649,7 +649,7 @@ c
      *               vmax,omax,norb,maxhist,diis_start) 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
+      call delete_integer_scratch_array(ciscr)
 
       return 
       end 
