@@ -44,35 +44,49 @@ c--------------------------------------------------------------------------
 
       integer(C_INT), intent(out)::ierr 
 
-      if (rank_0 .ne. 2) then
+      if (rank_0 .gt. 2) then
          print *,'Error: return_sval at line '!,current_line
-         print *,'First arg. must be a block of a 2-index array.'
+         print *,'First arg. must be a block of a 1 or 2-index array.'
 c        call abort_job()
       endif
 
       if (rank_1 .ne. 0) then
          print *,'Error: return_sval at line '!,current_line,' not ',
-         print *,'called with scalar in 2nd arg.'
+         print *,'called something other than scalar in 2nd arg.'
 c        call abort_job()
       endif
 
-      if (extents_0(1) .ne. 1) then  
-       write(6,*) ' return sval called using array without 
-     *              simple indeces'
-      endif 
+      if (rank_0 .eq. 2) then 
 
-      if (extents_0(2) .ne. 1) then  
-       write(6,*) ' return sval called using array without 
-     *              simple indeces'
-      endif 
+         if (extents_0(1) .ne. 1) then  
+             write(6,*) ' return sval called using array without 
+     *                    simple indeces'
+         endif 
 
-      call doreturn(data_0, data_1,
+         if (extents_0(2) .ne. 1) then  
+             write(6,*) ' return sval called using array without 
+     *                    simple indeces'
+         endif 
+
+         call doreturn2(data_0, data_1,
      *              1, extents_0(1), 1, extents_0(2)) 
 
-      return 
+         return 
+      endif 
+
+      if (rank_0 .eq. 1) then 
+
+         call doreturn1(data_0, data_1,
+     *              1, extents_0(1)) 
+
+         return 
+      endif 
+
+
+
       end 
 
-      subroutine doreturn(array1,sval,a1,a2,b1,b2) 
+      subroutine doreturn2(array1,sval,a1,a2,b1,b2) 
 
 c---------------------------------------------------------------------------
 c
@@ -92,6 +106,24 @@ c          write(6,*) ' SVAL ', a, b, sval
        enddo ! b 
        enddo ! a 
       sval = array1(a2,b2)
+c
+      return
+      end
+
+
+      subroutine doreturn1(array1,sval,a1,a2) 
+
+c---------------------------------------------------------------------------
+c
+c 
+c---------------------------------------------------------------------------
+
+      implicit none
+      integer a, a1, a2
+      double precision array1(a1:a2), sval   
+
+      sval = 0.0d+0 
+      sval = array1(a2)
 c
       return
       end

@@ -51,8 +51,10 @@ special return_sval rw
 special get_my_rank w
 special frag_index_range uu  
 special set_frag u  
-special compute_integral_batch u  
+special compute_integral_batch w  
 special energy_denominator_rhf ur   
+special compute_int_scratchmem uuu
+special print_block r
 
 endsial trans_frag_defs
 

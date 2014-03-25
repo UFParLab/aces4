@@ -247,20 +247,7 @@ c     enddo
 c     stop 
       return
       end
-C  Copyright (c) 2003-2010 University of Florida
-C
-C  This program is free software; you can redistribute it and/or modify
-C  it under the terms of the GNU General Public License as published by
-C  the Free Software Foundation; either version 2 of the License, or
-C  (at your option) any later version.
 
-C  This program is distributed in the hope that it will be useful,
-C  but WITHOUT ANY WARRANTY; without even the implied warranty of
-C  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-C  GNU General Public License for more details.
-
-C  The GNU General Public License is included in this distribution
-C  in the file COPYRIGHT.
       subroutine compute_aoladder(a1,a2,b1,b2,c1,c2,d1,d2,integrals, 
      *                 i1, i2, j1, j2, t2old, 
      *                 ii1, ii2, jj1, jj2, t2new, 
@@ -312,6 +299,9 @@ c---------------------------------------------------------------------------
       double precision integrals(a1:a2,b1:b2,c1:c2,d1:d2) 
       double precision t2old(a1:a2,1:i2,c1:c2,1:j2) 
       double precision t2new(b1:b2,1:ii2,d1:d2,1:jj2) 
+      double precision temp1(b1:b2,d1:d2,a1:a2,c1:c2) 
+      double precision temp_old(a1:a2,c1:c2,1:i2,1:j2) 
+      double precision temp_new(b1:b2,d1:d2,1:ii2,1:jj2) 
       double precision max_int, etemp   
 
 c     double precision scr(*)   
@@ -539,38 +529,87 @@ c---------------------------------------------------------------------------
       enddo 
       enddo 
 
-c     write(6,*) ' MAX_INT = ', max_int
-
-c             call return_maxint(nalpha_occupied, nbeta_occupied, 
-c    *                             a1,a2,b1,b2,
-c    *                             c1,c2,d1,d2,
-c    *                             integrals, 
-c    *                             scr(nfirst),   
-c    *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
-c    *                             )
+      do d = dd1, dd2 
+      do c = cc1, cc2 
+      do b = bb1, bb2 
+      do a = aa1, aa2 
+         temp1(b,d,a,c) = integrals(a,b,c,d) 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
  
-      do d = d1, d2 
-      do c = c1, c2 
-      do b = b1, b2 
-      do a = a1, a2 
-         if ((a .ge. aa1 .and. a .le. aa2) .and.
-     *       (b .ge. bb1 .and. b .le. bb2) .and.
-     *       (c .ge. cc1 .and. c .le. cc2) .and.
-     *       (d .ge. dd1 .and. d .le. dd2) .and. 
-     *       (max_int .gt. 1.0d-15)) then  
-             etemp = integrals(a,b,c,d) 
-             do iout = 1, i2 
-             do jout = 1, j2 
-                t2new(b,iout,d,jout) = t2new(b,iout,d,jout) 
-     *                               + etemp * t2old(a,iout,c,jout) 
+      do jout = 1, j2 
+      do iout = 1, i2 
+      do d = dd1, dd2 
+      do b = bb1, bb2 
+         temp_new(b,d,iout,jout) = 0.0  
+      enddo 
+      enddo 
+      enddo 
+      enddo 
+ 
+      do c = cc1, cc2 
+      do a = aa1, aa2 
+      do iout = 1, i2 
+      do jout = 1, j2 
+         temp_old(a,c,iout,jout) = t2old(a,iout,c,jout) 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
+ 
+      do iout = 1, i2 
+      do jout = 1, j2 
+      do c = cc1, cc2 
+      do a = aa1, aa2 
+         etemp = temp_old(a,c,iout,jout) 
+         do d = dd1, dd2 
+         do b = bb1, bb2 
+                temp_new(b,d,iout,jout) = temp_new(b,d,iout,jout) + 
+c    *                        temp1(b,d,a,c)*etemp ! temp_old(a,c,iout,jout) 
+     *                        integrals(a,b,c,d)*etemp ! temp_old(a,c,iout,jout) 
+          enddo 
+          enddo 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
+ 
+      do jout = 1, j2 
+      do d = dd1, dd2 
+      do iout = 1, i2 
+      do b = bb1, bb2 
+         t2new(b,iout,d,jout) = temp_new(b,d,iout,jout) 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
+ 
+
+ 
+c     do d = d1, d2 
+c     do c = c1, c2 
+c     do b = b1, b2 
+c     do a = a1, a2 
+c        if ((a .ge. aa1 .and. a .le. aa2) .and.
+c    *       (b .ge. bb1 .and. b .le. bb2) .and.
+c    *       (c .ge. cc1 .and. c .le. cc2) .and.
+c    *       (d .ge. dd1 .and. d .le. dd2) .and. 
+c    *       (max_int .gt. 1.0d-15)) then  
+c            etemp = integrals(a,b,c,d) 
+c            do iout = 1, i2 
+c            do jout = 1, j2 
+c               t2new(b,iout,d,jout) = t2new(b,iout,d,jout) 
+c    *                               + etemp * t2old(a,iout,c,jout) 
 c    *          + integrals(a,b,c,d) * t2old(a,iout,c,jout) 
-             enddo 
-             enddo 
-         endif 
-      enddo 
-      enddo 
-      enddo 
-      enddo 
+c            enddo 
+c            enddo 
+c        endif 
+c     enddo 
+c     enddo 
+c     enddo 
+c     enddo 
 
 30       continue 
          enddo   ! s

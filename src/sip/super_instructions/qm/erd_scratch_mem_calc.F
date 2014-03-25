@@ -38,7 +38,14 @@ c       me                      Rank of current processor.
 c       nprocs                  Number of processors.
 c--------------------------------------------------------------------------
 
+      use, intrinsic :: ISO_C_BINDING
       implicit none
+
+c Interface added BUT should be include NOT added in the future
+
+      include 'sip_interface.f'
+
+      integer (C_INT) nfrags 
 
       integer nshells, ncenters  
       integer shtype(nshells), ncfps(nshells), npfps(nshells)
@@ -74,6 +81,8 @@ c--------------------------------------------------------------------------
       integer ihrr, zhrr 
 
       logical spherical
+
+      nfrags          = int_constant("nfrags"//C_NULL_CHAR)
 
       do m = 1, nshells 
       do i = 1, ncenters 
@@ -117,6 +126,7 @@ c-------------------------------------------------------------------------
          zmax = max0(zmax, zblk)
       enddo
 
+      if (nfrags .gt. 0) go to 999 
 
       do m = m1, m2
       do n = m, nshells
@@ -312,6 +322,8 @@ c--------------------------------------------------------------------------
       enddo
       enddo
 
+999   continue 
+
 c------------------------------------------------------------------------
 c   Now calculate the memory for the one-electron integrals.
 c------------------------------------------------------------------------
@@ -409,6 +421,9 @@ c------------------------------------------------------------------------
       enddo
       enddo
 
+c     write(6,*) ' IMAX = ', imax 
+c     write(6,*) ' ZMAX = ', zmax 
+
 c-------------------------------------------------------------------------
 c   Add correction for memory needed in the HRR transformation.
 c-------------------------------------------------------------------------
@@ -417,6 +432,9 @@ c-------------------------------------------------------------------------
      *                  spherical, ihrr, zhrr)
       imax = imax + ihrr
       zmax = zmax + zhrr  
+
+c     write(6,*) ' F_IMAX = ', imax 
+c     write(6,*) ' F_ZMAX = ', zmax 
 
       return
       end

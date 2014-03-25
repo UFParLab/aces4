@@ -319,6 +319,7 @@ c-----------------------------------------------------------------------
       call lookup_shell(end_nfps, nshells, offset_1, m1) 
       call lookup_shell(end_nfps, nshells, offset_2, m2) 
 c
+c     call TAU_START("erd_scratch_mem_cal") 
       call erd_scratch_mem_calc(nshells, ncenters, ivangmom, 
      *                         ncfps, npfps, 
      *                         pcoords, ptcoords, 
@@ -329,6 +330,7 @@ c
      *                         my_imax, my_zmax, 
      * 
      *                         m1, m2)  
+c     call TAU_STOP("erd_scratch_mem_cal") 
 
       imax = max0(imax,my_imax) 
       zmax = max0(zmax,my_zmax) 

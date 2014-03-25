@@ -349,24 +349,6 @@ c---------------------------------------------------------------------------
      *                             scr(nfirst),   
      *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                             Fa,Fb)
- 
-      i = 0
-      do d = d1, d2 
-      do c = c1, c2 
-      do b = b1, b2 
-      do a = a1, a2 
-         i = i + 1 
-         if ((a .ge. aa1 .and. a .le. aa2) .and.
-     *       (b .ge. bb1 .and. b .le. bb2) .and.
-     *       (c .ge. cc1 .and. c .le. cc2) .and.
-     *       (d .ge. dd1 .and. d .le. dd2)) then  
-             aoint(i) = integrals(a,b,c,d)  
-c        write(6,*) a, b, c, d, integrals(a,b,c,d), aoint(i) 
-         endif 
-      enddo 
-      enddo 
-      enddo 
-      enddo 
 
             endif
 
@@ -380,6 +362,24 @@ c        write(6,*) a, b, c, d, integrals(a,b,c,d), aoint(i)
 100      continue 
          enddo   ! m
 c     stop 
+ 
+      i = 0
+      do d = d1, d2 
+      do c = c1, c2 
+      do b = b1, b2 
+      do a = a1, a2 
+         i = i + 1 
+c        if ((a .ge. aa1 .and. a .le. aa2) .and.
+c    *       (b .ge. bb1 .and. b .le. bb2) .and.
+c    *       (c .ge. cc1 .and. c .le. cc2) .and.
+c    *       (d .ge. dd1 .and. d .le. dd2)) then  
+             aoint(i) = integrals(a,b,c,d)  
+c        write(6,*) a, b, c, d, integrals(a,b,c,d), aoint(i) 
+c        endif 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
  
 c     i = 0
 c     do d = d1, d2 
