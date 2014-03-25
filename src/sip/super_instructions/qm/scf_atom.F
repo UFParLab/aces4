@@ -234,7 +234,7 @@ c---------------------------------------------------------------------------
 
 c        if (frag_calc) then 
 
-         call compute_fragscf(data_0,     ! OK  
+         call compute_fragscf(data_0(1),     ! OK  
      *                 scr, ! dbuf(integral_scr),
      *                 maxblk, 
      *                 iscr, ! ibuf(ipkgscr),
@@ -314,10 +314,10 @@ c array defining which atoms are in which fragment
       TYPE(C_PTR) :: sDimfrag  
       TYPE(C_PTR) :: pwatom_frag 
       integer, pointer :: pdim_frag(:)  
-      real(C_DOUBLE), pointer :: watom_frag(:,:)
+      integer(C_INT), pointer :: watom_frag(:,:)
 c array defining the number of atoms per fragment 
       TYPE(C_PTR) :: pnatoms_frag 
-      real(C_DOUBLE), pointer :: natoms_frag(:)
+      integer(C_INT), pointer :: natoms_frag(:)
 c     mapping of atoms to shells 
       TYPE(C_PTR) :: patom  
       integer, pointer :: atom(:)
@@ -1292,7 +1292,7 @@ c     HFD_a(m,n) = 0.0
 c     HFD_b(m,n) = 0.0   
 100   continue 
 
-      if (current_frag .eq. 111111111111) then 
+      if (current_frag .eq. -1) then 
        write(6,*) ' Alpha Orbital energies ' 
        write(6,*) ' -----------------------------------------------' 
        do m = 1, nocc_a 
