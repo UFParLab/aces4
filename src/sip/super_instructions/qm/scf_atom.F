@@ -332,10 +332,10 @@ c scratch space
       TYPE(C_PTR) :: ciscr
 
 c arrays defining fragment to otbital mapping  
-      real(C_DOUBLE), pointer :: baocc_frag(:,:)
-      real(C_DOUBLE), pointer :: bbocc_frag(:,:)
-      real(C_DOUBLE), pointer :: bavirt_frag(:,:)
-      real(C_DOUBLE), pointer :: bbvirt_frag(:,:)
+      integer(C_INT), pointer :: baocc_frag(:,:)
+      integer(C_INT), pointer :: bbocc_frag(:,:)
+      integer(C_INT), pointer :: bavirt_frag(:,:)
+      integer(C_INT), pointer :: bbvirt_frag(:,:)
 c ----------------------------------------------------------------------
 
 
