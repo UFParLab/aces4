@@ -22,8 +22,8 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 3 # Nfrags  
-      index   jatom  = 1, 3 # Nfrags  
+      index   katom  = 1, 29 # Nfrags  
+      index   jatom  = 1, 29 # Nfrags  
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -215,28 +215,6 @@ import "scf_frag_defs.sialx"
       set_persistent ca "ca" 
       set_persistent Fock_a "fock_a"
 
-#     DO p    
-#     DO p1    
-#        tpp(p,p1)      = fock_a(p,p1) 
-#        execute dump_amp tpp  
-#     ENDDO p1    
-#     ENDDO p     
-
-#     PARDO q, q1    
-#        tqq(q,q1)      = fock_b(q,q1) 
-#        execute dump_amp tqq  
-#     ENDPARDO q, q1    
-
-#     PARDO mu, p   
-#        txp(mu,p)      = ca(mu,p) 
-#        execute dump_amp txp  
-#     ENDPARDO mu, p   
-
-#     PARDO mu, q 
-#        txq(mu,q) = cb(mu,q) 
-#        execute dump_amp txq 
-#     ENDPARDO mu, q 
-#
 # -----------------------------------------------------------------------------
 #
                            ENDSIAL SCF_FRAGMENT 

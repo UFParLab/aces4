@@ -2850,8 +2850,8 @@
          CALL T2NEWAB  
 #
          CALL WMINJ 
-        #CALL AOLADDER 
-         CALL AOLADDER_GPU 
+         CALL AOLADDER 
+        #CALL AOLADDER_GPU 
          CALL WAEBF  
          CALL WMEBJ 
 #

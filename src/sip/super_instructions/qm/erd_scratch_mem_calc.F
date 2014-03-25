@@ -38,7 +38,14 @@ c       me                      Rank of current processor.
 c       nprocs                  Number of processors.
 c--------------------------------------------------------------------------
 
+      use, intrinsic :: ISO_C_BINDING
       implicit none
+
+c Interface added BUT should be include NOT added in the future
+
+      include 'sip_interface.f'
+
+      integer (C_INT) nfrags 
 
       integer nshells, ncenters  
       integer shtype(nshells), ncfps(nshells), npfps(nshells)
@@ -74,6 +81,8 @@ c--------------------------------------------------------------------------
       integer ihrr, zhrr 
 
       logical spherical
+
+      nfrags          = int_constant("nfrags"//C_NULL_CHAR)
 
       do m = 1, nshells 
       do i = 1, ncenters 
@@ -117,6 +126,7 @@ c-------------------------------------------------------------------------
          zmax = max0(zmax, zblk)
       enddo
 
+      if (nfrags .gt. 0) go to 999 
 
       do m = m1, m2
       do n = m, nshells
@@ -311,6 +321,8 @@ c--------------------------------------------------------------------------
       enddo
       enddo
       enddo
+
+999   continue 
 
 c------------------------------------------------------------------------
 c   Now calculate the memory for the one-electron integrals.

@@ -109,6 +109,8 @@ import "trans_frag_defs.sialx"
       scalar ao_exit
       scalar occ_exit 
       scalar virt_exit 
+      scalar imax 
+      scalar zmax 
 #
 # Declare arrays  
 # -------------- 
@@ -758,7 +760,7 @@ import "trans_frag_defs.sialx"
             if s == jcount  
 
                   aoint(mu,nu,lambda,sigma)  = 0.0 
-                  #VFL execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
 
                   DO j 
                      xj(j)             = wOccB_frag(j) 
@@ -955,7 +957,7 @@ import "trans_frag_defs.sialx"
             if s == jcount  
 
                   aoint(mu,nu,lambda,sigma)  = 0.0 
-                 #VFL execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
 
                   DO j 
                      xj(j)             = wOccB_frag(j) 
@@ -1502,9 +1504,10 @@ import "trans_frag_defs.sialx"
                   GET                         Vaibj(a,i,b,j,ii)  
                   tppqq(a,i,b,j)            = Vaibj(a,i,b,j,ii) 
                   t1ppqq(a,i,b,j)           = Vaibj(a,i,b,j,ii) 
-                 #VFL execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
+                  execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t1ppqq(a,i,b,j)  
                   t20disp(ifrag,jfrag)      = etemp 
+                  print_scalar etemp 
                   PUT e20disp(ifrag,jfrag) += t20disp(ifrag,jfrag) 
 
             endif # icount != jcount 
@@ -1519,9 +1522,10 @@ import "trans_frag_defs.sialx"
                   t1ppqq(a,i,b,j)           = t3ppqq(a,j,b,i) 
                   tppqq(a,i,b,j)           *= 2.0  
                   tppqq(a,i,b,j)           -= t1ppqq(a,i,b,j)   
-                 #VFLexecute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
+                  execute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t2ppqq(a,i,b,j)  
                   t20disp(ifrag,jfrag)      = etemp 
+                  print_scalar etemp 
                   PUT e20disp(ifrag,jfrag) += t20disp(ifrag,jfrag) 
 
             endif # icount != jcount 
@@ -1700,6 +1704,7 @@ import "trans_frag_defs.sialx"
 # 
       ENDDO kfrag 
       sip_barrier
+      println "Done forming initial t1" 
 
 # Compute initial singles energy of solute  
 
@@ -2477,7 +2482,7 @@ import "trans_frag_defs.sialx"
             if s == icount  
 
                  aoint(lambda,mu,sigma,nu)  = 0.0 
-                #VFL execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
+                 execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
 
                  DO i 
                      xi(i)             = wOccA_frag(i) 
@@ -3044,19 +3049,19 @@ import "trans_frag_defs.sialx"
 #     ----------------------- 
 #
 # Restore the persistent arrays. 
-      set_persistent ca "ca" 
-      set_persistent Fock_a "fock_a"
+      restore_persistent ca "ca" 
+      restore_persistent Fock_a "fock_a"
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
-     #imax = 0.0  
-     #zmax = 0.0  
-     #DO mu 
-     #DO nu 
-     #   txx(mu,nu) = 0.0
-     #   execute compute_int_scratchmem txx(mu,nu) zmax imax 
-     #ENDDO nu 
-     #ENDDO mu 
+      imax = 0.0  
+      zmax = 0.0  
+      DO mu 
+      DO nu 
+         txx(mu,nu) = 0.0
+         execute compute_int_scratchmem txx(mu,nu) zmax imax 
+      ENDDO nu 
+      ENDDO mu 
 
       mone = -1.0 
       ecrit = cc_conv 
@@ -3086,7 +3091,7 @@ import "trans_frag_defs.sialx"
 #     Form the electrostatic potential(complete) of all fragments  
 #     ----------------------------------------------------------- 
 #
-     #CALL FORM_ELSTPOT 
+      CALL FORM_ELSTPOT 
       sip_barrier 
 #
 #     Compute the CCPT(2) doubles amplitudes for Fragment 1.  

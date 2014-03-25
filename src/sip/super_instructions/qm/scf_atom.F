@@ -330,6 +330,12 @@ c scratch space
       real(C_DOUBLE), pointer :: iscr_i(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
+
+c arrays defining fragment to otbital mapping  
+      real(C_DOUBLE), pointer :: baocc_frag(:,:)
+      real(C_DOUBLE), pointer :: bbocc_frag(:,:)
+      real(C_DOUBLE), pointer :: bavirt_frag(:,:)
+      real(C_DOUBLE), pointer :: bbvirt_frag(:,:)
 c ----------------------------------------------------------------------
 
 
@@ -458,6 +464,27 @@ c ----------------------------------------------------------------------
       call c_f_pointer(atoms, patoms,[1])
       call c_f_pointer(charge, pcharge, patoms)
 
+c retrive alpha occupied mapping 
+      call predefined_int_array("baocc_frag"//C_NULL_CHAR,
+     *                                  two, sDimfrag,  pwatom_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[2])
+      call c_f_pointer(pwatom_frag, baocc_frag, pdim_frag)
+c retrive beta occupied mapping 
+      call predefined_int_array("bbocc_frag"//C_NULL_CHAR,
+     *                                  two, sDimfrag,  pwatom_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[2])
+      call c_f_pointer(pwatom_frag, bbocc_frag, pdim_frag)
+c retrive alpha virtual mapping 
+      call predefined_int_array("bavirt_frag"//C_NULL_CHAR,
+     *                                  two, sDimfrag,  pwatom_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[2])
+      call c_f_pointer(pwatom_frag, bavirt_frag, pdim_frag)
+c retrive beta virtual mapping 
+      call predefined_int_array("bbvirt_frag"//C_NULL_CHAR,
+     *                                  two, sDimfrag,  pwatom_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[2])
+      call c_f_pointer(pwatom_frag, bbvirt_frag, pdim_frag)
+
       spherical = .true.
       if (intSpherical .ne. 1) spherical = .false.
 c
@@ -582,26 +609,14 @@ c-----------------------------------------------------------------------
      *                 '1', n_basis   
          endif 
 
-c        write(66,*) ' Mapping Atom', watom  
-c        do n = nc1, nc2 
-c           write(66,*) 'n umap(n)', n, umap(n)  
+c        do j = nd1, nd2 
+c        do i = nc1, nc2 
+c           ca_perm(i,j) = 0.0 
+c           cb_perm(i,j) = 0.0 
+c           fa_perm(i,j) = 0.0 
+c           fb_perm(i,j) = 0.0 
 c        enddo 
-c        do m = m1, m2 
-c           if(atom(m) .eq. iatom) then 
-c           write(66,*) ' Mth shell:', m, beg_anfps(m), end_anfps(m) 
-c           endif 
 c        enddo 
-c         write(6,*) ' The number of basis functions on atom', 
-c     *                iatom, '=', n_basis  
-
-         do j = nd1, nd2 
-         do i = nc1, nc2 
-            ca_perm(i,j) = 0.0 
-            cb_perm(i,j) = 0.0 
-            fa_perm(i,j) = 0.0 
-            fb_perm(i,j) = 0.0 
-         enddo 
-         enddo 
 
 c   Set scratch space 
 
@@ -625,6 +640,11 @@ c
      *               watom_frag, 
      *               pcharge, 
      *               atom, 
+     *                         nfrags, 
+     *                         baocc_frag,
+     *                         bbocc_frag,
+     *                         bavirt_frag,
+     *                         bbvirt_frag, 
 c 
      *               vmax,omax,norb,maxhist,diis_start) 
 c  Remove scratch space  
@@ -645,6 +665,11 @@ c
      *               watom_frag, 
      *               charge, 
      *               atom, 
+     *                         nfrags, 
+     *                         baocc_frag,
+     *                         bbocc_frag,
+     *                         bavirt_frag,
+     *                         bbvirt_frag, 
 c
      *               vmax,omax,norb,maxhist,diis_start) 
 c---------------------------------------------------------------------------
@@ -679,15 +704,6 @@ c  INDX_CC
 c  IVANGMOM  
       TYPE(C_PTR) :: pivangmom
       integer, pointer :: ivangmom(:)
-
-c arrays defining fragment to otbital mapping  
-      TYPE(C_PTR) :: sDimfrag  
-      TYPE(C_PTR) :: pwatom_frag 
-      integer, pointer :: pdim_frag(:)  
-      real(C_DOUBLE), pointer :: baocc_frag(:,:)
-      real(C_DOUBLE), pointer :: bbocc_frag(:,:)
-      real(C_DOUBLE), pointer :: bavirt_frag(:,:)
-      real(C_DOUBLE), pointer :: bbvirt_frag(:,:)
 c ----------------------------------------------------------------------
 
       integer a1, a2, b1, b2, c1, c2, d1, d2 
@@ -698,7 +714,7 @@ c ----------------------------------------------------------------------
       integer a,b,c,d
       integer ncenters, nshells  
       integer iatom(ncenters), n_basis, n_basis_org, n_apf, nf   
-      integer current_frag 
+      integer current_frag, nfrags  
 
       integer num_to_do, nsend
       integer nints, maxblk
@@ -752,6 +768,12 @@ c ----------------------------------------------------------------------
       double precision FTb(n_basis,n_basis) 
       double precision Fa(n_basis,n_basis) 
       double precision Fb(n_basis,n_basis) 
+
+      integer baocc_frag(nfrags,*)
+      integer bbocc_frag(nfrags,*)
+      integer bavirt_frag(nfrags,*)
+      integer bbvirt_frag(nfrags,*)
+
       double precision temp, tempa, tempb   
       integer doit, itemp, jtemp, p, p1  
 
@@ -848,27 +870,6 @@ c ----------------------------------------------------------------------
       call c_f_pointer(pivangmom, ivangmom, ishells)
 c ----------------------------------------------------------------------
 
-c retrive alpha occupied mapping 
-      call predefined_int_array("baocc_frag"//C_NULL_CHAR,
-     *                                  two, sDimfrag,  pwatom_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[2])
-      call c_f_pointer(pwatom_frag, baocc_frag, pdim_frag)
-c retrive beta occupied mapping 
-      call predefined_int_array("bbocc_frag"//C_NULL_CHAR,
-     *                                  two, sDimfrag,  pwatom_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[2])
-      call c_f_pointer(pwatom_frag, bbocc_frag, pdim_frag)
-c retrive alpha virtual mapping 
-      call predefined_int_array("bavirt_frag"//C_NULL_CHAR,
-     *                                  two, sDimfrag,  pwatom_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[2])
-      call c_f_pointer(pwatom_frag, bavirt_frag, pdim_frag)
-c retrive beta virtual mapping 
-      call predefined_int_array("bbvirt_frag"//C_NULL_CHAR,
-     *                                  two, sDimfrag,  pwatom_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[2])
-      call c_f_pointer(pwatom_frag, bbvirt_frag, pdim_frag)
-
       n_apf = natoms_frag(current_frag) 
       do m = 1, n_apf 
          iatom(m) = watom_frag(current_frag, m) 
@@ -956,8 +957,6 @@ c-----------------------------------------------------------------------
      *                itemp, n_basis 
          call abort_job()
       endif 
-
-c     return ! VFL to be removed  
 
 c-----------------------------------------------------------------------
 c Construct the hcore initial guess  
@@ -1293,7 +1292,7 @@ c     HFD_a(m,n) = 0.0
 c     HFD_b(m,n) = 0.0   
 100   continue 
 
-      if (current_frag .eq. 12) then 
+      if (current_frag .eq. 111111111111) then 
        write(6,*) ' Alpha Orbital energies ' 
        write(6,*) ' -----------------------------------------------' 
        do m = 1, nocc_a 
@@ -1319,7 +1318,7 @@ c     HFD_b(m,n) = 0.0
        write(6,*) ' ' 
 
        endif 
-c         write(6,*) ' Done SCF calculation of ATOM :', iatom 
+          write(6,*) ' Done SCF calculation of ATOM :', iatom 
 
 c-----------------------------------------------------------------------
 c     Put the transformation coefficients to the proper spot  
