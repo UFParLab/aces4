@@ -43,7 +43,6 @@ class SetupReader;
 
 namespace sip {
 
-
 /** Objects of this class record the information necessary for the interpreter to write modified subblocks back into
  * the enclosing contiguous block.
  */
@@ -81,11 +80,21 @@ public:
 	ContiguousArrayManager(sip::SipTables&, setup::SetupReader&);
 	~ContiguousArrayManager();
 
+
+	/**
+	 * Inserts given block into the continguous_array_map with the given array_id.
+	 * If a block with that name already exists, it is replaced with warning.
+	 * Requires block and block->data to both be non-null.
+	 *
+	 * @param array_id
+	 * @param block
+	 * @return
+	 */
 	Block::BlockPtr create_contiguous_array(int array_id, Block::BlockPtr block);
 
 	/**
 	 * Allocates memory for a new contiguous array with the given id, and records it in the contiguous_array_map.
-	 * The shape of the array is obtained from the sipTables.
+	 * The shape of the array, is obtained from the sipTables.
 	 * The contents are initialized to zero.
 	 *
 	 * Requires that this array does not already exist in the map.
@@ -111,11 +120,11 @@ public:
 	 */
 	Block::BlockPtr create_contiguous_array(int array_id, Block::dataPtr data);
 
-	/**
-	 * Removes the given contiguous array from the map and deletes its data array
-	 * @param array_id
-	 */
-	void remove_contiguous_array(int array_id);
+//	/**
+//	 * Removes the given contiguous array from the map and deletes its data array
+//	 * @param array_id
+//	 */
+//	void remove_contiguous_array(int array_id);
 
 
 	/** Gets the indicated subblock of a contiguous array.  This is accomplished by allocating memory for the
@@ -158,18 +167,26 @@ public:
 
 
 	/**
-	 * Saves persistent contiguous arrays to the block manager
+	 * Returns a pointer to a Block containing the contiguous array, or NULL if the array does not exist.
+	 * Also removes this array from the contiguous array map.  This routine is used to move the
+	 * contiguous array into another data structure, such as persistent array manager.
+	 *
+	 * @param array_id
+	 * @return
 	 */
-	void save_persistent_contig_arrays();
+	Block::BlockPtr get_and_remove_array(int array_id);
+
 
 	friend std::ostream& operator<<(std::ostream&, const ContiguousArrayManager&);
 
 
 /**TODO is this needed?  correct?? */
 	friend void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);  //this doesn't seem to work
+
 private:
 
-	/** Performs the actually work to get a contiguous copy of a subblock.  Several values that are obtained in the
+	/** Performs the actually work to get a contiguous copy of a subblock.
+	 * Several values that are obtained in the
 	 * course of the method are returned for possible use by callers.
 	 *
 	 * @param [in] Id of subblock to create
@@ -182,14 +199,9 @@ private:
 
 	/** map from array slot number to block containing contiguous array */
 	ContiguousArrayMap contiguous_array_map_;
-	sip::SipTables & sipTables_;
+	sip::SipTables & sip_tables_;
 	setup::SetupReader & setup_reader_;
 
-//	/**
-//	 * Read and write persistent data between programs.
-//	 */
-//	sip::PersistentArrayManager<Block> & pbm_read_;
-//	sip::PersistentArrayManager<Block> & pbm_write_;
 
 	DISALLOW_COPY_AND_ASSIGN(ContiguousArrayManager);
 };

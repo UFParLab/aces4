@@ -18,7 +18,6 @@
 #include <stack>
 #include "blocks.h"
 #include "id_block_map.h"
-#include "persistent_array_manager.h"
 #include "barrier_support.h"
 
 #ifdef HAVE_MPI
@@ -29,23 +28,18 @@
 
 namespace sip {
 class SipTables;
-//class PersistentArrayManager<Block>;
 
 class BlockManager {
 public:
 
-
-//	typedef std::map<BlockId, Block::BlockPtr> IdBlockMap;
-//	typedef IdBlockMap* IdBlockMapPtr;
-//	typedef std::vector<IdBlockMapPtr> BlockMap;
 	typedef std::vector<BlockId> BlockList;
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
 #ifdef HAVE_MPI
-	BlockManager(sip::SipTables&, SIPMPIAttr&, DataDistribution&, BarrierSupport&);
+	BlockManager(sip::SipTables&, SIPMPIAttr&, DataDistribution&);
 #else
 	BlockManager(sip::SipTables&);
-#endif
+#endif //HAVE_MPI
 	~BlockManager();
 
 	/*! implements a global SIAL barrier */
@@ -55,21 +49,20 @@ public:
 	void create_distributed(int array_id);
 	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
 	void delete_distributed(int array_id);
-	void get(const BlockId&);
-	void put_replace(const BlockId&, const Block::BlockPtr);
-	void put_accumulate(const BlockId&, const Block::BlockPtr);
+	void get(BlockId&);
+	void put_replace(BlockId&, const Block::BlockPtr);
+	void put_accumulate(BlockId&, const Block::BlockPtr);
 
 	void destroy_served(int array_id);
-	void request(const BlockId&);
-	void prequest(const BlockId&, const BlockId&);
-	void prepare(const BlockId&, const Block::BlockPtr);
-	void prepare_accumulate(const BlockId&, const Block::BlockPtr);
+	void request(BlockId&);
+	void prequest(BlockId&, BlockId&);
+	void prepare(BlockId&, Block::BlockPtr);
+	void prepare_accumulate(BlockId&, Block::BlockPtr);
 
 	void allocate_local(const BlockId&);
 	void deallocate_local(const BlockId&);
 
 	/** basic block retrieval methods.*/
-
 
 	/** Gets requested Block to be written to, allocating it if it doesn't exist. Newly allocated blocks are initialized to 0.
 	 *
@@ -171,6 +164,7 @@ public:
 	friend std::ostream& operator<<(std::ostream&, const BlockManager&);
 
 	friend class DataManager;
+	friend class Interpreter;
 
 private:
 	/** Obtains block from BlockMap
@@ -258,12 +252,9 @@ private:
 													//contents.
 
 	/** Pointer to static data */
-	SipTables& sip_tables_;  //TODO only needed to look up shape. Perhaps refactor to eliminate
-	                             //this dependency?
+	SipTables& sip_tables_;
 
 #ifdef HAVE_MPI
-
-    BarrierSupport& barrier_support_;
 
 	SIPMPIAttr & sip_mpi_attr_; // MPI Attributes of the SIP for this rank
 	DataDistribution &data_distribution_; // Data distribution scheme
@@ -282,9 +273,9 @@ private:
 
 	/**
 	 * Requests a block from a server. Initiates a request and posts a receive for the block.
-	 * If the block is cached or owned by this worker, no request is sent.
+	 * If the block is cached by this worker, no request is sent.
 	 */
-	void request_block_from_server(const BlockId& id);
+	void request_block_from_server(BlockId& id);
 
 	/**
 	 * Blocks till requested block arrives.

@@ -36,32 +36,22 @@ namespace sip {
 Interpreter* Interpreter::global_interpreter;
 
 
-void Interpreter::_init(SipTables& sipTables) {
-	//data_manager_ = new sip::DataManager(sipTables, pbm_read, pbm_write);
-	int num_indices = sipTables.index_table_.entries_.size();
-	//op_table_ = sipTables.op_table_;
-	pc = 0;
-	global_interpreter = this;
-	gpu_enabled_ = false;
-#ifdef HAVE_CUDA
-	int devid;
-	int rank = 0;
-	_init_gpu(&devid, &rank);
-#endif
-}
+
 
 #ifdef HAVE_MPI
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::PersistentArrayManager<Block>& persistent_array_manager,
-		sip::SIPMPIAttr& sip_mpi_attr, sip::DataDistribution& data_distribution) :
-	persistent_array_manager_(persistent_array_manager),
-	sip_tables_(sipTables), sialx_timers_(sialx_timer),
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
+		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, PersistentArrayManager<Block>* persistent_array_manager) :
+	sip_tables_(sipTables),
+	sialx_timers_(sialx_timer),
 	data_manager_(sipTables,  sip_mpi_attr, data_distribution),
 	op_table_(sipTables.op_table_),
-	sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution){
+	sip_mpi_attr_(sip_mpi_attr),
+	data_distribution_(data_distribution),
+	persistent_array_manager_(persistent_array_manager){
 	_init(sipTables);
 }
 #else
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::PersistentArrayManager<Block>& persistent_data_manager ) :
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, PersistentArrayManager<Block>& persistent_data_manager ) :
 	persistent_data_manager_(persistent_data_manager),
 	sip_tables_(sipTables), sialx_timers_(sialx_timer),
 	data_manager_(sipTables),
@@ -74,7 +64,18 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, sip::Per
 
 Interpreter::~Interpreter() {}
 
-
+void Interpreter::_init(SipTables& sipTables) {
+	int num_indices = sipTables.index_table_.entries_.size();
+	//op_table_ = sipTables.op_table_;
+	pc = 0;
+	global_interpreter = this;
+	gpu_enabled_ = false;
+#ifdef HAVE_CUDA
+	int devid;
+	int rank = 0;
+	_init_gpu(&devid, &rank);
+#endif
+}
 
 void Interpreter::interpret() {
 	int nops = op_table_.size();
@@ -563,12 +564,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			// DEBUG
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-			if (is_scalar(array_slot))
-			    persistent_array_manager_.set_persistent_scalar(array_slot, string_slot);
-			else if (is_contiguous(array_slot))
-				persistent_array_manager_.set_persistent_contiguous(array_slot, string_slot);
-			else
-				persistent_array_manager_.set_persistent_distributed(array_slot, string_slot);
+
+			//TODO deal with parallel
+            persistent_array_manager_->set_persistent(array_slot,
+            		string_slot);
 			++pc;
 		}
 		break;
@@ -579,7 +578,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 
-			persistent_array_manager_.restore_persistent(array_slot, string_slot, &(data_manager_.block_manager_.block_map_));
+			persistent_array_manager_->restore_persistent(this, array_slot, string_slot);
 			++pc;
 		}
 		break;
@@ -598,26 +597,35 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 
 void Interpreter::post_sial_program(){
-	data_manager_.block_manager_.barrier();	// Implicit Barrier at the end of a SIAL program
-	data_manager_.save_persistent_arrays();
-#ifdef HAVE_MPI
-	// Send end of program message to server
-	int global_rank = sip_mpi_attr_.global_rank();
-	int global_size = sip_mpi_attr_.global_size();
-	bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
-
-	if (am_worker_to_communicate){
-		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning END_PROGRAM "<< std::endl);
-		int to_send = sip::SIPMPIData::END_PROGRAM;
-		int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
-		if (local_server > -1){
-			int end_program_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, message_number_);
-			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, end_program_tag, MPI_COMM_WORLD));
-			SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with END_PROGRAM "<< std::endl);
-		}
+//	data_manager_.block_manager_.barrier();	// Implicit Barrier at the end of a SIAL program
+//	persistent_array_manager_.save_marked_arrays_on_worker(this);
+//#ifdef HAVE_MPI
+//	// Send end of program message to server
+//	int global_rank = sip_mpi_attr_.global_rank();
+//	int global_size = sip_mpi_attr_.global_size();
+//	bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+//
+//	if (am_worker_to_communicate){
+//		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning END_PROGRAM "<< std::endl);
+//		int to_send = sip::SIPMPIData::END_PROGRAM;
+//		int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
+//		if (local_server > -1){
+//			int end_program_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, message_number_);
+//			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, end_program_tag, MPI_COMM_WORLD));
+//			SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with END_PROGRAM "<< std::endl);
+//		}
+//	}
+//	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
+//#endif
+#ifdef  HAVE_MPI
+	//send end of program message to server if responsible
+	if (int my_server = sip_mpi_attr_.my_server() > 0){
+		int end_program_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_END_PROGRAM();
+		SIPMPIUtils::check_err(MPI_Send(0, 0, MPI_INT, my_server, end_program_tag, MPI_COMM_WORLD));
+		MPI_Status status;
+		SIPMPIUtils::check_err(MPI_Recv(0,0,MPI_INT,my_server, end_program_tag, MPI_COMM_WORLD, &status));
 	}
-	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
-#endif
+#endif //HAVE_MPI
 }
 
 void Interpreter::handle_user_sub_op(int pc) {
@@ -629,7 +637,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				sip_tables_.special_instruction_manager_.get_no_arg_special_instruction_ptr(
 						func_slot);
 		func(ierr);
-		sip::check(ierr == 0,
+		check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
 								func_slot));

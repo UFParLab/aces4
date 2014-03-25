@@ -156,6 +156,10 @@ sip::BlockShape SipTables::shape(const sip::BlockId& block_id) {
 	return sip::BlockShape(seg_sizes);
 }
 
+int SipTables::block_size(const BlockId& block_id){
+	return shape(block_id).num_elems();
+}
+
 sip::BlockShape SipTables::contiguous_array_shape(int array_id){
 	int rank = array_table_.rank(array_id);
 	sip::index_selector_t& selector = array_table_.index_selectors(array_id);

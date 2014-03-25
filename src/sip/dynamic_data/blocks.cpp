@@ -36,6 +36,14 @@ BlockId::BlockId(const mpi_block_id_t buffer):
 	std::copy(buffer+1, buffer + MAX_RANK + 1, index_values_);
 }
 
+BlockId::BlockId(int array_id, const BlockId& old_block):
+	array_id_(array_id),
+	parent_id_ptr_(NULL){
+	std::copy(old_block.index_values_ + 0,
+			   old_block.index_values_ + MAX_RANK,
+			   index_values_ + 0);
+}
+
 BlockId::BlockId(int array_id, const index_value_array_t& index_values, const BlockId& parent_id_ptr) :
 		array_id_(array_id),
 		parent_id_ptr_(new BlockId(parent_id_ptr)) {

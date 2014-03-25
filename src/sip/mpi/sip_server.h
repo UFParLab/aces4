@@ -11,9 +11,10 @@
 #include "sip_tables.h"
 #include "blocks.h"
 #include "data_distribution.h"
-#include "persistent_array_manager.h"
 #include "sip_mpi_data.h"
 #include "id_block_map.h"
+#include "barrier_support.h"
+
 
 namespace sip {
 
@@ -49,15 +50,33 @@ namespace sip {
  * TODO:  In the current implementation, on receipt of a PUT or PUT_ACCUMULATE, the server waits for the
  * following PUT_DATA or PUT_ACCUMULATE_DATA message.  This decision will need to be revisited.
  */
+
+template <typename BLOCK_TYPE>
+class PersistentArrayManager;
+
 class SIPServer {
+
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock>&);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock> *);
 	~SIPServer();
 
 	/**
 	 * Main server loop
 	 */
 	void run();
+
+	/** Called by persistent_array_manager. Delegates to block_map_.
+	 *
+	 */
+	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
+			return block_map_.get_and_remove_per_array_map(array_id);
+	}
+	void set_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr){
+		block_map_.insert_per_array_map(array_id, map_ptr);
+	}
+
+	SipTables& sip_tables() { return sip_tables_;}
+
 
 private:
 
@@ -77,7 +96,7 @@ private:
 	SIPMPIAttr & sip_mpi_attr_;
 	DataDistribution &data_distribution_;
 	SipTables &sip_tables_;
-	PersistentArrayManager<ServerBlock>& persistent_array_manager_;
+	PersistentArrayManager<ServerBlock> * persistent_array_manager_;
 
 
 	/**
@@ -189,7 +208,7 @@ private:
 	 * @param mpi_source
 	 * @param tag
 	 */
-	void handle_RESTORE_PERSISTENT(int mpi_source, int tag, IdBlockMap<ServerBlock>& );
+	void handle_RESTORE_PERSISTENT(int mpi_source, int tag);
 
 	/**
 	 * Utility method checks whether the message with the given MPI_Status object has the expected number of MPI_INT elements.
@@ -198,7 +217,7 @@ private:
 	 * @param status
 	 * @param expected_count
 	 */
-	void check_int_count(const MPI_Status& status, int expected_count);
+	void check_int_count(MPI_Status& status, int expected_count);
 
 	/**
 	 * Utility method checks whether the message with the given MPI_Status object has the expected number of MPI_DOUBLE elements.
@@ -207,7 +226,7 @@ private:
 	 * @param status
 	 * @param expected_count
 	 */
-	void check_double_count(const MPI_Status& status, int expected_count);
+	void check_double_count(MPI_Status& status, int expected_count);
 
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 

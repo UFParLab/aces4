@@ -38,9 +38,12 @@ public:
 
 	}
 
+	IdBlockMap(){
+		check(false, "executing parameterless constructor for IdBlockMap");
+	}
 
 	/**
-	 * destructor, deletes all blocks, and all maps
+	 * destructor, deletes all maps and all of their blocks
 	 */
 	~IdBlockMap(){
 		int num_arrays = block_map_.size();
@@ -69,17 +72,18 @@ public:
 	 * @param [out] size
 	 * @returns pointer to existing or new block
 	 */
-	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size){
-		BLOCK_TYPE* block = block(block_id);
-		if (block == NULL) {
-			block = new BLOCK_TYPE(size);
-			block_map_.insert_block(block_id,block);
+	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size, bool initialize = true){
+		BLOCK_TYPE* b = block(block_id);
+		if (b == NULL) {
+			b = new BLOCK_TYPE(size, initialize);
+			insert_block(block_id,b);
 		}
+		return b;
 	}
 
 	/** inserts given block in the IdBlockMap.
 	 *
-	 * It is an error to insert a block that already exists.
+	 * It is a fatal error to insert a block that already exists.
 	 *
 	 * @param id BlockId of block to insert
 	 * @param block_ptr pointer to Block to insert
@@ -115,7 +119,8 @@ public:
 		return block_ptr;
     }
 
-	/** removes given block from the map and deletes it
+	/** removes given block from the map and deletes it.
+	 * Require that the block exist.
 	 *
 	 * @param id BlockId of block to delete
 	 */
@@ -126,7 +131,7 @@ public:
 
 	/**
 	 * per_array_map returns a pointer to the map containing blocks of the indicated array.
-	 * If the map doesn't exist, one is created and added to the map.
+	 * If the map doesn't exist, one is created and added to the list of maps.
 	 * This routine never returns NULL
 	 *
 	 * @param array_id
@@ -145,7 +150,7 @@ public:
 
 	/**
 	 *deletes the map containing blocks of the indicated array
-	 *alongs with the blocks in the map
+	 *along with the blocks in the map
 	 *
 	 * @param array_id
 	 */
@@ -163,7 +168,7 @@ public:
 	/**
 	 * returns a pointer to the PerArrayMap of the given array,
 	 * and removes it from the map.  Contents of the map are preserved.
-	 * If no PerArrayMap exists, one is created.
+	 * If no PerArrayMap exists, an empty one is created and returned.
 	 * This routine never returns NULL.
 	 *
 	 * @param array_id
@@ -187,7 +192,7 @@ public:
 	void insert_per_array_map(int array_id, PerArrayMap* map_ptr){
 		//get current map and warn if it contains blocks.  Delete any map that exists
 	    PerArrayMap* current_map = block_map_[array_id];
-	    check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map");
+	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"))
 	    delete_per_array_map(array_id);
 		block_map_[array_id] =map_ptr;
 	}
@@ -196,6 +201,8 @@ public:
 
 	PerArrayMap* operator[](unsigned i){ return block_map_[i]; }
     const PerArrayMap* operator[](unsigned i) const { return block_map_[i]; }
+
+    friend class Interpreter;
 
 	template <class BLOCK_TYPE>
 	friend std::ostream& operator<<(std::ostream&, const IdBlockMap<BLOCK_TYPE>&);

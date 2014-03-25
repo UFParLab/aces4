@@ -33,6 +33,9 @@
 #include "sip_interface.h"
 #include <iostream>
 
+#ifdef HAVE_MPI
+#include "mpi.h"
+#endif //HAVE_MPI
 
 using namespace std::rel_ops;
 
@@ -84,6 +87,19 @@ public:
 	 */
 
 	BlockId(const mpi_block_id_t buffer);
+
+	/**
+	 * Constructor that returns a new BlockId that is the same
+	 * as the given one except that the array_id has been replaced.
+	 * This is used when restoring arrays.
+	 *
+	 * Requires parent_id_ptr_ of given BlockId to be null;
+	 *
+	 * @param array_id
+	 * @param old_block
+	 */
+
+	BlockId(int array_id, const BlockId& old_block);
 
 	/** Constructor for subblocks
 	 *
@@ -348,6 +364,9 @@ private:
     int size_;
 	dataPtr data_;
 	dataPtr gpu_data_;
+#ifdef HAVE_MPI
+	MPI_Status status;  //status != MPI_REQUEST_NULL block in transit
+#endif //HAVE_MPI
 
 	// Why bitset is a good idea
 	// http://www.drdobbs.com/the-standard-librarian-bitsets-and-bit-v/184401382

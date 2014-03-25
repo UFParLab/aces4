@@ -38,7 +38,11 @@ TEST(Sial_QM,ccsdpt_test){
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager pbm;
+		sip::PersistentArrayManager<sip::ServerBlock>* persistent_server;
+		sip::PersistentArrayManager<sip::Block>* persistent_worker;
+		if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock>();
+		else persistent_worker = new sip::PersistentArrayManager<sip::Block>();
+
 		it = progs.begin();
 		while (it != progs.end()){
 			std::string sialfpath;
@@ -51,16 +55,18 @@ TEST(Sial_QM,ccsdpt_test){
 
 			sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 			if (sip_mpi_attr.is_server()){
-				sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, pbm, pbm);
+				sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
 				server.run();
+				persistent_server->save_marked_arrays_on_server(&server);
 				SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<pbm);
 				++it;
 
 			} else {
 				sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-				sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm, sip_mpi_attr, data_distribution);
+				sip::Interpreter runner(sipTables, sialxTimer, sip_mpi_attr, data_distribution, persistent_worker);
 				std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 				runner.interpret();
+				persistent_worker->save_marked_arrays_on_worker(&runner);
 				ASSERT_EQ(0, sip::DataManager::scope_count);
 				std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 				//std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm;
@@ -73,7 +79,7 @@ TEST(Sial_QM,ccsdpt_test){
 					ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-12);
 				}
 			}
-			pbm.clear_marked_arrays();
+
 		}
 	}
 }

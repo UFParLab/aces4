@@ -20,8 +20,6 @@
 #include <unistd.h>
 #include <fenv.h>
 
-
-#include <fenv.h>
 #include <execinfo.h>
 #include <signal.h>
 
@@ -123,7 +121,16 @@ int main(int argc, char* argv[]) {
     //	pbm_read = new array::PersistentBlockManager();
     //	pbm_write = new array::PersistentBlockManager();
 
-	sip::PersistentArrayManager pbm;
+
+#ifdef HAVE_MPI
+	sip::PersistentArrayManager<sip::ServerBlock>* persistent_server;
+	sip::PersistentArrayManager<sip::Block>* persistent_worker;
+	if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock>();
+	else persistent_worker = new sip::PersistentArrayManager<sip::Block>();
+#else
+	sip::PersistentArrayManager<Block>* persistent_worker =  new PersistentArrayManager<Block>();
+#endif //HAVE_MPI
+
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::string sialfpath;
@@ -152,9 +159,10 @@ int main(int argc, char* argv[]) {
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, pbm, pbm);
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<pbm);
+			persistent_server->save_marked_arrays_on_server(&server);
 		} else
 #endif
 
@@ -165,12 +173,14 @@ int main(int argc, char* argv[]) {
 			sip::DataManager::scope_count = 0;
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 #ifdef HAVE_MPI
-			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm, sip_mpi_attr, data_distribution);
+			sip::Interpreter runner(sipTables, sialxTimer, sip_mpi_attr, data_distribution, persistent_worker
+					);
 #else
-			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+			sip::Interpreter runner(sipTables, sialxTimer, persistent_worker);
 #endif
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
+			persistent_worker->save_marked_arrays_on_worker(&runner);
 			if (0 != sip::DataManager::scope_count) {
 				std::cout << "Error, did not run as expected!.";
 				return -1;
@@ -194,7 +204,7 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm);
 
 		}
-  		pbm.clear_marked_arrays();
+
 #ifdef HAVE_TAU
 		//TAU_STATIC_PHASE_STOP(it->c_str());
   		TAU_PHASE_STOP(tau_dtimer);

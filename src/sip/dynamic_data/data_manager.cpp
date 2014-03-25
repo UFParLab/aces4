@@ -24,15 +24,14 @@ int DataManager::scope_count = 0;
 
 #ifdef HAVE_MPI
 DataManager::DataManager(SipTables& sipTables,
-		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, int& section_number, int& message_number):
+		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution):
 //		pbm_read_(pbm_read), pbm_write_(pbm_write),
 		sipTables_(sipTables), scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
 		index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-        block_manager_(sipTables, sip_mpi_attr, data_distribution, section_number, message_number),
+        block_manager_(sipTables, sip_mpi_attr, data_distribution),
         scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
         contiguous_array_manager_(sipTables, sipTables.setup_reader()),
-        sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
-        section_number_(section_number), message_number_(message_number)
+        sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution)
         {
 		for (int i = 0; i < sipTables_.array_table_.entries_.size(); ++i) {
 			if (sipTables_.is_scalar(i)) {
@@ -290,93 +289,93 @@ void DataManager::collective_sum(int source_array_slot,
 }
 
 
-void DataManager::set_persistent_array(int array_id, std::string name, int slot){
-//#ifdef HAVE_MPI
-//	bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
-//	if (is_remote){
+//void DataManager::set_persistent_array(int array_id, std::string name, int slot){
+////#ifdef HAVE_MPI
+////	bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
+////	if (is_remote){
+////
+////		int global_rank = sip_mpi_attr_.global_rank();
+////		int global_size = sip_mpi_attr_.global_size();
+////		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+////
+////		if (am_worker_to_communicate){
+////
+////			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
+////			if (local_server > -1){
+////				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending SET_PERSISTENT to server "<< local_server<< std::endl);
+////
+////				int save_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT, section_number_, message_number_);
+////
+////				// Send array_id & label
+////				int send_buffer[2];
+////				send_buffer[0] = array_id;
+////				send_buffer[1] = slot;
+////				SIPMPIUtils::check_err(MPI_Send(send_buffer, 2, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
+////
+////				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT_ACK, section_number_, message_number_);
+////				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::SAVE_PERSISTENT_ACK, ack_tag);
+////				message_number_++;
+////				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
+////
+////			}
+////		}
+////	} else {
+//////		pbm_write_.mark_persistent_array(array_id, name);
+////	}
+////#else
+////	pbm_write_.mark_persistent_array(array_id, name);
+////#endif
+//}
 //
-//		int global_rank = sip_mpi_attr_.global_rank();
-//		int global_size = sip_mpi_attr_.global_size();
-//		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+//void DataManager::restore_persistent_array(int array_id, std::string name, int slot){
 //
-//		if (am_worker_to_communicate){
+////	bool is_contig = sipTables_.is_contiguous(array_id);
+////	if (is_contig){
+////		Block::BlockPtr bptr = pbm_read_.get_saved_contiguous_array(name);
+////		check_and_warn(bptr != NULL, "Contiguous Array null when restoring !");
+////		Block::BlockPtr bptr_clone = bptr->clone();
+////		contiguous_array_manager_.create_contiguous_array(array_id, bptr_clone);
+////	} else {
+////#ifdef HAVE_MPI
+////		bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
+////		check (is_remote, "Trying to restore an array that is neither contiguous, nor remote!");
+////
+////		int global_rank = sip_mpi_attr_.global_rank();
+////		int global_size = sip_mpi_attr_.global_size();
+////		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
+////
+////		if (am_worker_to_communicate){
+////			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
+////			if (local_server > -1){
+////				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending RESTORE_PERSISTENT to server "<< local_server<< std::endl);
+////
+////				// Send array_id  & slot to server master
+////				int send_buffer[2];
+////				send_buffer[0] = array_id;
+////				send_buffer[1] = slot;
+////				int restore_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT, section_number_, message_number_);
+////				SIPMPIUtils::check_err(MPI_Send(send_buffer, 2, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
+////
+////				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT_ACK, section_number_, message_number_);
+////				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::RESTORE_PERSISTENT_ACK, ack_tag);
+////				message_number_++;
+////
+////				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
+////			}
+////
+////		}
+////
+////#else
+////		BlockManager::IdBlockMapPtr bid_map = pbm_read_.get_saved_dist_array(name);
+////		block_manager_.restore_distributed(array_id, bid_map);
+////#endif
+////	}
+//}
 //
-//			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
-//			if (local_server > -1){
-//				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending SET_PERSISTENT to server "<< local_server<< std::endl);
-//
-//				int save_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT, section_number_, message_number_);
-//
-//				// Send array_id & label
-//				int send_buffer[2];
-//				send_buffer[0] = array_id;
-//				send_buffer[1] = slot;
-//				SIPMPIUtils::check_err(MPI_Send(send_buffer, 2, MPI_INT, local_server, save_persistent_tag, MPI_COMM_WORLD));
-//
-//				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::SAVE_PERSISTENT_ACK, section_number_, message_number_);
-//				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::SAVE_PERSISTENT_ACK, ack_tag);
-//				message_number_++;
-//				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
-//
-//			}
-//		}
-//	} else {
-////		pbm_write_.mark_persistent_array(array_id, name);
-//	}
-//#else
-//	pbm_write_.mark_persistent_array(array_id, name);
-//#endif
-}
-
-void DataManager::restore_persistent_array(int array_id, std::string name, int slot){
-
-//	bool is_contig = sipTables_.is_contiguous(array_id);
-//	if (is_contig){
-//		Block::BlockPtr bptr = pbm_read_.get_saved_contiguous_array(name);
-//		check_and_warn(bptr != NULL, "Contiguous Array null when restoring !");
-//		Block::BlockPtr bptr_clone = bptr->clone();
-//		contiguous_array_manager_.create_contiguous_array(array_id, bptr_clone);
-//	} else {
-//#ifdef HAVE_MPI
-//		bool is_remote = sipTables_.is_distributed(array_id) || sipTables_.is_served(array_id);
-//		check (is_remote, "Trying to restore an array that is neither contiguous, nor remote!");
-//
-//		int global_rank = sip_mpi_attr_.global_rank();
-//		int global_size = sip_mpi_attr_.global_size();
-//		bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
-//
-//		if (am_worker_to_communicate){
-//			int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
-//			if (local_server > -1){
-//				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending RESTORE_PERSISTENT to server "<< local_server<< std::endl);
-//
-//				// Send array_id  & slot to server master
-//				int send_buffer[2];
-//				send_buffer[0] = array_id;
-//				send_buffer[1] = slot;
-//				int restore_persistent_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT, section_number_, message_number_);
-//				SIPMPIUtils::check_err(MPI_Send(send_buffer, 2, MPI_INT, local_server, restore_persistent_tag, MPI_COMM_WORLD));
-//
-//				int ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT_ACK, section_number_, message_number_);
-//				SIPMPIUtils::expect_ack_from_rank(local_server, SIPMPIData::RESTORE_PERSISTENT_ACK, ack_tag);
-//				message_number_++;
-//
-//				SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with SET_PERSISTENT from server "<< local_server<< std::endl);
-//			}
-//
-//		}
-//
-//#else
-//		BlockManager::IdBlockMapPtr bid_map = pbm_read_.get_saved_dist_array(name);
-//		block_manager_.restore_distributed(array_id, bid_map);
-//#endif
-//	}
-}
-
-void DataManager::save_persistent_arrays(){
-	block_manager_.save_persistent_dist_arrays();
-	contiguous_array_manager_.save_persistent_contig_arrays();
-}
+//void DataManager::save_persistent_arrays(){
+//	block_manager_.save_persistent_dist_arrays();
+//	contiguous_array_manager_.save_persistent_contig_arrays();
+//}
 
 
 

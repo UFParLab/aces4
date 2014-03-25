@@ -34,7 +34,7 @@ TEST(Sial_QM,ccsdpt_test){
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager pbm;
+		sip::PersistentArrayManager<Block> pbm;
 		it = progs.begin();
 		while (it != progs.end()){
 			std::string sialfpath;

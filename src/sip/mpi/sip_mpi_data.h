@@ -17,11 +17,11 @@ public:
 
 	//TODO  rename this to SIPMPIConstants
 
-/*Note that if we need to add more message types while keeping
- * the tag length to four bits, we can use the same tag for
- * the message and its ack.  There is no ambiguity since
+/*TODO
+ * Currently, we are using the same tag for
+ * a meesage an its ack. There is no ambiguity since
  * messages go from worker to server, and acks from server to
- * worker.
+ * worker.  Need to clean this up.
  */
 
 #define SIP_MESSAGE_TYPES \

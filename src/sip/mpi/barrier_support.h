@@ -14,8 +14,8 @@ namespace sip {
 
 class BarrierSupport {
 public:
-	BarrierSupport();
-	virtual ~BarrierSupport();
+	BarrierSupport(){}
+	virtual ~BarrierSupport(){}
 	/**
 	 * Each tag (a 32 bit integer) contains these fields
 	 */
@@ -90,7 +90,7 @@ public:
 	 * @param section_number
 	 * @param message_number
 	 */
-	void decode_tag_and_check_invariant(int mpi_tag, SIPMPIData::MessageType_t message_type, int section_number, int message_number){
+	void decode_tag_and_check_invariant(int mpi_tag, SIPMPIData::MessageType_t& message_type, int& section_number, int& message_number){
 		message_type = extract_message_type(mpi_tag);
 		message_number = extract_message_number(mpi_tag);
 		section_number = extract_section_number(mpi_tag);
@@ -218,6 +218,10 @@ public:
 		message_number_ = 0;
 	}
 
+	friend std::ostream& operator<<(std::ostream& os, const BarrierSupport& obj){
+		os << "section number = " << obj.section_number_ << ": message number = " << obj.message_number_ << std::endl;
+		return os;
+	}
 private:
 	/**
 	 * Last pardo section for which a request was served.
