@@ -18,6 +18,7 @@ C  in the file COPYRIGHT.
      c array_slot_2, rank_2, index_values_2, size_2, extents_2, data_2,
      c array_slot_3, rank_3, index_values_3, size_3, extents_3, data_3,
      c array_slot_4, rank_4, index_values_4, size_4, extents_4, data_4,
+     c array_slot_5, rank_5, index_values_5, size_5, extents_5, data_5,
      c  ierr) BIND(C)
 
       use, intrinsic :: ISO_C_BINDING
@@ -67,6 +68,14 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(in)::extents_4(1:rank_4)
       real(C_DOUBLE), intent(in)::data_4(1:size_4)
 
+!     should be static array  of overlap integrals  
+      integer(C_INT), intent(in)::array_slot_5
+      integer(C_INT), intent(in)::rank_5
+      integer(C_INT), intent(in)::index_values_5(1:rank_5)
+      integer(C_INT), intent(in)::size_5
+      integer(C_INT), intent(in)::extents_5(1:rank_5)
+      real(C_DOUBLE), intent(in)::data_5(1:size_5)
+
       integer(C_INT), intent(out)::ierr
 
 !     one dimensional array of atomic coordinates  
@@ -101,7 +110,7 @@ c--------------------------------------------------------------------------
       integer (C_INT) ncenters        
 
       integer norbmax, vmax, omax, maxblk, maxhist, diis_start 
-      integer one, two 
+      integer one, two, i, j  
       integer iscr(500000) 
       double precision scr(500000) 
       double precision scr1(500000) 
@@ -181,6 +190,20 @@ c     write(6,*) ' COORDS',  (pcoords(1,i), i=1, pdim_coords(2),
 c    *                pntot_pcoeff(1))  
 c ----------------------------------------------------------------------
 
+c ----------------------------------------------------------------------
+c  ATOMIC COORDINATES  
+      call predefined_scalar_array("tcoords"//C_NULL_CHAR,
+     *                                  two, sDimCoords,  tcoords)
+      call c_f_pointer(sDimCoords, pdim_coords,[2])
+      call c_f_pointer(tcoords, ptcoords, pdim_coords)
+c     do i = 1, pdim_coords(2) 
+c         write(6,*) 'I = ', i 
+c     write(6,*) ' TCOORDS',  ptcoords(1,i), ptcoords(2,i),
+c    *                        ptcoords(3,i) 
+c     enddo 
+c ----------------------------------------------------------------------
+
+
       ncenters        = int_constant("ncenters"//C_NULL_CHAR)
 
 c ----------------------------------------------------------------------
@@ -216,6 +239,7 @@ c        if (frag_calc) then
      *                 maxblk, 
      *                 iscr, ! ibuf(ipkgscr),
      *                 pcoords, ! dbuf(icoord),
+     *                 ptcoords, ! dbuf(icoord),
      *                 ppcoeffs, !  dbuf(ipcoeff),
      *                 palphas, ! dbuf(ialpha), 
      *                 pccbeg, ! ibuf(iccbeg), 
@@ -224,7 +248,6 @@ c        if (frag_calc) then
      *                 1, extents_1(1), ! inda(2), 
      *                 scr1, ! x(nai_array), 
      *                 scr2, ! x(kin_array), 
-     *                 scr3, ! x(ovl_array),
      *                 ncenters, 
      *                 scr4, ! x(farray), 
      *                 scr5, ! x(fbarray), 
@@ -232,6 +255,7 @@ c        if (frag_calc) then
      *                 data_2, ! x(cb_array), 
      *                 data_3, ! x(fa_array), 
      *                 data_4, ! x(fb_array), 
+     *                 data_5, ! overlap array  
      *                 vmax,omax,norbmax,maxhist,diis_start) 
 
 c        call compute_fragscf(scalar_table(sind), 
@@ -249,47 +273,15 @@ c    *                 vmax,omax,norbmax,maxhist,diis_start)
 c        return 
 c        endif 
 
-
-c        if (scalar_table(sind) .lt. 0.0) then 
-
-c        call read_density(scalar_table(sind), 
-c    *                 dbuf(integral_scr),maxblk, ibuf(ipkgscr),
-c    *                 dbuf(icoord),dbuf(ipcoeff),dbuf(ialpha), 
-c    *                 ibuf(iccbeg), ibuf(iccend), 
-c    *                 1, inda(1), 1,inda(2), 
-c    *                 x(nai_array), x(kin_array), x(ovl_array),
-c    *                 x(farray), x(fbarray)) 
-c
-c        else 
-
-c        INQUIRE(file='ca.data',exist=aExist)
-c        INQUIRE(file='cb.data',exist=bExist)
-
-c        if (aexist) return
-c        if (bexist) return
-
-c        call compute_atomscf(scalar_table(sind), 
-c    *                 dbuf(integral_scr),maxblk, ibuf(ipkgscr),
-c    *                 dbuf(icoord),dbuf(ipcoeff),dbuf(ialpha), 
-c    *                 ibuf(iccbeg), ibuf(iccend), 
-c    *                 1, inda(1), 1,inda(2), 
-c    *                 x(nai_array), x(kin_array), x(ovl_array),
-c    *                 x(farray), x(fbarray), 
-c
-c    *                 vmax,omax,norbmax,maxhist,diis_start) 
-
-c        endif 
-
-c     endif 
-
       return
       end
 C
       subroutine compute_fragscf(current_frag, scr,
-     *                 maxblk, iscr, coords,coeffs,alphas, ccbeg, ccend,
+     *                 maxblk, iscr, coords, tcoords ,coeffs,alphas, 
+     *                 ccbeg, ccend,
      *                 nc1,nc2, nd1, nd2,
-     *                 nai, kin, ovl, ncenters, fa, fb, 
-     *                 ca_perm, cb_perm, fa_perm, fb_perm, 
+     *                 nai, kin, ncenters, fa, fb, 
+     *                 ca_perm, cb_perm, fa_perm, fb_perm, ovl,  
 c
      *                 vmax,omax,norb,maxhist,diis_start)  
 c---------------------------------------------------------------------------
@@ -326,11 +318,6 @@ c array defining which atoms are in which fragment
 c array defining the number of atoms per fragment 
       TYPE(C_PTR) :: pnatoms_frag 
       real(C_DOUBLE), pointer :: natoms_frag(:)
-!     tw0 dimensional array mapping atomic coordinates to shells  
-      TYPE(C_PTR) :: sDimTCoords
-      TYPE(C_PTR) :: Tcoords
-      integer, pointer :: pdim_Tcoords(:)
-      real(C_DOUBLE), pointer :: pTcoords(:,:)
 c     mapping of atoms to shells 
       TYPE(C_PTR) :: patom  
       integer, pointer :: atom(:)
@@ -379,7 +366,7 @@ c ----------------------------------------------------------------------
       double precision x3,y3,z3
       double precision x4,y4,z4
 
-      double precision coords(3,*), coeffs(*), alphas(*)
+      double precision coords(3,*), tcoords(3,*), coeffs(*), alphas(*)
       double precision nai(nc1:nc2,nd1:nd2)
       double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
@@ -495,17 +482,17 @@ c   Set scratch space
       niscr = 5000000 ! imax 
       call scratch_array(nscr, cscr)
       call c_f_pointer(cscr, scr_i, [nscr])
-
       call scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr_i, [niscr])
+
       call comp_return_frag_h0(H0T, n_apf, iatom, nc1, nc2, nd1, nd2,
      *                         ncenters, 
      *                         coords, tcoords, 
-     *                         charge,  
+     *                         pcharge, atom,  
      *                         scr_i, iscr_i) 
 c  Remove scratch space  
-      call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
+c     call delete_scratch_array(cscr)
+c     call delete_scratch_array(ciscr)
 
 c-----------------------------------------------------------------------
 c   Find the shell blocks for which we shall loop through.
@@ -540,7 +527,6 @@ c        do n = 1, n_basis
 c           write(6,*) ' VFL:', m,n, h0t(m,n) 
 c        enddo 
 c        enddo 
-c      return 
 
 c-----------------------------------------------------------------------
 c   Find the mapping from atom <--> molecule.  
@@ -617,36 +603,50 @@ c     *                iatom, '=', n_basis
          enddo 
          enddo 
 
+c   Set scratch space 
+
+      nscr  = 5000000 ! zmax  
+      niscr = 5000000 ! imax 
+      imax = niscr 
+      zmax = nscr 
+c     call scratch_array(nscr, cscr)
+c     call c_f_pointer(cscr, scr_i, [nscr])
+c     call scratch_array(niscr, ciscr)
+c     call c_f_pointer(ciscr, iscr_i, [niscr])
+
          call do_fragscf(icurrent_frag, scr,
-     *                 maxblk, iscr, coords,coeffs,alphas, ccbeg, ccend,
-     *                 nc1,nc2, nd1, nd2,
-     *                 H0T, nai, kin, ovl, ncenters, nshells, spherical,  
-     *                 n_basis, beg_anfps, end_anfps, map, umap, 
+     *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
+     *               nc1,nc2, nd1, nd2,
+     *               H0T, nai, kin, ovl, ncenters, nshells, spherical,  
+     *               n_basis, beg_anfps, end_anfps, map, umap, 
 c
-     *                 ca_perm, cb_perm, fa_perm, fb_perm, 
-     *                 natoms_frag, 
-     *                 watom_frag, 
-     *                 pcharge, 
-     *                 atom, 
+     *               ca_perm, cb_perm, fa_perm, fb_perm, 
+     *               natoms_frag, 
+     *               watom_frag, 
+     *               pcharge, 
+     *               atom, 
 c 
-     *                 vmax,omax,norb,maxhist,diis_start) 
+     *               vmax,omax,norb,maxhist,diis_start) 
+c  Remove scratch space  
+      call delete_scratch_array(cscr)
+      call delete_scratch_array(ciscr)
 
       return 
       end 
 
       subroutine do_fragscf(current_frag, scr,
-     *                 maxblk, iscr, coords,coeffs,alphas, ccbeg, ccend,
-     *                 nc1,nc2, nd1, nd2,
-     *                 H0T, nai, kin, ovl, ncenters, nshells, spherical,  
-     *                 n_basis, beg_anfps, end_anfps, map, umap, 
+     *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
+     *               nc1,nc2, nd1, nd2,
+     *               H0T, nai, kin, ovl, ncenters, nshells, spherical,
+     *               n_basis, beg_anfps, end_anfps, map, umap, 
 c
-     *                 ca_perm, cb_perm, fa_perm, fb_perm, 
-     *                 natoms_frag, 
-     *                 watom_frag, 
-     *                 charge, 
-     *                 atom, 
+     *               ca_perm, cb_perm, fa_perm, fb_perm, 
+     *               natoms_frag, 
+     *               watom_frag, 
+     *               charge, 
+     *               atom, 
 c
-     *                 vmax,omax,norb,maxhist,diis_start) 
+     *               vmax,omax,norb,maxhist,diis_start) 
 c---------------------------------------------------------------------------
 
       use, intrinsic :: ISO_C_BINDING
@@ -723,7 +723,7 @@ c ----------------------------------------------------------------------
       double precision x3,y3,z3
       double precision x4,y4,z4
 
-      double precision coords(3,*), coeffs(*), alphas(*)
+      double precision tcoords(3,*), coeffs(*), alphas(*)
       double precision nai(nc1:nc2,nd1:nd2)
       double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
@@ -869,7 +869,6 @@ c retrive beta virtual mapping
       call c_f_pointer(sDimfrag, pdim_frag,[2])
       call c_f_pointer(pwatom_frag, bbvirt_frag, pdim_frag)
 
-
       n_apf = natoms_frag(current_frag) 
       do m = 1, n_apf 
          iatom(m) = watom_frag(current_frag, m) 
@@ -927,6 +926,8 @@ c-----------------------------------------------------------------------
       enddo  
       enddo  
 
+      write(6,*) ' NC = ', nc1, nc2, ':', nd1, nd2 
+
       itemp = 0 
       do n = nc1, nc2 
          if (umap(n).ne.0) then 
@@ -955,6 +956,8 @@ c-----------------------------------------------------------------------
      *                itemp, n_basis 
          call abort_job()
       endif 
+
+c     return ! VFL to be removed  
 
 c-----------------------------------------------------------------------
 c Construct the hcore initial guess  
@@ -1079,9 +1082,9 @@ c-----------------------------------------------------------------------
             aa1 = beg_anfps(m)
             aa2 = end_anfps(m)
 
-            x1 = coords(1,m)
-            y1 = coords(2,m)
-            z1 = coords(3,m)
+            x1 = tcoords(1,m)
+            y1 = tcoords(2,m)
+            z1 = tcoords(3,m)
          do n = n1, n2
             if (m .le. n) then 
             don = .false. 
@@ -1092,9 +1095,9 @@ c-----------------------------------------------------------------------
             bb1 = beg_anfps(n)
             bb2 = end_anfps(n)
 
-            x2 = coords(1,n)
-            y2 = coords(2,n)
-            z2 = coords(3,n)
+            x2 = tcoords(1,n)
+            y2 = tcoords(2,n)
+            z2 = tcoords(3,n)
          do r = r1, r2
             dor = .false. 
             do nf = 1, n_apf 
@@ -1104,9 +1107,9 @@ c-----------------------------------------------------------------------
             cc1 = beg_anfps(r)
             cc2 = end_anfps(r)
 
-            x3 = coords(1,r)
-            y3 = coords(2,r)
-            z3 = coords(3,r)
+            x3 = tcoords(1,r)
+            y3 = tcoords(2,r)
+            z3 = tcoords(3,r)
          do s = s1, s2
             if (r .le. s) then 
             dos = .false. 
@@ -1121,9 +1124,9 @@ c-----------------------------------------------------------------------
 c   Determine the largest density element.
 c-----------------------------------------------------------------------
 
-               x4 = coords(1,s)
-               y4 = coords(2,s)
-               z4 = coords(3,s)
+               x4 = tcoords(1,s)
+               y4 = tcoords(2,s)
+               z4 = tcoords(3,s)
                call pack_coeffs(alphas, pixalphas, coeffs, pixpcoeffs, 
      *                          ncfps, npfps, m, n, 
      *                          r, s, alpha_pack, nalpha_pack, 

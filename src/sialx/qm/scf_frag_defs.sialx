@@ -49,7 +49,8 @@ special return_h1 w
 special return_ovl w
 special return_sval rw
 special get_my_rank w
-special scf_atom ruuuu  
+special scf_atom ruuuur 
+special compute_int_scratchmem uuu
 
 endsial scf_frag_defs
 

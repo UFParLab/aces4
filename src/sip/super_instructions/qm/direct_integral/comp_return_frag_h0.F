@@ -13,7 +13,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine comp_return_frag_h0(z, napf, watom, da1, da2, db1, db2, 
-     * ncenters, coords, tcoords, charge, zz, iscr)
+     * ncenters, coords, tcoords, charge, atom, zz, iscr)
 c---------------------------------------------------------------------------
 c  Computes the set of OED integrals of types  
 c
@@ -42,7 +42,7 @@ c---------------------------------------------------------------------------
 
       integer i, ix, m, n, nfirst, nints, ncoeff, iatom, ncsum
       integer component
-      integer a, b, a1,a2,b1,b2,lastao, igrad
+      integer a, b, aa, bb, a1,a2,b1,b2,lastao, igrad
       integer m1, m2, n1, n2
       integer der1x, der1y, der1z
       integer der2x, der2y, der2z
@@ -65,8 +65,9 @@ c---------------------------------------------------------------------------
      *                 pcoeff_pack(max_dim_coeff)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
-      double precision acharge(ncenters), do_atom(ncenters)   
-      integer napf, watom(ncenters)  
+      double precision acharge(ncenters)
+      integer do_atom(ncenters)   
+      integer napf, watom(ncenters), atom(*)   
       double precision charge(ncenters) 
 
       integer (C_INT) one
@@ -94,12 +95,6 @@ c ----------------------------------------------------------------------
 c  NPFPS 
       TYPE(C_PTR) :: pnpfps
       integer, pointer :: npfps(:)
-c ----------------------------------------------------------------------
-
-c ----------------------------------------------------------------------
-c  NPFPS 
-      TYPE(C_PTR) :: pindex_cc
-      integer, pointer :: index_cc(:)
 c ----------------------------------------------------------------------
 
 c ----------------------------------------------------------------------
@@ -132,11 +127,6 @@ c ----------------------------------------------------------------------
 
       TYPE(C_PTR) :: icc, ccbeg, ccend
       integer, pointer :: picc(:), pccbeg(:), pccend(:)
-c ----------------------------------------------------------------------
-c  mapping of atoms to shells  
-c ----------------------------------------------------------------------
-      TYPE(C_PTR) :: patom  
-      integer, pointer :: atom(:)
 
 c Get data needed to compute integrals 
 c --------------------------------------------------------------------------- 
@@ -248,20 +238,12 @@ c ----------------------------------------------------------------------
       call c_f_pointer(icc, picc,[1])
       call c_f_pointer(ccend,pccend,picc)
 
-c ----------------------------------------------------------------------
-c  mapping of atoms to shells  
-c ----------------------------------------------------------------------
-      call predefined_int_array("atom"//C_NULL_CHAR, one,
-     *                                   pnalpha, patom)
-      call c_f_pointer(pnalpha, nalpha, [1])
-      call c_f_pointer(patom, atom, nalpha) 
-
       intSpherical = int_constant("intspherical"//C_NULL_CHAR)
       spherical = .true.
       if (intSpherical .ne. 1) spherical = .false.
 c     write(6,*) ' Spherical = ', spherical 
 
-      intmax = 100**4 ! VER BAD HACK  
+      intmax = 5000000 ! VER BAD HACK  
       zmax = 2*intmax
 
 c----------------------------------------------------------------------------
@@ -299,9 +281,9 @@ c-------------------------------------------------------------------------
       do m = 1, ncenters 
          acharge(m) = charge(m) 
          do_atom(m) = 0 
+         write(6,*) ' CHARGE :', m, charge(m) 
       enddo 
 
-c      write(6,*) ' WATOM = ', watom 
       newcenters = 0 
       do n = 1, napf 
          jatom = watom(n)  
@@ -314,9 +296,16 @@ c      write(6,*) ' WATOM = ', watom
             zn(newcenters) = coords(3,m)  
             acharge(newcenters) = charge(iatom) 
             do_atom(iatom) = 1 
+c           if (do_atom(iatom) .eq. 1) then 
+c              write(6,*) ' WFRAG = ', iatom, newcenters,
+c    *         xn(newcenters), yn(newcenters), zn(newcenters) 
+c           endif 
          endif 
       enddo
       enddo
+
+      write(6,*) ' NEWCHARGE = ', newcenters  
+      write(6,*) '    ', (acharge(m), m=1, newcenters) 
 
       m1 = 1 
       m2 = nshells 
@@ -342,6 +331,11 @@ c-------------------------------------------------------------------------
             x2 = tcoords(1,n)  
             y2 = tcoords(2,n)  
             z2 = tcoords(3,n)  
+
+            write(6,*) ' VFL:', m, n, ':', iatom, jatom 
+c           write(6,*) 'XYZ1', x1, y1, z1 
+c           write(6,*) 'XYZ2', x2, y2, z2 
+c           write(6,*) 'ncsum', ncsum  
 
             call pack_coeffs_oed(palphas, pixalphas, ppcoeffs, 
      *                       pixpcoeffs, ncfps, npfps, m, n,
@@ -394,6 +388,7 @@ c ------------------------------------------------------------------------
      *                 spherical, .true., iscr, nints, nfirst,
      *                 zz)
 
+c              write(6,*) ' NINTS = ', nints 
                if (nints .gt. 0) then
 
                   a2 = end_nfps(m)
@@ -413,6 +408,24 @@ c ------------------------------------------------------------------------
                  call add_integrals2(zsum, da1,da2,db1,db2,
      *                 zz(nfirst),a1,a2,b1,b2,1.0d0)
 
+c Print out the integrals  
+
+                  i = 0
+                  do b = db1,db2
+                  do a = da1,da2
+                     i = i + 1
+                     do bb = b1, b2 
+                        if ((bb .ge. db1) .and. (bb .le. db2)) then 
+                     do aa = a1, a2 
+                        if ((aa .ge. da1) .and. (aa .le. da2)) then 
+                        z(i) = zsum(a,b)
+                        endif 
+                     enddo 
+                        endif 
+                     enddo 
+                  enddo
+                  enddo
+
                endif ! nints 
 
             endif 
@@ -420,18 +433,6 @@ c ------------------------------------------------------------------------
             endif 
          enddo   ! m shells
 
-
-c Print out the integrals  
-
-c     write(6,*) 'One electron integrals ' 
-c     i = 0
-c     do b = db1,db2
-c     do a = da1,da2
-c        i = i + 1
-c        z(i) = zsum(a,b)
-c        write(6,*) a, b, zsum(a,b)
-c     enddo
-c     enddo
 
       return
       end

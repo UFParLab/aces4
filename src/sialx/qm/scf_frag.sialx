@@ -22,8 +22,8 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 29 # Nfrags  
-      index   jatom  = 1, 29 # Nfrags  
+      index   katom  = 1, 3 # Nfrags  
+      index   jatom  = 1, 3 # Nfrags  
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -59,6 +59,7 @@ import "scf_frag_defs.sialx"
       static Cb(mu,q) 
       static Fock_a(p, p1) 
       static Fock_b(q, q1) 
+      static oed_ovl(mu,nu) 
 #
 # Declare scalars 
 # --------------- 
@@ -69,6 +70,8 @@ import "scf_frag_defs.sialx"
       scalar rank 
       scalar nfrags 
       scalar fcount 
+      scalar imax  
+      scalar zmax  
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -90,6 +93,29 @@ import "scf_frag_defs.sialx"
        ENDDO katom 
       print_scalar etemp  
 
+#     Get memory requirements from integral calculation 
+#     ------------------------------------------------- 
+      println "Starting scratch memory calculation" 
+      imax = 0.0  
+      zmax = 0.0  
+     #DO mu 
+     #DO nu 
+     #   txx(mu,nu) = 0.0
+     #   execute compute_int_scratchmem txx(mu,nu) zmax imax 
+         execute compute_int_scratchmem oed_ovl zmax imax 
+     #ENDDO nu 
+     #ENDDO mu 
+      println "Done computing scratch memory" 
+
+# Compute the overlap matrix 
+       DO mu 
+       DO nu 
+          execute return_ovl txx(mu,nu) 
+          oed_ovl(mu,nu) = txx(mu,nu)  
+       ENDDO nu 
+       ENDDO mu
+      println "Done computing overlap integrals" 
+#
       sip_barrier 
 
       PARDO katom  
@@ -99,7 +125,7 @@ import "scf_frag_defs.sialx"
                   tatom(katom,jatom) = atom(katom,jatom) 
                   execute return_sval tatom(katom,jatom) etemp   
                   print_scalar etemp 
-                  execute scf_atom etemp Ca Cb Fock_a Fock_b  
+                  execute scf_atom etemp Ca Cb Fock_a Fock_b oed_ovl  
  
               ENDIF # katom == jatom  
             ENDDO jatom 
