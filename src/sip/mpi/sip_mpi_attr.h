@@ -31,29 +31,27 @@ public:
 
 	~SIPMPIAttr();
 
-	const std::vector<int>& server_ranks() { return servers_; }
-	const std::vector<int>& worker_ranks() { return workers_; }
+	std::vector<int>& server_ranks() { return servers_; }
+	std::vector<int>& worker_ranks() { return workers_; }
 
-	const int num_servers() const { return num_servers_; }
-	const int num_workers() const { return num_workers_; }
+	int num_servers() const { return num_servers_; }
+	int num_workers() const { return num_workers_; }
 
-	const int global_rank() const { return global_rank_; }
-	const int global_size() const { return global_size_; }
+	int global_rank() const { return global_rank_; }
+	int global_size() const { return global_size_; }
 
 	// Each worker is in a worker company. Each server is in a server company.
-	const int company_rank() const { return company_rank_; }
-	const int company_size() const { return company_size_; }
-	const bool is_company_master() const;
+	int company_rank() const { return company_rank_; }
+	int company_size() const { return company_size_; }
+	bool is_company_master() const;
 
-	const bool is_worker() const;
-	const bool is_server() const;
+	bool is_worker() const;
+	bool is_server() const;
 
-	const int worker_master() const { return worker_master_; }
-	const int server_master() const { return server_master_; }
+	int worker_master() const { return worker_master_; }
+	int server_master() const { return server_master_; }
 
 	MPI_Comm& company_communicator() { return company_comm_; }
-//	MPI_Comm& server_communicator() { return server_comm_; }
-//	MPI_Comm& worker_communicator() { return worker_comm_; }
 
 	friend std::ostream& operator<<(std::ostream&, const SIPMPIAttr&);
 
@@ -61,78 +59,22 @@ public:
 private:
 	SIPMPIAttr();
 
-	/**
-	 * Server MPI ranks;
-	 */
-	std::vector<int> servers_;
+	std::vector<int> servers_; // Server MPI ranks;
+	std::vector<int> workers_; // Worker MPI ranks
+	int num_servers_; // Number of servers
+	int num_workers_; // Number of workers
+	int worker_master_; // Worker master
+	int server_master_; // Server master
+	bool is_server_; // Is this rank a server
+	bool is_company_master_; // Is this rank a company master (master worker or master server)
+	int global_rank_; // Rank w.r.t. the global communicator
+	int global_size_; // Number of ranks in MPI_COMM_WORLD
+	int company_rank_; // Rank w.r.t. company
+	int company_size_; // Size of company
 
-	/**
-	 * Worker MPI ranks
-	 */
-	std::vector<int> workers_;
-
-	/**
-	 * Number of servers
-	 */
-	int num_servers_;
-
-	/**
-	 * Number of workers
-	 */
-	int num_workers_;
-
-	/**
-	 * Server master
-	 */
-	int worker_master_;
-
-	/**
-	 * Worker master
-	 */
-	int server_master_;
-
-	/**
-	 * Is this rank a server
-	 */
-	bool is_server_;
-
-	/**
-	 * Is this rank a company master (master worker or master server)
-	 */
-	bool is_company_master_;
-
-	/**
-	 * Rank w.r.t. the global communicator
-	 */
-	int global_rank_;
-	/**
-	 * Number of ranks in MPI_COMM_WORLD
-	 */
-	int global_size_;
-
-	/**
-	 * Rank w.r.t. company
-	 */
-	int company_rank_;
-
-	/**
-	 * Size of company
-	 */
-	int company_size_;
-
-	/**
-	 * This company's communicator
-	 */
-	MPI_Comm company_comm_;
-
-	/**
-	 * Server company communicator
-	 */
-	MPI_Comm server_comm_;
-	/**
-	 * Worker company communicator
-	 */
-	MPI_Comm worker_comm_;
+	MPI_Comm company_comm_; // This company's communicator
+	MPI_Comm server_comm_; // Server company communicator
+	MPI_Comm worker_comm_; // Worker company communicator
 
 	// Temp variables to free up.
 	MPI_Group server_group;

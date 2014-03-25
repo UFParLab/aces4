@@ -30,59 +30,12 @@ public:
 	 */
 	void run();
 
-	/**
-	 * Auxiliary structure to keep track of data for pending puts & put_accumulates
-	 */
-	class TagInfo {
-	public:
-		int from;
-		int section_number;
-		int message_number;
-		TagInfo(int f, int s, int m): from(f), section_number(s), message_number(m){}
-		TagInfo(const TagInfo& other) {
-			from = other.from;
-			section_number = other.section_number;
-			message_number = other.message_number;
-		}
-		void operator= (const TagInfo &other){
-			from = other.from;
-			section_number = other.section_number;
-			message_number = other.message_number;
-		}
-		bool operator< (const TagInfo &other) const {
-			if (from < other.from) return true;
-			if (section_number < other.section_number) return true;
-			if (message_number < other.message_number) return true;
-			return false;
-		}
-		bool operator> (const TagInfo &other) const {
-					if (from > other.from) return true;
-					if (section_number > other.section_number) return true;
-					if (message_number > other.message_number) return true;
-					return false;
-				}
-		bool operator==(const TagInfo& other) const {
-			if (from == other.from &&
-				section_number == other.section_number &&
-				message_number == other.message_number)
-				return true;
-			return false;
-		}
-	};
-
 private:
-
-	friend std::ostream& operator<<(std::ostream& os, const TagInfo& obj);
 
 	/**
 	 * Keeps track of block data for pending puts & put_accumulates.
 	 */
-	typedef std::pair<BlockId, Block::BlockPtr> IdBlockPair;
-	typedef std::map<TagInfo, IdBlockPair> TagInfoIdBlockPairMap;
-	TagInfoIdBlockPairMap outstanding_put_data_map_;
-
-	friend std::ostream& operator<<(std::ostream& os, const TagInfoIdBlockPairMap& obj);
-
+	Block::BlockPtr *outstanding_put_data_arr_;
 
 	/**
 	 * MPI Attributes of the SIP for this rank

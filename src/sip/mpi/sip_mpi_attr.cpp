@@ -93,22 +93,20 @@ SIPMPIAttr::SIPMPIAttr() {
 	SIPMPIUtils::check_err(MPI_Group_translate_ranks(server_group, 1, &company_master, univ_group, &server_master_));
 	SIPMPIUtils::check_err(MPI_Group_translate_ranks(worker_group, 1, &company_master, univ_group, &worker_master_));
 
-
-
 	delete [] worker_ranks;
 	delete [] server_ranks;
 
 }
 
-const bool SIPMPIAttr::is_company_master() const {
+bool SIPMPIAttr::is_company_master() const {
 	return is_company_master_;
 }
 
-const bool SIPMPIAttr::is_server() const {
+bool SIPMPIAttr::is_server() const {
 	return is_server_;
 }
 
-const bool SIPMPIAttr::is_worker() const {
+bool SIPMPIAttr::is_worker() const {
 	return ! is_server_;
 }
 

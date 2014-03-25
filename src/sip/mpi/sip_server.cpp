@@ -18,11 +18,14 @@ namespace sip {
 SIPServer::SIPServer(SipTables& sip_tables, DataDistribution &data_distribution, SIPMPIAttr & sip_mpi_attr,
 		PersistentArrayManager& pbm_read, PersistentArrayManager& pbm_write):
 		sip_tables_(sip_tables), data_distribution_(data_distribution), sip_mpi_attr_(sip_mpi_attr),
-		pbm_read_(pbm_read), pbm_write_(pbm_write), block_map_(sip_tables.num_arrays()), section_number_(0)	{
+		pbm_read_(pbm_read), pbm_write_(pbm_write), block_map_(sip_tables.num_arrays()), section_number_(0){
 	int num_arrs = block_map_.size();
 	for (int i=0; i< num_arrs; i++){
 		block_map_[i] = NULL;
 	}
+	outstanding_put_data_arr_ = new Block::BlockPtr[sip_mpi_attr_.global_size()];
+	for (int i=0; i<sip_mpi_attr_.global_size(); i++)
+		outstanding_put_data_arr_[i] = NULL;
 }
 
 SIPServer::~SIPServer() {
@@ -41,6 +44,7 @@ SIPServer::~SIPServer() {
 			}
 		}
 	}
+	delete [] outstanding_put_data_arr_;
 }
 
 
@@ -201,11 +205,8 @@ void SIPServer::handle_PUT(int mpi_source, int tag) {
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting empty block " << bid << " of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
 	bid_map->insert(std::pair<BlockId, Block::BlockPtr>(bid, bptr));
 
-	TagInfo ti(mpi_source, section_number_, message_number);
-	std::pair<BlockId, Block::BlockPtr> id_bptr_pair (bid, bptr);
-	std::pair<TagInfoIdBlockPairMap::iterator, bool> outstanding_insert;
-	outstanding_insert = outstanding_put_data_map_.insert(std::pair<TagInfo, IdBlockPair>(ti, id_bptr_pair));
-	sip::check(outstanding_insert.second, "Could not insert into outstanding asyncs map !");
+	sip::check(outstanding_put_data_arr_[mpi_source] == NULL, "Data to put block into was not NULL !");
+	outstanding_put_data_arr_[mpi_source] = bptr;
 
 	// Send Ack
 	//SIPMPIUtils::send_ack_to_rank(mpi_source, SIPMPIData::PUT_ACK, SIPMPIData::SERVER_TO_WORKER_PUT_ACK);
@@ -224,33 +225,21 @@ void SIPServer::handle_PUT_DATA(int mpi_source, int size, int tag) {
 	this->section_number_ = section_number;
 //std::cout<<"\n section & message number : "<<section_number<<"\t"<<message_number<<"\n";
 
-	TagInfo ti(mpi_source, section_number_, message_number);
-	//==============//TagInfoIdBlockPairMap::const_iterator it = outstanding_put_data_map_.find(ti);
-	TagInfoIdBlockPairMap::const_iterator it = outstanding_put_data_map_.begin();
-	for (; it != outstanding_put_data_map_.end(); ++it){
-		if (it->first == ti)
-			break;
-	}
-	std::ostringstream err_no_id;
-	err_no_id << "Could not find block in which to insert incoming block data, could not find "<< ti << " in map " << outstanding_put_data_map_<< " !";
-	check(it != outstanding_put_data_map_.end(), err_no_id.str());
-//check (outstanding_put_data_map_.size() < 2, "MATCHED GREATER THAN 2 !");
-
-	BlockId bid = it->second.first;
-	Block::BlockPtr bptr = it->second.second;
+	Block::BlockPtr bptr = outstanding_put_data_arr_[mpi_source];
+	sip::check(bptr != NULL, "Block to put data into was NULL !");
+	outstanding_put_data_arr_[mpi_source] = NULL;
 
 	std::ostringstream err_message;
 	err_message << "Size of incoming block ("<<size<<") and that expected ("<<bptr->size()<< ")don't match up !";
 	check(size == bptr->size(), err_message.str());
 	//check(size == bptr->size(), "Size of incoming block and that expected don't match up !");
 	SIPMPIUtils::get_bptr_data_from_rank(mpi_source, tag, size, bptr);
-	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting received block data" << bid << " of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting received block data from rank " << mpi_source<< std::endl);
 
 	// Send Ack
 	int put_data_ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_DATA_ACK, section_number, message_number);
 	SIPMPIUtils::send_ack_to_rank(mpi_source, SIPMPIData::PUT_DATA_ACK, put_data_ack_tag);
 
-	outstanding_put_data_map_.erase(ti);
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Done PUT_DATA for rank "<< mpi_source << std::endl);
 }
 
@@ -273,17 +262,20 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int tag) {
 		bid_map = new IdBlockMap();
 		block_map_[array_id] = bid_map;
 		SIP_LOG(std::cout<<"First PUT_ACCUMULATE into block of array number "<<array_id<<" called "<<sip_tables_.array_name(array_id)<<std::endl);
-
 	}
+
 	IdBlockMap::const_iterator it = bid_map->find(bid);
-	Block::BlockPtr bptr = new Block(shape);
+	Block::BlockPtr bptr;
+	if (it == bid_map->end()){
+		bptr = new Block(shape);
+	} else {
+		bptr = it->second;
+	}
 
+	bid_map->insert(std::pair<BlockId, Block::BlockPtr>(bid, bptr));
 
-	TagInfo ti(mpi_source, section_number_, message_number);
-	std::pair<BlockId, Block::BlockPtr> id_bptr_pair(bid, bptr);
-	std::pair<TagInfoIdBlockPairMap::iterator, bool> outstanding_insert;
-	outstanding_insert = outstanding_put_data_map_.insert(std::pair<TagInfo, IdBlockPair>(ti, id_bptr_pair));
-	sip::check(outstanding_insert.second, "Could not insert into outstanding asyncs !");
+	sip::check(outstanding_put_data_arr_[mpi_source] == NULL, "Data to put block into was not NULL !");
+	outstanding_put_data_arr_[mpi_source] = bptr;
 
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Done PUT_ACCUMULATE for rank " << mpi_source<< std::endl);
 }
@@ -297,40 +289,23 @@ void SIPServer::handle_PUT_ACCUMULATE_DATA(int mpi_source, int size, int tag) {
 	check (section_number >= this->section_number_, "Section number invariant violated. Got request from an older section !");
 	this->section_number_ = section_number;
 
-	TagInfo ti(mpi_source, section_number_, message_number);
-	//==============//TagInfoIdBlockPairMap::const_iterator it = outstanding_put_data_map_.find(ti);
-	TagInfoIdBlockPairMap::const_iterator it = outstanding_put_data_map_.begin();
-	for (; it != outstanding_put_data_map_.end(); ++it){
-		if (it->first == ti)
-			break;
-	}
-	std::ostringstream err_no_id;
-	err_no_id << "Could not find block in which to insert incoming block data, could not find "<< ti << " in map " << outstanding_put_data_map_<< " !";
-	check(it != outstanding_put_data_map_.end(), err_no_id.str());
-//check (outstanding_put_data_map_.size() < 2, "MATCHED GREATER THAN 2 !");
-	BlockId bid = it->second.first;
-	Block::BlockPtr bptr = it->second.second;
+	Block::BlockPtr bptr = outstanding_put_data_arr_[mpi_source];
+	sip::check(bptr != NULL, "Block to put data into was NULL !");
+	outstanding_put_data_arr_[mpi_source] = NULL;
 
 	std::ostringstream err_message;
 	err_message << "Size of incoming block ("<<size<<") and that expected ("<<bptr->size()<< ")don't match up !";
 	check(size == bptr->size(), err_message.str());
+
+	Block::BlockPtr bptr_new = new Block(bptr->shape());
+
 	//check(size == bptr->size(), "Size of incoming block and that expected don't match up !");
-	SIPMPIUtils::get_bptr_data_from_rank(mpi_source, tag, size, bptr);
+	SIPMPIUtils::get_bptr_data_from_rank(mpi_source, tag, size, bptr_new);
 
-	int array_id = bid.array_id();
-	IdBlockMapPtr bid_map = block_map_[array_id];
-	check(bid_map != NULL, "Map for blocks of array is NULL !");
-	IdBlockMap::const_iterator it2 = bid_map->find(bid);
-	if (it2 == bid_map->end()) {
-		bid_map->insert(std::pair<BlockId, Block::BlockPtr>(bid, bptr));
-	} else {
-		Block::BlockPtr bptr_orig = it2->second;
-		check(bptr->size() == bptr_orig->size(), "Size of block being accumulated into doesnt match incoming block!");
-		bptr_orig->accumulate_data(bptr);
-		delete bptr;
-	}
+	bptr->accumulate_data(bptr_new);
+	delete bptr_new;
 
-	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting received block data" << bid << " of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting received block data from rank " << mpi_source<< std::endl);
 
 	// Send Ack
 	int put_data_ack_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA_ACK, section_number, message_number);
@@ -338,7 +313,6 @@ void SIPServer::handle_PUT_ACCUMULATE_DATA(int mpi_source, int size, int tag) {
 
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Done PUT_ACCUMULATE_DATA for rank "<< mpi_source << std::endl);
 
-	outstanding_put_data_map_.erase(ti);
 }
 
 void SIPServer::handle_DELETE(int mpi_source, int tag) {
@@ -348,7 +322,6 @@ void SIPServer::handle_DELETE(int mpi_source, int tag) {
 	// From the servers master
 	// Receieve the ID of the array to delete
 	// Inform other servers
-//	int tag;
 	int array_id = get_int_from_rank(mpi_source, tag);
 	int section_number = SIPMPIUtils::get_section_number(tag);
 	int message_number = SIPMPIUtils::get_message_number(tag);
@@ -514,22 +487,6 @@ std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
 			}
 		}
 	}
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const SIPServer::TagInfo& obj){
-	os << "TagInfo[from:" << obj.from << ",msg : "<<obj.message_number
-		<< ",sect : " << obj.section_number << "]";
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const SIPServer::TagInfoIdBlockPairMap& obj){
-	SIPServer::TagInfoIdBlockPairMap::const_iterator it = obj.begin();
-	os << "TagInfoIdBlockPairMap[";
-	for (; it != obj.end(); ++it){
-		os << it->first << " : "<<it->second.first<<", ";
-	}
-	os << "]";
 	return os;
 }
 
