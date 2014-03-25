@@ -92,6 +92,15 @@ void delete_scratch_array(double **array){
 	delete [] *array;
 }
 
+void integer_scratch_array(int& num_elements, int **array){
+	int * scratch = new int[num_elements]();  //initialize to zero
+	*array = scratch;
+}
+
+void delete_integer_scratch_array(int **array){
+	delete [] *array;
+}
+
 /**
  * Get predefined integer array from intitialization data
  *
