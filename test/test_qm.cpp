@@ -17,6 +17,7 @@
 
 static const std::string dir_name("src/sialx/qm/");
 
+/** Single node ccsd test*/
 TEST(Sial_QM,ccsdpt_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
@@ -34,7 +35,8 @@ TEST(Sial_QM,ccsdpt_test){
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager<Block> pbm;
+		sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+		pbm = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
 		it = progs.begin();
 		while (it != progs.end()){
 			std::string sialfpath;
@@ -45,14 +47,13 @@ TEST(Sial_QM,ccsdpt_test){
 			sip::SipTables sipTables(setup_reader, siox_file);
 			//std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+			sip::Interpreter runner(sipTables, sialxTimer, pbm);
 			std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 			runner.interpret();
+			pbm->save_marked_arrays(&runner);
 			ASSERT_EQ(0, sip::DataManager::scope_count);
 			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-			std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm;
-			pbm.clear_marked_arrays();
-
+			std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<< pbm;
 			++it;
 			if (it == progs.end()){	// Last Program
 				double eaab = runner.scalar_value("eaab");

@@ -40,7 +40,7 @@ Interpreter* Interpreter::global_interpreter;
 
 #ifdef HAVE_MPI
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
-		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, PersistentArrayManager<Block>* persistent_array_manager) :
+		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, PersistentArrayManager<Block,Interpreter>* persistent_array_manager) :
 	sip_tables_(sipTables),
 	sialx_timers_(sialx_timer),
 	data_manager_(sipTables,  sip_mpi_attr, data_distribution),
@@ -51,12 +51,12 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 	_init(sipTables);
 }
 #else
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, PersistentArrayManager<Block>& persistent_data_manager ) :
-	persistent_data_manager_(persistent_data_manager),
-	sip_tables_(sipTables), sialx_timers_(sialx_timer),
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, PersistentArrayManager<Block,Interpreter>* persistent_array_manager ) :
+	sip_tables_(sipTables),
+	sialx_timers_(sialx_timer),
 	data_manager_(sipTables),
-	op_table_(sipTables.op_table_){
-
+	op_table_(sipTables.op_table_),
+	persistent_array_manager_(persistent_array_manager){
 	_init(sipTables);
 }
 

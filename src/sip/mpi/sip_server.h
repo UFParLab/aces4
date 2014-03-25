@@ -51,13 +51,13 @@ namespace sip {
  * following PUT_DATA or PUT_ACCUMULATE_DATA message.  This decision will need to be revisited.
  */
 
-template <typename BLOCK_TYPE>
+
 class PersistentArrayManager;
 
 class SIPServer {
 
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock> *);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock, SIPServer> *);
 	~SIPServer();
 
 	/**
@@ -96,7 +96,7 @@ private:
 	SIPMPIAttr & sip_mpi_attr_;
 	DataDistribution &data_distribution_;
 	SipTables &sip_tables_;
-	PersistentArrayManager<ServerBlock> * persistent_array_manager_;
+	PersistentArrayManager<ServerBlock, SIPServer> * persistent_array_manager_;
 
 
 	/**

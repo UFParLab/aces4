@@ -46,8 +46,10 @@ namespace sip {
 #ifdef HAVE_MPI
 BlockManager::BlockManager(SipTables& sipTables,
 		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution) :
-		sip_tables_(sipTables), block_map_(sipTables.num_arrays()),
-		sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
+		sip_tables_(sipTables),
+		block_map_(sipTables.num_arrays()),
+		sip_mpi_attr_(sip_mpi_attr),
+		data_distribution_(data_distribution),
 		num_posted_async_(0)
 		{
 	std::fill(posted_async_ + 0, posted_async_+MAX_POSTED_ASYNC, MPI_REQUEST_NULL);
@@ -56,15 +58,10 @@ BlockManager::BlockManager(SipTables& sipTables,
 
 #else
 BlockManager::BlockManager(SipTables& sipTables) :
-		sip_tables_(sipTables), block_map_(sipTables.num_arrays()){
-//	// Initialize the Block Map to all NULLs
-//	int num_arrs = block_map_.size();
-//	for (int i=0; i< num_arrs; i++){
-//		block_map_[i] = NULL;
+		sip_tables_(sipTables),
+		block_map_(sipTables.num_arrays()){
 	}
-}
-
-#endif
+#endif //HAVE_MPI
 
 /**
  * Delete blocks being managed by the block manager.
@@ -140,9 +137,11 @@ void BlockManager::get(BlockId& block_id) {
 	//get_block_for_reading(block_id);
 	request_block_from_server(block_id);
 #else
-	//TODO  this was get_block_for_writing, which would cause a block to be created when attempting to
-	//read non-existent block.  If this causes problems, investigate.
-	get_block_for_reading(block_id, false);
+	//TODO: this allows a block to be
+	// obtained with get before it has been written.
+	//The assumption is that it is initialized to zero.
+	//DISCUSS this
+	get_block_for_accumulate(block_id);
 #endif
 
 }
@@ -199,7 +198,7 @@ void BlockManager::put_accumulate(BlockId& target_id,
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT_ACCUMULATE for block " << lhs_id << " to server rank " << server_rank << std::endl);
 #else
 	// Accumulate locally
-	Block::BlockPtr target_block = get_block_for_accumulate(lhs_id, false);
+	Block::BlockPtr target_block = get_block_for_accumulate(target_id, false);
 	assert(target_block->shape_ == source_block->shape_);
 	target_block->accumulate_data(source_block);
 #endif
@@ -417,7 +416,7 @@ Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 	return blk;
 }
 
-
+/* gets block, creating it if it doesn't exist.  If new, initializes to zero.*/
 Block::BlockPtr BlockManager::get_block_for_accumulate(const BlockId& id,
 		bool is_scope_extent) {
 	return get_block_for_writing(id, is_scope_extent);

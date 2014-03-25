@@ -96,7 +96,7 @@ public:
 	 * @return pointer to requested Block
 	 */
 	//TODO is this needed, or can it be replace with get_block_for_writing?
-	Block::BlockPtr get_block_for_accumulate(const BlockId& id, bool is_scope_extent);
+	Block::BlockPtr get_block_for_accumulate(const BlockId& id, bool is_scope_extent=false);
 
 	/** Initializes a new scope for temp Blocks
 	 */

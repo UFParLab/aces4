@@ -38,9 +38,9 @@ public:
 
 #ifdef HAVE_MPI
 	Interpreter(SipTables&, SialxTimer&, SIPMPIAttr&, DataDistribution&,
-			PersistentArrayManager<Block>*);
+			PersistentArrayManager<Block, Interpreter>*);
 #else
-	Interpreter(SipTables&, SialxTimer&, PersistentArrayManager<Block>*);
+	Interpreter(SipTables&, SialxTimer&, PersistentArrayManager<Block, Interpreter>* = NULL); //default value used for testing only
 #endif
 	~Interpreter();
 
@@ -243,7 +243,7 @@ private:
 	 * Owned by main program
 	 * The reference is needed for upcalls to handle set_persistent and restore_persistent instructions
 	 */
-	sip::PersistentArrayManager<Block>* persistent_array_manager_;
+	sip::PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
 
 	/**
 	 * Records whether or not we are executing in a section of code where gpu_on has been invoked

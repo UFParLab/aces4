@@ -41,11 +41,10 @@ DataManager::DataManager(SipTables& sipTables,
 }
 
 #else
-DataManager::DataManager(SipTables& sipTables,
-//		pbm_read_(pbm_read), pbm_write_(pbm_write),
+DataManager::DataManager(SipTables& sipTables):
 		sipTables_(sipTables), scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
 		index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-        block_manager_(sipTables, pbm_read, pbm_write),
+        block_manager_(sipTables),
         scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
         contiguous_array_manager_(sipTables, sipTables.setup_reader())
         {

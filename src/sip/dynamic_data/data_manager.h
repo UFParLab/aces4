@@ -32,9 +32,7 @@ public:
 #ifdef HAVE_MPI
 	DataManager(SipTables&, SIPMPIAttr&, DataDistribution&);
 #else
-	DataManager(SipTables&,
-//			sip::PersistentArrayManager&, sip::PersistentArrayManager&
-			);
+	DataManager(SipTables&);
 #endif
 
 
