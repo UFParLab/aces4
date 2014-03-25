@@ -105,13 +105,13 @@ c      end interface
       use, intrinsic :: ISO_C_BINDING
       integer (C_INT), intent(in)::numElements
       TYPE(C_PTR), intent(out)::array
-      end subroutine scratch_array
+      end subroutine integer_scratch_array
       end interface
 
       interface
       subroutine delete_integer_scratch_array(array) bind (C)
       use, intrinsic :: ISO_C_BINDING
       TYPE(C_PTR), intent(out)::array
-      end subroutine delete_scratch_array
+      end subroutine delete_integer_scratch_array
       end interface
 
