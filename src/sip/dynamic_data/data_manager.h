@@ -85,26 +85,6 @@ public:
 	sip::BlockManager block_manager_;  //this should probably be private
 	sip::ContiguousArrayManager contiguous_array_manager_;
 
-//	/**
-//	 * Sets an array to be persistent upto the next SIAL Program
-//	 * @param array_id
-//	 * @param name
-//	 * @param slot
-//	 */
-//	void set_persistent_array(int array_id, std::string name, int slot);
-//
-//	/**
-//	 * Restores a previously saved persistent array.
-//	 * @param array_id
-//	 * @param name
-//	 * @param slot
-//	 */
-//	void restore_persistent_array(int array_id, std::string name, int slot);
-//
-//	/**
-//	 * Saves persistent arrays to the persistent block manager.
-//	 */
-//	void save_persistent_arrays();
 
 private:
 	//dynamic state
@@ -116,23 +96,7 @@ private:
 	//static data for convenience
 	SipTables& sipTables_;
 
-//	/**
-//	 * Read and write persistent data between programs.
-//	 */
-//	sip::PersistentArrayManager<Block> & pbm_read_;
-//	sip::PersistentArrayManager<Block> & pbm_write_;
-
-
 #ifdef HAVE_MPI
-//	/**
-//	 * Reference to a the Interpreter's Section Number
-//	 */
-//	int & section_number_;
-//
-//	/**
-//	 * Reference to the interpreter's Message Number.
-//	 */
-//	int & message_number_;
 
 	/**
 	 * MPI Attributes of the SIP for this rank

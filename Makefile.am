@@ -295,6 +295,10 @@ SIOX_FILES=\
 ./src/sialx/test/assign_to_static_array_test.siox\
 ./src/sialx/test/set_persistent_test.siox\
 ./src/sialx/test/restore_persistent_test.siox\
+./src/sialx/test/persistent_scalars_1.siox\
+./src/sialx/test/persistent_scalars_2.siox\
+./src/sialx/test/persistent_static array_test_1.siox\
+./src/sialx/test/persistent_static_array_test_2.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -365,6 +369,10 @@ EXTRA_DIST += \
 ./src/sialx/test/assign_to_static_array_test.sialx\
 ./src/sialx/test/set_persistent_test.sialx\
 ./src/sialx/test/restore_persistent_test.sialx\
+./src/sialx/test/persistent_scalars_1.sialx\
+./src/sialx/test/persistent_scalars_2.sialx\
+./src/sialx/test/persistent_static array_test_1.sialx\
+./src/sialx/test/persistent_static_array_test_2.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

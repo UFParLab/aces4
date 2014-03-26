@@ -564,10 +564,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			// DEBUG
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-
+			std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
+								<< " and string \"" << string_literal(string_slot) << "\"" << std::endl;
 			//TODO deal with parallel
-            persistent_array_manager_->set_persistent(array_slot,
-            		string_slot);
+            persistent_array_manager_->set_persistent(this, array_slot,string_slot);
 			++pc;
 		}
 		break;
@@ -577,7 +577,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			// DEBUG
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-
+			std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
+								<< " and string \"" << string_literal(string_slot) << "\"" << std::endl;
 			persistent_array_manager_->restore_persistent(this, array_slot, string_slot);
 			++pc;
 		}

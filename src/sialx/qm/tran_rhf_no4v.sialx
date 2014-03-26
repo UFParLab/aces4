@@ -531,7 +531,7 @@ import "tran_rhf_no4v_defs.sialx"
 # Write transformed two-electron integrals to list 
 # ------------------------------------------------ 
 # 
-     #set_persistent Dca "ca" 
+     set_persistent Dca "ca" 
      #set_persistent FTa "fock_a" 
       set_persistent VSpipi "VSpipi"   
       set_persistent Vaaii  "Vaaii" 

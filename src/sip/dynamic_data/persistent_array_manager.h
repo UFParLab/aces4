@@ -92,7 +92,9 @@ public:
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void set_persistent(int array_id, int string_slot) {
+	void set_persistent(RUNNER_TYPE* runner, int array_id, int string_slot) {
+		//DEBUG
+		std::cout << "set_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
 		std::pair<ArrayIdLabelMap::iterator, bool> ret =
 				persistent_array_map_.insert(
 						std::pair<int, int>(array_id, string_slot));
@@ -122,9 +124,12 @@ public:
 				it != persistent_array_map_.end(); ++it) {
 			int array_id = it->first;
 			int string_slot = it->second;
+			//DEBUG
+			std::cout << "save marked: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
 			const std::string label = sip_tables.string_literal(string_slot);
 			if (sip_tables.is_scalar(array_id)) {
 				double value = runner->scalar_value(array_id);
+				std::cout << "scalar value is " << value;
 				save_scalar(label, value);
 			} else if (sip_tables.is_contiguous(array_id)) {
 				Block* contiguous_array =
@@ -157,6 +162,8 @@ public:
 //	}
 
 	void restore_persistent(RUNNER_TYPE* runner, int array_id, int string_slot){
+		//DEBUG
+		std::cout << "restore_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
 		if (runner->is_scalar(array_id))
 			restore_persistent_scalar(runner, array_id, string_slot);
 		else if (runner->is_contiguous(array_id))
@@ -180,6 +187,7 @@ public:
 		LabelScalarValueMap::iterator it = scalar_value_map_.find(label);
 		check(it != scalar_value_map_.end(),
 				"scalar to restore with label " + label + " not found");
+		std::cout<< "restoring scalar " << worker -> array_name(array_id) << "=" << it -> second << std::endl;
 		worker->set_scalar_value(array_id, it->second);
 		scalar_value_map_.erase(it);
 	}
@@ -230,7 +238,7 @@ public:
 //		distributed_array_map_.erase(it);
 //	}
 
-	template<typename BLOCK_TYPE>
+	template<typename BLOCK_TYPE, typename RUNNER_TYPE>
 	friend std::ostream& operator<<(std::ostream&,
 			const PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>&);
 
@@ -298,6 +306,28 @@ DISALLOW_COPY_AND_ASSIGN(PersistentArrayManager);
 }
 ;
 
+	template<typename BLOCK_TYPE, typename RUNNER_TYPE>
+	std::ostream& operator<<(std::ostream& os, const PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE> & obj){
+		os << "Persistent Array Manager" << std::endl;
+		os << "Marked arrays:" << std::endl;
+		os << "ScalarValueMap:" << std::endl;
+		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelScalarValueMap::const_iterator it;
+		for (it = obj.scalar_value_map_.begin(); it != obj.scalar_value_map_.end(); ++it){
+			os << it->first << "=" << it->second << std::endl;
+		}
+		os << "ContiguousArrayMap:" << std::endl;
+		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelContiguousArrayMap::const_iterator cit;
+		for (cit = obj.contiguous_array_map_.begin(); cit != obj.contiguous_array_map_.end(); ++cit){
+			os << it -> first << std::endl;
+		}
+		os << "Distributed/ServedArrayMap:" << std::endl;
+		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelDistributedArrayMap::const_iterator dit;
+		for (dit = obj.distributed_array_map_.begin(); dit != obj.distributed_array_map_.end(); ++dit){
+			os << it -> first << std::endl;
+			os << it -> second << std::endl;
+		}
+		return os;
+	}
 } /* namespace sip */
 
 //#include "persistent_array_manager.cpp"

@@ -231,6 +231,8 @@ void DataManager::get_subblock_offsets_and_shape(Block::BlockPtr super_block, co
 //	   std::cout << "], subblock_shape = " << subblock_shape << std::endl;
 }
 
+//DO NOT DELETE:  THIS IS COMMENTED OUT BECAUSE IT NEEDS TO BE VERIFIED
+//DO NOT DELETE
 ////returns the id of the superblock and calculates the offsets array in the reference variable
 //array::BlockId DataManager::super_block_id(const array::BlockSelector& selector, int (& offset)[MAX_RANK]){
 //	int array_id = selector.array_id_;

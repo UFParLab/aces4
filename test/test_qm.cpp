@@ -53,7 +53,7 @@ TEST(Sial_QM,ccsdpt_test){
 			pbm->save_marked_arrays(&runner);
 			ASSERT_EQ(0, sip::DataManager::scope_count);
 			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-			std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<< pbm;
+			std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<< *pbm;
 			++it;
 			if (it == progs.end()){	// Last Program
 				double eaab = runner.scalar_value("eaab");
