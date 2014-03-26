@@ -1303,85 +1303,85 @@ TEST(Sial,static_array_test){
 }
 
 
-TEST(Sial,persistent_static_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("static_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + "1.siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		std::string tmp1 = job + "2.siox";
-		const char* nm1= tmp1.c_str();
-		add_sial_program(nm1);
-		int segs[]  = {8,16};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
-	sip::Interpreter runner(sipTables, sialxTimer, pbm)
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	pbm->save_marked_arrays();
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
-	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file2);
-	std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables << std::endl;
-
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
-	sip::Interpreter runner(sipTables, sialxTimer, pbm)
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-	}
-	delete pbm;
-}
+//TEST(Sial,persistent_static_array_test){
+//	std::cout << "****************************************\n";
+//	sip::DataManager::scope_count=0;
+//	//create setup_file
+//	std::string job("static_array_test");
+//	std::cout << "JOBNAME = " << job << std::endl;
+//	double x = 3.456;
+//	int norb = 2;
+//
+//	{	init_setup(job.c_str());
+//		set_scalar("x",x);
+//		set_constant("norb",norb);
+//		std::string tmp = job + "1.siox";
+//		const char* nm= tmp.c_str();
+//		add_sial_program(nm);
+//		std::string tmp1 = job + "2.siox";
+//		const char* nm1= tmp1.c_str();
+//		add_sial_program(nm1);
+//		int segs[]  = {8,16};
+//		set_aoindex_info(2,segs);
+//		finalize_setup();
+//	}
+//
+//	//read and print setup_file
+//	//// setup::SetupReader setup_reader;
+//
+//	setup::BinaryInputFile setup_file(job + ".dat");
+//	// setup_reader.read(setup_file);
+//	setup::SetupReader setup_reader(setup_file);
+//
+//	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+//	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+//
+//	//get siox name from setup, load and print the sip tables
+//	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+//	std::string siox_dir(dir_name);
+//	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+////	siox_reader.read();
+//	sip::SipTables sipTables(setup_reader, siox_file);
+//	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+//
+//
+//	//interpret the program
+//	{
+//	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+//
+//	sip::Interpreter runner(sipTables, sialxTimer, pbm)
+//	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+//	runner.interpret();
+//	ASSERT_EQ(0, sip::DataManager::scope_count);
+//	pbm->save_marked_arrays();
+//	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+////	runner.print_block()
+//;
+//	}
+//	//get siox name from setup, load and print the sip tables
+//	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+//	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
+//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+////	siox_reader.read();
+//	sip::SipTables sipTables(setup_reader, siox_file2);
+//	std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables << std::endl;
+//
+//
+//	//interpret the program
+//	{
+//	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+//
+//	sip::Interpreter runner(sipTables, sialxTimer, pbm)
+//	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+//	runner.interpret();
+//	ASSERT_EQ(0, sip::DataManager::scope_count);
+//
+//	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+////	runner.print_block()
+//	}
+//	delete pbm;
+//}
 //
 //TEST(Sial,local_arrays){
 //	std::cout << "****************************************\n";
