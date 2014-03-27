@@ -116,7 +116,7 @@ void BlockManager::delete_distributed(int array_id) {
 	 * careful to remove blocks that should not be delete from the block_map_.
 	 */
 	//delete any blocks stored locally
-	block_map_.delete_per_array_map(array_id);
+	block_map_.delete_per_array_map_and_blocks(array_id);
 #ifdef HAVE_MPI
 	//send delete message to server if responsible worker
 	if (int my_server = sip_mpi_attr_.my_server() > 0){
@@ -397,7 +397,11 @@ void BlockManager::request_block_from_server(BlockId& id){
 
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	check(blk != NULL, "attempting to read non-existent block", current_line());
+	if (blk == NULL){
+		std::cout << "get_block_for_reading, block " << id << "    array " << sip_tables_.array_name(id.array_id()) << " does not exist\n";
+		std::cout << block_map_[id.array_id()]->size() << std::endl;
+		fail ("",current_line());
+	}
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_read_on_host(blk);

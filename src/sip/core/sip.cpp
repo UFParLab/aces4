@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include "sip_interface.h"
+#include "global_state.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -32,7 +33,9 @@ void sip_abort() {
 // Get backtrace
 #ifdef __GNUC__
 
-	std::cerr<<"Error at line number :"<<current_line()<<std::endl;
+//	std::cerr<<"Error at line number :"<<current_line()<<std::endl;
+
+	std::cerr << "\nBacktrace:" << std::endl;
 
 	//std::cerr<<"__GNUC__ defined !" << std::endl;
 
@@ -83,7 +86,9 @@ void check(bool condition, std::string message, int line){
 	if (condition) return;
 	std::cerr << "FATAL ERROR: " << message;
 	if (line > 0){
-		std::cerr << " at line " << line;
+		std::string prog = GlobalState::get_program_name();
+		int length = prog.size()-std::string(".siox").size();
+		std::cerr << " at "<< prog.substr(0,length) << ":" << line;
 	}
 	std::cerr << std::endl;
 	sip_abort();
@@ -95,19 +100,20 @@ bool check_and_warn(bool condition, std::string message, int line){
 	if (condition) return true;
 	std::cerr << "WARNING:  "  << message;
 	if (line > 0){
-		std::cerr << " at line " << line;
+		std::cerr << " at "<< GlobalState::get_program_name() << ":" << line;
 	}
 	std::cerr << std::endl;
 	return false;
 }
 
 void fail(std::string message, int line){
-	std::cerr << "FATAL ERROR: " << message;
-	if (line > 0){
-			std::cerr << " at line " << line;
-	}
-	sip_abort();
-	//throw std::logic_error("logic error");
+//	std::cerr << "FATAL ERROR: " << message;
+//	if (line > 0){
+//		std::cerr << " at "<< GlobalState::get_program_name() << ":" << line;
+//	}
+//	sip_abort();
+//	//throw std::logic_error("logic error");
+	check(false, message, line);
 }
 
 

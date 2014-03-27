@@ -121,7 +121,7 @@ public:
 				array_id);
 	}
 	void set_contiguous_array(int array_id, Block* contig) {
-		data_manager_.contiguous_array_manager_.create_contiguous_array(
+		data_manager_.contiguous_array_manager_.insert_contiguous_array(
 				array_id, contig);
 	}
 	IdBlockMap<Block>::PerArrayMap* get_and_remove_per_array_map(int array_id) {

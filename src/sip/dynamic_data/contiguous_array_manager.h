@@ -90,7 +90,7 @@ public:
 	 * @param block
 	 * @return
 	 */
-	Block::BlockPtr create_contiguous_array(int array_id, Block::BlockPtr block);
+	Block::BlockPtr insert_contiguous_array(int array_id, Block::BlockPtr block);
 
 	/**
 	 * Allocates memory for a new contiguous array with the given id, and records it in the contiguous_array_map.

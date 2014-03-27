@@ -65,7 +65,7 @@ public:
 	/**
 	 * Type of map for storing persistent contiguous arrays between SIAL programs.  Only used at workers
 	 */
-	typedef std::map<std::string, Block*> LabelContiguousArrayMap;
+	typedef std::map<std::string, Block::BlockPtr> LabelContiguousArrayMap;
 	/**
 	 * Type of map for storing persistent distributed and served arrays between SIAL programs.
 	 * In parallel implementation., only used at servers
@@ -125,20 +125,22 @@ public:
 			int array_id = it->first;
 			int string_slot = it->second;
 			//DEBUG
-			std::cout << "save marked: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
-			const std::string label = sip_tables.string_literal(string_slot);
+			std::cout << "\nsave marked: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
+			const std::string label = runner->string_literal(string_slot);
 			if (sip_tables.is_scalar(array_id)) {
 				double value = runner->scalar_value(array_id);
-				std::cout << "scalar value is " << value;
+				std::cout << "saving scalar " << label << " value is " << value << std::endl;
 				save_scalar(label, value);
 			} else if (sip_tables.is_contiguous(array_id)) {
 				Block* contiguous_array =
 						runner->get_and_remove_contiguous_array(array_id);
+				std::cout << "saving contiguous array  "<<  label << " with contents "<< std::endl << *contiguous_array << std::endl;
 				save_contiguous(label, contiguous_array);
 			} else {
 				//in parallel implementation, there won't be any of these on worker.
 				IdBlockMap<Block>::PerArrayMap* per_array_map =
 						runner->get_and_remove_per_array_map(array_id);
+				std::cout << " saving _distributed with array " << label << " and map with " << per_array_map->size() << " blocks" << std::endl;
 			save_distributed(label, per_array_map);
 			}
 		}
@@ -161,6 +163,20 @@ public:
 //		persistent_array_map_.clear();
 //	}
 
+
+	/**
+	 * Invoked by worker or server to implement restore_persistent command
+	 * in SIAL. The type of the object to restore is checked.
+	 * It is the responsibility of the worker to decide whether to send
+	 * a message to the server, or handle the request locally.
+	 *
+	 * The runner parameter provides access to the sip_tables to
+	 * get the label and check array types.
+	 *
+	 * @param runner
+	 * @param array_id
+	 * @param string_slot
+	 */
 	void restore_persistent(RUNNER_TYPE* runner, int array_id, int string_slot){
 		//DEBUG
 		std::cout << "restore_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
@@ -172,7 +188,7 @@ public:
 			restore_persistent_distributed(runner, array_id, string_slot);
 	}
 
-	/** Invoked by worker to implement restore_persistent command in
+	/** Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a scalar.  The value associated with the
 	 * string literal is copied into the scalar table and the entry removed
 	 * from the persistent_array_manager.
@@ -192,9 +208,9 @@ public:
 		scalar_value_map_.erase(it);
 	}
 
-	/** Invoked by worker to implement restore_persistent command in
+	/** Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a contiguous array.  The array associated
-	 * with the string literal is MOVED into the scalar table and the
+	 * with the string literal is MOVED into the contiguous array table and the
 	 * entry removed (which does not delete the block) from the
 	 * persistent_array_manager.
 	 *
@@ -214,6 +230,17 @@ public:
 		contiguous_array_map_.erase(it);
 	}
 
+
+    /**	/** Invoked by restore_persistent to implement restore_persistent command in
+	 * SIAl when the argument is a distributed/served array.  The block map associated
+	 * with the string literal is MOVED into the distributed array table and the
+	 * entry removed (which does not delete the map) from the
+	 * persistent_array_manager.
+     *
+     * @param runner
+     * @param array_id
+     * @param string_slot
+     */
 	void restore_persistent_distributed(RUNNER_TYPE* runner,
 			int array_id, int string_slot) {
 		std::string label = runner->sip_tables_.string_literal(string_slot);
@@ -259,7 +286,7 @@ private:
 		const std::pair<LabelScalarValueMap::iterator, bool> ret =
 				scalar_value_map_.insert(
 						std::pair<std::string, double>(label, value));
-	if (!check_and_warn(ret.second, "Persistent array manager overwriting saved scalar with label " + label )) {
+	if (!check_and_warn(ret.second, "Label " + label + "already used for scalar.  Overwriting previously saved value.")) {
 		scalar_value_map_.erase(ret.first);
 		scalar_value_map_.insert(std::pair<std::string,double>(label,value));
 	}
@@ -271,19 +298,20 @@ private:
  */
 void save_contiguous(const std::string label, Block* contig) {
 	check(contig != NULL,
-			"attempting to save nonexistent contiguous array");
+			"attempting to save nonexistent contiguous array", current_line());
 	const std::pair<LabelContiguousArrayMap::iterator, bool> ret =
 			contiguous_array_map_.insert(
 					std::pair<std::string, Block*>(label, contig));
-if (!check_and_warn(ret.second, "Overwriting label " + label + "with contiguous array")) {
+	std::cout << "save_contiguous: ret= " << ret.second;
+if (!check_and_warn(ret.second, "Label " + label + "already used for contiguous array.  Overwriting previously saved array.")) {
 			contiguous_array_map_.erase(ret.first);
 			contiguous_array_map_.insert(std::pair<std::string, Block*>(label, contig));
 		}
 
 	}
-	/** inserts label, map pair into map of saved contiguous arrays.
+	/** inserts label, map pair into map of saved distributed arrays.
 	 * Warns if label has already been used.
-	 * Fatal error if block is null
+	 * Fatal error if map is null
 	 */
 	void save_distributed(const std::string label,
 			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map) {
@@ -293,7 +321,7 @@ if (!check_and_warn(ret.second, "Overwriting label " + label + "with contiguous 
 								typename IdBlockMap<BLOCK_TYPE>::PerArrayMap*>(label,
 								map));
 	if (!check_and_warn(ret.second,
-					"Overwriting label " + label + "with distributed array")) {
+			"Label " + label + "already used for distributed/served array.  Overwriting previously saved array.")) {
 				distributed_array_map_.erase(ret.first);
 				distributed_array_map_.insert(std::pair<std::string, typename IdBlockMap<BLOCK_TYPE>::PerArrayMap*>(label,map));
 	}
@@ -309,23 +337,28 @@ DISALLOW_COPY_AND_ASSIGN(PersistentArrayManager);
 	template<typename BLOCK_TYPE, typename RUNNER_TYPE>
 	std::ostream& operator<<(std::ostream& os, const PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE> & obj){
 		os << "Persistent Array Manager" << std::endl;
-		os << "Marked arrays:" << std::endl;
-		os << "ScalarValueMap:" << std::endl;
+		os << "Marked arrays: size=" << obj.persistent_array_map_.size() << std::endl;
+		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::ArrayIdLabelMap::const_iterator mit;
+		for (mit = obj.persistent_array_map_.begin(); mit != obj.persistent_array_map_.end(); ++mit){
+			os << mit -> first << ": " << mit -> second << std::endl;
+		}
+		os << "ScalarValueMap: size=" << obj.scalar_value_map_.size()<<std::endl;
 		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelScalarValueMap::const_iterator it;
 		for (it = obj.scalar_value_map_.begin(); it != obj.scalar_value_map_.end(); ++it){
 			os << it->first << "=" << it->second << std::endl;
 		}
-		os << "ContiguousArrayMap:" << std::endl;
+		os << "ContiguousArrayMap: size=" << obj.contiguous_array_map_.size() << std::endl;
 		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelContiguousArrayMap::const_iterator cit;
 		for (cit = obj.contiguous_array_map_.begin(); cit != obj.contiguous_array_map_.end(); ++cit){
-			os << it -> first << std::endl;
+			os << cit -> first << std::endl;
 		}
-		os << "Distributed/ServedArrayMap:" << std::endl;
+		os << "Distributed/ServedArrayMap: size=" << obj.distributed_array_map_.size() << std::endl;
 		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelDistributedArrayMap::const_iterator dit;
 		for (dit = obj.distributed_array_map_.begin(); dit != obj.distributed_array_map_.end(); ++dit){
-			os << it -> first << std::endl;
-			os << it -> second << std::endl;
+			os << dit -> first << std::endl;
+			//os << dit -> second << std::endl;
 		}
+		os<< "DONE PRINTING" << std::endl;
 		return os;
 	}
 } /* namespace sip */

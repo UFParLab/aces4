@@ -39,7 +39,7 @@ public:
 	}
 
 	IdBlockMap(){
-		check(false, "executing parameterless constructor for IdBlockMap");
+		fail("executing parameterless constructor for IdBlockMap");
 	}
 
 	/**
@@ -48,7 +48,7 @@ public:
 	~IdBlockMap(){
 		int num_arrays = block_map_.size();
 		for (int array_id=0; array_id< num_arrays; ++array_id) {
-			delete_per_array_map(array_id);
+			delete_per_array_map_and_blocks(array_id);
 		}
 		block_map_.clear();
 	}
@@ -154,7 +154,7 @@ public:
 	 *
 	 * @param array_id
 	 */
-	void delete_per_array_map(int array_id){
+	void delete_per_array_map_and_blocks(int array_id){
 		PerArrayMap* map_ptr = block_map_[array_id];
 		if (map_ptr != NULL) {
 			for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
@@ -192,9 +192,17 @@ public:
 	void insert_per_array_map(int array_id, PerArrayMap* map_ptr){
 		//get current map and warn if it contains blocks.  Delete any map that exists
 	    PerArrayMap* current_map = block_map_[array_id];
-	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"))
-	    delete_per_array_map(array_id);
-		block_map_[array_id] =map_ptr;
+	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"));
+	    delete_per_array_map_and_blocks(array_id);
+
+	    //create a new map with Ids updated to new array_id
+	    PerArrayMap* new_map = new PerArrayMap();
+	    typename PerArrayMap::iterator it;
+		for (it = map_ptr->begin(); it != map_ptr->begin(); ++it){
+			BlockId new_id(array_id, it->first); //this constructor updates the array_id
+			(*new_map)[new_id] = it->second;
+		}
+
 	}
 
 	int size() const {return block_map_.size();}

@@ -65,7 +65,7 @@ public:
 	PredefIntMap predefined_int_map_;
 	PredefScalarMap predefined_scalar_map_;
 	SetupSegmentInfoMap segment_map_;
-	PredefArrMap predef_arr_; 	// Map of predefined arrays
+//	PredefArrMap predef_arr_; 	// Map of predefined arrays
 	PredefIntArrMap predef_int_arr_; 	// Map of predefined integer arrays
 	FileConfigMap configs_;		// Map of sial files to their configurations in the form of a key-value map
 
