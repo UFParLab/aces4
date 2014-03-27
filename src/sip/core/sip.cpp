@@ -107,12 +107,6 @@ bool check_and_warn(bool condition, std::string message, int line){
 }
 
 void fail(std::string message, int line){
-//	std::cerr << "FATAL ERROR: " << message;
-//	if (line > 0){
-//		std::cerr << " at "<< GlobalState::get_program_name() << ":" << line;
-//	}
-//	sip_abort();
-//	//throw std::logic_error("logic error");
 	check(false, message, line);
 }
 
