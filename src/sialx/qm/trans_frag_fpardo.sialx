@@ -1548,7 +1548,7 @@ import "trans_frag_defs.sialx"
                   t1ppqq(a,i,b,j)           = t3ppqq(a,j,b,i) 
                   tppqq(a,i,b,j)           *= 2.0  
                   tppqq(a,i,b,j)           -= t1ppqq(a,i,b,j)   
-                 #execute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
+                  execute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t2ppqq(a,i,b,j)  
                   print_scalar etemp 
                   t20disp(ifrag,jfrag)      = etemp 

@@ -118,6 +118,28 @@ import "scf_frag_defs.sialx"
        ENDDO nu 
        ENDDO mu
       println "Done computing overlap integrals" 
+
+       do p 
+       do mu 
+          ca(mu,p) = 0.0
+       enddo mu
+       enddo p 
+       do p 
+       do p1  
+          Fock_a(p,p1) = 0.0 
+       enddo p1  
+       enddo p
+       do q 
+       do mu 
+          cb(mu,q) = 0.0
+       enddo mu
+       enddo q 
+       do q 
+       do q1  
+          Fock_b(q,q1) = 0.0 
+       enddo q1  
+       enddo q
+
 #
       sip_barrier 
 
@@ -157,10 +179,11 @@ import "scf_frag_defs.sialx"
                      PUT Dfock_a(p,p1) += tpp(p,p1) 
                   ENDDO p1
                   ENDDO p  
+
                   DO mu  
                   DO p 
-                     txp(mu,p)      = ca(mu,p) 
-                     PUT DCa(mu,p) += txp(mu,p) 
+                    #txp(mu,p)      = ca(mu,p) 
+                     PUT DCa(mu,p) += ca(mu,p) 
                   ENDDO p 
                   ENDDO mu  
 
@@ -191,6 +214,7 @@ import "scf_frag_defs.sialx"
                   DO mu  
                   DO i 
                      GET DCa(mu,i) 
+                     execute print_block Ca(mu,i) 
                      etemp = DCa(mu,i) * DCa(mu,i) 
                      esum += etemp 
                   ENDDO i 

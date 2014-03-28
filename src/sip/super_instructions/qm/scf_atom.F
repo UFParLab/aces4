@@ -146,6 +146,8 @@ c     double precision scr5(5000000)
       real(C_DOUBLE), pointer :: scr4(:)
       real(C_DOUBLE), pointer :: scr5(:)
 
+      integer icurrent_frag 
+
 c Allocate scratch arrays 
 
 c     nscr = (extents_1(1) + 1)**2  
@@ -160,7 +162,7 @@ c     nscr = (extents_1(1) + 1)**2
       call scratch_array(nscr, cscr5)
       call integer_scratch_array(nscr, ciscr) 
 
-      call c_f_pointer(cscr, scr, [nscr])
+      call c_f_pointer(cscr,   scr, [nscr])
       call c_f_pointer(cscr1, scr1, [nscr])
       call c_f_pointer(cscr2, scr2, [nscr])
       call c_f_pointer(cscr3, scr3, [nscr])
@@ -295,7 +297,8 @@ c---------------------------------------------------------------------------
 
 c        if (frag_calc) then 
 
-         call compute_fragscf(data_0(1),     ! OK  
+         icurrent_frag = data_0(1) 
+         call compute_fragscf(icurrent_frag, ! OK  
      *                 scr, ! dbuf(integral_scr),
      *                 maxblk, 
      *                 iscr, ! ibuf(ipkgscr),
@@ -337,7 +340,7 @@ c deAllocate scratch arrays
       return
       end
 C
-      subroutine compute_fragscf(current_frag, scr,
+      subroutine compute_fragscf(icurrent_frag, scr,
      *                 maxblk, iscr, coords, tcoords ,coeffs,alphas, 
      *                 ccbeg, ccend,
      *                 nc1,nc2, nd1, nd2,
@@ -406,7 +409,6 @@ c ----------------------------------------------------------------------
       integer a,b,c,d
       integer ncenters  
       integer iatom(ncenters), n_basis, n_apf, nf   
-      double precision current_frag 
       integer icurrent_frag 
 
       integer num_to_do, nsend
@@ -540,7 +542,6 @@ c
 c ---------------------------------------------------------------------- 
 
       write(6,*) ' NFRAGS = ', nfrags 
-      icurrent_frag = current_frag 
       call return_napf(n_apf, icurrent_frag, nfrags, natoms_frag) 
 c     n_apf = natoms_frag(icurrent_frag) 
       do m = 1, n_apf 
@@ -591,8 +592,13 @@ c-----------------------------------------------------------------------
          n_basis = 0 
          do m = m1, m2 
          do n = 1, n_apf 
-            if(atom(m) .eq. iatom(n)) n_basis = n_basis + 
-     *                end_nfps(m) - end_nfps(m-1)   
+            if (m .gt. 1) then 
+               if(atom(m) .eq. iatom(n)) n_basis = n_basis + 
+     *                           end_nfps(m) - end_nfps(m-1)   
+            else 
+               if(atom(m) .eq. iatom(n)) n_basis = n_basis + 
+     *                           end_nfps(m)    
+            endif 
          enddo 
          enddo 
 
@@ -702,11 +708,12 @@ c  Remove scratch space
 
       etemp = 0.0 
       i = 0 
+      write(6,*) ' CA_PERM ' 
       do n = nd1, nd2 
       do m = nc1, nc2 
          i = i + 1 
 c        ca_out(i) = ca_perm(m,n) 
-c        write(6,*) m, n, i, ca_out(i) 
+         write(6,*) m, n, ca_perm(m, n) 
          etemp = etemp + ca_perm(m,n)**2 
       enddo 
       enddo 
@@ -859,7 +866,7 @@ c ----------------------------------------------------------------------
 c ---------------------------------------------------------------------- 
 
       integer max_dim_coeff
-      parameter (max_dim_coeff = 25000)
+      parameter (max_dim_coeff = 5000)
 
       integer max_shells 
       parameter (max_shells = 5000)
@@ -877,8 +884,8 @@ c ----------------------------------------------------------------------
       integer ccbeg(*), ccend(*)
 
       integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
-      double precision alpha_pack(max_dim_coeff), 
-     *                   pcoeff_pack(max_dim_coeff)
+      double precision alpha_pack(max_dim_coeff),
+     *                 pcoeff_pack(max_dim_coeff)
       double precision charge(ncenters) 
       double precision etemp 
 
@@ -1390,15 +1397,21 @@ c-----------------------------------------------------------------------
 c        Alpha 
 c-----------------------------------------------------------------------
 
+c     if (current_frag .eq. 1) go to 123 
+
       na_offset = baocc_frag(current_frag, 1) 
       etemp = 0.0 
+
+      write(6,*) ' NA_OFF(OCC):', na_offset 
       do n = 1, nocc_a 
       do m = 1, n_basis
          ca_perm(map(m),na_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
 c        if ((map(m) .ne. 0)) then  
-c           ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
+            ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
             etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
+            write(6,*) map(m), (na_offset+n-1),
+     *      ca_perm(map(m),na_offset+n-1)
          endif 
       enddo 
       enddo 
@@ -1406,6 +1419,7 @@ c           ca_perm(map(m),na_offset+n-1) = Ca(m,n)
 
       na_offset = bavirt_frag(current_frag, 1) 
       etemp = 0.0 
+
       write(6,*) ' NA_OFF(VIRT):', na_offset 
       do n = 1, n_basis - nocc_a  
       do m = 1, n_basis
@@ -1414,10 +1428,13 @@ c           ca_perm(map(m),na_offset+n-1) = Ca(m,n)
 c        if ((map(m) .ne. 0)) then  
             ca_perm(map(m),na_offset+n-1) = Ca(m,n+nocc_a)  
             etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
+            write(6,*) map(m), (na_offset+n-1),
+     *      ca_perm(map(m),na_offset+n-1)
          endif 
       enddo 
       enddo 
       write(6,*) ' ETEMP (virt)', etemp 
+
 
 c-----------------------------------------------------------------------
 c        Beta 
