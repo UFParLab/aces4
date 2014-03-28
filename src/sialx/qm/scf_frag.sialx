@@ -22,8 +22,8 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 4 # Nfrags  
-      index   jatom  = 1, 4 # Nfrags  
+      index   katom  = 1, 2 # Nfrags  
+      index   jatom  = 1, 2 # Nfrags  
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -139,6 +139,7 @@ import "scf_frag_defs.sialx"
           Fock_b(q,q1) = 0.0 
        enddo q1  
        enddo q
+
 #
       sip_barrier 
 
@@ -178,10 +179,11 @@ import "scf_frag_defs.sialx"
                      PUT Dfock_a(p,p1) += tpp(p,p1) 
                   ENDDO p1
                   ENDDO p  
+
                   DO mu  
                   DO p 
-                     txp(mu,p)      = ca(mu,p) 
-                     PUT DCa(mu,p) += txp(mu,p) 
+                    #txp(mu,p)      = ca(mu,p) 
+                     PUT DCa(mu,p) += ca(mu,p) 
                   ENDDO p 
                   ENDDO mu  
 
@@ -212,6 +214,7 @@ import "scf_frag_defs.sialx"
                   DO mu  
                   DO i 
                      GET DCa(mu,i) 
+                     execute print_block Ca(mu,i) 
                      etemp = DCa(mu,i) * DCa(mu,i) 
                      esum += etemp 
                   ENDDO i 
