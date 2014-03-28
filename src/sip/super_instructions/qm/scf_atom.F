@@ -465,7 +465,7 @@ c     double precision ca_out(*)
       integer max_dim_coeff
       parameter (max_dim_coeff = 5000)
       integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
-      double precision alpha_pack(max_dim_coeff), 
+      double precision alpha_pack(max_dim_coeff),
      *                 pcoeff_pack(max_dim_coeff)
       integer n_max, nout  
 c
@@ -859,12 +859,12 @@ c ----------------------------------------------------------------------
 c ---------------------------------------------------------------------- 
 
       integer max_dim_coeff
-      parameter (max_dim_coeff = 25000)
+      parameter (max_dim_coeff = 5000)
 
       integer max_shells 
       parameter (max_shells = 5000)
-      integer natoms_frag(current_frag) 
-      integer watom_frag(current_frag, max_shells) 
+      integer natoms_frag(nfrags) 
+      integer watom_frag(nfrags, *) 
       integer atom(nshells) 
 
       integer map(nc1:nc2) 
@@ -877,7 +877,7 @@ c ----------------------------------------------------------------------
       integer ccbeg(*), ccend(*)
 
       integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
-      double precision alpha_pack(max_dim_coeff), 
+      double precision alpha_pack(max_dim_coeff),
      *                 pcoeff_pack(max_dim_coeff)
       double precision charge(ncenters) 
       double precision etemp 
@@ -1390,14 +1390,18 @@ c-----------------------------------------------------------------------
 c        Alpha 
 c-----------------------------------------------------------------------
 
+c     if (current_frag .eq. 1) go to 123 
+
       na_offset = baocc_frag(current_frag, 1) 
       etemp = 0.0 
+
+      write(6,*) ' NA_OFF(OCC):', na_offset 
       do n = 1, nocc_a 
       do m = 1, n_basis
          ca_perm(map(m),na_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
 c        if ((map(m) .ne. 0)) then  
-c           ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
+            ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
             etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
          endif 
       enddo 
@@ -1406,6 +1410,7 @@ c           ca_perm(map(m),na_offset+n-1) = Ca(m,n)
 
       na_offset = bavirt_frag(current_frag, 1) 
       etemp = 0.0 
+
       write(6,*) ' NA_OFF(VIRT):', na_offset 
       do n = 1, n_basis - nocc_a  
       do m = 1, n_basis
@@ -1418,6 +1423,7 @@ c        if ((map(m) .ne. 0)) then
       enddo 
       enddo 
       write(6,*) ' ETEMP (virt)', etemp 
+
 
 c-----------------------------------------------------------------------
 c        Beta 
