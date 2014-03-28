@@ -88,12 +88,12 @@ void return_h1(int & array_slot, int& rank, int * index_values, int& size, int *
 void return_ovl(int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
 void scf_atom(
-int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
-int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
-int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
-int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
-int & array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5, 
-int & array_slot_6, int& rank_6, int * index_values_6, int& size_6, int * extents_6, double * block_data_6, 
+int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
+int& array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5, 
 int& ierr);
 
 void compute_int_scratchmem(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,

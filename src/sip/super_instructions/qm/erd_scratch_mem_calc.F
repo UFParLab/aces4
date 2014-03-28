@@ -126,7 +126,7 @@ c-------------------------------------------------------------------------
          zmax = max0(zmax, zblk)
       enddo
 
-      if (nfrags .gt. 0) go to 999 
+      if (nfrags .gt. 1) go to 999 
 
       do m = m1, m2
       do n = m, nshells
@@ -433,8 +433,8 @@ c-------------------------------------------------------------------------
       imax = imax + ihrr
       zmax = zmax + zhrr  
 
-c     write(6,*) ' F_IMAX = ', imax 
-c     write(6,*) ' F_ZMAX = ', zmax 
+      write(6,*) ' F_IMAX = ', imax 
+      write(6,*) ' F_ZMAX = ', zmax 
 
       return
       end

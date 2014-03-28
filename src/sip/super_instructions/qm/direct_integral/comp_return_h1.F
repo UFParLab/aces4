@@ -28,10 +28,10 @@ c---------------------------------------------------------------------------
 c Interface added but should be included instead 
 
       include 'sip_interface.f' 
+      include 'imemory.h' 
 
 c---------------------------------------------------------------------------
       integer iscr(*) 
-      integer intmax, zmax 
 
       integer da1, da2, db1, db2
       integer adim, bdim 
@@ -264,9 +264,6 @@ c    *                patoms(1))
       if (intSpherical .ne. 1) spherical = .false. 
 c     write(6,*) ' Spherical = ', spherical 
 
-      intmax = 100**4 ! VER BAD HACK  
-      zmax = 2*intmax
-
 c----------------------------------------------------------------------------
 c   Clear the output array.
 c----------------------------------------------------------------------------
@@ -333,7 +330,7 @@ c ------------------------------------------------------------------------
 c  KIN (type=2) integrals next.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_kin_batch(intmax, zmax, nalpha_pack,
+              call oed__gener_kin_batch(imax, zmax, nalpha_pack,
      *                 ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
@@ -367,7 +364,7 @@ c ------------------------------------------------------------------------
 c NAI (type=1) integrals first.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_nai_batch(intmax, zmax, nalpha, ncoeff,
+              call oed__gener_nai_batch(imax, zmax, nalpha, ncoeff,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 ncenters, xn,yn,zn, pcharge, alpha_pack,

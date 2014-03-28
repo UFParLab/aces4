@@ -99,7 +99,6 @@ c Get the ao segment ranges
      *                           n_ao_segs, aosegs)  
       call c_f_pointer(n_ao_segs,pn_ao_segs,[1]) 
       call c_f_pointer(aosegs,paosegs,pn_ao_segs) 
-c     write(6,*) ' NAO_SEGS', pn_ao_segs(1), (paosegs(i), i=1, 
 c    *                                             pn_ao_segs(1))  
 
 c   Set scratch space 

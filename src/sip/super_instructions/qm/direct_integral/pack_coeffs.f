@@ -46,6 +46,7 @@ c      include 'machine_types.h'
       ipcoeff = 1
       nalpha = 0
       npcoeff = 0
+
       do j = 1, 4
          ishell = quad(j)
          if (nalpha + npfps(ishell) .gt. 5000) then
@@ -60,7 +61,7 @@ c      include 'machine_types.h'
          ialpha = ialpha + npfps(ishell)
          nalpha = nalpha + npfps(ishell)
       enddo
-  
+
       icc = 1
       do j = 1, 4
          ishell = quad(j)

@@ -75,7 +75,7 @@ c--------------------------------------------------------------------------
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_AO,pn_ao_segs)
          call find_frag_index_range(wfrag, x2, w_frag_AO, pn_ao_segs) 
-
+         go to 100 
       endif 
 
       if (x2 .eq. 6.0) then ! get alpha occ fragment ranges 
@@ -84,6 +84,7 @@ c--------------------------------------------------------------------------
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_aocc,pn_ao_segs)
          call find_frag_index_range(wfrag, x2, w_frag_aocc, pn_ao_segs) 
+         go to 100 
       endif 
 
       if (x2 .eq. 9.0) then ! get beta occ fragment ranges 
@@ -92,6 +93,7 @@ c--------------------------------------------------------------------------
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_bocc,pn_ao_segs)
          call find_frag_index_range(wfrag, x2, w_frag_bocc, pn_ao_segs) 
+         go to 100 
       endif 
 
       if (x2 .eq. 7.0) then ! get alpha virt fragment ranges 
@@ -100,6 +102,7 @@ c--------------------------------------------------------------------------
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_avirt,pn_ao_segs)
          call find_frag_index_range(wfrag, x2, w_frag_avirt, pn_ao_segs) 
+         go to 100 
       endif 
 
       if (x2 .eq. 10.0) then ! get beta virt fragment ranges 
@@ -108,12 +111,15 @@ c--------------------------------------------------------------------------
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_bvirt,pn_ao_segs)
          call find_frag_index_range(wfrag, x2, w_frag_bvirt, pn_ao_segs) 
+         go to 100 
       endif 
 c     write(6,*) 'VFL Nfrags = ', nfrags, wfrag, x2 
 
 c     call find_frag_index_range(wfrag, x2, w_frag_AO, w_frag_aocc,
 c    *                      w_frag_avirt, w_frag_bocc, w_frag_bvirt,
 c    *                      nfrags)
+
+100   continue 
 
       data_0(1) = wfrag  
       data_1(1) = x2  
@@ -122,48 +128,50 @@ c    *                      nfrags)
       end
 
 
-      subroutine find_frag_index_range(r_wfrag,x2,w_frag_AO,nfrags)
+      subroutine find_frag_index_range(wfrag,x2,w_frag_AO,nfrags)
       implicit none 
-      double precision x2, r_wfrag
+      double precision x2, wfrag
       integer w_frag_AO(nfrags) 
       integer i, istart, iend, nfrags   
-      integer wfrag 
+      integer ifrag 
 
-      wfrag = r_wfrag 
+      ifrag = wfrag 
 
+c     write(6,*) ' IFRAG  ', ifrag 
 c     write(6,*) ' NFRAGS ', nfrags 
-c     do i = 1, nfrags
-c        write(6,*) '   ', i, w_frag_ao(i) 
-c     enddo 
-
+      do i = 1, nfrags
+         write(6,*) '   ', i, w_frag_ao(i) 
+      enddo 
 
       istart = 0 
       iend   = 0 
-      if (wfrag .eq. 1) then 
+      if (wfrag .eq. 1.0) then 
          istart = 1 
          go to 10 
       endif 
       do i = 2, nfrags  
-         if ((w_frag_AO(i) .eq. wfrag) .and.
-     *       (w_frag_AO(i-1) .ne. wfrag)) then 
+         if ((w_frag_AO(i) .eq. ifrag) .and.
+     *       (w_frag_AO(i-1) .ne. ifrag)) then 
              istart = i
              go to 10 
          endif 
       enddo 
 10    continue 
+15    continue 
       do i = istart, nfrags  
-         if ((w_frag_AO(i-1) .eq. wfrag) .and.
-     *       (w_frag_AO(i) .ne. wfrag)) then 
+         if ((w_frag_AO(i-1) .eq. ifrag) .and.
+     *       (w_frag_AO(i) .ne. ifrag)) then 
              iend = i-1 
              go to 20 
          endif 
+         if (i .eq. nfrags) iend = nfrags 
       enddo 
 20    continue 
 
-      write(6,*) 'FRAG TYPE:',wfrag,x2,' START END :', istart, iend 
+c     write(6,*) 'FRAG TYPE:',wfrag,x2,' START END :', istart, iend 
 
-      wfrag = istart 
-      x2    = iend 
+      wfrag = istart*1.0  
+      x2    = iend*1.0  
 
       return
       end

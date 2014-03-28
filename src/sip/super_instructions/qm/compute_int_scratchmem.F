@@ -108,6 +108,8 @@ c ----------------------------------------------------------------------
       integer(C_INT):: my_imax, my_zmax 
       logical(C_INT):: calc_2der, spherical 
 
+      integer i 
+
       nullify(pdim_coords)
       nullify(pcoords)
       nullify(pdim_tcoords)
@@ -237,7 +239,7 @@ c  NPFPS
      *                                   pishells, pnpfps)
       call c_f_pointer(pishells, ishells, [1])
       call c_f_pointer(pnpfps, npfps, ishells)
-c     write(6,*) ' NCFPS', ishells(1), (npfps(i), i=1, 
+c     write(6,*) ' NPFPS', ishells(1), (npfps(i), i=1, 
 c    *                                           ishells(1))  
 c ----------------------------------------------------------------------
 
@@ -294,14 +296,12 @@ c ----------------------------------------------------------------------
      * .not.  associated(paosegs) .or.
      * .not.  associated(ishells) .or.
      * .not.  associated(ncfps) .or.
+     * .not.  associated(npfps) .or.
      * .not.  associated(nalpha) .or.
      * .not.  associated(end_nfps) .or. 
      * .not.  associated(indx_cc) .or. 
      * .not.  associated(ivangmom))
      *    print *, "ERROR fortran pointer is not associated!!!"
-
-
-
 
       calc_2der = .true. ! Overestimate for now 
 

@@ -77,6 +77,7 @@ c--------------------------------------------------------------------------
       real(C_DOUBLE), intent(in)::data_5(1:size_5)
 
       integer(C_INT), intent(out)::ierr
+      integer(C_INT)  nscr  
 
 !     one dimensional array of atomic coordinates  
       TYPE(C_PTR) :: sDimCoords 
@@ -106,18 +107,66 @@ c--------------------------------------------------------------------------
       integer, pointer :: pntot_pcoeff(:), pixpcoeffs(:)
       real(C_DOUBLE), pointer :: ppcoeffs(:) 
 
+c ----------------------------------------------------------------------
+c  END_NFPS 
+      TYPE(C_PTR) :: pnalpha, pend_nfps 
+      integer, pointer :: nalpha(:) 
+      integer, pointer :: end_nfps(:) 
+c ----------------------------------------------------------------------
+c     mapping of atoms to shells 
+      TYPE(C_PTR) :: patom  
+      integer, pointer :: atom(:)
+
 !     Number of atomic centers 
       integer (C_INT) ncenters        
 
       integer norbmax, vmax, omax, maxblk, maxhist, diis_start 
       integer one, two, i, j  
-      integer iscr(500000) 
-      double precision scr(500000) 
-      double precision scr1(500000) 
-      double precision scr2(500000) 
-      double precision scr3(500000) 
-      double precision scr4(500000) 
-      double precision scr5(500000) 
+c     integer iscr(5000000) 
+c     double precision scr(5000000) 
+c     double precision scr1(5000000) 
+c     double precision scr2(5000000) 
+c     double precision scr3(5000000) 
+c     double precision scr4(5000000) 
+c     double precision scr5(5000000) 
+
+      TYPE(C_PTR) :: cscr
+      TYPE(C_PTR) :: ciscr
+      TYPE(C_PTR) :: cscr1
+      TYPE(C_PTR) :: cscr2
+      TYPE(C_PTR) :: cscr3
+      TYPE(C_PTR) :: cscr4
+      TYPE(C_PTR) :: cscr5
+
+      real(C_DOUBLE), pointer :: scr(:)
+      integer(C_INT), pointer :: iscr(:)
+      real(C_DOUBLE), pointer :: scr1(:)
+      real(C_DOUBLE), pointer :: scr2(:)
+      real(C_DOUBLE), pointer :: scr3(:)
+      real(C_DOUBLE), pointer :: scr4(:)
+      real(C_DOUBLE), pointer :: scr5(:)
+
+c Allocate scratch arrays 
+
+c     nscr = (extents_1(1) + 1)**2  
+      nscr = zmax ! 5000000
+
+      call scratch_array(nscr, cscr)
+      nscr = (extents_1(1) + 1)**2  
+      call scratch_array(nscr, cscr1)
+      call scratch_array(nscr, cscr2)
+      call scratch_array(nscr, cscr3)
+      call scratch_array(nscr, cscr4)
+      call scratch_array(nscr, cscr5)
+      call integer_scratch_array(nscr, ciscr) 
+
+      call c_f_pointer(cscr, scr, [nscr])
+      call c_f_pointer(cscr1, scr1, [nscr])
+      call c_f_pointer(cscr2, scr2, [nscr])
+      call c_f_pointer(cscr3, scr3, [nscr])
+      call c_f_pointer(cscr4, scr4, [nscr])
+      call c_f_pointer(cscr5, scr5, [nscr])
+      call c_f_pointer(ciscr, iscr, [nscr])
 
 c Get the predefined data 
 
@@ -202,6 +251,18 @@ c     write(6,*) ' TCOORDS',  ptcoords(1,i), ptcoords(2,i),
 c    *                        ptcoords(3,i) 
 c     enddo 
 c ----------------------------------------------------------------------
+c  END_NFPS 
+      call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
+     *                                   pnalpha, pend_nfps)
+      call c_f_pointer(pnalpha, nalpha, [1])
+      call c_f_pointer(pend_nfps, end_nfps, nalpha)
+c ----------------------------------------------------------------------
+c  mapping of atoms to shells  
+      call predefined_int_array("atom"//C_NULL_CHAR, one,
+     *                                   pnalpha, patom)
+      call c_f_pointer(pnalpha, nalpha, [1])
+      call c_f_pointer(patom, atom, nalpha)
+c ----------------------------------------------------------------------
 
 
       ncenters        = int_constant("ncenters"//C_NULL_CHAR)
@@ -215,7 +276,7 @@ c----------------------------------------------------------------------------
 c     integral_scr = dpkgscr
 c     maxblk  = zmax
 
-         maxblk = 5000000
+         maxblk = zmax ! 5000000
 
 c---------------------------------------------------------------------------
 
@@ -251,27 +312,27 @@ c        if (frag_calc) then
      *                 ncenters, 
      *                 scr4, ! x(farray), 
      *                 scr5, ! x(fbarray), 
-     *                 data_1, !x(ca_array), 
+     *                 data_1, ! x(ca_array), 
      *                 data_2, ! x(cb_array), 
      *                 data_3, ! x(fa_array), 
      *                 data_4, ! x(fb_array), 
      *                 data_5, ! overlap array  
+c  
+     *                 atom, end_nfps, 
+     c 
      *                 vmax,omax,norbmax,maxhist,diis_start) 
 
-c        call compute_fragscf(scalar_table(sind), 
-c    *                 dbuf(integral_scr),maxblk, ibuf(ipkgscr),
-c    *                 dbuf(icoord),dbuf(ipcoeff),dbuf(ialpha), 
-c    *                 ibuf(iccbeg), ibuf(iccend), 
-c    *                 1, inda(1), 1,inda(2), 
-c    *                 x(nai_array), x(kin_array), x(ovl_array),
-c    *                 x(farray), x(fbarray), 
-c    *                 x(ca_array), x(cb_array), 
-c    *                 x(fa_array), x(fb_array), 
-c
-c    *                 vmax,omax,norbmax,maxhist,diis_start) 
+c deAllocate scratch arrays 
 
-c        return 
-c        endif 
+      call delete_scratch_array(cscr)
+      call delete_scratch_array(cscr1)
+      call delete_scratch_array(cscr2)
+      call delete_scratch_array(cscr3)
+      call delete_scratch_array(cscr4)
+      call delete_scratch_array(cscr5)
+
+      call delete_integer_scratch_array(ciscr) 
+
 
       return
       end
@@ -282,6 +343,8 @@ C
      *                 nc1,nc2, nd1, nd2,
      *                 nai, kin, ncenters, fa, fb, 
      *                 ca_perm, cb_perm, fa_perm, fb_perm, ovl,  
+c  
+     *                 atom, end_nfps, 
 c
      *                 vmax,omax,norb,maxhist,diis_start)  
 c---------------------------------------------------------------------------
@@ -303,13 +366,6 @@ c Interface added but should be included instead
       integer (C_INT) nalpha_virtual  
       integer (C_INT) nbeta_virtual   
 
-c ----------------------------------------------------------------------
-c  END_NFPS 
-      TYPE(C_PTR) :: pnalpha, pend_nfps 
-      integer, pointer :: nalpha(:) 
-      integer, pointer :: end_nfps(:) 
-c ----------------------------------------------------------------------
-
 c array defining which atoms are in which fragment 
       TYPE(C_PTR) :: sDimfrag  
       TYPE(C_PTR) :: pwatom_frag 
@@ -318,9 +374,6 @@ c array defining which atoms are in which fragment
 c array defining the number of atoms per fragment 
       TYPE(C_PTR) :: pnatoms_frag 
       integer(C_INT), pointer :: natoms_frag(:)
-c     mapping of atoms to shells 
-      TYPE(C_PTR) :: patom  
-      integer, pointer :: atom(:)
 c  CHARGES    
       TYPE(C_PTR) :: charge, atoms
       integer, pointer :: patoms(:)
@@ -328,16 +381,23 @@ c  CHARGES
 c scratch space 
       real(C_DOUBLE), pointer :: scr_i(:)
       integer(C_INT), pointer :: iscr_i(:)
+c     real(C_DOUBLE), pointer :: iscr_i(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
 
-c arrays defining fragment to otbital mapping  
+c arrays defining fragment to orbital mapping  
       integer(C_INT), pointer :: baocc_frag(:,:)
       integer(C_INT), pointer :: bbocc_frag(:,:)
       integer(C_INT), pointer :: bavirt_frag(:,:)
       integer(C_INT), pointer :: bbvirt_frag(:,:)
+
+c     real(C_DOUBLE), pointer :: baocc_frag(:,:)
+c     real(C_DOUBLE), pointer :: bbocc_frag(:,:)
+c     real(C_DOUBLE), pointer :: bavirt_frag(:,:)
+c     real(C_DOUBLE), pointer :: bbvirt_frag(:,:)
 c ----------------------------------------------------------------------
 
+      integer atom(*), end_nfps(*)  
 
       integer aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
       integer adim, bdim, cdim, ddim  
@@ -385,6 +445,7 @@ c ----------------------------------------------------------------------
       double precision fb(nc1:nc2,nd1:nd2)
 
       double precision ca_perm(nc1:nc2,nd1:nd2)
+c     double precision ca_out(*)
       double precision cb_perm(nc1:nc2,nd1:nd2)
       double precision fa_perm(nc1:nc2,nd1:nd2)
       double precision fb_perm(nc1:nc2,nd1:nd2)
@@ -402,7 +463,7 @@ c ----------------------------------------------------------------------
       integer ccbeg(*), ccend(*)
 
       integer max_dim_coeff
-      parameter (max_dim_coeff = 25000)
+      parameter (max_dim_coeff = 5000)
       integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
       double precision alpha_pack(max_dim_coeff), 
      *                 pcoeff_pack(max_dim_coeff)
@@ -420,6 +481,7 @@ c ----------------------------------------------------------------------
       double precision BM(maxhist+1,maxhist+1) 
       double precision TBM(maxhist+1,maxhist+1) 
       double precision CM(maxhist+1) 
+      double precision etemp  
 c
 c ---------------------------------------------------------------------- 
 c Get predefined data 
@@ -444,19 +506,6 @@ c ----------------------------------------------------------------------
      *                                  one, sDimfrag,  pnatoms_frag)
       call c_f_pointer(sDimfrag, pdim_frag,[1])
       call c_f_pointer(pnatoms_frag, natoms_frag, pdim_frag)
-c ----------------------------------------------------------------------
-c  END_NFPS 
-      call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
-     *                                   pnalpha, pend_nfps)
-      call c_f_pointer(pnalpha, nalpha, [1])
-      call c_f_pointer(pend_nfps, end_nfps, nalpha)
-c ----------------------------------------------------------------------
-c  mapping of atoms to shells  
-      call predefined_int_array("atom"//C_NULL_CHAR, one,
-     *                                   pnalpha, patom)
-      call c_f_pointer(pnalpha, nalpha, [1])
-      call c_f_pointer(patom, atom, nalpha)
-c ----------------------------------------------------------------------
 c  NUCLEAR CHARGES    
 c ----------------------------------------------------------------------
       call predefined_scalar_array("charge"//C_NULL_CHAR,
@@ -505,11 +554,11 @@ c     iatom = wfrag
 
 c   Set scratch space 
 
-      nscr  = 5000000 ! zmax  
-      niscr = 5000000 ! imax 
+      nscr  = zmax  
+      niscr = imax 
       call scratch_array(nscr, cscr)
       call c_f_pointer(cscr, scr_i, [nscr])
-      call integer_scratch_array(niscr, ciscr)
+      call scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr_i, [niscr])
 
       call comp_return_frag_h0(H0T, n_apf, iatom, nc1, nc2, nd1, nd2,
@@ -518,8 +567,8 @@ c   Set scratch space
      *                         pcharge, atom,  
      *                         scr_i, iscr_i) 
 c  Remove scratch space  
-c     call delete_scratch_array(cscr)
-c     call delete_scratch_array(ciscr)
+      call delete_scratch_array(cscr)
+      call delete_scratch_array(ciscr)
 
 c-----------------------------------------------------------------------
 c   Find the shell blocks for which we shall loop through.
@@ -609,25 +658,25 @@ c-----------------------------------------------------------------------
      *                 '1', n_basis   
          endif 
 
-c        do j = nd1, nd2 
-c        do i = nc1, nc2 
-c           ca_perm(i,j) = 0.0 
-c           cb_perm(i,j) = 0.0 
-c           fa_perm(i,j) = 0.0 
-c           fb_perm(i,j) = 0.0 
-c        enddo 
-c        enddo 
+         do j = nd1, nd2 
+         do i = nc1, nc2 
+            ca_perm(i,j) = 0.0 
+            cb_perm(i,j) = 0.0 
+            fa_perm(i,j) = 0.0 
+            fb_perm(i,j) = 0.0 
+         enddo 
+         enddo 
 
 c   Set scratch space 
 
-      nscr  = 5000000 ! zmax  
-      niscr = 5000000 ! imax 
+      nscr  = zmax  
+      niscr = imax 
       imax = niscr 
       zmax = nscr 
-c     call scratch_array(nscr, cscr)
-c     call c_f_pointer(cscr, scr_i, [nscr])
-c     call scratch_array(niscr, ciscr)
-c     call c_f_pointer(ciscr, iscr_i, [niscr])
+      call scratch_array(nscr, cscr)
+      call c_f_pointer(cscr, scr_i, [nscr])
+      call scratch_array(niscr, ciscr)
+      call c_f_pointer(ciscr, iscr_i, [niscr])
 
          call do_fragscf(icurrent_frag, scr,
      *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
@@ -649,7 +698,19 @@ c
      *               vmax,omax,norb,maxhist,diis_start) 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
-      call delete_integer_scratch_array(ciscr)
+      call delete_scratch_array(ciscr)
+
+      etemp = 0.0 
+      i = 0 
+      do n = nd1, nd2 
+      do m = nc1, nc2 
+         i = i + 1 
+c        ca_out(i) = ca_perm(m,n) 
+c        write(6,*) m, n, i, ca_out(i) 
+         etemp = etemp + ca_perm(m,n)**2 
+      enddo 
+      enddo 
+      write(6,*) ' ETEMP at end ', etemp 
 
       return 
       end 
@@ -819,6 +880,7 @@ c ----------------------------------------------------------------------
       double precision alpha_pack(max_dim_coeff), 
      *                 pcoeff_pack(max_dim_coeff)
       double precision charge(ncenters) 
+      double precision etemp 
 
 c ----------------------------------------------------------------------
 c Get prdefined data 
@@ -1292,7 +1354,7 @@ c     HFD_a(m,n) = 0.0
 c     HFD_b(m,n) = 0.0   
 100   continue 
 
-      if (current_frag .eq. -1) then 
+c     if (current_frag .eq. -1) then 
        write(6,*) ' Alpha Orbital energies ' 
        write(6,*) ' -----------------------------------------------' 
        do m = 1, nocc_a 
@@ -1317,7 +1379,7 @@ c     HFD_b(m,n) = 0.0
        write(6,*) ' -----------------------------------------------' 
        write(6,*) ' ' 
 
-       endif 
+c      endif 
           write(6,*) ' Done SCF calculation of ATOM :', iatom 
 
 c-----------------------------------------------------------------------
@@ -1329,22 +1391,33 @@ c        Alpha
 c-----------------------------------------------------------------------
 
       na_offset = baocc_frag(current_frag, 1) 
+      etemp = 0.0 
       do n = 1, nocc_a 
       do m = 1, n_basis
+         ca_perm(map(m),na_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
-            ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
+c        if ((map(m) .ne. 0)) then  
+c           ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
+            etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
          endif 
       enddo 
       enddo 
+      write(6,*) ' ETEMP (occ)', etemp 
 
       na_offset = bavirt_frag(current_frag, 1) 
+      etemp = 0.0 
+      write(6,*) ' NA_OFF(VIRT):', na_offset 
       do n = 1, n_basis - nocc_a  
       do m = 1, n_basis
+         ca_perm(map(m),na_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
+c        if ((map(m) .ne. 0)) then  
             ca_perm(map(m),na_offset+n-1) = Ca(m,n+nocc_a)  
+            etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
          endif 
       enddo 
       enddo 
+      write(6,*) ' ETEMP (virt)', etemp 
 
 c-----------------------------------------------------------------------
 c        Beta 
@@ -1353,6 +1426,7 @@ c-----------------------------------------------------------------------
       nb_offset = bbocc_frag(current_frag, 1) 
       do n = 1, nocc_b 
       do m = 1, n_basis
+         cb_perm(map(m),nb_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
             cb_perm(map(m),nb_offset+n-1) = Cb(m,n)  
          endif 
@@ -1362,6 +1436,7 @@ c-----------------------------------------------------------------------
       nb_offset = bbvirt_frag(current_frag, 1) 
       do n = 1, n_basis - nocc_b  
       do m = 1, n_basis
+         cb_perm(map(m),nb_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
             cb_perm(map(m),nb_offset+n-1) = Cb(m,n+nocc_b)  
          endif 
@@ -1479,6 +1554,8 @@ c-----------------------------------------------------------------------
          endif 
       enddo 
       enddo 
+
+      return 
 
       end
  

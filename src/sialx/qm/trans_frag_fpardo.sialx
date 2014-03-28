@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 29 # Nfragments   
-      index  jjfrag  = 1, 29 # Nfragments   
-      index   kfrag  = 1, 29 # Nfragments   
-      index  kkfrag  = 1, 29 # Nfragments   
+      index   jfrag  = 1, 2 # Nfragments   
+      index  jjfrag  = 1, 2 # Nfragments   
+      index   kfrag  = 1, 2 # Nfragments   
+      index  kkfrag  = 1, 2 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -114,6 +114,8 @@ import "trans_frag_defs.sialx"
 #
 # Declare arrays  
 # -------------- 
+      distributed Dca(mu,p) 
+      distributed Dfock_a(p,p1) 
       static ca(mu,p) 
       static fock_a(p,p1) 
 #
@@ -235,34 +237,37 @@ import "trans_frag_defs.sialx"
       DO jfrag 
 
          icount   += 1.0 
-       #IF icount > nfrags 
-       #   exit 
-       #ENDIF 
-       #IF icount <= nfrags 
+
          i_aostart = icount 
          i_aoend   = 1.0  
          execute frag_index_range i_aostart i_aoend 
-         i_vstart  = icount 
-         i_vend    = 6.0  
-         execute frag_index_range i_vstart i_vend 
-         a_vstart  = icount 
-         a_vend    = 7.0  
-         execute frag_index_range a_vstart a_vend 
 #
+         print_scalar i_aostart 
+         print_scalar i_aoend  
+         m = 0.0 
          DO mu  
-            m = 0.0 
-            do mu1 
-               m += 1.0 
-               if mu == mu1 
-                  exit 
-               endif 
-            enddo mu1 
+            m += 1.0 
             if m >= i_aostart 
             if m <= i_aoend 
                wAO_frag(mu) = icount 
             endif 
             endif 
          ENDDO mu  
+#
+      ENDDO jfrag 
+
+      icount = 0.0 
+
+      DO jfrag 
+
+         icount   += 1.0 
+
+         i_vstart  = icount 
+         i_vend    = 6.0  
+         execute frag_index_range i_vstart i_vend 
+         a_vstart  = icount 
+         a_vend    = 7.0  
+         execute frag_index_range a_vstart a_vend 
 #
          DO i  
             m = 0.0 
@@ -297,6 +302,21 @@ import "trans_frag_defs.sialx"
         #ENDIF # icount <= nfrags 
 
       ENDDO jfrag 
+
+      DO mu 
+         execute return_sval wAO_frag(mu) m  
+         print_scalar m 
+      ENDDO mu  
+
+      DO a 
+         execute return_sval wVirtA_frag(a) m  
+         print_scalar m 
+      ENDDO a  
+
+      DO i 
+         execute return_sval wOccA_frag(i) m  
+         print_scalar m 
+      ENDDO i  
 
       icount = 0.0 
 
@@ -349,6 +369,16 @@ import "trans_frag_defs.sialx"
         #ENDIF # icount <= nfrags 
 
       ENDDO jfrag 
+
+      DO b 
+         execute return_sval wVirtB_frag(b) m  
+         print_scalar m 
+      ENDDO b  
+
+      DO j 
+         execute return_sval wOccB_frag(j) m  
+         print_scalar m 
+      ENDDO j  
 #
       ENDPROC SET_FRAG_PARMS    
 #     ---------------------- 
@@ -1281,10 +1311,6 @@ import "trans_frag_defs.sialx"
                         tppqq(a,i,b,j)          = txpqq(mu,i,b,j)*ca(mu,a) 
                         tppqqS(a,i,b,j,ii)      = tppqq(a,i,b,j) 
                         PUT Vaibj(a,i,b,j,ii) += tppqqS(a,i,b,j,ii) 
-
-                       #t1ppqq(i,a,b,j)        = tppqq(a,i,b,j)  
-                       #t1ppqqS(i,a,b,j,ii)    = t1ppqq(i,a,b,j) 
-                       #PUT Viabj(i,a,b,j,ii) += t1ppqqS(i,a,b,j,ii) 
                      endif # pcount == icount  
                   ENDDO a 
                ENDDO ii 
@@ -1506,8 +1532,8 @@ import "trans_frag_defs.sialx"
                   t1ppqq(a,i,b,j)           = Vaibj(a,i,b,j,ii) 
                   execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t1ppqq(a,i,b,j)  
-                  t20disp(ifrag,jfrag)      = etemp 
                   print_scalar etemp 
+                  t20disp(ifrag,jfrag)      = etemp 
                   PUT e20disp(ifrag,jfrag) += t20disp(ifrag,jfrag) 
 
             endif # icount != jcount 
@@ -1522,10 +1548,10 @@ import "trans_frag_defs.sialx"
                   t1ppqq(a,i,b,j)           = t3ppqq(a,j,b,i) 
                   tppqq(a,i,b,j)           *= 2.0  
                   tppqq(a,i,b,j)           -= t1ppqq(a,i,b,j)   
-                  execute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
+                 #execute energy_denominator_rhf  t2ppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t2ppqq(a,i,b,j)  
-                  t20disp(ifrag,jfrag)      = etemp 
                   print_scalar etemp 
+                  t20disp(ifrag,jfrag)      = etemp 
                   PUT e20disp(ifrag,jfrag) += t20disp(ifrag,jfrag) 
 
             endif # icount != jcount 
@@ -1562,6 +1588,7 @@ import "trans_frag_defs.sialx"
 
                GET                    e20disp(ifrag,jfrag) 
                t20disp(ifrag,jfrag) = e20disp(ifrag,jfrag)  
+               execute print_block e20disp(ifrag,jfrag)
 
             ENDIF # jfrag >= ifrag  
 
@@ -2055,7 +2082,7 @@ import "trans_frag_defs.sialx"
 #
       DO a
             xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a1)  m  
+            execute return_sval xa(a)  m  
             if m == icount  
       DO a1   
             xa1(a1)     = wVirtA_frag(a1) 
@@ -3049,8 +3076,49 @@ import "trans_frag_defs.sialx"
 #     ----------------------- 
 #
 # Restore the persistent arrays. 
-      restore_persistent ca "ca" 
-      restore_persistent Fock_a "fock_a"
+      create DCa 
+      create DFock_a
+      sip_barrier
+      restore_persistent Dca "ca" 
+      restore_persistent DFock_a "fock_a"
+      sip_barrier
+      DO mu
+      DO p 
+         GET        Dca(mu,p) 
+         ca(mu,p) = Dca(mu,p) 
+      ENDDO p 
+      ENDDO mu  
+      DO p  
+      DO p1  
+         GET            Dfock_a(p,p1) 
+         fock_a(p,p1) = Dfock_a(p,p1) 
+      ENDDO p1  
+      ENDDO p  
+      sip_barrier
+      esum = 0.0 
+      DO mu
+      DO i 
+         etemp = ca(mu,i) * ca(mu,i) 
+         esum += etemp 
+      ENDDO i 
+      ENDDO mu  
+      print_scalar esum 
+      esum = 0.0 
+      DO mu
+      DO a 
+         etemp = ca(mu,a) * ca(mu,a) 
+         esum += etemp 
+      ENDDO a 
+      ENDDO mu  
+      print_scalar esum 
+      esum = 0.0 
+      DO mu
+      DO p 
+         etemp = ca(mu,p) * ca(mu,p) 
+         esum += etemp 
+      ENDDO p 
+      ENDDO mu  
+      print_scalar esum 
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
@@ -3072,18 +3140,18 @@ import "trans_frag_defs.sialx"
       CALL SET_FRAG_PARMS   
       sip_barrier 
 #
-      create wC 
-      create t1old 
-      create t1new  
-      create x1new  
-      create e20disp 
-      create wC_ao 
-      sip_barrier 
+     #create wC 
+     #create t1old 
+     #create t1new  
+     #create x1new  
+     #create e20disp 
+     #create wC_ao 
+     #sip_barrier 
 #
 #     Perform 2-el integral transformation and calculate second order energies   
 #     ------------------------------------------------------------------------ 
 #
-      CALL CREATE_ARRAYS 
+     #CALL CREATE_ARRAYS 
       sip_barrier 
       CALL FRAG_TRAN 
       sip_barrier 
