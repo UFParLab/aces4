@@ -28,10 +28,10 @@ c---------------------------------------------------------------------------
 c Interface added but should be included instead 
 
       include 'sip_interface.f' 
+      include 'imemory.h' 
 
 c---------------------------------------------------------------------------
       integer iscr(*) 
-      integer intmax, zmax 
 
       integer da1, da2, db1, db2
       integer adim, bdim 
@@ -246,9 +246,6 @@ c    *                                           picc(1))
       if (intSpherical .ne. 1) spherical = .false. 
 c     write(6,*) ' Spherical = ', spherical 
 
-      intmax = 100**4 ! VER BAD HACK  
-      zmax = 2*intmax
-
 c----------------------------------------------------------------------------
 c   Clear the output array.
 c----------------------------------------------------------------------------
@@ -334,7 +331,7 @@ c ------------------------------------------------------------------------
 c  KIN (type=2) integrals next.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_ovl_batch(intmax, zmax, nalpha_pack,
+              call oed__gener_ovl_batch(imax, zmax, nalpha_pack,
      *                 ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
@@ -362,48 +359,7 @@ c           write(6,*) ' NINTS = ', nints
                 call add_integrals2(zsum, da1,da2,db1,db2,
      *                 zz(nfirst),a1,a2,b1,b2,1.0d0)
 
-c Print out the integrals  
-
-c               i = 0 
-c               do b = b1,b2
-c               do a = a1,a2
-c                  i = i + 1 
-c                  z(i) = zz(nfirst+i-1) 
-c               enddo
-c               enddo
-
              endif ! (nints .gt. 0) then
-
-c Print out the integrals  
-
-c     write(6,*) 'One electron integrals ' 
-
-c     a2 = end_nfps(m)
-c     if (m .eq. 1) then
-c         a1 = 1 
-c     else
-c         a1 = end_nfps(m-1)+1
-c     endif
-
-c     b2 = end_nfps(n)
-c     if (n .eq. 1) then
-c         b1 = 1 
-c     else
-c         b1 = end_nfps(n-1)+1
-c     endif
-
-c               call add_integrals2(zsum, da1,da2,db1,db2,
-c    *                 z(1),a1,a2,b1,b2,0.0d0)
-
-c     i = 0 
-c     do b = b1,b2
-c     do a = a1,a2
-c        i = i + 1 
-c        write(6,*) ' A1 A2: B1 B2:', a1, a2, b1, b2
-c        zsum(a,b) = z(i) 
-c        write(6,*) a, b, z(i)
-c     enddo
-c     enddo
 
         enddo   ! n shells
         enddo   ! m shells 

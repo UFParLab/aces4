@@ -1135,16 +1135,24 @@ import "scf_defs.sialx"
       CREATE DHFa   
       CREATE DHFb   
 
+      PARDO mu, nu 
+            txx(mu,nu)      = 0.0  
+            PUT Dhfa(mu,nu) = txx(mu,nu)
+            txx(mu,nu)      = 0.0  
+            PUT Dhfb(mu,nu) = txx(mu,nu)
+      ENDPARDO mu, nu 
+
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
       imax = 0.0 
       zmax = 0.0 
-      DO mu 
-      DO nu 
-         txx(mu,nu) = 0.0
-         execute compute_int_scratchmem txx(mu,nu) zmax imax
-      ENDDO nu 
-      ENDDO mu 
+     #DO mu 
+     #DO nu 
+     #   txx(mu,nu) = 0.0
+     #   execute compute_int_scratchmem txx(mu,nu) zmax imax
+         execute compute_int_scratchmem oed_ovl zmax imax 
+     #ENDDO nu 
+     #ENDDO mu 
 
 #
 #     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
