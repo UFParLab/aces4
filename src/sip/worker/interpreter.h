@@ -133,6 +133,10 @@ public:
 		data_manager_.block_manager_.block_map_.insert_per_array_map(array_id,
 				map_ptr);
 	}
+
+	Block::BlockPtr get_block_for_reading(const BlockId& block_id){
+		return data_manager_.block_manager_.get_block_for_reading(block_id);
+	}
 	/**
 	 * main interpret function
 	 */

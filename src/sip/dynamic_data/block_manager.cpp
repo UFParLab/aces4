@@ -67,7 +67,7 @@ BlockManager::BlockManager(SipTables& sipTables) :
  * Delete blocks being managed by the block manager.
  */
 BlockManager::~BlockManager() {
-	check(temp_block_list_stack_.size() == 0, "temp_block_list_stack not empty when destroying data manager!");
+	check(temp_block_list_stack_.size() == 0, "temp_block_list_stack not empty when destroying block manager!");
 }
 
 void BlockManager::barrier() {
@@ -399,9 +399,9 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
 	if (blk == NULL){
 		std::cout << "get_block_for_reading, block " << id << "    array " << sip_tables_.array_name(id.array_id()) << " does not exist\n";
-		std::cout << block_map_[id.array_id()]->size() << std::endl;
 		fail ("",current_line());
 	}
+
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_read_on_host(blk);

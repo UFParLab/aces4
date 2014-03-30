@@ -74,6 +74,7 @@ public:
 
 
 	/** Gets requested Block, which is required to already exist, for read only access.
+	 * It is a fatal error to ask for a block that does not exit.
 	 *
 	 * @param id BlockId of requested Block
 	 * @return pointer to requested Block

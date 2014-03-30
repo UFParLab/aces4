@@ -52,8 +52,8 @@ public:
 	typedef PredefIntArrMap::iterator PredefIntArrayIterator;
 	typedef std::map<std::string, std::string> KeyValueMap;
 	typedef std::map<std::string, KeyValueMap > FileConfigMap;
-	typedef std::map<std::string, sip::Block::BlockPtr> NamePredefinedContiguousArrayMap;
-    typedef std::map<std::string, sip::Block::BlockPtr>::iterator NamePredefinedContiguousArrayMapIterator;
+	typedef std::map<std::string, std::pair<int,sip::Block::BlockPtr> > NamePredefinedContiguousArrayMap;
+    typedef std::map<std::string, std::pair<int,sip::Block::BlockPtr> >::iterator NamePredefinedContiguousArrayMapIterator;
 
 	int predefined_int(std::string);
     double predefined_scalar(std::string);

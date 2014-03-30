@@ -32,10 +32,8 @@ public:
 	 *
 	 * @param size
 	 */
-	explicit IdBlockMap(int array_table_size):block_map_(array_table_size)
+	explicit IdBlockMap(int array_table_size):block_map_(array_table_size, NULL)
 	{
-//		std::fill(block_map_.begin(), block_map_.end(), NULL);
-
 	}
 
 	IdBlockMap(){
@@ -93,7 +91,7 @@ public:
 		PerArrayMap* map_ptr = block_map_[array_id];
 		if (map_ptr == NULL) {
 			map_ptr = new PerArrayMap(); //Will be deleted along with all of its Blocks in the IdBlockMap destructor.
-			                             //Alternatively, may be transferred to PersistentArrayManager, and replaced with
+			                             //Alternatively, ownership may be transferred to PersistentArrayManager, and replaced with
 			                             //NULL in the block_map_ entry.
 			block_map_[array_id] = map_ptr;
 		}
@@ -198,11 +196,12 @@ public:
 	    //create a new map with Ids updated to new array_id
 	    PerArrayMap* new_map = new PerArrayMap();
 	    typename PerArrayMap::iterator it;
-		for (it = map_ptr->begin(); it != map_ptr->begin(); ++it){
+		for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
 			BlockId new_id(array_id, it->first); //this constructor updates the array_id
 			(*new_map)[new_id] = it->second;
 		}
-
+		block_map_[array_id] = new_map;
+		delete map_ptr;
 	}
 
 	int size() const {return block_map_.size();}
@@ -225,12 +224,12 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(IdBlockMap<BLOCK_TYPE>);
 };
 
-template <class BLOCK_TYPE>
-std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE>& obj){
+template <typename BLOCK_TYPE1>
+std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE1>& obj){
 //	IdBlockMap<BLOCK_TYPE>::BlockMapVector::size_type size = obj.size();
-	typename IdBlockMap<BLOCK_TYPE>::size_type size = obj.size();
+	typename IdBlockMap<BLOCK_TYPE1>::size_type size = obj.size();
 	for (unsigned i = 0; i < size; ++i){
-		const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map_ptr = obj[i];
+		const typename IdBlockMap<BLOCK_TYPE1>::PerArrayMap* map_ptr = obj[i];
 		if (map_ptr != NULL && !map_ptr->empty()){
 			os << map_ptr;
 		}
@@ -244,9 +243,9 @@ std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE>& obj){
  * @param obj PerArrayMap
  * @return
  */
-template <class BLOCK_TYPE>
-std::ostream& operator<<(std::ostream& os, const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* & obj){
-	typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::iterator it, it_end;
+template <typename BLOCK_TYPE2>
+std::ostream& operator<<(std::ostream& os, const typename IdBlockMap<BLOCK_TYPE2>::PerArrayMap* & obj){
+	typename IdBlockMap<BLOCK_TYPE2>::PerArrayMap::iterator it, it_end;
 	for (it = obj->begin(); it != obj->end(); ++it){
 		os << (it = obj->begin()?"":", ") << it->first;
 	}

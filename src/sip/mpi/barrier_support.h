@@ -8,7 +8,7 @@
 #ifndef BARRIER_SUPPORT_H_
 #define BARRIER_SUPPORT_H_
 
-#include "sip_mpi_data.h";
+#include "sip_mpi_data.h"
 
 namespace sip {
 

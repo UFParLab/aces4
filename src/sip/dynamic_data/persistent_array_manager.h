@@ -8,14 +8,17 @@
 #ifndef PERSISTENT_ARRAY_MANAGER_H_
 #define PERSISTENT_ARRAY_MANAGER_H_
 
+
+#ifdef HAVE_MPI
 #include "mpi.h"
+#include "sip_mpi_attr.h"
+#endif //HAVE_MPI
 
 #include <vector>
 //#include <set>
 
 #include "blocks.h"
 #include "block_manager.h"
-#include "sip_mpi_attr.h"
 #include "id_block_map.h"
 #include "sip_tables.h"
 #include "contiguous_array_manager.h"
@@ -334,26 +337,26 @@ DISALLOW_COPY_AND_ASSIGN(PersistentArrayManager);
 }
 ;
 
-	template<typename BLOCK_TYPE, typename RUNNER_TYPE>
-	std::ostream& operator<<(std::ostream& os, const PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE> & obj){
+	template<typename BLOCK_TYPE1, typename RUNNER_TYPE1>
+	std::ostream& operator<<(std::ostream& os, const PersistentArrayManager<BLOCK_TYPE1, RUNNER_TYPE1> & obj){
 		os << "Persistent Array Manager" << std::endl;
 		os << "Marked arrays: size=" << obj.persistent_array_map_.size() << std::endl;
-		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::ArrayIdLabelMap::const_iterator mit;
+		typename PersistentArrayManager<BLOCK_TYPE1, RUNNER_TYPE1>::ArrayIdLabelMap::const_iterator mit;
 		for (mit = obj.persistent_array_map_.begin(); mit != obj.persistent_array_map_.end(); ++mit){
 			os << mit -> first << ": " << mit -> second << std::endl;
 		}
 		os << "ScalarValueMap: size=" << obj.scalar_value_map_.size()<<std::endl;
-		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelScalarValueMap::const_iterator it;
+		typename PersistentArrayManager<BLOCK_TYPE1, RUNNER_TYPE1>::LabelScalarValueMap::const_iterator it;
 		for (it = obj.scalar_value_map_.begin(); it != obj.scalar_value_map_.end(); ++it){
 			os << it->first << "=" << it->second << std::endl;
 		}
 		os << "ContiguousArrayMap: size=" << obj.contiguous_array_map_.size() << std::endl;
-		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelContiguousArrayMap::const_iterator cit;
+		typename PersistentArrayManager<BLOCK_TYPE1, RUNNER_TYPE1>::LabelContiguousArrayMap::const_iterator cit;
 		for (cit = obj.contiguous_array_map_.begin(); cit != obj.contiguous_array_map_.end(); ++cit){
 			os << cit -> first << std::endl;
 		}
 		os << "Distributed/ServedArrayMap: size=" << obj.distributed_array_map_.size() << std::endl;
-		typename PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>::LabelDistributedArrayMap::const_iterator dit;
+		typename PersistentArrayManager<BLOCK_TYPE1, RUNNER_TYPE1>::LabelDistributedArrayMap::const_iterator dit;
 		for (dit = obj.distributed_array_map_.begin(); dit != obj.distributed_array_map_.end(); ++dit){
 			os << dit -> first << std::endl;
 			//os << dit -> second << std::endl;

@@ -85,11 +85,11 @@ void Interpreter::interpret() {
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
 	while (pc < pc_end) {
-#ifdef HAVE_MPI
-		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Now processing line "<<line_number()<<std::endl);
-#else
-		SIP_LOG(std::cout<<"Now processing line "<<line_number()<<std::endl);
-#endif
+//#ifdef HAVE_MPI
+//		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Now processing line "<<line_number()<<std::endl);
+//#else
+//		SIP_LOG(std::cout<<"Now processing line "<<line_number()<<std::endl);
+//#endif
 		opcode_t opcode = op_table_.opcode(pc);
 		sip::check(write_back_list_.empty(),
 				"SIP bug:  write_back_list not empty at top of interpreter loop");
@@ -564,8 +564,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			// DEBUG
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-			std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
-								<< " and string \"" << string_literal(string_slot) << "\"" << std::endl;
 			//TODO deal with parallel
             persistent_array_manager_->set_persistent(this, array_slot,string_slot);
 			++pc;
@@ -577,8 +575,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			// DEBUG
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-			std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
-								<< " and string \"" << string_literal(string_slot) << "\"" << std::endl;
 			persistent_array_manager_->restore_persistent(this, array_slot, string_slot);
 			++pc;
 		}

@@ -107,40 +107,45 @@ ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 				setup::SetupReader::NamePredefinedContiguousArrayMapIterator b =
 						setup_reader_.name_to_predefined_contiguous_array_map_.find(
 								name);
-			if (check_and_warn(b != setup_reader_.name_to_predefined_contiguous_array_map_.end(), "No data for predefined static array " + name); {
-						block = b->second;
-						insert_contiguous_array(i, block);
-					}
-					else create_contiguous_array(i);
-				}			//if predefined
-				else
+				if (check_and_warn(
+						b
+								!= setup_reader_.name_to_predefined_contiguous_array_map_.end(),
+						"No data for predefined static array " + name)) {
+					//array is predefined and in setup reader
+					block = b->second.second;
+					insert_contiguous_array(i, block);
+				} else { //is predefined, but not in setreader.  warn and set to zero
 					create_contiguous_array(i);
+				}
+			} else { //not predefined, just create it
+				create_contiguous_array(i);
 
-			}			//if contiguous
-		}
-	}
-
-	ContiguousArrayManager::~ContiguousArrayManager() {
-		ContiguousArrayMap::iterator it;
-		for (it = contiguous_array_map_.begin();
-				it != contiguous_array_map_.end(); ++it) {
-			int i = it->first;
-			if (it->second != NULL) {
-				SIP_LOG(
-						std::cout<<"Deleting contiguous array : "<<sip_tables_.array_name(i)<<std::endl);
-				delete it->second;
-				it->second = NULL;
 			}
-		}
-		contiguous_array_map_.clear();
-	}
+		} //end if contiguous
+	} // end loop
+}
 
-	Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(
-			int array_id, Block::BlockPtr block_ptr) {
-		sip::check(block_ptr != NULL,
-				"Trying to insert null block_ptr into contiguous array manager\n");
-		sip::check(block_ptr->get_data() != NULL,
-				"Trying to put block with null data into contiguous array !");
+
+/** delete all contiguous arrays except the predefined ones. */
+ContiguousArrayManager::~ContiguousArrayManager() {
+	ContiguousArrayMap::iterator it;
+	for (it = contiguous_array_map_.begin(); it != contiguous_array_map_.end();
+			++it) {
+		int i = it->first;
+		if (it->second != NULL && !sip_tables_.is_predefined(i)) {
+			SIP_LOG(
+					std::cout<<"Deleting contiguous array : "<<sip_tables_.array_name(i)<<std::endl);
+			delete it->second;
+			it->second = NULL;
+		}
+	}
+	contiguous_array_map_.clear();
+}
+
+Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
+		Block::BlockPtr block_ptr) {
+	sip::check(block_ptr != NULL && block_ptr->get_data() != NULL,
+			"Trying to insert null block_ptr or null block into contiguous array manager\n");
 //	ContiguousArrayMap::iterator it = contiguous_array_map_.find(array_id);
 //	if (it != contiguous_array_map_.end()){
 //		if (block_ptr->get_data() != it->second->get_data()){
@@ -150,117 +155,121 @@ ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 //			contiguous_array_map_.erase(array_id);
 //		}
 //	}
-		const std::pair<ContiguousArrayMap::iterator, bool> &ret =
-				contiguous_array_map_.insert(
-						std::pair<int, Block::BlockPtr>(array_id, block_ptr));
+//	const std::pair<ContiguousArrayMap::iterator, bool> &ret =
+//			contiguous_array_map_.insert(
+//					std::pair<int, Block::BlockPtr>(array_id, block_ptr));
+//
+//	if (!ret.second){
+//		delete ret.first->second;
+//		contiguous_array_map_.erase(ret.first);
+//		contiguous_array_map_.insert(
+//				std::pair<int, Block::BlockPtr>(array_id, block_ptr));
+//	}
 
-		if (!check_and_warn(ret.second, "overwriting contiguous array")) {
-			delete ret.first->second;
-			contiguous_array_map_.erase(ret.first);
+	ContiguousArrayMap::iterator it = contiguous_array_map_.find(array_id);
+	if (it != contiguous_array_map_.end()){
+		delete it->second;
+		it->second = NULL;
+		contiguous_array_map_.erase(it);
+	}
+	contiguous_array_map_[array_id] = block_ptr;
+
+	SIP_LOG(
+			std::cout<<"Contiguous Block of array "<<sip_tables_.array_name(array_id)<<std::endl);
+	sip::check(
+			block_ptr->shape() == sip_tables_.contiguous_array_shape(array_id),
+			std::string("array ") + sip_tables_.array_name(array_id)
+					+ std::string(
+							"shape inconsistent in Sial program and inserted array "));
+	return block_ptr;
+}
+
+Block::BlockPtr ContiguousArrayManager::create_contiguous_array(int array_id) {
+	BlockShape shape = sip_tables_.contiguous_array_shape(array_id);
+	SIP_LOG(
+			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape << " and array id :" << array_id << std::endl);
+	Block::BlockPtr block_ptr = new Block(shape);
+	const std::pair<ContiguousArrayMap::iterator, bool> &ret =
 			contiguous_array_map_.insert(
 					std::pair<int, Block::BlockPtr>(array_id, block_ptr));
+	sip::check(ret.second,
+			std::string(
+					"attempting to create contiguous array that already exists"));
+	return block_ptr;
+}
+
+Block::BlockPtr ContiguousArrayManager::get_block_for_updating(
+		const BlockId& block_id, WriteBackList& write_back_list) {
+	int rank = 0;
+	Block::BlockPtr contiguous = NULL;
+	Block::BlockPtr block = NULL;
+	sip::offset_array_t offsets;
+	get_block(block_id, rank, contiguous, block, offsets);
+	write_back_list.push_back(new WriteBack(rank, contiguous, block, offsets));
+	return block;
+}
+
+Block::BlockPtr ContiguousArrayManager::get_block_for_reading(
+		const BlockId& block_id) {
+	int rank = 0;
+	Block::BlockPtr contiguous = NULL;
+	Block::BlockPtr block = NULL;
+	sip::offset_array_t offsets;
+	get_block(block_id, rank, contiguous, block, offsets);
+	return block;
+}
+
+std::ostream& operator<<(std::ostream& os, const ContiguousArrayManager& obj) {
+	os << "contiguous_array_map_:" << std::endl;
+	{
+		ContiguousArrayManager::ContiguousArrayMap::const_iterator it;
+		for (it = obj.contiguous_array_map_.begin();
+				it != obj.contiguous_array_map_.end(); ++it) {
+			os << it->first << std::endl;  //print the array id
 		}
-
-		SIP_LOG(
-				std::cout<<"Contiguous Block of array "<<sip_tables_.array_name(array_id)<<std::endl);
-		sip::check(
-				block_ptr->shape()
-						== sip_tables_.contiguous_array_shape(array_id),
-				std::string("array ") + sip_tables_.array_name(array_id)
-						+ std::string(
-								"shape inconsistent in Sial program and dat file "));
-		return block_ptr;
 	}
+	return os;
+}
 
-	Block::BlockPtr ContiguousArrayManager::create_contiguous_array(
-			int array_id) {
-		BlockShape shape = sip_tables_.contiguous_array_shape(array_id);
-		SIP_LOG(
-				std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape << " and array id :" << array_id << std::endl);
-		Block::BlockPtr block_ptr = new Block(shape);
-		const std::pair<ContiguousArrayMap::iterator, bool> &ret =
-				contiguous_array_map_.insert(
-						std::pair<int, Block::BlockPtr>(array_id, block_ptr));
-		sip::check(ret.second,
-				std::string(
-						"attempting to create contiguous array that already exists"));
-		return block_ptr;
+Block::BlockPtr ContiguousArrayManager::get_array(int array_id) {
+	ContiguousArrayMap::iterator b = contiguous_array_map_.find(array_id);
+	if (b != contiguous_array_map_.end()) {
+		return b->second;
 	}
+	return NULL;
+}
 
-	Block::BlockPtr ContiguousArrayManager::get_block_for_updating(
-			const BlockId& block_id, WriteBackList& write_back_list) {
-		int rank = 0;
-		Block::BlockPtr contiguous = NULL;
-		Block::BlockPtr block = NULL;
-		sip::offset_array_t offsets;
-		get_block(block_id, rank, contiguous, block, offsets);
-		write_back_list.push_back(
-				new WriteBack(rank, contiguous, block, offsets));
-		return block;
+Block::BlockPtr ContiguousArrayManager::get_and_remove_array(int array_id) {
+	ContiguousArrayMap::iterator b = contiguous_array_map_.find(array_id);
+	if (b != contiguous_array_map_.end()) {
+		Block::BlockPtr tmp = b->second;
+		contiguous_array_map_.erase(b);
+		return tmp;
 	}
+	return NULL;
+}
 
-	Block::BlockPtr ContiguousArrayManager::get_block_for_reading(
-			const BlockId& block_id) {
-		int rank = 0;
-		Block::BlockPtr contiguous = NULL;
-		Block::BlockPtr block = NULL;
-		sip::offset_array_t offsets;
-		get_block(block_id, rank, contiguous, block, offsets);
-		return block;
+void ContiguousArrayManager::get_block(const BlockId& block_id, int& rank,
+		Block::BlockPtr& contiguous, Block::BlockPtr& block,
+		sip::offset_array_t& offsets) {
+//get contiguous array that contains block block_id, which must exist, and get its selectors and shape
+	int array_id = block_id.array_id();
+	rank = sip_tables_.array_rank(array_id);
+	contiguous = get_array(array_id);
+	sip::check(contiguous != NULL, "contiguous array not allocated");
+	const sip::index_selector_t& selector = sip_tables_.selectors(array_id);
+	BlockShape array_shape = sip_tables_.contiguous_array_shape(array_id); //shape of containing contiguous array
+
+//get offsets of block_id in the containing array
+	for (int i = 0; i < rank; ++i) {
+		offsets[i] = sip_tables_.offset_into_contiguous(selector[i],
+				block_id.index_values(i));
 	}
+//set offsets of unused indices to 0
+	std::fill(offsets + rank, offsets + MAX_RANK, 0);
 
-	std::ostream& operator<<(std::ostream& os,
-			const ContiguousArrayManager& obj) {
-		os << "contiguous_array_map_:" << std::endl;
-		{
-			ContiguousArrayManager::ContiguousArrayMap::const_iterator it;
-			for (it = obj.contiguous_array_map_.begin();
-					it != obj.contiguous_array_map_.end(); ++it) {
-				os << it->first << std::endl;  //print the array id
-			}
-		}
-		return os;
-	}
-
-	Block::BlockPtr ContiguousArrayManager::get_array(int array_id) {
-		ContiguousArrayMap::iterator b = contiguous_array_map_.find(array_id);
-		if (b != contiguous_array_map_.end()) {
-			return b->second;
-		}
-		return NULL;
-	}
-
-	Block::BlockPtr ContiguousArrayManager::get_and_remove_array(int array_id) {
-		ContiguousArrayMap::iterator b = contiguous_array_map_.find(array_id);
-		if (b != contiguous_array_map_.end()) {
-			Block::BlockPtr tmp = b->second;
-			contiguous_array_map_.erase(b);
-			return tmp;
-		}
-		return NULL;
-	}
-
-	void ContiguousArrayManager::get_block(const BlockId& block_id, int& rank,
-			Block::BlockPtr& contiguous, Block::BlockPtr& block,
-			sip::offset_array_t& offsets) {
-		//get contiguous array that contains block block_id, which must exist, and get its selectors and shape
-		int array_id = block_id.array_id();
-		rank = sip_tables_.array_rank(array_id);
-		contiguous = get_array(array_id);
-		sip::check(contiguous != NULL, "contiguous array not allocated");
-		const sip::index_selector_t& selector = sip_tables_.selectors(array_id);
-		BlockShape array_shape = sip_tables_.contiguous_array_shape(array_id); //shape of containing contiguous array
-
-		//get offsets of block_id in the containing array
-		for (int i = 0; i < rank; ++i) {
-			offsets[i] = sip_tables_.offset_into_contiguous(selector[i],
-					block_id.index_values(i));
-		}
-		//set offsets of unused indices to 0
-		std::fill(offsets + rank, offsets + MAX_RANK, 0);
-
-		//get shape of subblock
-		BlockShape block_shape = sip_tables_.shape(block_id);
+//get shape of subblock
+	BlockShape block_shape = sip_tables_.shape(block_id);
 
 //	//DEBUG print info about block
 //    std::cout << "ContiguousArrayManager::get_block " << block_id << "  offsets: [";
@@ -273,10 +282,10 @@ ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 //	}
 //    std::cout << ']' << std::endl;
 
-		//allocate a new block and copy data from contiguous block
-		block = new Block(block_shape);
-		contiguous->extract_slice(rank, offsets, block);
-		return;
-	}
+//allocate a new block and copy data from contiguous block
+	block = new Block(block_shape);
+	contiguous->extract_slice(rank, offsets, block);
+	return;
+}
 
-	} /* namespace sip */
+} /* namespace sip */
