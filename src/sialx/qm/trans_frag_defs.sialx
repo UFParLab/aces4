@@ -54,7 +54,9 @@ special set_frag u
 special compute_integral_batch w  
 special energy_denominator_rhf ur   
 special compute_int_scratchmem uuu
+special return_h1frag wr   
 special print_block r
+special return_diagonal u  
 
 endsial trans_frag_defs
 

@@ -706,18 +706,18 @@ c  Remove scratch space
       call delete_scratch_array(cscr)
       call delete_scratch_array(ciscr)
 
-      etemp = 0.0 
-      i = 0 
-      write(6,*) ' CA_PERM ' 
-      do n = nd1, nd2 
-      do m = nc1, nc2 
-         i = i + 1 
+c     etemp = 0.0 
+c     i = 0 
+c     write(6,*) ' CA_PERM ' 
+c     do n = nd1, nd2 
+c     do m = nc1, nc2 
+c        i = i + 1 
 c        ca_out(i) = ca_perm(m,n) 
-         write(6,*) m, n, ca_perm(m, n) 
-         etemp = etemp + ca_perm(m,n)**2 
-      enddo 
-      enddo 
-      write(6,*) ' ETEMP at end ', etemp 
+c        write(6,*) m, n, ca_perm(m, n) 
+c        etemp = etemp + ca_perm(m,n)**2 
+c     enddo 
+c     enddo 
+c     write(6,*) ' ETEMP at end ', etemp 
 
       return 
       end 
@@ -1400,9 +1400,9 @@ c-----------------------------------------------------------------------
 c     if (current_frag .eq. 1) go to 123 
 
       na_offset = baocc_frag(current_frag, 1) 
-      etemp = 0.0 
+c     etemp = 0.0 
 
-      write(6,*) ' NA_OFF(OCC):', na_offset 
+c     write(6,*) ' NA_OFF(OCC):', na_offset 
       do n = 1, nocc_a 
       do m = 1, n_basis
          ca_perm(map(m),na_offset+n-1) = 0.0  
@@ -1410,17 +1410,17 @@ c     if (current_frag .eq. 1) go to 123
 c        if ((map(m) .ne. 0)) then  
             ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
             etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
-            write(6,*) map(m), (na_offset+n-1),
-     *      ca_perm(map(m),na_offset+n-1)
+c           write(6,*) map(m), (na_offset+n-1),
+c    *      ca_perm(map(m),na_offset+n-1)
          endif 
       enddo 
       enddo 
-      write(6,*) ' ETEMP (occ)', etemp 
+c     write(6,*) ' ETEMP (occ)', etemp 
 
       na_offset = bavirt_frag(current_frag, 1) 
       etemp = 0.0 
 
-      write(6,*) ' NA_OFF(VIRT):', na_offset 
+c     write(6,*) ' NA_OFF(VIRT):', na_offset 
       do n = 1, n_basis - nocc_a  
       do m = 1, n_basis
          ca_perm(map(m),na_offset+n-1) = 0.0  
@@ -1428,12 +1428,12 @@ c        if ((map(m) .ne. 0)) then
 c        if ((map(m) .ne. 0)) then  
             ca_perm(map(m),na_offset+n-1) = Ca(m,n+nocc_a)  
             etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
-            write(6,*) map(m), (na_offset+n-1),
-     *      ca_perm(map(m),na_offset+n-1)
+c           write(6,*) map(m), (na_offset+n-1),
+c    *      ca_perm(map(m),na_offset+n-1)
          endif 
       enddo 
       enddo 
-      write(6,*) ' ETEMP (virt)', etemp 
+c     write(6,*) ' ETEMP (virt)', etemp 
 
 
 c-----------------------------------------------------------------------

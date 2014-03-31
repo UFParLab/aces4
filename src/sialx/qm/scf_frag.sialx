@@ -22,8 +22,8 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 2 # Nfrags  
-      index   jatom  = 1, 2 # Nfrags  
+      index   katom  = 1, 4 # Nfrags  
+      index   jatom  = 1, 4 # Nfrags  
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -214,7 +214,6 @@ import "scf_frag_defs.sialx"
                   DO mu  
                   DO i 
                      GET DCa(mu,i) 
-                     execute print_block Ca(mu,i) 
                      etemp = DCa(mu,i) * DCa(mu,i) 
                      esum += etemp 
                   ENDDO i 

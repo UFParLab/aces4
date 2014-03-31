@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 2 # Nfragments   
-      index  jjfrag  = 1, 2 # Nfragments   
-      index   kfrag  = 1, 2 # Nfragments   
-      index  kkfrag  = 1, 2 # Nfragments   
+      index   jfrag  = 1, 4 # Nfragments   
+      index  jjfrag  = 1, 4 # Nfragments   
+      index   kfrag  = 1, 4 # Nfragments   
+      index  kkfrag  = 1, 4 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -817,7 +817,7 @@ import "trans_frag_defs.sialx"
                      if pcount == jcount  
                         txxqq(mu,nu,j1,j)         = LVxxxq(mu,nu,lambda,j)*ca(lambda,j1) 
                         Ipp(j1,j)    = 2.0 
-                        # TO ADD execute return_diagonal4 Ipp(j1,j) 
+                        execute return_diagonal Ipp(j1,j) 
                         txx(mu,nu)    = Ipp(j1,j)*txxqq(mu,nu,j1,j) 
                         PUT wC_ao(mu,nu) += txx(mu,nu) 
                      endif # pcount == icount c
@@ -848,6 +848,10 @@ import "trans_frag_defs.sialx"
       ENDPARDO kfrag, jfrag 
 
       sip_barrier 
+     #PARDO mu, nu 
+     #      GET wC_ao(mu,nu) 
+     #      execute print_block wC_ao(mu,nu) 
+     #ENDPARDO mu, nu 
 
       PARDO kfrag 
          icount = 0.0 
@@ -1633,7 +1637,7 @@ import "trans_frag_defs.sialx"
             if n == icount  
 
                txx(mu,nu) = 0.0 
-               #TOADD execute return_h1frag txx icount  
+               execute return_h1frag txx(mu,mu) icount  
 
                do b 
                   xb(b) = wVirtB_frag(b) 
@@ -2860,8 +2864,14 @@ import "trans_frag_defs.sialx"
                  endif 
               ENDDO a
 #
-              deallocate LDaixj(*,i,nu,j)
-
+              DO a
+                 xa(a)     = wVirtA_frag(a)     
+                 execute return_sval xa(a)  s  
+                 if s == icount  
+                    deallocate LDaixj(a,i,nu,j)
+                 endif 
+              ENDDO a
+#
             ENDDO ii 
          endif # m == icount  
         ENDDO j
@@ -2872,6 +2882,11 @@ import "trans_frag_defs.sialx"
         ENDPARDO nu
 #
 # Add the wC contributions 
+      PARDO p, p1  
+         tpp(p,p1) = 0.0 
+         PUT wC(p,p1) = tpp(p,p1)  
+      ENDPARDO p, p1  
+      sip_barrier 
 #  
 
       PARDO a 
@@ -3165,14 +3180,14 @@ import "trans_frag_defs.sialx"
 #     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
 #
-     #CALL FORM_T1 
+      CALL FORM_T1 
       sip_barrier 
 #
 #     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
-     #CALL FORM_T2_GUESS 
+      CALL FORM_T2_GUESS 
       sip_barrier 
-     #CALL FORM_T2_ITERS 
+      CALL FORM_T2_ITERS 
       sip_barrier 
 #
 #
