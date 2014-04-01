@@ -322,8 +322,9 @@ c        if (frag_calc) then
      *                 data_5, ! overlap array  
 c  
      *                 atom, end_nfps, 
-     c 
+c 
      *                 vmax,omax,norbmax,maxhist,diis_start) 
+ 
 
 c deAllocate scratch arrays 
 
@@ -653,14 +654,14 @@ c-----------------------------------------------------------------------
          enddo 
 
          if ((n_max .lt. nc1) .or. (n_max .gt. nc2)) then 
-           write(66,*) ' UMapping of atom dens wrong:' 
-           write(66,*) ' Correct range :', nc1, nc2, 'Computed range:', 
+           write(6,*) ' UMapping of atom dens wrong:' 
+           write(6,*) ' Correct range :', nc1, nc2, 'Computed range:', 
      *                 '1', n_max  
          endif 
 
          if ((n_basis .lt. nc1) .or. (n_basis .gt. nc2)) then 
-           write(66,*) ' Mapping of atom dens wrong:' 
-           write(66,*) ' Correct range :', nc1, nc2, 'Computed range:', 
+           write(6,*) ' Mapping of atom dens wrong:' 
+           write(6,*) ' Correct range :', nc1, nc2, 'Computed range:', 
      *                 '1', n_basis   
          endif 
 
@@ -1400,41 +1401,29 @@ c-----------------------------------------------------------------------
 c     if (current_frag .eq. 1) go to 123 
 
       na_offset = baocc_frag(current_frag, 1) 
-c     etemp = 0.0 
 
-c     write(6,*) ' NA_OFF(OCC):', na_offset 
       do n = 1, nocc_a 
       do m = 1, n_basis
          ca_perm(map(m),na_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
 c        if ((map(m) .ne. 0)) then  
             ca_perm(map(m),na_offset+n-1) = Ca(m,n)  
-            etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
-c           write(6,*) map(m), (na_offset+n-1),
-c    *      ca_perm(map(m),na_offset+n-1)
          endif 
       enddo 
       enddo 
-c     write(6,*) ' ETEMP (occ)', etemp 
 
       na_offset = bavirt_frag(current_frag, 1) 
-      etemp = 0.0 
 
-c     write(6,*) ' NA_OFF(VIRT):', na_offset 
       do n = 1, n_basis - nocc_a  
       do m = 1, n_basis
          ca_perm(map(m),na_offset+n-1) = 0.0  
          if ((map(m) .ne. 0) .and. (map(n) .ne. 0)) then  
 c        if ((map(m) .ne. 0)) then  
             ca_perm(map(m),na_offset+n-1) = Ca(m,n+nocc_a)  
-            etemp = etemp + ca_perm(map(m),na_offset+n-1)**2
-c           write(6,*) map(m), (na_offset+n-1),
-c    *      ca_perm(map(m),na_offset+n-1)
          endif 
       enddo 
       enddo 
 c     write(6,*) ' ETEMP (virt)', etemp 
-
 
 c-----------------------------------------------------------------------
 c        Beta 

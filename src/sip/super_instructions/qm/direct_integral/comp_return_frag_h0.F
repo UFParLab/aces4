@@ -281,7 +281,7 @@ c-------------------------------------------------------------------------
       do m = 1, ncenters 
          acharge(m) = charge(m) 
          do_atom(m) = 0 
-         write(6,*) ' CHARGE :', m, charge(m) 
+c        write(6,*) ' CHARGE :', m, charge(m) 
       enddo 
 
       newcenters = 0 
@@ -304,8 +304,8 @@ c           endif
       enddo
       enddo
 
-      write(6,*) ' NEWCHARGE = ', newcenters  
-      write(6,*) '    ', (acharge(m), m=1, newcenters) 
+c     write(6,*) ' NEWCHARGE = ', newcenters  
+c     write(6,*) '    ', (acharge(m), m=1, newcenters) 
 
       m1 = 1 
       m2 = nshells 

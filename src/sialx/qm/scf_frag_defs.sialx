@@ -52,6 +52,8 @@ special get_my_rank w
 special scf_atom rwwwwr 
 special compute_int_scratchmem uuu
 special print_block r  
+special frag_index_range uu
+special set_frag u
 
 endsial scf_frag_defs
 

@@ -139,9 +139,9 @@ c    *                      nfrags)
 
 c     write(6,*) ' IFRAG  ', ifrag 
 c     write(6,*) ' NFRAGS ', nfrags 
-      do i = 1, nfrags
-         write(6,*) '   ', i, w_frag_ao(i) 
-      enddo 
+c     do i = 1, nfrags
+c        write(6,*) '   ', i, w_frag_ao(i) 
+c     enddo 
 
       istart = 0 
       iend   = 0 

@@ -25,8 +25,15 @@ import "scf_frag_defs.sialx"
       index   katom  = 1, 29 # Nfrags  
       index   jatom  = 1, 29 # Nfrags  
 
+      index   jfrag  = 1, 29 # Nfragments   
+      index  jjfrag  = 1, 29 # Nfragments   
+      index   kfrag  = 1, 29 # Nfragments   
+      index  kkfrag  = 1, 29 # Nfragments 
+
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
+      aoindex lambda = 1, norb 
+      aoindex sigma  = 1, norb 
 #
       moaindex i = baocc, eaocc  
       moaindex i1= baocc, eaocc  
@@ -35,6 +42,10 @@ import "scf_frag_defs.sialx"
       mobindex j1= bbocc, ebocc  
 #
       moaindex a = bavirt, eavirt   
+      moaindex a1= bavirt, eavirt   
+# 
+      mobindex b = bavirt, eavirt   
+      mobindex b1= bavirt, eavirt   
 #
       moaindex p = baocc, eavirt
       moaindex p1= baocc, eavirt
@@ -62,6 +73,27 @@ import "scf_frag_defs.sialx"
       static Fock_a(p, p1) 
       static Fock_b(q, q1) 
       static oed_ovl(mu,nu) 
+
+      local wAO_frag(mu)
+      local wOccA_frag(i)
+      local wOccB_frag(j)
+      local wVirtA_frag(a)
+      local wVirtB_frag(b)
+      temp x1(mu)
+      temp x2(nu)
+      temp x3(lambda)
+      temp x4(sigma)
+      temp xi(i)
+      temp xi1(i)
+      temp xi2(i)
+      temp xj(j)
+      temp xj1(j)
+      temp xa(a)
+      temp xa1(a)
+      temp xa2(a)
+      temp xb(b)
+      temp xb1(b)
+
 #
 # Declare scalars 
 # --------------- 
@@ -70,11 +102,204 @@ import "scf_frag_defs.sialx"
       scalar one 
       scalar two 
       scalar rank 
-      scalar nfrags 
-      scalar fcount 
       scalar imax  
       scalar zmax  
       scalar esum 
+      scalar nfrags 
+      scalar fcount 
+      scalar icount 
+      scalar jcount 
+      scalar pcount 
+      scalar i_aostart  
+      scalar i_aoend   
+      scalar j_aostart  
+      scalar j_aoend   
+      scalar i_vstart 
+      scalar i_vend  
+      scalar j_vstart 
+      scalar j_vend  
+      scalar a_vstart 
+      scalar a_vend  
+      scalar b_vstart 
+      scalar b_vend  
+      scalar m  
+      scalar m1 
+      scalar n  
+      scalar n1 
+      scalar n2 
+      scalar l  
+      scalar s  
+
+#
+# ---------------------------------------------------------------------------- 
+#
+      PROC SET_FRAG_PARMS    
+#     ------------------- 
+#
+#     Determine the number of fragments  
+#     --------------------------------- 
+      execute set_frag nfrags
+     #print_scalar nfrags
+      allocate wAO_frag(*) 
+      allocate wOccA_frag(*) 
+      allocate wOccB_frag(*) 
+      allocate wVirtA_frag(*) 
+      allocate wVirtB_frag(*) 
+
+      icount = 0.0  
+
+      DO jfrag 
+
+         icount   += 1.0  
+
+         i_aostart = icount 
+         i_aoend   = 1.0  
+         execute frag_index_range i_aostart i_aoend 
+#
+        #print_scalar i_aostart 
+        #print_scalar i_aoend  
+         m = 0.0  
+         DO mu   
+            m += 1.0  
+            if m >= i_aostart 
+            if m <= i_aoend 
+               wAO_frag(mu) = icount 
+            endif 
+            endif 
+         ENDDO mu   
+#
+      ENDDO jfrag 
+
+      icount = 0.0
+
+      DO jfrag
+
+         icount   += 1.0
+
+         i_vstart  = icount
+         i_vend    = 6.0
+         execute frag_index_range i_vstart i_vend
+         a_vstart  = icount
+         a_vend    = 7.0
+         execute frag_index_range a_vstart a_vend
+#
+         DO i
+            m = 0.0
+            do i1
+               m += 1.0
+               if i == i1
+                  exit
+               endif
+            enddo i1
+            if m >= i_vstart
+            if m <= i_vend
+               wOccA_frag(i) = icount
+            endif
+            endif
+         ENDDO i
+#
+         DO a
+            m = 0.0
+            do a1
+               m += 1.0
+               if a == a1
+                  exit
+               endif
+            enddo a1
+            if m >= a_vstart
+            if m <= a_vend
+               wVirtA_frag(a) = icount
+            endif
+            endif
+         ENDDO a
+
+        #ENDIF # icount <= nfrags 
+
+      ENDDO jfrag
+
+     #DO mu
+     #   execute return_sval wAO_frag(mu) m
+     #   print_scalar m
+     #ENDDO mu
+
+     #DO a
+     #   execute return_sval wVirtA_frag(a) m
+     #   print_scalar m
+     #ENDDO a
+
+     #DO i
+     #   execute return_sval wOccA_frag(i) m
+     #   print_scalar m
+     #ENDDO i
+
+      icount = 0.0
+
+      DO jfrag
+
+         icount   += 1.0
+        #IF icount > nfrags 
+        #   exit 
+        #ENDIF 
+
+        #IF icount <= nfrags 
+
+         i_vstart  = icount
+         i_vend    = 9.0
+         execute frag_index_range i_vstart i_vend
+         a_vstart  = icount
+         a_vend    = 10.0
+         execute frag_index_range a_vstart a_vend
+#
+         DO j
+            m = 0.0
+            do j1
+               m += 1.0
+               if j == j1
+                  exit
+               endif
+            enddo j1
+            if m >= i_vstart
+            if m <= i_vend
+               wOccB_frag(j) = icount
+            endif
+            endif
+         ENDDO j
+#
+         DO b
+            m = 0.0
+            do b1
+               m += 1.0
+               if b == b1
+                  exit
+               endif
+            enddo b1
+            if m >= a_vstart
+            if m <= a_vend
+               wVirtB_frag(b) = icount
+            endif
+            endif
+         ENDDO b
+        #ENDIF # icount <= nfrags 
+
+      ENDDO jfrag
+
+     #DO b
+     #   execute return_sval wVirtB_frag(b) m
+     #   print_scalar m
+     #ENDDO b
+
+     #DO j
+     #   execute return_sval wOccB_frag(j) m
+     #   print_scalar m
+     #ENDDO j
+#
+      ENDPROC SET_FRAG_PARMS
+#     ---------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+
+
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -85,16 +310,16 @@ import "scf_frag_defs.sialx"
 #     --------------------------------- 
 ####      execute set_frag nfrags
 
-       etemp = 0.0 
-       DO katom 
-       DO jatom 
-         IF katom == jatom 
-          etemp             = etemp + 1.0  
-          atom(katom,jatom) = etemp 
-         endif 
-       ENDDO jatom 
-       ENDDO katom 
-      print_scalar etemp  
+      #etemp = 0.0 
+      #DO katom 
+      #DO jatom 
+      #  IF katom == jatom 
+      #   etemp             = etemp + 1.0  
+      #   atom(katom,jatom) = etemp 
+      #  endif 
+      #ENDDO jatom 
+      #ENDDO katom 
+     #print_scalar etemp  
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
@@ -144,12 +369,17 @@ import "scf_frag_defs.sialx"
       sip_barrier 
 
       PARDO katom  
+            icount = 0.0 
             DO jatom 
+               icount += 1 
                IF katom == jatom  
+                  exit 
+               ENDIF
+            ENDDO jatom 
 
-                  tatom(katom,jatom) = atom(katom,jatom) 
-                  execute return_sval tatom(katom,jatom) etemp   
-                  print_scalar etemp 
+                 #tatom(katom,jatom) = atom(katom,jatom) 
+                 #execute return_sval tatom(katom,jatom) etemp   
+                  print_scalar icount # etemp 
                   do p 
                   do mu 
                      ca(mu,p) = 0.0
@@ -171,34 +401,90 @@ import "scf_frag_defs.sialx"
                   enddo q1  
                   enddo q
 
-                  execute scf_atom etemp Ca Cb Fock_a Fock_b oed_ovl  
+                  execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
+                  println "Done computing fragment scf" 
 
-                  DO p  
-                  DO p1
-                     tpp(p,p1)          = fock_a(p,p1) 
-                     PUT Dfock_a(p,p1) += tpp(p,p1) 
-                  ENDDO p1
-                  ENDDO p  
+                  DO a  
+                     xa(a)      = wVirtA_frag(a)
+                     execute return_sval xa(a)  l 
+                     if l == icount 
+                  DO a1
+                     xa1(a1)      = wVirtA_frag(a1)
+                     execute return_sval xa1(a1)  m 
+                     if m == icount 
+                        tpp(a,a1)          = fock_a(a,a1) 
+                        PUT Dfock_a(a,a1) += tpp(a,a1) 
+                     endif 
+                  ENDDO a1
+                  DO i1
+                     xi1(i1)      = wOccA_frag(i1)
+                     execute return_sval xi1(i1)  m 
+                     if m == icount 
+                        tpp(a,i1)          = fock_a(a,i1) 
+                        PUT Dfock_a(a,i1) += tpp(a,i1) 
+                     endif 
+                  ENDDO i1
+                     endif 
+                  ENDDO a  
+
+                  DO i  
+                     xi(i)      = wOccA_frag(i)
+                     execute return_sval xi(i)  l 
+                     if l == icount 
+                  DO i1
+                     xi1(i1)      = wOccA_frag(i1)
+                     execute return_sval xi1(i1)  m 
+                     if m == icount 
+                        tpp(i,i1)          = fock_a(i,i1) 
+                        PUT Dfock_a(i,i1) += tpp(i,i1) 
+                     endif 
+                  ENDDO i1
+                  DO a1
+                     xa1(a1)      = wVirtA_frag(a1)
+                     execute return_sval xa1(a1)  m 
+                     if m == icount 
+                        tpp(i,a1)          = fock_a(i,a1) 
+                        PUT Dfock_a(i,a1) += tpp(i,a1) 
+                     endif 
+                  ENDDO a1
+                     endif 
+                  ENDDO i  
 
                   DO mu  
-                  DO p 
-                    #txp(mu,p)      = ca(mu,p) 
-                     PUT DCa(mu,p) += ca(mu,p) 
-                  ENDDO p 
+                     x1(mu) = wAO_frag(mu) 
+                     execute return_sval x1(mu)  m 
+                     if m == icount 
+                  DO a 
+                     xa(a)      = wVirtA_frag(a)
+                     execute return_sval xa(a)  l 
+                     if l == icount 
+                        txp(mu,a)      = ca(mu,a) 
+                        PUT DCa(mu,a) += txp(mu,a) 
+                     endif 
+                  ENDDO a 
+                  DO i 
+                     xi(i)      = wOccA_frag(i) 
+                     execute return_sval xi(i)  s    
+                     if s == icount  
+                        txp(mu,i)      = ca(mu,i) 
+                        PUT DCa(mu,i) += txp(mu,i) 
+                     endif 
+                  ENDDO i 
+                     endif 
                   ENDDO mu  
 
-                  DO q  
-                  DO q1
-                     tqq(q,q1)          = fock_b(q,q1) 
-                     PUT Dfock_b(q,q1) += tqq(q,q1) 
-                  ENDDO q1
-                  ENDDO q  
-                  DO mu  
-                  DO q 
-                     txq(mu,q)      = cb(mu,q) 
-                     PUT DCb(mu,q) += txq(mu,q) 
-                  ENDDO q 
-                  ENDDO mu  
+                 #DO q  
+                 #DO q1
+                 #   tqq(q,q1)          = fock_b(q,q1) 
+                 #   PUT Dfock_b(q,q1) += tqq(q,q1) 
+                 #ENDDO q1
+                 #ENDDO q  
+                 #DO mu  
+                 #DO q 
+                 #   txq(mu,q)      = cb(mu,q) 
+                 #   PUT DCb(mu,q) += txq(mu,q) 
+                 #ENDDO q 
+                 #ENDDO mu  
 
                   esum = 0.0 
                   DO mu  
@@ -230,8 +516,8 @@ import "scf_frag_defs.sialx"
                   ENDDO mu  
                   print_scalar esum 
  
-              ENDIF # katom == jatom  
-            ENDDO jatom 
+           #  ENDIF # katom == jatom  
+           #ENDDO jatom 
       ENDPARDO katom   
 #
       ENDPROC IGUESS   
@@ -242,99 +528,96 @@ import "scf_frag_defs.sialx"
 #     Compute the fragment SCF  
 #     ------------------------- 
 #
-      create DCa 
-      create DCb 
-      create Dfock_a 
-      create Dfock_b 
+      CALL SET_FRAG_PARMS    
       sip_barrier 
       CALL IGUESS  
       sip_barrier
 
-      esum = 0.0 
-      DO mu  
-      DO p 
-         GET DCa(mu,p) 
-         etemp = DCa(mu,p) * DCa(mu,p) 
-         esum += etemp 
-      ENDDO p 
-      ENDDO mu  
-      print_scalar esum 
+     #esum = 0.0 
+     #DO mu  
+     #DO p 
+     #   GET DCa(mu,p) 
+     #   etemp = DCa(mu,p) * DCa(mu,p) 
+     #   esum += etemp 
+     #ENDDO p 
+     #ENDDO mu  
+     #print_scalar esum 
 
-      esum = 0.0 
-      DO mu  
-      DO i 
-         GET DCa(mu,i) 
-         etemp = DCa(mu,i) * DCa(mu,i) 
-         esum += etemp 
-      ENDDO i 
-      ENDDO mu  
-      print_scalar esum 
+     #esum = 0.0 
+     #DO mu  
+     #DO i 
+     #   GET DCa(mu,i) 
+     #   etemp = DCa(mu,i) * DCa(mu,i) 
+     #   esum += etemp 
+     #ENDDO i 
+     #ENDDO mu  
+     #print_scalar esum 
 
-      esum = 0.0 
-      DO mu  
-      DO a 
-         GET DCa(mu,a) 
-         etemp = DCa(mu,a) * DCa(mu,a) 
-         esum += etemp 
-      ENDDO a 
-      ENDDO mu  
-      print_scalar esum 
-      sip_barrier
+     #esum = 0.0 
+     #DO mu  
+     #DO a 
+     #   GET DCa(mu,a) 
+     #   etemp = DCa(mu,a) * DCa(mu,a) 
+     #   esum += etemp 
+     #ENDDO a 
+     #ENDDO mu  
+     #print_scalar esum 
+     #sip_barrier
 
-      DO mu  
-      DO p 
-         GET        DCa(mu,p) 
-         ca(mu,p) = DCa(mu,p) 
-      ENDDO p 
-      ENDDO mu  
-      sip_barrier
+     #DO mu  
+     #DO p 
+     #   GET        DCa(mu,p) 
+     #   ca(mu,p) = DCa(mu,p) 
+     #ENDDO p 
+     #ENDDO mu  
+     #sip_barrier
 
-      DO mu  
-      DO q 
-         txq(mu,q)      = cb(mu,q) 
-        #PUT DCb(mu,q) += txq(mu,q) 
-      ENDDO q 
-      ENDDO mu  
-      sip_barrier
+     #DO mu  
+     #DO q 
+     #   txq(mu,q)      = cb(mu,q) 
+     #  #PUT DCb(mu,q) += txq(mu,q) 
+     #ENDDO q 
+     #ENDDO mu  
+     #sip_barrier
 
-      DO mu  
-      DO q 
-         GET        DCb(mu,q) 
-         cb(mu,q) = DCb(mu,q) 
-      ENDDO q 
-      ENDDO mu  
-      sip_barrier
+     #DO mu  
+     #DO q 
+     #   GET        DCb(mu,q) 
+     #   cb(mu,q) = DCb(mu,q) 
+     #ENDDO q 
+     #ENDDO mu  
+     #sip_barrier
 
-      DO p  
-      DO p1
-         tpp(p,p1)          = fock_a(p,p1) 
-        #PUT Dfock_a(p,p1) += tpp(p,p1) 
-      ENDDO p1
-      ENDDO p  
-      sip_barrier
+     #DO p  
+     #DO p1
+     #   tpp(p,p1)          = fock_a(p,p1) 
+     #  #PUT Dfock_a(p,p1) += tpp(p,p1) 
+     #ENDDO p1
+     #ENDDO p  
+     #sip_barrier
 
-      DO p  
-      DO p1
-         GET            Dfock_a(p,p1) 
-         fock_a(p,p1) = Dfock_a(p,p1) 
-      ENDDO p1
-      ENDDO p  
-      sip_barrier
+     #DO p  
+     #DO p1
+     #   GET            Dfock_a(p,p1) 
+     #   fock_a(p,p1) = Dfock_a(p,p1) 
+     #ENDDO p1
+     #ENDDO p  
+     #sip_barrier
 
-      DO q  
-      DO q1
-         tqq(q,q1)          = fock_b(q,q1) 
-        #PUT Dfock_b(q,q1) += tqq(q,q1) 
-      ENDDO q1
-      ENDDO q  
-      sip_barrier
+     #DO q  
+     #DO q1
+     #   tqq(q,q1)          = fock_b(q,q1) 
+     #  #PUT Dfock_b(q,q1) += tqq(q,q1) 
+     #ENDDO q1
+     #ENDDO q  
+     #sip_barrier
 
-      DO q  
-      DO q1
-         GET            Dfock_b(q,q1) 
-         fock_b(q,q1) = Dfock_b(q,q1) 
-      ENDDO q1
-      ENDDO q  
+     #DO q  
+     #DO q1
+     #   GET            Dfock_b(q,q1) 
+     #   fock_b(q,q1) = Dfock_b(q,q1) 
+     #ENDDO q1
+     #ENDDO q  
 
       sip_barrier
 
