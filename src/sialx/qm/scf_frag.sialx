@@ -22,8 +22,8 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 4 # Nfrags  
-      index   jatom  = 1, 4 # Nfrags  
+      index   katom  = 1, 29 # Nfrags  
+      index   jatom  = 1, 29 # Nfrags  
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 

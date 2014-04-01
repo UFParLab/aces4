@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 4 # Nfragments   
-      index  jjfrag  = 1, 4 # Nfragments   
-      index   kfrag  = 1, 4 # Nfragments   
-      index  kkfrag  = 1, 4 # Nfragments   
+      index   jfrag  = 1, 29 # Nfragments   
+      index  jjfrag  = 1, 29 # Nfragments   
+      index   kfrag  = 1, 29 # Nfragments   
+      index  kkfrag  = 1, 29 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 

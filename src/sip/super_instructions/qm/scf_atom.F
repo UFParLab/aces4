@@ -1387,7 +1387,7 @@ c     if (current_frag .eq. -1) then
        write(6,*) ' ' 
 
 c      endif 
-          write(6,*) ' Done SCF calculation of ATOM :', iatom 
+          write(6,*) ' Done SCF calculation of ATOM :', current_frag  
 
 c-----------------------------------------------------------------------
 c     Put the transformation coefficients to the proper spot  
