@@ -122,13 +122,13 @@ import "trans_frag_defs.sialx"
       temp aoint(mu,nu,lambda,sigma) 
       temp txxxq(mu,nu,lambda,q)   
       temp txpxq(mu,p,lambda,q)    
-      temp txpxqS(mu,p,lambda,q,ii)    
+      temp txpxqS(mu,p,lambda,q)    
       temp txpqq(mu,p,q,j)   
-      temp txpqqS(mu,p,q,j,ii)   
+      temp txpqqS(mu,p,q,j)   
       temp tppqq(p,p1,q,q1)   
-      temp tppqqS(p,p1,q,q1,ii)   
-      temp tppppS(p,p1,q,q1,ii)   
-      temp t1ppqqS(p,p1,q,q1,ii)   
+      temp tppqqS(p,p1,q,q1)   
+      temp tppppS(p,p1,q,q1)   
+      temp t1ppqqS(p,p1,q,q1)   
       temp t1ppqq(p,p1,q,q1)   
       temp t2ppqq(p,p1,q,q1)   
       temp t3ppqq(p,p1,q,q1)   
@@ -145,38 +145,33 @@ import "trans_frag_defs.sialx"
 
       local LVxxxq(mu,nu,lambda,j) 
       distributed array_set(mu,nu,i,j,i20) 
-      distributed Vxpbq(mu,i,b,j,ii) 
+      distributed Vxpbq(mu,i,b,j) 
 
-      distributed Vaibj(a,i,b,j,ii)
-      distributed Viabj(i,a,b,j,ii)
-      distributed Vaajj(a,a1,j,j1,ii)
-      distributed Viijj(i,i1,j,j1,ii)
+      distributed Vaibj(a,i,b,j)
+      distributed Viabj(i,a,b,j)
+      distributed Vaajj(a,a1,j,j1)
+      distributed Viijj(i,i1,j,j1)
 
-      distributed Vxpxq(mu,i,lambda,j,ii) 
-      distributed Vxxqq(mu,nu,j1,j,ii) 
-      distributed Vpxxq(i,nu,mu,j,ii) 
+      distributed Vxpxq(mu,i,lambda,j) 
+      distributed Vxxqq(mu,nu,j1,j) 
+      distributed Vpxxq(i,nu,mu,j) 
 
-      distributed Vixbj(i,nu,b,j,ii) 
-      distributed Vixjj(i,nu,j,j1,ii) 
-      distributed Vaxjj(a,nu,j1,j,ii) 
+      distributed Vixbj(i,nu,b,j) 
+      distributed Vixjj(i,nu,j,j1) 
+      distributed Vaxjj(a,nu,j1,j) 
 
-      distributed T20aiai(a,i,a1,i1,ii) 
-      distributed T2old(a,i,a1,i1,ii) 
-      distributed T2new(a,i,a1,i1,ii) 
-      distributed TAO_ab(mu,i,nu,j,ii) 
-      distributed T2AO_ab(mu,i,nu,j,ii) 
+      distributed T20aiai(a,i,a1,i1) 
+      distributed T2old(a,i,a1,i1) 
+      distributed T2new(a,i,a1,i1) 
+      distributed TAO_ab(mu,i,nu,j) 
+      distributed T2AO_ab(mu,i,nu,j) 
       
       temp tpxxq(p,nu,lambda,q) 
-      temp tpxxqS(p,nu,lambda,q,ii) 
       temp tpxqq(p,nu,q,q1) 
-      temp tpxqqS(p,nu,q,q1,ii) 
       temp txxqq(mu,nu,j,j1) 
-      temp txxqqS(mu,nu,j,j1,ii) 
       temp Taixj(a,i,mu,j) 
       temp T1aixj(a,i,mu,j) 
       temp Txixi(nu,i,mu,j)
-      temp TxixiS(nu,i,mu,j,ii)
-      temp T1xixiS(nu,i,mu,j,ii)
 
       temp Ipp(p,p1) 
       temp txj(mu,j)
@@ -421,7 +416,7 @@ import "trans_frag_defs.sialx"
             execute return_sval x3(lambda)  l  
             if l == jcount  
 
-               create Vxpxq(mu,i,lambda,j,*) 
+               create Vxpxq(mu,i,lambda,j) 
 
              endif # l 
       ENDDO lambda
@@ -451,7 +446,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xj1(j1)  s  
             if s == jcount  
 
-               create Vxxqq(mu,nu,j1,j,*) 
+               create Vxxqq(mu,nu,j1,j) 
 
              endif # l 
       ENDDO j1
@@ -481,7 +476,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xj(j)  s  
             if s == jcount  
 
-               create Vpxxq(i,nu,mu,j,*) 
+               create Vpxxq(i,nu,mu,j) 
 
              endif # l 
       ENDDO j
@@ -527,7 +522,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xb(b)  n  
             if n == jcount  
 
-               create Vxpbq(mu,i,b,j,*) 
+               create Vxpbq(mu,i,b,j) 
 
              endif # l 
       ENDDO b  
@@ -557,7 +552,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xb(b)  n  
             if n == jcount  
 
-               create Vixbj(i,nu,b,j,*) 
+               create Vixbj(i,nu,b,j) 
 
              endif # l 
       ENDDO b  
@@ -588,7 +583,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xj1(j1)  n  
             if n == jcount  
 
-               create Vixjj(i,nu,j,j1,*) 
+               create Vixjj(i,nu,j,j1) 
 
              endif # l 
       ENDDO j1   
@@ -620,7 +615,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xj1(j1)  n  
             if n == jcount  
 
-               create Vaxjj(a,nu,j1,j,*) 
+               create Vaxjj(a,nu,j1,j) 
 
              endif # l 
       ENDDO j1   
@@ -652,8 +647,8 @@ import "trans_frag_defs.sialx"
             execute return_sval xb(b)  n  
             if n == jcount  
 
-               create Vaibj(a,i,b,j,*) 
-               create Viabj(i,a,b,j,*) 
+               create Vaibj(a,i,b,j) 
+               create Viabj(i,a,b,j) 
 
              endif # l 
       ENDDO b  
@@ -683,7 +678,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xj1(j1)  n  
             if n == jcount  
 
-               create Vaajj(a,a1,j,j1,*) 
+               create Vaajj(a,a1,j,j1) 
 
              endif # l 
       ENDDO j1   
@@ -713,7 +708,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xj1(j1)  n  
             if n == jcount  
 
-               create Viijj(i,i1,j,j1,*) 
+               create Viijj(i,i1,j,j1) 
 
              endif # l 
       ENDDO j1   
@@ -999,7 +994,6 @@ import "trans_frag_defs.sialx"
                      if pcount == jcount  
                         txxxq(mu,nu,lambda,j)   = aoint(mu,nu,lambda,sigma)*ca(sigma,j) 
                         LVxxxq(mu,nu,lambda,j) += txxxq(mu,nu,lambda,j) 
-                       #execute dump_block Txxxq 
                      endif # pcount  
                   ENDDO j 
 
@@ -1016,12 +1010,8 @@ import "trans_frag_defs.sialx"
                      xi(i)             = wOccA_frag(i) 
                      execute return_sval xi(i) pcount 
                      if pcount == icount  
-                        txpxq(mu,i,lambda,j)          = LVxxxq(mu,nu,lambda,j)*ca(nu,i) 
-                        DO ii 
-                           txpxqS(mu,i,lambda,j,ii)     = txpxq(mu,i,lambda,j) 
-                           PUT Vxpxq(mu,i,lambda,j,ii) += txpxqS(mu,i,lambda,j,ii) 
-                        ENDDO ii 
-                       #execute dump_block Txpxq 
+                        txpxq(mu,i,lambda,j)      = LVxxxq(mu,nu,lambda,j)*ca(nu,i) 
+                        PUT Vxpxq(mu,i,lambda,j) += txpxq(mu,i,lambda,j) 
                      endif # pcount == icount  
                   ENDDO i 
 
@@ -1029,12 +1019,8 @@ import "trans_frag_defs.sialx"
                      xi1(i1)           = wOccA_frag(i1) 
                      execute return_sval xi1(i1) pcount 
                      if pcount == icount  
-                        tpxxq(i1,nu,lambda,j)          = LVxxxq(mu,nu,lambda,j)*ca(mu,i1) 
-                        DO ii 
-                           tpxxqS(i1,nu,lambda,j,ii)     = tpxxq(i1,nu,lambda,j) 
-                           PUT Vpxxq(i1,nu,lambda,j,ii) += tpxxqS(i1,nu,lambda,j,ii) 
-                        ENDDO ii 
-                      #execute dump_amp Tpxxq # VFL  
+                        tpxxq(i1,nu,lambda,j)      = LVxxxq(mu,nu,lambda,j)*ca(mu,i1) 
+                        PUT Vpxxq(i1,nu,lambda,j) += tpxxq(i1,nu,lambda,j) 
                      endif # pcount == icount  
                   ENDDO i1 
 
@@ -1042,11 +1028,8 @@ import "trans_frag_defs.sialx"
                      xj1(j1)             = wOccB_frag(j1) 
                      execute return_sval xj1(j1) pcount 
                      if pcount == jcount  
-                        txxqq(mu,nu,j1,j)         = LVxxxq(mu,nu,lambda,j)*ca(lambda,j1) 
-                        DO ii 
-                           txxqqS(mu,nu,j1,j,ii)     = txxqq(mu,nu,j1,j)  
-                           PUT Vxxqq(mu,nu,j1,j,ii) += txxqqS(mu,nu,j1,j,ii) 
-                        ENDDO ii 
+                        txxqq(mu,nu,j1,j)      = LVxxxq(mu,nu,lambda,j)*ca(lambda,j1) 
+                        PUT Vxxqq(mu,nu,j1,j) += txxqq(mu,nu,j1,j) 
                      endif # pcount == icount  
                   ENDDO j1  
 
@@ -1117,21 +1100,16 @@ import "trans_frag_defs.sialx"
             execute return_sval x3(lambda)  l  
             if l == jcount  
 
-                  DO ii 
-                     GET                    Vxpxq(mu,i,lambda,j,ii) 
-                     txpxq(mu,i,lambda,j) = Vxpxq(mu,i,lambda,j,ii) 
+                  GET                    Vxpxq(mu,i,lambda,j) 
 
                   DO b 
                      xb(b)             = wVirtB_frag(b) 
                      execute return_sval xb(b) pcount 
                      if pcount == jcount  
-                        txpqq(mu,i,b,j)          = txpxq(mu,i,lambda,j)*ca(lambda,b) 
-                        txpqqS(mu,i,b,j,ii)      = txpqq(mu,i,b,j) 
-                        PUT Vxpbq(mu,i,b,j,ii) += txpqqS(mu,i,b,j,ii) 
+                        txpqq(mu,i,b,j)      = Vxpxq(mu,i,lambda,j)*ca(lambda,b) 
+                        PUT Vxpbq(mu,i,b,j) += txpqq(mu,i,b,j) 
                      endif # pcount == jcount  
                   ENDDO b 
-
-                  ENDDO ii 
 
              endif # l 
       ENDDO lambda
@@ -1169,18 +1147,14 @@ import "trans_frag_defs.sialx"
             execute return_sval x3(lambda)  l  
             if l == jcount  
 
-                  DO ii 
-                     GET                    Vpxxq(i,nu,lambda,j,ii) 
-                     tpxxq(i,nu,lambda,j) = Vpxxq(i,nu,lambda,j,ii) 
+                  GET                    Vpxxq(i,nu,lambda,j) 
 
                   DO b 
                      xb(b)             = wVirtB_frag(b) 
                      execute return_sval xb(b) pcount 
                      if pcount == jcount  
-                        tpxqq(i,nu,b,j)          = tpxxq(i,nu,lambda,j)*ca(lambda,b) 
-                        tpxqqS(i,nu,b,j,ii)      = tpxqq(i,nu,b,j) 
-                        PUT Vixbj(i,nu,b,j,ii) += tpxqqS(i,nu,b,j,ii) 
-                       #execute dump_block Tpxqq 
+                        tpxqq(i,nu,b,j)      = Vpxxq(i,nu,lambda,j)*ca(lambda,b) 
+                        PUT Vixbj(i,nu,b,j) += tpxqq(i,nu,b,j) 
                      endif # pcount == icount  
                   ENDDO b 
 
@@ -1188,14 +1162,10 @@ import "trans_frag_defs.sialx"
                      xj1(j1)            = wOccB_frag(j1) 
                      execute return_sval xj1(j1) pcount 
                      if pcount == jcount  
-                        tpxqq(i,nu,j1,j)          = tpxxq(i,nu,lambda,j)*ca(lambda,j1) 
-                        tpxqqS(i,nu,j1,j,ii)     = tpxqq(i,nu,j1,j) 
-                        PUT Vixjj(i,nu,j1,j,ii) += tpxqqS(i,nu,j1,j,ii) 
-                       #execute dump_block Txpxq 
+                        tpxqq(i,nu,j1,j)      = Vpxxq(i,nu,lambda,j)*ca(lambda,j1) 
+                        PUT Vixjj(i,nu,j1,j) += tpxqq(i,nu,j1,j) 
                      endif # pcount == icount  
                   ENDDO j1  
-
-                  ENDDO ii 
 
              endif # l 
       ENDDO lambda
@@ -1225,22 +1195,16 @@ import "trans_frag_defs.sialx"
             execute return_sval xj(j)  s  
             if s == jcount  
 
-                  DO ii 
-                     GET                 Vxxqq(mu,nu,j1,j,ii) 
-                     txxqq(mu,nu,j1,j) = Vxxqq(mu,nu,j1,j,ii) 
+                  GET                 Vxxqq(mu,nu,j1,j) 
 
                   DO a 
                      xa(a)             = wVirtA_frag(a) 
                      execute return_sval xa(a) pcount 
                      if pcount == icount  
-                        tpxqq(a,nu,j1,j)          = txxqq(mu,nu,j1,j)*ca(mu,a) 
-                        tpxqqS(a,nu,j1,j,ii)     = tpxqq(a,nu,j1,j) 
-                        PUT Vaxjj(a,nu,j1,j,ii) += tpxqqS(a,nu,j1,j,ii) 
-                       #execute dump_block Txpxq 
+                        tpxqq(a,nu,j1,j)      = Vxxqq(mu,nu,j1,j)*ca(mu,a) 
+                        PUT Vaxjj(a,nu,j1,j) += tpxqq(a,nu,j1,j) 
                      endif # pcount == icount  
                   ENDDO a 
-
-                  ENDDO ii 
 
              endif # s 
       ENDDO j 
@@ -1304,20 +1268,16 @@ import "trans_frag_defs.sialx"
             execute return_sval xj(j)  s  
             if s == jcount  
 
-               DO ii 
-                  GET               Vxpbq(mu,i,b,j,ii) 
-                  txpqq(mu,i,b,j) = Vxpbq(mu,i,b,j,ii) 
+                  GET               Vxpbq(mu,i,b,j) 
 
                   DO a 
                      xa(a)             = wVirtA_frag(a) 
                      execute return_sval xa(a) pcount 
                      if pcount == icount  
-                        tppqq(a,i,b,j)          = txpqq(mu,i,b,j)*ca(mu,a) 
-                        tppqqS(a,i,b,j,ii)      = tppqq(a,i,b,j) 
-                        PUT Vaibj(a,i,b,j,ii) += tppqqS(a,i,b,j,ii) 
+                        tppqq(a,i,b,j)      = Vxpbq(mu,i,b,j)*ca(mu,a) 
+                        PUT Vaibj(a,i,b,j) += tppqq(a,i,b,j) 
                      endif # pcount == icount  
                   ENDDO a 
-               ENDDO ii 
 
              endif # s 
       ENDDO j 
@@ -1354,23 +1314,18 @@ import "trans_frag_defs.sialx"
             xj(j)      = wOccB_frag(j) 
             execute return_sval xj(j)  s  
             if s == jcount  
-         DO ii 
 
-                  GET               Vixbj(i,nu,b,j,ii)  
-                  tpxqq(i,nu,b,j) = Vixbj(i,nu,b,j,ii) 
+                  GET               Vixbj(i,nu,b,j)  
 
                   DO a 
                      xa(a)             = wVirtA_frag(a) 
                      execute return_sval xa(a) pcount 
                      if pcount == icount  
-                        tppqq(i,a,b,j)          = tpxqq(i,nu,b,j)*ca(nu,a) 
-                        tppqqS(i,a,b,j,ii)     = tppqq(i,a,b,j) 
-                        PUT Viabj(i,a,b,j,ii) += tppqqS(i,a,b,j,ii) 
-                       #execute dump_block Txpxq 
+                        tppqq(i,a,b,j)      = Vixbj(i,nu,b,j)*ca(nu,a) 
+                        PUT Viabj(i,a,b,j) += tppqq(i,a,b,j) 
                      endif # pcount == icount  
                   ENDDO a 
 
-         ENDDO ii 
              endif # s 
       ENDDO j 
              endif # l 
@@ -1399,22 +1354,16 @@ import "trans_frag_defs.sialx"
             execute return_sval xj(j)  s  
             if s == jcount  
 
-               DO ii 
-                  GET                Vaxjj(a,nu,j1,j,ii) 
-                  tpxqq(a,nu,j1,j) = Vaxjj(a,nu,j1,j,ii) 
+                  GET                Vaxjj(a,nu,j1,j) 
 
                   DO a1 
                      xa1(a1)           = wVirtA_frag(a1) 
                      execute return_sval xa1(a1) pcount 
                      if pcount == icount  
-                        tppqq(a,a1,j1,j)         = tpxqq(a,nu,j1,j)*ca(nu,a1) 
-                        tppqqS(a,a1,j1,j,ii)     = tppqq(a,a1,j1,j) 
-                        PUT Vaajj(a,a1,j1,j,ii) += tppqqS(a,a1,j1,j,ii) 
-                       #execute dump_block Tppqq 
+                        tppqq(a,a1,j1,j)      = Vaxjj(a,nu,j1,j)*ca(nu,a1) 
+                        PUT Vaajj(a,a1,j1,j) += tppqq(a,a1,j1,j) 
                      endif # pcount == icount  
                   ENDDO a1 
-
-               ENDDO ii 
 
              endif # s 
       ENDDO j 
@@ -1452,22 +1401,16 @@ import "trans_frag_defs.sialx"
             execute return_sval xj1(j)  s  
             if s == jcount  
 
-            DO ii 
-                  GET                Vixjj(i,nu,j1,j,ii) 
-                  tpxqq(i,nu,j1,j) = Vixjj(i,nu,j1,j,ii) 
+                  GET                Vixjj(i,nu,j1,j) 
 
                   DO i1 
                      xi1(i1)            = wOccA_frag(i1) 
                      execute return_sval xi1(i1) pcount 
                      if pcount == icount  
-                        tppqq(i,i1,j1,j)          = tpxqq(i,nu,j1,j)*ca(nu,i1) 
-                        tppqqS(i,i1,j1,j,ii)     = tppqq(i,i1,j1,j) 
-                        PUT Viijj(i,i1,j1,j,ii) += tppqqS(i,i1,j1,j,ii) 
-                       #execute dump_block Txpxq 
+                        tppqq(i,i1,j1,j)      = Vixjj(i,nu,j1,j)*ca(nu,i1) 
+                        PUT Viijj(i,i1,j1,j) += tppqq(i,i1,j1,j) 
                      endif # pcount == icount  
                   ENDDO i1 
-
-            ENDDO ii 
 
              endif # s 
       ENDDO j 
@@ -1528,12 +1471,12 @@ import "trans_frag_defs.sialx"
             xj(j)      = wOccB_frag(j) 
             execute return_sval xj(j)  s  
             if s == jcount  
-         DO ii 
+         
             if icount != jcount 
 
-                  GET                         Vaibj(a,i,b,j,ii)  
-                  tppqq(a,i,b,j)            = Vaibj(a,i,b,j,ii) 
-                  t1ppqq(a,i,b,j)           = Vaibj(a,i,b,j,ii) 
+                  GET                         Vaibj(a,i,b,j)  
+                  tppqq(a,i,b,j)            = Vaibj(a,i,b,j) 
+                  t1ppqq(a,i,b,j)           = Vaibj(a,i,b,j) 
                   execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
                   etemp                     = tppqq(a,i,b,j)*t1ppqq(a,i,b,j)  
                   print_scalar etemp 
@@ -1544,11 +1487,11 @@ import "trans_frag_defs.sialx"
 
             if icount == jcount 
 
-                  GET                         Vaibj(a,i,b,j,ii)  
-                  GET                         Vaibj(a,j,b,i,ii)  
-                  tppqq(a,i,b,j)            = Vaibj(a,i,b,j,ii) 
-                  t2ppqq(a,i,b,j)           = Vaibj(a,i,b,j,ii) 
-                  t3ppqq(a,j,b,i)           = Vaibj(a,j,b,i,ii) 
+                  GET                         Vaibj(a,i,b,j)  
+                  GET                         Vaibj(a,j,b,i)  
+                  tppqq(a,i,b,j)            = Vaibj(a,i,b,j) 
+                  t2ppqq(a,i,b,j)           = Vaibj(a,i,b,j) 
+                  t3ppqq(a,j,b,i)           = Vaibj(a,j,b,i) 
                   t1ppqq(a,i,b,j)           = t3ppqq(a,j,b,i) 
                   tppqq(a,i,b,j)           *= 2.0  
                   tppqq(a,i,b,j)           -= t1ppqq(a,i,b,j)   
@@ -1560,7 +1503,6 @@ import "trans_frag_defs.sialx"
 
             endif # icount != jcount 
 
-         ENDDO ii 
             endif # s 
       ENDDO j 
             endif # l 
@@ -1637,7 +1579,7 @@ import "trans_frag_defs.sialx"
             if n == icount  
 
                txx(mu,nu) = 0.0 
-               execute return_h1frag txx(mu,mu) icount  
+               execute return_h1frag txx(mu,nu) icount  
 
                do b 
                   xb(b) = wVirtB_frag(b) 
@@ -1886,15 +1828,14 @@ import "trans_frag_defs.sialx"
             xi1(i1)    = wOccA_frag(i1) 
             execute return_sval xi1(i1)  s  
             if s == icount  
-         DO ii 
 
-               GET Viabj(i,a,a1,i1,ii)  
-               GET Vaajj(a,a1,i,i1,ii) 
+               GET Viabj(i,a,a1,i1)  
+               GET Vaajj(a,a1,i,i1) 
                GET     t1old(a1,i1) 
 
-               tppqq(i,a,a1,i1)  = Viabj(i,a,a1,i1,ii) 
+               tppqq(i,a,a1,i1)  = Viabj(i,a,a1,i1) 
 
-               t2ppqq(a,a1,i,i1) = Vaajj(a,a1,i,i1,ii) 
+               t2ppqq(a,a1,i,i1) = Vaajj(a,a1,i,i1) 
                t1ppqq(i,a,a1,i1) = t2ppqq(a,a1,i,i1) 
 
                tppqq(i,a,a1,i1) *= 2.0  
@@ -1904,7 +1845,6 @@ import "trans_frag_defs.sialx"
 
                PUT x1new(a,i) += tai(a,i) 
 
-         ENDDO ii 
             endif # s == icount  
         ENDDO i1  
             endif # l == icount  
@@ -1943,18 +1883,16 @@ import "trans_frag_defs.sialx"
             xi1(i1)    = wOccA_frag(i1) 
             execute return_sval xi1(i1)  s  
             if s == jcount  
-        DO ii 
 
-               GET Viabj(i,a,a1,i1,ii)  
+               GET Viabj(i,a,a1,i1)  
                GET t1old(a1,i1) 
 
-               tppqq(i,a,a1,i1)  = Viabj(i,a,a1,i1,ii) 
+               tppqq(i,a,a1,i1)  = Viabj(i,a,a1,i1) 
                tppqq(i,a,a1,i1) *= 2.0  
                tai(a,i) = tppqq(i,a,a1,i1)*t1old(a1,i1)
 
                PUT x1new(a,i) += tai(a,i) 
 
-        ENDDO ii 
             endif # s == icount  
         ENDDO i1  
             endif # l == icount  
@@ -2064,7 +2002,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xi1(i1)  n  
             if n == icount  
 
-               create T20aiai(a,i,a1,i1,*) 
+               create T20aiai(a,i,a1,i1) 
 
              endif # l 
       ENDDO i1   
@@ -2101,7 +2039,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xi1(i1)  n  
             if n == icount  
 
-               create T2old(a,i,a1,i1,*) 
+               create T2old(a,i,a1,i1) 
 
              endif # l 
       ENDDO i1   
@@ -2130,7 +2068,7 @@ import "trans_frag_defs.sialx"
             execute return_sval xi1(i1)  n  
             if n == icount  
 
-               create T2new(a,i,a1,i1,*) 
+               create T2new(a,i,a1,i1) 
 
              endif # l 
       ENDDO i1   
@@ -2161,7 +2099,7 @@ import "trans_frag_defs.sialx"
             execute return_sval x3(nu)  l  
             if l == icount  
 
-               create TAO_ab(mu,i,nu,j,*) 
+               create TAO_ab(mu,i,nu,j) 
 
              endif # l 
       ENDDO nu  
@@ -2190,7 +2128,7 @@ import "trans_frag_defs.sialx"
             execute return_sval x3(nu)  l  
             if l == icount  
 
-               create T2AO_ab(mu,i,nu,j,*) 
+               create T2AO_ab(mu,i,nu,j) 
 
              endif # l 
       ENDDO nu  
@@ -2232,9 +2170,7 @@ import "trans_frag_defs.sialx"
          execute return_sval xi1(i1) n1 
          if n1== icount  
 
-       DO ii 
-
-         GET                Vaibj(a,i,a1,i1,ii)  
+         GET                Vaibj(a,i,a1,i1)  
          xaiai(a,i,a1,i1) = 0.0  
 
          jcount = 0.0 
@@ -2251,10 +2187,10 @@ import "trans_frag_defs.sialx"
                if s == jcount  
 
                  #GET                         Viabj(j,b,a1,i1,ii) 
-                  GET                         Viabj(i1,a1,b,j,ii) 
-                  GET                         Vaibj(a,i,b,j,ii)  
-                  tppqq(a,i,b,j)            = Vaibj(a,i,b,j,ii) 
-                  t2ppqq(i1,a1,b,j)         = Viabj(i1,a1,b,j,ii) 
+                  GET                         Viabj(i1,a1,b,j) 
+                  GET                         Vaibj(a,i,b,j)  
+                  tppqq(a,i,b,j)            = Vaibj(a,i,b,j) 
+                  t2ppqq(i1,a1,b,j)         = Viabj(i1,a1,b,j) 
                   execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
                   t3ppqq(b,j,a1,i1)         = t2ppqq(i1,a1,b,j)  
                   t1ppqq(a,i,a1,i1)         = tppqq(a,i,b,j)*t3ppqq(b,j,a1,i1) 
@@ -2268,14 +2204,13 @@ import "trans_frag_defs.sialx"
             endif # jcount != icount 
          ENDDO jfrag 
 
-         t1ppqq(a1,i1,a,i)         = xaiai(a,i,a1,i1) 
-         tppqqS(a,i,a1,i1,ii)      = xaiai(a,i,a1,i1) 
-         tppqqS(a,i,a1,i1,ii)     += Vaibj(a,i,a1,i1,ii) 
-         t1ppqqS(a1,i1,a,i,ii)     = t1ppqq(a1,i1,a,i) 
-         PUT T20aiai(a,i,a1,i1,ii)+= tppqqS(a,i,a1,i1,ii) 
-         PUT T20aiai(a1,i1,a,i,ii)+= t1ppqqS(a1,i1,a,i,ii) 
+         t1ppqq(a1,i1,a,i)     = xaiai(a,i,a1,i1) 
+         tppqq(a,i,a1,i1)      = xaiai(a,i,a1,i1) 
+         tppqq(a,i,a1,i1)     += Vaibj(a,i,a1,i1) 
+         t1ppqq(a1,i1,a,i)     = t1ppqq(a1,i1,a,i) 
 
-       ENDDO ii 
+         PUT T20aiai(a,i,a1,i1)+= tppqq(a,i,a1,i1) 
+         PUT T20aiai(a1,i1,a,i)+= t1ppqq(a1,i1,a,i) 
 
          endif 
       ENDDO i1  
@@ -2303,20 +2238,18 @@ import "trans_frag_defs.sialx"
             xi1(i1)     = wOccA_frag(i1) 
             execute return_sval xi1(i1) n1 
             if n1== icount  
-            DO ii 
 
-               GET                T20aiai(a,i,a1,i1,ii) 
-               GET                Vaibj(a,i,a1,i1,ii)  
-               GET                Vaibj(a,i1,a1,i,ii)  
+               GET                T20aiai(a,i,a1,i1) 
+               GET                Vaibj(a,i,a1,i1)  
+               GET                Vaibj(a,i1,a1,i)  
 
-               tppqq(a,i,a1,i1) = T20aiai(a,i,a1,i1,ii) 
+               tppqq(a,i,a1,i1) = T20aiai(a,i,a1,i1) 
 
                execute energy_denominator_rhf tppqq(a,i,a1,i1) fock_a  
-               tppqqS(a,i,a1,i1,ii) = tppqq(a,i,a1,i1) 
-               PUT T2old(a,i,a1,i1,ii) = tppqqS(a,i,a1,i1,ii) 
+               PUT T2old(a,i,a1,i1) = tppqq(a,i,a1,i1) 
 
-               t1ppqq(a,i,a1,i1) = Vaibj(a,i,a1,i1,ii)  
-               t3ppqq(a,i1,a1,i) = Vaibj(a,i1,a1,i,ii)  
+               t1ppqq(a,i,a1,i1) = Vaibj(a,i,a1,i1)  
+               t3ppqq(a,i1,a1,i) = Vaibj(a,i1,a1,i)  
                t2ppqq(a,i,a1,i1)   = t3ppqq(a,i1,a1,i) 
                t1ppqq(a,i,a1,i1)*= 2.0  
                t1ppqq(a,i,a1,i1)-= t2ppqq(a,i,a1,i1) 
@@ -2324,7 +2257,6 @@ import "trans_frag_defs.sialx"
                etemp = tppqq(a,i,a1,i1)*t1ppqq(a,i,a1,i1) 
                esum += etemp 
 
-            ENDDO ii 
             endif 
       ENDDO i1  
             endif 
@@ -2378,12 +2310,8 @@ import "trans_frag_defs.sialx"
          execute return_sval xi1(i1) n1 
          if n1== icount  
 
-            DO ii 
-
-              GET                       T20aiai(a,i,a1,i1,ii) 
-              PUT T2new(a,i,a1,i1,ii) = T20aiai(a,i,a1,i1,ii) 
-
-            ENDDO ii 
+              GET                    T20aiai(a,i,a1,i1) 
+              PUT T2new(a,i,a1,i1) = T20aiai(a,i,a1,i1) 
 
          endif 
         ENDDO i1 
@@ -2411,13 +2339,9 @@ import "trans_frag_defs.sialx"
          execute return_sval xi1(i1) n1 
          if n1== icount  
 
-            DO ii 
-
-              txpxqS(mu,i,nu,i1,ii)      = 0.0 
-              PUT TAO_ab(mu,i,nu,i1,ii)  = txpxqS(mu,i,nu,i1,ii) 
-              PUT T2AO_ab(mu,i,nu,i1,ii) = txpxqS(mu,i,nu,i1,ii) 
-
-            ENDDO ii 
+              txpxq(mu,i,nu,i1)       = 0.0 
+              PUT TAO_ab(mu,i,nu,i1)  = txpxq(mu,i,nu,i1) 
+              PUT T2AO_ab(mu,i,nu,i1) = txpxq(mu,i,nu,i1) 
 
          endif 
         ENDDO i1 
@@ -2449,7 +2373,6 @@ import "trans_frag_defs.sialx"
          execute return_sval xj(j)  m1 
          if m1== icount  
 #
-         DO ii 
          taixj(a,i,mu,j) = 0.0
 
           DO b
@@ -2458,9 +2381,8 @@ import "trans_frag_defs.sialx"
               execute return_sval xb(b)  pcount   
               if pcount == icount  
 
-                 GET                T2old(a,i,b,j,ii) 
-                 tppqq(a,i,b,j)   = T2old(a,i,b,j,ii) 
-                 T1aixj(a,i,mu,j) = tppqq(a,i,b,j)*ca(mu,b)
+                 GET                T2old(a,i,b,j) 
+                 T1aixj(a,i,mu,j) = T2old(a,i,b,j)*ca(mu,b)
                  Taixj(a,i,mu,j) += T1aixj(a,i,mu,j)
 
               endif # pcount == icount  
@@ -2473,15 +2395,13 @@ import "trans_frag_defs.sialx"
               execute return_sval x2(nu)  pcount   
               if pcount == icount  
 
-                 Txixi(nu,i,mu,j)          = Taixj(a,i,mu,j)*ca(nu,a)
-                 txixiS(nu,i,mu,j,ii)      = txixi(nu,i,mu,j) 
-                 PUT TAO_ab(nu,i,mu,j,ii) += TxixiS(nu,i,mu,j,ii)
+                 Txixi(nu,i,mu,j)       = Taixj(a,i,mu,j)*ca(nu,a)
+                 PUT TAO_ab(nu,i,mu,j) += Txixi(nu,i,mu,j)
 
               endif # pcount == icount  
 
            ENDDO nu
 
-         ENDDO ii 
          endif 
        ENDDO j
          endif 
@@ -2523,15 +2443,11 @@ import "trans_frag_defs.sialx"
                      xj(j)             = wOccB_frag(j) 
                      execute return_sval xj(j) jcount 
                      if jcount == icount  
-                 DO ii 
 
-                     GET                          TAO_ab(lambda,i,sigma,j,ii) 
-                     txixi(lambda,i,sigma,j)    = Tao_ab(lambda,i,sigma,j,ii) 
-                     txpxq(mu,i,nu,j)           = aoint(lambda,mu,sigma,nu)*txixi(lambda,i,sigma,j) 
-                     t1xixiS(mu,i,nu,j,ii)      = txpxq(mu,i,nu,j) 
-                     PUT T2AO_ab(mu,i,nu,j,ii) += t1xixiS(mu,i,nu,j,ii) 
+                     GET                       TAO_ab(lambda,i,sigma,j) 
+                     txixi(mu,i,nu,j)        = aoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j) 
+                     PUT T2AO_ab(mu,i,nu,j) += txixi(mu,i,nu,j) 
 
-                 ENDDO ii 
                      endif # jcount == icount 
                  ENDDO j 
                      endif # pcount == icount  
@@ -2567,15 +2483,13 @@ import "trans_frag_defs.sialx"
          execute return_sval xi1(i1) n1 
          if n1== icount  
 
-         DO ii 
+         GET                 Viabj(i,a,a1,i1)  
+         GET                 Vaajj(a1,a,i,i1) 
 
-         GET                 Viabj(i,a,a1,i1,ii)  
-         GET                 Vaajj(a1,a,i,i1,ii) 
-
-         t2ppqq(i,a,a1,i1) = Viabj(i,a,a1,i1,ii) 
+         t2ppqq(i,a,a1,i1) = Viabj(i,a,a1,i1) 
          tppqq(a,i,a1,i1)  = t2ppqq(i,a,a1,i1) 
 
-         t3ppqq(a1,a,i,i1) = Vaajj(a1,a,i,i1,ii) 
+         t3ppqq(a1,a,i,i1) = Vaajj(a1,a,i,i1) 
          t1ppqq(a,i,a1,i1) = t3ppqq(a1,a,i,i1) 
 
          tppqq(a,i,a1,i1) -= t1ppqq(a,i,a1,i1)  
@@ -2591,21 +2505,16 @@ import "trans_frag_defs.sialx"
 
             if l == icount  
             if s == icount  
-               GET                       T2old(a1,i1,b,j,ii) 
-               t1ppqq(a1,i1,b,j)       = T2old(a1,i1,b,j,ii) 
-               xaiai(a,i,b,j)          = tppqq(a,i,a1,i1)*t1ppqq(a1,i1,b,j)  
-               t2ppqq(b,j,a,i)         = xaiai(a,i,b,j) 
-               tppqqS(a,i,b,j,ii)      = xaiai(a,i,b,j) 
-               t1ppqqS(b,j,a,i,ii)     = t2ppqq(b,j,a,i) 
-               PUT T2new(a,i,b,j,ii) += tppqqS(a,i,b,j,ii) 
-               PUT T2new(b,j,a,i,ii) += t1ppqqS(b,j,a,i,ii) 
+               GET                   T2old(a1,i1,b,j) 
+               xaiai(a,i,b,j)      = tppqq(a,i,a1,i1)*T2old(a1,i1,b,j)  
+               t2ppqq(b,j,a,i)     = xaiai(a,i,b,j) 
+               PUT T2new(a,i,b,j) += xaiai(a,i,b,j) 
+               PUT T2new(b,j,a,i) += t2ppqq(b,j,a,i) 
             endif 
             endif 
 
          ENDDO j 
          ENDDO b 
-
-         ENDDO ii 
 
          endif 
       ENDDO i1  
@@ -2635,13 +2544,11 @@ import "trans_frag_defs.sialx"
          execute return_sval xi1(i1) n1 
          if n1== icount  
 
-         DO ii 
+         GET                 T2old(a1,i1,a,i) 
+         GET                 T2old(a1,i,a,i1)  
 
-         GET                 T2old(a1,i1,a,i,ii) 
-         GET                 T2old(a1,i,a,i1,ii)  
-
-         tppqq(a1,i1,a,i)  = T2old(a1,i1,a,i,ii) 
-         t3ppqq(a1,i,a,i1) = T2old(a1,i,a,i1,ii)  
+         tppqq(a1,i1,a,i)  = T2old(a1,i1,a,i) 
+         t3ppqq(a1,i,a,i1) = T2old(a1,i,a,i1)  
          t1ppqq(a1,i1,a,i) = t3ppqq(a1,i,a,i1)  
 
          tppqq(a1,i1,a,i) -= t1ppqq(a1,i1,a,i)  
@@ -2658,22 +2565,18 @@ import "trans_frag_defs.sialx"
 
             if l == icount  
             if s == icount  
-               GET                       Viabj(i,a,b,j,ii) 
-               tppqq(i,a,b,j)          = Viabj(i,a,b,j,ii) 
-               xaiai(a1,i1,b,j)        = t2ppqq(a1,i1,i,a)*tppqq(i,a,b,j)  
-               t3ppqq(b,j,a1,i1)       = xaiai(a1,i1,b,j) 
+               GET                     Viabj(i,a,b,j) 
+               xaiai(a1,i1,b,j)      = t2ppqq(a1,i1,i,a)*Viabj(i,a,b,j)  
+               t3ppqq(b,j,a1,i1)     = xaiai(a1,i1,b,j) 
 
-               tppqqS(a1,i1,b,j,ii)      = xaiai(a1,i1,b,j) 
-               t1ppqqS(b,j,a1,i1,ii)     = t3ppqq(b,j,a1,i1) 
-               PUT T2new(a1,i1,b,j,ii) += tppqqS(a1,i1,b,j,ii) 
-               PUT T2new(b,j,a1,i1,ii) += t1ppqqS(b,j,a1,i1,ii) 
+               PUT T2new(a1,i1,b,j) += xaiai(a1,i1,b,j) 
+               PUT T2new(b,j,a1,i1) += t3ppqq(b,j,a1,i1) 
             endif 
             endif 
 
          ENDDO j 
          ENDDO b 
 
-         ENDDO ii 
          endif 
       ENDDO i1  
          endif 
@@ -2702,10 +2605,8 @@ import "trans_frag_defs.sialx"
          execute return_sval xb1(b1) m1 
          if m1== icount  
 
-         DO ii 
-
-         GET                 T2old(a,i1,b1,j,ii) 
-         t1ppqq(a,i1,b1,j) = T2old(a,i1,b1,j,ii) 
+         GET                 T2old(a,i1,b1,j) 
+         t1ppqq(a,i1,b1,j) = T2old(a,i1,b1,j) 
 
          DO b 
          DO i 
@@ -2718,23 +2619,19 @@ import "trans_frag_defs.sialx"
 
             if l == icount  
             if s == icount  
-               GET                       Vaajj(b,b1,i1,i,ii) 
-               tppqq(b,b1,i1,i)        = Vaajj(b,b1,i1,i,ii) 
-               xaiai(a,i,b,j)          = t1ppqq(a,i1,b1,j)*tppqq(b,b1,i1,i)   
-               xaiai(a,i,b,j)         *= -1.0  
+               GET                   Vaajj(b,b1,i1,i) 
+               xaiai(a,i,b,j)      = t1ppqq(a,i1,b1,j)*Vaajj(b,b1,i1,i)   
+               xaiai(a,i,b,j)     *= -1.0  
+               t3ppqq(b,j,a,i)     = xaiai(a,i,b,j) 
 
-               t3ppqq(b,j,a,i)       = xaiai(a,i,b,j) 
-               tppqqS(a,i,b,j,ii)    = xaiai(a,i,b,j) 
-               t1ppqqS(b,j,a,i,ii)   = t3ppqq(b,j,a,i) 
-               PUT T2new(a,i,b,j,ii) += tppqqS(a,i,b,j,ii) 
-               PUT T2new(b,j,a,i,ii) += t1ppqqS(b,j,a,i,ii) 
+               PUT T2new(a,i,b,j) += xaiai(a,i,b,j) 
+               PUT T2new(b,j,a,i) += t3ppqq(b,j,a,i) 
             endif 
             endif 
 
          ENDDO i 
          ENDDO b 
 
-         ENDDO ii 
          endif 
       ENDDO b1  
          endif 
@@ -2763,10 +2660,8 @@ import "trans_frag_defs.sialx"
          execute return_sval xj1(j1) n1 
          if n1== icount  
 
-         DO ii 
-
-         GET                 T2old(a,i1,b,j1,ii) 
-         t1ppqq(a,i1,b,j1) = T2old(a,i1,b,j1,ii) 
+         GET                 T2old(a,i1,b,j1) 
+         t1ppqq(a,i1,b,j1) = T2old(a,i1,b,j1) 
 
          DO i 
          DO j 
@@ -2779,18 +2674,16 @@ import "trans_frag_defs.sialx"
 
             if l == icount  
             if s == icount  
-               GET                       Viijj(i1,i,j1,j,ii) 
-               tppqq(i1,i,j1,j)        = Viijj(i1,i,j1,j,ii) 
-               xaiai(a,i,b,j)          = t1ppqq(a,i1,b,j1)*tppqq(i1,i,j1,j)  
-               tppqqS(a,i,b,j,ii)      = xaiai(a,i,b,j) 
-               PUT T2new(a,i,b,j,ii) += tppqqS(a,i,b,j,ii) 
+               GET                   Viijj(i1,i,j1,j) 
+               tppqq(i1,i,j1,j)    = Viijj(i1,i,j1,j) 
+               xaiai(a,i,b,j)      = t1ppqq(a,i1,b,j1)*tppqq(i1,i,j1,j)  
+               PUT T2new(a,i,b,j) += xaiai(a,i,b,j) 
             endif 
             endif 
 
          ENDDO j 
          ENDDO i 
 
-         ENDDO ii 
          endif 
       ENDDO j1  
          endif 
@@ -2817,7 +2710,6 @@ import "trans_frag_defs.sialx"
          execute return_sval xj(j)  m1 
          if m1== icount  
 
-            DO ii 
 #
               DO a
                  xa(a)     = wVirtA_frag(a)     
@@ -2832,8 +2724,8 @@ import "trans_frag_defs.sialx"
                  execute return_sval x2(mu)  l  
                  if l == icount  
 #
-                 GET                T2AO_ab(mu,i,nu,j,ii) 
-                 txixj(mu,i,nu,j) = T2AO_ab(mu,i,nu,j,ii) 
+                 GET                T2AO_ab(mu,i,nu,j) 
+                 txixj(mu,i,nu,j) = T2AO_ab(mu,i,nu,j) 
 #
                  DO a
                     xa(a)     = wVirtA_frag(a)     
@@ -2856,9 +2748,8 @@ import "trans_frag_defs.sialx"
                  xb(b)     = wVirtB_frag(b)     
                  execute return_sval xb(b)  s  
                  if s == icount  
-                 Tppqq(a,i,b,j)             = LDaixj(a,i,nu,j)*ca(nu,b)
-                 tppqqS(a,i,b,j,ii)      = Tppqq(a,i,b,j) 
-                 PUT T2new(a,i,b,j,ii) += TppqqS(a,i,b,j,ii)
+                 Tppqq(a,i,b,j)      = LDaixj(a,i,nu,j)*ca(nu,b)
+                 PUT T2new(a,i,b,j) += Tppqq(a,i,b,j)
                  endif 
               ENDDO b
                  endif 
@@ -2872,7 +2763,6 @@ import "trans_frag_defs.sialx"
                  endif 
               ENDDO a
 #
-            ENDDO ii 
          endif # m == icount  
         ENDDO j
          endif # n1== icount  
@@ -2905,18 +2795,15 @@ import "trans_frag_defs.sialx"
             xi1(i1)     = wOccA_frag(i1) 
             execute return_sval xi1(i1) n1 
             if n1== icount  
-          DO ii 
 
              DO a2 
                 xa2(a2) = wVirtA_frag(a2) 
                 execute return_sval xa2(a2) n2 
                 if n2== icount  
-                   GET                       T2old(a2,i,a1,i1,ii) 
-                   GET                       wC(a,a2) 
-                   tpppp(a2,i,a1,i1)       = T2old(a2,i,a1,i1,ii) 
-                   t1pppp(a,i,a1,i1)       = tpppp(a2,i,a1,i1)*wC(a,a2) 
-                   tppppS(a,i,a1,i1,ii)    = t1pppp(a,i,a1,i1) 
-                   PUT T2new(a,i,a1,i1,ii)+= tppppS(a,i,a1,i1,ii) 
+                   GET                    T2old(a2,i,a1,i1) 
+                   GET                    wC(a,a2) 
+                   t1pppp(a,i,a1,i1)    = T2old(a2,i,a1,i1)*wC(a,a2) 
+                   PUT T2new(a,i,a1,i1)+= t1pppp(a,i,a1,i1) 
                 endif 
              ENDDO a2 
 
@@ -2924,12 +2811,10 @@ import "trans_frag_defs.sialx"
                 xa2(a2) = wVirtA_frag(a2) 
                 execute return_sval xa2(a2) n2 
                 if n2== icount  
-                   GET                       T2old(a,i,a2,i1,ii) 
-                   GET                       wC(a1,a2) 
-                   tpppp(a,i,a2,i1)        = T2old(a,i,a2,i1,ii) 
-                   t1pppp(a,i,a1,i1)       = tpppp(a,i,a2,i1)*wC(a1,a2) 
-                   tppppS(a,i,a1,i1,ii)    = t1pppp(a,i,a1,i1) 
-                   PUT T2new(a,i,a1,i1,ii)+= tppppS(a,i,a1,i1,ii) 
+                   GET                    T2old(a,i,a2,i1) 
+                   GET                    wC(a1,a2) 
+                   t1pppp(a,i,a1,i1)    = T2old(a,i,a2,i1)*wC(a1,a2) 
+                   PUT T2new(a,i,a1,i1)+= t1pppp(a,i,a1,i1) 
                 endif 
              ENDDO a2 
 
@@ -2937,13 +2822,11 @@ import "trans_frag_defs.sialx"
                 xi2(i2) = wOccA_frag(i2) 
                 execute return_sval xi2(i2) n2 
                 if n2== icount  
-                   GET                       T2old(a,i,a1,i2,ii) 
-                   GET                       wC(i1,i2) 
-                   tpppp(a,i,a1,i2)        = T2old(a,i,a1,i2,ii) 
-                   t1pppp(a,i,a1,i1)       = tpppp(a,i,a1,i2)*wC(i1,i2) 
-                   t1pppp(a,i,a1,i1)      *= -1.0  
-                   tppppS(a,i,a1,i1,ii)    = t1pppp(a,i,a1,i1) 
-                   PUT T2new(a,i,a1,i1,ii)+= tppppS(a,i,a1,i1,ii) 
+                   GET                    T2old(a,i,a1,i2) 
+                   GET                    wC(i1,i2) 
+                   t1pppp(a,i,a1,i1)    = T2old(a,i,a1,i2)*wC(i1,i2) 
+                   t1pppp(a,i,a1,i1)   *= -1.0  
+                   PUT T2new(a,i,a1,i1)+= t1pppp(a,i,a1,i1) 
                 endif 
              ENDDO i2 
 
@@ -2951,17 +2834,14 @@ import "trans_frag_defs.sialx"
                 xi2(i2) = wOccA_frag(i2) 
                 execute return_sval xi2(i2) n2 
                 if n2== icount  
-                   GET                       T2old(a,i2,a1,i1,ii) 
-                   GET                       wC(i,i2) 
-                   tpppp(a,i2,a1,i1)        = T2old(a,i2,a1,i1,ii) 
-                   t1pppp(a,i,a1,i1)       = tpppp(a,i2,a1,i1)*wC(i,i2) 
-                   t1pppp(a,i,a1,i1)      *= -1.0  
-                   tppppS(a,i,a1,i1,ii)    = t1pppp(a,i,a1,i1) 
-                   PUT T2new(a,i,a1,i1,ii)+= tppppS(a,i,a1,i1,ii) 
+                   GET                    T2old(a,i2,a1,i1) 
+                   GET                    wC(i,i2) 
+                   t1pppp(a,i,a1,i1)    = T2old(a,i2,a1,i1)*wC(i,i2) 
+                   t1pppp(a,i,a1,i1)   *= -1.0  
+                   PUT T2new(a,i,a1,i1)+= t1pppp(a,i,a1,i1) 
                 endif 
              ENDDO i2 
 
-          ENDDO ii 
             endif 
       ENDDO i1  
             endif 
@@ -2991,15 +2871,12 @@ import "trans_frag_defs.sialx"
          xi1(i1)    = wOccA_frag(i1) 
          execute return_sval xi1(i1) n1 
          if n1== icount  
-            DO ii 
 
-              GET                        T2new(a,i,a1,i1,ii) 
-              tppqq(a,i,a1,i1)         = T2new(a,i,a1,i1,ii) 
+              GET                        T2new(a,i,a1,i1) 
+              tppqq(a,i,a1,i1)         = T2new(a,i,a1,i1) 
               execute energy_denominator_rhf tppqq(a,i,a1,i1) fock_a  
-              tppqqS(a,i,a1,i1,ii)     = tppqq(a,i,a1,i1) 
-              PUT T2old(a,i,a1,i1,ii) = tppqqS(a,i,a1,i1,ii) 
+              PUT T2old(a,i,a1,i1) = tppqq(a,i,a1,i1) 
 
-            ENDDO ii 
          endif 
         ENDDO i1 
          endif
@@ -3028,24 +2905,20 @@ import "trans_frag_defs.sialx"
             xi1(i1)     = wOccA_frag(i1) 
             execute return_sval xi1(i1) n1 
             if n1== icount  
-          DO ii 
 
-               GET                T2old(a,i,a1,i1,ii) 
-               GET                Vaibj(a,i,a1,i1,ii)  
-               GET                Vaibj(a,i1,a1,i,ii)  
+               GET                T2old(a,i,a1,i1) 
+               GET                Vaibj(a,i,a1,i1)  
+               GET                Vaibj(a,i1,a1,i)  
 
-               tppqq(a,i,a1,i1) = T2old(a,i,a1,i1,ii) 
-
-               t1ppqq(a,i,a1,i1) = Vaibj(a,i,a1,i1,ii)  
-               t3ppqq(a,i1,a1,i) = Vaibj(a,i1,a1,i,ii)  
+               t1ppqq(a,i,a1,i1) = Vaibj(a,i,a1,i1)  
+               t3ppqq(a,i1,a1,i) = Vaibj(a,i1,a1,i)  
                t2ppqq(a,i,a1,i1) = t3ppqq(a,i1,a1,i) 
                t1ppqq(a,i,a1,i1)*= 2.0  
                t1ppqq(a,i,a1,i1)-= t2ppqq(a,i,a1,i1) 
 
-               etemp = tppqq(a,i,a1,i1)*t1ppqq(a,i,a1,i1) 
+               etemp = T2old(a,i,a1,i1)*t1ppqq(a,i,a1,i1) 
                esum += etemp 
 
-          ENDDO ii 
             endif 
       ENDDO i1  
             endif 
