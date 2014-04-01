@@ -268,9 +268,7 @@ public:
 //		distributed_array_map_.erase(it);
 //	}
 
-	template<typename BLOCK_TYPE, typename RUNNER_TYPE>
-	friend std::ostream& operator<<(std::ostream&,
-			const PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>&);
+	friend std::ostream& operator<< <>(std::ostream&, const PersistentArrayManager<BLOCK_TYPE, RUNNER_TYPE>&);
 
 private:
 	/** holder for saved contiguous arrays*/

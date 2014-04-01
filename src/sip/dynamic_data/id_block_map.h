@@ -14,6 +14,9 @@
 #include "blocks.h"
 
 namespace sip {
+template <typename BLOCK_TYPE> class IdBlockMap;
+template <typename BLOCK_TYPE> std::ostream& operator<<( std::ostream&, const IdBlockMap<BLOCK_TYPE>& );
+
 
 
 template <typename BLOCK_TYPE>
@@ -210,12 +213,8 @@ public:
     const PerArrayMap* operator[](unsigned i) const { return block_map_[i]; }
 
     friend class Interpreter;
-
-	template <class BLOCK_TYPE>
-	friend std::ostream& operator<<(std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
-
-	template <class BLOCK_TYPE>
-	friend std::ostream& operator<<(std::ostream&, const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap &);
+	friend std::ostream& operator<< <> (std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
+//	friend std::ostream& operator<< <> (std::ostream&, const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap &);
 
 private:
 
@@ -224,34 +223,42 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(IdBlockMap<BLOCK_TYPE>);
 };
 
-template <typename BLOCK_TYPE1>
-std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE1>& obj){
-//	IdBlockMap<BLOCK_TYPE>::BlockMapVector::size_type size = obj.size();
-	typename IdBlockMap<BLOCK_TYPE1>::size_type size = obj.size();
-	for (unsigned i = 0; i < size; ++i){
-		const typename IdBlockMap<BLOCK_TYPE1>::PerArrayMap* map_ptr = obj[i];
-		if (map_ptr != NULL && !map_ptr->empty()){
-			os << map_ptr;
-		}
-	}
-	return os;
-}
-
 /**
  * returns an os stream with the block ids of blocks stored in the map, obj
  * @param os
  * @param obj PerArrayMap
  * @return
  */
-template <typename BLOCK_TYPE2>
-std::ostream& operator<<(std::ostream& os, const typename IdBlockMap<BLOCK_TYPE2>::PerArrayMap* & obj){
-	typename IdBlockMap<BLOCK_TYPE2>::PerArrayMap::iterator it, it_end;
+template <typename BLOCK_TYPE>
+std::ostream& operator<<(std::ostream& os, const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap& obj){
+	typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::iterator it;
 	for (it = obj->begin(); it != obj->end(); ++it){
 		os << (it = obj->begin()?"":", ") << it->first;
 	}
 	os << std::endl;
 	return os;
 }
+
+/**
+ * returns an os stream with the block contained in the id_block_map
+ * @param os
+ * @param obj PerArrayMap
+ * @return
+ */
+template <typename BLOCK_TYPE>
+std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE>& obj){
+	typename IdBlockMap<BLOCK_TYPE>::size_type size = obj.size();
+	for (unsigned i = 0; i < size; ++i){
+		const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map_ptr = obj[i];
+		if (map_ptr != NULL && !map_ptr->empty()){
+			os << map_ptr << std::endl;
+		}
+	}
+	return os;
+}
+
+
+
 
 }//namespace sip
 
