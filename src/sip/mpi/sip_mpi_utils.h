@@ -130,9 +130,11 @@ public:
 	 * Each tag (a 32 bit integer) contains these fields
 	 */
 	typedef struct {
+        unsigned int :2;
 		unsigned int message_type : 4;
 		unsigned int section_number : 12;
-		unsigned int message_number : 16;
+		unsigned int message_number : 12;
+        unsigned int :2;
 	} SIPMPITagBitField;
 
 	/**

@@ -133,7 +133,7 @@ void SIPMPIUtils::isend_bid_and_bptr_to_rank(const BlockId& bid, Block::BlockPtr
 
 	// Send double precision data
 	double * ddata = bptr->data_;
-	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Sending Block Data with tag : "<< data_tag << " to rank " << rank << std::endl);
+	SIP_LOG(std::cout<< SIPMPIAttr::get_instance().global_rank() << " : Sending Block Data with tag : "<< data_tag << " and size " << bptr->size_ <<  " to rank " << rank << std::endl);
 	check_err(MPI_Isend(ddata, bptr->size_, MPI_DOUBLE, rank, data_tag, MPI_COMM_WORLD, request));
 
 	delete [] to_send;
