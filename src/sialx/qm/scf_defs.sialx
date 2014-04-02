@@ -32,7 +32,7 @@ aoindex aces_defs_mu = 1, norb
 
 
 #these s are predefined in the array and scalar tables
-predefined static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
 predefined static cb(aces_defs_mu,aces_defs_pb)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
 
 predefined scalar scfeneg  # ???? 
@@ -47,7 +47,7 @@ predefined static e(aces_defs_mu)  # Restricted spin orbital energies from the S
 predefined static ea(aces_defs_mu)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 predefined static eb(aces_defs_mu)  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
-predefined static fock_a(aces_defs_pa, aces_defs_pa)
+static fock_a(aces_defs_pa, aces_defs_pa)
 predefined static fock_b(aces_defs_pb, aces_defs_pb)
 
 predefined static oed_nai(aces_defs_mu,aces_defs_mu)

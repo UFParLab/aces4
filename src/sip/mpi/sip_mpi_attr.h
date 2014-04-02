@@ -31,7 +31,8 @@ public:
 	 */
 	static void cleanup() ;
 
-	~SIPMPIAttr();
+	int company_rank_; 
+~SIPMPIAttr();
 
 	std::vector<int>& server_ranks() { return servers_; }
 	std::vector<int>& worker_ranks() { return workers_; }
@@ -75,7 +76,7 @@ private:
 	bool is_company_master_; // Is this rank a company master (master worker or master server)
 	int global_rank_; // Rank w.r.t. the global communicator
 	int global_size_; // Number of ranks in MPI_COMM_WORLD
-	int company_rank_; // Rank w.r.t. company
+	// Rank w.r.t. company
 	int company_size_; // Size of company
 	int my_server_; //server to communicate with, or none if not responsible for a server.
 

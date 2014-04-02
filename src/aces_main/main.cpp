@@ -182,6 +182,8 @@ int main(int argc, char* argv[]) {
 			persistent_worker->save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
+
+
 			std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 			sialxTimer.mpi_reduce_timers();
@@ -207,7 +209,7 @@ int main(int argc, char* argv[]) {
 		delete persistent_worker;
 
 #ifdef HAVE_MPI
-	  delete persistent_server;
+	  if (sip_mpi_attr.is_server()) delete persistent_server;
 	  MPI_Finalize();
 #endif
 

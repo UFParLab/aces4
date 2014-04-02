@@ -9,13 +9,13 @@
 #include "blocks.h"
 #include "sip_mpi_utils.h"
 #include <sstream>
-#include "persistent_array_manager.h"
+
 
 
 namespace sip {
 
-SIPServer::SIPServer(SipTables& sip_tables, DataDistribution &data_distribution, SIPMPIAttr & sip_mpi_attr,
-		typename PersistentArrayManager<ServerBlock, SIPServer> * persistent_array_manager):
+SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution, SIPMPIAttr& sip_mpi_attr,
+		PersistentArrayManager<ServerBlock, SIPServer>* persistent_array_manager):
 		sip_tables_(sip_tables),
 		data_distribution_(data_distribution),
 		sip_mpi_attr_(sip_mpi_attr),
@@ -158,7 +158,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	SIPMPIUtils::check_err(MPI_Recv(&array_id, 1, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD, &status));
 	check_int_count(status, 1);
 	//delete the block and map for the indicated array
-	block_map_.delete_per_array_map(array_id);
+	block_map_.delete_per_array_map_and_blocks(array_id);
 	//send ack
 	SIPMPIUtils::check_err(MPI_Send(0,0,MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD));
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Done DELETE for rank "<< mpi_source << std::endl);
@@ -191,7 +191,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	//upcall
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
-	persistent_array_manager_->set_persistent(array_id, string_slot);
+	persistent_array_manager_->set_persistent(this, array_id, string_slot);
 
 	//send ack
 	SIPMPIUtils::check_err(MPI_Send(0,0,MPI_INT, mpi_source, set_persistent_tag, MPI_COMM_WORLD));
@@ -211,7 +211,7 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source, int restore_persistent
 	//upcall
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
-	persistent_array_manager_->restore_persistent_distributed_server(this, array_id, string_slot);
+	persistent_array_manager_->restore_persistent(this, array_id, string_slot);
 
 	//send ack
 	SIPMPIUtils::check_err(MPI_Send(0,0,MPI_INT, mpi_source, restore_persistent_tag, MPI_COMM_WORLD));

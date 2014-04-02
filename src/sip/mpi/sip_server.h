@@ -14,6 +14,8 @@
 #include "sip_mpi_data.h"
 #include "id_block_map.h"
 #include "barrier_support.h"
+#include "persistent_array_manager.h"
+
 
 
 namespace sip {
@@ -51,9 +53,6 @@ namespace sip {
  * following PUT_DATA or PUT_ACCUMULATE_DATA message.  This decision will need to be revisited.
  */
 
-
-class PersistentArrayManager;
-
 class SIPServer {
 
 public:
@@ -75,8 +74,26 @@ public:
 		block_map_.insert_per_array_map(array_id, map_ptr);
 	}
 
-	SipTables& sip_tables() { return sip_tables_;}
+	SipTables* sip_tables() { return &sip_tables_;}
 
+
+	/** The following methods are called by the PersistentArrayManager.
+	 * Fi the functionality is not required on the server, they are empty.
+	 * @param slot
+	 * @return
+	 */
+	std::string string_literal(int slot) {
+		return sip_tables_.string_literal(slot);
+	}
+	std::string array_name(int array_id) {
+		return sip_tables_.array_name(array_id);
+	}
+
+
+	double scalar_value(int){ fail("scalar_value should not be invoked by a server"); return -.1;}
+	void set_scalar_value(int, double) { fail("set_scalar_value should not be invoked by a server");}
+    void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
+    Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
 
 private:
 

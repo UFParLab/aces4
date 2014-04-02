@@ -53,6 +53,8 @@ public:
 	//appropriate routine in the sipTable or dataManager.  The definitions are given
 	//here to allow inlining.
 
+	SipTables* sip_tables(){return &sip_tables_;}
+
 	std::string string_literal(int slot) {
 		return sip_tables_.string_literal(slot);
 	}

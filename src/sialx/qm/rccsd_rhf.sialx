@@ -479,7 +479,9 @@
 #    ------------------------------------------------------------------------ 
 #
       restore_persistent ca    "ca" 
+      set_persistent     ca    "ca"
       restore_persistent Fock_a "fock_a" 
+      set_persistent     Fock_a "fock_a"
       restore_persistent VSpipi "VSpipi"
       restore_persistent Vaaii  "Vaaii"
       restore_persistent Viaai  "Viaai"

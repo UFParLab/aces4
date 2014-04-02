@@ -93,7 +93,7 @@ void BlockManager::barrier() {
 	// Remove and deallocate cached blocks of distributed and served arrays
 	for (int i = 0; i < block_map_.size(); ++i){
 		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i))
-			block_map_.delete_per_array_map(i);
+			block_map_.delete_per_array_map_and_blocks(i);
 		}
 
 	// Workers do actual MPI_barrier among themselves

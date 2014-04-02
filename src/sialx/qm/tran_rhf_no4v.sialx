@@ -510,6 +510,7 @@ import "tran_rhf_no4v_defs.sialx"
      sip_barrier 
 
      restore_persistent ca "ca" 
+     set_persistent ca "ca"
     #restore_persistent FTa "fock_a" 
      println "done restoring persistent arrays" 
 
@@ -531,7 +532,7 @@ import "tran_rhf_no4v_defs.sialx"
 # Write transformed two-electron integrals to list 
 # ------------------------------------------------ 
 # 
-     set_persistent Dca "ca" 
+     #set_persistent Dca "ca" 
      #set_persistent FTa "fock_a" 
       set_persistent VSpipi "VSpipi"   
       set_persistent Vaaii  "Vaaii" 

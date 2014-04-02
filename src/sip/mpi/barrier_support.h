@@ -1,6 +1,11 @@
 /*
+ * This class manages tags in a way that supports the barrier implementation, and also
+ * provides each transaction with a unique id.
+ *
  * A barrier in SIAL is implemented with a distributed termination detection algorithm in the SIP.
  * This class attempts to encapsulate the implementation of the termination detection algorithm.
+ *
+ * Termination Detection algorithm:
  *
  * There are two types of processes involved--workers and servers.  A SIAL program proceeds in
  * a sequence of "sections" separated by barriers. The SIP maintains the current section number
@@ -15,12 +20,16 @@
  * The server updates its section number each time it receives a message, and checks that the sequence
  * of section numbers is monotone.
  *
+ *
+ *
+ * Other considerations:
+ *
  * It is useful for each "transaction" initiated by a worker to have a unique identifier. To
  * accomplish this, a transaction counter is also maintained.  Each message belonging to a transaction--
  * for example the put and corresponding put_data messages--has the same transaction number.
  * The section number, transaction number, and message type are combined to form the message tag.
  *
- *
+ * Because this class is entirely small inlined functions, it does not have a corresponding .cpp file.
  *
  */
 
@@ -37,7 +46,7 @@ public:
 	~BarrierSupport(){}
 
 
-
+/** Utility functions for dealing with tags **/
 
 	/**
 	 * Each tag (a 32 bit integer) contains these fields
@@ -104,6 +113,10 @@ public:
 		return bc.i;
 	}
 
+
+/** Routines called by the server */
+
+
 	/**
 	 * Called by the server loop for each message it receives.  Extracts message_type, section_number, and transaction_number,
 	 * checks the invariant, and updates the section number.
@@ -120,6 +133,40 @@ public:
 		check (section_number >= this->section_number_, "Section number invariant violated. Received request from an older section !");
 		this->section_number_ = section_number;
 	}
+
+	/**
+	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and session number as the given tag
+	 * Called by the server
+	 *
+	 * Requires:  the given tag is a PUT_ACCUMULATE tag.
+	 *
+	 * @param put_tag
+	 * @return
+	 */
+	int make_mpi_tag_for_PUT_ACCUMULATE_DATA(int put_accumulate_tag){
+		int transaction_number = extract_transaction_number(put_accumulate_tag);
+		int section_number = extract_section_number(put_accumulate_tag);
+		return make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
+	}
+
+	/**
+	 * Constructs a PUT_DATA tag with the same section number and session number as the given tag
+	 * Called by the server
+	 *
+	 * Requires:  the given tag is a PUT tag.
+	 *
+	 * @param put_tag
+	 * @return
+	 */
+	int make_mpi_tag_for_PUT_DATA(int put_tag){
+		SIPMPIData::MessageType_t message_type = extract_message_type(put_tag);
+		int transaction_number = extract_transaction_number(put_tag);
+		int section_number = extract_section_number(put_tag);
+		return make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, transaction_number_);
+	}
+
+
+/** Routines called by workers
 
 	/**
 	 * Called by worker to construct mpi tag for a GET transaction.
@@ -146,21 +193,6 @@ public:
 		return put_tag;
 	}
 
-	/**
-	 * Constructs a PUT_DATA tag with the same section number and session number as the given tag
-	 * Called by the server
-	 *
-	 * Requires:  the given tag is a PUT tag.
-	 *
-	 * @param put_tag
-	 * @return
-	 */
-	int make_mpi_tag_for_PUT_DATA(int put_tag){
-		SIPMPIData::MessageType_t message_type = extract_message_type(put_tag);
-		int transaction_number = extract_transaction_number(put_tag);
-		int section_number = extract_section_number(put_tag);
-		return make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, transaction_number_);
-	}
 
 	/**
 	 * Called by the worker to construct mpi tags for a PUT_ACCUMULATE transaction.
@@ -175,21 +207,6 @@ public:
 		int put_accumulate_tag = make_mpi_tag(SIPMPIData::PUT_ACCUMULATE, section_number_, transaction_number_);
 		put_accumulate_data_tag = make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_++);
 		return put_accumulate_tag;
-	}
-
-	/**
-	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and session number as the given tag
-	 * Called by the server
-	 *
-	 * Requires:  the given tag is a PUT_ACCUMULATE tag.
-	 *
-	 * @param put_tag
-	 * @return
-	 */
-	int make_mpi_tag_for_PUT_ACCUMULATE_DATA(int put_accumulate_tag){
-		int transaction_number = extract_transaction_number(put_accumulate_tag);
-		int section_number = extract_section_number(put_accumulate_tag);
-		return make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
 	}
 
 
@@ -245,17 +262,24 @@ public:
 		os << "section number = " << obj.section_number_ << ": transaction number = " << obj.transaction_number_ << std::endl;
 		return os;
 	}
+
+
 private:
 	/**
-	 * Last pardo section for which a request was served.
-	 * The invariant for correctness is
-	 * section(any_incoming_request at server) >= section_number_
+	 * At the worker, section_number is the current section (starting at 0) or the number of barriers that have been executed.
+	 *
+	 * At the server, this is the largest section number seen so far.  It is an error if a message arrives with a smaller section number.
+	 * This condition is checked in method decode_tag_and_check_invariant
 	 */
 	int section_number_;
+
+	/**
+	 * The number of the transaction in the current section.  Each
+	 */
 	int transaction_number_;
 
-friend class SIPServer;
-friend class Interpreter;
+//friend class SIPServer;
+//friend class Interpreter;
 };
 
 } /* namespace sip */

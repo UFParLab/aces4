@@ -282,10 +282,15 @@
      #create DCa 
       sip_barrier
       restore_persistent Fock_a "fock_a" 
+      set_persistent Fock_a "fock_a" 
       restore_persistent ca "ca" 
+      set_persistent ca "ca" 
       restore_persistent t1a_old "t1a_old"
+      set_persistent t1a_old "t1a_old"
       restore_persistent TSaiai "T2old_aa"
+      set_persistent TSaiai "T2old_aa"
       restore_persistent T2aiai "T2old_ab"
+      set_persistent T2aiai "T2old_ab"
 
      #DO mu 
      #DO p 

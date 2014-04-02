@@ -16,7 +16,7 @@
 #include "special_instructions.h"
 #include "blocks.h"
 #include "tensor_ops_c_prototypes.h"
-#include "persistent_array_manager.h"
+
 
 #include "config.h"
 
@@ -561,10 +561,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case set_persistent_op:{
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
-			// DEBUG
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
-			//TODO deal with parallel
             persistent_array_manager_->set_persistent(this, array_slot,string_slot);
 			++pc;
 		}
@@ -572,7 +570,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case restore_persistent_op:{
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
-			// DEBUG
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 			persistent_array_manager_->restore_persistent(this, array_slot, string_slot);
@@ -594,35 +591,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 
 void Interpreter::post_sial_program(){
-//	data_manager_.block_manager_.barrier();	// Implicit Barrier at the end of a SIAL program
-//	persistent_array_manager_.save_marked_arrays_on_worker(this);
-//#ifdef HAVE_MPI
-//	// Send end of program message to server
-//	int global_rank = sip_mpi_attr_.global_rank();
-//	int global_size = sip_mpi_attr_.global_size();
-//	bool am_worker_to_communicate = RankDistribution::is_local_worker_to_communicate(global_rank, global_size);
-//
-//	if (am_worker_to_communicate){
-//		SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning END_PROGRAM "<< std::endl);
-//		int to_send = sip::SIPMPIData::END_PROGRAM;
-//		int local_server = RankDistribution::local_server_to_communicate(global_rank, global_size);
-//		if (local_server > -1){
-//			int end_program_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, message_number_);
-//			sip::SIPMPIUtils::check_err(MPI_Send(&to_send, 1, MPI_INT, local_server, end_program_tag, MPI_COMM_WORLD));
-//			SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with END_PROGRAM "<< std::endl);
-//		}
-//	}
-//	sip::SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
-//#endif
-#ifdef  HAVE_MPI
-	//send end of program message to server if responsible
-	if (int my_server = sip_mpi_attr_.my_server() > 0){
-		int end_program_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_END_PROGRAM();
-		SIPMPIUtils::check_err(MPI_Send(0, 0, MPI_INT, my_server, end_program_tag, MPI_COMM_WORLD));
-		MPI_Status status;
-		SIPMPIUtils::check_err(MPI_Recv(0,0,MPI_INT,my_server, end_program_tag, MPI_COMM_WORLD, &status));
-	}
-#endif //HAVE_MPI
+
 }
 
 void Interpreter::handle_user_sub_op(int pc) {

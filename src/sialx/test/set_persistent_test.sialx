@@ -6,6 +6,7 @@ sial set_persistent_test
 	predefined int norb
 	
 	predefined scalar x
+	scalar x1
 	scalar y
 	aoindex i = 1,1
 	aoindex j = 1,1
@@ -18,12 +19,13 @@ sial set_persistent_test
 	
 	static ca(i2, j2)
 	
+	x1 = x
 	y = x*x
 	
 #	set_persistent b "arr1"
 #	set_persistent c "arr2"
 #	set_persistent ca "arr3"
-	set_persistent x "s1"
+	set_persistent x1 "s1"
 	set_persistent y "s2"
 	
 	do i
@@ -34,7 +36,7 @@ sial set_persistent_test
 		enddo j
 	enddo i
 	
-	print_scalar x
+	print_scalar x1
 	print_scalar y
 	execute print_static_array ca
 	

@@ -33,22 +33,22 @@ TEST(Sial_QM,ccsdpt_test){
 
 	// setup_reader.read(setup_file);
 	setup::SetupReader setup_reader(setup_file);
+	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//interpret the program
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager<sip::ServerBlock>* persistent_server;
-		sip::PersistentArrayManager<sip::Block>* persistent_worker;
-		if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock>();
-		else persistent_worker = new sip::PersistentArrayManager<sip::Block>();
+		sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>* persistent_server;
+		sip::PersistentArrayManager<sip::Block,sip::Interpreter>* persistent_worker;
+		if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>();
+		else persistent_worker = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
 
 		it = progs.begin();
 		while (it != progs.end()){
-			std::string sialfpath;
-			sialfpath.append(dir_name);
-			sialfpath.append("/");
-			sialfpath.append(*it);
+			if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< *it << std::endl;}
+				std::string sialfpath(dir_name);
+				sialfpath.append(*it);
 			setup::BinaryInputFile siox_file(sialfpath);
 			sip::SipTables sipTables(setup_reader, siox_file);
 			//std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
@@ -57,7 +57,7 @@ TEST(Sial_QM,ccsdpt_test){
 			if (sip_mpi_attr.is_server()){
 				sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
 				server.run();
-				persistent_server->save_marked_arrays_on_server(&server);
+				persistent_server->save_marked_arrays(&server);
 				SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<pbm);
 				++it;
 
@@ -66,7 +66,7 @@ TEST(Sial_QM,ccsdpt_test){
 				sip::Interpreter runner(sipTables, sialxTimer, sip_mpi_attr, data_distribution, persistent_worker);
 				std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 				runner.interpret();
-				persistent_worker->save_marked_arrays_on_worker(&runner);
+				persistent_worker->save_marked_arrays(&runner);
 				ASSERT_EQ(0, sip::DataManager::scope_count);
 				std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 				//std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm;
