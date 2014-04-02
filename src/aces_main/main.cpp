@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 #ifdef HAVE_MPI
-      SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
+      sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 #endif
 	}
 
