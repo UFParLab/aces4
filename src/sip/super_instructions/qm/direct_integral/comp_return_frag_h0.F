@@ -332,7 +332,7 @@ c-------------------------------------------------------------------------
             y2 = tcoords(2,n)  
             z2 = tcoords(3,n)  
 
-            write(6,*) ' VFL:', m, n, ':', iatom, jatom 
+c           write(6,*) ' VFL:', m, n, ':', iatom, jatom 
 c           write(6,*) 'XYZ1', x1, y1, z1 
 c           write(6,*) 'XYZ2', x2, y2, z2 
 c           write(6,*) 'ncsum', ncsum  
