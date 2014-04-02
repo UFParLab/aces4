@@ -202,7 +202,7 @@ void SIPServer::handle_PUT(int mpi_source, int tag) {
 	// Write into block map
 	//SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting block " << bid << " of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
 
-	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting empty block " << bid << " of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting empty block " << bid << " of size " << bptr->size_ <<" of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
 	bid_map->insert(std::pair<BlockId, Block::BlockPtr>(bid, bptr));
 
 	sip::check(outstanding_put_data_arr_[mpi_source] == NULL, "Data to put block into was not NULL !");
@@ -272,6 +272,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int tag) {
 		bptr = it->second;
 	}
 
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Putting block (to accumulate) " << bid << " of size " << bptr->size_ <<" of array " << sip_tables_.array_name(bid.array_id_) << std::endl);
 	bid_map->insert(std::pair<BlockId, Block::BlockPtr>(bid, bptr));
 
 	sip::check(outstanding_put_data_arr_[mpi_source] == NULL, "Data to put block into was not NULL !");
