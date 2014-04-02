@@ -199,6 +199,10 @@ int main(int argc, char* argv[]) {
 		//TAU_STATIC_PHASE_STOP(it->c_str());
   		TAU_PHASE_STOP(tau_dtimer);
 #endif
+
+#ifdef HAVE_MPI
+      SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
+#endif
 	}
 
 #ifdef HAVE_TAU
