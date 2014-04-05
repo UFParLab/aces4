@@ -70,7 +70,7 @@ public:
 	 * @param is_scope_extent indicates whether a newly allocated block should be placed on the list of blocks to be deleted on a leave_scope.
 	 * @return pointer to requested Block
 	 */
-	Block::BlockPtr get_block_for_writing(const BlockId& id, bool is_scope_extent);
+	Block::BlockPtr get_block_for_writing(const BlockId& id, bool is_scope_extent = false);
 
 
 	/** Gets requested Block, which is required to already exist, for read only access.
@@ -287,6 +287,13 @@ private:
 	 * Blocks till any one of the requested blocks arrive.
 	 */
 	void free_any_posted_receive();
+
+	/**
+	 * checks that the number of double values recieved is the same as expected.
+	 * If not, it is a fatal error
+	 */
+	void check_double_count(MPI_Status& status, int expected_count);
+
 
 #endif
 

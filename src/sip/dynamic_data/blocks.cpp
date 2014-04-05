@@ -9,8 +9,10 @@
 #include "blocks.h"
 #include <iostream>
 #include <cstring>
+#include <sstream>
 #include "sip.h"
 #include "tensor_ops_c_prototypes.h"
+#include "sip_tables.h"
 
 #include "gpu_super_instructions.h"
 
@@ -171,6 +173,23 @@ bool BlockId::operator<(const BlockId& rhs) const {
 //
 //
 
+std::string BlockId::str(){
+	std::stringstream ss;
+	SipTables* tables = SipTables::get_instance();
+    int rank = tables->array_rank(array_id_);
+	ss << (tables->array_name(array_id_));
+	ss << '[';
+	int i;
+	for (i = 0; i < rank; ++i){
+		ss << ( i==0 ? "" : "," ) << index_values_[i];
+	}
+	ss << ']';
+	return ss.str();
+	}
+
+
+
+
 
 std::ostream& operator<<(std::ostream& os, const BlockId& id) {
 	os << id.array_id_ << ':';
@@ -186,7 +205,7 @@ std::ostream& operator<<(std::ostream& os, const BlockId& id) {
 		}
 		os << ']';
 	} else {
-		os << " NULL";
+//		os << " NULL";
 	}
 	return os;
 }

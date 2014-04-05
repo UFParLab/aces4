@@ -15,11 +15,23 @@
 
 namespace sip {
 
+
+
 SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input_file):
-	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader),	sialx_lines_(-1){
+	setup_reader_(setup_reader),
+	siox_reader_(*this, input_file, setup_reader),
+	sialx_lines_(-1){
+	global_sip_tables = this;
 }
 
 SipTables::~SipTables() {
+}
+
+SipTables* SipTables::global_sip_tables;
+
+SipTables* SipTables::get_instance(){
+	check (global_sip_tables != NULL, "Attempting to access sip table when it doesn't exist");
+	return global_sip_tables;
 }
 
 int SipTables::max_timer_slots(){
@@ -224,7 +236,7 @@ std::ostream& operator<<(std::ostream& os, const SipTables& obj) {
 	//string literal table
 	os << "String Literal Table:" << std::endl;
 	for (int i = 0; i < obj.string_literal_table_.size(); ++i) {
-		os << obj.string_literal_table_[i] << '\n';
+		os << "string_literal_table[" << i << "]= " << obj.string_literal_table_[i] << '\n';
 	}
 	os << std::endl;
 	os << std::endl;

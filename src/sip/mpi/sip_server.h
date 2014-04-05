@@ -89,11 +89,13 @@ public:
 		return sip_tables_.array_name(array_id);
 	}
 
+	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
 	double scalar_value(int){ fail("scalar_value should not be invoked by a server"); return -.1;}
 	void set_scalar_value(int, double) { fail("set_scalar_value should not be invoked by a server");}
     void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
     Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
+
 
 private:
 
@@ -245,7 +247,7 @@ private:
 	 */
 	void check_double_count(MPI_Status& status, int expected_count);
 
-	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
+
 
 };
 

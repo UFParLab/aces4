@@ -100,7 +100,7 @@ void delete_scratch_array(double **array){
 }
 
 /**
- * Get predefined integer array from intitialization data
+ * Get predefined integer array from initialization data
  *
  * @param aname [in] Name of the array
  * @param [out] num_dims

@@ -50,6 +50,8 @@ public:
 	SipTables(setup::SetupReader&, setup::InputStream&);
 	~SipTables();
 
+	static SipTables* get_instance();
+
 // Convenience method
 	/**
 	 * @return Maximum number of slots to initialize in the timer
@@ -109,6 +111,8 @@ public:
 
 	setup::SetupReader& setup_reader() const { return setup_reader_; }
 private:
+
+static SipTables* global_sip_tables;
 
 	OpTable op_table_;
 	sip::ArrayTable array_table_;

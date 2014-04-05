@@ -19,9 +19,10 @@ sial put_test
 		do j
 			print_index j
 			a(i,j) = 42.0
+			execute print_block a(i,j)
 			put b(i,j) = a(i,j)
-			put c(i,j) += a(i,j)
-			put c(i,j) += a(i,j)
+			put c(i,j) = a(i,j)
+#			put c(i,j) += a(i,j)
 			execute print_block b(i,j)
 			execute print_block c(i,j)
 		enddo j

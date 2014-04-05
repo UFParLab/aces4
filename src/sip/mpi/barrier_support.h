@@ -42,7 +42,10 @@ namespace sip {
 
 class BarrierSupport {
 public:
-	BarrierSupport(){}
+	BarrierSupport():
+	section_number_(0),
+	transaction_number_(0){
+	}
 	~BarrierSupport(){}
 
 
@@ -226,7 +229,7 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_END_PROGRAM(){
-		return make_mpi_tag(SIPMPIData::DELETE, section_number_, transaction_number_++);
+		return make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, transaction_number_++);
 	}
 
 	/**

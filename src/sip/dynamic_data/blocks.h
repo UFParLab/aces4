@@ -163,6 +163,7 @@ public:
 	int array_id() const {return array_id_;}
 	int index_values (int i) const {return index_values_[i];}
 
+	std::string str();
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
 
 //	/**

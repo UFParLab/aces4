@@ -131,9 +131,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case get_op: {
-//			array::BlockSelector selector = block_selector_stack_.top();
-//			array::BlockId id = block_id(selector);
-//			block_selector_stack_.pop();
 			sip::BlockId id = get_block_id_from_selector_stack();
 			data_manager_.block_manager_.get(id);
 			++pc;
@@ -563,7 +560,27 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			int string_slot = op_table_.op1_array(pc);
 			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
+#ifdef HAVE_MPI
+			if (sip_tables_.is_distributed(array_slot) || sip_tables_.is_served(array_slot)){
+				int my_server = sip_mpi_attr_.my_server();
+				if (my_server > 0){
+					int set_persistent_tag;
+					set_persistent_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
+					int buffer[2]= {array_slot,string_slot};
+					SIPMPIUtils::check_err(MPI_Send(buffer, 2, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD));
+
+				//wait for ack
+				MPI_Status status;
+				SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD, &status));
+				}
+			}
+			else {
             persistent_array_manager_->set_persistent(this, array_slot,string_slot);
+			}
+#else
+	           persistent_array_manager_->set_persistent(this, array_slot,string_slot);
+#endif //HAVE_MPI
+
 			++pc;
 		}
 		break;
@@ -572,7 +589,26 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			int string_slot = op_table_.op1_array(pc);
 			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
 					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
+#ifdef HAVE_MPI
+			if (sip_tables_.is_distributed(array_slot) || sip_tables_.is_served(array_slot)){
+				int my_server = sip_mpi_attr_.my_server();
+				if (my_server > 0){
+					int restore_persistent_tag;
+					restore_persistent_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
+					int buffer[2]= {array_slot,string_slot};
+					SIPMPIUtils::check_err(MPI_Send(buffer, 2, MPI_INT, my_server, restore_persistent_tag, MPI_COMM_WORLD));
+
+				//wait for ack
+				MPI_Status status;
+				SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, restore_persistent_tag, MPI_COMM_WORLD, &status));
+				}
+			}
+			else {
+            persistent_array_manager_->restore_persistent(this, array_slot,string_slot);
+			}
+#else
 			persistent_array_manager_->restore_persistent(this, array_slot, string_slot);
+#endif //HAVE_MPI
 			++pc;
 		}
 		break;
@@ -585,12 +621,33 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 	}
 
 	post_sial_program();
+	std::cout <<  "W " << sip_mpi_attr_.global_rank() << " at barrier" << std::endl << std::flush;
+	MPI_Barrier(MPI_COMM_WORLD);
+	std::cout <<  "W " << sip_mpi_attr_.global_rank() << " after barrier" << std::endl << std::flush;
 
 }
 
 
 
 void Interpreter::post_sial_program(){
+#ifdef HAVE_MPI
+//	std::cout<< "in post sial program ";
+				int my_server = sip_mpi_attr_.my_server();
+//				std::cout << " with my_server " << my_server << std::endl;
+				if (my_server > 0){
+					int end_program_tag;
+					end_program_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_END_PROGRAM();
+					std::cout << "sending end_program_tag " << end_program_tag << std::endl << std::flush;
+					SIPMPIUtils::check_err(MPI_Send(0,0, MPI_INT, my_server, end_program_tag, MPI_COMM_WORLD));
+
+				//wait for ack
+				MPI_Status status;
+				SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, end_program_tag, MPI_COMM_WORLD, &status));
+				std::cout << "got ack for end_program in post_sial_program" << std::endl << std::flush;
+
+				}
+
+#endif //HAVE_MPI
 
 }
 
