@@ -639,7 +639,10 @@ TEST(SimpleMPI,DISABLED_put_test_mpi){
 TEST(Sial_QM,ccsdpt_test){
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+	std::cout << "+++++++++++++++++++++++++++++++++++"<< std::endl << sip_mpi_attr << std::endl  <<
+			"my_server=" <<  sip_mpi_attr.my_server() << "+++++++++++++++++++++++++++++++++++"<< std::endl << std::flush;
 
+	MPI_Barrier(MPI_COMM_WORLD);
 	//create setup_file
 	std::string job("ccsdpt_test");
 	std::cout << "JOBNAME = " << job << std::endl;

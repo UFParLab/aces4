@@ -569,9 +569,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 					int buffer[2]= {array_slot,string_slot};
 					SIPMPIUtils::check_err(MPI_Send(buffer, 2, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD));
 
-				//wait for ack
-				MPI_Status status;
-				SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD, &status));
+					//wait for ack
+					MPI_Status status;
+					SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD, &status));
 				}
 			}
 			else {
@@ -592,19 +592,25 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 #ifdef HAVE_MPI
 			if (sip_tables_.is_distributed(array_slot) || sip_tables_.is_served(array_slot)){
 				int my_server = sip_mpi_attr_.my_server();
-				if (my_server > 0){
+				if (my_server > 0) {
 					int restore_persistent_tag;
-					restore_persistent_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
-					int buffer[2]= {array_slot,string_slot};
-					SIPMPIUtils::check_err(MPI_Send(buffer, 2, MPI_INT, my_server, restore_persistent_tag, MPI_COMM_WORLD));
+					restore_persistent_tag =
+							sip_mpi_attr_.barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
+					int buffer[2] = { array_slot, string_slot };
+					SIPMPIUtils::check_err(
+							MPI_Send(buffer, 2, MPI_INT, my_server,
+									restore_persistent_tag, MPI_COMM_WORLD));
 
-				//wait for ack
-				MPI_Status status;
-				SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, restore_persistent_tag, MPI_COMM_WORLD, &status));
+					//wait for ack
+					MPI_Status status;
+					SIPMPIUtils::check_err(
+							MPI_Recv(0, 0, MPI_INT, my_server,
+									restore_persistent_tag, MPI_COMM_WORLD,
+									&status));
 				}
-			}
-			else {
-            persistent_array_manager_->restore_persistent(this, array_slot,string_slot);
+			} else {
+				persistent_array_manager_->restore_persistent(this, array_slot,
+						string_slot);
 			}
 #else
 			persistent_array_manager_->restore_persistent(this, array_slot, string_slot);

@@ -76,18 +76,19 @@ void BlockManager::barrier() {
 			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning BARRIER "<< std::endl);SIP_LOG(
 			if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : I am company master sending BARRIER to server !" << std::endl);
 
-	MPI_Status statuses[MAX_POSTED_ASYNC];
-	sip::check(0 <= num_posted_async_ && num_posted_async_ <= MAX_POSTED_ASYNC,
-			"Inconsistent value for number of posted asyncs !", current_line());
-	if (num_posted_async_ > 0)
-		SIPMPIUtils::check_err(
-				MPI_Waitall(num_posted_async_, posted_async_, statuses));
-	num_posted_async_ = 0;
-	blocks_in_transit_.clear();
-
-	std::fill(posted_async_ + 0, posted_async_ + MAX_POSTED_ASYNC,
-			MPI_REQUEST_NULL);
-
+//	MPI_Status statuses[MAX_POSTED_ASYNC];
+//	sip::check(0 <= num_posted_async_ && num_posted_async_ <= MAX_POSTED_ASYNC,
+//			"Inconsistent value for number of posted asyncs !", current_line());
+//	if (num_posted_async_ > 0)
+//		SIPMPIUtils::check_err(
+//				MPI_Waitall(num_posted_async_, posted_async_, statuses));
+//	num_posted_async_ = 0;
+//	blocks_in_transit_.clear();
+//
+//	std::fill(posted_async_ + 0, posted_async_ + MAX_POSTED_ASYNC,
+//			MPI_REQUEST_NULL);
+	MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
+	MPI_Barrier(worker_comm);
 	sip_mpi_attr_.barrier_support_.barrier(); //increment section number, reset msg number
 
 	// Remove and deallocate cached blocks of distributed and served arrays
@@ -119,7 +120,8 @@ void BlockManager::delete_distributed(int array_id) {
 	block_map_.delete_per_array_map_and_blocks(array_id);
 #ifdef HAVE_MPI
 	//send delete message to server if responsible worker
-	if (int my_server = sip_mpi_attr_.my_server() > 0) {
+	int my_server = sip_mpi_attr_.my_server();
+	if (my_server > 0) {
 		SIP_LOG(
 				std::cout<<"Worker " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< my_server << std::endl);
 		int delete_tag =

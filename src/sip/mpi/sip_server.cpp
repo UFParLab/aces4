@@ -260,7 +260,7 @@ void SIPServer::check_int_count(MPI_Status& status, int expected_count){
 }
 
 void SIPServer::check_double_count(MPI_Status& status, int expected_count){
-	int received_count;				std::cout <<  "W " << sip_mpi_attr_.global_rank() << " at barrier" << std::endl << std::flush;
+	int received_count;
 	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count));
 	check(received_count == expected_count, "message double count different than expected");
 }
