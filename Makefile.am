@@ -50,6 +50,8 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/block_id.cpp\
 ./src/sip/dynamic_data/block_shape.h\
 ./src/sip/dynamic_data/block_shape.cpp\
+./src/sip/dynamic_data/block_selector.h\
+./src/sip/dynamic_data/block_selector.cpp\
 ./src/sip/dynamic_data/blocks.h\
 ./src/sip/dynamic_data/blocks.cpp\
 ./src/sip/dynamic_data/block_manager.h\

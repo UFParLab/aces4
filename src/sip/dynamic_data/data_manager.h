@@ -14,6 +14,7 @@
 #include "config.h"
 #include "sip.h"
 #include "sip_tables.h"
+#include "block_selector.h"
 #include "blocks.h"
 #include "block_manager.h"
 #include "contiguous_array_manager.h"

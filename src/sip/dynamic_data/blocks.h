@@ -48,46 +48,6 @@ namespace sip {
 
 namespace sip {
 
-
-
-///** Describes the shape of the block in terms of the size of each index */
-////TODO Consider adding rank to the shape
-//
-//class BlockShape {
-//public:
-//	BlockShape();
-//	explicit BlockShape(const segment_size_array_t&);
-//	~BlockShape();
-//	segment_size_array_t segment_sizes_;
-//	bool operator==(const BlockShape& rhs) const;
-//	bool operator<(const BlockShape& rhs) const;
-//	int num_elems() const;
-//	friend std::ostream& operator<<(std::ostream&, const BlockShape &);
-//	friend class Block;
-//};
-
-/** The array slot along with the index slots.  Together with the values of the arrays, determines a block.
- * There are two special constants.  The value that indicates an unused index, and the value for wildcards.
- * The latter must match the value assumed by the compiler which is 90909.  To ensure proper initialization
- * of unused dimensions, the constructor requires the rank.
- *
- * If the rank of a non-scalar is zero, this should be a contiguous (static) array, and the whole array is selected.
- * Otherwise the rank should be the same as the rank in the array table.
- *
- * Note that the equality operator ignores the array_id.
- */
-class BlockSelector {
-public:
-	BlockSelector(int array_id, int rank, const index_selector_t&);
-	int array_id_;
-	int rank_;
-	index_selector_t index_ids_;
-	bool operator==(const BlockSelector& rhs) const;
-	friend std::ostream& operator<<(std::ostream&, const BlockSelector &);
-};
-
-
-
 /** A block of data together with its shape. Size is derived from the shape
  * and is stored for convenience.  The shape of a block cannot change once
  * created, although the data may.  In contrast to the other classes, which are

@@ -24,88 +24,6 @@
 namespace sip {
 
 
-///********************** Block Shape ***********************/
-//
-//BlockShape::BlockShape() {
-//	std::fill(segment_sizes_ + 0, segment_sizes_ + MAX_RANK, 1);
-//}
-//
-//BlockShape::BlockShape(const segment_size_array_t& segment_sizes) {
-//	std::copy(segment_sizes + 0, segment_sizes + MAX_RANK, segment_sizes_ + 0);
-//}
-//
-//BlockShape::~BlockShape() {
-//}std::ostream& operator<<(std::ostream& os, const BlockShape & shape) {
-//	os << "[";
-//	for (int i = 0; i < MAX_RANK; ++i) {
-//		os << (i == 0 ? "" : ",") << shape.segment_sizes_[i];
-//	}
-//	os << ']';
-//
-//	return os;
-//}
-//
-//int BlockShape::num_elems() const{
-//	int num_elems = 1;
-//	for (int i = 0; i < MAX_RANK; i++) {
-//		num_elems *= segment_sizes_[i];
-//	}
-//	return num_elems;
-//}
-//
-//bool BlockShape::operator==(const BlockShape& rhs) const {
-//	bool is_equal = true;
-//	for (int i = 0; is_equal && i < MAX_RANK; ++i) {
-//		is_equal = (segment_sizes_[i] == rhs.segment_sizes_[i]);
-//	}
-//	return is_equal;
-//}
-//bool BlockShape::operator<(const BlockShape& rhs) const {
-//	bool is_eq = true;
-//	bool is_leq = true;
-//	for (int i = 0; is_leq && i < MAX_RANK; ++i) {
-//		is_leq = (segment_sizes_[i] <= rhs.segment_sizes_[i]);
-//		is_eq = is_eq && (segment_sizes_[i] == rhs.segment_sizes_[i]);
-//	}
-//	return (is_leq && !is_eq);
-//}
-
-/*********************** Block Selector *****************/
-//const int BlockSelector::unused_index = -2;
-//const int BlockSelector::wild_card_index = 90909;
-BlockSelector::BlockSelector(int array_id, int rank,
-		const index_selector_t& index_ids) :
-		array_id_(array_id),
-		rank_(rank){
-	for (int i = 0; i != rank; ++i) {
-		index_ids_[i] = index_ids[i];
-	}
-	for (int i = rank; i != MAX_RANK; ++i) {
-		index_ids_[i] = unused_index_slot;
-	}
-}
-
-bool BlockSelector::operator==(const BlockSelector& rhs) const {
-	if (rank_ != rhs.rank_) return false;
-	for (int i = 0; i < MAX_RANK; ++i) {
-		if  (index_ids_[i] != rhs.index_ids_[i]) return false;
-	}
-	return true;
-}
-
-std::ostream& operator<<(std::ostream& os, const BlockSelector & selector) {
-	os << selector.array_id_;
-	os << "[" << selector.index_ids_[0];
-	for (int i = 1; i < MAX_RANK; ++i) {
-		int id = selector.index_ids_[i];
-		if (id != unused_index_slot)
-			os << "," << id;
-	}
-	os << ']';
-	return os;
-}
-
-/*********************** Block ***************************/
 
 Block::Block(BlockShape shape) :
 		shape_(shape)
@@ -348,7 +266,6 @@ Block::dataPtr Block::accumulate_data(BlockPtr source) {
 /*extracts slice from this block and copies to the given block, which must exist and have data allocated, Returns dest*/
 Block::dataPtr Block::extract_slice(int rank, offset_array_t& offsets,
 		BlockPtr destination) {
-//	std::cout << "in extract_slice, printing destination block " << std::endl << *destination << std::endl;
 	//extents = shape_.segment_sizes_;
 	/*  subroutine tensor_block_slice_(nthreads,dim_num,tens,tens_ext,slice,slice_ext,ext_beg,ierr) bind(c,name='tensor_block_slice__') !PARALLEL
 	 !This subroutine extracts a slice from a tensor block.
@@ -373,7 +290,6 @@ Block::dataPtr Block::extract_slice(int rank, offset_array_t& offsets,
 			destination->data_, destination->shape_.segment_sizes_, offsets,
 			ierr);
 	sip::check(ierr == 0, "error value returned from tensor_block_slice__");
-//	std::cout << "in extract_slice, after tensor_block_slice  printing destination block " << std::endl << *destination << std::endl;
 	return destination->data_;
 }
 
@@ -393,28 +309,9 @@ void Block::insert_slice(int rank, offset_array_t& offsets, BlockPtr source){
 	subroutine tensor_block_insert_(nthreads,dim_num,tens,tens_ext,slice,slice_ext,ext_beg,ierr)
 	void tensor_block_insert__(int&, int&, double*, int*, double*, int*, int*, int&);
 	*/
-//	std::cout << "Block::insert_slice\n";
-//	std::cout << "rank, offsets, source = " << rank << ", [" ;
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << offsets[i];
-//	}
-//	std::cout << "]\n";
-//	std::cout << *source << std::endl;
+
 	int nthreads = sip::MAX_OMP_THREADS;
 	int ierr = 0;
-//	std::cout << "nthreads, rank, data_, " <<
-//			"shape_.segment_sizes_, " <<
-//			"source->data_, source->shape>_.segment_sizes_" << std::endl;
-//	std::cout << nthreads << "," << rank << "," << data_[0] << "," << data_[1] << ",\n[" ;
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << shape_.segment_sizes_[i];
-//	}
-//	std::cout << "]\n";
-//	std::cout << source->data_[0] << "," << source->data_[1] << ",\n[" ;
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << source->shape_.segment_sizes_[i];
-//	}
-//	std::cout << ']' << std::endl;
 	tensor_block_insert__(nthreads, rank, data_, shape_.segment_sizes_,
 			source->data_, source->shape_.segment_sizes_, offsets, ierr);
 	sip::check(ierr==0, "error value returned from tensor_block_insert__");
@@ -466,34 +363,6 @@ void Block::allocate_host_data(){
 }
 
 
-//char* Block::serialize(BlockPtr obj, int &size){
-//	size = sizeof(obj->shape_) + sizeof(obj->size_) + obj->size_ * sizeof(dataPtr);
-//	char * to_return = new char[size];
-//
-//	memcpy(to_return + 0, &obj->shape_, sizeof(obj->shape_));
-//	memcpy(to_return + sizeof(obj->shape_), &obj->size_, sizeof(obj->size_));
-//	memcpy(to_return + sizeof(obj->shape_) + sizeof(obj->size_), obj->data_, obj->size_ * sizeof(dataPtr));
-//
-//	return to_return;
-//}
-
-//Block::BlockPtr Block::deserialize(char* bytes, int size){
-//	BlockShape shape_;
-//    int size_;
-//
-//	memcpy(&shape_, bytes + 0, sizeof(shape_));
-//	memcpy(&size_, bytes + sizeof(shape_), sizeof(size_));
-//	dataPtr data_ = new double[size_];
-//	memcpy(data_, bytes + sizeof(shape_) + sizeof(size_), size_ * sizeof(dataPtr));
-//
-//	sip::check(size == sizeof(shape_) + sizeof(size_) + size_ * sizeof(dataPtr),
-//			"Deserialization of BlockPtr failed !");
-//	sip::check(shape_.num_elems() == size_, "Incorrect size in deserialization of BlockPtr !");
-//
-//	Block * blk = new Block(shape_, data_);
-//	return blk;
-//
-//}
 
 /*********************************************************************/
 /**						GPU Specific methods						**/
