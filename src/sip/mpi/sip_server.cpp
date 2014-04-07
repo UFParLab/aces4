@@ -87,7 +87,7 @@ void SIPServer::run(){
 
 
 void SIPServer::handle_GET(int mpi_source, int get_tag){
-	int block_id_count = BlockId::mpi_count;
+	int block_id_count = BlockId::MPI_COUNT;
 	BlockId::mpi_block_id_t buffer;
 	MPI_Status status;
 
@@ -112,7 +112,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag){
 
 //TODO make second rec asynch
 void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag){
-	int block_id_count = BlockId::mpi_count;
+	int block_id_count = BlockId::MPI_COUNT;
 	BlockId::mpi_block_id_t buffer;
 	MPI_Status status;
 	//receive the PUT message
@@ -135,7 +135,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag){
 }
 
 void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag){
-	int block_id_count = BlockId::mpi_count;
+	int block_id_count = BlockId::MPI_COUNT;
 	BlockId::mpi_block_id_t buffer;
 	MPI_Status status;
 	//receive the PUT_ACCUMULATE message

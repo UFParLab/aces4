@@ -17,7 +17,6 @@
 #include "blocks.h"
 #include "tensor_ops_c_prototypes.h"
 
-
 #include "config.h"
 
 // For CUDA Super Instructions
@@ -35,34 +34,31 @@ namespace sip {
 
 Interpreter* Interpreter::global_interpreter;
 
-
-
-
 #ifdef HAVE_MPI
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
-		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution, PersistentArrayManager<Block,Interpreter>* persistent_array_manager) :
-	sip_tables_(sipTables),
-	sialx_timers_(sialx_timer),
-	data_manager_(sipTables,  sip_mpi_attr, data_distribution),
-	op_table_(sipTables.op_table_),
-	sip_mpi_attr_(sip_mpi_attr),
-	data_distribution_(data_distribution),
-	persistent_array_manager_(persistent_array_manager){
+		SIPMPIAttr& sip_mpi_attr, DataDistribution& data_distribution,
+		PersistentArrayManager<Block, Interpreter>* persistent_array_manager) :
+		sip_tables_(sipTables), sialx_timers_(sialx_timer), data_manager_(
+				sipTables, sip_mpi_attr, data_distribution), op_table_(
+				sipTables.op_table_), sip_mpi_attr_(sip_mpi_attr), data_distribution_(
+				data_distribution), persistent_array_manager_(
+				persistent_array_manager) {
 	_init(sipTables);
 }
 #else
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, PersistentArrayManager<Block,Interpreter>* persistent_array_manager ) :
-	sip_tables_(sipTables),
-	sialx_timers_(sialx_timer),
-	data_manager_(sipTables),
-	op_table_(sipTables.op_table_),
-	persistent_array_manager_(persistent_array_manager){
+sip_tables_(sipTables),
+sialx_timers_(sialx_timer),
+data_manager_(sipTables),
+op_table_(sipTables.op_table_),
+persistent_array_manager_(persistent_array_manager) {
 	_init(sipTables);
 }
 
 #endif
 
-Interpreter::~Interpreter() {}
+Interpreter::~Interpreter() {
+}
 
 void Interpreter::_init(SipTables& sipTables) {
 	int num_indices = sipTables.index_table_.entries_.size();
@@ -122,7 +118,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case do_op: {
 			int index_slot = op_table_.do_index_selector(pc);
-			LoopManager* loop = new DoLoop(index_slot, data_manager_, sip_tables_);
+			LoopManager* loop = new DoLoop(index_slot, data_manager_,
+					sip_tables_);
 			loop_start(loop);
 		}
 			break;
@@ -146,7 +143,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case put_op: { //this is instruction put a(...) += b(...)
 			sialx_timers_.start_timer(line_number());
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
+			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
+					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			data_manager_.block_manager_.put_accumulate(lhs_id, rhs_block);
 			sialx_timers_.pause_timer(line_number());
@@ -234,8 +232,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case pardo_op: {
 			int num_indices = op_table_.num_indices(pc);
 #ifdef HAVE_MPI
-			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
-								op_table_.index_selectors(pc), data_manager_, sip_tables_, sip_mpi_attr_);
+			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(
+					num_indices, op_table_.index_selectors(pc), data_manager_,
+					sip_tables_, sip_mpi_attr_);
 #else
 			LoopManager* loop = new SequentialPardoLoop(num_indices,
 					op_table_.index_selectors(pc), data_manager_, sip_tables_);
@@ -298,10 +297,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			int rrank = sip_tables_.array_rank(rarray);
 			check(lrank == 0 && rrank == 0 && drank == 0,
 					"divide only defined for scalars");
-            double denom = scalar_value(rarray);
-            double numer = scalar_value (larray);
-            sip::check(denom != 0, "Dividing by 0!", line_number());
-            double div = numer / denom;
+			double denom = scalar_value(rarray);
+			double numer = scalar_value(larray);
+			sip::check(denom != 0, "Dividing by 0!", line_number());
+			double div = numer / denom;
 			set_scalar_value(darray, div);
 			++pc;
 		}
@@ -374,7 +373,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case prepare_increment_op: {
 			sialx_timers_.start_timer(line_number());
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
+			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
+					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			data_manager_.block_manager_.prepare_accumulate(lhs_id, rhs_block);
 			sialx_timers_.pause_timer(line_number());
@@ -456,16 +456,17 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			int array_table_slot = op_table_.print_index(pc);
 			double value = scalar_value(array_table_slot);
 			std::string name = sip_tables_.array_name(array_table_slot);
-            const std::streamsize old = std::cout.precision();
+			const std::streamsize old = std::cout.precision();
 			std::cout << name << " = " << std::setprecision(20) << value
 					<< " at line " << op_table_.line_number(pc) << std::endl;
-            std::cout.precision(old);
+			std::cout.precision(old);
 			++pc;
 		}
 			break;
 		case dosubindex_op: {
 			int index_slot = op_table_.do_index_selector(pc);
-			LoopManager* loop = new SubindexDoLoop(index_slot, data_manager_, sip_tables_);
+			LoopManager* loop = new SubindexDoLoop(index_slot, data_manager_,
+					sip_tables_);
 			loop_start(loop);
 		}
 			break;
@@ -523,24 +524,24 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 				++pc;
 			}
 			break;
-		case gpu_put_op:{
-			if (gpu_enabled_){
-				sialx_timers_.start_timer(line_number());
-				get_gpu_block('w'); // TOOD FIXME Temporary solution
-				sialx_timers_.pause_timer(line_number());
-				++pc;
-			}
-			break;
-			case gpu_get_op: {
+			case gpu_put_op: {
 				if (gpu_enabled_) {
 					sialx_timers_.start_timer(line_number());
-					get_block_from_selector_stack('r'); //TODO FIXME Temporary solution
+					get_gpu_block('w'); // TOOD FIXME Temporary solution
 					sialx_timers_.pause_timer(line_number());
+					++pc;
 				}
-				++pc;
+				break;
+				case gpu_get_op: {
+					if (gpu_enabled_) {
+						sialx_timers_.start_timer(line_number());
+						get_block_from_selector_stack('r'); //TODO FIXME Temporary solution
+						sialx_timers_.pause_timer(line_number());
+					}
+					++pc;
+				}
+				break;
 			}
-			break;
-        }
 #else
 		case gpu_on_op:
 		case gpu_off_op:
@@ -555,42 +556,50 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 
 #endif
-		case set_persistent_op:{
+		case set_persistent_op: {
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
-			SIP_LOG(std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot
-					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
+			SIP_LOG(
+					std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot << " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 #ifdef HAVE_MPI
-			if (sip_tables_.is_distributed(array_slot) || sip_tables_.is_served(array_slot)){
+			if (sip_tables_.is_distributed(array_slot)
+					|| sip_tables_.is_served(array_slot)) {
 				int my_server = sip_mpi_attr_.my_server();
-				if (my_server > 0){
+				if (my_server > 0) {
 					int set_persistent_tag;
-					set_persistent_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
-					int buffer[2]= {array_slot,string_slot};
-					SIPMPIUtils::check_err(MPI_Send(buffer, 2, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD));
+					set_persistent_tag =
+							sip_mpi_attr_.barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
+					int buffer[2] = { array_slot, string_slot };
+					SIPMPIUtils::check_err(
+							MPI_Send(buffer, 2, MPI_INT, my_server,
+									set_persistent_tag, MPI_COMM_WORLD));
 
 					//wait for ack
 					MPI_Status status;
-					SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, set_persistent_tag, MPI_COMM_WORLD, &status));
+					SIPMPIUtils::check_err(
+							MPI_Recv(0, 0, MPI_INT, my_server,
+									set_persistent_tag, MPI_COMM_WORLD,
+									&status));
 				}
-			}
-			else {
-            persistent_array_manager_->set_persistent(this, array_slot,string_slot);
+			} else {
+				persistent_array_manager_->set_persistent(this, array_slot,
+						string_slot);
 			}
 #else
-	           persistent_array_manager_->set_persistent(this, array_slot,string_slot);
+			persistent_array_manager_->set_persistent(this, array_slot,string_slot);
 #endif //HAVE_MPI
 
 			++pc;
 		}
-		break;
-		case restore_persistent_op:{
+			break;
+		case restore_persistent_op: {
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
-			SIP_LOG(std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot
-					<< " and string \"" << string_literal(string_slot) << "\"" << std::endl);
+			SIP_LOG(
+					std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot << " and string \"" << string_literal(string_slot) << "\"" << std::endl);
 #ifdef HAVE_MPI
-			if (sip_tables_.is_distributed(array_slot) || sip_tables_.is_served(array_slot)){
+			if (sip_tables_.is_distributed(array_slot)
+					|| sip_tables_.is_served(array_slot)) {
 				int my_server = sip_mpi_attr_.my_server();
 				if (my_server > 0) {
 					int restore_persistent_tag;
@@ -617,41 +626,45 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 #endif //HAVE_MPI
 			++pc;
 		}
-		break;
-		default:{
+			break;
+		default: {
 			std::cout << "opcode =" << opcode;
 			check(false, " unimplemented opcode");
 		}
 
-	}
+		}
 	}
 
 	post_sial_program();
-	std::cout <<  "W " << sip_mpi_attr_.global_rank() << " at barrier" << std::endl << std::flush;
-	MPI_Barrier(MPI_COMM_WORLD);
-	std::cout <<  "W " << sip_mpi_attr_.global_rank() << " after barrier" << std::endl << std::flush;
+	std::cout << "W " << sip_mpi_attr_.global_rank() << " at barrier"
+			<< std::endl << std::flush;
+	MPI_Barrier (MPI_COMM_WORLD);
+	std::cout << "W " << sip_mpi_attr_.global_rank() << " after barrier"
+			<< std::endl << std::flush;
 
 }
 
-
-
-void Interpreter::post_sial_program(){
+void Interpreter::post_sial_program() {
 #ifdef HAVE_MPI
-//	std::cout<< "in post sial program ";
-				int my_server = sip_mpi_attr_.my_server();
-//				std::cout << " with my_server " << my_server << std::endl;
-				if (my_server > 0){
-					int end_program_tag;
-					end_program_tag = sip_mpi_attr_.barrier_support_.make_mpi_tag_for_END_PROGRAM();
-					std::cout << "sending end_program_tag " << end_program_tag << std::endl << std::flush;
-					SIPMPIUtils::check_err(MPI_Send(0,0, MPI_INT, my_server, end_program_tag, MPI_COMM_WORLD));
+	//implicit sip_barrier here
+	data_manager_.block_manager_.barrier();
+	int my_server = sip_mpi_attr_.my_server();
+	//send end_program message to server, if designated worker and wait for ack.
+	if (my_server > 0) {
+		int end_program_tag;
+		end_program_tag =
+				sip_mpi_attr_.barrier_support_.make_mpi_tag_for_END_PROGRAM();
+		SIP_LOG(
+				std::cout << "sending end_program_tag " << end_program_tag << std::endl << std::flush;)
+		SIPMPIUtils::check_err(
+				MPI_Send(0, 0, MPI_INT, my_server, end_program_tag,
+						MPI_COMM_WORLD));
 
-				//wait for ack
-				MPI_Status status;
-				SIPMPIUtils::check_err(MPI_Recv(0,0, MPI_INT, my_server, end_program_tag, MPI_COMM_WORLD, &status));
-				std::cout << "got ack for end_program in post_sial_program" << std::endl << std::flush;
-
-				}
+		data_manager_.block_manager_.ack_handler_.expect_ack_from(my_server, end_program_tag);
+	}
+	//another barrier
+	data_manager_.block_manager_.barrier();
+	//the program is done and the servers know it.
 
 #endif //HAVE_MPI
 
@@ -1110,7 +1123,7 @@ void Interpreter::handle_contraction_op(int pc) {
 	sip::index_selector_t dselected_index_ids;
 	if (d_is_scalar) {
 		double dval = scalar_value(op_table_.result_array(pc));
-		dval = 0;// Initialize to 0 as required by Dmitry's Contraction routine
+		dval = 0; // Initialize to 0 as required by Dmitry's Contraction routine
 		double *dvalPtr = new double[1];
 		*dvalPtr = dval;
 		sip::BlockShape scalar_shape;
@@ -1139,7 +1152,7 @@ void Interpreter::handle_contraction_op(int pc) {
 	it = std::copy(rselector.index_ids_ + 0, rselector.index_ids_ + rrank, it);
 
 //	int contraction_pattern[lrank + rrank];
-	int contraction_pattern[MAX_RANK*2];
+	int contraction_pattern[MAX_RANK * 2];
 	int ierr;
 
 	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
@@ -1361,8 +1374,8 @@ void Interpreter::handle_sum_op(int pc, double factor) {
 }
 
 void Interpreter::handle_self_multiply_op(int pc) {
-	check(is_scalar(op_table_.op2_array(pc)), "*= only for scalar right hand side",
-			line_number());
+	check(is_scalar(op_table_.op2_array(pc)),
+			"*= only for scalar right hand side", line_number());
 	bool d_is_scalar = is_scalar(op_table_.result_array(pc));
 	double lval = scalar_value(op_table_.op2_array(pc));
 	if (d_is_scalar) {
@@ -1389,15 +1402,13 @@ void Interpreter::handle_self_multiply_op(int pc) {
 		{
 			//TODO introduce debug level--or just delete?
 			sip::BlockId did;
-			sip::Block::BlockPtr dblock = get_block_from_selector_stack('u', did);
+			sip::Block::BlockPtr dblock = get_block_from_selector_stack('u',
+					did);
 //			block_selector_stack_.pop();
 			dblock->scale(lval);
 		}
 	}
 }
-
-
-
 
 void Interpreter::loop_start(LoopManager * loop) {
 	int enddo_pc = op_table_.go_to_target(pc);
@@ -1438,8 +1449,8 @@ sip::BlockId Interpreter::get_block_id_from_selector_stack() {
 	return block_id(selector);
 }
 
-sip::Block::BlockPtr Interpreter::get_block_from_selector_stack(char intent, sip::BlockId& id,
-		bool contiguous_allowed) {
+sip::Block::BlockPtr Interpreter::get_block_from_selector_stack(char intent,
+		sip::BlockId& id, bool contiguous_allowed) {
 	sip::BlockSelector selector = block_selector_stack_.top();
 	block_selector_stack_.pop();
 	return get_block(intent, selector, id);
@@ -1462,7 +1473,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 //		id = array::BlockId(array_id);
 //		return block;
 //	}
-	if (sip_tables_.array_rank(selector.array_id_) == 0){ //this "array" was declared to be a scalar.  Nothing to remove from selector stack.
+	if (sip_tables_.array_rank(selector.array_id_) == 0) { //this "array" was declared to be a scalar.  Nothing to remove from selector stack.
 		id = sip::BlockId(array_id);
 		block = data_manager_.get_scalar_block(array_id);
 		return block;
@@ -1504,7 +1515,8 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 	}
 		break;
 	default:
-		sip::check(false, "SIP bug:  illegal or unsupported intent given to get_block");
+		sip::check(false,
+				"SIP bug:  illegal or unsupported intent given to get_block");
 	}
 	return block;
 

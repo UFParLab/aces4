@@ -44,11 +44,10 @@ namespace sip {
 #ifdef HAVE_MPI
 BlockManager::BlockManager(SipTables& sipTables, SIPMPIAttr& sip_mpi_attr,
 		DataDistribution& data_distribution) :
-		sip_tables_(sipTables), block_map_(sipTables.num_arrays()), sip_mpi_attr_(
-				sip_mpi_attr), data_distribution_(data_distribution), num_posted_async_(
-				0) {
-	std::fill(posted_async_ + 0, posted_async_ + MAX_POSTED_ASYNC,
-			MPI_REQUEST_NULL);
+		sip_tables_(sipTables),
+		block_map_(sipTables.num_arrays()),
+		sip_mpi_attr_(sip_mpi_attr),
+		data_distribution_(data_distribution){
 }
 
 #else
@@ -67,8 +66,7 @@ BlockManager::~BlockManager() {
 }
 
 void BlockManager::barrier() {
-	/*not actually needed for sequential version, but may
-	 * want to enhance to detect data races.
+	/*is empty for the sequential, serverless version.  May want to add data race detection.
 	 */
 #ifdef HAVE_MPI
 
@@ -76,29 +74,20 @@ void BlockManager::barrier() {
 			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning BARRIER "<< std::endl);SIP_LOG(
 			if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : I am company master sending BARRIER to server !" << std::endl);
 
-//	MPI_Status statuses[MAX_POSTED_ASYNC];
-//	sip::check(0 <= num_posted_async_ && num_posted_async_ <= MAX_POSTED_ASYNC,
-//			"Inconsistent value for number of posted asyncs !", current_line());
-//	if (num_posted_async_ > 0)
-//		SIPMPIUtils::check_err(
-//				MPI_Waitall(num_posted_async_, posted_async_, statuses));
-//	num_posted_async_ = 0;
-//	blocks_in_transit_.clear();
-//
-//	std::fill(posted_async_ + 0, posted_async_ + MAX_POSTED_ASYNC,
-//			MPI_REQUEST_NULL);
+	//wait for all expected acks, call the MPI_Barrier among workers, and update barrier data structures.
+	//TODO:  encapsulate this.
+	ack_handler_.wait_all();
 	MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
-	MPI_Barrier(worker_comm);
+	SIPMPIUtils::check_err(MPI_Barrier(worker_comm));
 	sip_mpi_attr_.barrier_support_.barrier(); //increment section number, reset msg number
 
 	// Remove and deallocate cached blocks of distributed and served arrays
+	//TODO if only read and needed in the future, don't need to delete.
 	for (int i = 0; i < block_map_.size(); ++i) {
 		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i))
 			block_map_.delete_per_array_map_and_blocks(i);
 	}
 
-	// Workers do actual MPI_barrier among themselves
-//	SIPMPIUtils::check_err(MPI_Barrier(sip_mpi_attr_.company_communicator()));
 
 	SIP_LOG(
 			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
@@ -129,11 +118,8 @@ void BlockManager::delete_distributed(int array_id) {
 		SIPMPIUtils::check_err(
 				MPI_Send(&array_id, 1, MPI_INT, my_server, delete_tag,
 						MPI_COMM_WORLD));
-		MPI_Status status;
-//			SIPMPIUtils::expect_ack_from_rank(my_server, delete_tag);
-		SIPMPIUtils::check_err(
-				MPI_Recv(0, 0, MPI_INT, my_server, delete_tag, MPI_COMM_WORLD,
-						&status));
+		ack_handler_.expect_ack_from(my_server, delete_tag);
+
 	}
 #endif //HAVE_MPI
 }
@@ -159,7 +145,7 @@ void BlockManager::get(BlockId& block_id) {
 //			<< sip_mpi_attr_.barrier_support_.extract_message_type(get_tag)
 //			<< std::endl;
 	SIPMPIUtils::check_err(
-			MPI_Send(reinterpret_cast<int *>(&block_id), BlockId::mpi_count,
+			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_COUNT,
 					MPI_INT, server_rank, get_tag, MPI_COMM_WORLD));
 	Block::BlockPtr block = get_block_for_writing(block_id); //this buffer will be overwritten with the version from the server.
 	MPI_Status status;
@@ -179,6 +165,8 @@ void BlockManager::get(BlockId& block_id) {
  *
  * To get this right, we copy the contents of the source block into a local
  * copy of the target block and "put" the target block.
+ *
+ * TODO  optimize this to eliminate the copy
  *
  * @param target
  * @param source_ptr
@@ -217,23 +205,23 @@ void BlockManager::put_replace(BlockId& target_id,
 
 	//note that due to the structure of a blockId, we can just send the first MAX_RANK+1 int elements.
 	SIPMPIUtils::check_err(
-			MPI_Send(reinterpret_cast<int *>(&target_id), BlockId::mpi_count,
+			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT,
 					MPI_INT, server_rank, put_tag, MPI_COMM_WORLD));
 	//immediately follow with the data
 	SIPMPIUtils::check_err(
 			MPI_Send(target_block->data_, target_block->size_, MPI_DOUBLE,
 					server_rank, put_data_tag, MPI_COMM_WORLD));
-	//remove
-	//wait for ack
-	MPI_Status status;
-	MPI_Recv(0, 0, MPI_INT, server_rank, put_data_tag, MPI_COMM_WORLD, &status);
-//	SIP_LOG(
-//			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT for block " << lhs_id << " to server rank " << server_rank << std::endl);
-//	std::cout << "W " << my_rank << " : Done with PUT for block " << target_id
-//			<< " to server rank " << server_rank << std::endl;
+
+	//expect ack
+	ack_handler_.expect_ack_from(server_rank, put_data_tag);
+
+
+	SIP_LOG(std::cout << "W " << my_rank << " : Done with PUT for block " << target_id
+			<< " to server rank " << server_rank << std::endl;)
 
 	//remove target_block from map, it was used as a convenient buffer.
-	//TODO perhaps just allocate a buffer instead?
+	//TODO perhaps just allocate a buffer instead? Or handle this more
+	//asynchronously???
 	delete_block(target_id);
 
 #endif //HAVE_MPI
@@ -281,19 +269,17 @@ void BlockManager::put_accumulate(BlockId& target_id,
 //	SIP_LOG(
 //			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Sending PUT_ACCUMULATE for block with tags "<< put_accumulate_tag << " and " << put_accumulate_data_tag << ", "<< target_id << " to server rank " << server_rank << std::endl);
 
-	//note that due to the structure of a blockId, we can just send the first MAX_RANK+1 int elements.
+	//due to the structure of a blockId, we can just send the first MAX_RANK+1 int elements.
 	SIPMPIUtils::check_err(
-			MPI_Send(reinterpret_cast<int *>(&target_id), BlockId::mpi_count,
+			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT,
 					MPI_INT, server_rank, put_accumulate_tag, MPI_COMM_WORLD));
 	//immediately follow with the data
 	SIPMPIUtils::check_err(
 			MPI_Send(target_block->data_, target_block->size_, MPI_DOUBLE,
 					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
-	//wait for ack
-//	std::cout << "worker waiting for put_accumulate tag";
-	MPI_Status status;
-	MPI_Recv(0, 0, MPI_INT, server_rank, put_accumulate_data_tag,
-			MPI_COMM_WORLD, &status);
+
+	//ack
+	ack_handler_.expect_ack_from(server_rank, put_accumulate_data_tag);
 
 	SIP_LOG(
 			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT_ACCUMULATE for block " << lhs_id << " to server rank " << server_rank << std::endl);
@@ -371,7 +357,8 @@ void BlockManager::deallocate_local(const BlockId& id) {
 	}
 }
 
-//returns a pointer to the requested block, creating it if it doesn't exist
+//returns a pointer to the requested block, creating it if it doesn't exist.
+//The block is not initialized to zero
 Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 		bool is_scope_extent) {
 	Block::BlockPtr blk = block(id);
@@ -382,7 +369,6 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 			temp_block_list_stack_.back()->push_back(id);
 		}
 	}
-	//blk->fill(0);
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_write_on_host(blk, id, shape);
@@ -390,114 +376,7 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 	return blk;
 }
 
-#ifdef HAVE_MPI
 
-void BlockManager::wait_for_block_in_transit(const BlockId& id) {
-	BlockIdToIndexMap::iterator it = blocks_in_transit_.find(id);
-	int i = -1;
-	if (it != blocks_in_transit_.end()) {
-		SIP_LOG(
-				std::cout << "W " << sip_mpi_attr_.global_rank() << " : Waiting for block " << id << std::endl);
-		i = it->second;
-		sip::check(0 <= i && i < MAX_POSTED_ASYNC,
-				"Inconsistent value stored in blocks_in_transit_ map !",
-				current_line());
-		MPI_Request r = posted_async_[i];
-		MPI_Status s;
-		SIPMPIUtils::check_err(MPI_Wait(&r, &s));
-		if (num_posted_async_ > 0) {
-			posted_async_[i] = posted_async_[num_posted_async_ - 1];
-			num_posted_async_--;
-		}
-		blocks_in_transit_.erase(id);
-		SIP_LOG(
-				std::cout << "W " << sip_mpi_attr_.global_rank() << " : Got block " << id << ", was at index :" << i << ", outstanding : "<< num_posted_async_ << std::endl);
-	}
-}
-
-void BlockManager::free_any_posted_receive() {
-	MPI_Status statuses[MAX_POSTED_ASYNC];
-	int completed_index = -1;
-	SIPMPIUtils::check_err(
-			MPI_Waitany(num_posted_async_, posted_async_, &completed_index,
-					statuses));
-	posted_async_[completed_index] = posted_async_[num_posted_async_ - 1];
-	num_posted_async_--;
-}
-
-void BlockManager::request_block_from_server(BlockId& id) {
-	//get block, create if doesn't exist
-	Block* block = get_block_for_writing(id, false);
-
-	//check status--if valid copy of block return
-	//if outstanding request, don't request again, just return.
-
-//void BlockManager::request_block_from_server(const BlockId& id) {
-//	Block::BlockPtr blk = block(id);
-//	int array_id = id.array_id();
-//	bool is_remote = sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id);
-//
-//	// Request block from server if not cached
-//	if (blk == NULL && is_remote) {
-//
-//		// The request for this block is already in transit.
-//		// Complete that and launch a new one.
-//		//wait_for_block_in_transit(id); -> done in call to block()
-//
-//		// Fetch remote block (not is cache).
-//		int server_rank = data_distribution_.get_server_rank(id);
-//
-//		// Send block id to fetch
-//		int get_tag = barrier_support_.make_mpi_tag_for_GET();
-//		SIP_LOG(std::cout << "W " << sip_mpi_attr_.global_rank()
-//						<< " : Sending GET with tag " << get_tag
-//						<< " for block " << id << " to server rank "
-//						<< server_rank << std::endl);
-//		SIPMPIUtils::check_err(MPI_Send(reinterpret_cast<int *>(id),))
-//
-//		// Receive block id, shape & size
-//		BlockShape shape = sip_tables_.shape(id);
-//		int data_size = shape.num_elems();
-//
-//		// Receive block double precision data
-//		blk = new Block(shape);
-//		int block_tag = SIPMPIUtils::make_mpi_tag(SIPMPIData::GET_DATA, section_number_, message_number_);
-//		//SIPMPIUtils::get_bptr_data_from_rank(server_rank, &block_tag, data_size, blk);
-//
-//		check(blk != NULL, "Block Pointer into which data is to be received is NULL !", current_line());
-//
-//		// Free up a slot before posting any more requests
-//		if (num_posted_async_ == MAX_POSTED_ASYNC){
-//			free_any_posted_receive();
-//		}
-//
-//		MPI_Request request;
-//		SIPMPIUtils::check_err(MPI_Irecv(blk->data_, data_size, MPI_DOUBLE, server_rank, block_tag, MPI_COMM_WORLD, &request));
-//
-//		MPI_Status status;
-//		SIPMPIUtils::check_err(MPI_Wait(&request, &status));
-//
-////		int msg_no = SIPMPIUtils::get_message_number(block_tag);
-////		int sect_no = SIPMPIUtils::get_section_number(block_tag);
-////		check(msg_no == message_number_, "Message number not consistent in GET !", current_line());
-////		check(sect_no == section_number_,"Section number not consistent in GET !", current_line());
-//
-//		insert_into_blockmap(id, blk);
-//
-//		// Record this posted receive.
-//		posted_async_[num_posted_async_] = request;
-//		blocks_in_transit_[id] = num_posted_async_;
-//		num_posted_async_++;
-//
-//		message_number_++;
-//
-//		SIP_LOG(std::cout << "W " << sip_mpi_attr_.global_rank()
-//						<< " : Done with GET for block " << id
-//						<< " from server rank " << server_rank << std::endl);
-//	}
-}
-
-#endif
 
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
@@ -516,6 +395,7 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 
 /* gets block for reading and writing.  The block should already exist.*/
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
+	std::cout << "calling get_block_for_updateing for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
 	check(blk != NULL, "attempting to update non-existent block",
 			current_line());
@@ -533,66 +413,26 @@ Block::BlockPtr BlockManager::get_block_for_accumulate(const BlockId& id,
 }
 
 void BlockManager::enter_scope() {
-//	std::cout << "in enter_scope" << std::endl;
 	BlockList* temps = new BlockList;
 	temp_block_list_stack_.push_back(temps);
 }
 /*removes the temp blocks in the current scope, then delete the scope's TempBlockStack */
 void BlockManager::leave_scope() {
-//	std::cout << "in leave_scope" << std::endl;
 	BlockList* temps = temp_block_list_stack_.back();
 	BlockList::iterator it;
-//std::cout<<*this<<std::endl;
 	for (it = temps->begin(); it != temps->end(); ++it) {
-//int array_id = (*it).array_id();
-//std::string arrname = sipTables_.array_name(array_id);
-//std::cout<<"Now freeing " <<arrname<<std::endl;
 		delete_block(*it);
 	}
 	temp_block_list_stack_.pop_back();
 	delete temps;
 }
 
-//void BlockManager::save_persistent_dist_arrays(){
-//
-//	int num_arrs = block_map_.size();
-////	for (BlockMap::iterator it = block_map_.begin(); it != block_map_.end(); ++it){
-////		if (pbm_write_.is_array_persistent(it->first)){
-////
-////			IdBlockMap &bid_map = it->second;
-////			pbm_write_.save_dist_array(it->first, bid_map);
-////		}
-////	}
-////	for (int i=0; i<num_arrs; i++){
-////		bool is_remote = sip_tables_.is_distributed(i) || sip_tables_.is_served(i);
-////		if (is_remote && pbm_write_.is_array_persistent(i)){
-////			IdBlockMap<Block>::PerArrayMap *bid_map = block_map_[i];
-////			pbm_write_.save_dist_array(i, bid_map);
-////			block_map_.delete_per_array_map(i);
-////		}
-////	}
-//}
+
 
 std::ostream& operator<<(std::ostream& os, const BlockManager& obj) {
 	os << "block_map_:" << std::endl;
 	os << obj.block_map_ << std::endl;
-//	{
-//		const int num_arrs = obj.block_map_.size();
-//		for (int i=0; i<num_arrs; i++) {
-//			if (obj.block_map_[i] != NULL){
-//				os << "array [" << i << "]" << std::endl;  //print the array id
-//				const IdBlockMap<Block>* bid_map = obj.block_map_[i];
-//				IdBlockMap<Block>*::const_iterator it2;
-//				for (it2 = bid_map->begin(); it2 != bid_map->end(); ++it2) {
-//					check(it2->second != NULL, "Trying to print NULL blockPtr !");
-//					SIP_LOG(if(it2->second == NULL) std::cout<<it2->first<<" is NULL!"<<std::endl;);
-//					os << it2 -> first << std::endl;
-//				}
-//				os << std::endl;
-//			}
-//		}
-//	}
-	{
+
 		os << "temp_block_list_stack_:" << std::endl;
 		std::vector<BlockManager::BlockList*>::const_iterator it;
 		for (it = obj.temp_block_list_stack_.begin();
@@ -603,44 +443,25 @@ std::ostream& operator<<(std::ostream& os, const BlockManager& obj) {
 			}
 			os << std::endl;
 		}
-	}
+
 	return os;
 }
 
-//Block::BlockPtr BlockManager::block(const BlockId& id) {
-//	int array_id = id.array_id_;
-//
-//	if (block_map_[array_id] == NULL){
-//		block_map_[array_id] = new IdBlockMap();
-//		//check_and_warn(false, "Could not find distributed array, creating a new one...");
-//	}
-//
-//	//check(&block_map_[array_id] != NULL, "map containing blocks for array is null!", current_line());
-//	IdBlockMap *bid_map = block_map_[array_id];
-//	IdBlockMap::iterator b = bid_map->find(id);
-//	if (b != bid_map->end()) {
-//#ifdef HAVE_MPI
-//		//Check if this block is in transit and wait for it.
-//		wait_for_block_in_transit(id);
-//#endif
-//		return b->second;
-//	}
-//	return NULL;
-//}
 
-///**
-// * It is an error to try to create a new block if a block with that id already exists
-// * exists.
-// */
-//void BlockManager::insert_into_blockmap(const BlockId& block_id, Block::BlockPtr block_ptr) {
-//	check(block_ptr != NULL, "Trying to insert NULL block into BlockMap !", current_line());
-//	std::pair<IdBlockMap::iterator, bool> ret;
-//	int array_id = block_id.array_id_;
-//	IdBlockMap *bid_map = block_map_[array_id];
-//	std::pair<BlockId, Block::BlockPtr> bid_pair (block_id, block_ptr);
-//	ret = bid_map->insert(bid_pair);
-//	check(ret.second, std::string("attempting to create block that already exists"));
-//}
+Block::BlockPtr BlockManager::block(const BlockId& id){
+	Block::BlockPtr b = block_map_.block(id);
+#ifdef HAVE_MPI
+	if (b != NULL){
+		if ( b->mpi_request_ != NULL && b->mpi_request_ != MPI_REQUEST_NULL){
+		MPI_Status status;
+		MPI_Wait(&(b->mpi_request_), &status);
+		check_double_count(status, b->size_);
+		}
+	}
+#endif //HAVE_MPI
+	return b;
+}
+
 
 /** creates a new block with the given Id and inserts it into the block map.
  * It is an error to try to create a new block if a block with that id already exists
@@ -653,19 +474,6 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 	return block_ptr;
 }
 
-//void BlockManager::remove_block(const BlockId& block_id) {
-//	int array_id = block_id.array_id_;
-//
-////	BlockMap::iterator it = block_map_.find(array_id);
-////	check(it != block_map_.end(), "Could not find distributed array to remove block from !");
-//
-//
-//	IdBlockMap *bid_map = block_map_[array_id];
-//	check(bid_map != NULL,"Could not find distributed array " + sip_tables_.array_name(array_id) + " to remove block from !", current_line());
-//	Block::BlockPtr block_to_remove = bid_map->at(block_id);
-//	bid_map->erase(block_id);
-//	delete block_to_remove;
-//}
 
 void BlockManager::generate_local_block_list(const BlockId& id,
 		std::vector<BlockId>& list) {

@@ -639,6 +639,7 @@ TEST(SimpleMPI,DISABLED_put_test_mpi){
 TEST(Sial_QM,ccsdpt_test){
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+	bool am_master = sip_mpi_attr.global_rank() == 0;
 	std::cout << "+++++++++++++++++++++++++++++++++++"<< std::endl << sip_mpi_attr << std::endl  <<
 			"my_server=" <<  sip_mpi_attr.my_server() << "+++++++++++++++++++++++++++++++++++"<< std::endl << std::flush;
 
@@ -652,7 +653,7 @@ TEST(Sial_QM,ccsdpt_test){
 
 	// setup_reader.read(setup_file);
 	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+	if (am_master) std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//interpret the program
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
@@ -665,12 +666,12 @@ TEST(Sial_QM,ccsdpt_test){
 
 		it = progs.begin();
 		while (it != progs.end()){
-			if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< *it << std::endl;}
+			if (am_master){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< *it << std::endl;}
 				std::string sialfpath(dir_name);
 				sialfpath.append(*it);
 			setup::BinaryInputFile siox_file(sialfpath);
 			sip::SipTables sipTables(setup_reader, siox_file);
-			//std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+			if (am_master) std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
 
 			sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 			if (sip_mpi_attr.is_server()){

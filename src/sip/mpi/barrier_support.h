@@ -281,8 +281,7 @@ private:
 	 */
 	int transaction_number_;
 
-//friend class SIPServer;
-//friend class Interpreter;
+	DISALLOW_COPY_AND_ASSIGN(BarrierSupport);
 };
 
 } /* namespace sip */

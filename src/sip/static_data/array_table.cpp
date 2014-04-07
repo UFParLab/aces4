@@ -67,8 +67,9 @@ void ArrayTable::init(setup::InputStream &file) {
 std::ostream& operator<<(std::ostream& os, const ArrayTable& arrayTableObj) {
 	std::vector<ArrayTableEntry> local = arrayTableObj.entries_;
 	std::vector<ArrayTableEntry>::iterator it;
+	int i = 0;
 	for (it = local.begin(); it != local.end(); ++it) {
-		os << *it << std::endl;
+		os << i++ << ":" <<*it << std::endl;
 	}
     return os;
 }

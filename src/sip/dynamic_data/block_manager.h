@@ -21,10 +21,10 @@
 #include "barrier_support.h"
 
 #ifdef HAVE_MPI
+#include "async_acks.h"
 #include "sip_mpi_attr.h"
 #include "data_distribution.h"
-#define MAX_POSTED_ASYNC 65536 // = 2^16. 16 bits for message number in mpi tag (sip_mpi_utils).
-#endif
+#endif /HAVE_MPI
 
 namespace sip {
 class SipTables;
@@ -168,12 +168,14 @@ public:
 	friend class Interpreter;
 
 private:
-	/** Obtains block from BlockMap
+	/** Obtains block from BlockMap.
+	 *
+	 * If MPI and block is in transit, waits until it is available.
 	 *
 	 * @param BlockId of desired block
 	 * @return pointer to given block, or NULL if it is not in the map.
 	 */
-	Block::BlockPtr block(const BlockId& id){return block_map_.block(id);}
+	Block::BlockPtr block(const BlockId& id);
 
 	/**
 	 * Helper function to insert newly created block into block map.
@@ -260,33 +262,12 @@ private:
 	SIPMPIAttr & sip_mpi_attr_; // MPI Attributes of the SIP for this rank
 	DataDistribution &data_distribution_; // Data distribution scheme
 
-	MPI_Request posted_async_[MAX_POSTED_ASYNC]; // posted asynchronous receives/sends
-	int num_posted_async_; // number of posted asynchronous receives/sends
 
-	BlockIdToIndexMap blocks_in_transit_; // block_id -> index into posted_receives_
 
-	int posted_acks_[MAX_POSTED_ASYNC];	// posted acks
+//	BlockIdToIndexMap blocks_in_transit_; // block_id -> index into posted_receives_
 
-	/**
-	 * Helper function to send a block to the server that "owns" it.
-	 */
-	void send_block_to_server(int server_rank, int to_send_message, const BlockId& bid, Block::BlockPtr bptr);
+	AsyncAcks ack_handler_;
 
-	/**
-	 * Requests a block from a server. Initiates a request and posts a receive for the block.
-	 * If the block is cached by this worker, no request is sent.
-	 */
-	void request_block_from_server(BlockId& id);
-
-	/**
-	 * Blocks till requested block arrives.
-	 */
-	void wait_for_block_in_transit(const BlockId& id);
-
-	/**
-	 * Blocks till any one of the requested blocks arrive.
-	 */
-	void free_any_posted_receive();
 
 	/**
 	 * checks that the number of double values recieved is the same as expected.

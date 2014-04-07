@@ -92,7 +92,9 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/sip_mpi_utils.cpp \
 ./src/sip/mpi/sip_mpi_data.h\
 ./src/sip/mpi/sip_mpi_data.cpp\
-./src/sip/mpi/barrier_support.h
+./src/sip/mpi/barrier_support.h\
+./src/sip/mpi/async_acks.h\
+./src/sip/mpi/async_acks.cpp
 
 endif
 

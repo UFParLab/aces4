@@ -63,8 +63,8 @@ namespace sip {
 class BlockId {
 public:
 
-	static const int mpi_count = MAX_RANK+1;
-	typedef int mpi_block_id_t[mpi_count];
+	static const int MPI_COUNT = MAX_RANK + 1;
+	typedef int mpi_block_id_t[MPI_COUNT];
 
 
 	BlockId();
@@ -142,6 +142,19 @@ public:
 	 */
 	~BlockId();
 
+
+	/**
+	 * Converts this BlockID into an array that can be sent in an MPI
+	 * message.  In the current implementation, this is just a
+	 * cast. The parent_id_ptr_ field is ignored because distributed/served
+	 * arrays are not subarrays.
+	 *
+	 * @return
+	 */
+	int* to_mpi_array(){
+		return reinterpret_cast<int *>(this);
+	}
+
 	/** Overload ==.  Performs "deep" comparison of all fields.
 	 * Overloading == and < is required because we are using BlockIds as
 	 * keys in the block map, which is currently an STL map instance,
@@ -165,28 +178,6 @@ public:
 
 	std::string str();
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
-
-//	/**
-//	 * Serialize to send over the network
-//	 * @param [in]
-//	 * @param [out]
-//	 * @return
-//	 */
-//	static int* serialize(const BlockId&, int&);
-//	/**
-//	 * Deserialize and construct a BlockId object.
-//	 * @param
-//	 * @return
-//	 */
-//	static BlockId deserialize(const int*);
-//
-//
-//	/**
-//	 * Returns the serialized size
-//	 * @return
-//	 */
-//	static int serialized_size();
-
 
 private:
 	int array_id_; //ID of the array, represented by the slot the array table
@@ -218,7 +209,7 @@ public:
 };
 
 /** The array slot along with the index slots.  Together with the values of the arrays, determines a block.
- * There are two special constants.  The value that indicates an unused index, and tvalue for wildcards.
+ * There are two special constants.  The value that indicates an unused index, and the value for wildcards.
  * The latter must match the value assumed by the compiler which is 90909.  To ensure proper initialization
  * of unused dimensions, the constructor requires the rank.
  *
@@ -366,7 +357,7 @@ private:
 	dataPtr data_;
 	dataPtr gpu_data_;
 #ifdef HAVE_MPI
-	MPI_Status status;  //status != MPI_REQUEST_NULL block in transit
+	MPI_Request mpi_request_;  //status != MPI_REQUEST_NULL block in transit
 #endif //HAVE_MPI
 
 	// Why bitset is a good idea

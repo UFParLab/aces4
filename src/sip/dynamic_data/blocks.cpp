@@ -13,13 +13,17 @@
 #include "sip.h"
 #include "tensor_ops_c_prototypes.h"
 #include "sip_tables.h"
-
+#ifdef HAVE_MPI
+#include "sip_mpi_utils.h"
+#endif //HAVE_MPI
 #include "gpu_super_instructions.h"
 
 using namespace std::rel_ops;
 namespace sip {
 
 /********** BlockId *******************/
+
+const int BlockId::MPI_COUNT;
 
 BlockId::BlockId():parent_id_ptr_(NULL), array_id_(-1){
 }
@@ -145,33 +149,6 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	return false;
 }
 
-//int* BlockId::serialize(const BlockId& obj, int &size){
-//	int * to_return;
-//	size = 1 + MAX_RANK;
-//	to_return = new int[size];
-//	sip::check (size == serialized_size(), "serialized_size and caclulated size don't match!");
-//	memcpy(to_return + 0, &obj.array_id_, sizeof(obj.array_id_));
-//	memcpy(to_return + 1, obj.index_values_, sizeof (obj.index_values_));
-//
-//	return to_return;
-//}
-//
-//BlockId BlockId::deserialize(const int* obj){
-//	int array_id_;
-//	index_value_array_t  index_values_;
-//	memcpy(&array_id_, obj, sizeof (array_id_));
-//	memcpy(&(index_values_[0]), obj + 1, sizeof(index_values_));
-//	BlockId bid(array_id_, index_values_);
-//	return bid;
-//}
-//
-//
-//int BlockId::serialized_size(){
-//	int size = 1 + MAX_RANK;
-//	return size;
-//}
-//
-//
 
 std::string BlockId::str(){
 	std::stringstream ss;
@@ -295,7 +272,11 @@ std::ostream& operator<<(std::ostream& os, const BlockSelector & selector) {
 /*********************** Block ***************************/
 
 Block::Block(BlockShape shape) :
-		shape_(shape) {
+		shape_(shape)
+#ifdef HAVE_MPI
+	,mpi_request_(MPI_REQUEST_NULL)
+#endif //HAVE_MPI
+{
 	size_ = shape.num_elems();
 	data_ = new double[size_](); //c++ feature:parens cause allocated memory to be initialized to zero
 
@@ -311,7 +292,11 @@ Block::Block(BlockShape shape) :
 //arrays out of bounds
 Block::Block(BlockShape shape, dataPtr data):
 		shape_(shape),
-		data_(data){
+		data_(data)
+#ifdef HAVE_MPI
+	,mpi_request_(MPI_REQUEST_NULL)
+#endif //HAVE_MPI
+{
 	size_ = shape.num_elems();
 
 	gpu_data_ = NULL;
@@ -323,6 +308,9 @@ Block::Block(BlockShape shape, dataPtr data):
 
 Block::Block(dataPtr data):
 	data_(data)
+#ifdef HAVE_MPI
+	,mpi_request_(MPI_REQUEST_NULL)
+#endif //HAVE_MPI
 {
 	std::fill(shape_.segment_sizes_+0, shape_.segment_sizes_+MAX_RANK, 1);
 	size_ = 1;
@@ -334,22 +322,29 @@ Block::Block(dataPtr data):
 	status_[Block::dirtyOnGPU] = false;
 }
 
-Block::BlockPtr Block::clone(){
-	BlockPtr bptr = new Block();
-	bptr->data_ = new double[this->size_];
-	std::copy(data_, data_ + size_, bptr->data_);
-	bptr->size_ = this->size_;
-	bptr->shape_ = this->shape_;
-	bptr->status_ = this->status_;
-#ifdef HAVE_CUDA
-	if (this->gpu_data_ != NULL)
-		_gpu_device_to_device(bptr->gpu_data_, this->gpu_data_, size_);
-#endif
-	return bptr;
-}
+//Block::BlockPtr Block::clone(){
+//	//not fixed for MPI
+//	//should not be used
+//	fail("Block::clone not implemeted");
+//	BlockPtr bptr = new Block();
+//	bptr->data_ = new double[this->size_];
+//	std::copy(data_, data_ + size_, bptr->data_);
+//	bptr->size_ = this->size_;
+//	bptr->shape_ = this->shape_;
+//	bptr->status_ = this->status_;
+//#ifdef HAVE_CUDA
+//	if (this->gpu_data_ != NULL)
+//		_gpu_device_to_device(bptr->gpu_data_, this->gpu_data_, size_);
+//#endif
+//	return bptr;
+//}
 
 
-Block::Block(){
+Block::Block()
+#ifdef HAVE_MPI
+	:mpi_request_(MPI_REQUEST_NULL)
+#endif //HAVE_MPI
+{
 	data_ = NULL;
 	gpu_data_ = NULL;
 	size_ = 0;
@@ -357,6 +352,17 @@ Block::Block(){
 
 Block::~Block() {
 	sip::check_and_warn((data_), std::string("in ~Block with NULL data_"));
+
+#ifdef HAVE_MPI
+	//check to see if block is in transit.  If this is the case, there was a get
+	//on a block that was never used.  Print a warning.  We probably want to be able
+	//disable this check.
+	int flag;
+	SIPMPIUtils::check_err(MPI_Test(&mpi_request_, &flag, MPI_STATUS_IGNORE));
+	if (check_and_warn(flag, "deleting block with pending request. This likely is due to an unused get in the sial program")){
+		SIPMPIUtils::check_err(MPI_Wait(&mpi_request_, MPI_STATUS_IGNORE));
+	}
+#endif //HAVE_MPI
 	if (data_ != NULL && size_ >1) { //Assumption: if size==1, data_ points into the scalar table.
 		delete[] data_;
 		data_ = NULL;
@@ -367,7 +373,7 @@ Block::~Block() {
 		_gpu_free(gpu_data_);
 		gpu_data_ = NULL;
 	}
-#endif
+#endif //HAVE_CUDA
 	status_[Block::onGPU] = false;
 	status_[Block::onHost] = false;
 	status_[Block::dirtyOnHost] = false;
