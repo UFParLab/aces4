@@ -31,6 +31,7 @@
 #include "sip.h"
 #include "array_constants.h"
 #include "sip_interface.h"
+#include "block_shape.h"
 #include <iostream>
 
 #ifdef HAVE_MPI
@@ -49,21 +50,21 @@ namespace sip {
 
 
 
-/** Describes the shape of the block in terms of the size of each index */
-//TODO Consider adding rank to the shape
-
-class BlockShape {
-public:
-	BlockShape();
-	explicit BlockShape(const segment_size_array_t&);
-	~BlockShape();
-	segment_size_array_t segment_sizes_;
-	bool operator==(const BlockShape& rhs) const;
-	bool operator<(const BlockShape& rhs) const;
-	int num_elems() const;
-	friend std::ostream& operator<<(std::ostream&, const BlockShape &);
-	friend class Block;
-};
+///** Describes the shape of the block in terms of the size of each index */
+////TODO Consider adding rank to the shape
+//
+//class BlockShape {
+//public:
+//	BlockShape();
+//	explicit BlockShape(const segment_size_array_t&);
+//	~BlockShape();
+//	segment_size_array_t segment_sizes_;
+//	bool operator==(const BlockShape& rhs) const;
+//	bool operator<(const BlockShape& rhs) const;
+//	int num_elems() const;
+//	friend std::ostream& operator<<(std::ostream&, const BlockShape &);
+//	friend class Block;
+//};
 
 /** The array slot along with the index slots.  Together with the values of the arrays, determines a block.
  * There are two special constants.  The value that indicates an unused index, and the value for wildcards.
