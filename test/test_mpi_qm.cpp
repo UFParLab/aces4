@@ -22,7 +22,7 @@ static const std::string dir_name("src/sialx/qm/");
 static const std::string simple_dir_name("src/sialx/test/");
 void list_block_map();
 
-TEST(Sial,DISABLED_persistent_empty_mpi){
+TEST(Sial,persistent_empty_mpi){
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	int my_rank = sip_mpi_attr.global_rank();
@@ -142,7 +142,7 @@ TEST(Sial,DISABLED_persistent_empty_mpi){
 			std::cout << "rank " << my_rank << " passed third barrier in test" << std::endl << std::flush;
 
 }
-TEST(Sial,DISABLED_persistent_distributed_array_mpi){
+TEST(Sial,persistent_distributed_array_mpi){
 //	std::cout << "****************************************\n";
 //	sip::DataManager::scope_count=0;
 //	//create setup_file
@@ -350,7 +350,7 @@ TEST(Sial,DISABLED_persistent_distributed_array_mpi){
 
 /************************************************/
 
-TEST(SimpleMPI,DISABLED_get_mpi){
+TEST(SimpleMPI,get_mpi){
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 		std::cout << "****************************************\n";
@@ -415,7 +415,7 @@ TEST(SimpleMPI,DISABLED_get_mpi){
 
 
 }
-TEST(SimpleMPI,DISABLED_delete_mpi){
+TEST(SimpleMPI,delete_mpi){
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 		std::cout << "****************************************\n";
@@ -488,7 +488,7 @@ TEST(SimpleMPI,DISABLED_delete_mpi){
 
 
 }
-TEST(SimpleMPI,DISABLED_put_accumulate_mpi){
+TEST(SimpleMPI,put_accumulate_mpi){
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 		std::cout << "****************************************\n";
@@ -562,7 +562,7 @@ TEST(SimpleMPI,DISABLED_put_accumulate_mpi){
 
 }
 
-TEST(SimpleMPI,DISABLED_put_test_mpi){
+TEST(SimpleMPI,put_test_mpi){
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 		std::cout << "****************************************\n";
