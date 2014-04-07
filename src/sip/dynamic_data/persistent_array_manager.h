@@ -15,8 +15,7 @@
 #endif //HAVE_MPI
 
 #include <vector>
-//#include <set>
-
+#include "block_id.h"
 #include "blocks.h"
 #include "block_manager.h"
 #include "id_block_map.h"

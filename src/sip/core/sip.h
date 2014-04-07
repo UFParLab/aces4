@@ -15,6 +15,10 @@
 #include <vector>
 #include <map>
 
+//include these so that including this will pull them in.
+#include "aces_defs.h"
+#include "array_constants.h"
+
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&);               \
   void operator=(const TypeName&)

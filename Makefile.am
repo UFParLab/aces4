@@ -46,6 +46,8 @@ ACES_DATA_FILES=\
 ./src/sip/static_data/sip_tables.cpp\
 ./src/sip/static_data/op_table.h\
 ./src/sip/static_data/op_table.cpp\
+./src/sip/dynamic_data/block_id.h\
+./src/sip/dynamic_data/block_id.cpp\
 ./src/sip/dynamic_data/blocks.h\
 ./src/sip/dynamic_data/blocks.cpp\
 ./src/sip/dynamic_data/block_manager.h\

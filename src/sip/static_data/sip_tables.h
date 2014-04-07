@@ -23,6 +23,7 @@
 #include "op_table.h"
 #include "int_table.h"
 #include "array_table.h"
+#include "block_id.h"
 #include "blocks.h"
 #include "index_table.h"
 #include "special_instructions.h"

@@ -11,6 +11,7 @@
 #include <map>
 #include <vector>
 #include <stack>
+#include "block_id.h"
 #include "blocks.h"
 
 namespace sip {
