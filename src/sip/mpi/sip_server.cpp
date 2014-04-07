@@ -6,7 +6,6 @@
 #include <sip_server.h>
 #include "mpi.h"
 #include "sip.h"
-#include "blocks.h"
 #include "sip_mpi_utils.h"
 #include <sstream>
 

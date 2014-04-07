@@ -12,7 +12,7 @@
 #include <vector>
 #include <stack>
 #include "block_id.h"
-#include "blocks.h"
+
 
 namespace sip {
 template <typename BLOCK_TYPE> class IdBlockMap;

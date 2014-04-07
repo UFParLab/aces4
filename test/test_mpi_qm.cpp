@@ -12,7 +12,7 @@
 #include "sip_server.h"
 #include "sip_mpi_attr.h"
 
-#include "blocks.h"
+#include "block.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>

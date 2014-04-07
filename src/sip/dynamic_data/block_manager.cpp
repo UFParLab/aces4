@@ -124,12 +124,17 @@ void BlockManager::delete_distributed(int array_id) {
 #endif //HAVE_MPI
 }
 
+
+#ifdef HAVE_MPI
 void BlockManager::check_double_count(MPI_Status& status, int expected_count) {
 	int received_count;
 	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count));
 	check(received_count == expected_count,
 			"message double count different than expected");
 }
+#endif
+
+
 void BlockManager::get(BlockId& block_id) {
 
 #ifdef HAVE_MPI
@@ -395,7 +400,7 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 
 /* gets block for reading and writing.  The block should already exist.*/
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
-	std::cout << "calling get_block_for_updateing for " << id << current_line()<<std::endl << std::flush;
+//	std::cout << "calling get_block_for_updating for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
 	check(blk != NULL, "attempting to update non-existent block",
 			current_line());

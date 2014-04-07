@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 #include <stack>
-#include "blocks.h"
+#include "block.h"
 #include "id_block_map.h"
 #include "barrier_support.h"
 

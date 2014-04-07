@@ -32,7 +32,7 @@
 #include <vector>
 #include <stack>
 #include "block_id.h"
-#include "blocks.h"
+#include "block.h"
 
 namespace sip {
 class SipTables;

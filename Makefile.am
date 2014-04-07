@@ -52,8 +52,8 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/block_shape.cpp\
 ./src/sip/dynamic_data/block_selector.h\
 ./src/sip/dynamic_data/block_selector.cpp\
-./src/sip/dynamic_data/blocks.h\
-./src/sip/dynamic_data/blocks.cpp\
+./src/sip/dynamic_data/block.h\
+./src/sip/dynamic_data/block.cpp\
 ./src/sip/dynamic_data/block_manager.h\
 ./src/sip/dynamic_data/block_manager.cpp\
 ./src/sip/dynamic_data/contiguous_array_manager.h\

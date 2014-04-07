@@ -9,7 +9,7 @@
 #include "sip_interface.h"
 #include "data_manager.h"
 
-#include "blocks.h"
+#include "block.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>

@@ -14,7 +14,7 @@
 #include <iomanip>
 #include "loop_manager.h"
 #include "special_instructions.h"
-#include "blocks.h"
+#include "block.h"
 #include "tensor_ops_c_prototypes.h"
 
 #include "config.h"
@@ -636,12 +636,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 	}
 
 	post_sial_program();
+#ifdef HAVE_MPI
 	std::cout << "W " << sip_mpi_attr_.global_rank() << " at barrier"
 			<< std::endl << std::flush;
 	MPI_Barrier (MPI_COMM_WORLD);
 	std::cout << "W " << sip_mpi_attr_.global_rank() << " after barrier"
 			<< std::endl << std::flush;
-
+#endif //HAVE_MPI
 }
 
 void Interpreter::post_sial_program() {

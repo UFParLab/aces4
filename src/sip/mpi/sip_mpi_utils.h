@@ -8,9 +8,7 @@
 #ifndef SIP_MPI_UTILS_H_
 #define SIP_MPI_UTILS_H_
 
-#include "blocks.h"
-#include "mpi.h"
-#include "sip_mpi_data.h"
+
 
 namespace sip {
 

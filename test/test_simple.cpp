@@ -10,7 +10,7 @@
 #include "data_manager.h"
 #include "global_state.h"
 
-#include "blocks.h"
+#include "block.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>

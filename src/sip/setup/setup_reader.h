@@ -16,7 +16,7 @@
 #include "sip.h"
 #include "io_utils.h"
 #include "array_constants.h"
-#include "blocks.h"
+#include "block.h"
 #define MAX_PRINT_ELEMS 512
 
 //namespace array {

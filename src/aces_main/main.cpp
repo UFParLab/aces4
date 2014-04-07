@@ -10,7 +10,7 @@
 #include "sip_interface.h"
 #include "data_manager.h"
 #include "persistent_array_manager.h"
-#include "blocks.h"
+#include "block.h"
 #include "global_state.h"
 
 #include <vector>

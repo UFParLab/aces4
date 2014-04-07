@@ -6,7 +6,7 @@
  */
 
 #include "config.h"
-#include "blocks.h"
+#include "block.h"
 #include <iostream>
 #include <cstring>
 #include "sip.h"

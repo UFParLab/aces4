@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "block_id.h"
-#include "blocks.h"
+#include "block.h"
 #include "block_manager.h"
 #include "id_block_map.h"
 #include "sip_tables.h"

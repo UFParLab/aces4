@@ -12,7 +12,7 @@
 #include "sip_interface.h"
 #include "interpreter.h"
 #include "index_table.h"
-#include "blocks.h"
+#include "block.h"
 #include <stdexcept>
 
 #ifdef __cplusplus
