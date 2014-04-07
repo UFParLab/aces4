@@ -64,7 +64,8 @@ public:
 
 	/** basic block retrieval methods.*/
 
-	/** Gets requested Block to be written to, allocating it if it doesn't exist. Newly allocated blocks are initialized to 0.
+	/** Gets requested Block to be written to, allocating it if it doesn't exist.
+	 * Newly allocated blocks ARE NOT initialized to 0.
 	 *
 	 * @param id  BlockId of requested Block
 	 * @param is_scope_extent indicates whether a newly allocated block should be placed on the list of blocks to be deleted on a leave_scope.
@@ -90,7 +91,7 @@ public:
 
 
 	/** Gets block for accumulating into,  allocating it if it doesn't exists.
-	 * Newly allocated blocks are initialized to zero.
+	 * Newly allocated blocks ARE initialized to zero.
 	 *
 	 * @param id BlockId of requested Block
 	 * @param is_scope_extent indicates whether a newly allocated block should be placed on the list of blocks to be deleted on a leave_scope.
