@@ -88,19 +88,22 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\
 ./src/sip/dynamic_data/persistent_array_manager.h\
-./src/sip/mpi/sip_server.h \
-./src/sip/mpi/sip_server.cpp \
 ./src/sip/mpi/rank_distribution.h \
 ./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \
-./src/sip/mpi/data_distribution.h \
-./src/sip/mpi/sip_mpi_utils.h \
-./src/sip/mpi/sip_mpi_utils.cpp \
+./src/sip/mpi/data_distribution.h\
+./src/sip/mpi/sip_mpi_utils.h\
+./src/sip/mpi/sip_mpi_utils.cpp\
 ./src/sip/mpi/sip_mpi_data.h\
 ./src/sip/mpi/sip_mpi_data.cpp\
 ./src/sip/mpi/barrier_support.h\
 ./src/sip/mpi/async_acks.h\
-./src/sip/mpi/async_acks.cpp
+./src/sip/mpi/async_acks.cpp\
+./src/sip/mpi/sip_server.h\
+./src/sip/mpi/sip_server.cpp\
+./src/sip/server/server_block.h\
+./src/sip/server/server_block.cpp
+
 
 endif
 
@@ -133,6 +136,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/core\
 -I${top_srcdir}/src/sip/setup\
 -I${top_srcdir}/src/sip/worker\
+-I${top_srcdir}/src/sip/server\
 -I${top_srcdir}/src/sip/static_data\
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\

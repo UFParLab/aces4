@@ -9,7 +9,7 @@
 #define SIP_SERVER_H_
 
 #include "sip_tables.h"
-#include "blocks.h"
+#include "server_block.h"
 #include "data_distribution.h"
 #include "sip_mpi_data.h"
 #include "id_block_map.h"
