@@ -34,6 +34,7 @@ c---------------------------------------------------------------------------
       real(C_DOUBLE), intent(out)::data(1:size)
       integer(C_INT), intent(out)::ierr
       integer(C_INT) ncenters  
+      integer(C_INT) npcoeff  
 c     integer(C_INT) iscr(10000000) !!! NEED TO MALLOC VFL  
 c     real(C_DOUBLE) scr(10000000)  !!! NEED TO MALLOC VFL  
 
@@ -93,6 +94,9 @@ c                     Nuclear Tcoordinates
 c                   Number of nuclear centers 
       ncenters = int_constant("ncenters"//C_NULL_CHAR) 
 
+c Number of coefficints 
+      npcoeff = int_constant("npcoeff"//C_NULL_CHAR) 
+
 c
 c Get the ao segment ranges  
       call predefined_int_array("ao_seg_ranges"//C_NULL_CHAR, one, 
@@ -125,8 +129,8 @@ c Find the offset index ranges
 c     write(6,*) ' OFFSETS = ', index_values(1), offset_1 
 c     write(6,*) ' OFFSETS = ', index_values(2), offset_2 
       call comp_return_h1(data, 1+offset_1, extents(1)+offset_1,
-     *           1+offset_2, extents(2)+offset_2, ncenters, coords,
-     *           tcoords, scr, iscr)
+     *           1+offset_2, extents(2)+offset_2, ncenters, 
+     *           coords, tcoords, scr, iscr)
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)

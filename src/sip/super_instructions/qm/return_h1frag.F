@@ -113,6 +113,7 @@ c arrays defining fragment to orbital mapping
       integer (C_INT) nalpha_virtual  
       integer (C_INT) nbeta_virtual   
       integer(C_INT) ncenters 
+      integer(C_INT) npcoeffs  
 
       integer m, ix2, n_apf, iatom(250) ! Assumes < 20 atoms in a fragment TO CHANGE  
       integer nscr, niscr  
@@ -127,6 +128,7 @@ c ----------------------------------------------------------------------
       nalpha_virtual  = int_constant("nalpha_virtual"//C_NULL_CHAR)
       nbeta_virtual   = int_constant("nbeta_virtual"//C_NULL_CHAR)
       nfrags          = int_constant("nfrags"//C_NULL_CHAR)
+      npcoeffs        = int_constant("npcoeffs"//C_NULL_CHAR)
 
 c array defining which atoms are in which fragments 
 c ----------------------------------------------------------------------
@@ -224,7 +226,7 @@ c     iatom = wfrag
       call comp_return_fragh1(data_0, n_apf, iatom, 
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
-     *                        ncenters, pcoords, ptcoords,
+     *                        ncenters, npcoeffs, pcoords, ptcoords,
      *                        scr, iscr) 
 
 c  Remove scratch space  
@@ -235,7 +237,7 @@ c  Remove scratch space
       end
 
       subroutine comp_return_fragh1(z,n_apf, watom, da1, da2, db1, db2, 
-     *                              ncenters, coords, tcoords, zz, iscr) 
+     *                   ncenters, npcoeffs, coords, tcoords, zz, iscr) 
     
 c---------------------------------------------------------------------------
 c Interface added but should be included instead 
@@ -247,6 +249,7 @@ c Interface added but should be included instead
 c Nuclear coordinates 
 c --------------------------------------------------------------------------- 
       integer ncenters 
+      integer npcoeffs  
       double precision coords(3,ncenters) 
       double precision tcoords(3,*) 
 c --------------------------------------------------------------------------- 
@@ -343,12 +346,12 @@ c     mapping of atoms to shells
       logical spherical
       logical*8 l8true, l8spherical
 
-      integer max_dim_coeff
-      parameter (max_dim_coeff = 5000)
-      integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
+c     integer max_dim_coeff
+c     parameter (max_dim_coeff = 5000)
+      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
       integer nalpha_pack, ncoeff_pack
-      double precision alpha_pack(max_dim_coeff),
-     *                 pcoeff_pack(max_dim_coeff)
+      double precision alpha_pack(npcoeffs),
+     *                 pcoeff_pack(npcoeffs)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
       integer do_atom(ncenters)
@@ -603,7 +606,7 @@ c         if (do_atom(iatom) .eq. 1) then
      *                       ncoeff_pack, pccbeg, pccend, 
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       max_dim_coeff)
+     *                       npcoeffs)
 
 c ------------------------------------------------------------------------ 
 c NAI (type=1) integrals only.   

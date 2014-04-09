@@ -12,8 +12,8 @@ C  GNU General Public License for more details.
 
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
-      subroutine erd_scratch_mem_calc(nshells, ncenters, shtype, 
-     *                                ncfps, npfps, 
+      subroutine erd_scratch_mem_calc(nshells, ncenters, npcoeff, 
+     *                                shtype,  ncfps, npfps, 
      *                                atom, coords, alpha, pcoeff,
      *                                ixalpha, ixpcoeff, ccbeg, ccend,
      *                                indx_cc, spherical,
@@ -54,17 +54,17 @@ c Interface added BUT should be include NOT added in the future
       integer ixalpha(nshells), ixpcoeff(nshells)
       integer ccbeg(*), ccend(*), indx_cc(*)
       integer imax, zmax
-      integer nuclei, nalpha, ncoeff
+      integer nuclei, nalpha, ncoeff, npcoeff
 
       logical calc_2der
 
       double precision coords(3,nshells)
       double precision alpha(*), pcoeff(*)
-      integer max_dim_coeff
-      parameter (max_dim_coeff = 5000)
-      double precision alpha_pack(max_dim_coeff), 
-     *                 pcoeff_pack(max_dim_coeff)
-      integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
+c     integer max_dim_coeff
+c     parameter (max_dim_coeff = 5000)
+      double precision alpha_pack(npcoeff), 
+     *                 pcoeff_pack(npcoeff)
+      integer ccbeg_pack(npcoeff), ccend_pack(npcoeff)
 
       integer i,j
       integer m, n, r, s
@@ -154,7 +154,7 @@ c         do iflag = 1, 12
                   if (der_flags(3) .eq. 1) der_flags(6) = 1
                   if (der_flags(6) .eq. 1) der_flags(3) = 1
                endif
-                                                                                
+
                if (satom(m) .eq. satom(r)) then
                   if (der_flags(1) .eq. 1) der_flags(7) = 1
                   if (der_flags(7) .eq. 1) der_flags(1) = 1
@@ -163,7 +163,7 @@ c         do iflag = 1, 12
                   if (der_flags(3) .eq. 1) der_flags(9) = 1
                   if (der_flags(9) .eq. 1) der_flags(3) = 1
                endif
-                                                                                
+
                if (satom(m) .eq. satom(s)) then
                   if (der_flags(1) .eq. 1) der_flags(10) = 1
                   if (der_flags(10).eq. 1) der_flags(1)  = 1
@@ -335,7 +335,7 @@ c------------------------------------------------------------------------
      *                       alpha_pack, nalpha, pcoeff_pack,
      *                       ncoeff, ccbeg, ccend, indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       max_dim_coeff)
+     *                       npcoeff)
             call oed__memory_nai_batch(nalpha, ncoeff,
      *                   ncfps(m), ncfps(n), 
      *                   npfps(m), npfps(n), 

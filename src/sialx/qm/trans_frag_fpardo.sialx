@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 29 # Nfragments   
-      index  jjfrag  = 1, 29 # Nfragments   
-      index   kfrag  = 1, 29 # Nfragments   
-      index  kkfrag  = 1, 29 # Nfragments   
+      index   jfrag  = 1, 100 # Nfragments   
+      index  jjfrag  = 1, 100 # Nfragments   
+      index   kfrag  = 1, 100 # Nfragments   
+      index  kkfrag  = 1, 100 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -189,7 +189,8 @@ import "trans_frag_defs.sialx"
       distributed t1new(b,j)  
       distributed x1new(b,j)  
       distributed wC_ao(mu,nu) 
-      local LwC(b,j)  
+      local LwC_ao(mu,nu) 
+      local LwC(p,p1)  
       temp t20disp(ifrag,jfrag) 
       local wAO_frag(mu) 
       local wOccA_frag(i) 
@@ -401,8 +402,8 @@ import "trans_frag_defs.sialx"
             ENDIF 
          ENDDO jjfrag 
         
-        #print_scalar icount 
-        #print_scalar jcount 
+         print_scalar icount 
+         print_scalar jcount 
 
 # ---------------------------------------------------------------------------- 
 #     Form wC_ao  
@@ -416,6 +417,7 @@ import "trans_frag_defs.sialx"
             x2(nu)     = wAO_frag(nu) 
             execute return_sval x2(nu)  n  
             if n == icount  
+               allocate LwC_ao(mu,nu)  
       DO lambda 
             x3(lambda) = wAO_frag(lambda) 
             execute return_sval x3(lambda)  l  
@@ -464,7 +466,8 @@ import "trans_frag_defs.sialx"
                         Ipp(j1,j)    = 2.0 
                         execute return_diagonal Ipp(j1,j) 
                         txx(mu,nu)    = Ipp(j1,j)*txxqq(mu,nu,j1,j) 
-                        PUT wC_ao(mu,nu) += txx(mu,nu) 
+                       #PUT wC_ao(mu,nu) += txx(mu,nu) 
+                        LwC_ao(mu,nu) += txx(mu,nu) 
                      endif # pcount == icount c
                   ENDDO j1  
 
@@ -481,6 +484,8 @@ import "trans_frag_defs.sialx"
 
              endif # l 
       ENDDO lambda 
+               PUT wC_ao(mu,nu) += LwC_ao(mu,nu) 
+               deallocate LwC_ao(mu,nu)  
              endif # n 
       ENDDO nu 
              endif # m 
@@ -1337,7 +1342,7 @@ import "trans_frag_defs.sialx"
 # Compute initial singles energy of solute  
 
       icount = 0.0 
-      DO kfrag 
+      DO ifrag 
         icount += 1.0 
 #
          esum = 0.0 
@@ -1375,7 +1380,7 @@ import "trans_frag_defs.sialx"
            e1old = et1_correction 
         endif 
 # 
-      ENDDO kfrag 
+      ENDDO ifrag 
       sip_barrier
 
       esum = 0.0 
@@ -2526,6 +2531,11 @@ import "trans_frag_defs.sialx"
       sip_barrier 
       CALL FRAG_TRAN 
       println "Done two-electron integral tranfsormations" 
+      sip_barrier 
+     #PARDO p, p1 
+     #   tpp(p,p1) = 0.0 
+     #   wC(p,p1) = tpp(p,p1)  
+     #ENDPARDO p, p1 
       sip_barrier 
 #
 #     Form the electrostatic potential(complete) of all fragments  
