@@ -483,13 +483,13 @@ c Arrays used in the DIIS procedure
 c ---------------------------------------------------------------------- 
 
       integer vmax,omax,norb,maxhist,diis_start  
-      double precision Fai(vmax,omax,maxhist+1) 
-      double precision Fbj(vmax,omax,maxhist+1) 
-      double precision Ea(norb,norb,maxhist+1) 
-      double precision Eb(norb,norb,maxhist+1) 
-      double precision BM(maxhist+1,maxhist+1) 
-      double precision TBM(maxhist+1,maxhist+1) 
-      double precision CM(maxhist+1) 
+c     double precision Fai(vmax,omax,maxhist+1) 
+c     double precision Fbj(vmax,omax,maxhist+1) 
+c     double precision Ea(norb,norb,maxhist+1) 
+c     double precision Eb(norb,norb,maxhist+1) 
+c     double precision BM(maxhist+1,maxhist+1) 
+c     double precision TBM(maxhist+1,maxhist+1) 
+c     double precision CM(maxhist+1) 
       double precision etemp  
 c
 c ---------------------------------------------------------------------- 
@@ -867,10 +867,10 @@ c Arrays used in the DIIS procedure
 c ---------------------------------------------------------------------- 
 
       integer vmax,omax,norb,nhist,maxhist,diis_start   
-      double precision Fai(vmax,omax,maxhist+1) 
-      double precision Fbj(vmax,omax,maxhist+1) 
-      double precision Ea(norb,norb,maxhist+1) 
-      double precision Eb(norb,norb,maxhist+1) 
+      double precision Fai(n_basis,n_basis,maxhist+1) 
+      double precision Fbj(n_basis,n_basis,maxhist+1) 
+      double precision Ea(n_basis,n_basis,maxhist+1) 
+      double precision Eb(n_basis,n_basis,maxhist+1) 
       double precision BM(maxhist+1,maxhist+1) 
       double precision TBM(maxhist+1,maxhist+1) 
       double precision CM(maxhist+1) 
