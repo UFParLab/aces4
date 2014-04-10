@@ -323,6 +323,8 @@ SIOX_FILES=\
 ./src/sialx/test/persistent_distributed_array_mpi2.siox\
 ./src/sialx/test/persistent_empty_mpi1.siox\
 ./src/sialx/test/persistent_empty_mpi2.siox\
+./src/sialx/test/persistent_scalars_1.siox\
+./src/sialx/test/persistent_scalars_2.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -405,6 +407,8 @@ EXTRA_DIST += \
 ./src/sialx/test/persistent_distributed_array_mpi2.sialx\
 ./src/sialx/test/persistent_empty_mpi1.sial\
 ./src/sialx/test/persistent_empty_mpi2.sial\
+./src/sialx/test/persistent_scalars_1.sialx\
+./src/sialx/test/persistent_scalars_2.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

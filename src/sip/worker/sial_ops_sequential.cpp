@@ -6,19 +6,18 @@
  */
 
 #include "sial_ops_sequential.h"
-
+#include "interpreter.h"
 
 namespace sip {
 
-#ifdef HAVE_MPI
+//#ifndef HAVE_MPI
 
-#else
 SialOpsSequential::SialOpsSequential(DataManager & data_manager,
-	PersistentArrayManager<Block, Interpreter> * persistent_array_manager):
-		sip_tables_(SipTables::get_instance()),
-		data_manager_(data_manager),
-		block_manager_(data_manager.block_manager_),
-		persistent_array_manager_(persistent_array_manager){
+		PersistentArrayManager<Block, Interpreter> * persistent_array_manager):
+sip_tables_(SipTables::get_instance()),
+data_manager_(data_manager),
+block_manager_(data_manager.block_manager_),
+persistent_array_manager_(persistent_array_manager) {
 }
 
 SialOpsSequential::~SialOpsSequential() {
@@ -49,7 +48,6 @@ void SialOpsSequential::delete_distributed(int array_id) {
 	block_manager_.delete_per_array_map_and_blocks(array_id);
 }
 
-
 void SialOpsSequential::get(BlockId& block_id) {
 	get_block_for_reading(block_id);
 }
@@ -65,15 +63,13 @@ void SialOpsSequential::get(BlockId& block_id) {
 void SialOpsSequential::put_replace(BlockId& target_id,
 		const Block::BlockPtr source_block) {
 	Block::BlockPtr target_block = get_block_for_writing(target_id, false);
-	assert(target_block->shape_ == source_block->shape_);
 	target_block->copy_data_(source_block);
 }
 
 void SialOpsSequential::put_accumulate(BlockId& target_id,
 		const Block::BlockPtr source_block) {
 	// Accumulate locally
-	Block::BlockPtr target_block = get_block_for_accumulate(target_id, false);
-	assert(target_block->shape_ == source_block->shape_);
+	Block::BlockPtr target_block = block_manager_.get_block_for_accumulate(target_id, false);
 	target_block->accumulate_data(source_block);
 }
 
@@ -96,17 +92,28 @@ void SialOpsSequential::prepare_accumulate(BlockId& lhs_id,
 }
 
 
-void SialOpsSequential::set_persistent(Interpreter* interpreter,
-		int array_id, int string_slot){
-    persistent_array_manager_->set_persistent(interpreter, array_id, string_slot);
+
+
+void SialOpsSequential::collective_sum(int source_array_slot,
+               int dest_array_slot) {
+       double val_source = data_manager_.scalar_value(source_array_slot);
+       double val_dest = data_manager_.scalar_value(dest_array_slot);
+       double summed = 0.0;
+       summed = val_source + val_dest;
+       data_manager_.set_scalar_value(dest_array_slot, summed);
 }
 
-void SialOpsSequential::restore_persistent(Interpreter* intrerpreter, int array_id, int string_slot){
+
+void SialOpsSequential::set_persistent(Interpreter* interpreter,
+		int array_id, int string_slot) {
+	persistent_array_manager_->set_persistent(interpreter, array_id, string_slot);
+}
+
+void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_id, int string_slot) {
 	persistent_array_manager_->restore_persistent(interpreter, array_id, string_slot);
 }
 
-
-void SialOpsSequential::end_program(){
+void SialOpsSequential::end_program() {
 }
 
 /** wrapper around these methods in the block_manager.  Checks for data
@@ -116,27 +123,22 @@ void SialOpsSequential::end_program(){
  * @param id
  * @return
  */
-Block::BlockPtr SialOpsSequential::get_block_for_reading(const BlockId& id){
-	block_manager_.get_block_for_reading(id);
+Block::BlockPtr SialOpsSequential::get_block_for_reading(const BlockId& id) {
+	return block_manager_.get_block_for_reading(id);
 }
 
 Block::BlockPtr SialOpsSequential::get_block_for_writing(const BlockId& id,
-		bool is_scope_extent = false){
-	block_manager_.get_block_for_writing(id, is_scope_extent);
+		bool is_scope_extent) {
+	return block_manager_.get_block_for_writing(id, is_scope_extent);
 }
 
-Block::BlockPtr SialOpsSequential::get_block_for_updating(const BlockId& id){
-	block_manager_.get_block_for_upating(id);
+Block::BlockPtr SialOpsSequential::get_block_for_updating(const BlockId& id) {
+	return block_manager_.get_block_for_updating(id);
 }
 
-#endif
+//#else
+
+//#endif
 }
 /* namespace sip */
-
-
-
-
-
-
-
 

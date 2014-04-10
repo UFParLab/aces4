@@ -104,7 +104,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	size_t block_size = SipTables::get_instance().block_size(block_id);
 	ServerBlock* block = block_map_.block(block_id);
 	if (block == NULL) {
-		std::string msg(" getting uninitialized block");
+		std::string msg(" getting uninitialized block ");
 		msg.append(block_id.str());
 		msg.append(".  Creating zero block ");
 //		check_and_warn(block != NULL, msg);

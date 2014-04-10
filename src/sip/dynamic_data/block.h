@@ -243,17 +243,18 @@ private:
 		onHost			= 0,	// Block is on host
 		onGPU			= 1,	// Block is on device (GPU)
 		dirtyOnHost 	= 2,	// Block dirty on host
-		dirtyOnGPU 	= 3		// Block dirty on device (GPU)
+		dirtyOnGPU 	    = 3		// Block dirty on device (GPU)
 	};
 	std::bitset<4> status_;
 
-
+//TODO  is all this necessary??
 	friend class BlockManager;
 	friend class Interpreter;
 	friend class ContiguousArrayManager;
 	friend class SIPMPIUtils;
 	friend class SIPServer;
 	friend class SialOpsParallel;
+	friend class SialOpsSequential;
 
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.

@@ -24,7 +24,7 @@ int test_transpose4d_op(double*);
 int test_contraction_small2(double*);
 }
 
-TEST(Sial,DISABLED_empty){
+TEST(Sial,empty){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -57,7 +57,7 @@ TEST(Sial,DISABLED_empty){
 	}
 }
 
-TEST(Sial,DISABLED_scalars){
+TEST(Sial,scalars){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -107,7 +107,7 @@ TEST(Sial,DISABLED_scalars){
 }
 
 
-TEST(Sial,DISABLED_persistent_scalars){
+TEST(Sial,persistent_scalars){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -154,7 +154,7 @@ TEST(Sial,DISABLED_persistent_scalars){
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	ASSERT_DOUBLE_EQ(x, scalar_value("x"));
+//	ASSERT_DOUBLE_EQ(x, scalar_value("x"));
 	ASSERT_DOUBLE_EQ(y, scalar_value("y"));
 	ASSERT_DOUBLE_EQ(x, scalar_value("z"));
 	ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
@@ -187,7 +187,7 @@ TEST(Sial,DISABLED_persistent_scalars){
 
 
 
-TEST(Sial,DISABLED_helloworld){
+TEST(Sial,helloworld){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -221,7 +221,7 @@ TEST(Sial,DISABLED_helloworld){
 }
 
 
-TEST(Sial,DISABLED_no_arg_user_sub) {
+TEST(Sial,no_arg_user_sub) {
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
@@ -250,7 +250,7 @@ TEST(Sial,DISABLED_no_arg_user_sub) {
 
 
 
-TEST(Sial,DISABLED_index_decs) {
+TEST(Sial,index_decs) {
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 
@@ -297,7 +297,7 @@ TEST(Sial,DISABLED_index_decs) {
 }
 
 
-TEST(Sial,DISABLED_where_clause){
+TEST(Sial,where_clause){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -333,7 +333,7 @@ TEST(Sial,DISABLED_where_clause){
 	}
 }
 
-TEST(Sial,DISABLED_ifelse){
+TEST(Sial,ifelse){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -368,7 +368,7 @@ TEST(Sial,DISABLED_ifelse){
 	}
 }
 
-TEST(Sial,DISABLED_loop_over_simple_indices){
+TEST(Sial,loop_over_simple_indices){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -402,7 +402,7 @@ TEST(Sial,DISABLED_loop_over_simple_indices){
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 	}
 	}
-	TEST(Sial,DISABLED_pardo_loop){
+	TEST(Sial,pardo_loop){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -437,7 +437,7 @@ TEST(Sial,DISABLED_loop_over_simple_indices){
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 	}
 }
-TEST(Sial,DISABLED_tmp_arrays){
+TEST(Sial,tmp_arrays){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -487,7 +487,7 @@ TEST(Sial,DISABLED_tmp_arrays){
 	}
 }
 
-TEST(Sial,DISABLED_tmp_arrays_2){
+TEST(Sial,tmp_arrays_2){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -540,7 +540,7 @@ TEST(Sial,DISABLED_tmp_arrays_2){
 }
 
 
-TEST(Sial,DISABLED_exit_statement_test){
+TEST(Sial,exit_statement_test){
 
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
@@ -592,7 +592,7 @@ TEST(Sial,DISABLED_exit_statement_test){
 	}
 }
 
-TEST(Sial,DISABLED_transpose_tmp){
+TEST(Sial,transpose_tmp){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -656,7 +656,7 @@ TEST(Sial,DISABLED_transpose_tmp){
 
 }
 
-TEST(Sial,DISABLED_fill_sequential){
+TEST(Sial,fill_sequential){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -706,7 +706,7 @@ TEST(Sial,DISABLED_fill_sequential){
 }
 
 
-TEST(Sial,DISABLED_contraction_small_test){
+TEST(Sial,contraction_small_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -809,7 +809,7 @@ TEST(Sial,DISABLED_contraction_small_test){
 
 
 
-TEST(Sial,DISABLED_contraction_small_test2){
+TEST(Sial,contraction_small_test2){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -975,7 +975,7 @@ TEST(Sial,DISABLED_contraction_small_test2){
 }
 
 
-TEST(Sial,DISABLED_sum_op){
+TEST(Sial,sum_op){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1095,7 +1095,7 @@ TEST(Sial,DISABLED_sum_op){
 	}
 }
 
-TEST(Sial,DISABLED_print_block_test){
+TEST(Sial,print_block_test){
 
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
@@ -1145,7 +1145,7 @@ TEST(Sial,DISABLED_print_block_test){
 	}
 }
 
-TEST(Sial,DISABLED_subindex_test){
+TEST(Sial,subindex_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1196,7 +1196,7 @@ TEST(Sial,DISABLED_subindex_test){
 
 
 
-TEST(Sial,DISABLED_insert_slice_test){
+TEST(Sial,insert_slice_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1249,7 +1249,7 @@ TEST(Sial,DISABLED_insert_slice_test){
 	}
 }
 
-TEST(Sial,DISABLED_static_array_test){
+TEST(Sial,static_array_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1306,7 +1306,7 @@ TEST(Sial,DISABLED_static_array_test){
 
 
 
-TEST(Sial,DISABLED_local_arrays){
+TEST(Sial,local_arrays){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1359,7 +1359,7 @@ TEST(Sial,DISABLED_local_arrays){
 	}
 }
 
-TEST(Sial,DISABLED_local_arrays_wild){
+TEST(Sial,local_arrays_wild){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1412,7 +1412,7 @@ TEST(Sial,DISABLED_local_arrays_wild){
 	}
 }
 
-TEST(Sial,DISABLED_put_test){
+TEST(Sial,put_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1466,7 +1466,7 @@ TEST(Sial,DISABLED_put_test){
 }
 
 
-TEST(Sial,DISABLED_gpu_contraction_small){
+TEST(Sial,gpu_contraction_small){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1571,7 +1571,7 @@ TEST(Sial,DISABLED_gpu_contraction_small){
 	}
 }
 
-TEST(Sial,DISABLED_gpu_sum_op){
+TEST(Sial,gpu_sum_op){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1696,7 +1696,7 @@ TEST(Sial,DISABLED_gpu_sum_op){
 }
 
 
-TEST(Sial,DISABLED_gpu_ops){
+TEST(Sial,gpu_ops){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1751,7 +1751,7 @@ TEST(Sial,DISABLED_gpu_ops){
 }
 
 
-TEST(Sial,DISABLED_contract_to_scalar){
+TEST(Sial,contract_to_scalar){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1831,7 +1831,7 @@ TEST(Sial,DISABLED_contract_to_scalar){
 	}
 }
 
-TEST(Sial,DISABLED_gpu_contract_to_scalar){
+TEST(Sial,gpu_contract_to_scalar){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -1911,7 +1911,7 @@ TEST(Sial,DISABLED_gpu_contract_to_scalar){
 	}
 }
 
-TEST(Sial,DISABLED_gpu_transpose_tmp){
+TEST(Sial,gpu_transpose_tmp){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2033,7 +2033,7 @@ TEST(Sial,DISABLED_gpu_transpose_tmp){
 
 }
 
-TEST(Sial,DISABLED_simple_indices_assignments){
+TEST(Sial,simple_indices_assignments){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2087,7 +2087,7 @@ TEST(Sial,DISABLED_simple_indices_assignments){
 
 
 
-TEST(Sial,DISABLED_self_multiply_op){
+TEST(Sial,self_multiply_op){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2165,7 +2165,7 @@ TEST(Sial,DISABLED_self_multiply_op){
 	}
 }
 
-TEST(Sial,DISABLED_gpu_self_multiply_op){
+TEST(Sial,gpu_self_multiply_op){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2245,7 +2245,7 @@ TEST(Sial,DISABLED_gpu_self_multiply_op){
 
 
 
-TEST(Sial,DISABLED_get_int_array_test){
+TEST(Sial,get_int_array_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2321,7 +2321,7 @@ TEST(Sial,DISABLED_get_int_array_test){
 	}
 }
 
-TEST(Sial,DISABLED_get_scalar_array_test){
+TEST(Sial,get_scalar_array_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2396,7 +2396,7 @@ TEST(Sial,DISABLED_get_scalar_array_test){
 }
 
 
-TEST(Sial,DISABLED_get_scratch_array_test){
+TEST(Sial,get_scratch_array_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2470,7 +2470,7 @@ TEST(Sial,DISABLED_get_scratch_array_test){
 }
 
 
-TEST(Sial,DISABLED_gpu_contraction_predefined){
+TEST(Sial,gpu_contraction_predefined){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2546,7 +2546,7 @@ TEST(Sial,DISABLED_gpu_contraction_predefined){
 	}
 }
 
-TEST(Sial,DISABLED_transpose4d_tmp){
+TEST(Sial,transpose4d_tmp){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2624,7 +2624,7 @@ TEST(Sial,DISABLED_transpose4d_tmp){
 
 }
 
-TEST(Sial,DISABLED_transpose4d_square_tmp){
+TEST(Sial,transpose4d_square_tmp){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2732,7 +2732,7 @@ TEST(Sial,DISABLED_transpose4d_square_tmp){
 	}
 }
 
-TEST(Sial,DISABLED_reproduce_transpose_problem){
+TEST(Sial,reproduce_transpose_problem){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2799,7 +2799,7 @@ TEST(Sial,DISABLED_reproduce_transpose_problem){
 
 }
 
-TEST(Sial,DISABLED_assign_to_static_array_test){
+TEST(Sial,assign_to_static_array_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2852,7 +2852,7 @@ TEST(Sial,DISABLED_assign_to_static_array_test){
 	}
 }
 
-TEST(Sial,DISABLED_set_persistent_test){
+TEST(Sial,set_persistent_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file
@@ -2943,7 +2943,7 @@ TEST(Sial,DISABLED_set_persistent_test){
 
 }
 
-TEST(Sial,DISABLED_persistent_static_array_test){
+TEST(Sial,persistent_static_array_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
 	//create setup_file

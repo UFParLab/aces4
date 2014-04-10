@@ -2583,12 +2583,21 @@
 
       sip_barrier 
 
+      kcount = 0.0
       DO jdiis 
+        kcount +=1.0
+        if kcount <= worder
+        jcount = 0.0
       DO j1diis 
+         jcount += 1.0
+         if jcount <= worder
          GET DIST_BB(jdiis,j1diis) 
 
          BB(jdiis,j1diis) = DIST_BB(jdiis,j1diis) 
+         endif 
+        
       ENDDO j1diis 
+      endif
       ENDDO jdiis 
      #println "finished coputing BB" 
 

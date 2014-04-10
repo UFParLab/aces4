@@ -20,6 +20,6 @@ sial persistent_scalars_1
 	println "e should be 6"
 	print_scalar e
 	set_persistent e "saved_e"
-	set_persistent x "saved_x"
+#	set_persistent x "saved_x"
 	
 endsial persistent_scalars_1

@@ -131,13 +131,17 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 //	return blk;
 //}
 
+
+//TODO TEMPORARY FIX WHILE SEMANTICS BEING WORKED OUT
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	if (blk == NULL) {
-		std::cout << "get_block_for_reading, block " << id << "    array "
-				<< sip_tables_.array_name(id.array_id()) << " does not exist\n";
-		fail("", current_line());
-	}
+//	if (blk == NULL) {
+//		std::cout << "get_block_for_reading, block " << id << "    array "
+//				<< sip_tables_.array_name(id.array_id()) << " does not exist\n";
+//		fail("", current_line());
+//	}
+	return get_block_for_accumulate(id);  //TODO
+
 
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
