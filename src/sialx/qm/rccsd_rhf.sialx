@@ -2586,6 +2586,7 @@
       DO jdiis 
       DO j1diis 
          GET DIST_BB(jdiis,j1diis) 
+
          BB(jdiis,j1diis) = DIST_BB(jdiis,j1diis) 
       ENDDO j1diis 
       ENDDO jdiis 

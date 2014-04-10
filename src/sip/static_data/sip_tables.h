@@ -51,7 +51,9 @@ public:
 	SipTables(setup::SetupReader&, setup::InputStream&);
 	~SipTables();
 
-	static SipTables* get_instance();
+
+	static SipTables& get_instance() ;
+
 
 // Convenience method
 	/**
@@ -107,13 +109,16 @@ public:
 	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot);
 	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot);
 
-    void print();
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 
 	setup::SetupReader& setup_reader() const { return setup_reader_; }
 private:
 
-static SipTables* global_sip_tables;
+	/** this is a pointer to the SipTables instance of the current SIAL program
+	 * or NULL if there is no current program.  This variable is set in the
+	 * constructor and set to NULL in the destructor.
+	 */
+	static SipTables* instance_;
 
 	OpTable op_table_;
 	sip::ArrayTable array_table_;

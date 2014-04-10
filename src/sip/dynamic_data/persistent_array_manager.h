@@ -106,7 +106,7 @@ public:
 						std::pair<int, int>(array_id, string_slot));
 		check(ret.second,
 				"duplicate save of array in same sial program "
-						+ runner->array_name(array_id));
+						+ SipTables::get_instance().array_name(array_id));
 		//note that duplicate label for same type of object will
 		//be detected during the save process so we don't
 		//check for unique labels here.
@@ -167,8 +167,11 @@ public:
 	 * @param string_slot
 	 */
 	void restore_persistent(RUNNER_TYPE* runner, int array_id, int string_slot){
-		//DEBUG
-		std::cout << "restore_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
+		SIP_LOG(
+		std::cout << "restore_persistent: array= " <<
+		runner->array_name(array_id) << ", label=" <<
+		runner->string_literal(string_slot) << std::endl;)
+
 		if (runner->sip_tables()->is_scalar(array_id))
 			restore_persistent_scalar(runner, array_id, string_slot);
 		else if (runner->sip_tables()->is_contiguous(array_id))
@@ -228,6 +231,7 @@ public:
 	 * SIAl when the argument is a distributed/served array.  The block map associated
 	 * with the string literal is MOVED into the distributed array table and the
 	 * entry removed (which does not delete the map) from the persistent_array_manager.
+	 * The set_per_array method updates the array id in each block's id.
 	 *
 	 * In a parallel instance of aces4, this will be called only on the server, in
 	 * a single node instance, it will be called by the single process.

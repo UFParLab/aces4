@@ -25,21 +25,44 @@ namespace sip {
  * At a barrier, the wait_all method returns when all of the acks have
  * been received.
  *
- * The cleanup method may be called to remove requests for acks that
- * have already arrived from the array of pending requests.
+ * The cleanup method may be called at any time to remove requests for acks that
+ * have already arrived from the array of pending requests.  It will be
+ * called if the array of pending requests becomes full.
  */
 class AsyncAcks {
 public:
 	AsyncAcks();
    ~AsyncAcks();
 
-	//TODO  this is excessive
-	static const size_t MAX_POSTED_ASYNC = 65536;  // = 2^16. 16 bits for message number in mpi tag (sip_mpi_utils).
+	//TODO  figure out a good size for this (NOT 2^16)
+	static const size_t MAX_POSTED_ASYNC = 32;
 
+	/** called by sial_ops implementations that expect an ack from a server
+	 *
+	 * @param from_rank  server rank
+	 * @param tag        tag from msg being acked
+	 */
 	void expect_ack_from(int from_rank, int tag);
 
+	/**
+	 * returns after the expected ack has been received.
+	 * called during program termination.
+	 *
+	 * @param from_rank  server rank
+	 * @param tag        tag from msg being acked
+	 */
+	void expect_sync_ack_from(int from_rank, int tag);
+
+	/**
+	 * called by sip_barrier to wait for all acks to be acknowledged.
+	 * After return, this worker has no more message in transit
+	 */
 	void wait_all();
 
+	/**
+	 * Handles and receives complete acks.  It does not wait,
+	 * just handles acks that have already arrived.
+	 */
 	void cleanup();
 
 private:
@@ -58,15 +81,30 @@ private:
 
 	/**
 	 * like cleanup, but blocks until at least one pending request has been
-	 * satisfied.  This may be caleed by add_request to wait for a slot
+	 * satisfied.  This may be called by add_request to wait for a slot
 	 * in the posted_async_ array.  A warning is printed since the situation
 	 * where the entire poaster_async_ list is full of pending requests is
 	 * unusual and should be investigated.
 	 */
 	void wait_and_cleanup();
 
+	/**
+	 * removes completed requests from the posted_async_ array.
+	 * Called by cleanup and wait_and_cleanup
+	 *
+	 * @param outcount  the number of completed requests (obtained from
+	 *                      MPI_Testsome or MPI_Waitsome
+	 * @param array_of_indices  array containing outcount indices into
+	 *                        posted_async_ array that are completed.
+	 *                        This was also returned from MPI_Testsome
+	 *                        or MPI_Waitsome
+	 */
+	void remove_completed_requests(int outcount,
+			int array_of_indices[]);
+
 	DISALLOW_COPY_AND_ASSIGN(AsyncAcks);
 
+	friend std::ostream& operator<<(std::ostream&, const AsyncAcks &);
 
 };
 

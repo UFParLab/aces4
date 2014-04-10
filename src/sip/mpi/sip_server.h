@@ -22,7 +22,7 @@ namespace sip {
 
 
 
-/** SIPServer manages distributed blocks.
+/** SIPServer manages distributed/served arrays.
  *
  * The server executes a loop, run, that repeatedly polls for messages from workers and handles them.
  * The loop terminates when an END_PROGRAM message is received.
@@ -50,7 +50,8 @@ namespace sip {
  * DELETE:
  *
  * TODO:  In the current implementation, on receipt of a PUT or PUT_ACCUMULATE, the server waits for the
- * following PUT_DATA or PUT_ACCUMULATE_DATA message.  This decision will need to be revisited.
+ * following PUT_DATA or PUT_ACCUMULATE_DATA message.
+ * We need to investigate the performance implications.
  */
 
 class SIPServer {
@@ -64,21 +65,31 @@ public:
 	 */
 	void run();
 
-	/** Called by persistent_array_manager. Delegates to block_map_.
-	 *
+	/**
+	 * Called by persistent_array_manager. Delegates to block_map_.
 	 */
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
 			return block_map_.get_and_remove_per_array_map(array_id);
 	}
+
+	/**
+	 * Called by persistent_array_manager during restore.  elegates
+	 * to block_map_
+	 *
+	 * @param array_id
+	 * @param map_ptr
+	 */
 	void set_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr){
 		block_map_.insert_per_array_map(array_id, map_ptr);
 	}
+
 
 	SipTables* sip_tables() { return &sip_tables_;}
 
 
 	/** The following methods are called by the PersistentArrayManager.
-	 * Fi the functionality is not required on the server, they are empty.
+	 * If the functionality is not required on the server, they are empty--
+	 * or rather cause a runtime error.
 	 * @param slot
 	 * @return
 	 */
@@ -98,7 +109,7 @@ public:
 
 
 private:
-
+    SipTables &sip_tables_;
 	/**
 	 * Data structure to store blocks of distributed/served arrays
 	 */
@@ -110,11 +121,15 @@ private:
 	 */
 	BarrierSupport state_;
 
+	/**
+	 * Set to true on receipt of an end program message.  Causes
+	 * the run loop to terminate.
+	 */
 	bool terminated_;
 
 	SIPMPIAttr & sip_mpi_attr_;
 	DataDistribution &data_distribution_;
-	SipTables &sip_tables_;
+
 	PersistentArrayManager<ServerBlock, SIPServer> * persistent_array_manager_;
 
 
@@ -246,8 +261,6 @@ private:
 	 * @param expected_count
 	 */
 	void check_double_count(MPI_Status& status, int expected_count);
-
-
 
 };
 

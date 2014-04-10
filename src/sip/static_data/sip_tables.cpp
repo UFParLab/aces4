@@ -21,17 +21,17 @@ SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input
 	setup_reader_(setup_reader),
 	siox_reader_(*this, input_file, setup_reader),
 	sialx_lines_(-1){
-	global_sip_tables = this;
+//	check(SipTables::instance_ == NULL, "attempting to write to non-null SipTables::instance_");
+	SipTables::instance_ = this;
 }
 
 SipTables::~SipTables() {
+	SipTables::instance_ = NULL;
 }
 
-SipTables* SipTables::global_sip_tables;
-
-SipTables* SipTables::get_instance(){
-	check (global_sip_tables != NULL, "Attempting to access sip table when it doesn't exist");
-	return global_sip_tables;
+SipTables* SipTables::instance_;
+SipTables& SipTables::get_instance(){
+	return *instance_;
 }
 
 int SipTables::max_timer_slots(){
@@ -129,23 +129,6 @@ sip::IndexType_t SipTables::index_type(int index_table_slot) {
 	return index_table_.index_type(index_table_slot);
 }
 
-//array::BlockShape& SipTables::shape(const array::BlockId& block_id) const{
-//	int array_table_slot = block_id.array_id_;
-//	int rank = array_table_.rank(array_table_slot);
-//	array::index_selector_t& selectors = array_table_.index_selectors(array_table_slot);
-//	int seg_sizes[MAX_RANK];
-//	for (int i = 0; i < MAX_RANK; ++i) {
-//		seg_sizes[i] = index_table_.segment_extent(selectors[i],
-//				block_id.index_values_[i]);
-//	}
-////	std::cout << "seg_sizes: ";
-////
-////	for (int i = 0; i < MAX_RANK; ++i){
-////		std::cout << (i==0?"":",") << seg_sizes[i];
-////	}
-////	std::cout << std::endl;
-//	return array::BlockShape(seg_sizes);
-//}
 
 sip::BlockShape SipTables::shape(const sip::BlockId& block_id) {
 	int array_table_slot = block_id.array_id();
@@ -196,12 +179,11 @@ int SipTables::num_segments(int index_table_slot) {
 	return index_table_.num_segments(index_table_slot);
 }
 int SipTables::num_subsegments(int index_slot, int parent_segment_value){return index_table_.num_subsegments(index_slot, parent_segment_value);}
+
 bool SipTables::is_subindex(int index_table_slot){return index_table_.is_subindex(index_table_slot);}
+
 int SipTables::parent_index(int subindex_slot){return index_table_.parent(subindex_slot);}
 
-void SipTables::print(){
-	std::cout << *this << std::endl;
-}
 
 std::ostream& operator<<(std::ostream& os, const SipTables& obj) {
 	//index table

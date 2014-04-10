@@ -25,25 +25,33 @@
 #include "contiguous_array_manager.h"
 #include "data_manager.h"
 #include "sialx_timer.h"
-
 #include "persistent_array_manager.h"
 #include "config.h"
+
+#ifdef HAVE_MPI
+#include "sial_ops_parallel.h"
+#else
+#include "sial_ops_sequential.h"
+#endif //HAVE_MPI
 
 namespace sip {
 
 class LoopManager;
 
+
 class Interpreter {
 public:
 
-#ifdef HAVE_MPI
-	Interpreter(SipTables&, SialxTimer&, SIPMPIAttr&, DataDistribution&,
-			PersistentArrayManager<Block, Interpreter>*);
-#else
+
 	Interpreter(SipTables&, SialxTimer&, PersistentArrayManager<Block, Interpreter>* = NULL); //default value used for testing only
-#endif
+
 	~Interpreter();
 
+	/** Static pointer to the current Interpreter.  This is
+	 * initialized in the Interpreter constructor and reset to NULL
+	 * in its destructor.  There should be at most on Interpreter instance
+	 * at any given time.
+	 */
 	static Interpreter* global_interpreter;
 
 	friend class DoLoop;
@@ -161,11 +169,11 @@ public:
 	}
 
 //TODO these should be private.  Made public as expedient way to implement list_block_map super instruction.
-	//dynamic data
-	DataManager data_manager_;
+
 	//static data
 	SipTables& sip_tables_;
-
+	//dynamic data
+	DataManager data_manager_;
 private:
 
 	/**
@@ -178,24 +186,29 @@ private:
 	void interpret(int pc_start, int pc_end);
 
 	/**
-	 *  Any processing to be done after the SIAL program is complete.
+	 *  Called after the main interpret loop terminates to
+	 *  cleanly terminate this program.
 	 */
 	void post_sial_program();
 
-#ifdef HAVE_MPI
-	/**
-	 * MPI Attributes of the SIP for this rank
-	 */
-	SIPMPIAttr & sip_mpi_attr_;
-
-	/**
-	 * Data distribution scheme
-	 */
-	DataDistribution &data_distribution_;
-
-#endif
 
 	OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
+	/**
+	 * Timer manager
+	 */
+	sip::SialxTimer& sialx_timers_;
+
+	/**
+	 * Owned by main program
+	 * The reference is needed for upcalls to handle set_persistent and restore_persistent instructions
+	 */
+	sip::PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
+
+#ifdef HAVE_MPI
+	SialOpsParallel sial_ops_;  //todo make this a template param
+#else
+	SialOpsSequential sial_ops_;
+#endif
 
 	/** the "program counter". Actually, the current location in the op_table_.
 	 */
@@ -237,34 +250,16 @@ private:
 	/**
 	 * Writes back the blocks in the write_back_list_ into their containing contiguous array.
 	 * This should be called after each instruction that may have updated a block.
+	 * TODO let the compiler indicate if this needs to be called.
 	 */
 	void write_back_contiguous();
 
-	/**
-	 * Timer manager, owned by main program
-	 */
-	sip::SialxTimer& sialx_timers_;
-
-	/**
-	 * Owned by main program
-	 * The reference is needed for upcalls to handle set_persistent and restore_persistent instructions
-	 */
-	sip::PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
 
 	/**
 	 * Records whether or not we are executing in a section of code where gpu_on has been invoked
 	 */
 	bool gpu_enabled_;
 
-//	/**
-//	 * Records the pardo section number in the SIAL program currently being executed.
-//	 */
-//	int section_number_;
-//
-//	/**
-//	 * Keeps track of the message sent to the server (in a section).
-//	 */
-//	int message_number_;
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
@@ -332,7 +327,6 @@ private:
 	 */
 	sip::Block::BlockPtr get_block(char intent, sip::BlockSelector&,
 			sip::BlockId&, bool contiguous_allowed = true);
-	//array::Block::BlockPtr get_block_from_selector_stack(char intent, array::BlockId& id, bool contiguous_allowed = true);
 
 	// GPU
 	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockId&,

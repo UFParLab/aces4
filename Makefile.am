@@ -74,6 +74,10 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
 ./src/sip/worker/siox_reader.cpp\
+./src/sip/worker/sial_ops_parallel.h\
+./src/sip/worker/sial_ops_parallel.cpp\
+./src/sip/worker/sial_ops_sequential.h\
+./src/sip/worker/sial_ops_sequential.cpp\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\

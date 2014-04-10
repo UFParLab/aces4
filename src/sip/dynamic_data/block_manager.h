@@ -18,16 +18,11 @@
 #include <stack>
 #include "block.h"
 #include "id_block_map.h"
-#include "barrier_support.h"
 
-#ifdef HAVE_MPI
-#include "async_acks.h"
-#include "sip_mpi_attr.h"
-#include "data_distribution.h"
-#endif /HAVE_MPI
 
 namespace sip {
 class SipTables;
+class SialOpsParallel;
 
 class BlockManager {
 public:
@@ -35,29 +30,8 @@ public:
 	typedef std::vector<BlockId> BlockList;
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
-#ifdef HAVE_MPI
-	BlockManager(sip::SipTables&, SIPMPIAttr&, DataDistribution&);
-#else
-	BlockManager(sip::SipTables&);
-#endif //HAVE_MPI
+	BlockManager();
 	~BlockManager();
-
-	/*! implements a global SIAL barrier */
-	void barrier();
-
-	/*! SIAL operations on arrays */
-	void create_distributed(int array_id);
-	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
-	void delete_distributed(int array_id);
-	void get(BlockId&);
-	void put_replace(BlockId&, const Block::BlockPtr);
-	void put_accumulate(BlockId&, const Block::BlockPtr);
-
-	void destroy_served(int array_id);
-	void request(BlockId&);
-	void prequest(BlockId&, BlockId&);
-	void prepare(BlockId&, Block::BlockPtr);
-	void prepare_accumulate(BlockId&, Block::BlockPtr);
 
 	void allocate_local(const BlockId&);
 	void deallocate_local(const BlockId&);
@@ -108,6 +82,18 @@ public:
 	 * then deletes the scope's temp Block list
 	 */
 	void leave_scope();
+
+	/**
+	 * Deletes the map for the given array from the block map.  This is used by the
+	 * persistent_array_manager. The call is simply delegated to the block_map_.
+	 *
+	 * @param array_id
+	 */
+	void delete_per_array_map_and_blocks(int array_id){
+		block_map_.delete_per_array_map_and_blocks(array_id);
+	}
+
+
 
 #ifdef HAVE_CUDA
 	// GPU
@@ -243,6 +229,8 @@ private:
 	 * @return whether the selector contains a wild card
 	 */
 	bool has_wild_slot(const index_selector_t& selector);
+	/** Pointer to static data */
+	SipTables& sip_tables_;
 
 	/** Map from block id's to blocks */
 	IdBlockMap<Block> block_map_;
@@ -255,30 +243,9 @@ private:
 													//to allow more convenient printing of
 													//contents.
 
-	/** Pointer to static data */
-	SipTables& sip_tables_;
-
-#ifdef HAVE_MPI
-
-	SIPMPIAttr & sip_mpi_attr_; // MPI Attributes of the SIP for this rank
-	DataDistribution &data_distribution_; // Data distribution scheme
 
 
-
-//	BlockIdToIndexMap blocks_in_transit_; // block_id -> index into posted_receives_
-
-	AsyncAcks ack_handler_;
-
-
-	/**
-	 * checks that the number of double values recieved is the same as expected.
-	 * If not, it is a fatal error
-	 */
-	void check_double_count(MPI_Status& status, int expected_count);
-
-
-#endif
-
+	friend class SialOpsParallel;
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

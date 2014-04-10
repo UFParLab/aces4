@@ -36,6 +36,7 @@
 #ifndef BARRIER_SUPPORT_H_
 #define BARRIER_SUPPORT_H_
 
+#include <sstream>
 #include "sip_mpi_data.h"
 
 namespace sip {
@@ -256,9 +257,21 @@ public:
 	/**
 	 * Called by worker at barrier to increment section_number_ and reset transaction_number_;
 	 */
-	void barrier(){
+	void update_state_at_barrier(){
 		section_number_++;
 		transaction_number_ = 0;
+	}
+
+	static std::string tag_to_str(int tag){
+		std::stringstream ss;
+		ss <<  "get_tag: section number "
+           << extract_section_number(tag)
+					<< " transaction number "
+					<< extract_transaction_number(tag)
+					<< " tag type "
+					<< extract_message_type(tag)
+					<< std::endl;
+		return ss.str();
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const BarrierSupport& obj){

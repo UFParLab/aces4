@@ -1,6 +1,7 @@
 sial get_mpi
 	special list_block_map
 	special print_block r
+	special get_my_rank w
 	predefined int norb
 	aoindex i = 1,norb
 	aoindex j = 1,norb
@@ -8,6 +9,7 @@ sial get_mpi
 	local aa(i,j)
 	distributed b(i,j)
 	distributed c(i,j)
+	scalar rank
 	
 	create b
 	create c
@@ -34,6 +36,8 @@ sial get_mpi
 	enddo i
 	
 	sip_barrier
+	execute get_my_rank rank
+	print_scalar rank
 	execute list_block_map
 	delete b
 	delete c

@@ -90,7 +90,7 @@ void check(bool condition, std::string message, int line){
 		int length = prog.size()-std::string(".siox").size();
 		std::cerr << " at "<< prog.substr(0,length) << ":" << line;
 	}
-	std::cerr << std::endl;
+	std::cerr << std::endl << std::flush;
 	sip_abort();
 	//throw std::logic_error("logic error");
 }
@@ -102,7 +102,7 @@ bool check_and_warn(bool condition, std::string message, int line){
 	if (line > 0){
 		std::cerr << " at "<< GlobalState::get_program_name() << ":" << line;
 	}
-	std::cerr << std::endl;
+	std::cerr << std::endl << std::flush;
 	return false;
 }
 

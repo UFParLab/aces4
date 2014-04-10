@@ -30,11 +30,9 @@ public:
 	typedef std::vector<BlockId> BlockIdList;
 	typedef std::vector<Block::BlockPtr>  ScalarBlockTable;
 
-#ifdef HAVE_MPI
-	DataManager(SipTables&, SIPMPIAttr&, DataDistribution&);
-#else
-	DataManager(SipTables&);
-#endif
+
+	DataManager();
+
 
 
 	~DataManager();
@@ -77,11 +75,13 @@ public:
     void get_subblock_offsets_and_shape(const sip::Block::BlockPtr block, const sip::BlockSelector& subblock_selector,
     		sip::offset_array_t& offsets, sip::BlockShape& subblock_shape);
 
-	/**scalar collective sum.  Creates dependency on MPI for parallel versions*/
-	void collective_sum(int source_array_slot,int dest_array_slot);
+
 
 	void enter_scope();
 	void leave_scope();
+
+	//immutable data for convenience
+	SipTables& sip_tables_;
 
 	sip::BlockManager block_manager_;  //this should probably be private
 	sip::ContiguousArrayManager contiguous_array_manager_;
@@ -93,22 +93,6 @@ private:
 	ScalarTable scalar_values_; //scalar values, initialized from "scalar table" read from siox file
 	ScalarBlockTable scalar_blocks_; //blocks wrapped around pointers to scalars.
 
-
-	//static data for convenience
-	SipTables& sipTables_;
-
-#ifdef HAVE_MPI
-
-	/**
-	 * MPI Attributes of the SIP for this rank
-	 */
-	sip::SIPMPIAttr & sip_mpi_attr_;
-
-	/**
-	 * Data distribution scheme
-	 */
-	sip::DataDistribution &data_distribution_;
-#endif
 
 	friend class Interpreter;
 

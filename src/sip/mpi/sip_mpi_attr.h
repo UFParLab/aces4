@@ -8,10 +8,10 @@
 #ifndef SIP_MPI_ATTR_H_
 #define SIP_MPI_ATTR_H_
 
-#include "mpi.h"
+#include  <mpi.h>
 #include "sip.h"
 #include "rank_distribution.h"
-#include "barrier_support.h"
+
 
 
 namespace sip {
@@ -60,8 +60,6 @@ public:
 
 	friend std::ostream& operator<<(std::ostream&, const SIPMPIAttr&);
 
-	//TODO refactor this
-	BarrierSupport barrier_support_;
 
 private:
 	SIPMPIAttr();

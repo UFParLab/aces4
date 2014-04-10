@@ -35,7 +35,7 @@
 #include <iostream>
 
 #ifdef HAVE_MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif //HAVE_MPI
 
 
@@ -44,9 +44,60 @@ namespace sip {
 	class Interpreter;
 	class SIPServer;
 	class SIPMPIUtils;
+	class SialOpsParallel;
 }
 
 namespace sip {
+class Block;
+
+#ifdef HAVE_MPI
+
+class MPIState{
+public:
+	MPIState():mpi_request_(MPI_REQUEST_NULL){
+	}
+	~MPIState(){
+		if (!check_and_warn(!pending(), "deleting block with pending request")){
+			//the block id pending, and we have raised a warning
+			wait();
+		}
+	}
+	bool pending(){
+		return mpi_request_ != MPI_REQUEST_NULL;
+	}
+	void wait(){
+		MPI_Wait(&mpi_request_, MPI_STATUS_IGNORE);
+	}
+	void wait(int expected_count){
+		MPI_Status status;
+		MPI_Wait(&mpi_request_, &status);
+		int received_count;
+		MPI_Get_count(&status, MPI_DOUBLE, &received_count);
+			check(received_count == expected_count,
+					"message double count different than expected");
+	}
+//	MPI_Request mpi_request(){
+//		return mpi_request_;
+//	}
+
+private:
+
+
+	friend class SialOpsParallel;
+	MPI_Request mpi_request_;
+	DISALLOW_COPY_AND_ASSIGN(MPIState);
+};
+#else
+class MPIState{
+	bool pending(){return false;}
+	void wait(){}
+	void wait(int){}
+//	MPI_Request mpi_request(){
+//		return MPI_REQUEST_NULL;
+//	}
+};
+#endif //HAVE_MPI
+
 
 /** A block of data together with its shape. Size is derived from the shape
  * and is stored for convenience.  The shape of a block cannot change once
@@ -85,13 +136,17 @@ public:
 	 */
 	Block(dataPtr);
 
-	/**
-	 * Returns a copy of the block
-	 * @param
-	 * @return
-	 */
-	BlockPtr clone();
+//	/**
+//	 * Returns a copy of the block
+//	 * @param
+//	 * @return
+//	 */
+//	BlockPtr clone();
 
+	/**
+	 * Deletes data in block if any.  If an MPI request associated with this
+	 * block is pending, it waits until it has been satisfied and issues a warning.
+	 */
 	~Block();
 
     int size();
@@ -166,17 +221,21 @@ public:
 #endif
 
 
+
 private:
 
     Block();
 
+
 	BlockShape shape_;
     int size_;
 	dataPtr data_;
+
+	//TODO encapsulate this
 	dataPtr gpu_data_;
-#ifdef HAVE_MPI
-	MPI_Request mpi_request_;  //status != MPI_REQUEST_NULL block in transit
-#endif //HAVE_MPI
+
+
+
 
 	// Why bitset is a good idea
 	// http://www.drdobbs.com/the-standard-librarian-bitsets-and-bit-v/184401382
@@ -194,62 +253,31 @@ private:
 	friend class ContiguousArrayManager;
 	friend class SIPMPIUtils;
 	friend class SIPServer;
+	friend class SialOpsParallel;
 
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
 	bool operator==(const Block& rhs) const;
+
+
+
+	/** encapsulates MPI related state info.
+	 *
+	 * TODO For the sake of expediency at the moment,
+	 * MPIState is an empty interface in a sequential
+	 * program.  Fix this up.
+	 *
+	 * TODO make template param.
+	 * This is defined last so its destructor will be called first.
+	 *
+	 */
+	MPIState state_;
+
+
+
 	DISALLOW_COPY_AND_ASSIGN(Block);
 
 };
-
-
-///** This is a container for block data held by a server
-// *
-// */
-//class ServerBlock {
-//public:
-//	typedef double * dataPtr;
-//	typedef size_t size_type;
-//
-//	ServerBlock():
-//		size_(0), data_(NULL){
-//	}
-//
-//	ServerBlock(size_type size, bool initialize = true):
-//			size_(size){
-//		if (initialize) data_ = new double[size]();
-//		else data_ = new double[size];
-//	}
-//
-//	ServerBlock(size_type size, dataPtr data):
-//				size_(size),
-//				data_(data){
-//	}
-//
-//	~ServerBlock(){
-//		if (data_ != NULL) delete [] data_;
-//	}
-//
-//	size_t size(){return size_;}
-//	dataPtr get_data(){return data_;}
-//
-//    dataPtr accumulate_data(size_t size, dataPtr to_add){
-//    	check(size_ == size, "accumulating blocks of unequal size");
-//    	for (unsigned i = 0; i < size; ++i){
-//    		data_[i] += to_add[i];
-//    	}
-//    	return data_;
-//    }
-//
-//    friend std::ostream& operator<<(std::ostream&, const ServerBlock &);
-//
-//private:
-//	size_t size_;
-//	dataPtr data_;
-//
-//	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
-//};
-//
 
 
 } /* namespace sip */

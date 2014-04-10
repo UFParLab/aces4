@@ -172,11 +172,9 @@ int main(int argc, char* argv[]) {
 			sip::GlobalState::increment_program();
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-#ifdef HAVE_MPI
-			sip::Interpreter runner(sipTables, sialxTimer, sip_mpi_attr, data_distribution, persistent_worker);
-#else
+
 			sip::Interpreter runner(sipTables, sialxTimer, persistent_worker);
-#endif
+
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
 			persistent_worker->save_marked_arrays(&runner);
