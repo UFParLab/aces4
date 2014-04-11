@@ -80,19 +80,15 @@ Block::Block()
 
 Block::~Block() {
 	sip::check_and_warn((data_), std::string("in ~Block with NULL data_"));
-//#ifdef HAVE_MPI
-////	//check to see if block is in transit.  If this is the case, there was a get
-////	//on a block that was never used.  Print a warning.  We probably want to be able
-////	//disable this check.
-//	if (check_and_warn( !state_.pending() ,"deleting block with pending request. " +
-//			"This likely is due to an unused get in the sial program")){
-//		state_.wait(size());
-//	}
-//#endif //HAVE_MPI
-	if (data_ != NULL && size_ >1) { //Assumption: if size==1, data_ points into the scalar table.
-		delete[] data_;
-		data_ = NULL;
+#ifdef HAVE_MPI
+//	//check to see if block is in transit.  If this is the case, there was a get
+//	//on a block that was never used.  Print a warning.  We probably want to be able
+//	//disable this check.  The logic is a bit convoluted--check_and_warn=true, means no pending.
+	//we wait if this is not the case
+	if (!check_and_warn( !state_.pending() ,"deleting block with pending request, probably get with no use")){
+		state_.wait(size());
 	}
+#endif //HAVE_MPI
 	if (data_ != NULL && size_ >1) { //Assumption: if size==1, data_ points into the scalar table.
 		delete[] data_;
 		data_ = NULL;

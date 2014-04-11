@@ -106,7 +106,7 @@ public:
 						std::pair<int, int>(array_id, string_slot));
 		check(ret.second,
 				"duplicate save of array in same sial program "
-						+ SipTables::get_instance().array_name(array_id));
+						+ SipTables::instance().array_name(array_id));
 		//note that duplicate label for same type of object will
 		//be detected during the save process so we don't
 		//check for unique labels here.

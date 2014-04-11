@@ -30,7 +30,7 @@ SipTables::~SipTables() {
 }
 
 SipTables* SipTables::instance_;
-SipTables& SipTables::get_instance(){
+SipTables& SipTables::instance(){
 	return *instance_;
 }
 
@@ -112,6 +112,10 @@ bool SipTables::is_served(int array_table_slot) {
 
 int SipTables::num_arrays(){
 	return array_table_.entries_.size();
+}
+
+int SipTables::num_block_in_array(int array_table_slot){
+	return array_table_.entries_[array_table_slot].num_blocks_;
 }
 
 int SipTables::int_value(int int_table_slot) {

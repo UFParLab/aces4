@@ -1,4 +1,4 @@
-/*
+/**
  * This class manages tags in a way that supports the barrier implementation, and also
  * provides each transaction with a unique id.
  *
@@ -37,7 +37,7 @@
 #define BARRIER_SUPPORT_H_
 
 #include <sstream>
-#include "sip_mpi_data.h"
+#include "sip_mpi_constants.h"
 
 namespace sip {
 

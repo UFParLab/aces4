@@ -141,7 +141,7 @@ bool BlockId::operator<(const BlockId& rhs) const {
 
 std::string BlockId::str() {
 	std::stringstream ss;
-	SipTables& tables = SipTables::get_instance();
+	SipTables& tables = SipTables::instance();
 	int rank = tables.array_rank(array_id_);
 	ss << (tables.array_name(array_id_));
 	ss << '[';

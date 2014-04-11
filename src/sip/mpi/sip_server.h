@@ -11,7 +11,6 @@
 #include "sip_tables.h"
 #include "server_block.h"
 #include "data_distribution.h"
-#include "sip_mpi_data.h"
 #include "id_block_map.h"
 #include "barrier_support.h"
 #include "persistent_array_manager.h"

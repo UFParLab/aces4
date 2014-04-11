@@ -12,7 +12,7 @@
 #include "sip.h"
 #include "rank_distribution.h"
 
-
+//TODO  come up with a less military naming scheme
 
 namespace sip {
 

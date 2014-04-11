@@ -12,7 +12,7 @@
 #include <climits>
 
 #ifdef HAVE_MPI
-#include "sip_mpi_data.h"
+#include "sip_mpi_constants.h"
 #include "mpi.h"
 #include "sip_mpi_utils.h"
 #endif
@@ -24,7 +24,7 @@ int DataManager::scope_count = 0;
 
 
 DataManager::DataManager():
-     sip_tables_(SipTables::get_instance()),
+     sip_tables_(SipTables::instance()),
      scalar_values_(sip_tables_.scalar_table_), /*initialize scalars from sipTables*/
 	 index_values_(sip_tables_.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
      block_manager_(),

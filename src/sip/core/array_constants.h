@@ -50,6 +50,8 @@ IndexType_t map_index_type(std::string name);
  * with bitwise or as below
  * individual flags can be tested with bitwise and--attribute &
  * attr_contiguous is non zero if attribute has attr_contiguous set.
+ *
+ * Note:  these values must match those in the SIAL compiler
  */
 enum ArrayAttribute {
 	/*! the modified object is an integer */

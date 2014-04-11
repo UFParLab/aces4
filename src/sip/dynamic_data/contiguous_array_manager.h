@@ -121,12 +121,6 @@ public:
 	 */
 	Block::BlockPtr create_contiguous_array(int array_id, Block::dataPtr data);
 
-//	/**
-//	 * Removes the given contiguous array from the map and deletes its data array
-//	 * @param array_id
-//	 */
-//	void remove_contiguous_array(int array_id);
-
 
 	/** Gets the indicated subblock of a contiguous array.  This is accomplished by allocating memory for the
 	 * subblock and copying the elements, resulting in a contiguously allocated subblock that can

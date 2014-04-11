@@ -43,47 +43,7 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 	return os;
 }
 
-//ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables, setup::SetupReader& setup_reader) :
-//		sip_tables_(sip_tables),
-//		setup_reader_(setup_reader){
-//	//create static arrays in sial program
-//	int num_arrays = sip_tables_.num_arrays();
-//	for (int i = 0; i < num_arrays; ++i){
-//		if (sip_tables_.is_contiguous(i) && sip_tables_.array_rank(i)>0){
-//			//check whether array has been predefined
-//			// FIXME TODO HACK - Check current program number.
-//			// The assumption is that only the first program reads predefined arrays from the
-//			// initialization data. The following ones dont.
-//
-//			if (sip::GlobalState::is_first_program()){
-//
-//				if (sip_tables_.is_predefined(i)) {
-//
-//					SIP_LOG(std::cout << "Array " << sip_tables_.array_name(i)<< " is predefined..." << std::endl);
-//
-//					Block::BlockPtr block = NULL;
-//					std::string name = sip_tables_.array_name(i);
-//					setup::SetupReader::NamePredefinedContiguousArrayMapIterator b =
-//							setup_reader_.name_to_predefined_contiguous_array_map_.find(name);
-//					if (b != setup_reader_.name_to_predefined_contiguous_array_map_.end()) {
-//						block = b->second;
-//					}
-//					if (block != NULL)
-//						// Copy the data in the block when reading from setup reader instead of
-//						// copying the pointer.
-//						insert_contiguous_array(i, block->clone());
-//					else
-//						create_contiguous_array(i);
-//				} else {
-//					create_contiguous_array(i);
-//				}
-//			} else {
-//				create_contiguous_array(i);
-//
-//			}
-//		}
-//	}
-//}
+
 
 ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 		setup::SetupReader& setup_reader) :
@@ -146,26 +106,6 @@ Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 		Block::BlockPtr block_ptr) {
 	sip::check(block_ptr != NULL && block_ptr->get_data() != NULL,
 			"Trying to insert null block_ptr or null block into contiguous array manager\n");
-//	ContiguousArrayMap::iterator it = contiguous_array_map_.find(array_id);
-//	if (it != contiguous_array_map_.end()){
-//		if (block_ptr->get_data() != it->second->get_data()){
-//			SIP_LOG(sip::check_and_warn(false, std::string("attempting to create contiguous array that already exists"), current_line()));
-//			sip::check(it->second != NULL, "Trying to delete NULL block !", current_line());
-//			delete it->second;
-//			contiguous_array_map_.erase(array_id);
-//		}
-//	}
-//	const std::pair<ContiguousArrayMap::iterator, bool> &ret =
-//			contiguous_array_map_.insert(
-//					std::pair<int, Block::BlockPtr>(array_id, block_ptr));
-//
-//	if (!ret.second){
-//		delete ret.first->second;
-//		contiguous_array_map_.erase(ret.first);
-//		contiguous_array_map_.insert(
-//				std::pair<int, Block::BlockPtr>(array_id, block_ptr));
-//	}
-
 	ContiguousArrayMap::iterator it = contiguous_array_map_.find(array_id);
 	if (it != contiguous_array_map_.end()){
 		delete it->second;
@@ -270,17 +210,6 @@ void ContiguousArrayManager::get_block(const BlockId& block_id, int& rank,
 
 //get shape of subblock
 	BlockShape block_shape = sip_tables_.shape(block_id);
-
-//	//DEBUG print info about block
-//    std::cout << "ContiguousArrayManager::get_block " << block_id << "  offsets: [";
-//    		for (int i = 0; i < MAX_RANK; ++i){
-//    			std::cout << (i ==0 ? "" : ",") << offsets[i];
-//    		}
-//    std::cout << "] shape: [";
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << block_shape.segment_sizes_[i];
-//	}
-//    std::cout << ']' << std::endl;
 
 //allocate a new block and copy data from contiguous block
 	block = new Block(block_shape);

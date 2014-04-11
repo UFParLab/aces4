@@ -52,7 +52,7 @@ public:
 	~SipTables();
 
 
-	static SipTables& get_instance() ;
+	static SipTables& instance() ;
 
 
 // Convenience method
@@ -81,6 +81,7 @@ public:
 	bool is_distributed(int array_table_slot);
 	bool is_served(int array_table_slot);
 	int num_arrays();
+	int num_block_in_array(int array_table_slot);
 
 //int (symbolic constants)
 	int int_value(int int_table_slot);
@@ -128,6 +129,7 @@ private:
 	StringLiteralTable string_literal_table_;
 	sip::SpecialInstructionManager special_instruction_manager_;
 	sip::SioxReader siox_reader_;
+	std::vector<int> blocks_in_array();
 
 	setup::SetupReader& setup_reader_;
 

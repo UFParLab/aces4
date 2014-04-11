@@ -577,7 +577,6 @@ void Interpreter::handle_user_sub_op(int pc) {
 	// num_args >= 1.  Set up first argument
 	const std::string signature(
 			sip_tables_.special_instruction_manager_.get_signature(func_slot));
-	//set up first argument
 	sip::BlockId block_id0;
 	char intent0 = signature[0];
 	sip::BlockSelector arg_selector0 = block_selector_stack_.top();

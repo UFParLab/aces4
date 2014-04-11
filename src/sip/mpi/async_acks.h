@@ -34,7 +34,7 @@ public:
 	AsyncAcks();
    ~AsyncAcks();
 
-	//TODO  figure out a good size for this (NOT 2^16)
+	//TODO  figure out a good size for this (probably not as big as 2^16)
 	static const size_t MAX_POSTED_ASYNC = 32;
 
 	/** called by sial_ops implementations that expect an ack from a server

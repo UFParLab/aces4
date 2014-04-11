@@ -38,8 +38,8 @@ namespace sip {
 
 
 BlockManager::BlockManager() :
-sip_tables_(SipTables::get_instance()),
-block_map_(SipTables::get_instance().num_arrays()){
+sip_tables_(SipTables::instance()),
+block_map_(SipTables::instance().num_arrays()){
 }
 
 

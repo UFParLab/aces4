@@ -60,7 +60,9 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/data_manager.h\
 ./src/sip/dynamic_data/data_manager.cpp\
-./src/sip/dynamic_data/id_block_map.h
+./src/sip/dynamic_data/id_block_map.h\
+./src/sip/dynamic_data/persistent_array_manager.h\
+./src/sip/dynamic_data/mpi_state.h
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -91,15 +93,14 @@ if WORKING_MPI
 ACES_SOURCEFILES +=\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\
-./src/sip/dynamic_data/persistent_array_manager.h\
 ./src/sip/mpi/rank_distribution.h \
 ./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \
 ./src/sip/mpi/data_distribution.h\
 ./src/sip/mpi/sip_mpi_utils.h\
 ./src/sip/mpi/sip_mpi_utils.cpp\
-./src/sip/mpi/sip_mpi_data.h\
-./src/sip/mpi/sip_mpi_data.cpp\
+./src/sip/mpi/sip_mpi_constants.h\
+./src/sip/mpi/sip_mpi_constants.cpp\
 ./src/sip/mpi/barrier_support.h\
 ./src/sip/mpi/async_acks.h\
 ./src/sip/mpi/async_acks.cpp\
@@ -325,6 +326,7 @@ SIOX_FILES=\
 ./src/sialx/test/persistent_empty_mpi2.siox\
 ./src/sialx/test/persistent_scalars_1.siox\
 ./src/sialx/test/persistent_scalars_2.siox\
+./src/sialx/test/unmatched_get.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -409,6 +411,7 @@ EXTRA_DIST += \
 ./src/sialx/test/persistent_empty_mpi2.sial\
 ./src/sialx/test/persistent_scalars_1.sialx\
 ./src/sialx/test/persistent_scalars_2.sialx\
+./src/sialx/test/unmatched_get.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

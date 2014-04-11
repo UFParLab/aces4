@@ -209,6 +209,7 @@ private:
 #else
 	SialOpsSequential sial_ops_;
 #endif
+//	SIAL_OPS_TYPE sial_ops_;
 
 	/** the "program counter". Actually, the current location in the op_table_.
 	 */

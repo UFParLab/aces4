@@ -413,6 +413,75 @@ TEST(SimpleMPI,DISABLED_get_mpi){
 
 
 }
+
+/************************************************/
+
+TEST(SimpleMPI,unmatched_get){
+	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+
+		std::cout << "****************************************\n";
+		sip::DataManager::scope_count=0;
+		//create setup_file
+		std::string job("unmatched_get");
+		std::cout << "JOBNAME = " << job << std::endl;
+		double x = 3.456;
+		int norb = 4;
+
+		{	init_setup(job.c_str());
+			set_scalar("x",x);
+			set_constant("norb",norb);
+			std::string tmp = job + ".siox";
+			const char* nm= tmp.c_str();
+			add_sial_program(nm);
+			int segs[]  = {2,3,4,1};
+			set_aoindex_info(4,segs);
+			finalize_setup();
+		}
+
+		//read and print setup_file
+		//// setup::SetupReader setup_reader;
+
+		setup::BinaryInputFile setup_file(job + ".dat");
+		// setup_reader.read(setup_file);
+		setup::SetupReader setup_reader(setup_file);
+
+		std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+
+
+		//get siox name from setup, load and print the sip tables
+		std::string prog_name = setup_reader.sial_prog_list_.at(0);
+		std::string siox_dir(simple_dir_name);
+		setup::BinaryInputFile siox_file(siox_dir + prog_name);
+		// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+	//	siox_reader.read();
+		sip::SipTables sipTables(setup_reader, siox_file);
+//		if (!sip_mpi_attr.is_server()) {std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;}
+
+		//create worker and server
+
+		if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
+
+
+		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+		if (sip_mpi_attr.is_server()){
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
+			MPI_Barrier(MPI_COMM_WORLD);
+			std::cout<<"starting server" << std::endl;
+			server.run();
+			std::cout << "Server state after termination" << server << std::endl;
+		} else {
+			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			sip::Interpreter runner(sipTables, sialxTimer,  NULL);
+			MPI_Barrier(MPI_COMM_WORLD);
+			std::cout << "starting worker for "<< job  << std::endl;
+			runner.interpret();
+			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+			list_block_map();
+		}
+		std::cout << "this test should have printed a warning about unmatched get";
+
+
+}
 TEST(SimpleMPI,DISABLED_delete_mpi){
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 

@@ -6,6 +6,7 @@
  */
 
 #include "array_table.h"
+#include "sip_tables.h"
 
 namespace sip {
 
@@ -56,11 +57,27 @@ ArrayTable::~ArrayTable() {
 
 void ArrayTable::init(setup::InputStream &file) {
 	int n = file.read_int(); //number of entries
+	//read info from the .siox file
 	for (int i = 0; i < n; ++i) {
 		ArrayTableEntry entry;
 		entry.init(file);
 		entries_.push_back(entry);
 		array_name_slot_map_[entry.name_] = i;
+	}
+}
+
+void ArrayTable::init_num_blocks(){
+	int n = entries_.size();
+	SipTables& sip_tables = SipTables::instance();
+	for (unsigned array_id = 0; array_id < n; array_id++){
+		// Calculate total number of blocks
+		int num_blocks = 1;
+		for (int pos=0; pos<rank(array_id); pos++){
+			int index_slot = sip_tables.selectors(array_id)[pos];
+			int num_segments = sip_tables.num_segments(index_slot);
+			num_blocks *= num_segments;
+		}
+		entries_[array_id].num_blocks_ = num_blocks;
 	}
 }
 
