@@ -104,7 +104,7 @@ void BlockManager::barrier() {
 #ifdef HAVE_MPI
 
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Beginning BARRIER "<< std::endl);
-	SIP_LOG(if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : I am company master sending BARRIER to server !" << std::endl);
+	SIP_LOG(if(sip_mpi_attr_.is_company_master()) std::cout<<"W " << sip_mpi_attr_.global_rank() << " : outstanding asyncs to wait on : "<< num_posted_async_ << std::endl);
 
 	MPI_Status statuses[MAX_POSTED_ASYNC];
 	sip::check(0 <= num_posted_async_ && num_posted_async_ <= MAX_POSTED_ASYNC, "Inconsistent value for number of posted asyncs !", current_line());
@@ -449,6 +449,7 @@ void BlockManager::free_any_posted_receive() {
 	SIPMPIUtils::check_err(MPI_Waitany(num_posted_async_, posted_async_, &completed_index,
 			statuses));
 	posted_async_[completed_index] = posted_async_[num_posted_async_ - 1];
+	posted_async_[completed_index] = MPI_REQUEST_NULL;
 	num_posted_async_--;
 }
 
