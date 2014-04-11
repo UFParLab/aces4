@@ -22,13 +22,13 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 100 # Nfrags  
-      index   jatom  = 1, 100 # Nfrags  
+      index   katom  = 1, 400 # Nfrags  
+      index   jatom  = 1, 400 # Nfrags  
 
-      index   jfrag  = 1, 100 # Nfragments   
-      index  jjfrag  = 1, 100 # Nfragments   
-      index   kfrag  = 1, 100 # Nfragments   
-      index  kkfrag  = 1, 100 # Nfragments 
+      index   jfrag  = 1, 400 # Nfragments   
+      index  jjfrag  = 1, 400 # Nfragments   
+      index   kfrag  = 1, 400 # Nfragments   
+      index  kkfrag  = 1, 400 # Nfragments 
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -344,26 +344,26 @@ import "scf_frag_defs.sialx"
        ENDDO mu
       println "Done computing overlap integrals" 
 
-       do p 
-       do mu 
-          ca(mu,p) = 0.0
-       enddo mu
-       enddo p 
-       do p 
-       do p1  
-          Fock_a(p,p1) = 0.0 
-       enddo p1  
-       enddo p
-       do q 
-       do mu 
-          cb(mu,q) = 0.0
-       enddo mu
-       enddo q 
-       do q 
-       do q1  
-          Fock_b(q,q1) = 0.0 
-       enddo q1  
-       enddo q
+#      do p 
+#      do mu 
+#         ca(mu,p) = 0.0
+#      enddo mu
+#      enddo p 
+#      do p 
+#      do p1  
+#         Fock_a(p,p1) = 0.0 
+#      enddo p1  
+#      enddo p
+#      do q 
+#      do mu 
+#         cb(mu,q) = 0.0
+#      enddo mu
+#      enddo q 
+#      do q 
+#      do q1  
+#         Fock_b(q,q1) = 0.0 
+#      enddo q1  
+#      enddo q
 
 #
       sip_barrier 

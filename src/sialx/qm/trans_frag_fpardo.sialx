@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 100 # Nfragments   
-      index  jjfrag  = 1, 100 # Nfragments   
-      index   kfrag  = 1, 100 # Nfragments   
-      index  kkfrag  = 1, 100 # Nfragments   
+      index   jfrag  = 1, 400 # Nfragments   
+      index  jjfrag  = 1, 400 # Nfragments   
+      index   kfrag  = 1, 400 # Nfragments   
+      index  kkfrag  = 1, 400 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -2465,48 +2465,40 @@ import "trans_frag_defs.sialx"
       restore_persistent Dca "ca" 
       restore_persistent DFock_a "fock_a"
       sip_barrier
-      DO mu
+      println "Done restoring persistent arrays" 
+      PARDO mu
       DO p 
          GET        Dca(mu,p) 
          ca(mu,p) = Dca(mu,p) 
       ENDDO p 
+      ENDPARDO mu  
+      PARDO p
+      DO mu 
+         GET        Dca(mu,p) 
+         ca(mu,p) = Dca(mu,p) 
       ENDDO mu  
-      DO p  
+      ENDPARDO p  
+
+      PARDO p  
       DO p1  
          GET            Dfock_a(p,p1) 
          fock_a(p,p1) = Dfock_a(p,p1) 
       ENDDO p1  
+      ENDPARDO p  
+      PARDO p1  
+      DO p  
+         GET            Dfock_a(p,p1) 
+         fock_a(p,p1) = Dfock_a(p,p1) 
       ENDDO p  
+      ENDPARDO p1  
+
       sip_barrier
-     #esum = 0.0 
-     #DO mu
-     #DO i 
-     #   etemp = ca(mu,i) * ca(mu,i) 
-     #   esum += etemp 
-     #ENDDO i 
-     #ENDDO mu  
-     #print_scalar esum 
-     #esum = 0.0 
-     #DO mu
-     #DO a 
-     #   etemp = ca(mu,a) * ca(mu,a) 
-     #   esum += etemp 
-     #ENDDO a 
-     #ENDDO mu  
-     #print_scalar esum 
-     #esum = 0.0 
-     #DO mu
-     #DO p 
-     #   etemp = ca(mu,p) * ca(mu,p) 
-     #   esum += etemp 
-     #ENDDO p 
-     #ENDDO mu  
-     #print_scalar esum 
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
       imax = 0.0  
       zmax = 0.0  
+      println "Start computing scratch memory" 
      #DO mu 
      #DO nu 
      #   txx(mu,nu) = 0.0
@@ -2514,6 +2506,7 @@ import "trans_frag_defs.sialx"
          execute compute_int_scratchmem sxx zmax imax 
      #ENDDO nu 
      #ENDDO mu 
+      println "Done computing scratch memory" 
 
       mone = -1.0 
       ecrit = cc_conv 

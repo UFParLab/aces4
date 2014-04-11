@@ -164,15 +164,15 @@ c     nscr = (extents_1(1) + 1)**2
       call c_f_pointer(ciscr, iscr, [nscr])
 
       nscr = (extents_1(1) + 1)**2  
-      call scratch_array(nscr, cscr1)
-      call scratch_array(nscr, cscr2)
-      call scratch_array(nscr, cscr4)
-      call scratch_array(nscr, cscr5)
+c     call scratch_array(nscr, cscr1)
+c     call scratch_array(nscr, cscr2)
+c     call scratch_array(nscr, cscr4)
+c     call scratch_array(nscr, cscr5)
 
-      call c_f_pointer(cscr1, scr1, [nscr])
-      call c_f_pointer(cscr2, scr2, [nscr])
-      call c_f_pointer(cscr4, scr4, [nscr])
-      call c_f_pointer(cscr5, scr5, [nscr])
+c     call c_f_pointer(cscr1, scr1, [nscr])
+c     call c_f_pointer(cscr2, scr2, [nscr])
+c     call c_f_pointer(cscr4, scr4, [nscr])
+c     call c_f_pointer(cscr5, scr5, [nscr])
 
 c Get the predefined data 
 
@@ -316,11 +316,11 @@ c        if (frag_calc) then
      *                 pccend, ! ibuf(iccend), 
      *                 1, extents_1(1), ! 1, inda(1), 
      *                 1, extents_1(1), ! inda(2), 
-     *                 scr1, ! x(nai_array), 
-     *                 scr2, ! x(kin_array), 
+c    *                 scr1, ! x(nai_array), 
+c    *                 scr2, ! x(kin_array), 
      *                 ncenters, npcoeffs, nshells,  
-     *                 scr4, ! x(farray), 
-     *                 scr5, ! x(fbarray), 
+c    *                 scr4, ! x(farray), 
+c    *                 scr5, ! x(fbarray), 
      *                 data_1, ! x(ca_array), 
      *                 data_2, ! x(cb_array), 
      *                 data_3, ! x(fa_array), 
@@ -335,10 +335,10 @@ c
 c deAllocate scratch arrays 
 
       call delete_scratch_array(cscr)
-      call delete_scratch_array(cscr1)
-      call delete_scratch_array(cscr2)
-      call delete_scratch_array(cscr4)
-      call delete_scratch_array(cscr5)
+c     call delete_scratch_array(cscr1)
+c     call delete_scratch_array(cscr2)
+c     call delete_scratch_array(cscr4)
+c     call delete_scratch_array(cscr5)
 
       call delete_integer_scratch_array(ciscr) 
 
@@ -350,7 +350,8 @@ C
      *                 maxblk, iscr, coords, tcoords ,coeffs,alphas, 
      *                 ccbeg, ccend,
      *                 nc1,nc2, nd1, nd2,
-     *                 nai, kin, ncenters, npcoeffs, nshells, fa, fb, 
+c    *                 nai, kin, ncenters, npcoeffs, nshells, fa, fb, 
+     *                 ncenters, npcoeffs, nshells,  
      *                 ca_perm, cb_perm, fa_perm, fb_perm, ovl,  
 c  
      *                 atom, end_nfps, 
@@ -442,19 +443,18 @@ c ----------------------------------------------------------------------
       double precision x4,y4,z4
 
       double precision coords(3,*), tcoords(3,*), coeffs(*), alphas(*)
-      double precision nai(nc1:nc2,nd1:nd2)
-      double precision kin(nc1:nc2,nd1:nd2)
+c     double precision nai(nc1:nc2,nd1:nd2)
+c     double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
-      double precision H0T(nc1:nc2,nd1:nd2)
+c     double precision H0T(nc1:nc2,nd1:nd2)
 
-      double precision ca(nc1:nc2,nd1:nd2)
-      double precision cb(nc1:nc2,nd1:nd2)
+c     double precision ca(nc1:nc2,nd1:nd2)
+c     double precision cb(nc1:nc2,nd1:nd2)
 
-      double precision fa(nc1:nc2,nd1:nd2)
-      double precision fb(nc1:nc2,nd1:nd2)
+c     double precision fa(nc1:nc2,nd1:nd2)
+c     double precision fb(nc1:nc2,nd1:nd2)
 
       double precision ca_perm(nc1:nc2,nd1:nd2)
-c     double precision ca_out(*)
       double precision cb_perm(nc1:nc2,nd1:nd2)
       double precision fa_perm(nc1:nc2,nd1:nd2)
       double precision fb_perm(nc1:nc2,nd1:nd2)
@@ -577,18 +577,18 @@ c   Set scratch space
 
 c     nscr  = zmax  
 c     niscr = imax 
-c     call scratch_array(nscr, cscr)
-c     call c_f_pointer(cscr, scr_i, [nscr])
+      nscr = (nc2-nc1+1)*(nd2-nd1+1) 
+      call scratch_array(nscr, cscr)
+      call c_f_pointer(cscr, scr_i, [nscr])
 c     call integer_scratch_array(niscr, ciscr)
 c     call c_f_pointer(ciscr, iscr_i, [niscr])
 
-      call comp_return_frag_h0(H0T, n_apf, iatom, nc1, nc2, nd1, nd2,
+      call comp_return_frag_h0(scr_i, n_apf, iatom, nc1, nc2, nd1, nd2,
      *                         npcoeffs, ncenters, 
      *                         coords, tcoords, 
      *                         pcharge, atom,  
      *                         scr, iscr) 
 c  Remove scratch space  
-c     call delete_scratch_array(cscr)
 c     call delete_integer_scratch_array(ciscr)
       write(6,*) ' Finished H0 on frag:', icurrent_frag
 
@@ -709,7 +709,8 @@ c     call c_f_pointer(ciscr, iscr_i, [niscr])
          call do_fragscf(icurrent_frag, scr,
      *            maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
      *            nc1,nc2, nd1, nd2,
-     *            H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
+c    *            H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
+     *            scr_i, ovl, ncenters, npcoeffs, nshells, 
      *            spherical,  
      *            n_basis, beg_anfps, end_anfps, map, umap, 
 c
@@ -726,7 +727,7 @@ c
 c 
      *            vmax,omax,norb,maxhist,diis_start) 
 c  Remove scratch space  
-c     call delete_scratch_array(cscr)
+      call delete_scratch_array(cscr)
 c     call delete_scratch_array(ciscr)
 
       return 
@@ -735,7 +736,8 @@ c     call delete_scratch_array(ciscr)
       subroutine do_fragscf(current_frag, scr,
      *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
      *               nc1,nc2, nd1, nd2,
-     *               H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
+c    *               H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
+     *               H0T, ovl, ncenters, npcoeffs, nshells, 
      *               spherical,
      *               n_basis, beg_anfps, end_anfps, map, umap, 
 c
@@ -819,8 +821,8 @@ c ----------------------------------------------------------------------
       double precision x4,y4,z4
 
       double precision tcoords(3,*), coeffs(*), alphas(*)
-      double precision nai(nc1:nc2,nd1:nd2)
-      double precision kin(nc1:nc2,nd1:nd2)
+c     double precision nai(nc1:nc2,nd1:nd2)
+c     double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
       double precision H0T(nc1:nc2,nd1:nd2)
 
