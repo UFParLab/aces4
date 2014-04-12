@@ -1,0 +1,16 @@
+sial persistent_empty_mpi2
+	special list_block_map
+	special print_block r
+	predefined int norb
+	aoindex i = 1,norb
+	aoindex j = 1,norb
+	local a(i,j)
+	distributed b(i,j)
+	distributed c(i,j)
+	temp t(i,j)
+	
+
+ 
+	println "!!!!!!!!!! persistent_empty_mpi2!!!!!!!!!!!!!"
+	
+endsial persistent_empty_mpi2

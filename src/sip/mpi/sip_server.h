@@ -9,139 +9,258 @@
 #define SIP_SERVER_H_
 
 #include "sip_tables.h"
-#include "blocks.h"
+#include "server_block.h"
 #include "data_distribution.h"
+#include "id_block_map.h"
+#include "barrier_support.h"
 #include "persistent_array_manager.h"
-#include "sip_mpi_data.h"
+
+
 
 namespace sip {
 
+
+
+/** SIPServer manages distributed/served arrays.
+ *
+ * The server executes a loop, run, that repeatedly polls for messages from workers and handles them.
+ * The loop terminates when an END_PROGRAM message is received.
+ *
+ * The current sip_barrier implementation requires each "transaction" initiated by a worker be acknowledged by the server.
+ * Also, workers and servers need to be able to match messages that belong to a single transaction.
+ * For example, a GET transaction has a request and a reply.  PUT and PUT_ACCUMULATE
+ * involve two messages from the worker to the server, one containing the block meta-data (id, size)
+ * and another containing the data itself; followed by an ack from the server to the worker.
+ * Each transaction is given a unique number.  To allow some error checking of the barrier routines,
+ * this number is formed by combining the section number (each barrier increases the section number)
+ * and message number within the barrier.  In a message, the transaction number is combined with
+ * a constant indicating the message type and sent in the tag of the mpi message.
+ *
+ * The BarrierSupport class provides routines for constructing tags and extracting the components;
+ * it also maintains the section and message numbers and provides a routine for checking the
+ * section number invariant at server.
+ *
+ * The server supports the following "transactions" with workers:
+ * GET: server receives GET from worker, replies with requested block.  It is a fatal error for a worker to request a block that doesn't exist
+ * PUT: server receives PUT from worker with block id, server receives matching PUT_DATA from worker.  replies with PUT_DATA_ACK.
+ * PUT_ACCUMULATE: server receives PUT_ACCUMLATE from worker with block id, server receives matching PUT_ACCUMULATE_DATA from worker.  replies with PUT_ACCUMULATE_DATA_ACK.
+ * RESTORE_PERSISTENT:
+ * SET_PERSISTENT:
+ * DELETE:
+ *
+ * TODO:  In the current implementation, on receipt of a PUT or PUT_ACCUMULATE, the server waits for the
+ * following PUT_DATA or PUT_ACCUMULATE_DATA message.
+ * We need to investigate the performance implications.
+ */
+
 class SIPServer {
+
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr &, PersistentArrayManager&, PersistentArrayManager&);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock, SIPServer> *);
 	~SIPServer();
 
-	typedef std::map<BlockId, Block::BlockPtr> IdBlockMap;
-	typedef IdBlockMap* IdBlockMapPtr;
-	typedef std::vector<IdBlockMapPtr> BlockMap;
-
 	/**
-	 * The servers run this loop to serve up blocks
+	 * Main server loop
 	 */
 	void run();
 
-private:
-
 	/**
-	 * Keeps track of block data for pending puts & put_accumulates.
+	 * Called by persistent_array_manager. Delegates to block_map_.
 	 */
-	Block::BlockPtr *outstanding_put_data_arr_;
+	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
+			return block_map_.get_and_remove_per_array_map(array_id);
+	}
 
 	/**
-	 * MPI Attributes of the SIP for this rank
-	 */
-	SIPMPIAttr & sip_mpi_attr_;
-
-	/**
-	 * Data distribution scheme
-	 */
-	DataDistribution &data_distribution_;
-
-	/**
-	 * Reference to the static Sip Tables data.
-	 */
-	SipTables &sip_tables_;
-
-	/**
-	 * persistent block manager instance to read data from previous sial file.
-	 */
-	PersistentArrayManager& pbm_read_;
-
-	/**
-	 * persistent block manager instance to read data from previous sial file.
-	 */
-	PersistentArrayManager& pbm_write_;
-
-	/**
-	 * Stores distributed blocks
-	 */
-	BlockMap block_map_;
-
-	/**
-	 * Last pardo section for which a request was served.
-	 * The invariant for correctness is
-	 * section(any_incoming_request) > section_number_
-	 */
-	int section_number_;
-
-
-	/**
-	 * Deletes all blocks from given array
+	 * Called by persistent_array_manager during restore.  elegates
+	 * to block_map_
+	 *
 	 * @param array_id
+	 * @param map_ptr
 	 */
-	void delete_array(int array_id);
+	void set_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr){
+		block_map_.insert_per_array_map(array_id, map_ptr);
+	}
 
-	/**
-	 * Get array id from a blocking receive from given rank.
-	 * @param rank
-	 * @param tag
+
+	SipTables* sip_tables() { return &sip_tables_;}
+
+
+	/** The following methods are called by the PersistentArrayManager.
+	 * If the functionality is not required on the server, they are empty--
+	 * or rather cause a runtime error.
+	 * @param slot
 	 * @return
 	 */
-	int get_int_from_rank(const int rank, int tag);
+	std::string string_literal(int slot) {
+		return sip_tables_.string_literal(slot);
+	}
+	std::string array_name(int array_id) {
+		return sip_tables_.array_name(array_id);
+	}
 
-	/**
-	 * Send integer to other servers (from master server)
-	 * @param to_send
-	 * @param tag
-	 */
-	void send_to_other_servers(int to_send, int tag);
-
-	/**
-	 * Send char* to other servers (from master server)
-	 * @param str [in]
-	 * @param len [in]
-	 * @param tag [in]
-	 */
-	void send_to_other_servers(const char *str, int len, int tag);
-
-//	/**
-//	 * Gets a string from the given rank.
-//	 * @param rank [in]
-//	 * @param size [out]
-//	 */
-//	std::string get_string_from(int rank, int &size);
-
-	/**
-	 * Any work to be done before server exits
-	 */
-	void post_program_processing();
-
-	/**
-	 * Restores a persistent array
-	 * @param label
-	 * @param array_id
-	 */
-	void restore_persistent_array(const std::string& label,
-			int array_id);
-
-	/**
-	 * Print an object of SIPServer
-	 * @param os
-	 * @param obj
-	 * @return
-	 */
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
-	// Handles messages received by the server
+	double scalar_value(int){ fail("scalar_value should not be invoked by a server"); return -.1;}
+	void set_scalar_value(int, double) { fail("set_scalar_value should not be invoked by a server");}
+    void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
+    Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
+
+
+private:
+    SipTables &sip_tables_;
+	/**
+	 * Data structure to store blocks of distributed/served arrays
+	 */
+	IdBlockMap<ServerBlock> block_map_;
+
+	/** maintains message, section number, etc for barrier.  This
+	 * object's check_section_number_invariant should be invoked
+	 * for each transaction.
+	 */
+	BarrierSupport state_;
+
+	/**
+	 * Set to true on receipt of an end program message.  Causes
+	 * the run loop to terminate.
+	 */
+	bool terminated_;
+
+	SIPMPIAttr & sip_mpi_attr_;
+	DataDistribution &data_distribution_;
+
+	PersistentArrayManager<ServerBlock, SIPServer> * persistent_array_manager_;
+
+
+	/**
+	 * Get
+	 *
+	 * invoked by server loop.
+	 *
+	 * Retrieves block_id and block size from the message and replies with the block
+	 * The program fails if a block is requested that doesn't exist.
+	 *
+	 * @param mpi_source  requesting worker
+	 * @param tag         tag, which includes message type, section number, and message number
+	 *
+	 *
+	 */
 	void handle_GET(int mpi_source, int tag);
-	void handle_PUT(int mpi_source, int tag);
-	void handle_PUT_DATA(int mpi_source, int size, int tag);
-	void handle_PUT_ACCUMULATE(int mpi_source, int tag);
-	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int size, int tag);
+
+	/**
+	 * Put
+	 *
+	 * invoked by server loop.
+	 *
+	 * Receives the message and obtains the block_id and block size.
+	 * Get the block, creating it if
+	 *    it doesn't exist.
+	 * Posts recvieve with tag put_dat_tag
+	 * Sends an ack to the source
+	 *
+	 * @param mpi_source
+	 * @param put_tag
+	 * @param put_data_tag
+	 */
+	void handle_PUT(int mpi_source, int put_tag, int put_data_tag);
+
+
+	/**
+	 * put_accumulate
+	 *
+	 * invoked by server loop.
+	 *
+	 * Receives the message and obtains the block_id and block size.
+	 * Creates a temp buffer to receive the data, and posts receive
+	 *    for message with the put_accumulate_data_tag.
+	 *    This tag should have the same message number and section number as
+	 *    the put_accumulate_tag.
+	 * Get the block to accumulate into, creating and initializing it if
+	 *    it doesn't exist.
+	 * Accumulates received data into block
+	 * Sends an ack to the source
+	 *
+	 * @param [in] mpi_source
+	 * @param [in] put_accumulate_tag
+	 * @param [in] put_accumulate_data_tag
+	 */
+	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag);
+
+	/**
+	 * delete
+	 *
+	 * invoked by server loop.
+	 *
+	 * gets array_id from message and deletes all blocks
+	 * belonging to that array.
+	 *
+	 * @param mpi_source
+	 * @param tag
+	 */
 	void handle_DELETE(int mpi_source, int tag);
+
+	/**
+	 * end program
+	 *
+	 * invoked by server loop.
+	 *
+	 * causes server loop to exit.
+	 *
+	 * @param mpi_source
+	 * @param tag
+	 */
 	void handle_END_PROGRAM(int mpi_source, int tag);
-	void handle_SAVE_PERSISTENT(int mpi_source, int tag);
+
+	/**
+	 * set persistent
+	 *
+	 * invoked by server loop.
+	 *
+	 * Makes an upcall to the persistent_array_manager_ to
+	 * mark the indicated array as persistent.  After server loop
+	 * termination, the persistent array manager will move the
+	 * marked arrays to its own data structures to preserver between
+	 * SIAL programs
+	 *
+	 * @param mpi_source
+	 * @param tag
+	 */
+	void handle_SET_PERSISTENT(int mpi_source, int tag);
+
+	/**
+	 * restore persistent
+	 *
+	 * invoked by server loop.
+	 *
+	 * Makes an upcall to the persistent_array_manager_ to
+	 * restore the blocks of the indicated array from the
+	 * persistent_array_manager to the block_manager_.
+	 * The persistent_array_manager is responsible for
+	 * updating the array_id.
+	 *
+	 * @param mpi_source
+	 * @param tag
+	 */
 	void handle_RESTORE_PERSISTENT(int mpi_source, int tag);
+
+	/**
+	 * Utility method checks whether the message with the given MPI_Status object has the expected number of MPI_INT elements.
+	 * If not, it is a fatal error.
+	 *
+	 * @param status
+	 * @param expected_count
+	 */
+	void check_int_count(MPI_Status& status, int expected_count);
+
+	/**
+	 * Utility method checks whether the message with the given MPI_Status object has the expected number of MPI_DOUBLE elements.
+	 * If not, it is a fatal error.
+	 *
+	 * @param status
+	 * @param expected_count
+	 */
+	void check_double_count(MPI_Status& status, int expected_count);
+
 };
 
 } /* namespace sip */

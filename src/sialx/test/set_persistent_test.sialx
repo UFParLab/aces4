@@ -2,28 +2,43 @@ sial set_persistent_test
 
 	special list_block_map
 	special print_block r
+	special print_static_array r
 	predefined int norb
 	
+	predefined scalar x
+	scalar x1
+	scalar y
 	aoindex i = 1,1
 	aoindex j = 1,1
 	local a(i,j)
 	distributed b(i,j)
 	distributed c(i,j)
 	
-	predefined static ca(i, j)
+	aoindex i2 = 1,2
+	aoindex j2 = 1,2
 	
-	set_persistent b "arr1"
-	set_persistent c "arr2"
-	set_persistent ca "arr3"
+	static ca(i2, j2)
+	
+	x1 = x
+	y = x*x
+	
+#	set_persistent b "arr1"
+#	set_persistent c "arr2"
+#	set_persistent ca "arr3"
+	set_persistent x1 "s1"
+	set_persistent y "s2"
 	
 	do i
 		do j
-			b(i,j) = 2.0
-			c(i,j) = 3.0
+#			b(i,j) = 2.0
+#			c(i,j) = 3.0
 			ca(i, j) = 4.0
 		enddo j
 	enddo i
 	
+	print_scalar x1
+	print_scalar y
+	execute print_static_array ca
 	
 	println "end of sial program set_persistent_test"
 	

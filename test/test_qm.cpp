@@ -9,7 +9,7 @@
 #include "sip_interface.h"
 #include "data_manager.h"
 
-#include "blocks.h"
+#include "block.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -17,6 +17,7 @@
 
 static const std::string dir_name("src/sialx/qm/");
 
+/** Single node ccsd test*/
 TEST(Sial_QM,ccsdpt_test){
 	std::cout << "****************************************\n";
 	sip::DataManager::scope_count=0;
@@ -29,29 +30,31 @@ TEST(Sial_QM,ccsdpt_test){
 
 	// setup_reader.read(setup_file);
 	setup::SetupReader setup_reader(setup_file);
+	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//interpret the program
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager pbm;
+		sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+		pbm = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
 		it = progs.begin();
 		while (it != progs.end()){
-			std::string sialfpath;
-			sialfpath.append(dir_name);
-			sialfpath.append("/");
+			std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< *it << std::endl;
+			std::string sialfpath(dir_name);
 			sialfpath.append(*it);
 			setup::BinaryInputFile siox_file(sialfpath);
 			sip::SipTables sipTables(setup_reader, siox_file);
 			//std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
-			std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
+			sip::Interpreter runner(sipTables, sialxTimer, pbm);
+
 			runner.interpret();
+			std::cout<<"Persistent Array manager right after program " << sialfpath << " :"<<std::endl<< *pbm;
+			pbm->save_marked_arrays(&runner);
+			std::cout<<"Persistent Array Manager after saving " << sialfpath << " :"<<std::endl<< *pbm;
 			ASSERT_EQ(0, sip::DataManager::scope_count);
 			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-			std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm;
-			pbm.clear_marked_arrays();
 
 			++it;
 			if (it == progs.end()){	// Last Program

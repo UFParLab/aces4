@@ -23,6 +23,7 @@ std::string opcodeToName(opcode_t op){
 	SIP_OPCODES
 #undef SIPOP
 	}
+	return std::string("");
 }
 
 bool printableOpcode(opcode_t op){
@@ -30,6 +31,7 @@ bool printableOpcode(opcode_t op){
 #define SIPOP(e,n,t,p) case e: return p;
 #undef SIPOP
 	}
+	return false;
 }
 
 OpTableEntry::OpTableEntry() {}
@@ -53,6 +55,7 @@ void OpTableEntry::read(OpTableEntry &entry, setup::InputStream &file) {
 
 
 std::ostream& operator<<(std::ostream& os, const OpTableEntry & entry) {
+	os << opcodeToName(entry.opcode) << ':';
 	os << entry.opcode << ',';
 	os << entry.op1_array << ',';
 	os << entry.op2_array << ',';

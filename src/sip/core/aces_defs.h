@@ -8,13 +8,17 @@
 #ifndef PROBLEM_ACES_DEFS_H_
 #define PROBLEM_ACES_DEFS_H_
 
-/*! Maximum number of dimensions */
-//#define MAX_RANK 6
+/** Maximum number of dimensions */
+
 const int MAX_RANK = 6;
 
+/** Macro for a 6-d  array of all ones, for convenience.
+ * This needs to change if MAX_RANK does
+ */
 #define ONE_ARRAY {1,1,1,1,1,1}
-/*! Maximum number of arguments to a special instruction */
-//#define MAXARGS 3
+
+
+/** Maximum number of arguments to a special instruction */
 const int MAXARGS = 3;
 
 

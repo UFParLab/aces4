@@ -6,261 +6,28 @@
  */
 
 #include "config.h"
-#include "blocks.h"
+#include "block.h"
 #include <iostream>
 #include <cstring>
 #include "sip.h"
 #include "tensor_ops_c_prototypes.h"
+#include "sip_tables.h"
+
+#ifdef HAVE_MPI
+#include "sip_mpi_utils.h"
+#endif //HAVE_MPI
 
 #include "gpu_super_instructions.h"
 
-using namespace std::rel_ops;
+
+
 namespace sip {
 
-/********** BlockId *******************/
 
-BlockId::BlockId():parent_id_ptr_(NULL), array_id_(-1){
-}
-
-BlockId::BlockId(int array_id, const index_value_array_t& index_values) :
-		array_id_(array_id), parent_id_ptr_(NULL) {
-	std::copy(index_values + 0, index_values + MAX_RANK, index_values_ + 0);
-//	std::cout << "BlockId(int array_id, const index_value_array_t& index_values)  "<< *this
-//			<< '@' << this << std::endl;
-
-}
-BlockId::BlockId(int array_id, const index_value_array_t& index_values, const BlockId& parent_id_ptr) :
-		array_id_(array_id),
-		parent_id_ptr_(new BlockId(parent_id_ptr)) {
-	std::copy(index_values + 0, index_values + MAX_RANK, index_values_ + 0);
-//	std::cout << "BlockId(int array_id, const index_value_array_t& index_values, BlockId* parent_id_ptr)  "<< *this
-//			<< '@' << this << std::endl;
-}
-
-BlockId::BlockId(int array_id, int rank, const std::vector<int>& index_values):
-	array_id_(array_id),
-	parent_id_ptr_(NULL){
-	sip::check(rank == index_values.size(), "SIP BUG: BlockId constructor");
-	std::copy(index_values.begin(), index_values.end(), index_values_+0);  //copy values from vector into index_values_ array
-	std::fill(index_values_+rank, index_values_ + MAX_RANK, unused_index_value); //fill in unused slots
-}
-
-BlockId::BlockId(const BlockId& rhs) {
-	array_id_ = rhs.array_id_;
-	std::copy(rhs.index_values_ + 0, rhs.index_values_ + MAX_RANK,
-			index_values_ + 0);
-	if (rhs.parent_id_ptr_ != NULL) {
-//		std::cout << "calling BlockId copy const on *rhs.parent_id_ptr_" << std::endl;
-		parent_id_ptr_ = new BlockId(*rhs.parent_id_ptr_);
-	} else {
-		parent_id_ptr_ = NULL;
-	}
-//	std::cout << "BlockId::BlockId(const BlockId& rhs)\nrhs:    "<< rhs<< '@' << &rhs << "\nthis:  "<< *this
-//			<< '@' << this << std::endl;
-}
-
-BlockId::BlockId(int array_id):
-		array_id_(array_id),
-		parent_id_ptr_(NULL){
-	std::fill(index_values_+0, index_values_ + MAX_RANK, 1);
-}
-
-BlockId BlockId::operator=(BlockId tmp) { //param passed by value, makes a copy.
-	//C++ note:  this is the recommended way to make an exception safe assign constructor.
-	//if an exception is thrown, it will happen in the (implicit) copy.
-	std::swap(array_id_, tmp.array_id_);
-	std::swap(index_values_, tmp.index_values_);
-	std::swap(parent_id_ptr_, tmp.parent_id_ptr_);
-	return *this;  //but this is probably making another copy anyway--or is it?
-}
-
-BlockId::~BlockId() {
-//	std::cout << "~BlockId()  "<< *this << '@' << this << std::endl;
-	if (parent_id_ptr_ != NULL)
-		delete parent_id_ptr_;
-}
-
-bool BlockId::operator==(const BlockId& rhs) const {
-	bool is_equal = (array_id_ == rhs.array_id_);
-	is_equal &= std::equal(index_values_+0, index_values_+ MAX_RANK, rhs.index_values_);
-    is_equal &= (parent_id_ptr_ == NULL && rhs.parent_id_ptr_== NULL)||
-    		(parent_id_ptr_ != NULL && rhs.parent_id_ptr_!= NULL && *parent_id_ptr_ == *rhs.parent_id_ptr_);
-	return is_equal;
-}
-
-//Since the blockId is used as a key in the BlockMap, which is currently
-//the binary tree, this operator must be defined.
-// a < b if the a.array_id_ < b.array_id_ or a.array_id_ = b.array_id_  && a.index_values_ < b.index_values
-//where the latter uses lexicographic ordering.
-//TODO this has only been tested with one level of nesting.
-bool BlockId::operator<(const BlockId& rhs) const {
-//	std::cout << "BlockId::operator<(const BlockId& rhs)\n this: " << *this << '@'<<this <<
-//			"\n rhs " << rhs << '@'<< &rhs << std::endl;
-
-	if (this == &rhs) return false;  //self comparison
-	if (array_id_ != rhs.array_id_) {  //compare by arrays
-		return (array_id_ < rhs.array_id_);
-	}
-	//same arrays, neither is a subblock
-	if (parent_id_ptr_ == NULL && rhs.parent_id_ptr_==NULL){
-		return std::lexicographical_compare(index_values_+0, index_values_+ MAX_RANK,
-    			rhs.index_values_+0, rhs.index_values_+ MAX_RANK);
-	}
-    //lhs is a subblock, rhs isn't, compare lhs parent with rhs
-	if (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ == NULL){
-		if (*parent_id_ptr_ < rhs) return true;
-		if (*parent_id_ptr_ == rhs) return true;  //this is subblock of rhs, subblock < own parent block
-		return false;
-	}
-	//rhs is subblock, lhs isn't, compare lhs with rhs parent
-	if (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ != NULL){
-		if (*this < *rhs.parent_id_ptr_) return true;
-		if (*this == *rhs.parent_id_ptr_) return false;  //rhs is subblock of lhs, subblock < own parent block
-		return false;
-	}
-    //both are subblocks, compare their parents
-	if (*parent_id_ptr_ < *rhs.parent_id_ptr_) return true;
-	if (*parent_id_ptr_ == *rhs.parent_id_ptr_){
-		return std::lexicographical_compare(index_values_+0, index_values_+ MAX_RANK,
-    			rhs.index_values_+0, rhs.index_values_+ MAX_RANK);
-	}
-	return false;
-}
-
-int* BlockId::serialize(const BlockId& obj, int &size){
-	int * to_return;
-	size = 1 + MAX_RANK;
-	to_return = new int[size];
-	sip::check (size == serialized_size(), "serialized_size and caclulated size don't match!");
-	memcpy(to_return + 0, &obj.array_id_, sizeof(obj.array_id_));
-	memcpy(to_return + 1, obj.index_values_, sizeof (obj.index_values_));
-
-	return to_return;
-}
-
-BlockId BlockId::deserialize(const int* obj){
-	int array_id_;
-	index_value_array_t  index_values_;
-	memcpy(&array_id_, obj, sizeof (array_id_));
-	memcpy(&(index_values_[0]), obj + 1, sizeof(index_values_));
-	BlockId bid(array_id_, index_values_);
-	return bid;
-}
-
-
-int BlockId::serialized_size(){
-	int size = 1 + MAX_RANK;
-	return size;
-}
-
-
-
-
-std::ostream& operator<<(std::ostream& os, const BlockId& id) {
-	os << id.array_id_ << ':';
-	os << "[" << id.index_values_[0];
-	for (int i = 1; i < MAX_RANK; ++i) {
-		os << "," << id.index_values_[i];
-	}
-	os << ']';
-	if (id.parent_id_ptr_ != NULL) {
-		os << "[" << id.parent_id_ptr_->index_values_[0];
-		for (int i = 1; i < MAX_RANK; ++i) {
-			os << "," << id.parent_id_ptr_->index_values_[i];
-		}
-		os << ']';
-	} else {
-		os << " NULL";
-	}
-	return os;
-}
-;
-
-/********************** Block Shape ***********************/
-
-BlockShape::BlockShape() {
-	std::fill(segment_sizes_ + 0, segment_sizes_ + MAX_RANK, 1);
-}
-
-BlockShape::BlockShape(const segment_size_array_t& segment_sizes) {
-	std::copy(segment_sizes + 0, segment_sizes + MAX_RANK, segment_sizes_ + 0);
-}
-
-BlockShape::~BlockShape() {
-}std::ostream& operator<<(std::ostream& os, const BlockShape & shape) {
-	os << "[";
-	for (int i = 0; i < MAX_RANK; ++i) {
-		os << (i == 0 ? "" : ",") << shape.segment_sizes_[i];
-	}
-	os << ']';
-
-	return os;
-}
-
-int BlockShape::num_elems() const{
-	int num_elems = 1;
-	for (int i = 0; i < MAX_RANK; i++) {
-		num_elems *= segment_sizes_[i];
-	}
-	return num_elems;
-}
-
-bool BlockShape::operator==(const BlockShape& rhs) const {
-	bool is_equal = true;
-	for (int i = 0; is_equal && i < MAX_RANK; ++i) {
-		is_equal = (segment_sizes_[i] == rhs.segment_sizes_[i]);
-	}
-	return is_equal;
-}
-bool BlockShape::operator<(const BlockShape& rhs) const {
-	bool is_eq = true;
-	bool is_leq = true;
-	for (int i = 0; is_leq && i < MAX_RANK; ++i) {
-		is_leq = (segment_sizes_[i] <= rhs.segment_sizes_[i]);
-		is_eq = is_eq && (segment_sizes_[i] == rhs.segment_sizes_[i]);
-	}
-	return (is_leq && !is_eq);
-}
-
-/*********************** Block Selector *****************/
-//const int BlockSelector::unused_index = -2;
-//const int BlockSelector::wild_card_index = 90909;
-BlockSelector::BlockSelector(int array_id, int rank,
-		const index_selector_t& index_ids) :
-		array_id_(array_id),
-		rank_(rank){
-	for (int i = 0; i != rank; ++i) {
-		index_ids_[i] = index_ids[i];
-	}
-	for (int i = rank; i != MAX_RANK; ++i) {
-		index_ids_[i] = unused_index_slot;
-	}
-}
-
-bool BlockSelector::operator==(const BlockSelector& rhs) const {
-	if (rank_ != rhs.rank_) return false;
-	for (int i = 0; i < MAX_RANK; ++i) {
-		if  (index_ids_[i] != rhs.index_ids_[i]) return false;
-	}
-	return true;
-}
-
-std::ostream& operator<<(std::ostream& os, const BlockSelector & selector) {
-	os << selector.array_id_;
-	os << "[" << selector.index_ids_[0];
-	for (int i = 1; i < MAX_RANK; ++i) {
-		int id = selector.index_ids_[i];
-		if (id != unused_index_slot)
-			os << "," << id;
-	}
-	os << ']';
-	return os;
-}
-
-/*********************** Block ***************************/
 
 Block::Block(BlockShape shape) :
-		shape_(shape) {
+		shape_(shape)
+{
 	size_ = shape.num_elems();
 	data_ = new double[size_](); //c++ feature:parens cause allocated memory to be initialized to zero
 
@@ -276,7 +43,8 @@ Block::Block(BlockShape shape) :
 //arrays out of bounds
 Block::Block(BlockShape shape, dataPtr data):
 		shape_(shape),
-		data_(data){
+		data_(data)
+{
 	size_ = shape.num_elems();
 
 	gpu_data_ = NULL;
@@ -299,22 +67,12 @@ Block::Block(dataPtr data):
 	status_[Block::dirtyOnGPU] = false;
 }
 
-Block::BlockPtr Block::clone(){
-	BlockPtr bptr = new Block();
-	bptr->data_ = new double[this->size_];
-	std::copy(data_, data_ + size_, bptr->data_);
-	bptr->size_ = this->size_;
-	bptr->shape_ = this->shape_;
-	bptr->status_ = this->status_;
-#ifdef HAVE_CUDA
-	if (this->gpu_data_ != NULL)
-		_gpu_device_to_device(bptr->gpu_data_, this->gpu_data_, size_);
-#endif
-	return bptr;
-}
 
 
-Block::Block(){
+
+Block::Block()
+
+{
 	data_ = NULL;
 	gpu_data_ = NULL;
 	size_ = 0;
@@ -322,6 +80,15 @@ Block::Block(){
 
 Block::~Block() {
 	sip::check_and_warn((data_), std::string("in ~Block with NULL data_"));
+#ifdef HAVE_MPI
+//	//check to see if block is in transit.  If this is the case, there was a get
+//	//on a block that was never used.  Print a warning.  We probably want to be able
+//	//disable this check.  The logic is a bit convoluted--check_and_warn=true, means no pending.
+	//we wait if this is not the case
+	if (!check_and_warn( !state_.pending() ,"deleting block with pending request, probably get with no use")){
+		state_.wait(size());
+	}
+#endif //HAVE_MPI
 	if (data_ != NULL && size_ >1) { //Assumption: if size==1, data_ points into the scalar table.
 		delete[] data_;
 		data_ = NULL;
@@ -332,7 +99,7 @@ Block::~Block() {
 		_gpu_free(gpu_data_);
 		gpu_data_ = NULL;
 	}
-#endif
+#endif //HAVE_CUDA
 	status_[Block::onGPU] = false;
 	status_[Block::onHost] = false;
 	status_[Block::dirtyOnHost] = false;
@@ -347,9 +114,7 @@ BlockShape Block::shape() {
 	return shape_;
 }
 
-//Block::dataPtr Block::copy_data(BlockPtr source_block) {
-//	return copy_data_(source_block, 0);
-//}
+
 
 Block::dataPtr Block::copy_data_(BlockPtr source_block, int offset) {
 	dataPtr target = get_data();
@@ -397,7 +162,7 @@ Block::dataPtr Block::fill(double value) {
 	return data_;
 }
 
-// TODO use Dmitry's
+// TODO use Dmitry's??
 Block::dataPtr Block::scale(double value) {
 	dataPtr ptr = get_data();
 	int n = size();
@@ -441,11 +206,6 @@ Block::dataPtr Block::transpose_copy(BlockPtr source, int rank,
 	 !NOTES:
 	 ! - The output tensor block is expected to have the same size as the input tensor block.
 	 */
-//std::cout<<"permutation ";
-//for (int i = 0; i < MAX_RANK + 1; ++i) {
-//	std::cout<<dmitry_permute[i] << " ";
-//}
-//std::cout<<std::endl;
 	int nthreads = sip::MAX_OMP_THREADS;
 	tensor_block_copy__(nthreads, rank, source->shape_.segment_sizes_,
 			dmitry_permute, source_data, data, ierr);
@@ -471,7 +231,6 @@ Block::dataPtr Block::accumulate_data(BlockPtr source) {
 /*extracts slice from this block and copies to the given block, which must exist and have data allocated, Returns dest*/
 Block::dataPtr Block::extract_slice(int rank, offset_array_t& offsets,
 		BlockPtr destination) {
-//	std::cout << "in extract_slice, printing destination block " << std::endl << *destination << std::endl;
 	//extents = shape_.segment_sizes_;
 	/*  subroutine tensor_block_slice_(nthreads,dim_num,tens,tens_ext,slice,slice_ext,ext_beg,ierr) bind(c,name='tensor_block_slice__') !PARALLEL
 	 !This subroutine extracts a slice from a tensor block.
@@ -496,7 +255,6 @@ Block::dataPtr Block::extract_slice(int rank, offset_array_t& offsets,
 			destination->data_, destination->shape_.segment_sizes_, offsets,
 			ierr);
 	sip::check(ierr == 0, "error value returned from tensor_block_slice__");
-//	std::cout << "in extract_slice, after tensor_block_slice  printing destination block " << std::endl << *destination << std::endl;
 	return destination->data_;
 }
 
@@ -516,28 +274,9 @@ void Block::insert_slice(int rank, offset_array_t& offsets, BlockPtr source){
 	subroutine tensor_block_insert_(nthreads,dim_num,tens,tens_ext,slice,slice_ext,ext_beg,ierr)
 	void tensor_block_insert__(int&, int&, double*, int*, double*, int*, int*, int&);
 	*/
-//	std::cout << "Block::insert_slice\n";
-//	std::cout << "rank, offsets, source = " << rank << ", [" ;
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << offsets[i];
-//	}
-//	std::cout << "]\n";
-//	std::cout << *source << std::endl;
+
 	int nthreads = sip::MAX_OMP_THREADS;
 	int ierr = 0;
-//	std::cout << "nthreads, rank, data_, " <<
-//			"shape_.segment_sizes_, " <<
-//			"source->data_, source->shape>_.segment_sizes_" << std::endl;
-//	std::cout << nthreads << "," << rank << "," << data_[0] << "," << data_[1] << ",\n[" ;
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << shape_.segment_sizes_[i];
-//	}
-//	std::cout << "]\n";
-//	std::cout << source->data_[0] << "," << source->data_[1] << ",\n[" ;
-//	for (int i = 0; i < MAX_RANK; ++i){
-//		std::cout << (i ==0 ? "" : ",") << source->shape_.segment_sizes_[i];
-//	}
-//	std::cout << ']' << std::endl;
 	tensor_block_insert__(nthreads, rank, data_, shape_.segment_sizes_,
 			source->data_, source->shape_.segment_sizes_, offsets, ierr);
 	sip::check(ierr==0, "error value returned from tensor_block_insert__");
@@ -589,34 +328,6 @@ void Block::allocate_host_data(){
 }
 
 
-//char* Block::serialize(BlockPtr obj, int &size){
-//	size = sizeof(obj->shape_) + sizeof(obj->size_) + obj->size_ * sizeof(dataPtr);
-//	char * to_return = new char[size];
-//
-//	memcpy(to_return + 0, &obj->shape_, sizeof(obj->shape_));
-//	memcpy(to_return + sizeof(obj->shape_), &obj->size_, sizeof(obj->size_));
-//	memcpy(to_return + sizeof(obj->shape_) + sizeof(obj->size_), obj->data_, obj->size_ * sizeof(dataPtr));
-//
-//	return to_return;
-//}
-
-//Block::BlockPtr Block::deserialize(char* bytes, int size){
-//	BlockShape shape_;
-//    int size_;
-//
-//	memcpy(&shape_, bytes + 0, sizeof(shape_));
-//	memcpy(&size_, bytes + sizeof(shape_), sizeof(size_));
-//	dataPtr data_ = new double[size_];
-//	memcpy(data_, bytes + sizeof(shape_) + sizeof(size_), size_ * sizeof(dataPtr));
-//
-//	sip::check(size == sizeof(shape_) + sizeof(size_) + size_ * sizeof(dataPtr),
-//			"Deserialization of BlockPtr failed !");
-//	sip::check(shape_.num_elems() == size_, "Incorrect size in deserialization of BlockPtr !");
-//
-//	Block * blk = new Block(shape_, data_);
-//	return blk;
-//
-//}
 
 /*********************************************************************/
 /**						GPU Specific methods						**/
@@ -674,8 +385,6 @@ Block::dataPtr Block::gpu_scale(double value){
 }
 
 #endif
-
-
 
 
 } /* namespace sip */

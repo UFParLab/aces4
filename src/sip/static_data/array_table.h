@@ -56,8 +56,7 @@ private:
 	 * at the appropriate position.  This is called by the ArrayTable init method */
 	void init(setup::InputStream &);
 
-	/** the name of the array in the SIAL program */
-	std::string name_;
+
 
 	/** number of dimensions of the array */
 	int rank_; // dimension of array
@@ -75,6 +74,14 @@ private:
 	 * of this scalar.
 	 */
 	int scalar_selector_;
+
+	/** this value is calculated using setup-reader info.  It is
+	 * not read directly from the .siox file
+	 */
+	int num_blocks_;
+
+	/** the name of the array in the SIAL program */
+	std::string name_;
 
 	friend std::ostream& operator<<(std::ostream&, const ArrayTableEntry &);
 	friend class ArrayTable;
@@ -142,6 +149,12 @@ private:
 	 * @param .siox file
 	 */
 	void init(setup::InputStream &);
+
+	/** Initializes the num_blocks_ field in all the ArrayTable entries.
+	 * This is called by the siptable constructor after other required
+	 * tables have been initialized.
+	 */
+	void init_num_blocks();
 
 	/** Vector containing the ArrayTableEntries describing the arrays in the SIAL program */
 	std::vector<ArrayTableEntry> entries_;

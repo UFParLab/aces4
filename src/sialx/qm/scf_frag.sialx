@@ -623,6 +623,9 @@ import "scf_frag_defs.sialx"
 
       set_persistent Dca "ca" 
       set_persistent DFock_a "fock_a"
+      
+#      set_persistent ca "ca" 
+#      set_persistent Fock_a "fock_a"
 
 # -----------------------------------------------------------------------------
 #
