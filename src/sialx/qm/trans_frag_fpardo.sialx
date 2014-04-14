@@ -25,15 +25,14 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 29 # Nfragments   
-      index  jjfrag  = 1, 29 # Nfragments   
-      index   kfrag  = 1, 29 # Nfragments   
-      index  kkfrag  = 1, 29 # Nfragments   
+      index   jfrag  = 1, 217 # Nfragments   
+      index  jjfrag  = 1, 217 # Nfragments   
+      index   kfrag  = 1, 217 # Nfragments   
+      index  kkfrag  = 1, 217 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
       index      ii  = 1, 1  # 1 
-      index     i20  = 1, 1 
 
       aoindex mu     = 1, norb 
       aoindex mu1    = 1, norb 
@@ -118,6 +117,7 @@ import "trans_frag_defs.sialx"
       distributed Dfock_a(p,p1) 
       static ca(mu,p) 
       static fock_a(p,p1) 
+      static sxx(mu,nu) 
 #
       temp aoint(mu,nu,lambda,sigma) 
       temp txxxq(mu,nu,lambda,q)   
@@ -144,7 +144,6 @@ import "trans_frag_defs.sialx"
       temp txixj(mu,i,nu,j) 
 
       local LVxxxq(mu,nu,lambda,j) 
-      distributed array_set(mu,nu,i,j,i20) 
       distributed Vxpbq(mu,i,b,j) 
 
       distributed Vaibj(a,i,b,j)
@@ -190,7 +189,8 @@ import "trans_frag_defs.sialx"
       distributed t1new(b,j)  
       distributed x1new(b,j)  
       distributed wC_ao(mu,nu) 
-      local LwC(b,j)  
+      local LwC_ao(mu,nu) 
+      local LwC(p,p1)  
       temp t20disp(ifrag,jfrag) 
       local wAO_frag(mu) 
       local wOccA_frag(i) 
@@ -380,355 +380,6 @@ import "trans_frag_defs.sialx"
 #
 # ---------------------------------------------------------------------------- 
 #
-      PROC CREATE_ARRAYS 
-# ---------------------------------------------------------------------------- 
-# Create the sparse distributed arrays. 
-# ---------------------------------------------------------------------------- 
-
-#
-#
-      icount = 0.0 
-      DO ifrag 
-        icount+= 1.0 
-        jcount = 0.0 
-      DO jfrag 
-         jcount   += 1.0 
-        
-        #print_scalar icount 
-        #print_scalar jcount 
-#
-# Vxpxq 
-#
-      DO mu
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  n  
-            if n == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO lambda
-            x3(lambda) = wAO_frag(lambda) 
-            execute return_sval x3(lambda)  l  
-            if l == jcount  
-
-               create Vxpxq(mu,i,lambda,j) 
-
-             endif # l 
-      ENDDO lambda
-             endif # s 
-      ENDDO j 
-             endif # n 
-      ENDDO i
-             endif # m 
-      ENDDO mu
-#
-# Vxxqq 
-#
-      DO mu
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
-      DO nu
-            x2(nu)     = wAO_frag(nu)     
-            execute return_sval x2(nu)  n  
-            if n == icount  
-      DO j
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  l  
-            if l == jcount  
-      DO j1
-            xj1(j1)    = wOccB_frag(j1) 
-            execute return_sval xj1(j1)  s  
-            if s == jcount  
-
-               create Vxxqq(mu,nu,j1,j) 
-
-             endif # l 
-      ENDDO j1
-             endif # s 
-      ENDDO j 
-             endif # n 
-      ENDDO nu  
-             endif # m 
-      ENDDO mu
-#
-# Vpxxq 
-#
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  l  
-            if l == icount  
-      DO nu
-            x2(nu)     = wAO_frag(nu)     
-            execute return_sval x2(nu)  n  
-            if n == icount  
-      DO mu
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == jcount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-
-               create Vpxxq(i,nu,mu,j) 
-
-             endif # l 
-      ENDDO j
-             endif # m 
-      ENDDO mu
-             endif # n 
-      ENDDO nu  
-             endif # l 
-      ENDDO i 
-
-      ENDDO jfrag 
-      ENDDO ifrag 
-
-
-# Start third stage 
-#
-        icount = 0.0 
-      DO ifrag 
-        icount+= 1.0 
-        jcount = 0.0 
-      DO jfrag 
-        jcount   += 1.0 
-        
-        #print_scalar icount 
-        #print_scalar jcount 
-#
-# Vpxqq 
-#
-      DO mu
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO b
-            xb(b)      = wVirtB_frag(b)     
-            execute return_sval xb(b)  n  
-            if n == jcount  
-
-               create Vxpbq(mu,i,b,j) 
-
-             endif # l 
-      ENDDO b  
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO i 
-             endif # m 
-      ENDDO mu
-#
-# Vixbj 
-#
-      DO nu
-            x1(nu)     = wAO_frag(nu)     
-            execute return_sval x1(nu)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO b
-            xb(b)      = wVirtB_frag(b)     
-            execute return_sval xb(b)  n  
-            if n == jcount  
-
-               create Vixbj(i,nu,b,j) 
-
-             endif # l 
-      ENDDO b  
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO i 
-             endif # m 
-      ENDDO nu
-#
-# Vixbj 
-#
-      DO nu
-            x1(nu)     = wAO_frag(nu)     
-            execute return_sval x1(nu)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-
-      DO j1  
-            xj1(j1)      = wOccB_frag(j1)     
-            execute return_sval xj1(j1)  n  
-            if n == jcount  
-
-               create Vixjj(i,nu,j,j1) 
-
-             endif # l 
-      ENDDO j1   
-
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO i 
-             endif # m 
-      ENDDO nu
-#
-#
-# Vaxjj 
-#
-      DO a
-            xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a)  m  
-            if m == icount  
-      DO nu  
-            x1(nu)     = wAO_frag(nu) 
-            execute return_sval x1(nu)  l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO j1  
-            xj1(j1)    = wOccB_frag(j1)     
-            execute return_sval xj1(j1)  n  
-            if n == jcount  
-
-               create Vaxjj(a,nu,j1,j) 
-
-             endif # l 
-      ENDDO j1   
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO nu 
-             endif # m 
-      ENDDO a
-
-# Start final trans 
-#
-# Vaibj 
-#
-      DO a
-            xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO b
-            xb(b)      = wVirtB_frag(b)     
-            execute return_sval xb(b)  n  
-            if n == jcount  
-
-               create Vaibj(a,i,b,j) 
-               create Viabj(i,a,b,j) 
-
-             endif # l 
-      ENDDO b  
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO i 
-             endif # m 
-      ENDDO a
-#
-# Vaajj 
-#
-      DO a
-            xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a)  m  
-            if m == icount  
-      DO a1   
-            xa1(a1)     = wVirtA_frag(a1) 
-            execute return_sval xa1(a1)  l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO j1  
-            xj1(j1)    = wOccB_frag(j1)     
-            execute return_sval xj1(j1)  n  
-            if n == jcount  
-
-               create Vaajj(a,a1,j,j1) 
-
-             endif # l 
-      ENDDO j1   
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO a1  
-             endif # m 
-      ENDDO a
-#
-# Viijj 
-#
-      DO i
-            xi(i)      = wOccA_frag(i)     
-            execute return_sval xi(i)  m  
-            if m == icount  
-      DO i1 
-            xi1(i1)    = wOccA_frag(i1) 
-            execute return_sval xi1(i1) l  
-            if l == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == jcount  
-      DO j1  
-            xj1(j1)    = wOccB_frag(j1)     
-            execute return_sval xj1(j1)  n  
-            if n == jcount  
-
-               create Viijj(i,i1,j,j1) 
-
-             endif # l 
-      ENDDO j1   
-             endif # l 
-      ENDDO j
-             endif # n 
-      ENDDO i1
-             endif # m 
-      ENDDO i  
-
-      ENDDO jfrag 
-      ENDDO ifrag 
-
-#
-      sip_barrier 
-      ENDPROC CREATE_ARRAYS 
-#     --------------------- 
-#
-# ---------------------------------------------------------------------------- 
-#
       PROC FRAG_TRAN    
 #     -------------- 
 
@@ -751,8 +402,8 @@ import "trans_frag_defs.sialx"
             ENDIF 
          ENDDO jjfrag 
         
-        #print_scalar icount 
-        #print_scalar jcount 
+         print_scalar icount 
+         print_scalar jcount 
 
 # ---------------------------------------------------------------------------- 
 #     Form wC_ao  
@@ -766,6 +417,7 @@ import "trans_frag_defs.sialx"
             x2(nu)     = wAO_frag(nu) 
             execute return_sval x2(nu)  n  
             if n == icount  
+               allocate LwC_ao(mu,nu)  
       DO lambda 
             x3(lambda) = wAO_frag(lambda) 
             execute return_sval x3(lambda)  l  
@@ -814,7 +466,8 @@ import "trans_frag_defs.sialx"
                         Ipp(j1,j)    = 2.0 
                         execute return_diagonal Ipp(j1,j) 
                         txx(mu,nu)    = Ipp(j1,j)*txxqq(mu,nu,j1,j) 
-                        PUT wC_ao(mu,nu) += txx(mu,nu) 
+                       #PUT wC_ao(mu,nu) += txx(mu,nu) 
+                        LwC_ao(mu,nu) += txx(mu,nu) 
                      endif # pcount == icount c
                   ENDDO j1  
 
@@ -831,6 +484,8 @@ import "trans_frag_defs.sialx"
 
              endif # l 
       ENDDO lambda 
+               PUT wC_ao(mu,nu) += LwC_ao(mu,nu) 
+               deallocate LwC_ao(mu,nu)  
              endif # n 
       ENDDO nu 
              endif # m 
@@ -843,6 +498,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO kfrag, jfrag 
 
       sip_barrier 
+      println "Done initial formation of wC" 
      #PARDO mu, nu 
      #      GET wC_ao(mu,nu) 
      #      execute print_block wC_ao(mu,nu) 
@@ -934,6 +590,8 @@ import "trans_frag_defs.sialx"
       ENDPARDO kfrag 
 
       sip_barrier 
+      println "Done final formation of wC" 
+      sip_barrier 
 
 
       PARDO ifrag, jfrag 
@@ -952,8 +610,8 @@ import "trans_frag_defs.sialx"
             ENDIF 
          ENDDO jjfrag 
         
-        #print_scalar icount 
-        #print_scalar jcount 
+         print_scalar icount 
+         print_scalar jcount 
 
 # ---------------------------------------------------------------------------- 
 #     First stage --> form Vxxxj (1122) 
@@ -1055,10 +713,11 @@ import "trans_frag_defs.sialx"
 #     Done second stage --> form Vixxj (1122) 
 # ---------------------------------------------------------------------------- 
 
-     #print_scalar mone 
+      print_scalar mone 
       ENDPARDO ifrag, jfrag 
 
       sip_barrier 
+      println "Done first two stages of two-electron integral tranfsormations" 
 
       PARDO ifrag, jfrag 
         icount = 0.0 
@@ -1178,10 +837,6 @@ import "trans_frag_defs.sialx"
 
      #print_scalar mone 
 #
-      DO mu 
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
       DO nu 
             x2(nu)     = wAO_frag(nu) 
             execute return_sval x2(nu)  n  
@@ -1194,6 +849,10 @@ import "trans_frag_defs.sialx"
             xj(j)      = wOccB_frag(j) 
             execute return_sval xj(j)  s  
             if s == jcount  
+      DO mu 
+            x1(mu)     = wAO_frag(mu)     
+            execute return_sval x1(mu)  m  
+            if m == icount  
 
                   GET                 Vxxqq(mu,nu,j1,j) 
 
@@ -1206,14 +865,14 @@ import "trans_frag_defs.sialx"
                      endif # pcount == icount  
                   ENDDO a 
 
+             endif # m 
+      ENDDO mu 
              endif # s 
       ENDDO j 
              endif # l 
       ENDDO j1 
              endif # n 
       ENDDO nu 
-             endif # m 
-      ENDDO mu 
 
      #print_scalar mone 
 
@@ -1227,6 +886,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag, jfrag 
 
       sip_barrier 
+      println "Done third stage of two-electron integral tranfsormations" 
 
       PARDO ifrag, jfrag 
         icount = 0.0 
@@ -1682,7 +1342,7 @@ import "trans_frag_defs.sialx"
 # Compute initial singles energy of solute  
 
       icount = 0.0 
-      DO kfrag 
+      DO ifrag 
         icount += 1.0 
 #
          esum = 0.0 
@@ -1720,7 +1380,7 @@ import "trans_frag_defs.sialx"
            e1old = et1_correction 
         endif 
 # 
-      ENDDO kfrag 
+      ENDDO ifrag 
       sip_barrier
 
       esum = 0.0 
@@ -1975,171 +1635,6 @@ import "trans_frag_defs.sialx"
 # 
       PROC FORM_T2_GUESS 
 #     ------------------ 
-
-      icount = 0.0 
-      DO ifrag 
-         icount   += 1.0 
-        #print_scalar icount 
-#
-# Amplitude arrays 
-#
-# T20aiai  
-#
-      DO a
-            xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a)  m  
-            if m == icount  
-      DO a1   
-            xa1(a1)     = wVirtA_frag(a1) 
-            execute return_sval xa1(a1)  l  
-            if l == icount  
-      DO i 
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  s  
-            if s == icount  
-      DO i1  
-            xi1(i1)    = wOccA_frag(i1)     
-            execute return_sval xi1(i1)  n  
-            if n == icount  
-
-               create T20aiai(a,i,a1,i1) 
-
-             endif # l 
-      ENDDO i1   
-             endif # l 
-      ENDDO i
-             endif # n 
-      ENDDO a1  
-             endif # m 
-      ENDDO a
-     #execute sip_barrier 
-
-      ENDDO ifrag 
-
-      icount = 0.0 
-      DO isolute  
-         icount   += 1.0 
-        
-        #print_scalar icount 
-#
-      DO a
-            xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a)  m  
-            if m == icount  
-      DO a1   
-            xa1(a1)     = wVirtA_frag(a1) 
-            execute return_sval xa1(a1)  l  
-            if l == icount  
-      DO i 
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  s  
-            if s == icount  
-      DO i1  
-            xi1(i1)    = wOccA_frag(i1)     
-            execute return_sval xi1(i1)  n  
-            if n == icount  
-
-               create T2old(a,i,a1,i1) 
-
-             endif # l 
-      ENDDO i1   
-             endif # l 
-      ENDDO i
-             endif # n 
-      ENDDO a1  
-             endif # m 
-      ENDDO a
-     #execute sip_barrier 
-#
-      DO a
-            xa(a)      = wVirtA_frag(a)     
-            execute return_sval xa(a)  m  
-            if m == icount  
-      DO a1   
-            xa1(a1)     = wVirtA_frag(a1) 
-            execute return_sval xa1(a1)  l  
-            if l == icount  
-      DO i 
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  s  
-            if s == icount  
-      DO i1  
-            xi1(i1)    = wOccA_frag(i1)     
-            execute return_sval xi1(i1)  n  
-            if n == icount  
-
-               create T2new(a,i,a1,i1) 
-
-             endif # l 
-      ENDDO i1   
-             endif # l 
-      ENDDO i
-             endif # n 
-      ENDDO a1  
-             endif # m 
-      ENDDO a
-     #execute sip_barrier 
-#
-# Back transformed amplitude arrays  
-#
-      DO mu
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  n  
-            if n == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == icount  
-      DO nu  
-            x3(nu) = wAO_frag(nu) 
-            execute return_sval x3(nu)  l  
-            if l == icount  
-
-               create TAO_ab(mu,i,nu,j) 
-
-             endif # l 
-      ENDDO nu  
-             endif # s 
-      ENDDO j 
-             endif # n 
-      ENDDO i
-             endif # m 
-      ENDDO mu
-     #execute sip_barrier 
-#
-      DO mu
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
-      DO i
-            xi(i)      = wOccA_frag(i) 
-            execute return_sval xi(i)  n  
-            if n == icount  
-      DO j 
-            xj(j)      = wOccB_frag(j) 
-            execute return_sval xj(j)  s  
-            if s == icount  
-      DO nu  
-            x3(nu) = wAO_frag(nu) 
-            execute return_sval x3(nu)  l  
-            if l == icount  
-
-               create T2AO_ab(mu,i,nu,j) 
-
-             endif # l 
-      ENDDO nu  
-             endif # s 
-      ENDDO j 
-             endif # n 
-      ENDDO i
-             endif # m 
-      ENDDO mu
-#
-      ENDDO isolute  
 
       sip_barrier 
      
@@ -2697,14 +2192,14 @@ import "trans_frag_defs.sialx"
 #    ---------------------------------------------------
 #
         sip_barrier 
-        PARDO i
-         xi(i)      = wOccA_frag(i) 
-         execute return_sval xi(i)  n1 
-         if n1== icount  
-        DO nu 
+        PARDO nu 
          x1(nu)     = wAO_frag(nu)     
          execute return_sval x1(nu)  m  
          if m == icount  
+        DO i
+         xi(i)      = wOccA_frag(i) 
+         execute return_sval xi(i)  n1 
+         if n1== icount  
         DO j
          xj(j)      = wOccB_frag(j) 
          execute return_sval xj(j)  m1 
@@ -2766,16 +2261,16 @@ import "trans_frag_defs.sialx"
          endif # m == icount  
         ENDDO j
          endif # n1== icount  
-        ENDDO nu  
+        ENDDO i  
          endif # m1== icount  
 #
-        ENDPARDO i
+        ENDPARDO nu  
 #
 # Add the wC contributions 
-      PARDO p, p1  
-         tpp(p,p1) = 0.0 
-         PUT wC(p,p1) = tpp(p,p1)  
-      ENDPARDO p, p1  
+#     PARDO p, p1  
+#        tpp(p,p1) = 0.0 
+#        PUT wC(p,p1) = tpp(p,p1)  
+#     ENDPARDO p, p1  
       sip_barrier 
 #  
 
@@ -2970,54 +2465,48 @@ import "trans_frag_defs.sialx"
       restore_persistent Dca "ca" 
       restore_persistent DFock_a "fock_a"
       sip_barrier
-      DO mu
+      println "Done restoring persistent arrays" 
+      PARDO mu
       DO p 
          GET        Dca(mu,p) 
          ca(mu,p) = Dca(mu,p) 
       ENDDO p 
+      ENDPARDO mu  
+      PARDO p
+      DO mu 
+         GET        Dca(mu,p) 
+         ca(mu,p) = Dca(mu,p) 
       ENDDO mu  
-      DO p  
+      ENDPARDO p  
+
+      PARDO p  
       DO p1  
          GET            Dfock_a(p,p1) 
          fock_a(p,p1) = Dfock_a(p,p1) 
       ENDDO p1  
+      ENDPARDO p  
+      PARDO p1  
+      DO p  
+         GET            Dfock_a(p,p1) 
+         fock_a(p,p1) = Dfock_a(p,p1) 
       ENDDO p  
+      ENDPARDO p1  
+
       sip_barrier
-     #esum = 0.0 
-     #DO mu
-     #DO i 
-     #   etemp = ca(mu,i) * ca(mu,i) 
-     #   esum += etemp 
-     #ENDDO i 
-     #ENDDO mu  
-     #print_scalar esum 
-     #esum = 0.0 
-     #DO mu
-     #DO a 
-     #   etemp = ca(mu,a) * ca(mu,a) 
-     #   esum += etemp 
-     #ENDDO a 
-     #ENDDO mu  
-     #print_scalar esum 
-     #esum = 0.0 
-     #DO mu
-     #DO p 
-     #   etemp = ca(mu,p) * ca(mu,p) 
-     #   esum += etemp 
-     #ENDDO p 
-     #ENDDO mu  
-     #print_scalar esum 
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
       imax = 0.0  
       zmax = 0.0  
-      DO mu 
-      DO nu 
-         txx(mu,nu) = 0.0
-         execute compute_int_scratchmem txx(mu,nu) zmax imax 
-      ENDDO nu 
-      ENDDO mu 
+      println "Start computing scratch memory" 
+     #DO mu 
+     #DO nu 
+     #   txx(mu,nu) = 0.0
+     #   execute compute_int_scratchmem txx(mu,nu) zmax imax 
+         execute compute_int_scratchmem sxx zmax imax 
+     #ENDDO nu 
+     #ENDDO mu 
+      println "Done computing scratch memory" 
 
       mone = -1.0 
       ecrit = cc_conv 
@@ -3027,21 +2516,19 @@ import "trans_frag_defs.sialx"
       solute = 1.0 
       CALL SET_FRAG_PARMS   
       sip_barrier 
-#
-     #create wC 
-     #create t1old 
-     #create t1new  
-     #create x1new  
-     #create e20disp 
-     #create wC_ao 
-     #sip_barrier 
+      println "Done setting fragment parameters" 
 #
 #     Perform 2-el integral transformation and calculate second order energies   
 #     ------------------------------------------------------------------------ 
 #
-     #CALL CREATE_ARRAYS 
       sip_barrier 
       CALL FRAG_TRAN 
+      println "Done two-electron integral tranfsormations" 
+      sip_barrier 
+     #PARDO p, p1 
+     #   tpp(p,p1) = 0.0 
+     #   wC(p,p1) = tpp(p,p1)  
+     #ENDPARDO p, p1 
       sip_barrier 
 #
 #     Form the electrostatic potential(complete) of all fragments  
@@ -3049,6 +2536,7 @@ import "trans_frag_defs.sialx"
 #
       CALL FORM_ELSTPOT 
       sip_barrier 
+      println "Done forming electrostatic potentials" 
 #
 #     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 

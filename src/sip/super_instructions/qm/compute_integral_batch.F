@@ -433,12 +433,10 @@ c ----------------------------------------------------------------------
 c     intmax = 100**4 ! VER BAD HACK  
 c     zmax = 2*intmax  
  
-      i = 0
       do d = d1, d2 
       do c = c1, c2 
       do b = b1, b2 
       do a = a1, a2 
-         i = i + 1 
          integrals(a,b,c,d) = 0.0 
       enddo 
       enddo 
