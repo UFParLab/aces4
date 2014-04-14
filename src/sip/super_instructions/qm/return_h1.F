@@ -95,7 +95,7 @@ c                   Number of nuclear centers
       ncenters = int_constant("ncenters"//C_NULL_CHAR) 
 
 c Number of coefficints 
-      npcoeff = int_constant("npcoeff"//C_NULL_CHAR) 
+      npcoeff = int_constant("npcoeffs"//C_NULL_CHAR) 
 
 c
 c Get the ao segment ranges  

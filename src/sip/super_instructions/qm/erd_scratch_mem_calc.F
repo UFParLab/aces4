@@ -110,6 +110,8 @@ c     parameter (max_dim_coeff = 5000)
 c-------------------------------------------------------------------------
 c   ERD version 2
 c-------------------------------------------------------------------------
+c        write(6,*) 'SHTYPE:', shtype(m), shtype(n), shtype(r),
+c    *   shtype(s)
 
             call ERD__MEMORY_ERI_BATCH(
      *                   nalpha, ncoeff,                 

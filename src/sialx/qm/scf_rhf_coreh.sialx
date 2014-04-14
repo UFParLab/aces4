@@ -114,6 +114,7 @@ import "scf_defs.sialx"
 
       static dflags11(iiter1,jjter1)
       static dflags12(iiter1,jjter2)
+      static oed_ovl(mu,nu) 
 #
 # Declare temporary arrays 
 # ------------------------ 

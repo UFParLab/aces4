@@ -565,8 +565,6 @@ c        iatom(m) = nout ! watom_frag(icurrent_frag, m)
       enddo 
 c     call return_napf(n_apf, icurrent_frag, nfrags, natoms_frag) 
 
-c     iatom = wfrag 
-c     return ! VFL TO REMOVE 
 123   continue 
 
       write(6,*) ' Entering H0 on frag:', icurrent_frag, ':', 
@@ -716,7 +714,7 @@ c    *            H0T, nai, kin, ovl, ncenters, npcoeffs, nshells,
 c
      *            ca_perm, cb_perm, fa_perm, fb_perm, 
      *            natoms_frag, 
-     *            watom_frag, 
+     *            iatom, 
      *            pcharge, 
      *            atom, 
      *            nfrags, 
@@ -743,7 +741,7 @@ c    *               H0T, nai, kin, ovl, ncenters, npcoeffs, nshells,
 c
      *               ca_perm, cb_perm, fa_perm, fb_perm, 
      *               natoms_frag, 
-     *               watom_frag, 
+     *               iatom, 
      *               charge, 
      *               atom, 
      *                         nfrags, 
@@ -884,7 +882,7 @@ c     parameter (max_dim_coeff = 5000)
 c     integer max_shells 
 c     parameter (max_shells = 5000)
       integer natoms_frag(nfrags) 
-      integer watom_frag(nfrags, *) 
+c     integer watom_frag(nfrags, *) 
       integer atom(nshells) 
 
       integer map(nc1:nc2) 
@@ -903,12 +901,12 @@ c     parameter (max_shells = 5000)
       double precision etemp 
 
       write(6,*) ' N_APF = ', natoms_frag(current_frag) 
-      write(6,*) ' IATOM = ', (watom_frag(current_frag, m), 
+      write(6,*) ' IATOM = ', (iatom(m), 
      *                         m = 1, natoms_frag(current_frag) )
       n_apf = natoms_frag(current_frag) 
-      do m = 1, n_apf 
-         iatom(m) = watom_frag(current_frag, m) 
-      enddo 
+c     do m = 1, n_apf 
+c        iatom(m) = watom_frag(current_frag, m) 
+c     enddo 
 c     return ! VFL  
 
       nocc_a = 0 

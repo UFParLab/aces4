@@ -25,10 +25,10 @@ import "trans_frag_defs.sialx"
       index   ifrag  = 1,  1 # Nsolute   
       index  iifrag  = 1,  1 # Nsolute    
 
-      index   jfrag  = 1, 400 # Nfragments   
-      index  jjfrag  = 1, 400 # Nfragments   
-      index   kfrag  = 1, 400 # Nfragments   
-      index  kkfrag  = 1, 400 # Nfragments   
+      index   jfrag  = 1, 217 # Nfragments   
+      index  jjfrag  = 1, 217 # Nfragments   
+      index   kfrag  = 1, 217 # Nfragments   
+      index  kkfrag  = 1, 217 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -837,10 +837,6 @@ import "trans_frag_defs.sialx"
 
      #print_scalar mone 
 #
-      DO mu 
-            x1(mu)     = wAO_frag(mu)     
-            execute return_sval x1(mu)  m  
-            if m == icount  
       DO nu 
             x2(nu)     = wAO_frag(nu) 
             execute return_sval x2(nu)  n  
@@ -853,6 +849,10 @@ import "trans_frag_defs.sialx"
             xj(j)      = wOccB_frag(j) 
             execute return_sval xj(j)  s  
             if s == jcount  
+      DO mu 
+            x1(mu)     = wAO_frag(mu)     
+            execute return_sval x1(mu)  m  
+            if m == icount  
 
                   GET                 Vxxqq(mu,nu,j1,j) 
 
@@ -865,14 +865,14 @@ import "trans_frag_defs.sialx"
                      endif # pcount == icount  
                   ENDDO a 
 
+             endif # m 
+      ENDDO mu 
              endif # s 
       ENDDO j 
              endif # l 
       ENDDO j1 
              endif # n 
       ENDDO nu 
-             endif # m 
-      ENDDO mu 
 
      #print_scalar mone 
 
