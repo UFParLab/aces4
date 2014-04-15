@@ -119,6 +119,10 @@ c     mapping of atoms to shells
 
 !     Number of atomic centers 
       integer (C_INT) ncenters        
+!     Number of coeffs  
+      integer (C_INT) npcoeffs  
+!     Number of shells  
+      integer (C_INT) nshells  
 
       integer norbmax, vmax, omax, maxblk, maxhist, diis_start 
       integer one, two, i, j  
@@ -126,7 +130,6 @@ c     integer iscr(5000000)
 c     double precision scr(5000000) 
 c     double precision scr1(5000000) 
 c     double precision scr2(5000000) 
-c     double precision scr3(5000000) 
 c     double precision scr4(5000000) 
 c     double precision scr5(5000000) 
 
@@ -134,7 +137,6 @@ c     double precision scr5(5000000)
       TYPE(C_PTR) :: ciscr
       TYPE(C_PTR) :: cscr1
       TYPE(C_PTR) :: cscr2
-      TYPE(C_PTR) :: cscr3
       TYPE(C_PTR) :: cscr4
       TYPE(C_PTR) :: cscr5
 
@@ -142,7 +144,6 @@ c     double precision scr5(5000000)
       integer(C_INT), pointer :: iscr(:)
       real(C_DOUBLE), pointer :: scr1(:)
       real(C_DOUBLE), pointer :: scr2(:)
-      real(C_DOUBLE), pointer :: scr3(:)
       real(C_DOUBLE), pointer :: scr4(:)
       real(C_DOUBLE), pointer :: scr5(:)
 
@@ -151,24 +152,27 @@ c     double precision scr5(5000000)
 c Allocate scratch arrays 
 
 c     nscr = (extents_1(1) + 1)**2  
+
+      write(6,*) ' ZMAX IMAX NSCR :', zmax, imax, 
+     *             (extents_1(1) + 1)**2 
       nscr = zmax ! 5000000
-
       call scratch_array(nscr, cscr)
-      nscr = (extents_1(1) + 1)**2  
-      call scratch_array(nscr, cscr1)
-      call scratch_array(nscr, cscr2)
-      call scratch_array(nscr, cscr3)
-      call scratch_array(nscr, cscr4)
-      call scratch_array(nscr, cscr5)
-      call integer_scratch_array(nscr, ciscr) 
-
       call c_f_pointer(cscr,   scr, [nscr])
-      call c_f_pointer(cscr1, scr1, [nscr])
-      call c_f_pointer(cscr2, scr2, [nscr])
-      call c_f_pointer(cscr3, scr3, [nscr])
-      call c_f_pointer(cscr4, scr4, [nscr])
-      call c_f_pointer(cscr5, scr5, [nscr])
+
+      nscr = imax ! 5000000
+      call integer_scratch_array(nscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [nscr])
+
+      nscr = (extents_1(1) + 1)**2  
+c     call scratch_array(nscr, cscr1)
+c     call scratch_array(nscr, cscr2)
+c     call scratch_array(nscr, cscr4)
+c     call scratch_array(nscr, cscr5)
+
+c     call c_f_pointer(cscr1, scr1, [nscr])
+c     call c_f_pointer(cscr2, scr2, [nscr])
+c     call c_f_pointer(cscr4, scr4, [nscr])
+c     call c_f_pointer(cscr5, scr5, [nscr])
 
 c Get the predefined data 
 
@@ -194,20 +198,20 @@ c ----------------------------------------------------------------------
 
 c ----------------------------------------------------------------------
 c  IXALPHAS(exponents)     
-      call predefined_int_array("ixalphas"//C_NULL_CHAR, one,
-     *                                   ntot_alpha, ixalphas)
-      call c_f_pointer(ntot_alpha, pntot_alpha,[1])
-      call c_f_pointer(ixalphas, pixalphas, pntot_alpha)
+c     call predefined_int_array("ixalphas"//C_NULL_CHAR, one,
+c    *                                   ntot_alpha, ixalphas)
+c     call c_f_pointer(ntot_alpha, pntot_alpha,[1])
+c     call c_f_pointer(ixalphas, pixalphas, pntot_alpha)
 c     write(6,*) ' IXALPHAS', pntot_alpha(1), (pixalphas(i), i=1, 
 c    *                                         pntot_alpha(1)) 
 c ----------------------------------------------------------------------
 
 c ----------------------------------------------------------------------
 c  IXCOEFFICIENTS   
-      call predefined_int_array("ixpcoeffs"//C_NULL_CHAR,one,
-     *                                   ntot_pcoeff, ixpcoeffs)
-      call c_f_pointer(ntot_pcoeff, pntot_pcoeff,[1])
-      call c_f_pointer(ixpcoeffs, pixpcoeffs, pntot_pcoeff)
+c     call predefined_int_array("ixpcoeffs"//C_NULL_CHAR,one,
+c    *                                   ntot_pcoeff, ixpcoeffs)
+c     call c_f_pointer(ntot_pcoeff, pntot_pcoeff,[1])
+c     call c_f_pointer(ixpcoeffs, pixpcoeffs, pntot_pcoeff)
 c     write(6,*) ' IXPCOEFFS', pntot_pcoeff(1), (pixpcoeffs(i), i=1, 
 c    *                                         pntot_pcoeff(1)) 
 c ----------------------------------------------------------------------
@@ -268,6 +272,8 @@ c ----------------------------------------------------------------------
 
 
       ncenters        = int_constant("ncenters"//C_NULL_CHAR)
+      npcoeffs        = int_constant("npcoeffs"//C_NULL_CHAR)
+      nshells         = int_constant("nshells"//C_NULL_CHAR)
 
 c ----------------------------------------------------------------------
 
@@ -286,7 +292,7 @@ c---------------------------------------------------------------------------
          vmax    = extents_1(1) ! inda(1) 
          omax    = extents_1(1) ! inda(1) 
          maxhist = 8 
-         diis_start = 3 
+         diis_start = 3  
 
 c---------------------------------------------------------------------------
 c Determine 
@@ -310,11 +316,11 @@ c        if (frag_calc) then
      *                 pccend, ! ibuf(iccend), 
      *                 1, extents_1(1), ! 1, inda(1), 
      *                 1, extents_1(1), ! inda(2), 
-     *                 scr1, ! x(nai_array), 
-     *                 scr2, ! x(kin_array), 
-     *                 ncenters, 
-     *                 scr4, ! x(farray), 
-     *                 scr5, ! x(fbarray), 
+c    *                 scr1, ! x(nai_array), 
+c    *                 scr2, ! x(kin_array), 
+     *                 ncenters, npcoeffs, nshells,  
+c    *                 scr4, ! x(farray), 
+c    *                 scr5, ! x(fbarray), 
      *                 data_1, ! x(ca_array), 
      *                 data_2, ! x(cb_array), 
      *                 data_3, ! x(fa_array), 
@@ -329,11 +335,10 @@ c
 c deAllocate scratch arrays 
 
       call delete_scratch_array(cscr)
-      call delete_scratch_array(cscr1)
-      call delete_scratch_array(cscr2)
-      call delete_scratch_array(cscr3)
-      call delete_scratch_array(cscr4)
-      call delete_scratch_array(cscr5)
+c     call delete_scratch_array(cscr1)
+c     call delete_scratch_array(cscr2)
+c     call delete_scratch_array(cscr4)
+c     call delete_scratch_array(cscr5)
 
       call delete_integer_scratch_array(ciscr) 
 
@@ -345,7 +350,8 @@ C
      *                 maxblk, iscr, coords, tcoords ,coeffs,alphas, 
      *                 ccbeg, ccend,
      *                 nc1,nc2, nd1, nd2,
-     *                 nai, kin, ncenters, fa, fb, 
+c    *                 nai, kin, ncenters, npcoeffs, nshells, fa, fb, 
+     *                 ncenters, npcoeffs, nshells,  
      *                 ca_perm, cb_perm, fa_perm, fb_perm, ovl,  
 c  
      *                 atom, end_nfps, 
@@ -395,6 +401,7 @@ c arrays defining fragment to orbital mapping
       integer(C_INT), pointer :: bavirt_frag(:,:)
       integer(C_INT), pointer :: bbvirt_frag(:,:)
 
+
 c     real(C_DOUBLE), pointer :: baocc_frag(:,:)
 c     real(C_DOUBLE), pointer :: bbocc_frag(:,:)
 c     real(C_DOUBLE), pointer :: bavirt_frag(:,:)
@@ -408,7 +415,7 @@ c ----------------------------------------------------------------------
       integer m1, m2, n1, n2, r1, r2, s1, s2
       integer i, j, n, m, r, s
       integer a,b,c,d
-      integer ncenters  
+      integer ncenters, npcoeffs   
       integer iatom(ncenters), n_basis, n_apf, nf   
       integer icurrent_frag 
 
@@ -436,19 +443,18 @@ c ----------------------------------------------------------------------
       double precision x4,y4,z4
 
       double precision coords(3,*), tcoords(3,*), coeffs(*), alphas(*)
-      double precision nai(nc1:nc2,nd1:nd2)
-      double precision kin(nc1:nc2,nd1:nd2)
+c     double precision nai(nc1:nc2,nd1:nd2)
+c     double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
-      double precision H0T(nc1:nc2,nd1:nd2)
+c     double precision H0T(nc1:nc2,nd1:nd2)
 
-      double precision ca(nc1:nc2,nd1:nd2)
-      double precision cb(nc1:nc2,nd1:nd2)
+c     double precision ca(nc1:nc2,nd1:nd2)
+c     double precision cb(nc1:nc2,nd1:nd2)
 
-      double precision fa(nc1:nc2,nd1:nd2)
-      double precision fb(nc1:nc2,nd1:nd2)
+c     double precision fa(nc1:nc2,nd1:nd2)
+c     double precision fb(nc1:nc2,nd1:nd2)
 
       double precision ca_perm(nc1:nc2,nd1:nd2)
-c     double precision ca_out(*)
       double precision cb_perm(nc1:nc2,nd1:nd2)
       double precision fa_perm(nc1:nc2,nd1:nd2)
       double precision fb_perm(nc1:nc2,nd1:nd2)
@@ -456,20 +462,20 @@ c     double precision ca_out(*)
       integer map(nc1:nc2) 
       integer umap(nc1:nc2) 
 
-      integer max_shells 
-      parameter (max_shells = 5000)
-      integer beg_anfps(max_shells)  
-      integer end_anfps(max_shells)  
+c     integer max_shells 
+c     parameter (max_shells = 5000)
+      integer beg_anfps(nshells)  
+      integer end_anfps(nshells)  
       double precision scr(*)   
       integer iscr(*)
 
       integer ccbeg(*), ccend(*)
 
-      integer max_dim_coeff
-      parameter (max_dim_coeff = 5000)
-      integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
-      double precision alpha_pack(max_dim_coeff),
-     *                 pcoeff_pack(max_dim_coeff)
+c     integer max_dim_coeff
+c     parameter (max_dim_coeff = 5000)
+      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
+      double precision alpha_pack(npcoeffs),
+     *                 pcoeff_pack(npcoeffs)
       integer n_max, nout  
 c
 c ---------------------------------------------------------------------- 
@@ -477,13 +483,13 @@ c Arrays used in the DIIS procedure
 c ---------------------------------------------------------------------- 
 
       integer vmax,omax,norb,maxhist,diis_start  
-      double precision Fai(vmax,omax,maxhist+1) 
-      double precision Fbj(vmax,omax,maxhist+1) 
-      double precision Ea(norb,norb,maxhist+1) 
-      double precision Eb(norb,norb,maxhist+1) 
-      double precision BM(maxhist+1,maxhist+1) 
-      double precision TBM(maxhist+1,maxhist+1) 
-      double precision CM(maxhist+1) 
+c     double precision Fai(vmax,omax,maxhist+1) 
+c     double precision Fbj(vmax,omax,maxhist+1) 
+c     double precision Ea(norb,norb,maxhist+1) 
+c     double precision Eb(norb,norb,maxhist+1) 
+c     double precision BM(maxhist+1,maxhist+1) 
+c     double precision TBM(maxhist+1,maxhist+1) 
+c     double precision CM(maxhist+1) 
       double precision etemp  
 c
 c ---------------------------------------------------------------------- 
@@ -543,34 +549,46 @@ c
 c ---------------------------------------------------------------------- 
 
       write(6,*) ' NFRAGS = ', nfrags 
-      call return_napf(n_apf, icurrent_frag, nfrags, natoms_frag) 
-c     n_apf = natoms_frag(icurrent_frag) 
-      do m = 1, n_apf 
-         call return_predef_2d_int(nfrags, ncenters, icurrent_frag, m, 
-     *                             watom_frag, nout) 
-         iatom(m) = nout ! watom_frag(icurrent_frag, m) 
+      write(6,*) ' CURRENT_FRAGS = ', icurrent_frag 
+
+      write(6,*) 'N_APF = ', natoms_frag(icurrent_frag)
+      do m = 1, natoms_frag(icurrent_frag) 
+         write(6,*) '  ', m, watom_frag(icurrent_frag, m)
       enddo 
-c     iatom = wfrag 
+
+      n_apf = natoms_frag(icurrent_frag) 
+      do m = 1, n_apf 
+c        call return_predef_2d_int(nfrags, ncenters, icurrent_frag, m, 
+c    *                             watom_frag, nout) 
+c        iatom(m) = nout ! watom_frag(icurrent_frag, m) 
+         iatom(m) = watom_frag(icurrent_frag, m) 
+      enddo 
+c     call return_napf(n_apf, icurrent_frag, nfrags, natoms_frag) 
+
+123   continue 
+
       write(6,*) ' Entering H0 on frag:', icurrent_frag, ':', 
      *            n_apf, (iatom(m), m=1, n_apf)  
 
+
 c   Set scratch space 
 
-      nscr  = zmax  
-      niscr = imax 
+c     nscr  = zmax  
+c     niscr = imax 
+      nscr = (nc2-nc1+1)*(nd2-nd1+1) 
       call scratch_array(nscr, cscr)
       call c_f_pointer(cscr, scr_i, [nscr])
-      call scratch_array(niscr, ciscr)
-      call c_f_pointer(ciscr, iscr_i, [niscr])
+c     call integer_scratch_array(niscr, ciscr)
+c     call c_f_pointer(ciscr, iscr_i, [niscr])
 
-      call comp_return_frag_h0(H0T, n_apf, iatom, nc1, nc2, nd1, nd2,
-     *                         ncenters, 
+      call comp_return_frag_h0(scr_i, n_apf, iatom, nc1, nc2, nd1, nd2,
+     *                         npcoeffs, ncenters, 
      *                         coords, tcoords, 
      *                         pcharge, atom,  
-     *                         scr_i, iscr_i) 
+     *                         scr, iscr) 
 c  Remove scratch space  
-      call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
+c     call delete_integer_scratch_array(ciscr)
+      write(6,*) ' Finished H0 on frag:', icurrent_frag
 
 c-----------------------------------------------------------------------
 c   Find the shell blocks for which we shall loop through.
@@ -624,7 +642,7 @@ c-----------------------------------------------------------------------
          n_max = 0 
          do m = m1, m2 
             beg_anfps(m) = 0   
-            end_anfps(m) = 0   
+           end_anfps(m) = 0   
 
           do nf = 1, n_apf 
             if(atom(m) .eq. iatom(nf)) then 
@@ -673,52 +691,42 @@ c-----------------------------------------------------------------------
             fb_perm(i,j) = 0.0 
          enddo 
          enddo 
+c     return ! VFL 
 
 c   Set scratch space 
 
-      nscr  = zmax  
-      niscr = imax 
-      imax = niscr 
-      zmax = nscr 
-      call scratch_array(nscr, cscr)
-      call c_f_pointer(cscr, scr_i, [nscr])
-      call scratch_array(niscr, ciscr)
-      call c_f_pointer(ciscr, iscr_i, [niscr])
+c     nscr  = zmax  
+c     niscr = imax 
+c     imax = niscr 
+c     zmax = nscr 
+c     call scratch_array(nscr, cscr)
+c     call c_f_pointer(cscr, scr_i, [nscr])
+c     call scratch_array(niscr, ciscr)
+c     call c_f_pointer(ciscr, iscr_i, [niscr])
 
          call do_fragscf(icurrent_frag, scr,
-     *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
-     *               nc1,nc2, nd1, nd2,
-     *               H0T, nai, kin, ovl, ncenters, nshells, spherical,  
-     *               n_basis, beg_anfps, end_anfps, map, umap, 
+     *            maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
+     *            nc1,nc2, nd1, nd2,
+c    *            H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
+     *            scr_i, ovl, ncenters, npcoeffs, nshells, 
+     *            spherical,  
+     *            n_basis, beg_anfps, end_anfps, map, umap, 
 c
-     *               ca_perm, cb_perm, fa_perm, fb_perm, 
-     *               natoms_frag, 
-     *               watom_frag, 
-     *               pcharge, 
-     *               atom, 
-     *                         nfrags, 
-     *                         baocc_frag,
-     *                         bbocc_frag,
-     *                         bavirt_frag,
-     *                         bbvirt_frag, 
+     *            ca_perm, cb_perm, fa_perm, fb_perm, 
+     *            natoms_frag, 
+     *            iatom, 
+     *            pcharge, 
+     *            atom, 
+     *            nfrags, 
+     *            baocc_frag,
+     *            bbocc_frag,
+     *            bavirt_frag,
+     *            bbvirt_frag, 
 c 
-     *               vmax,omax,norb,maxhist,diis_start) 
+     *            vmax,omax,norb,maxhist,diis_start) 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
-
-c     etemp = 0.0 
-c     i = 0 
-c     write(6,*) ' CA_PERM ' 
-c     do n = nd1, nd2 
-c     do m = nc1, nc2 
-c        i = i + 1 
-c        ca_out(i) = ca_perm(m,n) 
-c        write(6,*) m, n, ca_perm(m, n) 
-c        etemp = etemp + ca_perm(m,n)**2 
-c     enddo 
-c     enddo 
-c     write(6,*) ' ETEMP at end ', etemp 
+c     call delete_scratch_array(ciscr)
 
       return 
       end 
@@ -726,12 +734,14 @@ c     write(6,*) ' ETEMP at end ', etemp
       subroutine do_fragscf(current_frag, scr,
      *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
      *               nc1,nc2, nd1, nd2,
-     *               H0T, nai, kin, ovl, ncenters, nshells, spherical,
+c    *               H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
+     *               H0T, ovl, ncenters, npcoeffs, nshells, 
+     *               spherical,
      *               n_basis, beg_anfps, end_anfps, map, umap, 
 c
      *               ca_perm, cb_perm, fa_perm, fb_perm, 
      *               natoms_frag, 
-     *               watom_frag, 
+     *               iatom, 
      *               charge, 
      *               atom, 
      *                         nfrags, 
@@ -740,7 +750,7 @@ c
      *                         bavirt_frag,
      *                         bbvirt_frag, 
 c
-     *               vmax,omax,norb,maxhist,diis_start) 
+     *              vmax,omax,norb,maxhist,diis_start) 
 c---------------------------------------------------------------------------
 
       use, intrinsic :: ISO_C_BINDING
@@ -756,9 +766,9 @@ c--------------------------------------------------------------------------
 
 !     one dimensional array containg coefficients 
       TYPE(C_PTR) :: ntot_pcoeff, ixpcoeffs 
-      TYPE(C_PTR) :: pcoeffs  
+c     TYPE(C_PTR) :: pcoeffs  
       integer, pointer :: pntot_pcoeff(:), pixpcoeffs(:) 
-      real(C_DOUBLE), pointer :: ppcoeffs(:) 
+c     real(C_DOUBLE), pointer :: ppcoeffs(:) 
 c ----------------------------------------------------------------------
 c  NCFPS 
       TYPE(C_PTR) :: pishells, pncfps 
@@ -781,7 +791,7 @@ c ----------------------------------------------------------------------
       integer m1, m2, n1, n2, r1, r2, s1, s2
       integer i, j, n, m, r, s, l, mn, rs  
       integer a,b,c,d
-      integer ncenters, nshells  
+      integer ncenters, npcoeffs, nshells   
       integer iatom(ncenters), n_basis, n_basis_org, n_apf, nf   
       integer current_frag, nfrags  
 
@@ -809,8 +819,8 @@ c ----------------------------------------------------------------------
       double precision x4,y4,z4
 
       double precision tcoords(3,*), coeffs(*), alphas(*)
-      double precision nai(nc1:nc2,nd1:nd2)
-      double precision kin(nc1:nc2,nd1:nd2)
+c     double precision nai(nc1:nc2,nd1:nd2)
+c     double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
       double precision H0T(nc1:nc2,nd1:nd2)
 
@@ -857,93 +867,47 @@ c Arrays used in the DIIS procedure
 c ---------------------------------------------------------------------- 
 
       integer vmax,omax,norb,nhist,maxhist,diis_start   
-      double precision Fai(vmax,omax,maxhist+1) 
-      double precision Fbj(vmax,omax,maxhist+1) 
-      double precision Ea(norb,norb,maxhist+1) 
-      double precision Eb(norb,norb,maxhist+1) 
+      double precision Fai(n_basis,n_basis,maxhist+1) 
+      double precision Fbj(n_basis,n_basis,maxhist+1) 
+      double precision Ea(n_basis,n_basis,maxhist+1) 
+      double precision Eb(n_basis,n_basis,maxhist+1) 
       double precision BM(maxhist+1,maxhist+1) 
       double precision TBM(maxhist+1,maxhist+1) 
       double precision CM(maxhist+1) 
 c ---------------------------------------------------------------------- 
 
-      integer max_dim_coeff
-      parameter (max_dim_coeff = 5000)
+c     integer max_dim_coeff
+c     parameter (max_dim_coeff = 5000)
 
-      integer max_shells 
-      parameter (max_shells = 5000)
+c     integer max_shells 
+c     parameter (max_shells = 5000)
       integer natoms_frag(nfrags) 
-      integer watom_frag(nfrags, *) 
+c     integer watom_frag(nfrags, *) 
       integer atom(nshells) 
 
       integer map(nc1:nc2) 
       integer umap(nc1:nc2) 
-      integer beg_anfps(max_shells)  
-      integer end_anfps(max_shells)  
+      integer beg_anfps(nshells)  
+      integer end_anfps(nshells)  
       double precision scr(*)   
       integer iscr(*)
 
       integer ccbeg(*), ccend(*)
 
-      integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
-      double precision alpha_pack(max_dim_coeff),
-     *                 pcoeff_pack(max_dim_coeff)
+      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
+      double precision alpha_pack(npcoeffs),
+     *                 pcoeff_pack(npcoeffs)
       double precision charge(ncenters) 
       double precision etemp 
 
-c ----------------------------------------------------------------------
-c Get prdefined data 
-c ----------------------------------------------------------------------
-c  IXALPHAS(exponents)     
-      call predefined_int_array("ixalphas"//C_NULL_CHAR, one,
-     *                                   ntot_alpha, ixalphas)
-      call c_f_pointer(ntot_alpha, pntot_alpha,[1])
-      call c_f_pointer(ixalphas, pixalphas, pntot_alpha)
-c ----------------------------------------------------------------------
-c  IXPCOEFFS  
-c ----------------------------------------------------------------------
-      call predefined_int_array("ixpcoeffs"//C_NULL_CHAR,one,
-     *                                   ntot_pcoeff, ixpcoeffs)
-      call c_f_pointer(ntot_pcoeff, pntot_pcoeff,[1])
-      call c_f_pointer(ixpcoeffs, pixpcoeffs, pntot_pcoeff)
-c ----------------------------------------------------------------------
-c ----------------------------------------------------------------------
-c  NCFPS 
-c ----------------------------------------------------------------------
-      call predefined_int_array("ncfps"//C_NULL_CHAR, one,
-     *                                   pishells, pncfps)
-      call c_f_pointer(pishells, ishells, [1])
-      call c_f_pointer(pncfps, ncfps, ishells)
-c     write(6,*) ' NCFPS', ishells(1), (ncfps(i), i=1,
-c    *                                           ishells(1))
-c ----------------------------------------------------------------------
-c  NPFPS 
-c ----------------------------------------------------------------------
-      call predefined_int_array("npfps"//C_NULL_CHAR, one,
-     *                                   pishells, pnpfps)
-      call c_f_pointer(pishells, ishells, [1])
-      call c_f_pointer(pnpfps, npfps, ishells)
-c ----------------------------------------------------------------------
-c  INDX_CX  
-c ----------------------------------------------------------------------
-      call predefined_int_array("indx_cc"//C_NULL_CHAR, one,
-     *                                   pishells, pindx_cc)
-      call c_f_pointer(pishells, ishells, [1])
-      call c_f_pointer(pindx_cc, indx_cc, ishells)
-c     write(6,*) ' INDX_CC', ishells(1), (indx_cc(i), i=1, 
-c    *                                           ishells(1))  
-c ----------------------------------------------------------------------
-c  IVANGMOM  
-c ----------------------------------------------------------------------
-      call predefined_int_array("ivangmom"//C_NULL_CHAR, one,pishells,
-     *                                   pivangmom)
-      call c_f_pointer(pishells, ishells, [1])
-      call c_f_pointer(pivangmom, ivangmom, ishells)
-c ----------------------------------------------------------------------
-
+      write(6,*) ' N_APF = ', natoms_frag(current_frag) 
+      write(6,*) ' IATOM = ', (iatom(m), 
+     *                         m = 1, natoms_frag(current_frag) )
       n_apf = natoms_frag(current_frag) 
-      do m = 1, n_apf 
-         iatom(m) = watom_frag(current_frag, m) 
-      enddo 
+c     do m = 1, n_apf 
+c        iatom(m) = watom_frag(current_frag, m) 
+c     enddo 
+c     return ! VFL  
 
       nocc_a = 0 
       nocc_b = 0 
@@ -1111,6 +1075,56 @@ c Copy the HF Density into the old Density.
 c-----------------------------------------------------------------------
 
       call hfdensity_copy(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,n_basis)  
+
+c ----------------------------------------------------------------------
+c Get prdefined data 
+c ----------------------------------------------------------------------
+c  IXALPHAS(exponents)     
+      call predefined_int_array("ixalphas"//C_NULL_CHAR, one,
+     *                                   ntot_alpha, ixalphas)
+      call c_f_pointer(ntot_alpha, pntot_alpha,[1])
+      call c_f_pointer(ixalphas, pixalphas, pntot_alpha)
+c ----------------------------------------------------------------------
+c  IXPCOEFFS  
+c ----------------------------------------------------------------------
+      call predefined_int_array("ixpcoeffs"//C_NULL_CHAR,one,
+     *                                   ntot_pcoeff, ixpcoeffs)
+      call c_f_pointer(ntot_pcoeff, pntot_pcoeff,[1])
+      call c_f_pointer(ixpcoeffs, pixpcoeffs, pntot_pcoeff)
+c ----------------------------------------------------------------------
+c ----------------------------------------------------------------------
+c  NCFPS 
+c ----------------------------------------------------------------------
+      call predefined_int_array("ncfps"//C_NULL_CHAR, one,
+     *                                   pishells, pncfps)
+      call c_f_pointer(pishells, ishells, [1])
+      call c_f_pointer(pncfps, ncfps, ishells)
+c     write(6,*) ' NCFPS', ishells(1), (ncfps(i), i=1,
+c    *                                           ishells(1))
+c ----------------------------------------------------------------------
+c  NPFPS 
+c ----------------------------------------------------------------------
+      call predefined_int_array("npfps"//C_NULL_CHAR, one,
+     *                                   pishells, pnpfps)
+      call c_f_pointer(pishells, ishells, [1])
+      call c_f_pointer(pnpfps, npfps, ishells)
+c ----------------------------------------------------------------------
+c  INDX_CX  
+c ----------------------------------------------------------------------
+      call predefined_int_array("indx_cc"//C_NULL_CHAR, one,
+     *                                   pishells, pindx_cc)
+      call c_f_pointer(pishells, ishells, [1])
+      call c_f_pointer(pindx_cc, indx_cc, ishells)
+c     write(6,*) ' INDX_CC', ishells(1), (indx_cc(i), i=1, 
+c    *                                           ishells(1))  
+c ----------------------------------------------------------------------
+c  IVANGMOM  
+c ----------------------------------------------------------------------
+      call predefined_int_array("ivangmom"//C_NULL_CHAR, one,pishells,
+     *                                   pivangmom)
+      call c_f_pointer(pishells, ishells, [1])
+      call c_f_pointer(pivangmom, ivangmom, ishells)
+c ----------------------------------------------------------------------
 
 c     if (nocc_a .ne. nocc_b) go to 100 
 

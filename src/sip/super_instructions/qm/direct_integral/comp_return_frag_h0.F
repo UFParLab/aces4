@@ -13,7 +13,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine comp_return_frag_h0(z, napf, watom, da1, da2, db1, db2, 
-     * ncenters, coords, tcoords, charge, atom, zz, iscr)
+     * npcoeffs, ncenters, coords, tcoords, charge, atom, zz, iscr)
 c---------------------------------------------------------------------------
 c  Computes the set of OED integrals of types  
 c
@@ -28,11 +28,11 @@ c---------------------------------------------------------------------------
 c Interface added but should be included instead 
 
       include 'sip_interface.f' 
+      include 'imemory.h' 
 
 c---------------------------------------------------------------------------
 
       integer iscr(*) 
-      integer intmax, zmax 
 
       integer da1, da2, db1, db2 
       integer adim, bdim 
@@ -51,18 +51,19 @@ c---------------------------------------------------------------------------
       integer ind(2)
       integer ierr
       integer two
+      integer npcoeffs 
 
       integer flopcount
       logical spherical
       logical*8 l8true, l8spherical
 
-      integer max_dim_coeff
-      parameter (max_dim_coeff = 5000)
-      integer ccbeg_pack(max_dim_coeff), ccend_pack(max_dim_coeff)
+c     integer max_dim_coeff
+c     parameter (max_dim_coeff = 25000)
+      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
       integer nalpha_pack, ncoeff_pack
       integer jatom, newcenters 
-      double precision alpha_pack(max_dim_coeff),
-     *                 pcoeff_pack(max_dim_coeff)
+      double precision alpha_pack(npcoeffs),
+     *                 pcoeff_pack(npcoeffs)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
       double precision acharge(ncenters)
@@ -243,9 +244,6 @@ c ----------------------------------------------------------------------
       if (intSpherical .ne. 1) spherical = .false.
 c     write(6,*) ' Spherical = ', spherical 
 
-      intmax = 5000000 ! VER BAD HACK  
-      zmax = 2*intmax
-
 c----------------------------------------------------------------------------
 c   Clear the output array.
 c----------------------------------------------------------------------------
@@ -296,21 +294,40 @@ c        write(6,*) ' CHARGE :', m, charge(m)
             zn(newcenters) = coords(3,m)  
             acharge(newcenters) = charge(iatom) 
             do_atom(iatom) = 1 
-c           if (do_atom(iatom) .eq. 1) then 
-c              write(6,*) ' WFRAG = ', iatom, newcenters,
-c    *         xn(newcenters), yn(newcenters), zn(newcenters) 
-c           endif 
          endif 
       enddo
       enddo
 
-c     write(6,*) ' NEWCHARGE = ', newcenters  
-c     write(6,*) '    ', (acharge(m), m=1, newcenters) 
+c-------------------------------------------------------------------------
+c Find starting and ending shell do the cluster. It is assumed
+c throughout the cluster code that the the atoms and shells 
+c come in order such as 
+c frag1 frag2 ....
+c-------------------------------------------------------------------------
 
-      m1 = 1 
-      m2 = nshells 
-      n1 = 1 
-      n2 = nshells 
+      m1 = 0 
+      m2 = 0 
+
+      do m = 1, nshells 
+         if (atom(m) .eq. watom(1)) then 
+            m1 = m 
+            go to 11 
+         endif 
+      enddo 
+11    continue 
+
+      do m = nshells, 1, -1  
+         if (atom(m) .eq. watom(napf)) then 
+            m2 = m 
+            go to 12 
+         endif 
+      enddo 
+12    continue 
+
+c     m1 = 1 
+c     m2 = nshells 
+c     n1 = 1 
+c     n2 = nshells 
 
 c-------------------------------------------------------------------------
 c   Calculate the integrals over the necessary shell blocks.
@@ -332,7 +349,7 @@ c-------------------------------------------------------------------------
             y2 = tcoords(2,n)  
             z2 = tcoords(3,n)  
 
-            write(6,*) ' VFL:', m, n, ':', iatom, jatom 
+c           write(6,*) ' VFL:', m, n, ':', iatom, jatom 
 c           write(6,*) 'XYZ1', x1, y1, z1 
 c           write(6,*) 'XYZ2', x2, y2, z2 
 c           write(6,*) 'ncsum', ncsum  
@@ -343,13 +360,13 @@ c           write(6,*) 'ncsum', ncsum
      *                       ncoeff, pccbeg, pccend, 
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       max_dim_coeff)
+     *                       npcoeffs)
 
 c ------------------------------------------------------------------------ 
 c  KIN (type=2) integrals next.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_kin_batch(intmax, zmax, nalpha, ncoeff,
+              call oed__gener_kin_batch(imax, zmax, nalpha, ncoeff,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 alpha_pack,
@@ -380,7 +397,7 @@ c ------------------------------------------------------------------------
 c NAI (type=1) integrals first.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_nai_batch(intmax, zmax, nalpha, ncoeff,
+              call oed__gener_nai_batch(imax, zmax, nalpha, ncoeff,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 newcenters, xn,yn,zn, acharge, alpha_pack,
@@ -410,21 +427,21 @@ c              write(6,*) ' NINTS = ', nints
 
 c Print out the integrals  
 
-                  i = 0
-                  do b = db1,db2
-                  do a = da1,da2
-                     i = i + 1
-                     do bb = b1, b2 
-                        if ((bb .ge. db1) .and. (bb .le. db2)) then 
-                     do aa = a1, a2 
-                        if ((aa .ge. da1) .and. (aa .le. da2)) then 
-                        z(i) = zsum(a,b)
-                        endif 
-                     enddo 
-                        endif 
-                     enddo 
-                  enddo
-                  enddo
+c                 i = 0
+c                 do b = db1,db2
+c                 do a = da1,da2
+c                    i = i + 1
+c                    do bb = b1, b2 
+c                       if ((bb .ge. db1) .and. (bb .le. db2)) then 
+c                    do aa = a1, a2 
+c                       if ((aa .ge. da1) .and. (aa .le. da2)) then 
+c                       z(i) = zsum(a,b)
+c                       endif 
+c                    enddo 
+c                       endif 
+c                    enddo 
+c                 enddo
+c                 enddo
 
                endif ! nints 
 
@@ -432,6 +449,24 @@ c Print out the integrals
          enddo   ! n shells
             endif 
          enddo   ! m shells
+
+c Print out the integrals  
+
+                  i = 0
+                  do b = db1,db2
+                  do a = da1,da2
+                     i = i + 1
+c                    do bb = b1, b2 
+c                       if ((bb .ge. db1) .and. (bb .le. db2)) then 
+c                    do aa = a1, a2 
+c                       if ((aa .ge. da1) .and. (aa .le. da2)) then 
+                        z(i) = zsum(a,b)
+c                       endif 
+c                    enddo 
+c                       endif 
+c                    enddo 
+                  enddo
+                  enddo
 
 
       return

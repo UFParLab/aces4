@@ -22,13 +22,13 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 29 # Nfrags  
-      index   jatom  = 1, 29 # Nfrags  
+      index   katom  = 1, 217 # Nfrags  
+      index   jatom  = 1, 217 # Nfrags  
 
-      index   jfrag  = 1, 29 # Nfragments   
-      index  jjfrag  = 1, 29 # Nfragments   
-      index   kfrag  = 1, 29 # Nfragments   
-      index  kkfrag  = 1, 29 # Nfragments 
+      index   jfrag  = 1, 217 # Nfragments   
+      index  jjfrag  = 1, 217 # Nfragments   
+      index   kfrag  = 1, 217 # Nfragments   
+      index  kkfrag  = 1, 217 # Nfragments 
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -344,26 +344,26 @@ import "scf_frag_defs.sialx"
        ENDDO mu
       println "Done computing overlap integrals" 
 
-       do p 
-       do mu 
-          ca(mu,p) = 0.0
-       enddo mu
-       enddo p 
-       do p 
-       do p1  
-          Fock_a(p,p1) = 0.0 
-       enddo p1  
-       enddo p
-       do q 
-       do mu 
-          cb(mu,q) = 0.0
-       enddo mu
-       enddo q 
-       do q 
-       do q1  
-          Fock_b(q,q1) = 0.0 
-       enddo q1  
-       enddo q
+#      do p 
+#      do mu 
+#         ca(mu,p) = 0.0
+#      enddo mu
+#      enddo p 
+#      do p 
+#      do p1  
+#         Fock_a(p,p1) = 0.0 
+#      enddo p1  
+#      enddo p
+#      do q 
+#      do mu 
+#         cb(mu,q) = 0.0
+#      enddo mu
+#      enddo q 
+#      do q 
+#      do q1  
+#         Fock_b(q,q1) = 0.0 
+#      enddo q1  
+#      enddo q
 
 #
       sip_barrier 
@@ -380,27 +380,28 @@ import "scf_frag_defs.sialx"
                  #tatom(katom,jatom) = atom(katom,jatom) 
                  #execute return_sval tatom(katom,jatom) etemp   
                   print_scalar icount # etemp 
-                  do p 
-                  do mu 
-                     ca(mu,p) = 0.0
-                  enddo mu
-                  enddo p 
-                  do p 
-                  do p1  
-                     Fock_a(p,p1) = 0.0 
-                  enddo p1  
-                  enddo p
-                  do q 
-                  do mu 
-                     cb(mu,q) = 0.0
-                  enddo mu
-                  enddo q 
-                  do q 
-                  do q1  
-                     Fock_b(q,q1) = 0.0 
-                  enddo q1  
-                  enddo q
+                 #do p 
+                 #do mu 
+                 #   ca(mu,p) = 0.0
+                 #enddo mu
+                 #enddo p 
+                 #do p 
+                 #do p1  
+                 #   Fock_a(p,p1) = 0.0 
+                 #enddo p1  
+                 #enddo p
+                 #do q 
+                 #do mu 
+                 #   cb(mu,q) = 0.0
+                 #enddo mu
+                 #enddo q 
+                 #do q 
+                 #do q1  
+                 #   Fock_b(q,q1) = 0.0 
+                 #enddo q1  
+                 #enddo q
 
+                  println "Starting computing fragment scf" 
                   execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
                   println "Done computing fragment scf" 
 
@@ -449,6 +450,7 @@ import "scf_frag_defs.sialx"
                   ENDDO a1
                      endif 
                   ENDDO i  
+                  println "Done placing fock_matrix" 
 
                   DO mu  
                      x1(mu) = wAO_frag(mu) 
@@ -472,52 +474,8 @@ import "scf_frag_defs.sialx"
                   ENDDO i 
                      endif 
                   ENDDO mu  
+                  println "Done placing coefficients" 
 
-                 #DO q  
-                 #DO q1
-                 #   tqq(q,q1)          = fock_b(q,q1) 
-                 #   PUT Dfock_b(q,q1) += tqq(q,q1) 
-                 #ENDDO q1
-                 #ENDDO q  
-                 #DO mu  
-                 #DO q 
-                 #   txq(mu,q)      = cb(mu,q) 
-                 #   PUT DCb(mu,q) += txq(mu,q) 
-                 #ENDDO q 
-                 #ENDDO mu  
-
-                  esum = 0.0 
-                  DO mu  
-                  DO p 
-                     GET DCa(mu,p) 
-                     etemp = DCa(mu,p) * DCa(mu,p) 
-                     esum += etemp 
-                  ENDDO p 
-                  ENDDO mu  
-                  print_scalar esum 
-
-                  esum = 0.0 
-                  DO mu  
-                  DO i 
-                     GET DCa(mu,i) 
-                     etemp = DCa(mu,i) * DCa(mu,i) 
-                     esum += etemp 
-                  ENDDO i 
-                  ENDDO mu  
-                  print_scalar esum 
-
-                  esum = 0.0 
-                  DO mu  
-                  DO a 
-                     GET DCa(mu,a) 
-                     etemp = DCa(mu,a) * DCa(mu,a) 
-                     esum += etemp 
-                  ENDDO a 
-                  ENDDO mu  
-                  print_scalar esum 
- 
-           #  ENDIF # katom == jatom  
-           #ENDDO jatom 
       ENDPARDO katom   
 #
       ENDPROC IGUESS   
@@ -531,94 +489,6 @@ import "scf_frag_defs.sialx"
       CALL SET_FRAG_PARMS    
       sip_barrier 
       CALL IGUESS  
-      sip_barrier
-
-     #esum = 0.0 
-     #DO mu  
-     #DO p 
-     #   GET DCa(mu,p) 
-     #   etemp = DCa(mu,p) * DCa(mu,p) 
-     #   esum += etemp 
-     #ENDDO p 
-     #ENDDO mu  
-     #print_scalar esum 
-
-     #esum = 0.0 
-     #DO mu  
-     #DO i 
-     #   GET DCa(mu,i) 
-     #   etemp = DCa(mu,i) * DCa(mu,i) 
-     #   esum += etemp 
-     #ENDDO i 
-     #ENDDO mu  
-     #print_scalar esum 
-
-     #esum = 0.0 
-     #DO mu  
-     #DO a 
-     #   GET DCa(mu,a) 
-     #   etemp = DCa(mu,a) * DCa(mu,a) 
-     #   esum += etemp 
-     #ENDDO a 
-     #ENDDO mu  
-     #print_scalar esum 
-     #sip_barrier
-
-     #DO mu  
-     #DO p 
-     #   GET        DCa(mu,p) 
-     #   ca(mu,p) = DCa(mu,p) 
-     #ENDDO p 
-     #ENDDO mu  
-     #sip_barrier
-
-     #DO mu  
-     #DO q 
-     #   txq(mu,q)      = cb(mu,q) 
-     #  #PUT DCb(mu,q) += txq(mu,q) 
-     #ENDDO q 
-     #ENDDO mu  
-     #sip_barrier
-
-     #DO mu  
-     #DO q 
-     #   GET        DCb(mu,q) 
-     #   cb(mu,q) = DCb(mu,q) 
-     #ENDDO q 
-     #ENDDO mu  
-     #sip_barrier
-
-     #DO p  
-     #DO p1
-     #   tpp(p,p1)          = fock_a(p,p1) 
-     #  #PUT Dfock_a(p,p1) += tpp(p,p1) 
-     #ENDDO p1
-     #ENDDO p  
-     #sip_barrier
-
-     #DO p  
-     #DO p1
-     #   GET            Dfock_a(p,p1) 
-     #   fock_a(p,p1) = Dfock_a(p,p1) 
-     #ENDDO p1
-     #ENDDO p  
-     #sip_barrier
-
-     #DO q  
-     #DO q1
-     #   tqq(q,q1)          = fock_b(q,q1) 
-     #  #PUT Dfock_b(q,q1) += tqq(q,q1) 
-     #ENDDO q1
-     #ENDDO q  
-     #sip_barrier
-
-     #DO q  
-     #DO q1
-     #   GET            Dfock_b(q,q1) 
-     #   fock_b(q,q1) = Dfock_b(q,q1) 
-     #ENDDO q1
-     #ENDDO q  
-
       sip_barrier
 
       set_persistent Dca "ca" 

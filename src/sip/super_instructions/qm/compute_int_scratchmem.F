@@ -320,8 +320,9 @@ c-----------------------------------------------------------------------
       call lookup_shell(end_nfps, nshells, offset_2, m2) 
 c
 c     call TAU_START("erd_scratch_mem_cal") 
-      call erd_scratch_mem_calc(nshells, ncenters, ivangmom, 
-     *                         ncfps, npfps, 
+
+      call erd_scratch_mem_calc(nshells, ncenters, pntot_pcoeff, 
+     *                         ivangmom, ncfps, npfps, 
      *                         pcoords, ptcoords, 
      *                         palphas,  ppcoeffs, 
      *                         pixalphas, pixpcoeffs, 

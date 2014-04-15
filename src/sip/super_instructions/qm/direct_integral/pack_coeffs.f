@@ -49,10 +49,6 @@ c      include 'machine_types.h'
 
       do j = 1, 4
          ishell = quad(j)
-         if (nalpha + npfps(ishell) .gt. 5000) then
-            print *,'Error: alpha overflow in pack_coeffs'
-            call abort_job()
-         endif
 
          do i = 1, npfps(ishell)
             alpha_pack(ialpha+i-1) = alpha(ixalpha(ishell)+i-1)
@@ -66,10 +62,6 @@ c      include 'machine_types.h'
       do j = 1, 4
          ishell = quad(j)
          num    = npfps(ishell)*ncfps(ishell)
-         if (npcoeff + num .gt. 5000) then
-            print *,'Error: pcoeff overflow in pack_coeffs'
-            call abort_job()
-         endif
 
          do i = 1, num
             pcoeff_pack(ipcoeff+i-1) = pcoeff(ixpcoeff(ishell)+i-1)
