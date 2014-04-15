@@ -95,8 +95,9 @@ c     parameter (max_dim_coeff = 5000)
       enddo 
       enddo 
 
-      imax = 0
-      zmax = 0
+      imax = 500000
+      zmax = 500000
+      return
 
       do m = m1, m2
        n = m

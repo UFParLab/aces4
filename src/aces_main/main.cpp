@@ -208,10 +208,10 @@ int main(int argc, char* argv[]) {
 		TAU_STATIC_PHASE_STOP("SIP Main");
 #endif
 
-		delete persistent_worker;
 
 #ifdef HAVE_MPI
 	  if (sip_mpi_attr.is_server()) delete persistent_server;
+	  else delete persistent_worker;
 	  MPI_Finalize();
 #endif
 
