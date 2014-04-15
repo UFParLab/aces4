@@ -108,7 +108,7 @@ c ----------------------------------------------------------------------
       integer(C_INT):: my_imax, my_zmax 
       logical(C_INT):: calc_2der, spherical 
 
-      integer i 
+      integer i, nalphas, npcoeffs  
 
       nullify(pdim_coords)
       nullify(pcoords)
@@ -279,6 +279,8 @@ c ----------------------------------------------------------------------
 
       nshells  = int_constant("nshells"//C_NULL_CHAR) 
       ncenters = int_constant("ncenters"//C_NULL_CHAR) 
+      nalphas  = int_constant("nalphas"//C_NULL_CHAR) 
+      npcoeffs = int_constant("npcoeffs"//C_NULL_CHAR) 
 
       if(.not. associated(pdim_coords) .or.
      * .not. associated(pcoords) .or.
@@ -321,7 +323,7 @@ c-----------------------------------------------------------------------
 c
 c     call TAU_START("erd_scratch_mem_cal") 
 
-      call erd_scratch_mem_calc(nshells, ncenters, pntot_pcoeff, 
+      call erd_scratch_mem_calc(nshells, ncenters, npcoeffs, nalphas, 
      *                         ivangmom, ncfps, npfps, 
      *                         pcoords, ptcoords, 
      *                         palphas,  ppcoeffs, 
