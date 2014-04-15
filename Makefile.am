@@ -46,16 +46,24 @@ ACES_DATA_FILES=\
 ./src/sip/static_data/sip_tables.cpp\
 ./src/sip/static_data/op_table.h\
 ./src/sip/static_data/op_table.cpp\
-./src/sip/dynamic_data/blocks.h\
-./src/sip/dynamic_data/blocks.cpp\
+./src/sip/dynamic_data/block_id.h\
+./src/sip/dynamic_data/block_id.cpp\
+./src/sip/dynamic_data/block_shape.h\
+./src/sip/dynamic_data/block_shape.cpp\
+./src/sip/dynamic_data/block_selector.h\
+./src/sip/dynamic_data/block_selector.cpp\
+./src/sip/dynamic_data/block.h\
+./src/sip/dynamic_data/block.cpp\
 ./src/sip/dynamic_data/block_manager.h\
 ./src/sip/dynamic_data/block_manager.cpp\
-./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/contiguous_array_manager.h\
-./src/sip/dynamic_data/persistent_array_manager.cpp\
-./src/sip/dynamic_data/persistent_array_manager.h\
+./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/data_manager.h\
-./src/sip/dynamic_data/data_manager.cpp
+./src/sip/dynamic_data/data_manager.cpp\
+./src/sip/dynamic_data/id_block_map.h\
+./src/sip/dynamic_data/persistent_array_manager.h\
+./src/sip/dynamic_data/mpi_state.h
+#need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.cpp\
@@ -68,6 +76,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
 ./src/sip/worker/siox_reader.cpp\
+./src/sip/worker/sial_ops_sequential.h\
+./src/sip/worker/sial_ops_sequential.cpp\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
@@ -81,16 +91,24 @@ if WORKING_MPI
 ACES_SOURCEFILES +=\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\
-./src/sip/mpi/sip_server.h \
-./src/sip/mpi/sip_server.cpp \
 ./src/sip/mpi/rank_distribution.h \
 ./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \
-./src/sip/mpi/data_distribution.h \
-./src/sip/mpi/sip_mpi_utils.h \
-./src/sip/mpi/sip_mpi_utils.cpp \
-./src/sip/mpi/sip_mpi_data.h\
-./src/sip/mpi/sip_mpi_data.cpp
+./src/sip/mpi/data_distribution.h\
+./src/sip/mpi/sip_mpi_utils.h\
+./src/sip/mpi/sip_mpi_utils.cpp\
+./src/sip/mpi/sip_mpi_constants.h\
+./src/sip/mpi/sip_mpi_constants.cpp\
+./src/sip/mpi/barrier_support.h\
+./src/sip/mpi/async_acks.h\
+./src/sip/mpi/async_acks.cpp\
+./src/sip/mpi/sip_server.h\
+./src/sip/mpi/sip_server.cpp\
+./src/sip/server/server_block.h\
+./src/sip/server/server_block.cpp\
+./src/sip/worker/sial_ops_parallel.h\
+./src/sip/worker/sial_ops_parallel.cpp
+
 
 endif
 
@@ -123,6 +141,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/core\
 -I${top_srcdir}/src/sip/setup\
 -I${top_srcdir}/src/sip/worker\
+-I${top_srcdir}/src/sip/server\
 -I${top_srcdir}/src/sip/static_data\
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\
@@ -293,6 +312,21 @@ SIOX_FILES=\
 ./src/sialx/test/assign_to_static_array_test.siox\
 ./src/sialx/test/set_persistent_test.siox\
 ./src/sialx/test/restore_persistent_test.siox\
+./src/sialx/test/persistent_static_array_test1.siox\
+./src/sialx/test/persistent_static_array_test2.siox\
+./src/sialx/test/persistent_distributed_array_test1.siox\
+./src/sialx/test/persistent_distributed_array_test2.siox\
+./src/sialx/test/put_test_mpi.siox\
+./src/sialx/test/put_accumulate_mpi.siox\
+./src/sialx/test/delete_mpi.siox\
+./src/sialx/test/get_mpi.siox\
+./src/sialx/test/persistent_distributed_array_mpi1.siox\
+./src/sialx/test/persistent_distributed_array_mpi2.siox\
+./src/sialx/test/persistent_empty_mpi1.siox\
+./src/sialx/test/persistent_empty_mpi2.siox\
+./src/sialx/test/persistent_scalars_1.siox\
+./src/sialx/test/persistent_scalars_2.siox\
+./src/sialx/test/unmatched_get.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -363,6 +397,21 @@ EXTRA_DIST += \
 ./src/sialx/test/assign_to_static_array_test.sialx\
 ./src/sialx/test/set_persistent_test.sialx\
 ./src/sialx/test/restore_persistent_test.sialx\
+./src/sialx/test/persistent_static_array_test1.sialx\
+./src/sialx/test/persistent_static_array_test2.sialx\
+./src/sialx/test/persistent_distributed_array_test1.sialx\
+./src/sialx/test/persistent_distributed_array_test2.sialx\
+./src/sialx/test/put_test_mpi.sialx\
+./src/sialx/test/put_accumulate_mpi.sialx\
+./src/sialx/test/delete_mpi.sialx\
+./src/sialx/test/get_mpi.sialx\
+./src/sialx/test/persistent_distributed_array_mpi1.sialx\
+./src/sialx/test/persistent_distributed_array_mpi2.sialx\
+./src/sialx/test/persistent_empty_mpi1.sial\
+./src/sialx/test/persistent_empty_mpi2.sial\
+./src/sialx/test/persistent_scalars_1.sialx\
+./src/sialx/test/persistent_scalars_2.sialx\
+./src/sialx/test/unmatched_get.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

@@ -2,57 +2,16 @@
  *
  *To extend ACES4 with a super instruction the following changes to this class are required:
  *
- * 	4. add a C prototype in the "extern "C"" block.
+ * 	4. add a C prototype (inside the "extern "C"" block for instruction written in fortran and c, outside for instructions written in c++)
  * 	2. add a statement to the init_procmap method to add it to the procmap_. This is done as follows
  * 	    (*procmap)["sialname"] = (fp)&cname;
  * 	    where "sialname" is a string that matches the name declared in sial programs
  * 	    and cname is the name of the routine implementing the program as declared in the "extern "C"" block.
  * 	    It is strongly encouraged that these names be the same!!!!
  *
- *The C prototypes for the currently supported special super instruction types (as Mark reimplemented them
- *The except that an ierr parameter has been added) are
- *  0 argument: void name (int ierr);
- *  4 argument; void name (double *, int *, int *, int *, int *, int *, int *, int ierr);
- *  2 argument: void name (double *, int *, int *, int *, int *, int *, int *,
-			               double *, int *, int *, int *, int *, int *, int *, int ierr);
- *  3 argument: void name (double *, int *, int *, int *, int *, int *, int *,
-			               double *, int *, int *, int *, int *, int *, int *,
-			               double *, int *, int *, int *, int *, int *, int *, int ierr);
-
- *
- * The object code for the file should be in a static library that will be linked with the aces4 executable.
- * FORTRAN implementations should use the ISO_C_BINDING module and have the following
- * interface
- *
- * WHICH IS TAKEN FROM THE WIKI AND STILL NEEDS TO BE FIXED UP FOR ISO_C
- * THE CONSTANTS USED FOR INDEX TYPES ARE CURRENLTY THE SAME AS BEFORE,
- * BUT THE WAY THIS IS HANDLED ALSO NEEDS TO BE IMPROVED.
- *
- *SUBROUTINE NEWSUPER  (arg_4, nindex_4, type_4, bval_4, eval_4, bdim_4, edim_4,
-           arg_2, nindex_2, type_2, bval_2, eval_2, bdim_2, edim_2,
-           arg_last, nindex_last, type_last, bval_last, eval_last, bdim_last, edim_last)
-    REAL(8) arg_x                                   !pointer to the data representing argument#x
-    INTEGER nindex_x                                !dimensionality of argument#x (0 for scalars)
-    INTEGER type_x(4:nindex_x)                      !array of index types
-    INTEGER bval_x(4:nindex_x),eval_x(4:nindex_x)   !lower and upper bounds for each dimension of the argument#x
-    INTEGER bdim_x(4:nindex_x),edim_x(4:nindex_x)   !beginning and ending dimensions of each index of the array  (see below)
-    ...
-    Code
-    ...
-    return
- *
- * where
-
-
- bdim and edim are used when the array is static. For a non-static array, bval and bdim are the same, as are eval and edim. The reason we need these is that if the array being processed is a static array, it is sitting in memory in 4 block, dimensioned as x(bdim(4):edim(4), bdim(2):edim(2), ...bdim(nindex):edim(nindex). In this execution of the instruction, we are processing only one segment of each index, but to access the data properly, we must have BOTH the segment beginning and end ranges and the actual dimensions. If the array is a normal block, managed by the blkmgr routines, then the bval/eval data and the bdim/edim data will be identical. By adding the bdim/edim data to the calling sequence, the instruction can process either regular data blocks or static arrays transparently (to the instruction). Of course, the logic must be added in the calling routine to check the array type and set bdim/edim properly, depending on whether the array is static or not.
- *
- *
- *
- * 	Currently, this system does no checking for correct usage (matching params, etc.)
- * 	TODO  enhance type checking for special super instructions in SIAL and SIP
  *
  * 	Comment:  This design allow the sial compiler to set up an arbitrary index mapping for special super instructions and
- * 	thus only requires changes to this file.
+ * 	thus adding a super instruction only requires changes to this file.
  *
  *  Created on: Aug 3, 2043
  *      Author: Beverly Sanders
@@ -328,17 +287,16 @@ std::ostream& operator<<(std::ostream& os, const SpecialInstructionManager& obj)
 	return os;
 }
 
-//void SpecialInstructionManager::clear(){
-//	procmap_.clear();
-//    procvec_.clear();
-//	proc_index_map_.clear();
-//}
+
 void SpecialInstructionManager::init_procmap(){
+    // TEST  The next few instructions are used for testing
+	procmap_["test_increment_counter"]=(fp0)&test_increment_counter;
 	procmap_["dadd"] = (fp0)&dadd;
 	procmap_["dsub"] = (fp0)&dsub;
 	procmap_["print_something"] = (fp0)&print_something;
 	procmap_["fill_block_sequential"]= (fp0)&fill_block_sequential;
 	procmap_["fill_block_cyclic"]= (fp0)&fill_block_cyclic;
+
 	procmap_["print_block"]=(fp0)&print_block;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
 	procmap_["list_block_map"]=(fp0)&list_block_map;
@@ -378,8 +336,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["set_ijk_aab"]=(fp0)&set_ijk_aab;
     procmap_["swap_blocks"]=(fp0)&swap_blocks;
 
-    // TEST
-	procmap_["test_increment_counter"]=(fp0)&test_increment_counter;
+
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
 	//THE &WITH THE NAME IN THE C PROTOTYPE.

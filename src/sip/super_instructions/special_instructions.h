@@ -106,12 +106,8 @@ public:
 
 
 	/** returns the special super instruction at the given index. The given methods return function pointers
-	 * cast to correct types for currently supported superinstruction formats.  These are the ones that Mark
-	 * rewrote.  Note that the number of arguments refers to the number of arguments in the sial program.
-	 *
-	 * For unsupported types, use get_noarg_special_instruction_ptr and cast to the correct type.
-	 *
-	 * Currently, a maximum of three arguments is supported and no checking is done to ensure correct usage.
+	 * cast to correct types for currently supported superinstruction formats.
+	 * Note that the number of arguments refers to the number of arguments in the sial program.
 	 *
 	 * @param  index of the desired special super instruction
 	 * @return pointer to function implementing the super instruction
@@ -124,16 +120,21 @@ public:
 	 fp5 get_five_arg_special_instruction_ptr(int function_slot);
 	 fp6 get_six_arg_special_instruction_ptr(int function_slot);
 
+	 /**
+	  * Returns a string containing the signature for the function as declared in the SIAL program.
+	  * The string contains a character for each argument in the SIAL program which is one of 'r', 'w', or 'u' for
+	  * read, write, and update respectively.  The signatures are used for block management.
+	  */
       const std::string get_signature(int function_slot);
 
   	 /** returns the name of the special superinstruction at the given slot */
   	  std::string name(int procvec_slot);
+
 	  friend std::ostream& operator<<(std::ostream&, const SpecialInstructionManager&);
 	  friend class SipTables;
 
 private:
 	/**Initializes procmap.  Called by the constructor. */
-//	void clear();
 	void init_procmap();
 
 	/** adds the given special super instruction to proc vector
@@ -147,8 +148,6 @@ private:
 	 */
 	void add_special_finalize();
 
-//	/** returns the name of the special superinstruction at the given slot */
-//	std::string name(int procvec_slot);
 
 	/** returns the address of the special superinstruction at the given slot.
 	 * It is stored as type fp0; if the superinstruction has arguments, this pointer must be cast to the appropriate type.
@@ -162,12 +161,11 @@ private:
 	std::map<std::string, fp0> procmap_;
 
 
-
-
-	/** the vector holding super instructions needed for the current SIAL program.  It is initialized using the super instruction names
-	 * read from the .siox file.  The first component of the pair is the address of the super instruction. The second is a string
-	 * with the signature as given in the sial program.  A signature is a possibly 0 length string containing the characters
-	 *   r, w, and u, where these mean read, write, and update, respectively of the corresponding argument.
+	/** the vector holding super instructions needed for the current SIAL program where the slot is assigned by the compiler.
+	 * It is initialized using the super instruction names read from the .siox file.  The first component of the pair is the
+	 * address of the super instruction. The second is a string with the signature as given in the sial program.  A signature
+	 * is a possibly 0 length string containing the characters
+	 * r, w, and u, where these mean read, write, and update, respectively of the corresponding argument.
 	 */
 	typedef std::pair<fp0,std::string> procvec_entry_t;
 	typedef std::vector<procvec_entry_t> procvec_t;

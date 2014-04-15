@@ -26,182 +26,32 @@
 
 #include "config.h"
 #include <bitset>
-#include <utility>   // for std::rel_ops.  Allows relational ops for BlockId to be derived from == and <
+//#include <utility>   // for std::rel_ops.  Allows relational ops for BlockId to be derived from == and <
 #include "aces_defs.h"
 #include "sip.h"
 #include "array_constants.h"
 #include "sip_interface.h"
+#include "block_shape.h"
 #include <iostream>
 
+#ifdef HAVE_MPI
+#include "mpi_state.h"
+#endif //HAVE_MPI
 
-using namespace std::rel_ops;
+
 
 namespace sip {
 	class Interpreter;
 	class SIPServer;
 	class SIPMPIUtils;
+	class SialOpsParallel;
 }
 
 namespace sip {
-
-/** A BlockId concretely identifies a block.
- *
- * A BlockId consists of
- * 	 the array_id
- * 	 an array of values for the indices, which select segments
- * 	 a pointer to a parent block, if this ID is for a subblock.  If not a subblock this field is NULL.
- *
- * 	 The parent_id_ptr_ is a pointer to allow (future) arbitrary nesting of subindices.
- * 	 To simplify memory management, this instance will make its own copy of parent_id_ptr_ and delete it in its
- * 	 destructor.  The copy constructor has been provided.
- *
- * 	 TODO change BlockId * to a smart pointer.
- */
-class BlockId {
-public:
-	BlockId();
-
-	/** Constructor for normal blocks.  parent_id_is set to NULL.
-	 *
-	 * @param array_id
-	 * @param index_values
-	 */
-	BlockId(int array_id, const index_value_array_t& index_values);
-
-	/** Constructor for subblocks
-	 *
-	 * @param array_id
-	 * @param index_values
-	 * @param ID of parent block
-	 */
-	BlockId(int array_id, const index_value_array_t& index_values, const BlockId&);
-
-	/** Another constructor for normal blocks, taking rank and vector (instead of index_value_array_t)
-	 *
-	 * @param array_id
-	 * @param rank
-	 * @param index_values
-	 */
-	BlockId(int array_id, int rank, const std::vector<int>& index_values);
-
-	/** A constructor for a block ID for a scalar or entire contiguous array
-	 *
-	 * @param array_id
-	 */
-
-	BlockId(int array_id);
-
-	/** Copy constructor.  Performs deep copy
-	 *
-	 * @param BlockId to copy
-	 */
-	BlockId(const BlockId&); //copy constructor, performs deep copy
-
-	/** Assign constructor.
-	 *
-	 * @param tmp
-	 * @return
-	 */
-	BlockId  operator=(BlockId tmp ); //assignment constructor
-
-	/** Destructor
-	 * Recursively deletes parent block ids.
-	 */
-	~BlockId();
-
-	/** Overload ==.  Performs "deep" comparison of all fields.
-	 * Overloading == and < is required because we are using BlockIds as
-	 * keys in the block map, which is currently an STL map instance,
-	 * where map is a binary tree.
-	 *
-	 * @param rhs
-	 * @return
-	 */
-	bool operator==(const BlockId& rhs) const;
-
-	/** Overload <.
-	 *  a < b if the a.array_id_ < b.array_id_ or a.array_id_ = b.array_id_  &&  a.index_values_ < b.index_values
-	 *  where index values are compared using lexicographic ordering.
-	 * @param rhs
-	 * @return
-	 */
-	bool operator<(const BlockId& rhs) const;
-
-	int array_id() const {return array_id_;}
-	int index_values (int i) const {return index_values_[i];}
-
-	friend std::ostream& operator<<(std::ostream&, const BlockId &);
-
-	/**
-	 * Serialize to send over the network
-	 * @param [in]
-	 * @param [out]
-	 * @return
-	 */
-	static int* serialize(const BlockId&, int&);
-	/**
-	 * Deserialize and construct a BlockId object.
-	 * @param
-	 * @return
-	 */
-	static BlockId deserialize(const int*);
+class Block;
 
 
-	/**
-	 * Returns the serialized size
-	 * @return
-	 */
-	static int serialized_size();
 
-
-private:
-	int array_id_; //ID of the array, represented by the slot the array table
-	index_value_array_t  index_values_;  //these are visible in sial.  Unused slots have value unused_index_value
-	BlockId * parent_id_ptr_;
-
-	friend class Interpreter;
-	friend class BlockManager;
-	friend class SIPServer;
-	friend class SIPMPIUtils;
-
-};
-
-
-/** Describes the shape of the block in terms of the size of each index */
-//TODO Consider adding rank to the shape
-
-class BlockShape {
-public:
-	BlockShape();
-	explicit BlockShape(const segment_size_array_t&);
-	~BlockShape();
-	segment_size_array_t segment_sizes_;
-	bool operator==(const BlockShape& rhs) const;
-	bool operator<(const BlockShape& rhs) const;
-	int num_elems() const;
-	friend std::ostream& operator<<(std::ostream&, const BlockShape &);
-	friend class Block;
-};
-
-/** The array slot along with the index slots.  Together with the values of the arrays, determines a block.
- * There are two special constants.  The value that indicates an unused index, and tvalue for wildcards.
- * The latter must match the value assumed by the compiler which is 90909.  To ensure proper initialization
- * of unused dimensions, the constructor requires the rank.
- *
- * If the rank of a non-scalar is zero, this should be a contiguous (static) array, and the whole array is selected.
- * Otherwise the rank should be the same as the rank in the array table.
- *
- * Note that the equality operator ignores the array_id.
- */
-class BlockSelector {
-public:
-	BlockSelector(int array_id, int rank, const index_selector_t&);
-	int array_id_;
-	int rank_;
-	index_selector_t index_ids_;
-	bool operator==(const BlockSelector& rhs) const;
-	friend std::ostream& operator<<(std::ostream&, const BlockSelector &);
-};
 
 
 
@@ -242,13 +92,17 @@ public:
 	 */
 	Block(dataPtr);
 
-	/**
-	 * Returns a copy of the block
-	 * @param
-	 * @return
-	 */
-	BlockPtr clone();
+//	/**
+//	 * Returns a copy of the block
+//	 * @param
+//	 * @return
+//	 */
+//	BlockPtr clone();
 
+	/**
+	 * Deletes data in block if any.  If an MPI request associated with this
+	 * block is pending, it waits until it has been satisfied and issues a warning.
+	 */
 	~Block();
 
     int size();
@@ -323,14 +177,21 @@ public:
 #endif
 
 
+
 private:
 
     Block();
 
+
 	BlockShape shape_;
     int size_;
 	dataPtr data_;
+
+	//TODO encapsulate this
 	dataPtr gpu_data_;
+
+
+
 
 	// Why bitset is a good idea
 	// http://www.drdobbs.com/the-standard-librarian-bitsets-and-bit-v/184401382
@@ -338,23 +199,40 @@ private:
 		onHost			= 0,	// Block is on host
 		onGPU			= 1,	// Block is on device (GPU)
 		dirtyOnHost 	= 2,	// Block dirty on host
-		dirtyOnGPU 	= 3		// Block dirty on device (GPU)
+		dirtyOnGPU 	    = 3		// Block dirty on device (GPU)
 	};
 	std::bitset<4> status_;
 
-
+//TODO  is all this necessary??
 	friend class BlockManager;
 	friend class Interpreter;
 	friend class ContiguousArrayManager;
 	friend class SIPMPIUtils;
 	friend class SIPServer;
+	friend class SialOpsParallel;
+	friend class SialOpsSequential;
 
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
 	bool operator==(const Block& rhs) const;
+
+
+
+	/** encapsulates MPI related state info.
+	 * This is defined last so its destructor will be called first.
+	 *
+	 * TODO get rid of the type defs.
+	 */
+#ifdef HAVE_MPI
+	MPIState state_;
+//#else
+//	EmptyMPIState state_;
+#endif
+
 	DISALLOW_COPY_AND_ASSIGN(Block);
 
 };
+
 
 } /* namespace sip */
 

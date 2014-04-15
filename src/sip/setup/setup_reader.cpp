@@ -35,16 +35,17 @@ SetupReader::~SetupReader() {
 		delete [] iter->second.second.first;  //dims
 		delete [] iter->second.second.second; //data
 	}
-    for (PredefArrayIterator iter = predef_arr_.begin(); iter != predef_arr_.end(); ++iter){
-    	SIP_LOG(std::cout<<"From SetupReader, freeing "<<iter->first<<std::endl);
-    	delete [] iter->second.second.first;
-    	delete [] iter->second.second.second;
-    }
+//    for (PredefArrayIterator iter = predef_arr_.begin(); iter != predef_arr_.end(); ++iter){
+//    	SIP_LOG(std::cout<<"From SetupReader, freeing "<<iter->first<<std::endl);
+//    	delete [] iter->second.second.first;
+//    	delete [] iter->second.second.second;
+//    }
     for (NamePredefinedContiguousArrayMapIterator iter = name_to_predefined_contiguous_array_map_.begin();
     		iter != name_to_predefined_contiguous_array_map_.end(); ++iter){
     	SIP_LOG(std::cout<<"From SetupReader, freeing "<<iter->first<<std::endl);
-		delete iter->second;
-		iter->second = NULL;
+    	check(iter->second.second, "attempting to delete NULL block in ~SetupReader");
+		delete iter->second.second;
+		iter->second.second = NULL;
     }
 }
 
@@ -91,29 +92,29 @@ std::ostream& operator<<(std::ostream& os, const SetupReader & obj) {
 		os << ']' << std::endl;
 	}
 
-	os << "Predefined arrays:" << std::endl;
-	SetupReader::PredefArrMap::const_iterator itp;
-	for (itp = obj.predef_arr_.begin(); itp != obj.predef_arr_.end(); ++itp){
-		int rank = itp->second.first;
-		int * dims = itp->second.second.first;
-		double * data = itp->second.second.second;
-		int num_elems = 1;
-		for (int i = 0; i < rank; i++) {
-			num_elems *= dims[i];
-		}
-		os << itp->first << ":{ rank : ";
-		os << rank << " } (";
-		os << dims[0];
-		for (int i=1; i<rank; i++){
-			os <<" ," << dims[i];
-		}
-		os << "), [";
-		os << data [0];
-		for (int i=1; i<num_elems && i < MAX_PRINT_ELEMS; i++){
-			os << ", " << data[i];
-		}
-		os << "]" << std::endl;
-	}
+//	os << "Predefined arrays:" << std::endl;
+//	SetupReader::PredefArrMap::const_iterator itp;
+//	for (itp = obj.predef_arr_.begin(); itp != obj.predef_arr_.end(); ++itp){
+//		int rank = itp->second.first;
+//		int * dims = itp->second.second.first;
+//		double * data = itp->second.second.second;
+//		int num_elems = 1;
+//		for (int i = 0; i < rank; i++) {
+//			num_elems *= dims[i];
+//		}
+//		os << itp->first << ":{ rank : ";
+//		os << rank << " } (";
+//		os << dims[0];
+//		for (int i=1; i<rank; i++){
+//			os <<" ," << dims[i];
+//		}
+//		os << "), [";
+//		os << data [0];
+//		for (int i=1; i<num_elems && i < MAX_PRINT_ELEMS; i++){
+//			os << ", " << data[i];
+//		}
+//		os << "]" << std::endl;
+//	}
 
 	os << "Predefined integer arrays:" << std::endl;
 	SetupReader::PredefIntArrMap::const_iterator itpi;
@@ -240,23 +241,24 @@ void SetupReader::read_predefined_arrays(){
 		int rank = stream_.read_int();
 		// Dimensions
 		int * dims = stream_.read_int_array(&rank);
-		// Data
+		// Number of elements
 		int num_data_elems = 1;
 		for (int i=0; i<rank; i++){
 			num_data_elems *= dims[i];
 		}
 		double * data = stream_.read_double_array(&num_data_elems);
-		std::pair<int *, double *> dataPair = std::pair<int *, double *>(dims, data);
-		predef_arr_[name] = std::pair<int, std::pair<int *, double *> >(rank, dataPair);
-
+//		std::pair<int *, double *> dataPair = std::pair<int *, double *>(dims, data);
+//		predef_arr_[name] = std::pair<int, std::pair<int *, double *> >(rank, dataPair);
+//
 		sip::segment_size_array_t dim_sizes;
 		std::copy(dims+0, dims+rank,dim_sizes);
 		std::fill(dim_sizes+rank, dim_sizes+MAX_RANK, 1);
 		sip::BlockShape shape(dim_sizes);
-
-		double * data2 = new double[num_data_elems];
-		std::copy(data+0, data+num_data_elems, data2);
-		name_to_predefined_contiguous_array_map_[name] = new sip::Block(shape, data2);
+//
+//		double * data2 = new double[num_data_elems];
+//		std::copy(data+0, data+num_data_elems, data2);
+//		name_to_predefined_contiguous_array_map_[name] = new sip::Block(shape, data2);
+		name_to_predefined_contiguous_array_map_[name] = std::pair<int, sip::Block::BlockPtr>(rank, new sip::Block(shape, data));
 
 	}
 }
@@ -270,11 +272,12 @@ void SetupReader::read_predefined_integer_arrays(){
 		int rank = stream_.read_int();
 		// Dimensions
 		int * dims = stream_.read_int_array(&rank);
-		// Data
+		// Number of elements
 		int num_data_elems = 1;
 		for (int i=0; i<rank; i++){
 			num_data_elems *= dims[i];
 		}
+		//read the elements
 		int * data = stream_.read_int_array(&num_data_elems);
 		std::pair<int *, int *> dataPair = std::pair<int *, int *>(dims, data);
 		predef_int_arr_[name] = std::pair<int, std::pair<int *, int *> >(rank, dataPair);

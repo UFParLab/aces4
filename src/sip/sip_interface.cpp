@@ -12,6 +12,7 @@
 #include "sip_interface.h"
 #include "interpreter.h"
 #include "index_table.h"
+#include "block.h"
 #include <stdexcept>
 
 #ifdef __cplusplus
@@ -65,15 +66,21 @@ int int_constant(const char*cname) {
  * @param values [out] the data contained in the array
  */
 
+
 void predefined_scalar_array(const char*aname, int& num_dims, int **dims,
 		double **values) {
 	try {
-		std::pair<int, std::pair<int *, double *> > a =
-				sip::Interpreter::global_interpreter->sip_tables_.setup_reader().predef_arr_.at(
-						std::string(aname));
-		num_dims = a.first;
-		*dims = a.second.first;
-		*values = a.second.second;
+//		std::pair<int, std::pair<int *, double *> > a =
+//				sip::Interpreter::global_interpreter->sip_tables_.setup_reader().predef_arr_.at(
+//						std::string(aname));
+//		num_dims = a.first;
+//		*dims = a.second.first;
+//		*values = a.second.second;
+		std::pair<int,sip::Block::BlockPtr> rankblock = sip::Interpreter::global_interpreter->sip_tables_.setup_reader().name_to_predefined_contiguous_array_map_.at(std::string(aname));
+		num_dims = rankblock.first;
+		sip::Block::BlockPtr block = rankblock.second;
+		*dims = block->shape().segment_sizes_;
+		*values = block->get_data();
 		return;
 	} catch (const std::out_of_range& oor) {
 		sip::check(false,
@@ -102,7 +109,7 @@ void delete_integer_scratch_array(int **array){
 }
 
 /**
- * Get predefined integer array from intitialization data
+ * Get predefined integer array from initialization data
  *
  * @param aname [in] Name of the array
  * @param [out] num_dims

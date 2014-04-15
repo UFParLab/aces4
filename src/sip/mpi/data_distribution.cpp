@@ -18,20 +18,22 @@ DataDistribution::~DataDistribution() {}
 
 int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 	int array_id = bid.array_id();
-	int rank = sip_tables_.array_rank(array_id);
+	int array_rank = sip_tables_.array_rank(array_id);
 
-	// Calculate total number of blocks
-	int num_blocks = 1;
-	for (int pos=0; pos<rank; pos++){
-		int index_slot = sip_tables_.selectors(array_id)[pos];
-		int num_segments = sip_tables_.num_segments(index_slot);
-		num_blocks *= num_segments;
-	}
+//	// Calculate total number of blocks
+//	int num_blocks = 1;
+//	for (int pos=0; pos<array_rank; pos++){
+//		int index_slot = sip_tables_.selectors(array_id)[pos];
+//		int num_segments = sip_tables_.num_segments(index_slot);
+//		num_blocks *= num_segments;
+//	}
 
-	// Convert rank-dimensional index to 1-d index
+	int num_blocks = sip_tables_.num_block_in_array(array_id);
+
+	// Convert rank-dimensional index to 1-dimensional index
 	int block_num = 0;
 	int tmp = 1;
-	for (int pos=rank-1; pos>=0; pos--){
+	for (int pos=array_rank-1; pos>=0; pos--){
 		int index_slot = sip_tables_.selectors(array_id)[pos];
 		int num_segments = sip_tables_.num_segments(index_slot);
 		block_num += bid.index_values(pos) * tmp;

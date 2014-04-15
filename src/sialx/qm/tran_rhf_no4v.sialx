@@ -509,7 +509,8 @@ import "tran_rhf_no4v_defs.sialx"
     #create Dca 
      sip_barrier 
 
-     restore_persistent ca "ca" 
+     restore_persistent ca "ca"
+     set_persistent ca "ca"  
     #restore_persistent FTa "fock_a" 
      println "done restoring persistent arrays" 
 

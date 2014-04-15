@@ -96,6 +96,10 @@ SIPMPIAttr::SIPMPIAttr() {
 	delete [] worker_ranks;
 	delete [] server_ranks;
 
+	if (RankDistribution::is_local_worker_to_communicate(global_rank_, global_size_))
+		my_server_ = RankDistribution::local_server_to_communicate(global_rank_, global_size_);
+	else my_server_ =  -1;
+
 }
 
 bool SIPMPIAttr::is_company_master() const {

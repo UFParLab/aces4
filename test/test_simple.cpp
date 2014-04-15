@@ -8,8 +8,9 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
+#include "global_state.h"
 
-#include "blocks.h"
+#include "block.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -48,8 +49,8 @@ TEST(Sial,empty){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
@@ -76,7 +77,7 @@ TEST(Sial,scalars){
 
 	//read and print setup_file
 	// setup::SetupReader setup_reader;
-	setup::BinaryInputFile setup_file(job + ".dat");;
+	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	// setup_reader.read(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
@@ -93,8 +94,7 @@ TEST(Sial,scalars){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
@@ -105,6 +105,87 @@ TEST(Sial,scalars){
 	ASSERT_EQ(0, sip::DataManager::scope_count);
 	}
 }
+
+
+TEST(Sial,persistent_scalars){
+	std::cout << "****************************************\n";
+	sip::DataManager::scope_count=0;
+	//create setup_file
+	std::string job("persistent_scalars");
+	std::cout << "JOBNAME = " << job << std::endl;
+	double x = 3.456;
+	double y = -0.1;
+
+	{	init_setup(job.c_str());
+		set_scalar("x",x);
+		set_scalar("y",y);
+		std::string tmp1 = job + "_1.siox";
+		const char* nm1= tmp1.c_str();
+		add_sial_program(nm1);
+		std::string tmp2 = job + "_2.siox";
+		const char* nm2= tmp2.c_str();
+		add_sial_program(nm2);
+		finalize_setup();
+	}
+
+	sip::PersistentArrayManager<sip::Block, sip::Interpreter>* pam;
+	pam = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+
+	//read and print setup_file
+	// setup::SetupReader setup_reader;
+	setup::BinaryInputFile setup_file(job + ".dat");
+	setup::SetupReader setup_reader(setup_file);
+	// setup_reader.read(setup_file);
+	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+////	siox_reader.read();
+	sip::SipTables sipTables(setup_reader, siox_file);
+	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+
+	//interpret the program
+	{
+	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+	sip::Interpreter runner(sipTables, sialxTimer, pam);
+	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+	runner.interpret();
+	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+//	ASSERT_DOUBLE_EQ(x, scalar_value("x"));
+	ASSERT_DOUBLE_EQ(y, scalar_value("y"));
+	ASSERT_DOUBLE_EQ(x, scalar_value("z"));
+	ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
+	ASSERT_EQ(0, sip::DataManager::scope_count);
+	pam->save_marked_arrays(&runner);
+	std::cout << "pam:" << std::endl << *pam << std::endl << "%%%%%%%%%%%%"<< std::endl;
+	}
+
+	//Now do the second program
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name1 = setup_reader.sial_prog_list_.at(1);
+	setup::BinaryInputFile siox_file1(siox_dir + prog_name1);
+	sip::SipTables sipTables1(setup_reader, siox_file1);
+	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+
+	//interpret the program
+	{
+	sip::SialxTimer sialxTimer1(sipTables1.max_timer_slots());
+	sip::Interpreter runner2(sipTables1, sialxTimer1, pam);
+	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+	runner2.interpret();
+	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+	ASSERT_DOUBLE_EQ(x+1, scalar_value("x"));
+	ASSERT_DOUBLE_EQ(y, scalar_value("y"));
+	ASSERT_DOUBLE_EQ(6, scalar_value("e"));
+	ASSERT_EQ(0, sip::DataManager::scope_count);
+	}
+	delete pam;
+}
+
+
 
 TEST(Sial,helloworld){
 	std::cout << "****************************************\n";
@@ -129,8 +210,8 @@ TEST(Sial,helloworld){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
@@ -158,8 +239,8 @@ TEST(Sial,no_arg_user_sub) {
 	std::cout << sipTables;
 
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "\nINSTANTIATED INTERPRETER" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -207,8 +288,8 @@ TEST(Sial,index_decs) {
 
 	//interpret the program
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "\nSIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -243,8 +324,8 @@ TEST(Sial,where_clause){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -278,8 +359,8 @@ TEST(Sial,ifelse){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -313,8 +394,8 @@ TEST(Sial,loop_over_simple_indices){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -347,8 +428,8 @@ TEST(Sial,loop_over_simple_indices){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -379,7 +460,7 @@ TEST(Sial,tmp_arrays){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -396,8 +477,8 @@ TEST(Sial,tmp_arrays){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -430,7 +511,7 @@ TEST(Sial,tmp_arrays_2){
 
 	//read and print setup_file
 
-	setup::BinaryInputFile setup_file(job + ".dat");;
+	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
@@ -448,8 +529,8 @@ TEST(Sial,tmp_arrays_2){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -483,7 +564,7 @@ TEST(Sial,exit_statement_test){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -500,8 +581,8 @@ TEST(Sial,exit_statement_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -534,7 +615,7 @@ TEST(Sial,transpose_tmp){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -551,8 +632,8 @@ TEST(Sial,transpose_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -596,7 +677,7 @@ TEST(Sial,fill_sequential){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -613,8 +694,8 @@ TEST(Sial,fill_sequential){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -642,7 +723,7 @@ TEST(Sial,contraction_small_test){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -659,8 +740,8 @@ TEST(Sial,contraction_small_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -755,7 +836,7 @@ TEST(Sial,contraction_small_test2){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -772,8 +853,8 @@ TEST(Sial,contraction_small_test2){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -915,7 +996,7 @@ TEST(Sial,sum_op){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -932,8 +1013,8 @@ TEST(Sial,sum_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1036,7 +1117,7 @@ TEST(Sial,print_block_test){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -1053,8 +1134,8 @@ TEST(Sial,print_block_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1085,7 +1166,7 @@ TEST(Sial,subindex_test){
 	}
 
 	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");;
+		setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
@@ -1102,8 +1183,8 @@ TEST(Sial,subindex_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1157,8 +1238,8 @@ TEST(Sial,insert_slice_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1211,8 +1292,8 @@ TEST(Sial,static_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1221,6 +1302,9 @@ TEST(Sial,static_array_test){
 ;
 	}
 }
+
+
+
 
 TEST(Sial,local_arrays){
 	std::cout << "****************************************\n";
@@ -1264,8 +1348,8 @@ TEST(Sial,local_arrays){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1317,8 +1401,8 @@ TEST(Sial,local_arrays_wild){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1370,8 +1454,8 @@ TEST(Sial,put_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1420,8 +1504,8 @@ TEST(Sial,gpu_contraction_small){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1529,8 +1613,8 @@ TEST(Sial,gpu_sum_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1654,8 +1738,8 @@ TEST(Sial,gpu_ops){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1709,8 +1793,8 @@ TEST(Sial,contract_to_scalar){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1789,8 +1873,8 @@ TEST(Sial,gpu_contract_to_scalar){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1871,8 +1955,8 @@ TEST(Sial,gpu_transpose_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -1991,8 +2075,8 @@ TEST(Sial,simple_indices_assignments){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2045,8 +2129,8 @@ TEST(Sial,self_multiply_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2123,8 +2207,8 @@ TEST(Sial,gpu_self_multiply_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2206,8 +2290,8 @@ TEST(Sial,get_int_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2282,8 +2366,8 @@ TEST(Sial,get_scalar_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2355,8 +2439,8 @@ TEST(Sial,get_scratch_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2435,8 +2519,8 @@ TEST(Sial,gpu_contraction_predefined){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2493,7 +2577,7 @@ TEST(Sial,transpose4d_tmp){
 	//read and print setup_file
 	//// setup::SetupReader setup_reader;
 
-	setup::BinaryInputFile setup_file(job + ".dat");;
+	setup::BinaryInputFile setup_file(job + ".dat");
 	// setup_reader.read(setup_file);
 	setup::SetupReader setup_reader(setup_file);
 
@@ -2512,8 +2596,8 @@ TEST(Sial,transpose4d_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2584,8 +2668,8 @@ TEST(Sial,transpose4d_square_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2698,8 +2782,8 @@ TEST(Sial,reproduce_transpose_problem){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2738,7 +2822,7 @@ TEST(Sial,assign_to_static_array_test){
 	//read and print setup_file
 	//// setup::SetupReader setup_reader;
 
-	setup::BinaryInputFile setup_file(job + ".dat");;
+	setup::BinaryInputFile setup_file(job + ".dat");
 	// setup_reader.read(setup_file);
 	setup::SetupReader setup_reader(setup_file);
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
@@ -2757,8 +2841,8 @@ TEST(Sial,assign_to_static_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager pbm;
-	sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
 	ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2781,7 +2865,7 @@ TEST(Sial,set_persistent_test){
 	{
 		init_setup(job.c_str());
 		set_scalar("x",x);
-		double ca_array[6] = {0, 0, 0, 0, 0, 0};
+		double ca_array[6] = {7, 8, 9, 10, 11, 12};
 		int dims[] = {2, 2};
 		set_predefined_scalar_array("ca", 2, dims, ca_array);
 		int segs[]  = {2,3};
@@ -2802,12 +2886,14 @@ TEST(Sial,set_persistent_test){
 
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
-	sip::PersistentArrayManager pbm1, pbm2, pbm3;
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
 
 	{
 
 			//get siox name from setup, load and print the sip tables
 			std::string prog_name = setup_reader.sial_prog_list_.at(0);
+			sip::GlobalState::set_program_name(prog_name);
 			std::string siox_dir(dir_name);
 			setup::BinaryInputFile siox_file(siox_dir + prog_name);
 		//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
@@ -2818,24 +2904,25 @@ TEST(Sial,set_persistent_test){
 		//interpret the program
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm1, pbm2);
+			sip::Interpreter runner(sipTables, sialxTimer, pbm);
 			std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 			runner.interpret();
+			std::cout<<"PBM:"<<std::endl << *pbm << std::endl;
+			pbm->save_marked_arrays(&runner);
+			std::cout <<"PBM after saving:"<<std::endl << *pbm << std::endl;
 			ASSERT_EQ(0, sip::DataManager::scope_count);
 			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 		}
 	}
-	std::cout<<"PBM1:"<<std::endl;
-	std::cout<<pbm1<<std::endl;
-	std::cout<<"PBM2:"<<std::endl;
-	std::cout<<pbm2<<std::endl;
+	std::cout<<"PBM1:"<<std::endl << *pbm << std::endl;
 
 	{
 
 			//get siox name from setup, load and print the sip tables
-			std::string prog_name = setup_reader.sial_prog_list_.at(1);
+			std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
 			std::string siox_dir(dir_name);
-			setup::BinaryInputFile siox_file(siox_dir + prog_name);
+			setup::BinaryInputFile siox_file(siox_dir + prog_name2);
+			sip::GlobalState::set_program_name(prog_name2);
 		//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
 		//	siox_reader.read();
 			sip::SipTables sipTables(setup_reader, siox_file);
@@ -2844,7 +2931,7 @@ TEST(Sial,set_persistent_test){
 		//interpret the program
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm2, pbm3);
+			sip::Interpreter runner(sipTables, sialxTimer, pbm);
 			std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 			runner.interpret();
 			ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -2852,11 +2939,171 @@ TEST(Sial,set_persistent_test){
 		}
 	}
 	std::cout<<"PBM3:"<<std::endl;
-	std::cout<<pbm3<<std::endl;
+	std::cout<<*pbm<<std::endl;
 
 }
 
+TEST(Sial,persistent_static_array_test){
+	std::cout << "****************************************\n";
+	sip::DataManager::scope_count=0;
+	//create setup_file
+	std::string job("persistent_static_array_test");
+	std::cout << "JOBNAME = " << job << std::endl;
+	double x = 3.456;
+	int norb = 2;
 
+	{	init_setup(job.c_str());
+		set_scalar("x",x);
+		set_constant("norb",norb);
+		std::string tmp = job + "1.siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		std::string tmp1 = job + "2.siox";
+		const char* nm1= tmp1.c_str();
+		add_sial_program(nm1);
+		int segs[]  = {8,16};
+		set_aoindex_info(2,segs);
+		finalize_setup();
+	}
+
+	//read and print setup_file
+	//// setup::SetupReader setup_reader;
+
+	setup::BinaryInputFile setup_file(job + ".dat");
+	// setup_reader.read(setup_file);
+	setup::SetupReader setup_reader(setup_file);
+
+	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+//	siox_reader.read();
+	sip::SipTables sipTables(setup_reader, siox_file);
+	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+
+
+	//interpret the program
+	{
+	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+
+	sip::Interpreter runner(sipTables, sialxTimer, pbm);
+	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+	runner.interpret();
+	ASSERT_EQ(0, sip::DataManager::scope_count);
+	pbm->save_marked_arrays(&runner);
+	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+//	runner.print_block()
+;
+	}
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
+	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+//	siox_reader.read();
+	sip::SipTables sipTables2(setup_reader, siox_file2);
+	std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables2 << std::endl;
+
+
+	//interpret the program
+	{
+	sip::SialxTimer sialxTimer(sipTables2.max_timer_slots());
+
+	sip::Interpreter runner(sipTables2, sialxTimer, pbm);
+	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+	runner.interpret();
+	ASSERT_EQ(0, sip::DataManager::scope_count);
+
+	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+//	runner.print_block()
+	}
+	delete pbm;
+}
+
+
+TEST(Sial,persistent_distributed_array_test){
+	std::cout << "****************************************\n";
+	sip::DataManager::scope_count=0;
+	//create setup_file
+	std::string job("persistent_distributed_array_test");
+	std::cout << "JOBNAME = " << job << std::endl;
+	double x = 3.456;
+	int norb = 2;
+
+	{	init_setup(job.c_str());
+		set_scalar("x",x);
+		set_constant("norb",norb);
+		std::string tmp = job + "1.siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		std::string tmp1 = job + "2.siox";
+		const char* nm1= tmp1.c_str();
+		add_sial_program(nm1);
+		int segs[]  = {8,16};
+		set_aoindex_info(2,segs);
+		finalize_setup();
+	}
+
+	//read and print setup_file
+	//// setup::SetupReader setup_reader;
+
+	setup::BinaryInputFile setup_file(job + ".dat");
+	// setup_reader.read(setup_file);
+	setup::SetupReader setup_reader(setup_file);
+
+	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+//	siox_reader.read();
+	sip::SipTables sipTables(setup_reader, siox_file);
+	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+
+
+	//interpret the program
+	{
+	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+
+	sip::Interpreter runner(sipTables, sialxTimer, pbm);
+	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+	runner.interpret();
+	ASSERT_EQ(0, sip::DataManager::scope_count);
+	pbm->save_marked_arrays(&runner);
+	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+//	runner.print_block()
+;
+	}
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
+	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
+//	siox_reader.read();
+	sip::SipTables sipTables2(setup_reader, siox_file2);
+	std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables2 << std::endl;
+
+
+	//interpret the program
+	{
+
+	sip::SialxTimer sialxTimer2(sipTables2.max_timer_slots());
+
+	sip::Interpreter runner2(sipTables2, sialxTimer2, pbm);
+	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
+	runner2.interpret();
+	ASSERT_EQ(0, sip::DataManager::scope_count);
+
+	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+//	runner.print_block()
+	}
+	//delete pbm;
+}
 int main(int argc, char **argv) {
 
 #ifdef HAVE_TAU

@@ -8,7 +8,7 @@
 #ifndef DATA_DISTRIBUTION_H_
 #define DATA_DISTRIBUTION_H_
 
-#include "blocks.h"
+#include "block_id.h"
 #include "sip_tables.h"
 #include "sip_mpi_attr.h"
 

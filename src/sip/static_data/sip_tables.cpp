@@ -15,11 +15,23 @@
 
 namespace sip {
 
+
+
 SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input_file):
-	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader),	sialx_lines_(-1){
+	setup_reader_(setup_reader),
+	siox_reader_(*this, input_file, setup_reader),
+	sialx_lines_(-1){
+//	check(SipTables::instance_ == NULL, "attempting to write to non-null SipTables::instance_");
+	SipTables::instance_ = this;
 }
 
 SipTables::~SipTables() {
+	SipTables::instance_ = NULL;
+}
+
+SipTables* SipTables::instance_;
+SipTables& SipTables::instance(){
+	return *instance_;
 }
 
 int SipTables::max_timer_slots(){
@@ -102,6 +114,10 @@ int SipTables::num_arrays(){
 	return array_table_.entries_.size();
 }
 
+int SipTables::num_block_in_array(int array_table_slot){
+	return array_table_.entries_[array_table_slot].num_blocks_;
+}
+
 int SipTables::int_value(int int_table_slot) {
 	return int_table_.value(int_table_slot);
 }
@@ -117,23 +133,6 @@ sip::IndexType_t SipTables::index_type(int index_table_slot) {
 	return index_table_.index_type(index_table_slot);
 }
 
-//array::BlockShape& SipTables::shape(const array::BlockId& block_id) const{
-//	int array_table_slot = block_id.array_id_;
-//	int rank = array_table_.rank(array_table_slot);
-//	array::index_selector_t& selectors = array_table_.index_selectors(array_table_slot);
-//	int seg_sizes[MAX_RANK];
-//	for (int i = 0; i < MAX_RANK; ++i) {
-//		seg_sizes[i] = index_table_.segment_extent(selectors[i],
-//				block_id.index_values_[i]);
-//	}
-////	std::cout << "seg_sizes: ";
-////
-////	for (int i = 0; i < MAX_RANK; ++i){
-////		std::cout << (i==0?"":",") << seg_sizes[i];
-////	}
-////	std::cout << std::endl;
-//	return array::BlockShape(seg_sizes);
-//}
 
 sip::BlockShape SipTables::shape(const sip::BlockId& block_id) {
 	int array_table_slot = block_id.array_id();
@@ -154,6 +153,10 @@ sip::BlockShape SipTables::shape(const sip::BlockId& block_id) {
 	}
 	std::fill(seg_sizes+rank, seg_sizes + MAX_RANK, 1);
 	return sip::BlockShape(seg_sizes);
+}
+
+int SipTables::block_size(const BlockId& block_id){
+	return shape(block_id).num_elems();
 }
 
 sip::BlockShape SipTables::contiguous_array_shape(int array_id){
@@ -180,12 +183,11 @@ int SipTables::num_segments(int index_table_slot) {
 	return index_table_.num_segments(index_table_slot);
 }
 int SipTables::num_subsegments(int index_slot, int parent_segment_value){return index_table_.num_subsegments(index_slot, parent_segment_value);}
+
 bool SipTables::is_subindex(int index_table_slot){return index_table_.is_subindex(index_table_slot);}
+
 int SipTables::parent_index(int subindex_slot){return index_table_.parent(subindex_slot);}
 
-void SipTables::print(){
-	std::cout << *this << std::endl;
-}
 
 std::ostream& operator<<(std::ostream& os, const SipTables& obj) {
 	//index table
@@ -220,7 +222,7 @@ std::ostream& operator<<(std::ostream& os, const SipTables& obj) {
 	//string literal table
 	os << "String Literal Table:" << std::endl;
 	for (int i = 0; i < obj.string_literal_table_.size(); ++i) {
-		os << obj.string_literal_table_[i] << '\n';
+		os << "string_literal_table[" << i << "]= " << obj.string_literal_table_[i] << '\n';
 	}
 	os << std::endl;
 	os << std::endl;

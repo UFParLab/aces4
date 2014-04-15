@@ -15,6 +15,15 @@
 #include <vector>
 #include <map>
 
+//include these so that including this will pull them in.
+#include "aces_defs.h"
+#include "array_constants.h"
+
+/** use this macro as the last statement in most
+ * class definitions to disable the copy and assign
+ * constructors.  Omit only if you really want these
+ * constructors
+ */
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&);               \
   void operator=(const TypeName&)

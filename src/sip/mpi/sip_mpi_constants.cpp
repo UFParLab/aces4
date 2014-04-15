@@ -1,4 +1,4 @@
-#include <sip_mpi_data.h>
+#include <sip_mpi_constants.h>
 
 
 namespace sip{

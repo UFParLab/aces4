@@ -23,7 +23,8 @@
 #include "op_table.h"
 #include "int_table.h"
 #include "array_table.h"
-#include "blocks.h"
+#include "block_id.h"
+#include "block_shape.h"
 #include "index_table.h"
 #include "special_instructions.h"
 #include "setup_reader.h"
@@ -49,6 +50,10 @@ class SipTables {
 public:
 	SipTables(setup::SetupReader&, setup::InputStream&);
 	~SipTables();
+
+
+	static SipTables& instance() ;
+
 
 // Convenience method
 	/**
@@ -76,6 +81,7 @@ public:
 	bool is_distributed(int array_table_slot);
 	bool is_served(int array_table_slot);
 	int num_arrays();
+	int num_block_in_array(int array_table_slot);
 
 //int (symbolic constants)
 	int int_value(int int_table_slot);
@@ -104,11 +110,16 @@ public:
 	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot);
 	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot);
 
-    void print();
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 
 	setup::SetupReader& setup_reader() const { return setup_reader_; }
 private:
+
+	/** this is a pointer to the SipTables instance of the current SIAL program
+	 * or NULL if there is no current program.  This variable is set in the
+	 * constructor and set to NULL in the destructor.
+	 */
+	static SipTables* instance_;
 
 	OpTable op_table_;
 	sip::ArrayTable array_table_;
@@ -118,6 +129,7 @@ private:
 	StringLiteralTable string_literal_table_;
 	sip::SpecialInstructionManager special_instruction_manager_;
 	sip::SioxReader siox_reader_;
+	std::vector<int> blocks_in_array();
 
 	setup::SetupReader& setup_reader_;
 

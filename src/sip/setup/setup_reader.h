@@ -16,7 +16,7 @@
 #include "sip.h"
 #include "io_utils.h"
 #include "array_constants.h"
-#include "blocks.h"
+#include "block.h"
 #define MAX_PRINT_ELEMS 512
 
 //namespace array {
@@ -52,8 +52,8 @@ public:
 	typedef PredefIntArrMap::iterator PredefIntArrayIterator;
 	typedef std::map<std::string, std::string> KeyValueMap;
 	typedef std::map<std::string, KeyValueMap > FileConfigMap;
-	typedef std::map<std::string, sip::Block::BlockPtr> NamePredefinedContiguousArrayMap;
-    typedef std::map<std::string, sip::Block::BlockPtr>::iterator NamePredefinedContiguousArrayMapIterator;
+	typedef std::map<std::string, std::pair<int,sip::Block::BlockPtr> > NamePredefinedContiguousArrayMap;
+    typedef std::map<std::string, std::pair<int,sip::Block::BlockPtr> >::iterator NamePredefinedContiguousArrayMapIterator;
 
 	int predefined_int(std::string);
     double predefined_scalar(std::string);
@@ -65,7 +65,7 @@ public:
 	PredefIntMap predefined_int_map_;
 	PredefScalarMap predefined_scalar_map_;
 	SetupSegmentInfoMap segment_map_;
-	PredefArrMap predef_arr_; 	// Map of predefined arrays
+//	PredefArrMap predef_arr_; 	// Map of predefined arrays
 	PredefIntArrMap predef_int_arr_; 	// Map of predefined integer arrays
 	FileConfigMap configs_;		// Map of sial files to their configurations in the form of a key-value map
 

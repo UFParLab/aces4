@@ -12,8 +12,9 @@ C  GNU General Public License for more details.
 
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
-      subroutine erd_scratch_mem_calc(nshells, ncenters, npcoeff, 
-     *                                shtype,  ncfps, npfps, 
+      subroutine erd_scratch_mem_calc(nshells, ncenters, 
+     *                                npcoeff, nalphas,  
+     *                                shtype, ncfps, npfps, 
      *                                atom, coords, alpha, pcoeff,
      *                                ixalpha, ixpcoeff, ccbeg, ccend,
      *                                indx_cc, spherical,
@@ -47,14 +48,14 @@ c Interface added BUT should be include NOT added in the future
 
       integer (C_INT) nfrags 
 
-      integer nshells, ncenters  
+      integer nshells, ncenters, npcoeff, nalphas   
       integer shtype(nshells), ncfps(nshells), npfps(nshells)
       double precision atom(3,ncenters)  
       integer satom(nshells) 
       integer ixalpha(nshells), ixpcoeff(nshells)
       integer ccbeg(*), ccend(*), indx_cc(*)
       integer imax, zmax
-      integer nuclei, nalpha, ncoeff, npcoeff
+      integer nuclei, nalpha, ncoeff 
 
       logical calc_2der
 
@@ -62,7 +63,7 @@ c Interface added BUT should be include NOT added in the future
       double precision alpha(*), pcoeff(*)
 c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
-      double precision alpha_pack(npcoeff), 
+      double precision alpha_pack(nalphas), 
      *                 pcoeff_pack(npcoeff)
       integer ccbeg_pack(npcoeff), ccend_pack(npcoeff)
 
@@ -94,8 +95,9 @@ c     parameter (max_dim_coeff = 5000)
       enddo 
       enddo 
 
-      imax = 0
-      zmax = 0
+      imax = 500000
+      zmax = 500000
+      return
 
       do m = m1, m2
        n = m

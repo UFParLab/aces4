@@ -10,7 +10,7 @@
 #include "sip_interface.h"
 #include "data_manager.h"
 #include "persistent_array_manager.h"
-#include "blocks.h"
+#include "block.h"
 #include "global_state.h"
 
 #include <vector>
@@ -20,8 +20,6 @@
 #include <unistd.h>
 #include <fenv.h>
 
-
-#include <fenv.h>
 #include <execinfo.h>
 #include <signal.h>
 
@@ -59,7 +57,7 @@ int main(int argc, char* argv[]) {
 	  MPI_Init(&argc, &argv);
 	  sip::SIPMPIUtils::set_error_handler();
 	  sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
-//	  std::cout<<"Rank "<<sip_mpi_attr.global_rank()<<" of "<<sip_mpi_attr.global_size()<<std::endl;   
+//	  std::cout<<"Rank "<<sip_mpi_attr.global_rank()<<" of "<<sip_mpi_attr.global_size()<<std::endl;
 	  std::cout<<sip_mpi_attr<<std::endl;
 #endif
 
@@ -123,7 +121,17 @@ int main(int argc, char* argv[]) {
     //	pbm_read = new array::PersistentBlockManager();
     //	pbm_write = new array::PersistentBlockManager();
 
-	sip::PersistentArrayManager pbm;
+
+#ifdef HAVE_MPI
+	sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>* persistent_server;
+	sip::PersistentArrayManager<sip::Block, sip::Interpreter>* persistent_worker;
+	if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock,sip::SIPServer>();
+	else persistent_worker = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+#else
+	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* persistent_worker;
+	persistent_worker = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+#endif //HAVE_MPI
+
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::string sialfpath;
@@ -152,30 +160,28 @@ int main(int argc, char* argv[]) {
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, pbm, pbm);
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
 			server.run();
-			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<pbm);
+			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
+			persistent_server->save_marked_arrays(&server);
 		} else
 #endif
 
-		//interpret the program
+		//interpret current program on worker
 		{
 			sip::GlobalState::increment_program();
 
-			sip::DataManager::scope_count = 0;
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-#ifdef HAVE_MPI
-			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm, sip_mpi_attr, data_distribution);
-#else
-			sip::Interpreter runner(sipTables, sialxTimer, pbm, pbm);
-#endif
+
+			sip::Interpreter runner(sipTables, sialxTimer, persistent_worker);
+
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
-			if (0 != sip::DataManager::scope_count) {
-				std::cout << "Error, did not run as expected!.";
-				return -1;
-			}
+			persistent_worker->save_marked_arrays(&runner);
+			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
+
+
 			std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 			sialxTimer.mpi_reduce_timers();
@@ -185,16 +191,8 @@ int main(int argc, char* argv[]) {
 			sialxTimer.print_timers(lno2name);
 #endif
 
-			// Sial program i reads persistent data written by progam i-1
-			// Sial program i writes persistent data to be read by program i+1
+		}// end of worker or server
 
-			//delete pbm_read;
-			//pbm_read = pbm_write;
-			//pbm_write = new array::PersistentBlockManager();
-			SIP_MASTER_LOG(std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm);
-
-		}
-  		pbm.clear_marked_arrays();
 #ifdef HAVE_TAU
 		//TAU_STATIC_PHASE_STOP(it->c_str());
   		TAU_PHASE_STOP(tau_dtimer);
@@ -203,13 +201,17 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_MPI
       sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 #endif
-	}
+	} //end of loop over programs
+
 
 #ifdef HAVE_TAU
 		TAU_STATIC_PHASE_STOP("SIP Main");
 #endif
 
+
 #ifdef HAVE_MPI
+	  if (sip_mpi_attr.is_server()) delete persistent_server;
+	  else delete persistent_worker;
 	  MPI_Finalize();
 #endif
 

@@ -1,0 +1,25 @@
+sial persistent_scalars_1
+    predefined scalar x
+	predefined scalar y
+	scalar z
+	scalar zz
+	scalar e
+	
+	print_scalar x
+	print_scalar y
+	z = x
+	zz = 99.99
+	
+	print_scalar z
+	print_scalar zz
+	
+	e = 1.0
+	e *= 2.0
+	e *= 3.0
+	
+	println "e should be 6"
+	print_scalar e
+	set_persistent e "saved_e"
+#	set_persistent x "saved_x"
+	
+endsial persistent_scalars_1

@@ -1,0 +1,25 @@
+sial persistent_static_array_test1
+predefined int norb
+special fill_block_sequential wr
+special print_block r
+special print_static_array r
+aoindex i = 1,norb
+aoindex j = 1,norb
+static a(i,j)
+
+do i
+do j
+execute fill_block_sequential a(i,j) 1.0
+#execute print_block a(i,j)
+println "execute print_block a(i,j)"
+execute print_block a(i,j)
+enddo j
+enddo i
+println "execute print_block a"
+execute print_block a
+
+set_persistent a "array_a"
+
+println " finished static_array_test"
+
+endsial persistent_static_array_test1

@@ -32,13 +32,13 @@ aoindex aces_defs_mu = 1, norb
 
 
 #these s are predefined in the array and scalar tables
-predefined static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
-predefined static cb(aces_defs_mu,aces_defs_pb)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static cb(aces_defs_mu,aces_defs_pb)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
 
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
           
-#predefined static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
+#static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
 #predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 #predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
@@ -47,7 +47,7 @@ predefined static e(aces_defs_mu)  # Restricted spin orbital energies from the S
 predefined static ea(aces_defs_mu)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 predefined static eb(aces_defs_mu)  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
-predefined static fock_a(aces_defs_pa, aces_defs_pa)
+static fock_a(aces_defs_pa, aces_defs_pa)
 predefined static fock_b(aces_defs_pb, aces_defs_pb)
 
 predefined static oed_nai(aces_defs_mu,aces_defs_mu)
@@ -80,21 +80,21 @@ special compute_ubatch1 wrruu
 special compute_ubatch2 wrruu
 special compute_ubatch3 wrruu
 special compute_ubatch4 wrruu
-special compute_ubatch5 wrruu
+#special compute_ubatch5 wrruu
 special compute_ubatch6 wrruu
 special compute_ubatch7 wrruu
 special compute_ubatch8 wrruu
 special compute_int_scratchmem uuu
 special compute_nn_repulsion u 
 #     NOT PORTED 
-special blocks_to_list r
-special diis_setup w
+#special blocks_to_list r
+#special diis_setup w
 special set_flags2 r
 special return_sval rw
 special compute_aabb_batch w
 special get_my_rank w
-special scf_atom u
-special print_rel_info rr
+#special scf_atom u
+#special print_rel_info rr
 special print_block r
 
 endsial scf_defs

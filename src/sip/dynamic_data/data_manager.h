@@ -14,14 +14,11 @@
 #include "config.h"
 #include "sip.h"
 #include "sip_tables.h"
+#include "block_selector.h"
+#include "block.h"
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
 #include "special_instructions.h"
-
-
-namespace sip {
-class PersistentArrayManager;
-}
 
 namespace sip {
 
@@ -30,14 +27,12 @@ class Interpreter;
 class DataManager {
 public:
 
-	typedef std::vector<sip::BlockId> BlockIdList;
-	typedef std::vector<sip::Block::BlockPtr>  ScalarBlockTable;
+	typedef std::vector<BlockId> BlockIdList;
+	typedef std::vector<Block::BlockPtr>  ScalarBlockTable;
 
-#ifdef HAVE_MPI
-	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&, sip::SIPMPIAttr&, sip::DataDistribution&, int&, int&);
-#else
-	DataManager(SipTables&, sip::PersistentArrayManager&, sip::PersistentArrayManager&);
-#endif
+
+	DataManager();
+
 
 
 	~DataManager();
@@ -80,35 +75,17 @@ public:
     void get_subblock_offsets_and_shape(const sip::Block::BlockPtr block, const sip::BlockSelector& subblock_selector,
     		sip::offset_array_t& offsets, sip::BlockShape& subblock_shape);
 
-	/**scalar collective sum.  Creates dependency on MPI for parallel versions*/
-	void collective_sum(int source_array_slot,int dest_array_slot);
+
 
 	void enter_scope();
 	void leave_scope();
 
+	//immutable data for convenience
+	SipTables& sip_tables_;
+
 	sip::BlockManager block_manager_;  //this should probably be private
 	sip::ContiguousArrayManager contiguous_array_manager_;
 
-	/**
-	 * Sets an array to be persistent upto the next SIAL Program
-	 * @param array_id
-	 * @param name
-	 * @param slot
-	 */
-	void set_persistent_array(int array_id, std::string name, int slot);
-
-	/**
-	 * Restores a previously saved persistent array.
-	 * @param array_id
-	 * @param name
-	 * @param slot
-	 */
-	void restore_persistent_array(int array_id, std::string name, int slot);
-
-	/**
-	 * Saves persistent arrays to the persistent block manager.
-	 */
-	void save_persistent_arrays();
 
 private:
 	//dynamic state
@@ -116,38 +93,6 @@ private:
 	ScalarTable scalar_values_; //scalar values, initialized from "scalar table" read from siox file
 	ScalarBlockTable scalar_blocks_; //blocks wrapped around pointers to scalars.
 
-
-	//static data for convenience
-	SipTables& sipTables_;
-
-	/**
-	 * Read and write persistent data between programs.
-	 */
-	sip::PersistentArrayManager & pbm_read_;
-	sip::PersistentArrayManager & pbm_write_;
-
-
-#ifdef HAVE_MPI
-	/**
-	 * Reference to a the Interpreter's Section Number
-	 */
-	int & section_number_;
-
-	/**
-	 * Reference to the interpreter's Message Number.
-	 */
-	int & message_number_;
-
-	/**
-	 * MPI Attributes of the SIP for this rank
-	 */
-	sip::SIPMPIAttr & sip_mpi_attr_;
-
-	/**
-	 * Data distribution scheme
-	 */
-	sip::DataDistribution &data_distribution_;
-#endif
 
 	friend class Interpreter;
 
