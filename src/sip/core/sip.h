@@ -31,9 +31,9 @@
 #define SETUP_FILE_TYPE_IS_BINARY 1
 
 #ifdef SIP_DEVEL
-	#define SIP_LOG(x) x
+	#define SIP_LOG(x) if (sip::_sip_debug_print) {x;}
 	#ifdef HAVE_MPI
-		#define SIP_MASTER_LOG(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) x;
+		#define SIP_MASTER_LOG(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
 		#define SIP_MASTER(x) SIP_MASTER_LOG(x)
 	#else
 		#define SIP_MASTER_LOG(x) x
@@ -58,6 +58,9 @@ extern const int SETUP_VERSION;
 extern const int SIOX_MAGIC;
 extern const int SIOX_VERSION;
 extern const int SIOX_RELEASE;
+
+/*! Debug printintg control */
+extern bool _sip_debug_print;
 
 typedef std::vector<double> ScalarTable;
 typedef std::vector<std::string> StringLiteralTable;

@@ -68,7 +68,7 @@ void sip_abort() {
 
 namespace sip {
 
-
+bool _sip_debug_print = true;
 
 const int SETUP_MAGIC = 23121991;
 const int SETUP_VERSION = 1;
@@ -109,7 +109,6 @@ bool check_and_warn(bool condition, std::string message, int line){
 void fail(std::string message, int line){
 	check(false, message, line);
 }
-
 
 
 } //namespace sip

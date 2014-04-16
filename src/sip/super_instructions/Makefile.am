@@ -314,7 +314,9 @@ GENERAL_SOURCE_FILES=\
 ./general/print_static_array.cpp\
 ./general/get_my_rank.cpp\
 ./general/swap_blocks.cpp\
-./general/abort_job.f
+./general/abort_job.f\
+./general/disable_debug_print.cpp\
+./general/enable_debug_print.cpp
 
 # Super instructions only for Test
 TEST_SOURCE_FILES=\

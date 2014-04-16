@@ -163,6 +163,10 @@ void print_static_array(int& array_slot, int& rank, int* index_values, int& size
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
 
+void disable_debug_print();
+void enable_debug_print();
+
+
 // Special Super Instructions Just For Testing
 void test_increment_counter(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
@@ -335,6 +339,9 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["set_ijk_aaa"]=(fp0)&set_ijk_aaa;
     procmap_["set_ijk_aab"]=(fp0)&set_ijk_aab;
     procmap_["swap_blocks"]=(fp0)&swap_blocks;
+
+    procmap_["enable_debug_print"]=(fp0)&enable_debug_print;
+    procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
 
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
