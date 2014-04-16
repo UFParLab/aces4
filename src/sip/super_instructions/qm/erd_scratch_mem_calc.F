@@ -63,9 +63,13 @@ c Interface added BUT should be include NOT added in the future
       double precision alpha(*), pcoeff(*)
 c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
-      double precision alpha_pack(nalphas), 
-     *                 pcoeff_pack(npcoeff)
-      integer ccbeg_pack(npcoeff), ccend_pack(npcoeff)
+c
+c These 4 arrays pack the coefficients/exponents linearly with n_shell
+c for each shell --> 2 or 4. (one_el two-el) integrals. They thus need
+c at most 4*n. 
+      double precision alpha_pack(4*nalphas), 
+     *                 pcoeff_pack(4*npcoeff)
+      integer ccbeg_pack(4*npcoeff), ccend_pack(4*npcoeff)
 
       integer i,j
       integer m, n, r, s
@@ -99,6 +103,10 @@ c     parameter (max_dim_coeff = 5000)
       zmax = 500000
       return
 
+c     imax = 5000000 
+c     zmax = 5000000 
+c     return 
+
       do m = m1, m2
        n = m
        r = m
@@ -107,7 +115,8 @@ c     parameter (max_dim_coeff = 5000)
      *                       ncfps, npfps, m, n, r, s,
      *                       alpha_pack, nalpha, pcoeff_pack,
      *                       ncoeff, ccbeg, ccend, indx_cc,
-     *                       ccbeg_pack, ccend_pack)
+     *                       ccbeg_pack, ccend_pack) 
+c    *                       nalphas, npcoeff)
 
 c-------------------------------------------------------------------------
 c   ERD version 2
@@ -339,7 +348,7 @@ c------------------------------------------------------------------------
      *                       alpha_pack, nalpha, pcoeff_pack,
      *                       ncoeff, ccbeg, ccend, indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeff)
+     *                       npcoeff*2)
             call oed__memory_nai_batch(nalpha, ncoeff,
      *                   ncfps(m), ncfps(n), 
      *                   npfps(m), npfps(n), 
