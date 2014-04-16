@@ -16,7 +16,8 @@ C  in the file COPYRIGHT.
      *                       ncfps, npfps, m, n, r, s,
      *                       alpha_pack, nalpha, pcoeff_pack, 
      *                       npcoeff, ccbeg, ccend, indx_cc,
-     *                       ccbeg_pack, ccend_pack)
+     *                       ccbeg_pack, ccend_pack) 
+c    *                       max_alpha, max_pcoeff)
 c---------------------------------------------------------------------------
 c   Formats the integral exponents and contraction coefficients for use
 c   in the ERD integral package.
@@ -29,6 +30,7 @@ c      include 'machine_types.h'
       integer ccbeg_pack(*), ccend_pack(*)
       integer m, n, r, s
       integer nalpha, npcoeff
+      integer max_alpha, max_pcoeff 
       integer ialpha
       integer ipcoeff
       integer quad(4)
@@ -47,6 +49,8 @@ c      include 'machine_types.h'
       nalpha = 0
       npcoeff = 0
 
+c     write(6,*) 'MAX :', max_alpha, max_pcoeff 
+
       do j = 1, 4
          ishell = quad(j)
 
@@ -56,6 +60,12 @@ c      include 'machine_types.h'
 
          ialpha = ialpha + npfps(ishell)
          nalpha = nalpha + npfps(ishell)
+c        if (nalpha .gt. 4*max_alpha) then  
+c            print *,'Error: alpha buffer overflow shell ', 
+c    *            quad(1),quad(2), ':', nalpha, 4*max_alpha
+c            call abort_job()
+c        endif
+
       enddo
 
       icc = 1
@@ -69,6 +79,12 @@ c      include 'machine_types.h'
 
          ipcoeff = ipcoeff + num
          npcoeff = npcoeff + num
+c        if (npcoeff .gt. 4*max_pcoeff) then  
+c            print *,'Error: pcoeff buffer overflow shell ', 
+c    *            quad(1),quad(2)
+c            call abort_job()
+c        endif
+
       enddo
 
          icc = 1

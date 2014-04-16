@@ -720,23 +720,24 @@ import "trans_frag_defs.sialx"
       println "Done first two stages of two-electron integral tranfsormations" 
 
       PARDO ifrag, jfrag 
-        icount = 0.0 
-        DO iifrag 
-           icount   += 1.0 
-           IF iifrag == ifrag 
-              exit 
-           ENDIF 
-        ENDDO iifrag 
-        jcount = 0.0 
-        DO jjfrag 
-           jcount   += 1.0 
-           IF jjfrag == jfrag 
-              exit 
-           ENDIF 
-        ENDDO jjfrag 
+         icount = 0.0 
+         DO iifrag 
+            icount   += 1.0 
+            IF iifrag == ifrag 
+               exit 
+            ENDIF 
+         ENDDO iifrag 
+         jcount = 0.0 
+         DO jjfrag 
+            jcount   += 1.0 
+            IF jjfrag == jfrag 
+               exit 
+            ENDIF 
+         ENDDO jjfrag 
         
-        #print_scalar icount 
-        #print_scalar jcount 
+        
+         print_scalar icount 
+         print_scalar jcount 
 
 # ---------------------------------------------------------------------------- 
 #     Third stage --> form Vxibj (1122) 
@@ -885,8 +886,8 @@ import "trans_frag_defs.sialx"
      #print_scalar mone 
       ENDPARDO ifrag, jfrag 
 
-      sip_barrier 
       println "Done third stage of two-electron integral tranfsormations" 
+      sip_barrier 
 
       PARDO ifrag, jfrag 
         icount = 0.0 
