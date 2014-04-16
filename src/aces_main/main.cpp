@@ -213,6 +213,8 @@ int main(int argc, char* argv[]) {
 	  if (sip_mpi_attr.is_server()) delete persistent_server;
 	  else delete persistent_worker;
 	  MPI_Finalize();
+#else
+	  delete persistent_worker;
 #endif
 
 
