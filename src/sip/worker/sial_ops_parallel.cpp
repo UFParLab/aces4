@@ -420,6 +420,12 @@ void SialOpsParallel::reset_mode() {
 	std::fill(mode_.begin(), mode_.end(), NONE);
 }
 
+void SialOpsParallel::log_statement(opcode_t type, int line){
+	SIP_LOG(
+			std::cout<< "W " << sip_mpi_attr_.global_rank()
+					 << " : Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
+}
+
 Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)

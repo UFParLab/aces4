@@ -46,6 +46,13 @@ public:
 
 	void end_program();
 
+	/**
+	 * Logs type of statement and line number
+	 * @param type
+	 * @param line
+	 */
+	void log_statement(opcode_t type, int line);
+
 	/** wrapper around these methods in the block_manager.  Checks for data
 	 * races due to missing barrier and implements the wait for blocks of
 	 * distributed and served arrays.
@@ -77,6 +84,7 @@ private:
 	 * Used to detect data races
 	 */
 	std::vector<array_mode> mode_;
+
 
 //	/**
 //	 * returns true if the mode associated with an array is compatible with

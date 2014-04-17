@@ -67,6 +67,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		switch (opcode) {
 		case contraction_op: {
 			sialx_timers_.start_timer(line_number());
+			sial_ops_.log_statement(opcode, line_number());
 			handle_contraction_op(pc);
 			write_back_contiguous();
 			sialx_timers_.pause_timer(line_number());
@@ -75,6 +76,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case sum_op: {
 			sialx_timers_.start_timer(line_number());
+			sial_ops_.log_statement(opcode, line_number());
 			handle_sum_op(pc, 1.0);
 			write_back_contiguous();
 			sialx_timers_.pause_timer(line_number());
@@ -102,12 +104,14 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case get_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sip::BlockId id = get_block_id_from_selector_stack();
 			sial_ops_.get(id);
 			++pc;
 		}
 			break;
 		case user_sub_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_user_sub_op(pc);
 			write_back_contiguous();
@@ -116,6 +120,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case put_op: { //this is instruction put a(...) += b(...)
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
@@ -130,6 +135,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case create_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			int array_id = sip_tables_.op_table_.result_array(pc);
 			sial_ops_.create_distributed(array_id);
@@ -138,6 +144,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case delete_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			int array_id = sip_tables_.op_table_.result_array(pc);
 			sial_ops_.delete_distributed(array_id);
@@ -146,6 +153,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case call_op: {  //compiler ensures every subroutine has return_op
+			sial_ops_.log_statement(opcode, line_number());
 			int target = op_table_.result_array(pc);
 			control_stack_.push(pc + 1);
 			pc = target;
@@ -204,6 +212,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case pardo_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			int num_indices = op_table_.num_indices(pc);
 #ifdef HAVE_MPI
 			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(
@@ -217,15 +226,18 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case endpardo_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			loop_end();
 		}
 			break;
 		case exit_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			loop_manager_stack_.top()->set_to_exit();
 			pc = control_stack_.top();
 		}
 			break;
 		case assignment_op:
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			// x = y
 			handle_assignment_op(pc);
@@ -238,6 +250,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case self_multiply_op: { // *= scalar  The compiler should generate better code for this
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_self_multiply_op(pc);
 			write_back_contiguous();
@@ -246,6 +259,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case subtract_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_sum_op(pc, -1.0); // (x = y - z) is computed as x = y + (z * -1)
 			write_back_contiguous();
@@ -254,6 +268,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case collective_sum_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			int target_array_slot = op_table_.result_array(pc);
 			int source_array_slot = op_table_.op1_array(pc);
@@ -263,6 +278,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case divide_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			int darray = op_table_.result_array(pc);
 			int drank = sip_tables_.array_rank(darray);
 			int larray = op_table_.op1_array(pc);
@@ -281,6 +297,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 
 		case prepare_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
@@ -290,6 +307,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case request_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			sip::BlockId id = get_block_id_from_selector_stack();
 			sial_ops_.request(id);
@@ -298,6 +316,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case put_replace_op: {  // put a(...) = b(...)
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
@@ -307,6 +326,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case tensor_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_contraction_op(pc);
 			write_back_contiguous();
@@ -339,6 +359,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case prepare_increment_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
@@ -349,6 +370,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case allocate_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			int array_table_slot = op_table_.result_array(pc);
 			int rank = sip_tables_.array_rank(array_table_slot);
@@ -362,6 +384,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case deallocate_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			int array_table_slot = op_table_.result_array(pc);
 			int rank = sip_tables_.array_rank(array_table_slot);
@@ -382,6 +405,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case destroy_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			int array_id = sip_tables_.op_table_.result_array(pc);
 			sial_ops_.destroy_served(array_id);
@@ -433,6 +457,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case dosubindex_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			int index_slot = op_table_.do_index_selector(pc);
 			LoopManager* loop = new SubindexDoLoop(index_slot, data_manager_,
 					sip_tables_);
@@ -440,6 +465,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case enddosubindex_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			loop_end();
 		}
 			break;
@@ -456,6 +482,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case sip_barrier_op: //fallthrough. server and sip barriers the same
 		case server_barrier_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			sial_ops_.sip_barrier();
 			sialx_timers_.pause_timer(line_number());
@@ -464,16 +491,19 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 #ifdef HAVE_CUDA
 			case gpu_on_op: {
+				sial_ops_.log_statement(opcode, line_number());
 				gpu_enabled_= true;
 				++pc;
 			}
 			break;
 			case gpu_off_op: {
+				sial_ops_.log_statement(opcode, line_number());
 				gpu_enabled_ = false;
 				++pc;
 			}
 			break;
 			case gpu_allocate_op: {
+				sial_ops_.log_statement(opcode, line_number());
 				if (gpu_enabled_) {
 					sialx_timers_.start_timer(line_number());
 					get_gpu_block('w');
@@ -484,6 +514,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			}
 			break;
 			case gpu_free_op: {
+				sial_ops_.log_statement(opcode, line_number());
 				if (gpu_enabled_) {
 					sialx_timers_.start_timer(line_number());
 					sip::Block::BlockPtr blk = get_gpu_block('w');
@@ -494,6 +525,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			}
 			break;
 			case gpu_put_op: {
+				sial_ops_.log_statement(opcode, line_number());
 				if (gpu_enabled_) {
 					sialx_timers_.start_timer(line_number());
 					get_gpu_block('w'); // TOOD FIXME Temporary solution
@@ -502,6 +534,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 				}
 				break;
 				case gpu_get_op: {
+					sial_ops_.log_statement(opcode, line_number());
 					if (gpu_enabled_) {
 						sialx_timers_.start_timer(line_number());
 						get_block_from_selector_stack('r'); //TODO FIXME Temporary solution
@@ -518,6 +551,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case gpu_free_op:
 		case gpu_put_op:
 		case gpu_get_op:
+			sial_ops_.log_statement(opcode, line_number());
 			sip::check_and_warn(false,
 					"No CUDA Support, ignoring GPU instruction at line ",
 					line_number());
@@ -526,6 +560,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 #endif //HAVE_CUDA
 		case set_persistent_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
 			SIP_LOG(
@@ -535,6 +570,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case restore_persistent_op: {
+			sial_ops_.log_statement(opcode, line_number());
 			int array_slot = op_table_.result_array(pc);
 			int string_slot = op_table_.op1_array(pc);
 			SIP_LOG(
@@ -895,7 +931,7 @@ void Interpreter::handle_assignment_op(int pc) {
 				return;
 			}
 
-			check(false, "illegal indices in assignment", current_line());
+			check(false, "illegal indices in assignment", line_number());
 		} else { //lhs_rank > rhs_rank, the compiler should have checked that extra indices are simple
 			lhs_block->copy_data_(rhs_block);
 			return;

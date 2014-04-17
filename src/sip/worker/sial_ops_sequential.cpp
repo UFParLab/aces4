@@ -116,6 +116,12 @@ void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_i
 void SialOpsSequential::end_program() {
 }
 
+
+void SialOpsSequential::log_statement(opcode_t type, int line){
+	SIP_LOG(std::cout<<"Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
+}
+
+
 /** wrapper around these methods in the block_manager.  Checks for data
  * races due to missing barrier and implements the wait for blocks of
  * distributed and served arrays.
