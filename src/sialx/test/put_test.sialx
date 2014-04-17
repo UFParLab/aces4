@@ -4,13 +4,16 @@ sial put_test
 	predefined int norb
 	aoindex i = 1,norb
 	aoindex j = 1,norb
-	local a(i,j)
+	temp t(i, j)
+	local x(i, j)
+	local y(i, j)
 	distributed b(i,j)
 	distributed c(i,j)
 	
 	create b
 	create c
-	allocate a(*,*)
+	allocate x(*, *)
+	allocate y(*, *)
 	
 	println "Sending blocks"	
 	do i
@@ -18,11 +21,10 @@ sial put_test
 		execute list_block_map
 		do j
 			print_index j
-			a(i,j) = 42.0
-			execute print_block a(i,j)
-			put b(i,j) = a(i,j)
-			put c(i,j) = a(i,j)
-#			put c(i,j) += a(i,j)
+			t(i,j) = 1.0
+			put b(i,j) = t(i,j)
+			put c(i,j) += t(i,j)
+			put c(i,j) += t(i,j)
 			execute print_block b(i,j)
 			execute print_block c(i,j)
 		enddo j
@@ -39,12 +41,16 @@ sial put_test
 			get c(i,j) 
 			execute print_block b(i,j)
 			execute print_block c(i,j)
+			x(i, j) = b(i, j)
+			y(i, j) = c(i, j)
 		enddo j
 	enddo i
 	
-	println "block map before deallocates:"
+	sip_barrier
+	
+	println "block map after both do:"
 	execute list_block_map
-	deallocate a(*,*)
+	
 	delete b
 	delete c
 	println "block map after deallocates:"

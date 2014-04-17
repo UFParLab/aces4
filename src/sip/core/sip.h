@@ -46,7 +46,17 @@
 #endif
 
 
+// Fortran Callable sip_abort
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void sip_abort();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 namespace sip {
 

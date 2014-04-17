@@ -11,6 +11,7 @@
 #include <map>
 #include <vector>
 #include <stack>
+#include <iostream>
 #include "block_id.h"
 
 
@@ -79,6 +80,10 @@ public:
 		BLOCK_TYPE* b = block(block_id);
 		if (b == NULL) {
 			b = new BLOCK_TYPE(size, initialize);
+			// TODO ************************************************
+			// TODO call limit_reached and write to disk if need be
+			// TODO ************************************************
+
 			insert_block(block_id,b);
 		}
 		return b;
@@ -243,19 +248,22 @@ std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE>& obj){
 			for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
 				BlockId id = it->first;
 				BLOCK_TYPE* block = it->second;
-				if (block == NULL) {os << " NULL block ";}
-				else {
-				double * data = block->get_data();
-				if (data == NULL) {os << " NULL data ";}
-				else {
-				int size = block->size();
-				os <<  id << " size="<< size << " ";
-				os << '[' << data[0];
-				if (size > 1) {
-					os << "..." << data[size-1];
+				if (block == NULL) {
+					os << " NULL block ";
+				} else {
+					double * data = block->get_data();
+					if (data == NULL) {
+						os << " NULL data ";
+					} else {
+						int size = block->size();
+						os << id << " size=" << size << " ";
+						os << '[' << data[0];
+						if (size > 1) {
+							os << "..." << data[size - 1];
+						}
+						os << ']';
+					}
 				}
-				os << ']';
-				}}
 				os << std::endl;
 			}
 			os << std::endl;

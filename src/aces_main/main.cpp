@@ -44,7 +44,7 @@ void bt_sighandler(int signum) {
 }
 
 int main(int argc, char* argv[]) {
-
+    
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);

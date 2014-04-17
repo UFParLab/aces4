@@ -17,6 +17,7 @@
 #endif
 
 static const std::string dir_name("src/sialx/test/");
+static const std::string simple_dir_name("src/sialx/test/");
 
 extern "C"{
 int test_transpose_op(double*);
@@ -1419,16 +1420,16 @@ TEST(Sial,put_test){
 	std::string job("put_test");
 	std::cout << "JOBNAME = " << job << std::endl;
 	double x = 3.456;
-	int norb = 2;
+	int norb = 1;
 
 	{	init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3};
-		set_aoindex_info(2,segs);
+		int segs[]  = {3};
+		set_aoindex_info(1,segs);
 		finalize_setup();
 	}
 
@@ -1461,8 +1462,31 @@ TEST(Sial,put_test){
 	ASSERT_EQ(0, sip::DataManager::scope_count);
 	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 //	runner.print_block()
-;
+
+
+	int x_slot = sip::Interpreter::global_interpreter->array_slot(std::string("x"));
+	int y_slot = sip::Interpreter::global_interpreter->array_slot(std::string("y"));
+	sip::index_selector_t x_indices, y_indices;
+	for (int i = 0; i < MAX_RANK; i++)
+		x_indices[i] = y_indices[i] = sip::unused_index_value;
+	x_indices[0] = y_indices[0] = 1;
+	x_indices[1] = y_indices[0] = 1;
+	sip::BlockId x_bid(x_slot, x_indices);
+	sip::BlockId y_bid(y_slot, y_indices);
+
+	sip::Block::BlockPtr x_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(x_bid);
+	sip::Block::dataPtr x_data = x_bptr->get_data();
+	sip::Block::BlockPtr y_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(y_bid);
+	sip::Block::dataPtr y_data = y_bptr->get_data();
+
+
+	for (int i=0; i<3*3; i++){
+		ASSERT_EQ(1, x_data[i]);
+		ASSERT_EQ(2, y_data[i]);
 	}
+
+	}
+
 }
 
 

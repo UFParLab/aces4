@@ -20,7 +20,6 @@ namespace sip {
 class DataDistribution {
 public:
 	DataDistribution(SipTables&, SIPMPIAttr&);
-	virtual ~DataDistribution();
 
 	/**
 	 * Calculates and returns MPI rank of server that "owns" a given block.

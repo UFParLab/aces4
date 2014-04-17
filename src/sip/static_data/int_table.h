@@ -21,11 +21,11 @@ public:
 	~IntTable();
 	static void read(IntTable&, setup::InputStream&, setup::SetupReader&);
 	/** returns the value associated with the given slot */
-	int value(int);
+	int value(int) const;
 	/** returns the name associated with the given slot */
-	std::string name(int); //returns the name associated with indicated location in the int table
+	std::string name(int) const; //returns the name associated with indicated location in the int table
 	/** returns the index associated with the given name */
-	int index(std::string);
+	int index(std::string) const;
 
 	friend std::ostream& operator<<(std::ostream&, const IntTable &);
 	friend class SipTables;

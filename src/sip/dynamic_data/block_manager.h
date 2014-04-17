@@ -30,7 +30,7 @@ public:
 	typedef std::vector<BlockId> BlockList;
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
-	BlockManager();
+	BlockManager(SipTables &sip_tables);
 	~BlockManager();
 
 	void allocate_local(const BlockId&);

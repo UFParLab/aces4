@@ -57,10 +57,10 @@ class SegmentDescriptor {
 public:
 	virtual ~SegmentDescriptor() {}
 	/*! returns the number of elements in the indicated segment*/
-	int extent(int segment){return get_extent(segment);}
+	int extent(int segment) const {return get_extent(segment);}
 	/*! returns the offset of segment relative to get_segment in the overall index.  Used for dealing with contiguous arrays
 	 */
-	int offset(int beg_segment, int segment){return get_offset(beg_segment,segment);}
+	int offset(int beg_segment, int segment) const {return get_offset(beg_segment,segment);}
 	friend std::ostream& operator<<(std::ostream& os,
 			const SegmentDescriptor &desc) {
 		os << desc.to_string();
@@ -68,8 +68,8 @@ public:
 	}
 private:
 	virtual std::string to_string() const=0;
-	virtual	int get_extent(int segment)=0;
-	virtual int get_offset(int beg_segment,int segment)=0;
+	virtual	int get_extent(int segment) const=0;
+	virtual int get_offset(int beg_segment,int segment) const=0;
 };
 
 
@@ -79,8 +79,8 @@ public:
 	virtual ~SimpleIndexSegmentDescriptor();
 private:
 	std::string  to_string() const;
-	int get_extent(int segment);
-	int get_offset(int beg_segment,int segment);
+	int get_extent(int segment) const;
+	int get_offset(int beg_segment,int segment) const;
 };
 
 /** Segment descriptor for index types where the segment sizes are not uniform.
@@ -92,8 +92,8 @@ public:
 	virtual ~NonuniformSegmentDescriptor();
 private:
 	std::string  to_string() const;
-	int get_extent(int segment);
-	int get_offset(int beg_segment,int segment);
+	int get_extent(int segment) const;
+	int get_offset(int beg_segment,int segment) const;
 	std::vector<int> seg_extents_;
 };
 
@@ -134,9 +134,9 @@ public:
 private:
 	virtual std::string to_string() const;
 	//TODO consider making get_extent unsupported
-	virtual	int get_extent(int segment); //looks up parent's segment value, then calls subseg version.
+	virtual	int get_extent(int segment) const; //looks up parent's segment value, then calls subseg version.
 	/*! get_offset is unsupported.  Use get_subsegment_offset */
-	virtual int get_offset(int beg_segment, int segment); //looks up parent's segment value, then calls subseg version.
+	virtual int get_offset(int beg_segment, int segment) const; //looks up parent's segment value, then calls subseg version.
 	virtual int get_subsegment_extent(int parent_segment, int segment);
     virtual int get_subsegment_offset(int parent_segment_value, int segment_value);
     virtual int get_num_subsegments(int parent_segment){return num_subsegments_;}
@@ -170,11 +170,11 @@ public:
 	~IndexTableEntry();
 
 	/** returns the number of elements in the given segment (i.e. value of index) */
-	int segment_extent(int index_value);
+	int segment_extent(int index_value) const;
 	/** returns the total size of this dimension.  Used for contiguous (static) arrays */
-    int index_extent();
+    int index_extent() const;
 	/** returns the parent index slot of this subindex.  Requires that this entry represent a subindex */
-    int parent_index();
+    int parent_index() const;
 
 	/*! two indices are == if the types and sizes are the same.  (the name and segment table ptr not included)
 	 * This operations is not yet supported for subindices.
@@ -228,29 +228,29 @@ public:
 			sip::IntTable& int_table);
 
 	/*!  returns the number of indices defined in the entire sial program */
-	int num_indices(){return entries_.size();}
+	int num_indices() const {return entries_.size();}
 
 	/*! convenience functions providing access to info from the IndexTableEntry selected by index_slot */
-    int segment_extent(int index_slot, int index_value);
-    int index_extent(int index_slot);
-    int offset_into_contiguous(int index_slot, int index_value);
-    int lower_seg(int index_slot);
-    int num_segments(int index_slot);
-    std::string index_name(int index_slot);
-    IndexType_t index_type(int index_slot);
+    int segment_extent (int index_slot, int index_value) const;
+    int index_extent(int index_slot) const;
+    int offset_into_contiguous(int index_slot, int index_value) const;
+    int lower_seg(int index_slot) const;
+    int num_segments(int index_slot) const;
+    std::string index_name(int index_slot) const;
+    IndexType_t index_type(int index_slot) const;
 
 
     /*! The next set of convenience functions are for subindices */
 
-    bool is_subindex(int index_slot);
+    bool is_subindex(int index_slot) const;
     /*! returns the index slot of the given subindex's parent */
-    int parent(int subindex_slot);
+    int parent(int subindex_slot) const;
     /*! returns the offset in the enlosing block of this segment */
-    int subsegment_offset(int subindex_slot, int parent_segment_value, int subsegment_value);
+    int subsegment_offset(int subindex_slot, int parent_segment_value, int subsegment_value) const;
     /*! returns the number of elements for this index in the subblock */
-    int subsegment_extent(int subindex_slot, int parent_segment_value, int subsegment_value);
+    int subsegment_extent(int subindex_slot, int parent_segment_value, int subsegment_value) const;
     /*! The number of subsegments in the parent segment of the given subindex */
-    int num_subsegments(int subindex_slot, int parent_segment_value);
+    int num_subsegments(int subindex_slot, int parent_segment_value) const;
 
 	friend std::ostream& operator<<(std::ostream&, const IndexTable &);
 

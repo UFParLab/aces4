@@ -172,6 +172,7 @@ private:
 	friend class BlockManager;
 	friend class SIPServer;
 	friend class SIPMPIUtils;
+	friend class SipTables;
 
 };
 

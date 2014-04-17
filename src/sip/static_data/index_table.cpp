@@ -19,10 +19,10 @@ SimpleIndexSegmentDescriptor::~SimpleIndexSegmentDescriptor() {}
 std::string SimpleIndexSegmentDescriptor::to_string() const {
 	return std::string("simple");
 }
-int SimpleIndexSegmentDescriptor::get_extent(int segment) {
+int SimpleIndexSegmentDescriptor::get_extent(int segment) const {
 	return 1;
 }
-int SimpleIndexSegmentDescriptor::get_offset(int beg_segment, int segment) {
+int SimpleIndexSegmentDescriptor::get_offset(int beg_segment, int segment) const {
 	return segment - beg_segment;
 }
 
@@ -47,7 +47,7 @@ std::string NonuniformSegmentDescriptor::to_string() const {
 	return ss.str();
 }
 
-int NonuniformSegmentDescriptor::get_extent(int segment) {
+int NonuniformSegmentDescriptor::get_extent(int segment) const {
 	try {
 		return seg_extents_.at(segment - 1); //convert to c index before retrieving value
 	} catch (const std::out_of_range& oor) {
@@ -57,7 +57,7 @@ int NonuniformSegmentDescriptor::get_extent(int segment) {
 	return 0;  //should not get here
 }
 
-int NonuniformSegmentDescriptor::get_offset(int beg_segment, int segment){
+int NonuniformSegmentDescriptor::get_offset(int beg_segment, int segment) const{
 	sip::check(beg_segment <= segment,
 			"SIP or Compiler bug.  Illegal segment value in NonuniformSegmentDescriptor::get_offset");
 	int offset = 0;
@@ -94,7 +94,7 @@ int SubindexSegmentDescriptor::get_subsegment_extent(int parent_segment,
 	return subsegment_extent;
 }
 
-int SubindexSegmentDescriptor::get_extent(int segment) {
+int SubindexSegmentDescriptor::get_extent(int segment) const {
 //	int parent_segment_value =
 //			sip::Interpreter::global_interpreter->index_value(
 //					parent_index_slot_);
@@ -108,7 +108,7 @@ int SubindexSegmentDescriptor::get_extent(int segment) {
 	return -1;
 }
 
-int SubindexSegmentDescriptor::get_offset(int beg_segment, int segment) {
+int SubindexSegmentDescriptor::get_offset(int beg_segment, int segment) const{
 	sip::check(false,
 			"SIP or Compiler bug:  calling get_offset in SubindexSegmentDescriptor");
 	return -1;
@@ -127,7 +127,7 @@ IndexTableEntry::~IndexTableEntry() {
  //   if (index_type_ == subindex && segment_descriptor_ptr_) delete segment_descriptor_ptr_;
 }
 
-int IndexTableEntry::segment_extent(int index_value) {
+int IndexTableEntry::segment_extent(int index_value) const {
 //	std::cout << "IndexTableEntry::segment_extent " << *this << std::endl;
 	assert(
 			index_type_ == subindex
@@ -137,7 +137,7 @@ int IndexTableEntry::segment_extent(int index_value) {
 }
 
 
-int IndexTableEntry::index_extent() {
+int IndexTableEntry::index_extent() const {
 	int result = 0;
 	for (int i = lower_seg_; i < lower_seg_ + num_segments_; ++i) {
 		result += segment_descriptor_ptr_->extent(i);
@@ -145,7 +145,7 @@ int IndexTableEntry::index_extent() {
 	return result;
 }
 
-int IndexTableEntry::parent_index() {
+int IndexTableEntry::parent_index() const {
 	sip::check(index_type_ == subindex,
 			"attempting to get parent of an index that is not a subindex");
 	return lower_seg_;
@@ -262,48 +262,48 @@ void IndexTable::init(setup::InputStream &siox_file,
 	}
 }
 
-int IndexTable::segment_extent(int index_id, int index_value) {
+int IndexTable::segment_extent(int index_id, int index_value) const {
 	if (index_id == unused_index_slot)
 		return unused_index_segment_size;
-	IndexTableEntry* entry = &entries_.at(index_id);
-	return entry->segment_extent(index_value);
+	IndexTableEntry entry = entries_.at(index_id);
+	return entry.segment_extent(index_value);
 }
 
-int IndexTable::index_extent(int index_slot){
+int IndexTable::index_extent(int index_slot) const{
 	return entries_.at(index_slot).index_extent();
 }
 
-int IndexTable::offset_into_contiguous(int index_slot, int index_value){
+int IndexTable::offset_into_contiguous(int index_slot, int index_value) const{
 	const IndexTableEntry entry = entries_.at(index_slot);
 	return entry.segment_descriptor_ptr_->offset(entry.lower_seg_, index_value);
 }
-int IndexTable::lower_seg(int index_slot) {
+int IndexTable::lower_seg(int index_slot) const {
 	return entries_.at(index_slot).lower_seg_;
 }
 
-int IndexTable::num_segments(int index_slot) {
+int IndexTable::num_segments(int index_slot) const {
 	return entries_.at(index_slot).num_segments_;
 }
 
-std::string IndexTable::index_name(int index_slot) {
+std::string IndexTable::index_name(int index_slot) const {
 	return entries_.at(index_slot).name_;
 }
 
-IndexType_t IndexTable::index_type(int index_slot) {
+IndexType_t IndexTable::index_type(int index_slot) const {
 	return entries_.at(index_slot).index_type_;
 }
 
-bool IndexTable::is_subindex(int index_slot) {
+bool IndexTable::is_subindex(int index_slot) const {
 	return entries_.at(index_slot).index_type_ == subindex;
 }
 
-int IndexTable::parent(int subindex_slot) {
+int IndexTable::parent(int subindex_slot) const {
 	return entries_.at(subindex_slot).parent_index();
 }
 
 /*! returns the offset of this subsegment within the parent segment */
 int IndexTable::subsegment_offset(int subindex_slot, int parent_segment_value,
-		int subsegment_value) {
+		int subsegment_value) const {
 	sip::check(is_subindex(subindex_slot),
 			"attempting to get subsegment offset of an index that is not a subindex");
 	SubindexSegmentDescriptor * desc =
@@ -312,7 +312,7 @@ int IndexTable::subsegment_offset(int subindex_slot, int parent_segment_value,
 }
 
 int IndexTable::subsegment_extent(int subindex_slot, int parent_segment_value,
-		int subsegment_value) {
+		int subsegment_value) const {
 //	std::cout << "IndexTable::subsegment_extent(int subindex_slot, int parent_segment_value, int subsegment_value)" <<
 //			subindex_slot << ',' << parent_segment_value << ',' << subsegment_value << std::endl;
 	SubindexSegmentDescriptor * desc =
@@ -323,7 +323,7 @@ int IndexTable::subsegment_extent(int subindex_slot, int parent_segment_value,
 	return tmp;
 }
 
-int IndexTable::num_subsegments(int index_slot, int parent_segment_value) {
+int IndexTable::num_subsegments(int index_slot, int parent_segment_value) const {
 //	std::cout << "DEBUG IndexTable::num_subsegments:: index_slot=" << index_slot
 //			<< " parent_segment_value=" << parent_segment_value << std::endl;
 	IndexTableEntry subindex_entry = entries_.at(index_slot);

@@ -34,8 +34,8 @@ public:
 	int company_rank_; 
 ~SIPMPIAttr();
 
-	std::vector<int>& server_ranks() { return servers_; }
-	std::vector<int>& worker_ranks() { return workers_; }
+	const std::vector<int>& server_ranks() const { return servers_; }
+	const std::vector<int>& worker_ranks() const { return workers_; }
 
 	int num_servers() const { return num_servers_; }
 	int num_workers() const { return num_workers_; }
@@ -54,7 +54,7 @@ public:
 	int worker_master() const { return worker_master_; }
 	int server_master() const { return server_master_; }
 
-	MPI_Comm& company_communicator() { return company_comm_; }
+	const MPI_Comm& company_communicator() const { return company_comm_; }
 
 	int my_server(){return my_server_;}
 

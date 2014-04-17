@@ -104,11 +104,12 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/async_acks.cpp\
 ./src/sip/mpi/sip_server.h\
 ./src/sip/mpi/sip_server.cpp\
-./src/sip/server/server_block.h\
-./src/sip/server/server_block.cpp\
 ./src/sip/worker/sial_ops_parallel.h\
-./src/sip/worker/sial_ops_parallel.cpp
-
+./src/sip/worker/sial_ops_parallel.cpp\
+./src/sip/mpi/disk_backed_arrays_io.h\
+./src/sip/mpi/disk_backed_arrays_io.cpp\
+./src/sip/mpi/server_block.h\
+./src/sip/mpi/server_block.cpp
 
 endif
 
@@ -157,14 +158,14 @@ AM_CPPFLAGS = \
 
 
 #######################################################################
-# Single node tests
+# tests
 #######################################################################
 
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm
-check_PROGRAMS = test_mpi_qm
+TESTS = test_mpi_qm test_mpi_simple
+check_PROGRAMS = test_mpi_qm test_mpi_simple
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
@@ -176,6 +177,10 @@ endif
 test_mpi_qm_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_mpi_qm.cpp
+
+test_mpi_simple_SOURCES = \
+	$(ACES_SOURCEFILES)\
+	test/test_mpi_simple.cpp
 
 test_simple_SOURCES = \
     $(ACES_SOURCEFILES) \
@@ -199,6 +204,7 @@ TEST_LDADD_VARS = \
 test_simple_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
+test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 
 # Add any initialization files needed by tests here.
 TEST_INIT_DATA_FILES=\
@@ -219,7 +225,9 @@ if HAVE_PTHREADS
 	test_qm_LDADD += $(PTHREAD_LIBS)
 	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
 	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
-	test_mpi_qm
+	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
+	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
+	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
 # Google TESTS
@@ -250,6 +258,7 @@ TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP
 test_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
 SUBDIRS = src/sip/super_instructions
 

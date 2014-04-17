@@ -25,7 +25,8 @@ public:
 	//deleted in the destructor--it has a lifespan
 	//beyond SIAL programs.
 	SialOpsParallel(DataManager &,
-			PersistentArrayManager<Block, Interpreter> *);
+			PersistentArrayManager<Block, Interpreter> *,
+			SipTables&);
 	~SialOpsParallel();
 
 	/** implements a global SIAL barrier */

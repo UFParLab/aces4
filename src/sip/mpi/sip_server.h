@@ -59,6 +59,9 @@ public:
 	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock, SIPServer> *);
 	~SIPServer();
 
+
+	static SipTables& instance() ;
+
 	/**
 	 * Main server loop
 	 */

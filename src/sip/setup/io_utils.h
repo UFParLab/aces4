@@ -16,7 +16,9 @@
 
 namespace setup{
 
-   class OutputFile {
+	/* Output Classes ============================================ */
+
+   class OutputStream {
 	public:
 		virtual void write_string(const std::string&)=0;
 		virtual void write_int(int)=0;
@@ -24,29 +26,53 @@ namespace setup{
 		virtual void write_double(double)=0;
 		virtual void write_double_array(int size, double[])=0;
 		virtual void write_size_t_val(size_t)=0;
-		virtual ~OutputFile();
+		virtual ~OutputStream();
 	protected:
-		OutputFile();  //must use subclass
-		std::ofstream *file;
+		OutputStream();  //must use subclass
+		std::ostream *stream_;
 	private:
-		DISALLOW_COPY_AND_ASSIGN(OutputFile);
+		DISALLOW_COPY_AND_ASSIGN(OutputStream);
    };
 
-	class BinaryOutputFile: public OutputFile{
-	public:
-		std::string get_file_name();
+   class BinaryOutputStream : public OutputStream {
+   public:
 		virtual void write_string(const std::string&);
 		virtual void write_int(int);
 		virtual void write_int_array(int size, int[] );
 		virtual void write_double(double);
 		virtual void write_double_array(int size, double[]);
 		virtual void write_size_t_val(size_t);
+   };
+
+	class BinaryOutputFile: public BinaryOutputStream{
+	public:
+		std::string get_file_name();
+
 		BinaryOutputFile(const std::string&);
 		virtual~BinaryOutputFile();
 	private:
 		std::string file_name_;
+		std::ofstream *file_stream_;
 		DISALLOW_COPY_AND_ASSIGN(BinaryOutputFile);
 	};
+
+	class BinaryOutputByteStream : public BinaryOutputStream{
+	public:
+		BinaryOutputByteStream(char* char_stream, int size);
+		virtual ~BinaryOutputByteStream();
+	private:
+		struct CharStreamBuf : std::streambuf
+		{
+			CharStreamBuf(char* begin, char* end) {
+				this->setg(begin, begin, end);
+			}
+		};
+		CharStreamBuf *char_stream_;
+		DISALLOW_COPY_AND_ASSIGN(BinaryOutputByteStream);
+	};
+
+
+	/* Input Classes ============================================ */
 
 	class InputStream {
 	public:
@@ -62,7 +88,7 @@ namespace setup{
 		virtual ~InputStream();
 	protected:
 		InputStream();
-		std::istream *stream;
+		std::istream *stream_;
 	private:
 		DISALLOW_COPY_AND_ASSIGN(InputStream);
 	};
@@ -93,7 +119,7 @@ namespace setup{
 	class BinaryInputFile : public BinaryInputStream{
 	public:
 		virtual bool is_open(){
-			return file_stream!= NULL && stream !=NULL && file_stream -> is_open();
+			return file_stream_!= NULL && stream_ !=NULL && file_stream_ -> is_open();
 		}
 
 		std::string get_file_name();
@@ -101,7 +127,7 @@ namespace setup{
         virtual ~BinaryInputFile();
 	private:
         std::string file_name_;
-        std::ifstream *file_stream;
+        std::ifstream *file_stream_;
 		DISALLOW_COPY_AND_ASSIGN(BinaryInputFile);
 	};
 

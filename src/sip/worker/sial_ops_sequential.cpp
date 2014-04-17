@@ -13,8 +13,9 @@ namespace sip {
 //#ifndef HAVE_MPI
 
 SialOpsSequential::SialOpsSequential(DataManager & data_manager,
-		PersistentArrayManager<Block, Interpreter> * persistent_array_manager):
-sip_tables_(SipTables::instance()),
+		PersistentArrayManager<Block, Interpreter> * persistent_array_manager,
+		SipTables &sip_tables):
+sip_tables_(sip_tables),
 data_manager_(data_manager),
 block_manager_(data_manager.block_manager_),
 persistent_array_manager_(persistent_array_manager) {

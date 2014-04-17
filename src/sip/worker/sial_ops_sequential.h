@@ -19,7 +19,8 @@ namespace sip {
 class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
-			PersistentArrayManager<Block, Interpreter> *);
+			PersistentArrayManager<Block, Interpreter> *,
+			SipTables&);
 	~SialOpsSequential();
 
 	/** implements a global SIAL barrier */

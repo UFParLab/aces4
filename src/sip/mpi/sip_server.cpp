@@ -102,7 +102,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId block_id(buffer);
-	size_t block_size = SipTables::instance().block_size(block_id);
+	size_t block_size = sip_tables_.block_size(block_id);
 	ServerBlock* block = block_map_.block(block_id);
 	if (block == NULL) {
 		std::string msg(" getting uninitialized block ");

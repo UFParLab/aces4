@@ -13,8 +13,6 @@ DataDistribution::DataDistribution(SipTables& sip_tables, SIPMPIAttr& sip_mpi_at
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr) {
 }
 
-DataDistribution::~DataDistribution() {}
-
 
 int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 	int array_id = bid.array_id();
@@ -28,7 +26,7 @@ int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 //		num_blocks *= num_segments;
 //	}
 
-	int num_blocks = sip_tables_.num_block_in_array(array_id);
+	//int num_blocks = sip_tables_.num_block_in_array(array_id);
 
 	// Convert rank-dimensional index to 1-dimensional index
 	int block_num = 0;

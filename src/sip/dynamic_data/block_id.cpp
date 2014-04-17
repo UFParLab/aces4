@@ -141,12 +141,13 @@ bool BlockId::operator<(const BlockId& rhs) const {
 
 std::string BlockId::str() {
 	std::stringstream ss;
-	SipTables& tables = SipTables::instance();
-	int rank = tables.array_rank(array_id_);
-	ss << (tables.array_name(array_id_));
+//	SipTables& tables = SipTables::instance();
+//	int rank = tables.array_rank(array_id_);
+//	ss << (tables.array_name(array_id_));
+	ss << array_id_;
 	ss << '[';
 	int i;
-	for (i = 0; i < rank; ++i) {
+	for (i = 0; i < MAX_RANK; ++i) {
 		ss << (i == 0 ? "" : ",") << index_values_[i];
 	}
 	ss << ']';

@@ -13,8 +13,9 @@ namespace sip {
 
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
-		PersistentArrayManager<Block, Interpreter>* persistent_array_manager) :
-		sip_tables_(SipTables::instance()), sip_mpi_attr_(
+		PersistentArrayManager<Block, Interpreter>* persistent_array_manager,
+		SipTables& sip_tables) :
+		sip_tables_(sip_tables), sip_mpi_attr_(
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,
 				sip_mpi_attr_), persistent_array_manager_(
@@ -303,7 +304,7 @@ void SialOpsParallel::collective_sum(int source_array_slot,
 
 	if (sip_mpi_attr_.num_workers() > 1) {
 		double to_send = val_source + val_dest;
-		MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
+		const MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(
 				MPI_Allreduce(&to_send, &summed, 1, MPI_DOUBLE, MPI_SUM,
 						worker_comm));
