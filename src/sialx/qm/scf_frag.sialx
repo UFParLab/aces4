@@ -486,6 +486,7 @@ import "scf_frag_defs.sialx"
 #     Compute the fragment SCF  
 #     ------------------------- 
 #
+      execute disable_debug_print 
       CALL SET_FRAG_PARMS    
       sip_barrier 
       CALL IGUESS  

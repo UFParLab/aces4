@@ -323,6 +323,8 @@ c---------------------------------------------------------------------------
 
                ncsum = ncfps(m) + ncfps(n) + ncfps(r) + ncfps(s)
 
+      call TAU_START("start erd in compute_uintegrals2")   
+
               call ERD__GENER_ERI_BATCH(imax, zmax,
      *                nalpha_pack, npcoeff_pack, ncsum, 
      *                ncfps(m),ncfps(n), ncfps(r), ncfps(s),
@@ -334,12 +336,16 @@ c---------------------------------------------------------------------------
      *                spherical, .true., iscr, nints, 
      *                nfirst, scr)    
 
+      call TAU_STOP("start erd in compute_uintegrals2")   
+
 c---------------------------------------------------------------------------
 c   Move the integrals into the output block.  (For the GAMESS integral 
 c   package, this has been already performed.)
 c---------------------------------------------------------------------------
 
            if (nints .gt. 0) then
+
+      call TAU_START("start fock in compute_uintegrals2")   
  
               jx = 2 
               call uscf_tp2a(nalpha_occupied, nbeta_occupied, 
@@ -349,6 +355,8 @@ c---------------------------------------------------------------------------
      *                             scr(nfirst),   
      *                             aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                             Fa,Fb)
+
+      call TAU_STOP("start fock in compute_uintegrals2")   
 
             endif
 
