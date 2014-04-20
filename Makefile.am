@@ -109,7 +109,9 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_arrays_io.h\
 ./src/sip/mpi/disk_backed_arrays_io.cpp\
 ./src/sip/mpi/server_block.h\
-./src/sip/mpi/server_block.cpp
+./src/sip/mpi/server_block.cpp\
+./src/sip/mpi/disk_backed_block_map.h\
+./src/sip/mpi/disk_backed_block_map.cpp
 
 endif
 

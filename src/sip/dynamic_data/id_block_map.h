@@ -80,10 +80,6 @@ public:
 		BLOCK_TYPE* b = block(block_id);
 		if (b == NULL) {
 			b = new BLOCK_TYPE(size, initialize);
-			// TODO ************************************************
-			// TODO call limit_reached and write to disk if need be
-			// TODO ************************************************
-
 			insert_block(block_id,b);
 		}
 		return b;

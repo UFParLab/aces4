@@ -16,7 +16,7 @@
 namespace sip {
 
 const std::size_t ServerBlock::field_members_size_ = sizeof(int) + sizeof(int) + sizeof(dataPtr);
-const std::size_t ServerBlock::max_allocated_bytes_ = 2147483648;
+const std::size_t ServerBlock::max_allocated_bytes_ = 2147483648;	// 2 GB
 std::size_t ServerBlock::allocated_bytes_ = 0;
 
 ServerBlock::ServerBlock(int size, bool initialize): is_dirty_(false), size_(size){

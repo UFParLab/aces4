@@ -20,7 +20,6 @@
 #include "data_distribution.h"
 
 namespace sip {
-class SIPServer;
 
 /**
  * Provides disk backed IO for distributed and served arrays.
@@ -78,6 +77,8 @@ public:
 	 * @param array_label
 	 */
 	void restore_persistent_array(const int array_id, const std::string& array_label);
+
+	friend std::ostream& operator<<(std::ostream& os, const DiskBackedArraysIO& obj);
 
 private:
 	typedef std::map<BlockId, MPI_Offset> BlockIdOffsetMap;

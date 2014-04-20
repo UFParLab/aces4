@@ -377,4 +377,15 @@ void DiskBackedArraysIO::check_data_types() {
 				"Size of double and MPI_DOUBLE don't match !");
 }
 
+std::ostream& operator<<(std::ostream& os, const DiskBackedArraysIO& obj){
+	os << "block_offset_map : ";
+	DiskBackedArraysIO::BlockIdOffsetMap::const_iterator it = obj.block_offset_map_.begin();
+	for (; it != obj.block_offset_map_.end(); ++it){
+		os << it->first << " : " << it->second << std::endl;
+	}
+
+	return os;
+}
+
+
 } /* namespace sip */

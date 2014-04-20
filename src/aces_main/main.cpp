@@ -140,6 +140,7 @@ int main(int argc, char* argv[]) {
 		sialfpath.append(*it);
 
 		sip::GlobalState::set_program_name(*it);
+		sip::GlobalState::increment_program();
 #ifdef HAVE_TAU
 		//TAU_REGISTER_EVENT(tau_event, it->c_str());
 		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
@@ -169,7 +170,6 @@ int main(int argc, char* argv[]) {
 
 		//interpret current program on worker
 		{
-			sip::GlobalState::increment_program();
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 

@@ -38,7 +38,7 @@ public:
 
 	static bool limit_reached();
 
-	friend std::ostream& operator<<(std::ostream& os, const ServerBlock& block);
+	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
 private:
 

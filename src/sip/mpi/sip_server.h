@@ -11,9 +11,9 @@
 #include "sip_tables.h"
 #include "server_block.h"
 #include "data_distribution.h"
-#include "id_block_map.h"
 #include "barrier_support.h"
 #include "persistent_array_manager.h"
+#include "disk_backed_block_map.h"
 
 
 
@@ -71,7 +71,7 @@ public:
 	 * Called by persistent_array_manager. Delegates to block_map_.
 	 */
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
-			return block_map_.get_and_remove_per_array_map(array_id);
+			return disk_backed_block_map_.get_and_remove_per_array_map(array_id);
 	}
 
 	/**
@@ -82,11 +82,11 @@ public:
 	 * @param map_ptr
 	 */
 	void set_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr){
-		block_map_.insert_per_array_map(array_id, map_ptr);
+		disk_backed_block_map_.insert_per_array_map(array_id, map_ptr);
 	}
 
 
-	SipTables* sip_tables() { return &sip_tables_;}
+	const SipTables* sip_tables() { return &sip_tables_;}
 
 
 	/** The following methods are called by the PersistentArrayManager.
@@ -111,11 +111,9 @@ public:
 
 
 private:
-    SipTables &sip_tables_;
-	/**
-	 * Data structure to store blocks of distributed/served arrays
-	 */
-	IdBlockMap<ServerBlock> block_map_;
+    const SipTables &sip_tables_;
+	const SIPMPIAttr & sip_mpi_attr_;
+	const DataDistribution &data_distribution_;
 
 	/** maintains message, section number, etc for barrier.  This
 	 * object's check_section_number_invariant should be invoked
@@ -129,11 +127,13 @@ private:
 	 */
 	bool terminated_;
 
-	SIPMPIAttr & sip_mpi_attr_;
-	DataDistribution &data_distribution_;
 
 	PersistentArrayManager<ServerBlock, SIPServer> * persistent_array_manager_;
 
+	/**
+	 * Interface to disk backed block manager.
+	 */
+	DiskBackedBlockMap disk_backed_block_map_;
 
 	/**
 	 * Get

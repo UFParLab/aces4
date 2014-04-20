@@ -139,7 +139,7 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	return false;
 }
 
-std::string BlockId::str() {
+std::string BlockId::str() const{
 	std::stringstream ss;
 //	SipTables& tables = SipTables::instance();
 //	int rank = tables.array_rank(array_id_);

@@ -159,7 +159,7 @@ public:
 	 *
 	 * @return a string representation of this BlockId
 	 */
-	std::string str();
+	std::string str() const;
 
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
 

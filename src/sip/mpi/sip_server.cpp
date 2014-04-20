@@ -14,8 +14,9 @@ namespace sip {
 SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		SIPMPIAttr& sip_mpi_attr,
 		PersistentArrayManager<ServerBlock, SIPServer>* persistent_array_manager) :
-		sip_tables_(sip_tables), data_distribution_(data_distribution), block_map_(
-				sip_tables.num_arrays()), sip_mpi_attr_(sip_mpi_attr), persistent_array_manager_(
+		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
+				sip_tables, sip_mpi_attr, data_distribution), sip_mpi_attr_(
+				sip_mpi_attr), persistent_array_manager_(
 				persistent_array_manager), terminated_(false) {
 }
 
@@ -103,15 +104,17 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId block_id(buffer);
 	size_t block_size = sip_tables_.block_size(block_id);
-	ServerBlock* block = block_map_.block(block_id);
-	if (block == NULL) {
-		std::string msg(" getting uninitialized block ");
-		msg.append(block_id.str());
-		msg.append(".  Creating zero block ");
-//		check_and_warn(block != NULL, msg);
-		std::cout <<"worker " << mpi_source << msg << std::endl << std::flush; //do this instead of check_and_warn so goes to std::out intead of std::err
-		block = block_map_.get_or_create_block(block_id, block_size, true);
-	}
+
+	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
+
+//	ServerBlock* block = block_map_.block(block_id);
+//	if (block == NULL) {
+//		std::string msg(" getting uninitialized block ");
+//		msg.append(block_id.str());
+//		msg.append(".  Creating zero block ");
+//		std::cout <<"worker " << mpi_source << msg << std::endl << std::flush; //do this instead of check_and_warn so goes to std::out intead of std::err
+//		block = block_map_.get_or_create_block(block_id, block_size, true);
+//	}
 	//send block to worker using same tag as GET
 	SIPMPIUtils::check_err(
 			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
@@ -137,7 +140,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(
 			std::cout << "server " << sip_mpi_attr_.global_rank()<< " put to receive block " << block_id << ", size = " << block_size << std::endl;)
-	ServerBlock* block = block_map_.get_or_create_block(block_id, block_size,
+	ServerBlock* block = disk_backed_block_map_.get_or_create_block(block_id, block_size,
 			false);
 
 	//receive data
@@ -182,7 +185,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			MPI_COMM_WORLD, &request);
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
-	ServerBlock* block = block_map_.get_or_create_block(block_id, block_size,
+	ServerBlock* block = disk_backed_block_map_.get_or_create_block(block_id, block_size,
 			true);
 
 	//wait for data to arrive
@@ -221,7 +224,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			MPI_Send(0, 0, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD));
 
 	//delete the block and map for the indicated array
-	block_map_.delete_per_array_map_and_blocks(array_id);
+	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
 
 }
 
@@ -308,7 +311,7 @@ void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
 }
 
 std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
-	os << "\nblock_map_:" << std::endl << obj.block_map_;
+	os << "\nblock_map_:" << std::endl << obj.disk_backed_block_map_;
 	os << "state_: " << obj.state_ << std::endl;
 	os << "terminated=" << obj.terminated_ << std::endl;
 	return os;

@@ -11,7 +11,7 @@
 
 #include "sip_server.h"
 #include "sip_mpi_attr.h"
-
+#include "global_state.h"
 #include "block.h"
 
 #ifdef HAVE_TAU
@@ -56,6 +56,8 @@ TEST(Sial_QM,ccsdpt_test){
 				sialfpath.append(*it);
 			setup::BinaryInputFile siox_file(sialfpath);
 			sip::SipTables sipTables(setup_reader, siox_file);
+			sip::GlobalState::set_program_name(*it);
+			sip::GlobalState::increment_program();
 //			if (am_master) std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
 
 			sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
