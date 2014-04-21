@@ -14,6 +14,9 @@ libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
 
 EXTRA_DIST+=\
+README.md\
+README.devel\
+LICENSE\
 src/sip/setup/setup_interface.f\
 src/sip/sip_interface.f
 
@@ -407,8 +410,8 @@ EXTRA_DIST += \
 ./src/sialx/test/get_mpi.sialx\
 ./src/sialx/test/persistent_distributed_array_mpi1.sialx\
 ./src/sialx/test/persistent_distributed_array_mpi2.sialx\
-./src/sialx/test/persistent_empty_mpi1.sial\
-./src/sialx/test/persistent_empty_mpi2.sial\
+./src/sialx/test/persistent_empty_mpi1.sialx\
+./src/sialx/test/persistent_empty_mpi2.sialx\
 ./src/sialx/test/persistent_scalars_1.sialx\
 ./src/sialx/test/persistent_scalars_2.sialx\
 ./src/sialx/test/unmatched_get.sialx\
