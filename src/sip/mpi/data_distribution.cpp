@@ -6,6 +6,7 @@
  */
 
 #include <data_distribution.h>
+#include <sstream>
 
 namespace sip {
 
@@ -28,7 +29,15 @@ int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 //		num_blocks *= num_segments;
 //	}
 
+    std::stringstream ss;
+    ss << " Number of blocks is -ve " << bid;
+    sip::check(array_id >= 0, ss.str(), current_line());
+
 	int num_blocks = sip_tables_.num_block_in_array(array_id);
+
+    std::stringstream ss1;
+    ss1 << " Number of blocks is -ve " << num_blocks;
+    sip::check(num_blocks >= 0, ss.str(), current_line());
 
 	// Convert rank-dimensional index to 1-dimensional index
 	int block_num = 0;
@@ -45,6 +54,10 @@ int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 	int server_rank = block_num % num_servers;
 
 	const std::vector<int> &server_ranks = sip_mpi_attr_.server_ranks();
+
+    std::stringstream ss2;
+    ss2 << " Server rank is -ve : "<< server_rank;
+    sip::check(server_rank >= 0, ss2.str(), current_line());
 
 	return server_ranks[server_rank];
 }
