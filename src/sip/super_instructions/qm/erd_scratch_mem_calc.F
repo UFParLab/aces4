@@ -99,10 +99,6 @@ c at most 4*n.
       enddo 
       enddo 
 
-      imax = 500000
-      zmax = 500000
-      return
-
 c     imax = 5000000 
 c     zmax = 5000000 
 c     return 

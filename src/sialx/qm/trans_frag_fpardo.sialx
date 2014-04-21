@@ -718,6 +718,7 @@ import "trans_frag_defs.sialx"
 
       sip_barrier 
       println "Done first two stages of two-electron integral tranfsormations" 
+      execute enable_debug_print 
 
       PARDO ifrag, jfrag 
          icount = 0.0 

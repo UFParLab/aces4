@@ -54,6 +54,8 @@ special compute_int_scratchmem uuu
 special print_block r  
 special frag_index_range uu
 special set_frag u
+special enable_debug_print  
+special disable_debug_print  
 
 endsial scf_frag_defs
 
