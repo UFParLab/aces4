@@ -12,6 +12,7 @@
 #include <map>
 
 #include "mpi.h"
+#include "id_block_map.h"
 #include "block_id.h"
 #include "block_shape.h"
 #include "sip_mpi_attr.h"
@@ -21,15 +22,13 @@
 
 namespace sip {
 
+
 /**
  * Provides disk backed IO for distributed and served arrays.
  * Reads and writes blocks to disk.
  */
 class DiskBackedArraysIO {
 public:
-
-	typedef std::map<BlockId, ServerBlock::ServerBlockPtr> IdBlockMap;
-	typedef IdBlockMap* IdBlockMapPtr;
 
 	const static int MAX_FILE_NAME_SIZE = 256;
 	const static int INTS_IN_FILE_HEADER = 16;
@@ -69,7 +68,9 @@ public:
 	 * @param array_blocks
 	 * @param array_label
 	 */
-	void save_persistent_array(const int array_id, const std::string& array_label, const IdBlockMapPtr array_blocks);
+	void save_persistent_array(const int array_id,
+			const std::string& array_label,
+			sip::IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
 	/**
 	 * Reads all the blocks of the array with given label.
@@ -146,7 +147,7 @@ private:
 	 * @param fh
 	 * @param array_blocks
 	 */
-	void write_all_dirty_blocks(MPI_File fh, const IdBlockMapPtr array_blocks);
+	void write_all_dirty_blocks(MPI_File fh, const IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
 	/**
 	 * Zeroes out all blocks on disk for a given array.

@@ -109,7 +109,6 @@ public:
     void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
     Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
 
-
 private:
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
@@ -263,6 +262,9 @@ private:
 	 * @param expected_count
 	 */
 	void check_double_count(MPI_Status& status, int expected_count);
+
+
+    friend ServerPersistentArrayManager;
 
 };
 

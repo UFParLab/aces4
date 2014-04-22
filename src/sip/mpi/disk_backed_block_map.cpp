@@ -59,6 +59,18 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id){
 	block_map_.delete_per_array_map_and_blocks(array_id);
 }
 
+void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & label){
+	disk_backed_arrays_io_.restore_persistent_array(array_id, label);
+}
+
+
+void DiskBackedBlockMap::save_persistent_array(const int array_id,
+		const std::string& array_label,
+		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
+	disk_backed_arrays_io_.save_persistent_array(array_id, array_label, array_blocks);
+}
+
+
 std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj){
 	os << "block map : " << std::endl;
 	os << obj.block_map_;

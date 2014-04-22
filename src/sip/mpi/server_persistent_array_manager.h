@@ -115,10 +115,6 @@ public:
 
 private:
 
-	/** holder for saved distributed arrays*/
-	LabelDistributedArrayMap distributed_array_map_;
-	/** holder for saved scalar values */
-	LabelScalarValueMap scalar_value_map_;
 	/** holder for arrays and scalars that have been marked as persistent */
 	ArrayIdLabelMap persistent_array_map_;
 
@@ -142,7 +138,9 @@ private:
 	 * Warns if label has already been used.
 	 * Fatal error if map is null
 	 */
-	void save_distributed(const std::string& label, IdBlockMap<ServerBlock>::PerArrayMap* map) ;
+	void save_distributed(SIPServer* runner, const int array_id,
+			const std::string& label,
+			IdBlockMap<ServerBlock>::PerArrayMap* map);
 
 
 	DISALLOW_COPY_AND_ASSIGN(ServerPersistentArrayManager);

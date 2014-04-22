@@ -126,7 +126,7 @@ void DiskBackedArraysIO::zero_out_all_disk_blocks(const int array_id,
 }
 
 void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::string& array_label,
-		const IdBlockMapPtr array_blocks){
+		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks){
 	/* This method renames the array file to a temporary persistent file and writes out
 	 * all the dirty blocks of the given array.
 	 * If a previous persistent array file by the same label exists, it deletes it and renames
@@ -276,12 +276,12 @@ MPI_Offset DiskBackedArraysIO::calculate_block_offset(const BlockId& bid){
 	return block_offset;
 }
 
-void DiskBackedArraysIO::write_all_dirty_blocks(MPI_File fh, const IdBlockMapPtr array_blocks) {
+void DiskBackedArraysIO::write_all_dirty_blocks(MPI_File fh, const IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
 
 	// Write out missing blocks into the array.
 	if (array_blocks != NULL) {
 		MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-		IdBlockMap::const_iterator it = array_blocks->begin();
+		IdBlockMap<ServerBlock>::PerArrayMap::const_iterator it = array_blocks->begin();
 		for (; it != array_blocks->end(); ++it) {
 			const BlockId& bid = it->first;
 			const ServerBlock::ServerBlockPtr bptr = it->second;

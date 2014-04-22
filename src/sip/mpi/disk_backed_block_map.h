@@ -14,6 +14,7 @@
 
 namespace sip {
 class BlockId;
+class ServerPersistentArrayManager;
 
 /**
  * Wrapper over block map for servers.
@@ -32,6 +33,25 @@ public:
 	ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 
 	void delete_per_array_map_and_blocks(int array_id);
+
+	/**
+	 * Restores a persistent array from disk.
+	 * Delegates to internal DiskBackedArraysIO object.
+	 * @param array_id
+	 * @param label
+	 */
+	void restore_persistent_array(int array_id, std::string & label);
+
+	/**
+	 * Saves a persistent array to disk.
+	 * Delegates to internal DiskBackedArraysIO object.
+	 * @param array_id
+	 * @param array_label
+	 * @param array_blocks
+	 */
+	void save_persistent_array(const int array_id,
+			const std::string& array_label,
+			IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
 
