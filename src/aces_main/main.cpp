@@ -54,12 +54,12 @@ int main(int argc, char* argv[]) {
     signal(SIGFPE, bt_sighandler);
 
 #ifdef HAVE_MPI
-	  /* MPI Initialization */
-	  MPI_Init(&argc, &argv);
-	  sip::SIPMPIUtils::set_error_handler();
-	  sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
-//	  std::cout<<"Rank "<<sip_mpi_attr.global_rank()<<" of "<<sip_mpi_attr.global_size()<<std::endl;
-	  std::cout<<sip_mpi_attr<<std::endl;
+	/* MPI Initialization */
+	MPI_Init(&argc, &argv);
+
+	sip::SIPMPIUtils::set_error_handler();
+	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
+	std::cout<<sip_mpi_attr<<std::endl;
 #endif
 
 #ifdef HAVE_TAU
@@ -120,11 +120,6 @@ int main(int argc, char* argv[]) {
 
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
-
-    //	array::PersistentBlockManager *pbm_read, *pbm_write;
-    //	pbm_read = new array::PersistentBlockManager();
-    //	pbm_write = new array::PersistentBlockManager();
-
 
 #ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
@@ -211,7 +206,8 @@ int main(int argc, char* argv[]) {
 
 
 #ifdef HAVE_MPI
-	  MPI_Finalize();
+	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
+	MPI_Finalize();
 #endif
 
 

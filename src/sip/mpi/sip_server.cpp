@@ -25,7 +25,7 @@ SIPServer::~SIPServer() {
 
 void SIPServer::run() {
 
-	int my_rank = sip_mpi_attr_.get_instance().global_rank();
+	int my_rank = sip_mpi_attr_.global_rank();
 
 	while (!terminated_) {
 
