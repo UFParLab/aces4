@@ -12,14 +12,14 @@
 #include "sip_tables.h"
 #include "block_manager.h"
 #include "data_manager.h"
-#include "persistent_array_manager.h"
+#include "worker_persistent_array_manager.h"
 
 namespace sip {
 
 class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
-			PersistentArrayManager<Block, Interpreter> *,
+			WorkerPersistentArrayManager*,
 			SipTables&);
 	~SialOpsSequential();
 
@@ -73,7 +73,7 @@ private:
 	SipTables& sip_tables_;
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
-	PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
+	WorkerPersistentArrayManager* persistent_array_manager_;
 
 	/**
 	 * values for mode_ array

@@ -36,8 +36,8 @@ TEST(Sial_QM,ccsdpt_test){
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-		pbm = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+		sip::WorkerPersistentArrayManager* pbm;
+		pbm = new sip::WorkerPersistentArrayManager();
 		it = progs.begin();
 		while (it != progs.end()){
 			std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< *it << std::endl;
@@ -64,6 +64,7 @@ TEST(Sial_QM,ccsdpt_test){
 				ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-12);
 			}
 		}
+		delete pbm;
 	}
 }
 

@@ -129,8 +129,8 @@ TEST(Sial,persistent_scalars){
 		finalize_setup();
 	}
 
-	sip::PersistentArrayManager<sip::Block, sip::Interpreter>* pam;
-	pam = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+	sip::WorkerPersistentArrayManager* pam;
+	pam = new sip::WorkerPersistentArrayManager();
 
 	//read and print setup_file
 	// setup::SetupReader setup_reader;
@@ -240,7 +240,7 @@ TEST(Sial,no_arg_user_sub) {
 	std::cout << sipTables;
 
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "\nINSTANTIATED INTERPRETER" << std::endl;
 	runner.interpret();
@@ -289,7 +289,7 @@ TEST(Sial,index_decs) {
 
 	//interpret the program
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "\nSIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -325,7 +325,7 @@ TEST(Sial,where_clause){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -360,7 +360,7 @@ TEST(Sial,ifelse){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -395,7 +395,7 @@ TEST(Sial,loop_over_simple_indices){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -429,7 +429,7 @@ TEST(Sial,loop_over_simple_indices){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -478,7 +478,7 @@ TEST(Sial,tmp_arrays){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -530,7 +530,7 @@ TEST(Sial,tmp_arrays_2){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -582,7 +582,7 @@ TEST(Sial,exit_statement_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -633,7 +633,7 @@ TEST(Sial,transpose_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -695,7 +695,7 @@ TEST(Sial,fill_sequential){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -741,7 +741,7 @@ TEST(Sial,contraction_small_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -854,7 +854,7 @@ TEST(Sial,contraction_small_test2){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1014,7 +1014,7 @@ TEST(Sial,sum_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1135,7 +1135,7 @@ TEST(Sial,print_block_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1184,7 +1184,7 @@ TEST(Sial,subindex_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1239,7 +1239,7 @@ TEST(Sial,insert_slice_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1349,7 +1349,7 @@ TEST(Sial,local_arrays){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1402,7 +1402,7 @@ TEST(Sial,local_arrays_wild){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1455,7 +1455,7 @@ TEST(Sial,put_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1528,7 +1528,7 @@ TEST(Sial,gpu_contraction_small){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1637,7 +1637,7 @@ TEST(Sial,gpu_sum_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1762,7 +1762,7 @@ TEST(Sial,gpu_ops){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
@@ -1817,7 +1817,7 @@ TEST(Sial,contract_to_scalar){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1897,7 +1897,7 @@ TEST(Sial,gpu_contract_to_scalar){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -1979,7 +1979,7 @@ TEST(Sial,gpu_transpose_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2099,7 +2099,7 @@ TEST(Sial,simple_indices_assignments){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2153,7 +2153,7 @@ TEST(Sial,self_multiply_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2231,7 +2231,7 @@ TEST(Sial,gpu_self_multiply_op){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2314,7 +2314,7 @@ TEST(Sial,get_int_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2390,7 +2390,7 @@ TEST(Sial,get_scalar_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2463,7 +2463,7 @@ TEST(Sial,get_scratch_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2543,7 +2543,7 @@ TEST(Sial,gpu_contraction_predefined){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2620,7 +2620,7 @@ TEST(Sial,transpose4d_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2692,7 +2692,7 @@ TEST(Sial,transpose4d_square_tmp){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2806,7 +2806,7 @@ TEST(Sial,reproduce_transpose_problem){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2865,7 +2865,7 @@ TEST(Sial,assign_to_static_array_test){
 	//interpret the program
 	{
 	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
+	sip::WorkerPersistentArrayManager* pbm;
 	sip::Interpreter runner(sipTables, sialxTimer);
 	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 	runner.interpret();
@@ -2910,8 +2910,8 @@ TEST(Sial,set_persistent_test){
 
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
+	sip::WorkerPersistentArrayManager* pbm;
+	pbm = new sip::WorkerPersistentArrayManager();
 
 	{
 
@@ -2998,8 +2998,8 @@ TEST(Sial,persistent_static_array_test){
 	setup::SetupReader setup_reader(setup_file);
 
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
+	sip::WorkerPersistentArrayManager* pbm;
+	pbm = new sip::WorkerPersistentArrayManager();
 	//get siox name from setup, load and print the sip tables
 	std::string prog_name = setup_reader.sial_prog_list_.at(0);
 	std::string siox_dir(dir_name);
@@ -3079,8 +3079,8 @@ TEST(Sial,persistent_distributed_array_test){
 	setup::SetupReader setup_reader(setup_file);
 
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
+	sip::WorkerPersistentArrayManager* pbm;
+	pbm = new sip::WorkerPersistentArrayManager();
 	//get siox name from setup, load and print the sip tables
 	std::string prog_name = setup_reader.sial_prog_list_.at(0);
 	std::string siox_dir(dir_name);

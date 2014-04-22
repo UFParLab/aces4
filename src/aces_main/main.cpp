@@ -9,7 +9,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "persistent_array_manager.h"
+#include "worker_persistent_array_manager.h"
 #include "block.h"
 #include "global_state.h"
 
@@ -28,6 +28,7 @@
 #include "sip_mpi_attr.h"
 #include "sip_server.h"
 #include "sip_mpi_utils.h"
+#include "server_persistent_array_manager.h"
 #endif
 
 
@@ -73,6 +74,9 @@ int main(int argc, char* argv[]) {
 
 
 	// Check sizes of data types.
+	// In the MPI version, the TAG is used to communicate information
+	// The various bits needed to send information to other nodes
+	// sums up to 32.
 	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
 	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
 	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
@@ -123,13 +127,10 @@ int main(int argc, char* argv[]) {
 
 
 #ifdef HAVE_MPI
-	sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>* persistent_server;
-	sip::PersistentArrayManager<sip::Block, sip::Interpreter>* persistent_worker;
-	if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock,sip::SIPServer>();
-	else persistent_worker = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+	sip::ServerPersistentArrayManager persistent_server;
+	sip::WorkerPersistentArrayManager persistent_worker;
 #else
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* persistent_worker;
-	persistent_worker = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+	sip::WorkerPersistentArrayManager persistent_worker;
 #endif //HAVE_MPI
 
 
@@ -161,10 +162,10 @@ int main(int argc, char* argv[]) {
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
-			persistent_server->save_marked_arrays(&server);
+			persistent_server.save_marked_arrays(&server);
 		} else
 #endif
 
@@ -173,11 +174,11 @@ int main(int argc, char* argv[]) {
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 
-			sip::Interpreter runner(sipTables, sialxTimer, persistent_worker);
+			sip::Interpreter runner(sipTables, sialxTimer, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
-			persistent_worker->save_marked_arrays(&runner);
+			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
@@ -210,11 +211,7 @@ int main(int argc, char* argv[]) {
 
 
 #ifdef HAVE_MPI
-	  if (sip_mpi_attr.is_server()) delete persistent_server;
-	  else delete persistent_worker;
 	  MPI_Finalize();
-#else
-	  delete persistent_worker;
 #endif
 
 

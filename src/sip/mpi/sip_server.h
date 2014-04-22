@@ -12,7 +12,7 @@
 #include "server_block.h"
 #include "data_distribution.h"
 #include "barrier_support.h"
-#include "persistent_array_manager.h"
+#include "server_persistent_array_manager.h"
 #include "disk_backed_block_map.h"
 
 
@@ -56,11 +56,11 @@ namespace sip {
 class SIPServer {
 
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, PersistentArrayManager<ServerBlock, SIPServer> *);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*);
 	~SIPServer();
 
 
-	static SipTables& instance() ;
+	//static SipTables& instance() ;
 
 	/**
 	 * Main server loop
@@ -128,7 +128,7 @@ private:
 	bool terminated_;
 
 
-	PersistentArrayManager<ServerBlock, SIPServer> * persistent_array_manager_;
+	ServerPersistentArrayManager* persistent_array_manager_;
 
 	/**
 	 * Interface to disk backed block manager.

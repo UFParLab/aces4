@@ -13,7 +13,7 @@ namespace sip {
 
 SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		SIPMPIAttr& sip_mpi_attr,
-		PersistentArrayManager<ServerBlock, SIPServer>* persistent_array_manager) :
+		ServerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
 				sip_tables, sip_mpi_attr, data_distribution), sip_mpi_attr_(
 				sip_mpi_attr), persistent_array_manager_(

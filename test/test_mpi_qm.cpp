@@ -44,10 +44,8 @@ TEST(Sial_QM,ccsdpt_test){
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 	{
-		sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>* persistent_server;
-		sip::PersistentArrayManager<sip::Block,sip::Interpreter>* persistent_worker;
-		if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>();
-		else persistent_worker = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
+		sip::ServerPersistentArrayManager persistent_server;
+		sip::WorkerPersistentArrayManager persistent_worker;
 
 		it = progs.begin();
 		while (it != progs.end()){
@@ -62,19 +60,19 @@ TEST(Sial_QM,ccsdpt_test){
 
 			sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 			if (sip_mpi_attr.is_server()){
-				sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
+				sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
 				std::cout<<"starting server" << std::endl;
 				server.run();
-				persistent_server->save_marked_arrays(&server);
+				persistent_server.save_marked_arrays(&server);
 				SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 				++it;
 
 			} else {
 				sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-				sip::Interpreter runner(sipTables, sialxTimer,  persistent_worker);
+				sip::Interpreter runner(sipTables, sialxTimer,  &persistent_worker);
 				std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 				runner.interpret();
-				persistent_worker->save_marked_arrays(&runner);
+				persistent_worker.save_marked_arrays(&runner);
 				ASSERT_EQ(0, sip::DataManager::scope_count);
 				std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 				//std::cout<<"PBM after program " << sialfpath << " :"<<std::endl<<pbm;

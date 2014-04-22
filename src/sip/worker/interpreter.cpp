@@ -16,6 +16,7 @@
 #include "special_instructions.h"
 #include "block.h"
 #include "tensor_ops_c_prototypes.h"
+#include "worker_persistent_array_manager.h"
 
 #include "config.h"
 
@@ -29,11 +30,11 @@ namespace sip {
 Interpreter* Interpreter::global_interpreter;
 
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
-		PersistentArrayManager<Block, Interpreter>* persistent_array_manager) :
+		WorkerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), data_manager_(sipTables), op_table_(
 				sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sipTables) {
+						persistent_array_manager, sipTables) {
 	_init(sipTables);
 }
 
