@@ -240,6 +240,7 @@ import "scf_defs.sialx"
       scalar diis_order   
       scalar diis_max_order # same as kdiis   
       scalar diis_count 
+      scalar temp_order   
       scalar worder  
       scalar n1 
       scalar n2 
@@ -821,10 +822,18 @@ import "scf_defs.sialx"
        PROC GEN_6HISTORY  
 #      ------------------  
 #
-       DELETE FFai
-       DELETE FFbj
-       CREATE FFai
-       CREATE FFbj
+      #DELETE FFai
+      #DELETE FFbj
+      #CREATE FFai
+      #CREATE FFbj
+       PARDO a, i 
+             tai(a,i) = 0.0 
+             PUT FFai(a,i) = tai(a,i) 
+       ENDPARDO a, i 
+       PARDO b, j 
+             tbj(b,j) = 0.0 
+             PUT FFbj(b,j) = tbj(b,j) 
+       ENDPARDO b, j 
        sip_barrier 
 #  
        PARDO mu, nu  
@@ -993,15 +1002,21 @@ import "scf_defs.sialx"
 #
 #      Contributions from Fai histories. 
 #      --------------------------------- 
+
+       temp_order = worder
+      #if diis_order < worder 
+      #   temp_order = diis_order 
+      #endif 
+          
 #
        n1 = 0.0 
        DO d1 
           n1+= 1.0 
-       if n1 <= worder 
+       if n1 <= temp_order # worder 
           n2 = 0.0 
        DO d2 
           n2+= 1.0 
-       if n2 <= worder 
+       if n2 <= temp_order # worder 
           tdd(d1,d2) = 0.0 
           DO a  
           DO i 
@@ -1052,7 +1067,7 @@ import "scf_defs.sialx"
            n1 = 0.0 
            DO d1   
               n1 += 1.0 
-           if n1 <= worder 
+           if n1 <= temp_order # worder 
               GET            Fa(mu,nu,d1) 
               t1xx(mu,nu)  = Fa(mu,nu,d1) 
               execute return_sval BB(d1,d1) etemp 
@@ -1069,7 +1084,7 @@ import "scf_defs.sialx"
            n1 = 0.0 
            DO d1   
               n1 += 1.0 
-           if n1 <= worder 
+           if n1 <= temp_order # worder 
               GET            Fb(mu,nu,d1) 
               t1xx(mu,nu)  = Fb(mu,nu,d1) 
               execute return_sval BB(d1,d1) etemp 
@@ -1197,6 +1212,31 @@ import "scf_defs.sialx"
 
       #print_scalar diis_start
       #print_scalar diis_order
+#
+# Zero out the DIIS vectors 
+# 
+
+      PARDO a, i  
+            tai(a,i) = 0.0 
+            do d1 
+               PUT Fai(a,i,d1) = tai(a,i) 
+            enddo d1 
+      ENDPARDO a, i  
+
+      PARDO b, j  
+            tbj(b,j) = 0.0 
+            do d1 
+               PUT Fbj(b,j,d1) = tbj(b,j) 
+            enddo d1 
+      ENDPARDO b, j  
+
+      PARDO mu, nu 
+            txx(mu,nu) = 0.0 
+            do d1 
+               PUT Fa(mu,nu,d1) = txx(mu,nu)  
+               PUT Fb(mu,nu,d1) = txx(mu,nu)  
+            enddo d1 
+      ENDPARDO mu, nu 
 
 #
 #     Create the one-particle arrays needed for the computation. 

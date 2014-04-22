@@ -341,8 +341,8 @@ c     call TAU_STOP("erd_scratch_mem_cal")
 c     if (my_imax .gt. imax) imax = my_imax 
 c     if (my_zmax .gt. zmax) zmax = my_zmax 
 
-c      write(6,*) 'IMAX = ', imax
-c      write(6,*) 'ZMAX = ', Zmax
+       write(6,*) 'IMAX = ', imax
+       write(6,*) 'ZMAX = ', Zmax
 c ----------------------------------------------------------------------
 c
       return
