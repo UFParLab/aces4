@@ -13,6 +13,7 @@
 using namespace std::rel_ops;
 
 namespace sip {
+class SipTables;
 
 /** A BlockId concretely identifies a block.
  *
@@ -172,6 +173,7 @@ private:
 	friend class BlockManager;
 	friend class SIPServer;
 	friend class SIPMPIUtils;
+	friend class SipTables;
 
 };
 

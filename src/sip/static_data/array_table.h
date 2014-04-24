@@ -78,7 +78,7 @@ private:
 	/** this value is calculated using setup-reader info.  It is
 	 * not read directly from the .siox file
 	 */
-	int num_blocks_;
+	//int num_blocks_;
 
 	/** the name of the array in the SIAL program */
 	std::string name_;
@@ -101,42 +101,42 @@ public:
 	 * @param array_slot
 	 * @return name of corresponding array
 	 */
-	std::string array_name(int array_slot) {return entries_.at(array_slot).name_;}
+	std::string array_name(int array_slot) const {return entries_.at(array_slot).name_;}
 
 	/** Inlined function
 	 *
 	 * @param name
 	 * @return slot number in array table of array with given name
 	 */
-    int array_slot(const std::string & name) {return array_name_slot_map_.at(name);}
+    int array_slot(const std::string & name) const {return array_name_slot_map_.at(name);}
 
     /** Inlined function
      *
      * @param array_slot
      * @return declared type of array at given slot, possible values in array_constants.h
      */
-	ArrayType_t array_type(int array_slot){return entries_.at(array_slot).array_type_;}
+	ArrayType_t array_type(int array_slot) const {return entries_.at(array_slot).array_type_;}
 
 	/** Inlined function
 	 *
 	 * @param array_slot
 	 * @return rank of array at given slot
 	 */
-	int rank(int array_slot){return entries_.at(array_slot).rank_;}
+	int rank(int array_slot) const {return entries_.at(array_slot).rank_;}
 
 	/** Inlined function
 	 *
 	 * @param array_slot
 	 * @return reference to selector array of array at given slot.  TODO  make return value const
 	 */
-	index_selector_t &index_selectors(const int array_slot) {return entries_.at(array_slot).index_selectors_;}
+	const index_selector_t &index_selectors(const int array_slot) const{return entries_.at(array_slot).index_selectors_;}
 
 	/** Inlined function
 	 *
 	 * @param array_slot
 	 * @return  slot in scalar table containing the value of the indicated rank 0 "array".
 	 */
-	int scalar_selector(int array_slot){return entries_.at(array_slot).scalar_selector_;}
+	int scalar_selector(int array_slot) const {return entries_.at(array_slot).scalar_selector_;}
 
 	friend std::ostream& operator<<(std::ostream&, const ArrayTable &);
 

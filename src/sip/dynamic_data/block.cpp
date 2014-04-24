@@ -68,16 +68,6 @@ Block::Block(dataPtr data):
 }
 
 
-
-
-Block::Block()
-
-{
-	data_ = NULL;
-	gpu_data_ = NULL;
-	size_ = 0;
-}
-
 Block::~Block() {
 	sip::check_and_warn((data_), std::string("in ~Block with NULL data_"));
 #ifdef HAVE_MPI

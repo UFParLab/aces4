@@ -26,13 +26,13 @@ void IntTable::read(IntTable& intTable, setup::InputStream& siox_file, setup::Se
 }
 
 
-int IntTable::value(int index){
+int IntTable::value(int index) const{
 	return entries_.at(index);
 }
-std::string IntTable::name(int index){
+std::string IntTable::name(int index) const{
 	return entryindex_name_map_.at(index);
 }
-int IntTable::index(std::string name){
+int IntTable::index(std::string name) const{
 	return name_entry_map_.at(name);
 }
 

@@ -8,6 +8,8 @@
 #include "config.h"
 #include "setup_reader.h"
 #include "assert.h"
+#include "block.h"
+#include "block_shape.h"
 #include <stdexcept>
 
 namespace setup {
@@ -92,29 +94,26 @@ std::ostream& operator<<(std::ostream& os, const SetupReader & obj) {
 		os << ']' << std::endl;
 	}
 
-//	os << "Predefined arrays:" << std::endl;
-//	SetupReader::PredefArrMap::const_iterator itp;
-//	for (itp = obj.predef_arr_.begin(); itp != obj.predef_arr_.end(); ++itp){
-//		int rank = itp->second.first;
-//		int * dims = itp->second.second.first;
-//		double * data = itp->second.second.second;
-//		int num_elems = 1;
-//		for (int i = 0; i < rank; i++) {
-//			num_elems *= dims[i];
-//		}
-//		os << itp->first << ":{ rank : ";
-//		os << rank << " } (";
-//		os << dims[0];
-//		for (int i=1; i<rank; i++){
-//			os <<" ," << dims[i];
-//		}
-//		os << "), [";
-//		os << data [0];
-//		for (int i=1; i<num_elems && i < MAX_PRINT_ELEMS; i++){
-//			os << ", " << data[i];
-//		}
-//		os << "]" << std::endl;
-//	}
+	os << "Predefined arrays:" << std::endl;
+	SetupReader::NamePredefinedContiguousArrayMap::const_iterator itp = obj.name_to_predefined_contiguous_array_map_.begin();
+	for (; itp != obj.name_to_predefined_contiguous_array_map_.end(); ++itp){
+		int rank = itp->second.first;
+		sip::BlockShape shape = itp->second.second->shape();
+		double * data = itp->second.second->get_data();
+		int num_elems = shape.num_elems();
+		os << itp->first << ":{ rank : ";
+		os << rank << " } (";
+		os << shape.segment_sizes_[0];
+		for (int i=1; i<rank; i++){
+			os <<" ," << shape.segment_sizes_[i];
+		}
+		os << "), [";
+		os << data [0];
+		for (int i=1; i<num_elems && i < MAX_PRINT_ELEMS; i++){
+			os << ", " << data[i];
+		}
+		os << "]" << std::endl;
+	}
 
 	os << "Predefined integer arrays:" << std::endl;
 	SetupReader::PredefIntArrMap::const_iterator itpi;
