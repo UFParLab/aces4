@@ -46,7 +46,7 @@ int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 
 	const std::vector<int> &server_ranks = sip_mpi_attr_.server_ranks();
 
-	return server_ranks[server_rank];
+	return server_ranks.at(server_rank);
 }
 
 
