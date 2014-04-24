@@ -337,6 +337,7 @@
       scalar niter 
       scalar diis_start 
       scalar diis_order  
+      scalar temp_order  
       scalar zero
       scalar one
       scalar two
@@ -2570,15 +2571,28 @@
 
       sip_barrier 
 
+      jcount = 0.0 
       DO jdiis 
+         jcount += 1.0 
+         if jcount <= worder  
+      kcount = 0.0 
       DO j1diis 
-         GET DIST_BB(jdiis,j1diis) 
-         BB(jdiis,j1diis) = DIST_BB(jdiis,j1diis) 
+         kcount += 1.0 
+         if kcount <= worder  
+            GET DIST_BB(jdiis,j1diis) 
+            BB(jdiis,j1diis) = DIST_BB(jdiis,j1diis) 
+         endif 
       ENDDO j1diis 
+         endif 
       ENDDO jdiis 
      #println "finished coputing BB" 
 
       execute compute_diis BB 
+      temp_order = worder 
+     #if worder > diis_order 
+     #   temp_order = diis_order 
+     #endif 
+      sip_barrier 
      #println "finished compute_diis" 
      #DO jdiis 
      #execute print_block BB(jdiis,jdiis) 
@@ -2589,7 +2603,7 @@
             n1 = 0.0  
             DO kdiis   
                n1 += 1.0  
-               if n1 <= worder 
+               if n1 <  worder # temp_order # VFL  
                   REQUEST           Daibj(a,i,b,j,kdiis) a  
                   t2aibj(a,i,b,j) = Daibj(a,i,b,j,kdiis) 
                   n2 = 0.0  
@@ -2636,7 +2650,7 @@
             n1 = 0.0  
             DO kdiis    
                n1 += 1.0  
-            if n1 <= worder 
+            if n1 <  worder # temp_order # VFL  
                GET         Dai(a,i,kdiis) 
                t2ai(a,i) = Dai(a,i,kdiis) 
             n2 = 0.0  
@@ -2680,12 +2694,17 @@
 
       server_barrier
 
+# If history space is full shift history end error vectors 
+
       if niter >= diis_order  
+
+# histories first 
 
       PARDO a, i, b, j 
       n1 = 0.0 
       DO kdiis 
          n1 += 1.0  
+         if n1 <  worder # temp_order # VFL 
          REQUEST Daibj(a,i,b,j,kdiis) a  
          taibj(a,i,b,j) = Daibj(a,i,b,j,kdiis) 
          n2 = 0.0 
@@ -2700,6 +2719,7 @@
             PREPARE D0aibj(a,i,b,j) = taibj(a,i,b,j) 
          endif 
       ENDDO k1diis  
+         endif 
       ENDDO kdiis 
       ENDPARDO a, i, b, j 
 
@@ -2707,6 +2727,7 @@
       n1 = 0.0 
       DO kdiis 
          n1 += 1.0  
+         if n1 <  worder # temp_order # VFL 
          GET Dai(a,i,kdiis)   
          tai(a,i) = Dai(a,i,kdiis)   
          n2 = 0.0 
@@ -2721,8 +2742,52 @@
             PREPARE D0ai(a,i) = tai(a,i) 
          endif 
       ENDDO k1diis  
+         endif 
       ENDDO kdiis 
       ENDPARDO a, i  
+
+# Now error vectors 
+
+      PARDO a, i, b, j 
+      n1 = 0.0 
+      DO kdiis 
+         n1 += 1.0  
+         if n1 <= worder # temp_order # VFL 
+         REQUEST Eaibj(a,i,b,j,kdiis) a  
+         taibj(a,i,b,j) = Eaibj(a,i,b,j,kdiis) 
+         n2 = 0.0 
+      DO k1diis 
+         n2 += 1.0  
+         etemp = n1 
+         etemp -= n2 
+         if etemp == 1.0 
+            PREPARE Eaibj(a,i,b,j,k1diis) = taibj(a,i,b,j) 
+         endif 
+      ENDDO k1diis  
+         endif 
+      ENDDO kdiis 
+      ENDPARDO a, i, b, j 
+
+      PARDO a, i  
+      n1 = 0.0 
+      DO kdiis 
+         n1 += 1.0  
+         if n1 <= worder # temp_order # VFL 
+         GET Eai(a,i,kdiis)   
+         tai(a,i) = Eai(a,i,kdiis)   
+         n2 = 0.0 
+      DO k1diis 
+         n2 += 1.0  
+         etemp = n1 
+         etemp -= n2 
+         if etemp == 1.0 
+            PUT Eai(a,i,k1diis) = tai(a,i) 
+         endif 
+      ENDDO k1diis  
+         endif 
+      ENDDO kdiis 
+      ENDPARDO a, i  
+
 
       endif 
       server_barrier
@@ -2760,7 +2825,7 @@
       do korder
          diis_order += 1.0
       ENDDO korder
-      diis_order = 8 
+      diis_order = 5 
 
       print_scalar diis_start
       print_scalar diis_order
@@ -2785,7 +2850,13 @@
 # ------------------------------ 
       CALL IGUESS_UHF
       SERVER_BARRIER  
-#
+# 
+# zero out the diis vectors 
+     #PARDO jdiis, j1diis 
+     #         tbb(jdiis,j1diis)         = 0.0  
+     #         PUT DIST_BB(jdiis,j1diis) = tbb(jdiis,j1diis)  
+     #ENDPARDO jdiis, j1diis 
+
       PARDO a, i, b, j 
             REQUEST                     T2old_ab(a,i,b,j) a 
             REQUEST                     T2old_ab(a,j,b,i) a 

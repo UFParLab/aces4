@@ -42,7 +42,6 @@ predefined scalar totenerg  #Total energy read in from JOBARC.
 #predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 #predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
-
 predefined static e(aces_defs_mu)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
 predefined static ea(aces_defs_mu)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 predefined static eb(aces_defs_mu)  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 

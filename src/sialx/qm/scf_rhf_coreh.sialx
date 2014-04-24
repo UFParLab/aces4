@@ -717,7 +717,6 @@ import "scf_defs.sialx"
        ENDDO mu   
 #
        execute eigen_calc FSpq_a ca
-      #execute eigen_calc FSpq_b Cb  
 #
        ENDPROC FOCK_DIAG 
 #      ----------------- 
