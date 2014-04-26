@@ -63,7 +63,7 @@ public:
 	 */
 	BLOCK_TYPE* block(const BlockId& block_id) {
 		int array_id = block_id.array_id();
-		PerArrayMap* map_ptr = block_map_[array_id];
+		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL) return NULL;
 		typename PerArrayMap::iterator it = map_ptr->find(block_id);
 		return it != map_ptr->end() ? it->second : NULL;  //return NULL if not found
@@ -93,7 +93,7 @@ public:
 	 */
 	void insert_block(const BlockId& block_id, BLOCK_TYPE* block_ptr) {
 		int array_id = block_id.array_id();
-		PerArrayMap* map_ptr = block_map_[array_id];
+		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL) {
 			map_ptr = new PerArrayMap(); //Will be deleted along with all of its Blocks in the IdBlockMap destructor.
 			                             //Alternatively, ownership may be transferred to PersistentArrayManager, and replaced with

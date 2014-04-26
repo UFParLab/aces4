@@ -5,6 +5,8 @@
  *      Author: basbas
  */
 
+#include <utility>
+
 #include "config.h"
 #include "contiguous_array_manager.h"
 #include "sip_tables.h"
@@ -21,6 +23,7 @@ WriteBack::WriteBack(int rank, Block::BlockPtr contiguous_block,
 }
 
 WriteBack::~WriteBack() {
+	delete block_;
 }
 void WriteBack::do_write_back() {
 	sip::check(!done_, "SIP bug:  called doWriteBack twice");
@@ -74,8 +77,11 @@ ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 					//array is predefined and in setup reader
 					block = b->second.second;
 					insert_contiguous_array(i, block);
-				} else { //is predefined, but not in setreader.  warn and set to zero
-					create_contiguous_array(i);
+				} else { //is predefined, but not in setreader.  Set to zero, insert into setup_reader map so it "owns" it and deletes it.
+					block = create_contiguous_array(i);
+					int block_rank = sip_tables_.array_rank(i);
+					std::pair<int, Block::BlockPtr> zeroed_block_pair = std::make_pair(i, block);
+					setup_reader_.name_to_predefined_contiguous_array_map_.insert(make_pair(name, zeroed_block_pair));
 				}
 			} else { //not predefined, just create it
 				create_contiguous_array(i);
@@ -142,20 +148,19 @@ Block::BlockPtr ContiguousArrayManager::get_block_for_updating(
 		const BlockId& block_id, WriteBackList& write_back_list) {
 	int rank = 0;
 	Block::BlockPtr contiguous = NULL;
-	Block::BlockPtr block = NULL;
 	sip::offset_array_t offsets;
-	get_block(block_id, rank, contiguous, block, offsets);
+	Block::BlockPtr block = get_block(block_id, rank, contiguous, offsets);
 	write_back_list.push_back(new WriteBack(rank, contiguous, block, offsets));
 	return block;
 }
 
 Block::BlockPtr ContiguousArrayManager::get_block_for_reading(
-		const BlockId& block_id) {
+		const BlockId& block_id, ReadBlockList& read_block_list) {
 	int rank = 0;
 	Block::BlockPtr contiguous = NULL;
-	Block::BlockPtr block = NULL;
 	sip::offset_array_t offsets;
-	get_block(block_id, rank, contiguous, block, offsets);
+	Block::BlockPtr block = get_block(block_id, rank, contiguous, offsets);
+	read_block_list.push_back(block);
 	return block;
 }
 
@@ -189,9 +194,8 @@ Block::BlockPtr ContiguousArrayManager::get_and_remove_array(int array_id) {
 	return NULL;
 }
 
-void ContiguousArrayManager::get_block(const BlockId& block_id, int& rank,
-		Block::BlockPtr& contiguous, Block::BlockPtr& block,
-		sip::offset_array_t& offsets) {
+Block::BlockPtr ContiguousArrayManager::get_block(const BlockId& block_id, int& rank,
+		Block::BlockPtr& contiguous, sip::offset_array_t& offsets) {
 //get contiguous array that contains block block_id, which must exist, and get its selectors and shape
 	int array_id = block_id.array_id();
 	rank = sip_tables_.array_rank(array_id);
@@ -212,9 +216,9 @@ void ContiguousArrayManager::get_block(const BlockId& block_id, int& rank,
 	BlockShape block_shape = sip_tables_.shape(block_id);
 
 //allocate a new block and copy data from contiguous block
-	block = new Block(block_shape);
+	Block::BlockPtr block = new Block(block_shape);
 	contiguous->extract_slice(rank, offsets, block);
-	return;
+	return block;
 }
 
 } /* namespace sip */

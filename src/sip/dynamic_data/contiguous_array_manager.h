@@ -65,6 +65,12 @@ private:
 
 typedef  std::vector<WriteBack*> WriteBackList;
 
+/**
+ * List of blocks sliced out from a Contiguous array
+ * Garbage collected when not needed.
+ */
+typedef std::vector<Block::BlockPtr> ReadBlockList;
+
 /** Manages contiguous (static) arrays
  *
  */
@@ -131,7 +137,8 @@ public:
 	 * It is the reponsibility of the interpreter to invoke the do_write_back method for each object in the list
 	 * at an appropriate time.
 	 *
-	 * ????? is responsible for deleting the subblock allocated in this method
+	 * contiguous_blocks_post_op in sip::Interpreter (calls WriteBack destructor)
+	 * is responsible for deleting the subblock allocated in this method
 	 *
 	 * @param [in] block_id  the ID of the desired block
 	 * @param [inout] the list of blocks to write back when an instruction is finished. A write_back object for the returned
@@ -146,12 +153,15 @@ public:
 	 *
 	 * Since this subblock is not intended to be modified, it does not need to be written back.
 	 *
-	 * ????? is responsible for deleting the subblock allocated in this method
+	 * contiguous_blocks_post_op in sip::Interpreter
+	 * is responsible for deleting the subblock allocated in this method
 	 *
 	 * @param [in] block_id  the ID of the desired block
+	 * @param [inout] list of blocks to be garbage collected after use. This operation adds
+	 * 					the sliced block to this list.
 	 * @return BlockPtr referring to contiguous copy of desired subblock of this array.
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId&);
+	Block::BlockPtr get_block_for_reading(const BlockId&, ReadBlockList&);
 
 	/** Returns a pointer to a Block containing the entire contiguous array, or NULL if the array does not exist.
 	 *
@@ -187,10 +197,10 @@ private:
 	 * @param [in] Id of subblock to create
 	 * @param [out] rank
 	 * @param [out] contiguous BlockPtr to contiguous array that contains the indicated subblock.
-	 * @param [out] block BlockPtr to contiguous copy of subblock
 	 * @param offsets [out] array containing offsets in each of first element of subblock in containing array.
+	 * @return BlockPtr to contiguous copy of subblock
 	 */
-	void get_block(const BlockId&, int& rank, Block::BlockPtr& contiguous, Block::BlockPtr& block, sip::offset_array_t& offsets);
+	Block::BlockPtr get_block(const BlockId&, int& rank, Block::BlockPtr& block, sip::offset_array_t& offsets);
 
 	/** map from array slot number to block containing contiguous array */
 	ContiguousArrayMap contiguous_array_map_;

@@ -62,14 +62,14 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
 	while (pc < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc);
-		sip::check(write_back_list_.empty(),
-				"SIP bug:  write_back_list not empty at top of interpreter loop");
+		sip::check(write_back_list_.empty() && read_block_list_.empty(),
+				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 		switch (opcode) {
 		case contraction_op: {
 			sialx_timers_.start_timer(line_number());
 			sial_ops_.log_statement(opcode, line_number());
 			handle_contraction_op(pc);
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -78,7 +78,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sialx_timers_.start_timer(line_number());
 			sial_ops_.log_statement(opcode, line_number());
 			handle_sum_op(pc, 1.0);
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -114,7 +114,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_user_sub_op(pc);
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -241,7 +241,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sialx_timers_.start_timer(line_number());
 			// x = y
 			handle_assignment_op(pc);
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 			break;
@@ -253,7 +253,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_self_multiply_op(pc);
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -262,7 +262,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_sum_op(pc, -1.0); // (x = y - z) is computed as x = y + (z * -1)
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -329,7 +329,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sial_ops_.log_statement(opcode, line_number());
 			sialx_timers_.start_timer(line_number());
 			handle_contraction_op(pc);
-			write_back_contiguous();
+			contiguous_blocks_post_op();
 			sialx_timers_.pause_timer(line_number());
 			++pc;
 		}
@@ -471,7 +471,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case slice_op: {
 			handle_slice_op(pc);
-			write_back_contiguous();
+			//write_back_contiguous();
 			++pc;
 		}
 			break;
@@ -1098,8 +1098,10 @@ void Interpreter::handle_contraction_op(int pc) {
 			rblock->shape().segment_sizes_, dblock->get_data(), drank,
 			dblock->shape().segment_sizes_, ierr);
 	//std::cout <<"scalar:" << dblock.get_data()[0] << std::endl;
-	if (d_is_scalar)
+	if (d_is_scalar){
 		set_scalar_value(op_table_.result_array(pc), *(dblock->get_data()));
+		delete dblock;
+	}
 
 }
 
@@ -1411,7 +1413,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 	case 'r': {
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_reading(
-						id) :
+						id, read_block_list_) :
 				sial_ops_.get_block_for_reading(id);
 	}
 		break;
@@ -1438,10 +1440,9 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 
 }
 
-void Interpreter::write_back_contiguous() {
-	//DEBUG
-	int list_size = write_back_list_.size();
-	//VFLif (list_size >1){ std::cout << "SIZE OF WRITE BACKLIST = "<< write_back_list_.size() << std::endl;}
+void Interpreter::contiguous_blocks_post_op() {
+
+	// Write back all contiguous slices
 	while (!write_back_list_.empty()) {
 		sip::WriteBack * ptr = write_back_list_.front();
 #ifdef HAVE_CUDA
@@ -1451,16 +1452,17 @@ void Interpreter::write_back_contiguous() {
 		}
 #endif
 		ptr->do_write_back();
-		//DEBUG
-		//VFLif (list_size > 1){
-		//VFLstd::cout << "WRITE_BACK: " << std::endl;
-		//VFLstd::cout << *ptr << std::endl;
-		//VFL}
 		write_back_list_.erase(write_back_list_.begin());
 		delete ptr;
 	}
-	//DEBUG
-	//VFLif (list_size > 1) {std::cout << "returning from write_back_contiguous" << std::endl;}
+
+	// Free up contiguous slices only needed for read.
+	while (!read_block_list_.empty()){
+		// TODO FIXME GPU ?????????????????
+		Block::BlockPtr bptr = read_block_list_.front();
+		read_block_list_.erase(read_block_list_.begin());
+		delete bptr;
+	}
 }
 
 #ifdef HAVE_CUDA

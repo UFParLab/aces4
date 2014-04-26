@@ -109,7 +109,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 		msg.append(block_id.str());
 		msg.append(".  Creating zero block ");
 //		check_and_warn(block != NULL, msg);
-		std::cout <<"worker " << mpi_source << msg << std::endl << std::flush; //do this instead of check_and_warn so goes to std::out intead of std::err
+		SIP_LOG(std::cout <<"worker " << mpi_source << msg << std::endl << std::flush); //do this instead of check_and_warn so goes to std::out intead of std::err
 		block = block_map_.get_or_create_block(block_id, block_size, true);
 	}
 	//send block to worker using same tag as GET

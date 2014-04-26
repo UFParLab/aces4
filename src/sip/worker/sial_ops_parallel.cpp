@@ -401,7 +401,7 @@ void SialOpsParallel::end_program() {
 
 //enum array_mode {NONE, READ, WRITE};
 bool SialOpsParallel::check_and_set_mode(int array_id, array_mode mode) {
-	array_mode current = mode_[array_id];
+	array_mode current = mode_.at(array_id);
 	if (current == NONE) {
 		mode_[array_id] = mode;
 		return true;

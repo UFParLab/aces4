@@ -248,12 +248,22 @@ private:
 	 * be copied back into the contiguous array.
 	 */
 	sip::WriteBackList write_back_list_;
+
+
+	/** Maintains the list of sliced out blocks from contiguous arrays.
+	 * Garbage collected after the operation that uses it.
+	 */
+	sip::ReadBlockList read_block_list_;
+
 	/**
-	 * Writes back the blocks in the write_back_list_ into their containing contiguous array.
-	 * This should be called after each instruction that may have updated a block.
+	 * Handles post processing for slices of contiguous arrays.
+	 * -Frees up contiguous array slices that were obtained for intent "read".
+	 * -Writes back the blocks with intent "write/update" in the write_back_list_
+	 *  into their containing contiguous array.
+	 * -This should be called after each instruction that may have updated a block.
 	 * TODO let the compiler indicate if this needs to be called.
 	 */
-	void write_back_contiguous();
+	void contiguous_blocks_post_op();
 
 
 	/**

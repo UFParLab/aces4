@@ -49,6 +49,7 @@ SetupReader::~SetupReader() {
 		delete iter->second.second;
 		iter->second.second = NULL;
     }
+    name_to_predefined_contiguous_array_map_.clear();
 }
 
 void SetupReader::read() {
@@ -253,11 +254,15 @@ void SetupReader::read_predefined_arrays(){
 		std::copy(dims+0, dims+rank,dim_sizes);
 		std::fill(dim_sizes+rank, dim_sizes+MAX_RANK, 1);
 		sip::BlockShape shape(dim_sizes);
+		delete dims;
 //
 //		double * data2 = new double[num_data_elems];
 //		std::copy(data+0, data+num_data_elems, data2);
 //		name_to_predefined_contiguous_array_map_[name] = new sip::Block(shape, data2);
-		name_to_predefined_contiguous_array_map_[name] = std::pair<int, sip::Block::BlockPtr>(rank, new sip::Block(shape, data));
+		std::pair<int, sip::Block::BlockPtr> rank_blockptr_pair(rank, new sip::Block(shape, data));
+		std::pair<NamePredefinedContiguousArrayMap::iterator, bool> ret =
+				name_to_predefined_contiguous_array_map_.insert(make_pair(name, rank_blockptr_pair));
+		sip::check(ret.second, "Trying to read another array by name : " + name);
 
 	}
 }
@@ -279,7 +284,11 @@ void SetupReader::read_predefined_integer_arrays(){
 		//read the elements
 		int * data = stream_.read_int_array(&num_data_elems);
 		std::pair<int *, int *> dataPair = std::pair<int *, int *>(dims, data);
-		predef_int_arr_[name] = std::pair<int, std::pair<int *, int *> >(rank, dataPair);
+		//predef_int_arr_[name] = std::pair<int, std::pair<int *, int *> >(rank, dataPair);
+		std::pair<PredefIntArrMap::iterator, bool> ret =
+				predef_int_arr_.insert (make_pair(name, make_pair(rank, dataPair)));
+		sip::check(ret.second, "Trying to read another array by name : " + name);
+
 	}
 }
 
