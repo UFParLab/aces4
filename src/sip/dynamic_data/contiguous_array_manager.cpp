@@ -21,6 +21,7 @@ WriteBack::WriteBack(int rank, Block::BlockPtr contiguous_block,
 }
 
 WriteBack::~WriteBack() {
+    delete block_;
 }
 void WriteBack::do_write_back() {
 	sip::check(!done_, "SIP bug:  called doWriteBack twice");
