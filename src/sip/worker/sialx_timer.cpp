@@ -176,7 +176,7 @@ void SialxTimer::print_timers(std::vector<std::string> line_to_str) {
 			double avg_time = tot_time / timer_switched_[i];
 //			std::cout<< i <<" \t "<< line_to_str[i] << " \t "<< tot_time <<" \t "<< avg_time << std::endl;
 			std::cout<<std::setw(LW)<<std::left << i
-					<< std::setw(SW)<< std::left << line_to_str[i]
+					<< std::setw(SW)<< std::left << line_to_str.at(i)
 			        << std::setw(CW)<< std::left << tot_time
 			        << std::setw(CW)<< std::left << avg_time
 			        << std::endl;
