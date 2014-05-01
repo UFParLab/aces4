@@ -1045,10 +1045,8 @@ void Interpreter::handle_contraction_op(int pc) {
 	sip::Block::BlockPtr dblock = NULL;
 	sip::index_selector_t dselected_index_ids;
 	if (d_is_scalar) {
-		double dval = scalar_value(op_table_.result_array(pc));
-		dval = 0; // Initialize to 0 as required by Dmitry's Contraction routine
-		double *dvalPtr = new double[1];
-		*dvalPtr = dval;
+		double *dvalPtr = data_manager_.scalar_address(op_table_.result_array(pc));
+		*dvalPtr = 0; // Initialize to 0 as required by Dmitry's Contraction routine
 		sip::BlockShape scalar_shape;
 		dblock = new sip::Block(scalar_shape, dvalPtr);
 		std::fill(dselected_index_ids + 0, dselected_index_ids + MAX_RANK,
