@@ -305,7 +305,7 @@ c ----------------------------------------------------------------------
      * .not.  associated(ivangmom))
      *    print *, "ERROR fortran pointer is not associated!!!"
 
-      calc_2der = .true. ! Overestimate for now 
+      calc_2der = .false. ! No second-derivative capability yet  
 
       offset_1 = 0 
       offset_2 = 0 
@@ -322,6 +322,7 @@ c-----------------------------------------------------------------------
       call lookup_shell(end_nfps, nshells, offset_2, m2) 
 c
 c     call TAU_START("erd_scratch_mem_cal") 
+c     write(6,*) ' M1 M2', m1, m2, 'nshells', nshells 
 
       call erd_scratch_mem_calc(nshells, ncenters, npcoeffs, nalphas, 
      *                         ivangmom, ncfps, npfps, 
@@ -335,13 +336,13 @@ c     call TAU_START("erd_scratch_mem_cal")
      *                         m1, m2)  
 c     call TAU_STOP("erd_scratch_mem_cal") 
 
-      imax = max0(imax,my_imax) 
-      zmax = max0(zmax,my_zmax) 
-c     if (my_imax .gt. imax) imax = my_imax 
-c     if (my_zmax .gt. zmax) zmax = my_zmax 
+c     imax = max0(imax,my_imax) 
+c     zmax = max0(zmax,my_zmax) 
+      imax = my_imax 
+      zmax = my_zmax 
 
-c      write(6,*) 'IMAX = ', imax
-c      write(6,*) 'ZMAX = ', Zmax
+       write(6,*) 'IMAX = ', imax
+       write(6,*) 'ZMAX = ', Zmax
 c ----------------------------------------------------------------------
 c
       return

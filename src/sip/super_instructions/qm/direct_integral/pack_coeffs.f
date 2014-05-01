@@ -49,17 +49,19 @@ c      include 'machine_types.h'
       nalpha = 0
       npcoeff = 0
 
-c     write(6,*) 'MAX :', max_alpha, max_pcoeff 
+c     write(6,*) 'M N R S :', m, n, r, s  
 
       do j = 1, 4
          ishell = quad(j)
 
          do i = 1, npfps(ishell)
             alpha_pack(ialpha+i-1) = alpha(ixalpha(ishell)+i-1)
+c           write(6,*) 'alppha', ialpha+i-1, ixalpha(ishell)+i-1 
          enddo
 
          ialpha = ialpha + npfps(ishell)
          nalpha = nalpha + npfps(ishell)
+
 c        if (nalpha .gt. 4*max_alpha) then  
 c            print *,'Error: alpha buffer overflow shell ', 
 c    *            quad(1),quad(2), ':', nalpha, 4*max_alpha
@@ -75,6 +77,7 @@ c        endif
 
          do i = 1, num
             pcoeff_pack(ipcoeff+i-1) = pcoeff(ixpcoeff(ishell)+i-1)
+c           write(6,*) 'pcoeff', ipcoeff+i-1, ixpcoeff(ishell)+i-1 
          enddo
 
          ipcoeff = ipcoeff + num

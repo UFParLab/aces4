@@ -337,6 +337,7 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_frag.siox\
 ./src/sialx/qm/scf_frag_defs.siox\
 ./src/sialx/qm/trans_frag_fpardo.siox\
+./src/sialx/qm/frag_2order_corr.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
@@ -422,6 +423,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_frag.sialx\
 ./src/sialx/qm/scf_frag_defs.sialx\
 ./src/sialx/qm/trans_frag_fpardo.sialx\
+./src/sialx/qm/frag_2order_corr.sialx\
 ./src/sialx/qm/trans_frag_defs.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\

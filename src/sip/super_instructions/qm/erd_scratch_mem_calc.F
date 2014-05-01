@@ -99,9 +99,17 @@ c at most 4*n.
       enddo 
       enddo 
 
+c     imax = 500000
+c     zmax = 500000
+c     return
+
 c     imax = 5000000 
 c     zmax = 5000000 
 c     return 
+      imax = 0 
+      zmax = 0
+      ihrr = 0 
+      zhrr = 0 
 
       do m = m1, m2
        n = m
@@ -442,8 +450,8 @@ c-------------------------------------------------------------------------
       imax = imax + ihrr
       zmax = zmax + zhrr  
 
-c     write(6,*) ' F_IMAX = ', imax 
-c     write(6,*) ' F_ZMAX = ', zmax 
+      write(6,*) ' F_IMAX = ', ihrr 
+      write(6,*) ' F_ZMAX = ', zhrr 
 
       return
       end

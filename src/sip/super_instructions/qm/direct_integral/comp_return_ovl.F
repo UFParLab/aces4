@@ -325,6 +325,7 @@ c Zero out the output array
      *                       ccbeg_pack, ccend_pack,
      *                       max_dim_coeff)
 
+c      write(6,*) ' M N        :', m, n 
 c      write(6,*) ' NALPHA_PACK:', nalpha_pack 
 c      write(6,*) ' NCOEFF_PACK:', ncoeff_pack 
 c ------------------------------------------------------------------------ 

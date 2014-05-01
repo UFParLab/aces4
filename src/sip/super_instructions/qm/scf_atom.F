@@ -894,9 +894,9 @@ c     integer watom_frag(nfrags, *)
 
       integer ccbeg(*), ccend(*)
 
-      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
-      double precision alpha_pack(npcoeffs),
-     *                 pcoeff_pack(npcoeffs)
+      integer ccbeg_pack(npcoeffs*4), ccend_pack(npcoeffs*4)
+      double precision alpha_pack(npcoeffs*4),
+     *                 pcoeff_pack(npcoeffs*4)
       double precision charge(ncenters) 
       double precision etemp 
 

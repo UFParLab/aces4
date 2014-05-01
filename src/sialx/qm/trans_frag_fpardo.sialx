@@ -2468,31 +2468,19 @@ import "trans_frag_defs.sialx"
       restore_persistent DFock_a "fock_a"
       sip_barrier
       println "Done restoring persistent arrays" 
-      PARDO mu
+      DO mu
       DO p 
          GET        Dca(mu,p) 
          ca(mu,p) = Dca(mu,p) 
       ENDDO p 
-      ENDPARDO mu  
-      PARDO p
-      DO mu 
-         GET        Dca(mu,p) 
-         ca(mu,p) = Dca(mu,p) 
       ENDDO mu  
-      ENDPARDO p  
 
-      PARDO p  
+      DO p  
       DO p1  
          GET            Dfock_a(p,p1) 
          fock_a(p,p1) = Dfock_a(p,p1) 
       ENDDO p1  
-      ENDPARDO p  
-      PARDO p1  
-      DO p  
-         GET            Dfock_a(p,p1) 
-         fock_a(p,p1) = Dfock_a(p,p1) 
       ENDDO p  
-      ENDPARDO p1  
 
       sip_barrier
 
