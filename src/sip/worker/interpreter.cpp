@@ -1441,26 +1441,48 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 void Interpreter::contiguous_blocks_post_op() {
 
 	// Write back all contiguous slices
-	while (!write_back_list_.empty()) {
-		sip::WriteBack * ptr = write_back_list_.front();
+//	while (!write_back_list_.empty()) {
+//		sip::WriteBack * ptr = write_back_list_.front();
+//#ifdef HAVE_CUDA
+//		if (gpu_enabled_) {
+//			sip::Block::BlockPtr cblock = ptr->get_block();
+//			data_manager_.block_manager_.lazy_gpu_read_on_host(cblock);
+//		}
+//#endif
+//		ptr->do_write_back();
+//		write_back_list_.erase(write_back_list_.begin());
+//		delete ptr;
+//	}
+//
+//	// Free up contiguous slices only needed for read.
+//	while (!read_block_list_.empty()){
+//		// TODO FIXME GPU ?????????????????
+//		Block::BlockPtr bptr = read_block_list_.front();
+//		read_block_list_.erase(read_block_list_.begin());
+//		delete bptr;
+//	}
+
+	for (WriteBackList::iterator it = write_back_list_.begin(); it != write_back_list_.end(); ++it){
+		WriteBack* wb = *it;
+		wb->do_write_back();
 #ifdef HAVE_CUDA
 		if (gpu_enabled_) {
-			sip::Block::BlockPtr cblock = ptr->get_block();
+			sip::Block::BlockPtr cblock = it->get_block();
 			data_manager_.block_manager_.lazy_gpu_read_on_host(cblock);
 		}
 #endif
-		ptr->do_write_back();
-		write_back_list_.erase(write_back_list_.begin());
-		delete ptr;
+		delete wb;
+		*it = NULL;
 	}
-
-	// Free up contiguous slices only needed for read.
-	while (!read_block_list_.empty()){
+	write_back_list_.clear();
+	for (ReadBlockList::iterator it = read_block_list_.begin(); it != read_block_list_.end(); ++it){
 		// TODO FIXME GPU ?????????????????
-		Block::BlockPtr bptr = read_block_list_.front();
-		read_block_list_.erase(read_block_list_.begin());
+		Block::BlockPtr bptr = *it;
 		delete bptr;
+		*it = NULL;
 	}
+	read_block_list_.clear();
+
 }
 
 #ifdef HAVE_CUDA
