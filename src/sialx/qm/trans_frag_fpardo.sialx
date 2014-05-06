@@ -464,7 +464,7 @@ import "trans_frag_defs.sialx"
                      if pcount == jcount  
                         txxqq(mu,nu,j1,j)         = LVxxxq(mu,nu,lambda,j)*ca(lambda,j1) 
                         Ipp(j1,j)    = 2.0 
-                        execute return_diagonal Ipp(j1,j) 
+                        execute return_diagonal Ipp(j1,j) etemp  
                         txx(mu,nu)    = Ipp(j1,j)*txxqq(mu,nu,j1,j) 
                        #PUT wC_ao(mu,nu) += txx(mu,nu) 
                         LwC_ao(mu,nu) += txx(mu,nu) 
