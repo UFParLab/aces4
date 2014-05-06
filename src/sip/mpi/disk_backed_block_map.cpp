@@ -21,6 +21,9 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 
 ServerBlock* DiskBackedBlockMap::get_or_create_block(const BlockId& block_id,
 		size_t block_size, bool initialize) {
+	// TODO ===============================================
+	// TODO Complete this method.
+	// TODO ===============================================
 	ServerBlock* block = block_map_.get_or_create_block(block_id, block_size, initialize);
 	return block;
 }
@@ -60,6 +63,9 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id){
 }
 
 void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & label){
+	// TODO ===============================================
+	// TODO Complete this method.
+	// TODO ===============================================
 	disk_backed_arrays_io_.restore_persistent_array(array_id, label);
 }
 
@@ -67,6 +73,9 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & la
 void DiskBackedBlockMap::save_persistent_array(const int array_id,
 		const std::string& array_label,
 		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
+	// TODO ===============================================
+	// TODO Complete this method.
+	// TODO ===============================================
 	disk_backed_arrays_io_.save_persistent_array(array_id, array_label, array_blocks);
 }
 

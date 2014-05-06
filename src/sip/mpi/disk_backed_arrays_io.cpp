@@ -164,7 +164,7 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 	MPI_File mpif = MPI_FILE_NULL;
 	SIPMPIUtils::check_err(
 			MPI_File_open(server_comm, temp_persistent_filename,
-					MPI_MODE_WRONLY | MPI_MODE_RDWR, MPI_INFO_NULL, &mpif));
+					MPI_MODE_WRONLY | MPI_MODE_EXCL, MPI_INFO_NULL, &mpif));
 
 	zero_out_all_disk_blocks(array_id, mpif);
 	
