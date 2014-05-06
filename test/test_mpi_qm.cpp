@@ -762,9 +762,9 @@ TEST(Sial_QM,ccsdpt_test){
 
 				if (it == progs.end()){	// Last Program
 					double eaab = runner.scalar_value("eaab");
-					ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-12);
+					ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
 					double esaab = runner.scalar_value("esaab");
-					ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-12);
+					ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
 				}
 			}
 
