@@ -2825,7 +2825,6 @@
       do korder
          diis_order += 1.0
       ENDDO korder
-      diis_order = 5 
 
       print_scalar diis_start
       print_scalar diis_order
