@@ -35,11 +35,11 @@ c---------------------------------------------------------------------------
       integer(C_INT), intent(out)::ierr
       integer(C_INT) ncenters  
       integer(C_INT) npcoeff  
-c     integer(C_INT) iscr(10000000) !!! NEED TO MALLOC VFL  
-c     real(C_DOUBLE) scr(10000000)  !!! NEED TO MALLOC VFL  
+      integer(C_INT) iscr(10000000) !!! NEED TO MALLOC VFL  
+      real(C_DOUBLE) scr(10000000)  !!! NEED TO MALLOC VFL  
 
-      real(C_DOUBLE), pointer :: scr(:)
-      real(C_DOUBLE), pointer :: iscr(:)
+c     real(C_DOUBLE), pointer :: scr(:)
+c     real(C_DOUBLE), pointer :: iscr(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
 
@@ -110,11 +110,11 @@ c   Set scratch space
 
       nscr  = zmax ! 5000000 
       niscr = imax ! 5000000
-      call scratch_array(nscr, cscr) 
-      call c_f_pointer(cscr, scr, [nscr]) 
+c     call scratch_array(nscr, cscr) 
+c     call c_f_pointer(cscr, scr, [nscr]) 
 
-      call scratch_array(niscr, ciscr) 
-      call c_f_pointer(ciscr, iscr, [niscr])
+c     call scratch_array(niscr, ciscr) 
+c     call c_f_pointer(ciscr, iscr, [niscr])
 
 c---------------------------------------------------------------------------
 c   Compute data block of integrals.
@@ -133,8 +133,8 @@ c     write(6,*) ' OFFSETS = ', index_values(2), offset_2
      *           coords, tcoords, scr, iscr)
 
 c  Remove scratch space  
-      call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
+c     call delete_scratch_array(cscr)
+c     call delete_scratch_array(ciscr)
 
       return
       end

@@ -49,6 +49,11 @@ block_map_(sip_tables.num_arrays()){
 BlockManager::~BlockManager() {
 	check(temp_block_list_stack_.size() == 0,
 			"temp_block_list_stack not empty when destroying block manager!");
+
+	// Free up all blocks managed by this block manager.
+	for (int i = 0; i < sip_tables_.num_arrays(); ++i)
+		delete_per_array_map_and_blocks(i);
+
 }
 
 

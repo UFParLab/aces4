@@ -97,6 +97,9 @@ void SialOpsParallel::get(BlockId& block_id) {
 	int get_tag;
 	get_tag = barrier_support_.make_mpi_tag_for_GET();
 
+    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+
+
 	SIPMPIUtils::check_err(
 			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
 					server_rank, get_tag, MPI_COMM_WORLD));
@@ -182,6 +185,9 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 	int server_rank = data_distribution_.get_server_rank(target_id);
 	int put_tag, put_data_tag;
 	put_tag = barrier_support_.make_mpi_tags_for_PUT(put_data_tag);
+
+    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+
 	SIPMPIUtils::check_err(
 			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
 					server_rank, put_tag, MPI_COMM_WORLD));
@@ -260,6 +266,9 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 	int put_accumulate_tag, put_accumulate_data_tag;
 	put_accumulate_tag = barrier_support_.make_mpi_tags_for_PUT_ACCUMULATE(
 			put_accumulate_data_tag);
+
+    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+
 	//send block id
 	SIPMPIUtils::check_err(
 			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
@@ -402,7 +411,7 @@ void SialOpsParallel::end_program() {
 
 //enum array_mode {NONE, READ, WRITE};
 bool SialOpsParallel::check_and_set_mode(int array_id, array_mode mode) {
-	array_mode current = mode_[array_id];
+	array_mode current = mode_.at(array_id);
 	if (current == NONE) {
 		mode_[array_id] = mode;
 		return true;

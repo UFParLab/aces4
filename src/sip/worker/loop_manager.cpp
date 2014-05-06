@@ -215,7 +215,7 @@ StaticTaskAllocParallelPardoLoop::StaticTaskAllocParallelPardoLoop(int num_indic
 		const int (&index_id)[MAX_RANK], DataManager & data_manager, SipTables & sip_tables,
 		SIPMPIAttr & sip_mpi_attr) :
 		data_manager_(data_manager), sip_tables_(sip_tables),
-		num_indices_(num_indices), first_time_(true),
+		num_indices_(num_indices), first_time_(true), iteration_(0),
 		sip_mpi_attr_(sip_mpi_attr) {
 
 	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
@@ -251,8 +251,10 @@ inline bool StaticTaskAllocParallelPardoLoop::initialize_indices() {
 	//initialize values of all indices
 	bool more_iterations = true;
 	for (int i = 0; i < num_indices_; ++i) {
-		if (lower_seg_[i] >= upper_bound_[i])
+		if (lower_seg_[i] >= upper_bound_[i]){
 			more_iterations = false; //this loop has an empty range in at least one dimension.
+			return more_iterations;
+		}
 
 		sip::check(
 				data_manager_.index_value(index_id_[i])
@@ -269,8 +271,6 @@ inline bool StaticTaskAllocParallelPardoLoop::initialize_indices() {
 
 bool StaticTaskAllocParallelPardoLoop::do_update() {
 
-	static int iteration = 0;
-
 	if (to_exit_)
 		return false;
 
@@ -280,17 +280,17 @@ bool StaticTaskAllocParallelPardoLoop::do_update() {
 	if (first_time_) {
 		first_time_ = false;
 		bool more_iters = initialize_indices();
-		while (more_iters && iteration % num_workers != company_rank){
+		while (more_iters && iteration_ % num_workers != company_rank){
 			more_iters = increment_indices();
-			iteration++;
+			iteration_++;
 		}
 		return more_iters;
 	} else {
-		iteration++;
+		iteration_++;
 		bool more_iters = increment_indices();
-		while (more_iters && iteration % num_workers != company_rank){
+		while (more_iters && iteration_ % num_workers != company_rank){
 			more_iters = increment_indices();
-			iteration++;
+			iteration_++;
 		}
 		return more_iters;
 	}

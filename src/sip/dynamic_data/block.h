@@ -38,8 +38,6 @@
 #include "mpi_state.h"
 #endif //HAVE_MPI
 
-
-
 namespace sip {
 	class Interpreter;
 	class SIPServer;
@@ -180,7 +178,7 @@ public:
 
 private:
 
-    Block();
+    //Block();
 
 
 	BlockShape shape_;

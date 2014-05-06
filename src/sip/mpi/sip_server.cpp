@@ -115,6 +115,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 //		std::cout <<"worker " << mpi_source << msg << std::endl << std::flush; //do this instead of check_and_warn so goes to std::out intead of std::err
 //		block = block_map_.get_or_create_block(block_id, block_size, true);
 //	}
+
 	//send block to worker using same tag as GET
 	SIPMPIUtils::check_err(
 			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,

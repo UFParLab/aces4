@@ -265,7 +265,7 @@ void IndexTable::init(setup::InputStream &siox_file,
 int IndexTable::segment_extent(int index_id, int index_value) const {
 	if (index_id == unused_index_slot)
 		return unused_index_segment_size;
-	IndexTableEntry entry = entries_.at(index_id);
+	const IndexTableEntry &entry = entries_.at(index_id);
 	return entry.segment_extent(index_value);
 }
 

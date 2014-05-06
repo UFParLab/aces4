@@ -23,12 +23,14 @@ std::string opcodeToName(opcode_t op){
 	SIP_OPCODES
 #undef SIPOP
 	}
+	sip::fail("Interal error ! opcode not recognized !");
 	return std::string("");
 }
 
 bool printableOpcode(opcode_t op){
 	switch(op){
 #define SIPOP(e,n,t,p) case e: return p;
+	SIP_OPCODES
 #undef SIPOP
 	}
 	return false;

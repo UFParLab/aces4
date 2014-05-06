@@ -28,6 +28,10 @@ c---------------------------------------------------------------------------
          eps = epsb + epsd - epsa - epsc 
 
 c        val = array(a,b,c,d) 
+c        write(6,*) ' ABCD :', a, b, c, d, '::',
+c    *                         a+off_1,b+off_2,c+off_3,d+off_4, eps   
+c        write(6,*) 'EPS', epsa, epsb, epsc, epsd 
+c        write(6,*) 'array', array(a,b,c,d)  
          array(a,b,c,d) = array(a,b,c,d)/eps  
 c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
       enddo 

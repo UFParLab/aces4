@@ -12,7 +12,13 @@ namespace sip {
 
 //const int ArrayTableEntry::unused_index_slot = -1;//chosen to throw out of bound exception if accessed.
 
-ArrayTableEntry::ArrayTableEntry(){}
+ArrayTableEntry::ArrayTableEntry():
+		name_(""), rank_(-1), array_type_(temp_array_t),
+		scalar_selector_(-1){
+	for (int i = 0; i < MAX_RANK; ++i) {
+			this->index_selectors_[i] = unused_index_slot;
+	}
+}
 
 ArrayTableEntry::ArrayTableEntry(std::string name, int rank, ArrayType_t array_type,
 		int index_selectors[MAX_RANK], int scalar_selector) :name_(name),

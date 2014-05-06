@@ -46,6 +46,7 @@ c      include 'machine_types.h'
       ipcoeff = 1
       nalpha = 0
       npcoeff = 0
+
       do j = 1, 2 
          ishell = quad(j)
          do i = 1, npfps(ishell)

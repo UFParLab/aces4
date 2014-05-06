@@ -219,7 +219,7 @@ c  Set scratch space
       nscr  = zmax  
       niscr = imax  
 
-c      call TAU_START("start scratch_array")   
+c     call TAU_START("start scratch_array")   
 
       call scratch_array(nscr, cscr) 
       call c_f_pointer(cscr, scr, [nscr]) 
@@ -227,7 +227,7 @@ c      call TAU_START("start scratch_array")
       call scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr]) 
 
-c      call TAU_STOP("start scratch_array")   
+c     call TAU_STOP("start scratch_array")   
 
       offset_1 = 0 
       offset_2 = 0 
@@ -257,7 +257,7 @@ c     call TAU_START("start compute_uinntegrals7")
      *                         1, extents_1(1), 1,extents_1(2),
      *                         data_3, data_4)
 
-c      call TAU_STOP("start compute_uinntegrals7")   
+c     call TAU_STOP("start compute_uinntegrals7")   
 
 c ----------------------------------------------------------------------
 c

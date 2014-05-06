@@ -116,6 +116,7 @@ private:
 	virtual void do_finalize();
 	bool first_time_;
 	int num_indices_;
+	long iteration_;
 	sip::index_selector_t index_id_;
 	sip::index_value_array_t lower_seg_;
     sip::index_value_array_t upper_bound_;
