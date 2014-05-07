@@ -16,6 +16,7 @@ namespace sip {
 
 class SIPServer;
 class DiskBackedArraysIO;
+class DiskBackedBlockMap;
 
 class ServerBlock {
 public:
@@ -56,6 +57,7 @@ private:
 
 	friend SIPServer;
 	friend DiskBackedArraysIO;
+	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
 };
 

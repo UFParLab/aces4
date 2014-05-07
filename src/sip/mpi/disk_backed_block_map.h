@@ -57,6 +57,8 @@ public:
 
 private:
 
+	ServerBlock* read_block_from_disk(const BlockId& block_id, size_t block_size);
+
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
 	const DataDistribution &data_distribution_;

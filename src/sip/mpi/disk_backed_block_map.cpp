@@ -19,19 +19,29 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution){
 }
 
+ServerBlock* DiskBackedBlockMap::read_block_from_disk(const BlockId& block_id, size_t block_size){
+	ServerBlock* block = new ServerBlock(block_size);
+	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
+	block->set_dirty();
+	block_map_.insert_block(block_id, block);
+	return block;
+}
+
 ServerBlock* DiskBackedBlockMap::get_or_create_block(const BlockId& block_id,
 		size_t block_size, bool initialize) {
 	// TODO ===============================================
 	// TODO Complete this method.
 	// TODO ===============================================
-	ServerBlock* block = block_map_.get_or_create_block(block_id, block_size, initialize);
+	ServerBlock* block = block_map_.block(block_id);
+	if (block == NULL){
+		block = read_block_from_disk(block_id, block_size);
+	}
+	//ServerBlock* block = block_map_.get_or_create_block(block_id, block_size, initialize);
+	//return block;
 	return block;
 }
 
 ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
-	// TODO ===============================================
-	// TODO Complete this method.
-	// TODO ===============================================
 	ServerBlock* block = block_map_.block(block_id);
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
@@ -44,7 +54,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 
 		//do this instead of check_and_warn so goes to std::out intead of std::err
 		std::cout << msg.str() << std::flush;
-		block = get_or_create_block(block_id, block_size, true);
+		block = read_block_from_disk(block_id, block_size);
 	}
 	return block;
 }
@@ -63,9 +73,6 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id){
 }
 
 void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & label){
-	// TODO ===============================================
-	// TODO Complete this method.
-	// TODO ===============================================
 	disk_backed_arrays_io_.restore_persistent_array(array_id, label);
 }
 
@@ -73,9 +80,6 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & la
 void DiskBackedBlockMap::save_persistent_array(const int array_id,
 		const std::string& array_label,
 		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
-	// TODO ===============================================
-	// TODO Complete this method.
-	// TODO ===============================================
 	disk_backed_arrays_io_.save_persistent_array(array_id, array_label, array_blocks);
 }
 

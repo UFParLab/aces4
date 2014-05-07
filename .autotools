@@ -74,7 +74,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value=" CFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-g -O0&quot; CXXFLAGS=&quot;-g -O0&quot; FCFLAGS=&quot;-g -O0&quot; --with-mpi=no  --enable-development"/>
+<option id="user" value=" CFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-g -O0&quot; CXXFLAGS=&quot;-g -O0&quot; FCFLAGS=&quot;-g -O0&quot; --with-mpi=no "/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>

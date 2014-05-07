@@ -328,17 +328,18 @@ inline bool DiskBackedArraysIO::file_exists(const std::string& name) {
 MPI_File DiskBackedArraysIO::create_file_for_array(int array_id){
 
 	int my_rank = sip_mpi_attr_.company_rank();
-	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
+	const MPI_Comm &server_comm = sip_mpi_attr_.company_communicator();
 
 	char filename[MAX_FILE_NAME_SIZE];
 	MPI_File mpif;
 
-	// Get file name for array
+	// Get file name for array into "filename"
 	array_file_name(array_id, filename);
 
 	SIPMPIUtils::check_err(
 			MPI_File_open(server_comm, filename,
-					MPI_MODE_CREATE | MPI_MODE_RDWR | MPI_MODE_DELETE_ON_CLOSE,
+					MPI_MODE_EXCL | MPI_MODE_CREATE |
+					MPI_MODE_RDWR | MPI_MODE_DELETE_ON_CLOSE,
 					MPI_INFO_NULL, &mpif));
 
 	// Rank 0 of servers writes out the header.
