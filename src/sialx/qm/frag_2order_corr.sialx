@@ -22,14 +22,14 @@ import "trans_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, 25 # microiterations 
-      index   jiter  = 1, 1 # macroiterations 
-      index   ifrag  = 1,  2 # Nsolute   
-      index  iifrag  = 1,  2 # Nsolute    
+      index   jiter  = 1, 5 # macroiterations 
+      index   ifrag  = 1, 216 # Nsolute   
+      index  iifrag  = 1, 216 # Nsolute    
 
-      index   jfrag  = 1, 2 # Nfragments   
-      index  jjfrag  = 1, 2 # Nfragments   
-      index   kfrag  = 1, 2 # Nfragments   
-      index  kkfrag  = 1, 2 # Nfragments   
+      index   jfrag  = 1, 216 # Nfragments   
+      index  jjfrag  = 1, 216 # Nfragments   
+      index   kfrag  = 1, 216 # Nfragments   
+      index  kkfrag  = 1, 216 # Nfragments   
 
       index  isolute = 1, 1 
       index  jsolute = 1, 1 
@@ -114,6 +114,7 @@ import "trans_frag_defs.sialx"
       scalar virt_exit 
       scalar imax 
       scalar zmax 
+      scalar nn_rep 
 #
 # Declare arrays  
 # -------------- 
@@ -3862,6 +3863,8 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag 
       sip_barrier
 
+      execute compute_nn_repulsion nn_rep 
+      print_scalar nn_rep
       PARDO ifrag, jfrag 
          GET e10pol(ifrag,jfrag) 
          execute print_block e10pol(ifrag,jfrag) 
@@ -3917,6 +3920,12 @@ import "trans_frag_defs.sialx"
      #ENDDO nu 
      #ENDDO mu 
       println "Done computing scratch memory" 
+
+#     Compute the NN repusion between fragments  
+#     ----------------------------------------- 
+      nn_rep = 0.0 
+      execute compute_nn_repulsion nn_rep 
+      print_scalar nn_rep 
 
       mone = -1.0 
       ecrit = cc_conv 
