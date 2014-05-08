@@ -186,6 +186,9 @@ void IndexTableEntry::init(const std::string& name, IndexTableEntry& entry,
 	entry.name_ = name;
 	entry.lower_seg_ = bseg;
 	entry.num_segments_ = (eseg - bseg) + 1;
+    sip::check(entry.lower_seg_ >= 0, "-ve value for lower_seg_");
+    sip::check(entry.num_segments_ >= 0, "-ve value for lower_seg_");
+    
 	entry.index_type_ = intToIndexType_t(siox_file.read_int());
 	if (entry.index_type_ != subindex) { //set subindex_descriptor in IndexTable::init rather than here
 		entry.segment_descriptor_ptr_ = table.segment_descriptors_.at(

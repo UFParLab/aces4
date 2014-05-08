@@ -56,9 +56,11 @@ public:
 	 * Each tag (a 32 bit integer) contains these fields
 	 */
 	typedef struct {
+        unsigned int :1;
 		unsigned int message_type : 4;
 		unsigned int section_number : 12;
-		unsigned int transaction_number : 16;
+		unsigned int transaction_number : 14;
+        unsigned int :1;
 	} SIPMPITagBitField;
 
 	/**
@@ -76,6 +78,7 @@ public:
 	 */
 	static SIPMPIData::MessageType_t extract_message_type(int mpi_tag){
 		SIPMPITagBitFieldConverter bc;
+        bc.i = 0;
 	bc.i = mpi_tag;
 	return SIPMPIData::intToMessageType(bc.bf.message_type);
 	}
@@ -87,6 +90,7 @@ public:
 	 */
 	static int extract_section_number(int mpi_tag){
 		SIPMPITagBitFieldConverter bc;
+        bc.i = 0;
 		bc.i = mpi_tag;
 		return bc.bf.section_number;
 	}
@@ -98,6 +102,7 @@ public:
 	 */
 	static int extract_transaction_number(int mpi_tag){
 		SIPMPITagBitFieldConverter bc;
+        bc.i = 0;
 		bc.i = mpi_tag;
 		return bc.bf.transaction_number;
 	}
@@ -111,6 +116,7 @@ public:
 	 */
 	static int make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int transaction_number){
 		SIPMPITagBitFieldConverter bc;
+        bc.i = 0;
 		bc.bf.message_type = message_type;
 		bc.bf.section_number = section_number;
 		bc.bf.transaction_number = transaction_number;

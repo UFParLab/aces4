@@ -41,11 +41,12 @@ int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 //    sip::check(num_blocks >= 0, ss.str(), current_line());
 
 	// Convert rank-dimensional index to 1-dimensional index
-	int block_num = 0;
-	int tmp = 1;
+	long block_num = 0;
+	long tmp = 1;
 	for (int pos=array_rank-1; pos>=0; pos--){
 		int index_slot = sip_tables_.selectors(array_id)[pos];
 		int num_segments = sip_tables_.num_segments(index_slot);
+        sip::check (num_segments >= 0, "num_segments is -ve", current_line());
 		block_num += bid.index_values(pos) * tmp;
 		tmp *= num_segments;
 	}
@@ -56,9 +57,25 @@ int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 
 	const std::vector<int> &server_ranks = sip_mpi_attr_.server_ranks();
 
+    std::stringstream ss1;
+    ss1 << " Block num is -ve : "<< block_num << " Block Id : " << bid;
+    if (block_num < 0){
+        for (int pos=array_rank-1; pos>=0; pos--){
+            int index_slot = sip_tables_.selectors(array_id)[pos];
+            int num_segments = sip_tables_.num_segments(index_slot);
+            std :: cerr << " index_slot : " << index_slot 
+                        << " pos : " << pos 
+                        << " nseg : " << num_segments 
+                        << std::endl;
+	}
+    sip::check(block_num >= 0, ss1.str(), current_line());
+
+    }
+
     std::stringstream ss2;
     ss2 << " Server rank is -ve : "<< server_rank;
     sip::check(server_rank >= 0, ss2.str(), current_line());
+
     return server_ranks.at(server_rank);
 
 }
