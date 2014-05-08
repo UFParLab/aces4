@@ -171,7 +171,6 @@ void enable_debug_print();
 
 
 // Special Super Instructions Just For Testing
-void test_increment_counter(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 
@@ -297,7 +296,6 @@ std::ostream& operator<<(std::ostream& os, const SpecialInstructionManager& obj)
 
 void SpecialInstructionManager::init_procmap(){
     // TEST  The next few instructions are used for testing
-	procmap_["test_increment_counter"]=(fp0)&test_increment_counter;
 	procmap_["dadd"] = (fp0)&dadd;
 	procmap_["dsub"] = (fp0)&dsub;
 	procmap_["print_something"] = (fp0)&print_something;

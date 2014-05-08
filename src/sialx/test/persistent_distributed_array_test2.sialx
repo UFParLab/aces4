@@ -1,47 +1,41 @@
 sial persistent_distributed_array_test2
-predefined int norb
-special fill_block_sequential wr
-special print_block r
-special print_static_array r
-aoindex i = 1,norb
-aoindex j = 1,norb
-distributed a(i,j)
-distributed b(i,j)
-
-
-do i
-print_index i
-enddo i
-
-do j
-print_index j
-enddo j
-
-restore_persistent b "array_a"
-do i
-do j
-print_index j
-println "execute print_block b(i,j)"
-execute print_block b(i,j)
-enddo j
-enddo i
-println "done with ij loop"
-
-
-
-#restore_persistent b "array_a"
-
-#do i
-#print_index i
-#do j
-#print_index j
-#println "execute print_block b(i,j)"
-#execute print_block b(i,j)
-#enddo j
-#enddo i
-#println "execute print_block b"
-
-
-println " finished persistent_static_array_test2"
+	predefined int norb
+	special fill_block_sequential wr
+	special print_block r
+	special print_static_array r
+	aoindex i = 1,norb
+	aoindex j = 1,norb
+	distributed a(i,j)
+	distributed b(i,j)
+	
+	local lb(i,j)
+	allocate lb(*,*)
+	
+	do i
+		print_index i
+	enddo i
+	
+	do j
+		print_index j
+	enddo j
+	
+	restore_persistent b "array_a"
+	do i
+		do j
+			print_index j
+			println "execute print_block b(i,j)"
+			execute print_block b(i,j)
+		enddo j
+	enddo i
+	
+	do i
+		do j
+			lb (i, j) = b(i, j)
+		enddo j
+	enddo i
+	
+	println "done with ij loop"
+	
+	println " finished persistent_static_array_test2"
 
 endsial persistent_distributed_array_test2

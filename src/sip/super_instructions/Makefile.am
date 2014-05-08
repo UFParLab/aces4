@@ -319,16 +319,12 @@ GENERAL_SOURCE_FILES=\
 ./general/enable_debug_print.cpp\
 ./general/abort_job.F
 
-# Super instructions only for Test
-TEST_SOURCE_FILES=\
-./test/test_increment_counter.cpp
 
 libinstr_la_SOURCES=\
 special_instructions.h\
 special_instructions.cpp\
 $(QM_SOURCE_FILES)\
-$(GENERAL_SOURCE_FILES)\
-$(TEST_SOURCE_FILES)
+$(GENERAL_SOURCE_FILES)
 
 
 # We could add in our own lapack library if there wasn't a vendor supplied one on the machine.

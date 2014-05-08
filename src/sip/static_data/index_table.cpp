@@ -289,6 +289,10 @@ std::string IndexTable::index_name(int index_slot) const {
 	return entries_.at(index_slot).name_;
 }
 
+int IndexTable::index_id(std::string name) const {
+	return name_entry_map_.at(name);
+}
+
 IndexType_t IndexTable::index_type(int index_slot) const {
 	return entries_.at(index_slot).index_type_;
 }

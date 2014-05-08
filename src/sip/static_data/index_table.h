@@ -236,6 +236,7 @@ public:
     int offset_into_contiguous(int index_slot, int index_value) const;
     int lower_seg(int index_slot) const;
     int num_segments(int index_slot) const;
+    int index_id(std::string name) const;
     std::string index_name(int index_slot) const;
     IndexType_t index_type(int index_slot) const;
 

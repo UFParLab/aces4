@@ -109,6 +109,11 @@ int SipTables::int_value(int int_table_slot) const {
 std::string SipTables::string_literal(int slot) const {
 	return string_literal_table_.at(slot);
 }
+
+int SipTables::index_id(std::string name) const {
+	return index_table_.index_id(name);
+}
+
 std::string SipTables::index_name(int index_table_slot) const {
 	return index_table_.index_name(index_table_slot);
 }

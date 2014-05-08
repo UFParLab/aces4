@@ -325,7 +325,6 @@ SIOX_FILES=\
 ./src/sialx/test/simple_indices_assignments.siox\
 ./src/sialx/test/add_and_subtract_scalars.siox\
 ./src/sialx/test/gpu_contraction_predefined_test.siox\
-./src/sialx/test/reproduce_transpose_problem.siox\
 ./src/sialx/test/assign_to_static_array_test.siox\
 ./src/sialx/test/set_persistent_test.siox\
 ./src/sialx/test/restore_persistent_test.siox\
@@ -411,7 +410,6 @@ EXTRA_DIST += \
 ./src/sialx/test/simple_indices_assignments.sialx\
 ./src/sialx/test/add_and_subtract_scalars.sialx\
 ./src/sialx/test/gpu_contraction_predefined_test.sialx\
-./src/sialx/test/reproduce_transpose_problem.sialx\
 ./src/sialx/test/assign_to_static_array_test.sialx\
 ./src/sialx/test/set_persistent_test.sialx\
 ./src/sialx/test/restore_persistent_test.sialx\

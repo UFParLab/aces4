@@ -86,7 +86,7 @@ public:
 	std::string string_literal(int slot) const;
 
 //indices and blocks
-	//int index_id(std::string name);
+	int index_id(std::string name) const;
 	std::string index_name(int index_table_slot) const;
 	IndexType_t index_type(int index_table_slot) const;
 	BlockShape shape(const BlockId&) const;

@@ -9,23 +9,15 @@ special test_increment_counter w
 	index bb = 1,8
 	scalar counter
 	
-	counter = 1.0
+	counter = 0.0
 	
 	pardo j,k,i
 		print_index j
 		print_index k
 		print_index i
-		execute test_increment_counter counter
+		#execute test_increment_counter counter
+		counter = counter + 1
 	
 	endpardo j,k,i
 	
-	#println "do aa do bb where bb <= aa print aa print bb enddo bb endo aa"
-	#do aa 
-	#do bb 
-	#where bb <= aa 
-	#print_index aa 
-	#print_index bb 
-	#enddo bb 
-	#enddo aa
-
 endsial pardo_loop
