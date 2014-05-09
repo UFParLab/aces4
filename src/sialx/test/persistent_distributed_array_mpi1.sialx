@@ -1,6 +1,7 @@
 sial persistent_distributed_array_mpi1
 	special list_block_map
 	special print_block r
+	special fill_block_sequential wr
 	predefined int norb
 	aoindex i = 1,norb
 	aoindex j = 1,norb
@@ -15,7 +16,8 @@ sial persistent_distributed_array_mpi1
 	println "Sending blocks"	
 	do i
 		do j
-			a(i,j) = 42.0
+			#a(i,j) = 42.0
+			execute fill_block_sequential a(i,j) 1.0
 			put b(i,j) = a(i,j)
 			put c(i,j) += a(i,j)
 			put c(i,j) += a(i,j)

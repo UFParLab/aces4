@@ -30,6 +30,7 @@ sial persistent_distributed_array_test2
 	
 	do i
 		do j
+			get b(i, j)
 			lb (i, j) = b(i, j)
 		enddo j
 	enddo i

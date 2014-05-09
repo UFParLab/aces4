@@ -1,4 +1,5 @@
 sial persistent_empty_mpi2
+
 	special list_block_map
 	special print_block r
 	predefined int norb
@@ -9,8 +10,6 @@ sial persistent_empty_mpi2
 	distributed c(i,j)
 	temp t(i,j)
 	
-
- 
 	println "!!!!!!!!!! persistent_empty_mpi2!!!!!!!!!!!!!"
 	
 endsial persistent_empty_mpi2
