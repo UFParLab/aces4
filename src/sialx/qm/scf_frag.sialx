@@ -22,13 +22,13 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 2 # Nfrags  
-      index   jatom  = 1, 2 # Nfrags  
+      index   katom  = 1, 216 # Nfrags  
+      index   jatom  = 1, 216 # Nfrags  
 
-      index   jfrag  = 1, 2 # Nfragments   
-      index  jjfrag  = 1, 2 # Nfragments   
-      index   kfrag  = 1, 2 # Nfragments   
-      index  kkfrag  = 1, 2 # Nfragments 
+      index   jfrag  = 1, 216 # Nfragments   
+      index  jjfrag  = 1, 216 # Nfragments   
+      index   kfrag  = 1, 216 # Nfragments   
+      index  kkfrag  = 1, 216 # Nfragments 
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 

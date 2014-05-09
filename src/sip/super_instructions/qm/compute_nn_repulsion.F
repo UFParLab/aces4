@@ -71,25 +71,93 @@ c ----------------------------------------------------------------------
       end
 
       subroutine return_nn_repulsion(energy, ncenters, coords, charge) 
+
+c---------------------------------------------------------------------------
+
+      use, intrinsic :: ISO_C_BINDING 
       implicit none 
       
-      integer ncenters, i, j, kcoord    
+c---------------------------------------------------------------------------
+c Interface added but should be included instead 
+
+      include 'sip_interface.f'
+
+c array defining which atoms are in which fragment 
+      TYPE(C_PTR) :: sDimfrag  
+      TYPE(C_PTR) :: pwatom_frag 
+      integer, pointer :: pdim_frag(:)  
+      integer(C_INT), pointer :: watom_frag(:,:)
+c array defining the number of atoms per fragment 
+      TYPE(C_PTR) :: pnatoms_frag 
+      integer(C_INT), pointer :: natoms_frag(:)
+
+      integer (C_INT) nfrags
+
+c---------------------------------------------------------------------------
+      
+      integer ncenters, i, j, kcoord, one, two     
+      integer ifrag, jfrag, iatom, jatom
       double precision coords(3, ncenters), charge(ncenters), energy, 
      *                 dist   
+      
+c---------------------------------------------------------------------------
+c Get predefined data 
+c---------------------------------------------------------------------------
 
-      energy = 0.0 
-      do i = 1, ncenters 
-      do j = i, ncenters 
-         if (i .ne. j) then 
-            dist = 0.0 
-            do kcoord = 1, 3 
-               dist = dist + (coords(kcoord,i)-coords(kcoord,j))**2  
-            enddo
-            dist = dsqrt(dist) 
-            energy = energy + charge(i)*charge(j) / dist    
-         endif 
-      enddo  
-      enddo  
+      nfrags          = int_constant("nfrags"//C_NULL_CHAR)
+
+c array defining which atoms are in which fragments 
+c ----------------------------------------------------------------------
+      call predefined_int_array("watom_frag"//C_NULL_CHAR,
+     *                                  two, sDimfrag,  pwatom_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[2])
+      call c_f_pointer(pwatom_frag, watom_frag, pdim_frag)
+c array defining the number of atoms in each fragment 
+c ----------------------------------------------------------------------
+      call predefined_int_array("natoms_frag"//C_NULL_CHAR,
+     *                                  one, sDimfrag,  pnatoms_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[1])
+      call c_f_pointer(pnatoms_frag, natoms_frag, pdim_frag)
+
+      if (nfrags .le. 1) then 
+         energy = 0.0 
+         do i = 1, ncenters 
+         do j = i, ncenters 
+            if (i .ne. j) then 
+               dist = 0.0 
+               do kcoord = 1, 3 
+                  dist = dist + (coords(kcoord,i)-coords(kcoord,j))**2  
+               enddo
+               dist = dsqrt(dist) 
+               energy = energy + charge(i)*charge(j) / dist    
+            endif 
+         enddo  
+         enddo  
+      endif 
+
+      if (nfrags .ge. 2) then 
+         energy = 0.0 
+         do ifrag = 1, nfrags 
+         do jfrag = 1, nfrags 
+            if (ifrag .ne. jfrag) then 
+         do i = 1, natoms_frag(ifrag)  
+         do j = 1, natoms_frag(jfrag)  
+               dist = 0.0 
+               iatom = watom_frag(ifrag,i) 
+               jatom = watom_frag(jfrag,j) 
+               do kcoord = 1, 3 
+                  dist = dist  
+     *                 + (coords(kcoord,iatom)-coords(kcoord,jatom))**2  
+               enddo
+               dist = dsqrt(dist) 
+               energy = energy + charge(iatom)*charge(jatom) / dist    
+         enddo  
+         enddo  
+            endif 
+         enddo  
+         enddo  
+         energy = energy/2.0 
+      endif 
 
       return 
       end 

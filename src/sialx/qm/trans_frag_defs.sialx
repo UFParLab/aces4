@@ -58,6 +58,7 @@ special return_h1frag wr
 special print_block r
 special return_diagonal uu 
 special return_vpq uu 
+special compute_nn_repulsion u
 special enable_debug_print
 special disable_debug_print  
 
