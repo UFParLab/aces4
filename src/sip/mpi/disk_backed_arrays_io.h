@@ -92,11 +92,20 @@ private:
 
 
 	/**
-	 * Creates a MPI_File for an array with a given id.
+	 * Creates a MPI_File for an array with a given id/slot number.
+	 * Zeroes out all elements
 	 * @param array_id
 	 * @return
 	 */
-	MPI_File create_file_for_array(int array_id);
+	MPI_File create_initialized_file_for_array(int array_id);
+
+	/**
+	 * Creates a MPI File for an array with a given id/slot number.
+	 * Does not zero out all elements.
+	 * @param array_id
+	 * @return
+	 */
+	MPI_File create_unitialized_file_for_array(int array_id);
 
 	/**
 	 * Returns the offset on where to write block data in the file.
@@ -155,6 +164,20 @@ private:
 	 * @param mpif
 	 */
 	void zero_out_all_disk_blocks(const int array_id, MPI_File mpif);
+
+	/**
+	 * Collectively (Using MPIIO) copies data from the given MPI File handle
+	 * to a new file.
+	 *
+	 * Not used in current implementation. Kept around for future use.
+	 * Please verify correctness before using.
+	 *
+	 * @param persistent_filename
+	 * @param mpif_array
+	 */
+	void collectively_copy_block_data(
+				char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array);
+
 };
 
 } /* namespace sip */

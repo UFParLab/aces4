@@ -2201,10 +2201,17 @@
 #
            REQUEST Vpiqj(a,i,b,j) j  
            REQUEST Vpiqj(a,j,b,i) j  
+           
+           execute print_block Vpiqj(a,i,b,j)
+           execute print_block Vpiqj(a,j,b,i)
 #
            REQUEST T2old_ab(a,i,b,j) j  
            GET     t1a_old(a,i) 
            GET     t1a_old(b,j) 
+           
+           execute print_block t1a_old(a,i)
+           execute print_block t1a_old(b,j) 
+           
            tai(a,i) = t1a_old(a,i) 
 #
            Taibj(a,i,b,j)  = tai(a,i)^t1a_old(b,j) 

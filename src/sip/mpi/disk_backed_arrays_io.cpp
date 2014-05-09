@@ -34,7 +34,7 @@ DiskBackedArraysIO::DiskBackedArraysIO(const SipTables& sip_tables,
 	for (int i=0; i<num_arrays; ++i){
 		bool is_remote = sip_tables_.is_distributed(i) || sip_tables_.is_served(i);
 		if (is_remote){
-			mpi_file_arr_[i] = create_file_for_array(i);
+			mpi_file_arr_[i] = create_initialized_file_for_array(i);
 		}
 	}
 }
@@ -99,30 +99,8 @@ void DiskBackedArraysIO::delete_array(const int array_id){
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
 
 	// Create a new array file
-	mpi_file_arr_[array_id] = create_file_for_array(array_id);
+	mpi_file_arr_[array_id] = create_initialized_file_for_array(array_id);
 
-}
-
-void DiskBackedArraysIO::zero_out_all_disk_blocks(const int array_id,
-		MPI_File mpif) {
-	long tot_elems = sip_tables_.array_num_elems(array_id);
-	MPI_Offset end_array_offset = tot_elems * sizeof(double);
-	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-	int num_servers = sip_mpi_attr_.company_size();
-	int elems_per_server = tot_elems / num_servers;
-	if (tot_elems % num_servers != 0)
-		elems_per_server++;
-
-	double* file_buf = new double[elems_per_server](); // 0-d out buffer
-	const int server_rank = sip_mpi_attr_.company_rank();
-	MPI_Offset offset = header_offset
-			+ server_rank * elems_per_server * sizeof(double);
-	// Collectively write 0s to the file to fill in all blocks.
-	MPI_Status write_status;
-	SIPMPIUtils::check_err(
-			MPI_File_write_at_all(mpif, offset, file_buf, elems_per_server,
-					MPI_DOUBLE, &write_status));
-	SIPMPIUtils::check_err(MPI_File_sync(mpif));
 }
 
 void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::string& array_label,
@@ -172,7 +150,7 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 	write_all_dirty_blocks(mpif, array_blocks);
 
 	// Close the file
-	MPI_File_close(&mpif);
+	SIPMPIUtils::check_err(MPI_File_close(&mpif));
 
 
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
@@ -194,57 +172,52 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
 }
 
-
 void DiskBackedArraysIO::restore_persistent_array(const int array_id, const std::string& array_label){
 	
-	/* This method copies all the blocks from the file with the persistent array
-	 * labelled array_label into the array file for array id = array_id.
+	/* This method removes the array file
+	 * and renames the persistent file to the array file.
 	 */
 
 	// file handle for the array - array_id.
-	MPI_File mpif_array = mpi_file_arr_[array_id];
-	
+	MPI_File mpif = mpi_file_arr_[array_id];
+	mpi_file_arr_[array_id] = MPI_FILE_NULL;	// So that a "close" is not attempted on it.
 
+	// Close the file
+	sip::check(mpif != MPI_FILE_NULL, "Trying to close already closed file when restoring array");
+	SIPMPIUtils::check_err(MPI_File_close(&mpif));
+	
 	int my_rank = sip_mpi_attr_.company_rank();
+
 	char persistent_filename[MAX_FILE_NAME_SIZE];
 	persistent_array_file_name(array_label, persistent_filename);
+	char arr_filename[MAX_FILE_NAME_SIZE];
+	array_file_name(array_id, arr_filename);
 
-	// Open the file
-	MPI_File mpif_persistent;
+	// Copies data from MPI_File handle "mpif_array" to file - persistent_filename.
+	// collectively_copy_block_data(persistent_filename, mpif);
+
+	// On rank 0, Rename the array file.
 	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
-	SIPMPIUtils::check_err(
-			MPI_File_open(server_comm, persistent_filename,
-					MPI_MODE_RDONLY, MPI_INFO_NULL, &mpif_persistent));
+	if (my_rank == 0){
+		std::remove(arr_filename);	// Not needed since file is DELETE_ON_CLOSE.
+		// Rename persistent file to array file.
+		SIP_LOG(std::cout << "Server Master renaming " << persistent_filename << " to " << arr_filename << std::endl);
+		std::rename(persistent_filename, arr_filename);
+	}
 
+	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
 
-	// Collectively copy from persistent file and write to array file.
-	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-	MPI_Offset file_size;
-	SIPMPIUtils::check_err(MPI_File_get_size(mpif_persistent, &file_size));
-	sip::check((file_size - header_offset) % sizeof(double) == 0, "Inconsistent persistent file !");
-	int tot_elems = (file_size - header_offset) / sizeof(double);
-	
-	int num_servers = sip_mpi_attr_.company_size();
-	int elems_per_server = tot_elems / num_servers;
-	if (tot_elems % num_servers != 0)
-		elems_per_server ++;
-	double * file_buf = new double[elems_per_server];
-	const int server_rank = sip_mpi_attr_.company_rank();
-	MPI_Status read_status, write_status;
-	MPI_Offset offset = header_offset + server_rank * elems_per_server * sizeof(double);
-	SIPMPIUtils::check_err(
-			MPI_File_read_at_all(mpif_persistent, offset, file_buf,
-					elems_per_server, MPI_DOUBLE, &read_status));
-	int elems_read;
-	SIPMPIUtils::check_err(
-			MPI_Get_count(&read_status, MPI_DOUBLE, &elems_read));
+	char filename[MAX_FILE_NAME_SIZE];
+	MPI_File new_mpif;
 
-	SIPMPIUtils::check_err(
-			MPI_File_write_at_all(mpif_array, offset, file_buf,
-					elems_read, MPI_DOUBLE, &write_status));
+	// Get file name for array into "filename"
+	SIPMPIUtils::check_err(MPI_File_open(server_comm, arr_filename,
+			MPI_MODE_RDWR | MPI_MODE_DELETE_ON_CLOSE,
+			MPI_INFO_NULL, &new_mpif));
 
-	SIPMPIUtils::check_err(MPI_File_close(&mpif_persistent));
+	mpi_file_arr_[array_id] = new_mpif;
 
+	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
 }
 
 void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
@@ -324,27 +297,43 @@ inline bool DiskBackedArraysIO::file_exists(const std::string& name) {
 	return exists;
 }
 
+void DiskBackedArraysIO::zero_out_all_disk_blocks(const int array_id,
+		MPI_File mpif) {
+	long tot_elems = sip_tables_.array_num_elems(array_id);
+	MPI_Offset end_array_offset = tot_elems * sizeof(double);
+	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+	int num_servers = sip_mpi_attr_.company_size();
+	int elems_per_server = tot_elems / num_servers;
+	if (tot_elems % num_servers != 0)
+		elems_per_server++;
 
-MPI_File DiskBackedArraysIO::create_file_for_array(int array_id){
+	double* file_buf = new double[elems_per_server](); // 0-d out buffer
+	const int server_rank = sip_mpi_attr_.company_rank();
+	MPI_Offset offset = header_offset
+			+ server_rank * elems_per_server * sizeof(double);
+	// Collectively write 0s to the file to fill in all blocks.
+	MPI_Status write_status;
+	SIPMPIUtils::check_err(
+			MPI_File_write_at_all(mpif, offset, file_buf, elems_per_server,
+					MPI_DOUBLE, &write_status));
+	SIPMPIUtils::check_err(MPI_File_sync(mpif));
+}
 
+MPI_File DiskBackedArraysIO::create_unitialized_file_for_array(int array_id) {
 	int my_rank = sip_mpi_attr_.company_rank();
-	const MPI_Comm &server_comm = sip_mpi_attr_.company_communicator();
-
+	const MPI_Comm& server_comm = sip_mpi_attr_.company_communicator();
 	char filename[MAX_FILE_NAME_SIZE];
 	MPI_File mpif;
 
 	// Get file name for array into "filename"
 	array_file_name(array_id, filename);
-
-	SIPMPIUtils::check_err(
-			MPI_File_open(server_comm, filename,
-					MPI_MODE_EXCL | MPI_MODE_CREATE |
-					MPI_MODE_RDWR | MPI_MODE_DELETE_ON_CLOSE,
-					MPI_INFO_NULL, &mpif));
-
+	SIPMPIUtils::check_err(MPI_File_open(server_comm, filename,
+			MPI_MODE_EXCL | MPI_MODE_CREATE |
+			MPI_MODE_RDWR | MPI_MODE_DELETE_ON_CLOSE,
+			MPI_INFO_NULL, &mpif));
 	// Rank 0 of servers writes out the header.
 	if (my_rank == 0) {
-		int header[INTS_IN_FILE_HEADER] = {0};
+		int header[INTS_IN_FILE_HEADER] = { 0 };
 		header[0] = BLOCKFILE_MAGIC;
 		header[1] = BLOCKFILE_MAJOR_VERSION;
 		header[2] = BLOCKFILE_MINOR_VERSION;
@@ -353,13 +342,16 @@ MPI_File DiskBackedArraysIO::create_file_for_array(int array_id){
 		MPI_Status status;
 		SIPMPIUtils::check_err(
 				MPI_File_write_at(mpif, 0, header, INTS_IN_FILE_HEADER,
-						MPI_INT, &status));
+				MPI_INT, &status));
 	}
-
 	SIPMPIUtils::check_err(MPI_File_sync(mpif));
+	return mpif;
+}
 
+MPI_File DiskBackedArraysIO::create_initialized_file_for_array(int array_id){
+
+	MPI_File mpif = create_unitialized_file_for_array(array_id);
 	zero_out_all_disk_blocks(array_id, mpif);
-
 
 	return mpif;
 }
@@ -377,6 +369,43 @@ void DiskBackedArraysIO::check_data_types() {
 	check(sizeof(double) == size_of_double,
 				"Size of double and MPI_DOUBLE don't match !");
 }
+
+void DiskBackedArraysIO::collectively_copy_block_data(
+		char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array) {
+	// Open the file
+	MPI_File mpif_persistent;
+	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
+	SIPMPIUtils::check_err(MPI_File_open(server_comm, persistent_filename,
+	MPI_MODE_RDONLY, MPI_INFO_NULL, &mpif_persistent));
+	// Collectively copy from persistent file and write to array file.
+	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+	MPI_Offset file_size;
+	SIPMPIUtils::check_err(MPI_File_get_size(mpif_persistent, &file_size));
+	sip::check((file_size - header_offset) % sizeof(double) == 0,
+			"Inconsistent persistent file !");
+	int tot_elems = (file_size - header_offset) / sizeof(double);
+	int num_servers = sip_mpi_attr_.company_size();
+	int elems_per_server = tot_elems / num_servers;
+	if (tot_elems % num_servers != 0)
+		elems_per_server++;
+
+	double* file_buf = new double[elems_per_server];
+	const int server_rank = sip_mpi_attr_.company_rank();
+	MPI_Status read_status, write_status;
+	MPI_Offset offset = header_offset
+			+ server_rank * elems_per_server * sizeof(double);
+	SIPMPIUtils::check_err(
+			MPI_File_read_at_all(mpif_persistent, offset, file_buf,
+					elems_per_server, MPI_DOUBLE, &read_status));
+	int elems_read;
+	SIPMPIUtils::check_err(
+			MPI_Get_count(&read_status, MPI_DOUBLE, &elems_read));
+	SIPMPIUtils::check_err(
+			MPI_File_write_at_all(mpif_array, offset, file_buf, elems_read,
+					MPI_DOUBLE, &write_status));
+	SIPMPIUtils::check_err(MPI_File_close(&mpif_persistent));
+}
+
 
 std::ostream& operator<<(std::ostream& os, const DiskBackedArraysIO& obj){
 	os << "block_offset_map : ";

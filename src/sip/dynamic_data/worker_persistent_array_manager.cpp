@@ -74,7 +74,7 @@ namespace sip {
 		LabelScalarValueMap::iterator it = scalar_value_map_.find(label);
 		check(it != scalar_value_map_.end(),
 				"scalar to restore with label " + label + " not found");
-		std::cout<< "restoring scalar " << worker -> array_name(array_id) << "=" << it -> second << std::endl;
+		SIP_LOG(std::cout<< "restoring scalar " << worker -> array_name(array_id) << "=" << it -> second << std::endl);
 		worker->set_scalar_value(array_id, it->second);
 		scalar_value_map_.erase(it);
 	}
@@ -113,7 +113,7 @@ namespace sip {
 	void WorkerPersistentArrayManager::save_contiguous(const std::string label, Block* contig) {
 		check(contig != NULL, "attempting to save nonexistent contiguous array", current_line());
 		const std::pair<LabelContiguousArrayMap::iterator, bool> ret = contiguous_array_map_.insert(std::pair<std::string, Block*>(label, contig));
-		std::cout << "save_contiguous: ret= " << ret.second;
+		SIP_LOG(std::cout << "save_contiguous: ret= " << ret.second);
 		if (!check_and_warn(ret.second, "Label " + label + "already used for contiguous array.  Overwriting previously saved array.")) {
 			contiguous_array_map_.erase(ret.first);
 			contiguous_array_map_.insert(std::pair<std::string, Block*>(label, contig));
