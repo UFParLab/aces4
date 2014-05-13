@@ -28,6 +28,8 @@ public:
 
 	static std::string get_program_name() { return prog_name; }
 
+	static void reset_program_count() { prog_num = 0; }
+
 private:
 	static int prog_num;
 	static std::string prog_name;

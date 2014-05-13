@@ -25,9 +25,9 @@
 void list_block_map();
 static const std::string dir_name("src/sialx/test/");
 
-
 TEST(Sial_Simple,Simple_Put_Test){
 	std::cout << "****************************************\n";
+	sip::GlobalState::reset_program_count();
 	sip::DataManager::scope_count=0;
 	//create setup_file
 	std::string job("put_test");
@@ -100,7 +100,7 @@ TEST(Sial_Simple,Simple_Put_Test){
 
 // Sanity test to check for no compiler errors, crashes, etc.
 TEST(Sial,persistent_empty_mpi){
-
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	int my_rank = sip_mpi_attr.global_rank();
 
@@ -144,7 +144,8 @@ TEST(Sial,persistent_empty_mpi){
 
 	//create worker and server
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
 	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\n>>>>>>>>>>>>starting SIAL PROGRAM  "<< job << std::endl;}
 
 	std::cout << "rank " << my_rank << " reached first barrier in test" << std::endl << std::flush;
@@ -181,6 +182,8 @@ TEST(Sial,persistent_empty_mpi){
 		std::cout << "SIP TABLES FOR " << prog_name2 << '\n' << sipTables2 << std::endl;
 	}
 	sip::DataDistribution data_distribution2(sipTables2, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
 	std::cout << "rank " << my_rank << " reached second barrier in test" << std::endl << std::flush;
 	MPI_Barrier(MPI_COMM_WORLD);
 	std::cout << "rank " << my_rank << " passed second barrier in test" << std::endl << std::flush;
@@ -211,7 +214,7 @@ TEST(Sial,persistent_empty_mpi){
 
 TEST(Sial,persistent_distributed_array_mpi){
 
-
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	int my_rank = sip_mpi_attr.global_rank();
 
@@ -255,6 +258,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 	//create worker and server
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
 	sip::WorkerPersistentArrayManager wpam;
 	sip::ServerPersistentArrayManager spam;
 
@@ -297,6 +302,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 	}
 
 	sip::DataDistribution data_distribution2(sipTables2, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
 	std::cout << "rank " << my_rank << " reached second barrier in test" << std::endl << std::flush;
 	MPI_Barrier(MPI_COMM_WORLD);
 	std::cout << "rank " << my_rank << " passed second barrier in test" << std::endl << std::flush;
@@ -349,7 +356,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 		sip::Block::BlockPtr b_bptr_2 = runner.get_block_for_reading(b_bid_2);
 		sip::Block::dataPtr b_data_2 = b_bptr_2->get_data();
 		std::cout << " Comparing block " << b_bid_2 << std::endl;
-		double fill_seq_2_2 = 1.0;
+		double fill_seq_2_2 = 4.0;
 		for (int i=0; i<segs[1]; i++){
 			for (int j=0; j<segs[1]; j++){
 				ASSERT_DOUBLE_EQ(fill_seq_2_2, b_data_2[i*segs[1] + j]);
@@ -366,7 +373,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 		sip::Block::BlockPtr b_bptr_3 = runner.get_block_for_reading(b_bid_3);
 		sip::Block::dataPtr b_data_3 = b_bptr_3->get_data();
 		std::cout << " Comparing block " << b_bid_3 << std::endl;
-		double fill_seq_2_1 = 1.0;
+		double fill_seq_2_1 = 3.0;
 		for (int i=0; i<segs[1]; i++){
 			for (int j=0; j<segs[0]; j++){
 				ASSERT_DOUBLE_EQ(fill_seq_2_1, b_data_3[i*segs[0] + j]);
@@ -387,6 +394,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 /************************************************/
 
 TEST(SimpleMPI,get_mpi){
+
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 	std::cout << "****************************************\n";
@@ -423,6 +432,9 @@ TEST(SimpleMPI,get_mpi){
 	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
 
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
+
 	if (sip_mpi_attr.is_server()){
 		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -466,6 +478,7 @@ TEST(SimpleMPI,get_mpi){
 // Nothing should crash. Find something to test.
 TEST(SimpleMPI,unmatched_get){
 
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 	std::cout << "****************************************\n";
@@ -503,6 +516,9 @@ TEST(SimpleMPI,unmatched_get){
 	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
 
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
+
 	if (sip_mpi_attr.is_server()){
 		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -526,6 +542,8 @@ TEST(SimpleMPI,unmatched_get){
 // TODO ===========================================
 // Nothing should crash. Find something to test.
 TEST(SimpleMPI,delete_mpi){
+
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 	std::cout << "****************************************\n";
@@ -561,6 +579,9 @@ TEST(SimpleMPI,delete_mpi){
 	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
 
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
+
 	if (sip_mpi_attr.is_server()){
 		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -585,6 +606,8 @@ TEST(SimpleMPI,delete_mpi){
 // Nothing should crash. Find something to test.
 // Tested in get_mpi
 TEST(SimpleMPI,put_accumulate_mpi){
+
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 	std::cout << "****************************************\n";
@@ -622,6 +645,9 @@ TEST(SimpleMPI,put_accumulate_mpi){
 	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
 
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
+
 	if (sip_mpi_attr.is_server()){
 		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -645,6 +671,8 @@ TEST(SimpleMPI,put_accumulate_mpi){
 // Nothing should crash. Find something to test.
 // Tested in get_mpi
 TEST(SimpleMPI,put_test_mpi){
+
+	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 	std::cout << "****************************************\n";
@@ -683,6 +711,8 @@ TEST(SimpleMPI,put_test_mpi){
 
 
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
 	if (sip_mpi_attr.is_server()){
 		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
 		MPI_Barrier(MPI_COMM_WORLD);

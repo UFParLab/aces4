@@ -9,6 +9,10 @@ sial persistent_distributed_array_mpi1
 	distributed b(i,j)
 	distributed c(i,j)
 	
+	scalar count 
+	
+	count = 1.0	
+	
 	create b
 	create c
 	allocate a(*,*)
@@ -17,10 +21,13 @@ sial persistent_distributed_array_mpi1
 	do i
 		do j
 			#a(i,j) = 42.0
-			execute fill_block_sequential a(i,j) 1.0
+			execute fill_block_sequential a(i,j) count
 			put b(i,j) = a(i,j)
 			put c(i,j) += a(i,j)
 			put c(i,j) += a(i,j)
+			
+			count = count + 1
+			
 		enddo j
 	enddo i
 	
