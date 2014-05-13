@@ -56,6 +56,7 @@ DiskBackedArraysIO::~DiskBackedArraysIO(){
 void DiskBackedArraysIO::read_block_from_disk(const BlockId& bid, ServerBlock::ServerBlockPtr bptr){
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Reading block "<<bid<<" from disk..."<< std::endl);
 	MPI_Offset block_offset = calculate_block_offset(bid);
+std::cout << "Server : " << bid << " at " << block_offset << std::endl;
 	int array_id = bid.array_id();
 	MPI_File fh = mpi_file_arr_[array_id];
 	sip::check(fh != MPI_FILE_NULL, "Trying to read block from array file after closing it !");
@@ -222,9 +223,9 @@ void DiskBackedArraysIO::restore_persistent_array(const int array_id, const std:
 
 void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 		const ServerBlock::ServerBlockPtr bptr) {
-	MPI_Offset block_offset = calculate_block_offset(bid);
 	sip::check(fh != MPI_FILE_NULL,
 			"Trying to write block to array file after closing it !");
+	MPI_Offset block_offset = calculate_block_offset(bid);
 	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
 	MPI_Status read_status;
 	SIPMPIUtils::check_err(

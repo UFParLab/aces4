@@ -207,8 +207,7 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 	index_value_array_t lower_index_vals;
 	std::fill(lower_index_vals, lower_index_vals + MAX_RANK, unused_index_value);
 	index_value_array_t current_index_vals;
-	std::fill(current_index_vals, current_index_vals + MAX_RANK,
-			unused_index_value);
+	std::fill(current_index_vals, current_index_vals + MAX_RANK, unused_index_value);
 	// Initialize
 	for (int i = 0; i < rank; i++) {
 		int selector_index = selector[i];
@@ -226,23 +225,36 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 	while (pos < rank) {
 		// increment block_offset
 		bool equal_to_input_blockid = true;
-		for (int i = 0; i < MAX_RANK; i++)
+		for (int i = 0; i < rank; i++){
 			equal_to_input_blockid &= current_index_vals[i] == index_vals[i];
-		if (equal_to_input_blockid)
+
+			// DEBUG    ***************************
+//			std::cout << std::endl << "S : current_index_vals : [";
+//			for (int j=0; j<rank; j++)
+//				std::cout <<  current_index_vals[j] << ", ";
+//			std::cout << "] ==" << "index_vals [" ;
+//			for (int j=0; j<rank; j++)
+//				std::cout << index_vals[j] << ", ";
+//			std::cout << "] ? " << std::endl;
+			// END_DEBUG ***************************
+		}
+//		std::cout << "S : current_index_vals == index_vals -> "<< equal_to_input_blockid ;
+//		std::cout << "\t" << tot_fp_elems << std::endl;
+		if (equal_to_input_blockid){
 			break;
+		}
 		else {
 			int elems = block_size(array_id, current_index_vals);
 			tot_fp_elems += elems;
 		}
 		// Increment indices.
 		current_index_vals[pos]++;
-		if (current_index_vals[pos] < upper_index_vals[pos]) {
-			break;
-		} else {
+		if (current_index_vals[pos] >= upper_index_vals[pos]) {
 			current_index_vals[pos] = lower_index_vals[pos];
 			pos++;
 		}
 	}
+//	std::cout << "S : return val : " << tot_fp_elems << std::endl;
 	return tot_fp_elems;
 }
 

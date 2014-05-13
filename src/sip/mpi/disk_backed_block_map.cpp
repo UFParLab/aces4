@@ -53,7 +53,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 		msg << std::endl;
 
 		//do this instead of check_and_warn so goes to std::out intead of std::err
-		std::cout << msg.str() << std::flush;
+		SIP_LOG(std::cout << msg.str() << std::flush);
 		block = read_block_from_disk(block_id, block_size);
 	}
 	return block;
