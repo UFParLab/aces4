@@ -108,6 +108,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sial_ops_.log_statement(opcode, line_number());
 			sip::BlockId id = get_block_id_from_selector_stack();
 			sial_ops_.get(id);
+
+//Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
+//std::cout << "GET (" << line_number() << ") " << id << "\t" << *block << std::endl;
+
 			++pc;
 		}
 			break;
@@ -128,6 +132,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.put_accumulate(lhs_id, rhs_block);
 			sialx_timers_.pause_timer(line_number());
+
+//std::cout << "PUT_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
 			++pc;
 		}
 			break;
@@ -304,6 +310,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.prepare(lhs_id, rhs_block);
 			sialx_timers_.pause_timer(line_number());
+
+//std::cout << "PREPARE_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+
 			++pc;
 		}
 			break;
@@ -313,6 +322,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId id = get_block_id_from_selector_stack();
 			sial_ops_.request(id);
 			sialx_timers_.pause_timer(line_number());
+//Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
+//std::cout << "REQUEST (" << line_number() << ") " << id << "\t" << *block << std::endl;
 			++pc;
 		}
 			break;
@@ -323,6 +334,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.put_replace(lhs_id, rhs_block);
 			sialx_timers_.pause_timer(line_number());
+//std::cout << "PUT_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+
 			++pc;
 		}
 			break;
@@ -367,6 +380,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.prepare_accumulate(lhs_id, rhs_block);
 			sialx_timers_.pause_timer(line_number());
+//std::cout << "PREPARE_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+
 			++pc;
 		}
 			break;

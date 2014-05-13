@@ -56,7 +56,6 @@ DiskBackedArraysIO::~DiskBackedArraysIO(){
 void DiskBackedArraysIO::read_block_from_disk(const BlockId& bid, ServerBlock::ServerBlockPtr bptr){
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Reading block "<<bid<<" from disk..."<< std::endl);
 	MPI_Offset block_offset = calculate_block_offset(bid);
-std::cout << "Server : " << bid << " at " << block_offset << std::endl;
 	int array_id = bid.array_id();
 	MPI_File fh = mpi_file_arr_[array_id];
 	sip::check(fh != MPI_FILE_NULL, "Trying to read block from array file after closing it !");
@@ -112,6 +111,8 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 	 * this temporary persistent file to the final file.
 	 */
 
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Saving array " << sip_tables_.array_name(array_id) << " to label \"" << array_label << \" on disk" << std::endl)
+
 	// Construct File Names
 	char persistent_filename[MAX_FILE_NAME_SIZE];
 	persistent_array_file_name(array_label, persistent_filename);
@@ -130,6 +131,8 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 
 		// Rename array file to this new temp persistent filename.
 		std::rename(arr_filename, temp_persistent_filename);
+		SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Renamed file " <<arr_filename << " to "<< temp_persistent_filename << std::endl)
+
 	}
 
 	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
@@ -145,13 +148,20 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 			MPI_File_open(server_comm, temp_persistent_filename,
 					MPI_MODE_WRONLY | MPI_MODE_EXCL, MPI_INFO_NULL, &mpif));
 
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : writing out all zero blocks for array " << sip_tables_.array_name(array_id) << " to disk" << std::endl);
+
 	zero_out_all_disk_blocks(array_id, mpif);
 	
 	// Write all dirty blocks to temp persistent file.
+
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : writing out all dirty blocks for array " << sip_tables_.array_name(array_id) << " to disk" << std::endl);
+
 	write_all_dirty_blocks(mpif, array_blocks);
 
 	// Close the file
 	SIPMPIUtils::check_err(MPI_File_close(&mpif));
+
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : Closed file for array " << sip_tables_.array_name(array_id) << std::endl);
 
 
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
@@ -161,20 +171,26 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 	if (my_rank == 0 && file_exists(name)){
 		char persistent_filename_old[MAX_FILE_NAME_SIZE];
 		sprintf(persistent_filename_old, "%s.old", persistent_filename);
-		std::remove(persistent_filename_old);
+		std::rename(persistent_filename, persistent_filename_old);
+		SIP_LOG(std::cout << sip_mpi_attr_.global_rank()
+				<< " : Renamed previously existing persistent array file "
+				<< persistent_filename << " to " <<persistent_filename_old << std::endl);
+
 	}
 
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
 
 	// Rename temp file.
-	if (my_rank == 0)
+	if (my_rank == 0){
 		std::rename (temp_persistent_filename, persistent_filename);
+		SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << "Renamed temp file " << temp_persistent_filename << " to " << persistent_filename << std::endl);
+	}
 
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
 }
 
 void DiskBackedArraysIO::restore_persistent_array(const int array_id, const std::string& array_label){
-	
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Restoring label \"" << array_label << "\" into array "<< sip_tables_.array_name(array_id) << " from disk" << std::endl)
 	/* This method removes the array file
 	 * and renames the persistent file to the array file.
 	 */
@@ -202,8 +218,8 @@ void DiskBackedArraysIO::restore_persistent_array(const int array_id, const std:
 	if (my_rank == 0){
 		std::remove(arr_filename);	// Not needed since file is DELETE_ON_CLOSE.
 		// Rename persistent file to array file.
-		SIP_LOG(std::cout << "Server Master renaming " << persistent_filename << " to " << arr_filename << std::endl);
 		std::rename(persistent_filename, arr_filename);
+		SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Renamed file " <<persistent_filename << " to "<< arr_filename << std::endl)
 	}
 
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
