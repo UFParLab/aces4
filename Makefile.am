@@ -206,8 +206,8 @@ TEST_LDADD_VARS = \
 	test/libgtest_main.la \
 	libtensordil.a \
 	src/sip/super_instructions/libinstr.la\
-	$(AM_LDADD_LIBS) \
-	$(PTHREAD_LIBS) 
+	$(AM_LDADD_LIBS) 
+#	$(PTHREAD_LIBS) 
 	
 test_simple_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
@@ -227,16 +227,17 @@ copy-data-files.stamp:
 	cp $(top_srcdir)/test/*.dat .
 
 
-if HAVE_PTHREADS
-	test_simple_LDADD += $(PTHREAD_LIBS)
-	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
-	test_qm_LDADD += $(PTHREAD_LIBS)
-	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
-	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
-	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
-	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
-	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
-endif
+# Pthreads are not used, to enable, uncomment these. 
+#if HAVE_PTHREADS
+#	test_simple_LDADD += $(PTHREAD_LIBS)
+#	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
+#	test_qm_LDADD += $(PTHREAD_LIBS)
+#	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
+#	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
+#	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
+#	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
+#	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
+#endif
 
 # Google TESTS
 check_LTLIBRARIES = test/libgtest.la test/libgtest_main.la
