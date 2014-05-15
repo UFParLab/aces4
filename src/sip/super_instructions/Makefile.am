@@ -41,6 +41,7 @@ QM_SOURCE_FILES=\
 ./qm/compute_diis.F\
 ./qm/return_ovl.F\
 ./qm/scf_atom.F\
+./qm/return_pairs.F\
 ./qm/return_h1frag.F\
 ./qm/compute_int_scratchmem.F\
 ./qm/imemory.h\

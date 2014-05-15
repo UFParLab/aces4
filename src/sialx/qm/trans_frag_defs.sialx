@@ -23,6 +23,7 @@ predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
 predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
 predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+predefined  int nfrags  # Number of fragments from ZMAT 
 
 
 #these are predefined in the index table         
@@ -35,6 +36,7 @@ aoindex aces_defs_mu = 1, norb
 
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
+predefined scalar r_thresh  #Threshold for pair calculation 
           
 #predefined static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
 #predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
@@ -59,6 +61,7 @@ special print_block r
 special return_diagonal uu 
 special return_vpq uu 
 special compute_nn_repulsion u
+special return_pairs rrrw
 special enable_debug_print
 special disable_debug_print  
 

@@ -22,13 +22,13 @@ import "scf_frag_defs.sialx"
 # --------------- 
 #
       index   kiter  = 1, scf_iter  
-      index   katom  = 1, 216 # Nfrags  
-      index   jatom  = 1, 216 # Nfrags  
+      index   katom  = 1, nfrags # Nfrags  
+      index   jatom  = 1, nfrags # Nfrags  
 
-      index   jfrag  = 1, 216 # Nfragments   
-      index  jjfrag  = 1, 216 # Nfragments   
-      index   kfrag  = 1, 216 # Nfragments   
-      index  kkfrag  = 1, 216 # Nfragments 
+      index   jfrag  = 1, nfrags # Nfragments   
+      index  jjfrag  = 1, nfrags # Nfragments   
+      index   kfrag  = 1, nfrags # Nfragments   
+      index  kkfrag  = 1, nfrags # Nfragments 
 
       aoindex mu = 1, norb 
       aoindex nu = 1, norb 
@@ -105,7 +105,7 @@ import "scf_frag_defs.sialx"
       scalar imax  
       scalar zmax  
       scalar esum 
-      scalar nfrags 
+      scalar n_frags 
       scalar fcount 
       scalar icount 
       scalar jcount 
@@ -138,7 +138,7 @@ import "scf_frag_defs.sialx"
 #
 #     Determine the number of fragments  
 #     --------------------------------- 
-      execute set_frag nfrags
+      execute set_frag n_frags
      #print_scalar nfrags
       allocate wAO_frag(*) 
       allocate wOccA_frag(*) 
