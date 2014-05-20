@@ -117,7 +117,10 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
-./src/sip/dynamic_data/mpi_state.h
+./src/sip/dynamic_data/mpi_state.h\
+./src/sip/mpi/lru_array_policy.h\
+./src/sip/mpi/lru_array_policy.cpp
+
 
 endif
 

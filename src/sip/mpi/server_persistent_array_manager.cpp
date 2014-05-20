@@ -40,6 +40,8 @@ namespace sip {
 			IdBlockMap<ServerBlock>::PerArrayMap* per_array_map = runner->get_and_remove_per_array_map(array_id);
 	//				std::cout << " saving distributed array  with label " << label << " and map with " << per_array_map->size() << " blocks" << std::endl;
 			save_distributed(runner, array_id, label, per_array_map);
+
+			delete per_array_map;
 		}
 		persistent_array_map_.clear();
 	}

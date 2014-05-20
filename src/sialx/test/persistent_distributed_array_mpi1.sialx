@@ -27,9 +27,19 @@ sial persistent_distributed_array_mpi1
 			put c(i,j) += a(i,j)
 			
 			count = count + 1
+
 			
 		enddo j
 	enddo i
+
+    do i
+        do j
+            get b(i, j)
+            get c(i, j)
+            execute print_block b(i, j)
+            execute print_block c(i, j)
+        enddo j
+    enddo i
 	
 	set_persistent b "savedb"
 	set_persistent c "savedc"

@@ -208,6 +208,10 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 	std::fill(lower_index_vals, lower_index_vals + MAX_RANK, unused_index_value);
 	index_value_array_t current_index_vals;
 	std::fill(current_index_vals, current_index_vals + MAX_RANK, unused_index_value);
+
+
+    bool at_least_one_iter = false;
+
 	// Initialize
 	for (int i = 0; i < rank; i++) {
 		int selector_index = selector[i];
@@ -216,46 +220,43 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 		lower_index_vals[i] = lower;
 		current_index_vals[i] = lower_index_vals[i];
 		upper_index_vals[i] = upper;
+        if (upper - lower >= 1)
+            at_least_one_iter = true;
 	}
 	// Get the upper & lower ranges, increment the "current_seg_vals"
 	// till it reaches the "block_seg_vals".
 	// Sum up the block sizes into "tot_fp_elems"
 	long tot_fp_elems = 0;
-	int pos = 0;
-	while (pos < rank) {
-		// increment block_offset
-		bool equal_to_input_blockid = true;
-		for (int i = 0; i < rank; i++){
-			equal_to_input_blockid &= current_index_vals[i] == index_vals[i];
+    bool more_iters = at_least_one_iter;
 
-			// DEBUG    ***************************
-//			std::cout << std::endl << "S : current_index_vals : [";
-//			for (int j=0; j<rank; j++)
-//				std::cout <<  current_index_vals[j] << ", ";
-//			std::cout << "] ==" << "index_vals [" ;
-//			for (int j=0; j<rank; j++)
-//				std::cout << index_vals[j] << ", ";
-//			std::cout << "] ? " << std::endl;
-			// END_DEBUG ***************************
-		}
-//		std::cout << "S : current_index_vals == index_vals -> "<< equal_to_input_blockid ;
-//		std::cout << "\t" << tot_fp_elems << std::endl;
-		if (equal_to_input_blockid){
-			break;
-		}
-		else {
-			int elems = block_size(array_id, current_index_vals);
-			tot_fp_elems += elems;
-		}
-		// Increment indices.
-		current_index_vals[pos]++;
-		if (current_index_vals[pos] >= upper_index_vals[pos]) {
-			current_index_vals[pos] = lower_index_vals[pos];
-			pos++;
-		}
-	}
-//	std::cout << "S : return val : " << tot_fp_elems << std::endl;
+    while (more_iters) {
+		bool equal_to_input_blockid = true;
+
+		for (int i = 0; i < rank; i++)
+			equal_to_input_blockid &= current_index_vals[i] == index_vals[i];
+		
+		if (equal_to_input_blockid) break;
+		else tot_fp_elems += block_size(array_id, current_index_vals);
+
+        more_iters = increment_indices(rank, upper_index_vals, lower_index_vals, current_index_vals);
+    }
+
 	return tot_fp_elems;
+}
+
+bool SipTables::increment_indices(int rank, index_value_array_t& upper, index_value_array_t& lower, index_value_array_t& current) const {
+    int pos = 0;
+    while (pos < rank){
+        // Increment indices.
+        if (current[pos] >= upper[pos] - 1) {
+            current[pos] = lower[pos];
+            pos++;
+        } else {
+            current[pos]++;
+            return true;
+        }
+    }
+    return false;
 }
 
 //array::BlockShape& SipTables::shape(const array::BlockId& block_id) const{

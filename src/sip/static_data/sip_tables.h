@@ -154,6 +154,10 @@ public:
 
 private:
 
+
+    bool increment_indices(int rank, index_value_array_t& upper, index_value_array_t& lower, index_value_array_t& current) const;
+     
+
 	/**
 	 * Helper method to returns the offset of a block in its array
 	 * @param array_id

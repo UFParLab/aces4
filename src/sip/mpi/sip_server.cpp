@@ -141,8 +141,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(
 			std::cout << "server " << sip_mpi_attr_.global_rank()<< " put to receive block " << block_id << ", size = " << block_size << std::endl;)
-	ServerBlock* block = disk_backed_block_map_.get_or_create_block(block_id, block_size,
-			false);
+	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
 
 	//receive data
 	//TODO  Make this asynchrounous????
@@ -186,8 +185,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			MPI_COMM_WORLD, &request);
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
-	ServerBlock* block = disk_backed_block_map_.get_or_create_block(block_id, block_size,
-			true);
+	ServerBlock* block = disk_backed_block_map_.get_block_for_updating(block_id);
 
 	//wait for data to arrive
 	MPI_Wait(&request, &status2);

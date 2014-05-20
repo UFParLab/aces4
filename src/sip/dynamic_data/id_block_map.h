@@ -162,7 +162,10 @@ public:
 		PerArrayMap* map_ptr = block_map_[array_id];
 		if (map_ptr != NULL) {
 			for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
-				if (it->second != NULL) delete it->second;// Delete the block being pointed to.
+				if (it->second != NULL) {
+                    delete it->second;// Delete the block being pointed to.
+                    it->second = NULL;
+                }
 			}
 			delete block_map_[array_id];
 			block_map_[array_id] = NULL;
