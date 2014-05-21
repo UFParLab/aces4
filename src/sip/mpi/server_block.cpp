@@ -79,7 +79,7 @@ void ServerBlock::free_in_memory_data() {
 }
 
 void ServerBlock::allocate_in_memory_data(bool initialize) {
-   	sip::check_and_warn(data_ != NULL, "data_ was not NULL, allocating memory in allocate_in_memory_data!");
+   	sip::check(data_ == NULL, "data_ was not NULL, allocating memory in allocate_in_memory_data!");
    	if (initialize) 
         data_ = new double[size_]();
    	else 

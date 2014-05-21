@@ -152,12 +152,10 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : writing out all zero blocks for array " << sip_tables_.array_name(array_id) << " to disk" << std::endl);
 
-	zero_out_all_disk_blocks(array_id, mpif);
-	
-	// Write all dirty blocks to temp persistent file.
 
 	SIP_LOG(std::cout << sip_mpi_attr_.global_rank() << " : writing out all dirty blocks for array " << sip_tables_.array_name(array_id) << " to disk" << std::endl);
 
+	// Write all dirty blocks to temp persistent file.
 	write_all_dirty_blocks(mpif, array_blocks);
 
 	// Close the file
