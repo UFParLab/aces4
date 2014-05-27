@@ -30,6 +30,9 @@ public:
     /*! Mark a block as recently used  */
 	void touch(const BlockId& bid);
 
+    /*! Removes all blocks with given array id */
+    void remove_all_blocks_for_array(int array_id);
+
     /*! Get the next block for removal */
 	BlockId get_next_block_for_removal();
 

@@ -32,14 +32,25 @@ void LRUArrayPolicy::touch(const BlockId& bid){
 
 }
 
+void LRUArrayPolicy::remove_all_blocks_for_array(int array_id){
+    lru_list_.remove(array_id);
+}
+
 BlockId LRUArrayPolicy::get_next_block_for_removal(){
-    // Return an arbitrary block from the least recently used array
+    /** Return an arbitrary block from the least recently used array
+     *
+     */
     sip::check(!lru_list_.empty(), "No blocks have been touched, yet block requested for flushing");
-    int to_remove_array = lru_list_.back();
-    IdBlockMap<ServerBlock>::PerArrayMap* array_map = block_map_.per_array_map(to_remove_array);   
-    IdBlockMap<ServerBlock>::PerArrayMap::iterator it = array_map->begin();
-    sip::check(it != array_map->end(), "No blocks in array to flush!");
-    return it->first;
+    while (!lru_list_.empty()){
+    	int to_remove_array = lru_list_.back();
+    	IdBlockMap<ServerBlock>::PerArrayMap* array_map = block_map_.per_array_map(to_remove_array);
+    	IdBlockMap<ServerBlock>::PerArrayMap::iterator it = array_map->begin();
+    	if (it == array_map->end())
+    		lru_list_.pop_back();
+    	else
+    		return it->first;
+    }
+    sip::fail("No blocks to remove !");
 }
 
 } /* namespace sip */

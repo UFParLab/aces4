@@ -192,6 +192,7 @@ void DiskBackedBlockMap::insert_per_array_map(int array_id, IdBlockMap<ServerBlo
 
 
 void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id){
+    policy_.remove_all_blocks_for_array(array_id);          // remove from block replacement policy
 	disk_backed_arrays_io_.delete_array(array_id);			// remove from disk
 	block_map_.delete_per_array_map_and_blocks(array_id);	// remove from memory
 }

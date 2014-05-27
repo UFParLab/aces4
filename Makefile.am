@@ -175,8 +175,8 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm test_mpi_simple
-check_PROGRAMS = test_mpi_qm test_mpi_simple
+TESTS = test_mpi_qm test_mpi_simple test_unit
+check_PROGRAMS = test_mpi_qm test_mpi_simple test_unit
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
@@ -184,6 +184,9 @@ TESTS = test_simple test_qm
 check_PROGRAMS = test_simple test_qm
 endif
 
+test_unit_SOURCES = \
+	$(ACES_SOURCEFILES)\
+	test/test_unit.cpp
 
 test_mpi_qm_SOURCES = \
 	$(ACES_SOURCEFILES)\
@@ -212,6 +215,7 @@ TEST_LDADD_VARS = \
 	$(AM_LDADD_LIBS) 
 #	$(PTHREAD_LIBS) 
 	
+test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_simple_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
@@ -267,6 +271,7 @@ test_libgtest_main_la_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
 
 # -no-install taken from https://www.flameeyes.eu/autotools-mythbuster/libtool/wrappers.html
 TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) -no-install
+test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)

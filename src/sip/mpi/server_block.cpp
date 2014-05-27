@@ -16,7 +16,7 @@
 namespace sip {
 
 const std::size_t ServerBlock::field_members_size_ = sizeof(int) + sizeof(int) + sizeof(dataPtr);
-const std::size_t ServerBlock::max_allocated_bytes_ = 2147483648;	// 2 GB
+std::size_t ServerBlock::max_allocated_bytes_ = 2147483648;	// 2 GB
 std::size_t ServerBlock::allocated_bytes_ = 0;
 
 ServerBlock::ServerBlock(int size, bool initialize): size_(size){
@@ -118,5 +118,14 @@ std::size_t ServerBlock::remaining_memory(){
 	return max_allocated_bytes_ - allocated_bytes_;
 }
 
+void ServerBlock::set_memory_limit(std::size_t size){
+    static bool done_once = false;
+    if (!done_once){
+        done_once = true;
+        max_allocated_bytes_ = size;
+    } else {
+        sip::fail("Already set memory limit once !");
+    }
+}
 
 } /* namespace sip */
