@@ -106,19 +106,6 @@ c---------------------------------------------------------------------------
 
       nfrags          = int_constant("nfrags"//C_NULL_CHAR)
 
-c array defining which atoms are in which fragments 
-c ----------------------------------------------------------------------
-      call predefined_int_array("watom_frag"//C_NULL_CHAR,
-     *                                  two, sDimfrag,  pwatom_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[2])
-      call c_f_pointer(pwatom_frag, watom_frag, pdim_frag)
-c array defining the number of atoms in each fragment 
-c ----------------------------------------------------------------------
-      call predefined_int_array("natoms_frag"//C_NULL_CHAR,
-     *                                  one, sDimfrag,  pnatoms_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[1])
-      call c_f_pointer(pnatoms_frag, natoms_frag, pdim_frag)
-
       if (nfrags .le. 1) then 
          energy = 0.0 
          do i = 1, ncenters 
@@ -133,7 +120,21 @@ c ----------------------------------------------------------------------
             endif 
          enddo  
          enddo  
+         return 
       endif 
+
+c array defining which atoms are in which fragments 
+c ----------------------------------------------------------------------
+      call predefined_int_array("watom_frag"//C_NULL_CHAR,
+     *                                  two, sDimfrag,  pwatom_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[2])
+      call c_f_pointer(pwatom_frag, watom_frag, pdim_frag)
+c array defining the number of atoms in each fragment 
+c ----------------------------------------------------------------------
+      call predefined_int_array("natoms_frag"//C_NULL_CHAR,
+     *                                  one, sDimfrag,  pnatoms_frag)
+      call c_f_pointer(sDimfrag, pdim_frag,[1])
+      call c_f_pointer(pnatoms_frag, natoms_frag, pdim_frag)
 
       if (nfrags .ge. 2) then 
          energy = 0.0 

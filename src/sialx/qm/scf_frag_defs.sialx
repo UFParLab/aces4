@@ -23,6 +23,7 @@ predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
 predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
 predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+predefined  int nfrags  # Number of fragments from ZMAT
 
 
 #these are predefined in the index table         

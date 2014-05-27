@@ -71,7 +71,7 @@ import "trans_frag_defs.sialx"
       scalar one 
       scalar two 
       scalar rank 
-      scalar nfrags 
+      scalar n_frags 
       scalar fcount 
       scalar icount 
       scalar jcount 
@@ -219,7 +219,7 @@ import "trans_frag_defs.sialx"
 #
 #     Determine the number of fragments  
 #     --------------------------------- 
-      execute set_frag nfrags
+      execute set_frag n_frags
      #print_scalar nfrags
       allocate wAO_frag(*) 
       allocate wOccA_frag(*) 
