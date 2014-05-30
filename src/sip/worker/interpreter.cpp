@@ -1480,19 +1480,20 @@ void Interpreter::contiguous_blocks_post_op() {
 
 	for (WriteBackList::iterator it = write_back_list_.begin(); it != write_back_list_.end(); ++it){
 		WriteBack* wb = *it;
-		wb->do_write_back();
 #ifdef HAVE_CUDA
 		if (gpu_enabled_) {
-			sip::Block::BlockPtr cblock = it->get_block();
+			// Read from GPU back into host to do write back.
+			sip::Block::BlockPtr cblock = (*it)->get_block();
 			data_manager_.block_manager_.lazy_gpu_read_on_host(cblock);
 		}
 #endif
+		wb->do_write_back();
 		delete wb;
 		*it = NULL;
 	}
 	write_back_list_.clear();
+
 	for (ReadBlockList::iterator it = read_block_list_.begin(); it != read_block_list_.end(); ++it){
-		// TODO FIXME GPU ?????????????????
 		Block::BlockPtr bptr = *it;
 		delete bptr;
 		*it = NULL;
@@ -1524,7 +1525,7 @@ sip::Block::BlockPtr Interpreter::get_gpu_block(char intent, sip::BlockSelector&
 	switch (intent) {
 		case 'r': {
 			if (is_contiguous) {
-				block = data_manager_.contiguous_array_manager_.get_block_for_reading(id);
+				block = data_manager_.contiguous_array_manager_.get_block_for_reading(id, read_block_list_);
 				data_manager_.block_manager_.lazy_gpu_read_on_device(block);
 			} else {
 				block = data_manager_.block_manager_.get_gpu_block_for_reading(id);
