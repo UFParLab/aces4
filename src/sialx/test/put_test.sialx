@@ -16,21 +16,19 @@ sial put_test
 	allocate y(*, *)
 	
 	println "Sending blocks"	
-	do i
+	pardo i, j
 		print_index i
-		execute list_block_map
-		do j
-			print_index j
-			t(i,j) = 1.0
-			put b(i,j) = t(i,j)
-			put c(i,j) += t(i,j)
-			put c(i,j) += t(i,j)
-			execute print_block b(i,j)
-			execute print_block c(i,j)
-		enddo j
-	enddo i
+		print_index j
+		#execute list_block_map
+		t(i,j) = 1.0
+		put b(i,j) = t(i,j)
+		put c(i,j) += t(i,j)
+		put c(i,j) += t(i,j)
+		#execute print_block b(i,j)
+		#execute print_block c(i,j)
+	endpardo i, j
 	
-	execute list_block_map
+	#execute list_block_map
 	
 	sip_barrier
 	
@@ -41,6 +39,7 @@ sial put_test
 			get c(i,j) 
 			execute print_block b(i,j)
 			execute print_block c(i,j)
+
 			x(i, j) = b(i, j)
 			y(i, j) = c(i, j)
 		enddo j
@@ -49,12 +48,12 @@ sial put_test
 	sip_barrier
 	
 	println "block map after both do:"
-	execute list_block_map
+	#execute list_block_map
 	
 	delete b
 	delete c
 	println "block map after deallocates:"
-	execute list_block_map
+	#execute list_block_map
 	println "end of sial program put"
 	
 endsial put_test

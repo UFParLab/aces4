@@ -12,6 +12,7 @@
 #include "sip_server.h"
 #include "sip_mpi_attr.h"
 #include "global_state.h"
+#include "sip_mpi_utils.h"
 
 #include "worker_persistent_array_manager.h"
 #include "server_persistent_array_manager.h"
@@ -25,24 +26,29 @@
 void list_block_map();
 static const std::string dir_name("src/sialx/test/");
 
-TEST(Sial_Simple,Simple_Put_Test){
+TEST(SimpleMPI,Simple_Put_Test){
 	std::cout << "****************************************\n";
 	sip::GlobalState::reset_program_count();
 	sip::DataManager::scope_count=0;
 	//create setup_file
 	std::string job("put_test");
 	std::cout << "JOBNAME = " << job << std::endl;
-	int norb = 1;
+	int norb = 2;
 
-	{	init_setup(job.c_str());
+	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+
+	if (sip_mpi_attr.global_rank() == 0){
+		init_setup(job.c_str());
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
 		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {3};
-		set_aoindex_info(1,segs);
+		int segs[]  = {3, 4};
+		set_aoindex_info(2,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
@@ -55,7 +61,6 @@ TEST(Sial_Simple,Simple_Put_Test){
 	sip::SipTables sipTables(setup_reader, siox_file);
 	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
 
-	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 	//interpret the program
 	sip::WorkerPersistentArrayManager wpam;
@@ -99,7 +104,7 @@ TEST(Sial_Simple,Simple_Put_Test){
 
 
 // Sanity test to check for no compiler errors, crashes, etc.
-TEST(Sial,persistent_empty_mpi){
+TEST(SimpleMPI,persistent_empty_mpi){
 	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	int my_rank = sip_mpi_attr.global_rank();
@@ -111,7 +116,7 @@ TEST(Sial,persistent_empty_mpi){
 	double x = 3.456;
 	int norb = 4;
 
-	{
+	if (sip_mpi_attr.global_rank() == 0){
 		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
@@ -125,6 +130,8 @@ TEST(Sial,persistent_empty_mpi){
 		set_aoindex_info(4,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	//read and print setup_file
 	setup::BinaryInputFile setup_file(job + ".dat");
@@ -212,7 +219,7 @@ TEST(Sial,persistent_empty_mpi){
 
 }
 
-TEST(Sial,persistent_distributed_array_mpi){
+TEST(SimpleMPI,persistent_distributed_array_mpi){
 
 	sip::GlobalState::reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
@@ -227,7 +234,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 	int norb = 2;
 	int segs[]  = {2,3};
 
-	{
+
+	if (sip_mpi_attr.global_rank() == 0){
 		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
@@ -240,6 +248,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 		set_aoindex_info(2,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
@@ -407,7 +417,8 @@ TEST(SimpleMPI,get_mpi){
 	int norb = 4;
 	int segs[]  = {2,3,4,1};
 
-	{	init_setup(job.c_str());
+	if (sip_mpi_attr.global_rank() == 0){
+		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
@@ -416,6 +427,8 @@ TEST(SimpleMPI,get_mpi){
 		set_aoindex_info(4,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
@@ -489,7 +502,8 @@ TEST(SimpleMPI,unmatched_get){
 	double x = 3.456;
 	int norb = 4;
 
-	{
+
+	if (sip_mpi_attr.global_rank() == 0){
 		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
@@ -500,6 +514,8 @@ TEST(SimpleMPI,unmatched_get){
 		set_aoindex_info(4,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
@@ -554,7 +570,8 @@ TEST(SimpleMPI,delete_mpi){
 	double x = 3.456;
 	int norb = 4;
 
-	{	init_setup(job.c_str());
+	if (sip_mpi_attr.global_rank() == 0){
+		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
@@ -564,6 +581,8 @@ TEST(SimpleMPI,delete_mpi){
 		set_aoindex_info(4,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	setup::BinaryInputFile setup_file(job + ".dat");
 	setup::SetupReader setup_reader(setup_file);
@@ -618,7 +637,9 @@ TEST(SimpleMPI,put_accumulate_mpi){
 	double x = 3.456;
 	int norb = 4;
 
-	{	init_setup(job.c_str());
+
+	if (sip_mpi_attr.global_rank() == 0){
+		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
@@ -628,6 +649,8 @@ TEST(SimpleMPI,put_accumulate_mpi){
 		set_aoindex_info(4,segs);
 		finalize_setup();
 	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 
 	setup::BinaryInputFile setup_file(job + ".dat");
 	// setup_reader.read(setup_file);
@@ -683,7 +706,9 @@ TEST(SimpleMPI,put_test_mpi){
 	double x = 3.456;
 	int norb = 4;
 
-	{	init_setup(job.c_str());
+
+	if (sip_mpi_attr.global_rank() == 0){
+		init_setup(job.c_str());
 		set_scalar("x",x);
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
@@ -694,8 +719,9 @@ TEST(SimpleMPI,put_test_mpi){
 		finalize_setup();
 	}
 
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
+
 	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
 	setup::SetupReader setup_reader(setup_file);
 
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;

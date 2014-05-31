@@ -16,14 +16,12 @@ sial get_mpi
 	allocate a(*,*)
 	
 	println "Sending blocks"	
-	do i
-		do j
-			a(i,j) = 42.0
-			put b(i,j) = a(i,j)
-			put c(i,j) += a(i,j)
-			put c(i,j) += a(i,j)
-		enddo j
-	enddo i
+	pardo i, j
+		a(i,j) = 42.0
+		put b(i,j) = a(i,j)
+		put c(i,j) += a(i,j)
+		put c(i,j) += a(i,j)
+	endpardo i, j
 	sip_barrier
 	
 	do i

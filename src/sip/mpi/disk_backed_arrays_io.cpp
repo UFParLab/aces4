@@ -113,7 +113,7 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
 	 * this temporary persistent file to the final file.
 	 */
 
-	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Saving array " << sip_tables_.array_name(array_id) << " to label \"" << array_label << \" on disk" << std::endl)
+	SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Saving array " << sip_tables_.array_name(array_id) << " to label \"" << array_label << "\" on disk" << std::endl)
 
 	// Construct File Names
 	char persistent_filename[MAX_FILE_NAME_SIZE];
