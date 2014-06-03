@@ -69,8 +69,15 @@ extern const int SIOX_MAGIC;
 extern const int SIOX_VERSION;
 extern const int SIOX_RELEASE;
 
-/*! Debug printintg control */
+/*! Debug printintg control, default:true */
 extern bool _sip_debug_print;
+
+/*! Whether to print from all workers or just master, default:false
+ * This does not affect user defined super instructions; which are
+ * responsible for their own printing */
+extern bool _all_rank_print;
+
+bool should_all_ranks_print();
 
 typedef std::vector<double> ScalarTable;
 typedef std::vector<std::string> StringLiteralTable;

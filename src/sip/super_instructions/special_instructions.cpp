@@ -177,6 +177,9 @@ void list_block_map();
 void disable_debug_print();
 void enable_debug_print();
 
+void enable_all_rank_print();
+void disable_all_rank_print();
+
 
 // Special Super Instructions Just For Testing
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
@@ -353,6 +356,8 @@ void SpecialInstructionManager::init_procmap(){
 
     procmap_["enable_debug_print"]=(fp0)&enable_debug_print;
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
+    procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
+    procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
 
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE

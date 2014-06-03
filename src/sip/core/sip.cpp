@@ -69,6 +69,10 @@ void sip_abort() {
 namespace sip {
 
 bool _sip_debug_print = true;
+bool _all_rank_print = false;
+
+bool should_all_ranks_print() { return _all_rank_print; }
+
 
 const int SETUP_MAGIC = 23121991;
 const int SETUP_VERSION = 1;

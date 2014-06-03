@@ -352,6 +352,7 @@ SIOX_FILES=\
 ./src/sialx/test/persistent_scalars_1.siox\
 ./src/sialx/test/persistent_scalars_2.siox\
 ./src/sialx/test/unmatched_get.siox\
+./src/sialx/test/all_rank_print_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -437,6 +438,7 @@ EXTRA_DIST += \
 ./src/sialx/test/persistent_scalars_1.sialx\
 ./src/sialx/test/persistent_scalars_2.sialx\
 ./src/sialx/test/unmatched_get.sialx\
+./src/sialx/test/all_rank_print_test.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

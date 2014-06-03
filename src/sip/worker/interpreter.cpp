@@ -443,20 +443,26 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case print_op: {
 			int string_slot = op_table_.print_index(pc);
-			std::cout << string_literal(string_slot) << std::flush;
+			//std::cout << string_literal(string_slot) << std::flush;
+			sial_ops_.print_to_stdout(string_literal(string_slot));
 			++pc;
 		}
 			break;
 		case println_op: {
 			int string_slot = op_table_.print_index(pc);
-			std::cout << string_literal(string_slot) << std::endl << std::flush;
+			//std::cout << string_literal(string_slot) << std::endl << std::flush;
+			std::stringstream ss ;
+			ss << string_literal(string_slot) << std::endl;
+			sial_ops_.print_to_stdout(ss.str());
 			++pc;
 		}
 			break;
 		case print_index_op: {
 			int index_slot = op_table_.print_index(pc);
-			std::cout << index_value_to_string(index_slot) << std::endl
-					<< std::flush;
+			//std::cout << index_value_to_string(index_slot) << std::endl << std::flush;
+			std::stringstream ss ;
+			ss << index_value_to_string(index_slot) << std::endl;
+			sial_ops_.print_to_stdout(ss.str());
 			++pc;
 		}
 			break;

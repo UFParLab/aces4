@@ -409,6 +409,19 @@ void SialOpsParallel::end_program() {
 	//the program is done and the servers know it.
 }
 
+void SialOpsParallel::print_to_stdout(const std::string& to_print){
+	/** If all ranks should print, do that,
+	 * Otherwise just print from company master.
+	 */
+	if (sip::should_all_ranks_print()){
+		std::cout << to_print << std::flush;
+	} else {
+		if (sip_mpi_attr_.is_company_master()){
+			std::cout << to_print << std::flush;
+		}
+	}
+}
+
 //enum array_mode {NONE, READ, WRITE};
 bool SialOpsParallel::check_and_set_mode(int array_id, array_mode mode) {
 	array_mode current = mode_.at(array_id);

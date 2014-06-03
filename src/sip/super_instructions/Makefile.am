@@ -318,6 +318,8 @@ GENERAL_SOURCE_FILES=\
 ./general/swap_blocks.cpp\
 ./general/disable_debug_print.cpp\
 ./general/enable_debug_print.cpp\
+./general/enable_all_rank_print.cpp\
+./general/disable_all_rank_print.cpp\
 ./general/abort_job.F
 
 
