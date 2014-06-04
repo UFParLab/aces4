@@ -104,7 +104,7 @@ public:
 	~Block();
 
     int size();
-    BlockShape shape();
+    const BlockShape& shape();
     dataPtr get_data();
     dataPtr fill(double value);
     dataPtr scale(double value);
@@ -174,7 +174,9 @@ public:
 
 #endif
 
-
+#ifdef HAVE_MPI
+	MPIState& state() { return state_; }
+#endif
 
 private:
 
@@ -201,19 +203,9 @@ private:
 	};
 	std::bitset<4> status_;
 
-//TODO  is all this necessary??
-	friend class BlockManager;
-	friend class Interpreter;
-	friend class ContiguousArrayManager;
-	friend class SIPMPIUtils;
-	friend class SIPServer;
-	friend class SialOpsParallel;
-	friend class SialOpsSequential;
-
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
 	bool operator==(const Block& rhs) const;
-
 
 
 	/** encapsulates MPI related state info.

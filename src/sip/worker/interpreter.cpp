@@ -640,15 +640,16 @@ void Interpreter::handle_user_sub_op(int pc) {
 	sip::BlockSelector arg_selector0 = block_selector_stack_.top();
 	int array_id0 = arg_selector0.array_id_;
 	int rank0 = sip_tables_.array_rank(array_id0);
-	sip::Block::BlockPtr block0 = get_block_from_selector_stack(intent0,
-			block_id0, true);
+	sip::Block::BlockPtr block0 = get_block_from_selector_stack(intent0, block_id0, true);
+	int block0_size = block0->size();
+	segment_size_array_t& seg_sizes0 = const_cast<segment_size_array_t&>(block0->shape().segment_sizes_);
+	Block::dataPtr data0 = block0->get_data();
 	if (num_args == 1) {
 		SpecialInstructionManager::fp1 func =
 				sip_tables_.special_instruction_manager_.get_one_arg_special_instruction_ptr(
 						func_slot);
 		//	typedef void(*fp1)(int& array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr
-		func(array_id0, rank0, block_id0.index_values_, block0->size_,
-				block0->shape_.segment_sizes_, block0->data_, ierr);
+		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0, data0, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
@@ -661,17 +662,17 @@ void Interpreter::handle_user_sub_op(int pc) {
 	sip::BlockSelector arg_selector1 = block_selector_stack_.top();
 	int array_id1 = arg_selector1.array_id_;
 	int rank1 = sip_tables_.array_rank(array_id1);
-	sip::Block::BlockPtr block1 = get_block_from_selector_stack(intent1,
-			block_id1);
+	sip::Block::BlockPtr block1 = get_block_from_selector_stack(intent1, block_id1);
+	int block1_size = block1->size();
+	segment_size_array_t& seg_sizes1 = const_cast<segment_size_array_t&>(block1->shape().segment_sizes_);
+	Block::dataPtr data1 = block1->get_data();
 	if (num_args == 2) {
 		SpecialInstructionManager::fp2 func =
 				sip_tables_.special_instruction_manager_.get_two_arg_special_instruction_ptr(
 						func_slot);
 
-		func(array_id0, rank0, block_id0.index_values_, block0->size_,
-				block0->shape_.segment_sizes_, block0->data_, array_id1, rank1,
-				block_id1.index_values_, block1->size_,
-				block1->shape_.segment_sizes_, block1->data_, ierr);
+		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0, data0,
+			array_id1, rank1, block_id1.index_values_, block1_size, seg_sizes1, data1, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
@@ -684,19 +685,18 @@ void Interpreter::handle_user_sub_op(int pc) {
 	sip::BlockSelector arg_selector2 = block_selector_stack_.top();
 	int array_id2 = arg_selector2.array_id_;
 	int rank2 = sip_tables_.array_rank(array_id2);
-	sip::Block::BlockPtr block2 = get_block_from_selector_stack(intent2,
-			block_id2);
+	sip::Block::BlockPtr block2 = get_block_from_selector_stack(intent2, block_id2);
+	int block2_size = block2->size();
+	segment_size_array_t& seg_sizes2 = const_cast<segment_size_array_t&>(block2->shape().segment_sizes_);
+	Block::dataPtr data2 = block2->get_data();
 	if (num_args == 3) {
 		SpecialInstructionManager::fp3 func =
 				sip_tables_.special_instruction_manager_.get_three_arg_special_instruction_ptr(
 						func_slot);
 
-		func(array_id0, rank0, block_id0.index_values_, block0->size_,
-				block0->shape_.segment_sizes_, block0->data_, array_id1, rank1,
-				block_id1.index_values_, block1->size_,
-				block1->shape_.segment_sizes_, block1->data_, array_id2, rank2,
-				block_id2.index_values_, block2->size_,
-				block2->shape_.segment_sizes_, block2->data_, ierr);
+		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0, data0,
+				array_id1, rank1, block_id1.index_values_, block1_size, seg_sizes1, data1,
+				array_id2, rank2, block_id2.index_values_, block2_size, seg_sizes2, data2, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
@@ -710,20 +710,18 @@ void Interpreter::handle_user_sub_op(int pc) {
 	sip::BlockSelector arg_selector3 = block_selector_stack_.top();
 	int array_id3 = arg_selector3.array_id_;
 	int rank3 = sip_tables_.array_rank(array_id3);
-	sip::Block::BlockPtr block3 = get_block_from_selector_stack(intent3,
-			block_id3);
+	sip::Block::BlockPtr block3 = get_block_from_selector_stack(intent3, block_id3);
+	int block3_size = block3->size();
+	segment_size_array_t& seg_sizes3 = const_cast<segment_size_array_t&>(block3->shape().segment_sizes_);
+	Block::dataPtr data3 = block3->get_data();
 	if (num_args == 4) {
 		SpecialInstructionManager::fp4 func =
 				sip_tables_.special_instruction_manager_.get_four_arg_special_instruction_ptr(
 						func_slot);
-		func(array_id0, rank0, block_id0.index_values_, block0->size_,
-				block0->shape_.segment_sizes_, block0->data_, array_id1, rank1,
-				block_id1.index_values_, block1->size_,
-				block1->shape_.segment_sizes_, block1->data_, array_id2, rank2,
-				block_id2.index_values_, block2->size_,
-				block2->shape_.segment_sizes_, block2->data_, array_id3, rank3,
-				block_id3.index_values_, block3->size_,
-				block3->shape_.segment_sizes_, block3->data_, ierr);
+		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0, data0,
+				array_id1, rank1, block_id1.index_values_, block1_size, seg_sizes1, data1,
+				array_id2, rank2, block_id2.index_values_, block2_size, seg_sizes2, data2,
+				array_id3, rank3, block_id3.index_values_, block3_size, seg_sizes3, data3, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
@@ -736,22 +734,19 @@ void Interpreter::handle_user_sub_op(int pc) {
 	sip::BlockSelector arg_selector4 = block_selector_stack_.top();
 	int array_id4 = arg_selector4.array_id_;
 	int rank4 = sip_tables_.array_rank(array_id4);
-	sip::Block::BlockPtr block4 = get_block_from_selector_stack(intent4,
-			block_id4);
+	sip::Block::BlockPtr block4 = get_block_from_selector_stack(intent4, block_id4);
+	int block4_size = block4->size();
+	segment_size_array_t& seg_sizes4 = const_cast<segment_size_array_t&>(block4->shape().segment_sizes_);
+	Block::dataPtr data4 = block4->get_data();
 	if (num_args == 5) {
 		SpecialInstructionManager::fp5 func =
 				sip_tables_.special_instruction_manager_.get_five_arg_special_instruction_ptr(
 						func_slot);
-		func(array_id0, rank0, block_id0.index_values_, block0->size_,
-				block0->shape_.segment_sizes_, block0->data_, array_id1, rank1,
-				block_id1.index_values_, block1->size_,
-				block1->shape_.segment_sizes_, block1->data_, array_id2, rank2,
-				block_id2.index_values_, block2->size_,
-				block2->shape_.segment_sizes_, block2->data_, array_id3, rank3,
-				block_id3.index_values_, block3->size_,
-				block3->shape_.segment_sizes_, block3->data_, array_id4, rank4,
-				block_id4.index_values_, block4->size_,
-				block4->shape_.segment_sizes_, block4->data_, ierr);
+		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0, data0,
+				array_id1, rank1, block_id1.index_values_, block1_size, seg_sizes1, data1,
+				array_id2, rank2, block_id2.index_values_, block2_size, seg_sizes2, data2,
+				array_id3, rank3, block_id3.index_values_, block3_size, seg_sizes3, data3,
+				array_id4, rank4, block_id4.index_values_, block4_size, seg_sizes4, data4, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
@@ -764,24 +759,20 @@ void Interpreter::handle_user_sub_op(int pc) {
 	sip::BlockSelector arg_selector5 = block_selector_stack_.top();
 	int array_id5 = arg_selector5.array_id_;
 	int rank5 = sip_tables_.array_rank(array_id5);
-	sip::Block::BlockPtr block5 = get_block_from_selector_stack(intent5,
-			block_id5);
+	sip::Block::BlockPtr block5 = get_block_from_selector_stack(intent5, block_id5);
+	int block5_size = block5->size();
+	segment_size_array_t& seg_sizes5 = const_cast<segment_size_array_t&>(block5->shape().segment_sizes_);
+	Block::dataPtr data5 = block5->get_data();
 	if (num_args == 6) {
 		SpecialInstructionManager::fp6 func =
 				sip_tables_.special_instruction_manager_.get_six_arg_special_instruction_ptr(
 						func_slot);
-		func(array_id0, rank0, block_id0.index_values_, block0->size_,
-				block0->shape_.segment_sizes_, block0->data_, array_id1, rank1,
-				block_id1.index_values_, block1->size_,
-				block1->shape_.segment_sizes_, block1->data_, array_id2, rank2,
-				block_id2.index_values_, block2->size_,
-				block2->shape_.segment_sizes_, block2->data_, array_id3, rank3,
-				block_id3.index_values_, block3->size_,
-				block3->shape_.segment_sizes_, block3->data_, array_id4, rank4,
-				block_id4.index_values_, block4->size_,
-				block4->shape_.segment_sizes_, block4->data_, array_id5, rank5,
-				block_id5.index_values_, block5->size_,
-				block5->shape_.segment_sizes_, block5->data_, ierr);
+		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0, data0,
+				array_id1, rank1, block_id1.index_values_, block1_size, seg_sizes1, data1,
+				array_id2, rank2, block_id2.index_values_, block2_size, seg_sizes2, data2,
+				array_id3, rank3, block_id3.index_values_, block3_size, seg_sizes3, data3,
+				array_id4, rank4, block_id4.index_values_, block4_size, seg_sizes4, data4,
+				array_id5, rank5, block_id5.index_values_, block5_size, seg_sizes5, data5, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
 						+ sip_tables_.special_instruction_manager_.name(
@@ -926,15 +917,13 @@ void Interpreter::handle_assignment_op(int pc) {
 				for (int i = 0; i < lhs_rank; ++i) {
 					int lhs_index = lhs_selector.index_ids_[i];
 					int j;
-					for (j = 0;
-							j < MAX_RANK
-									&& rhs_selector.index_ids_[j] != lhs_index;
-							++j) {/* keep looking until matching index found */
-					}
+					for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index; ++j)
+					{/* keep looking until matching index found */}
 					sip::check(j < lhs_rank, "illegal transpose");
 					permutation[j] = i;
 				}
-				for (int i = lhs_rank; i < MAX_RANK; ++i) { //fill in unused dims with -1 to cause failure if accessed
+				for (int i = lhs_rank; i < MAX_RANK; ++i) {
+					//fill in unused dims with -1 to cause failure if accessed
 					permutation[i] = -1;
 				}
 				//DEBUG
@@ -1024,7 +1013,8 @@ void Interpreter::handle_contraction_op(int pc) {
 			double h_d = 0.0;
 			sip::BlockShape scalar_shape;
 			g_dblock = new sip::Block(scalar_shape);
-			g_dblock->gpu_data_ = _gpu_allocate(1);
+			//g_dblock->gpu_data_ = _gpu_allocate(1);
+			g_dblock->allocate_gpu_data();
 			std::fill(g_dselected_index_ids + 0, g_dselected_index_ids + MAX_RANK, sip::unused_index_slot);
 		} else {
 			sip::BlockSelector dselector = block_selector_stack_.top();
@@ -1113,10 +1103,14 @@ void Interpreter::handle_contraction_op(int pc) {
 //    ! - ierr - error code (0: success);
 //     */
 	int nthreads = sip::MAX_OMP_THREADS;
-	tensor_block_contract__(nthreads, contraction_pattern, lblock->get_data(),
-			lrank, lblock->shape().segment_sizes_, rblock->get_data(), rrank,
-			rblock->shape().segment_sizes_, dblock->get_data(), drank,
-			dblock->shape().segment_sizes_, ierr);
+	tensor_block_contract__(nthreads, contraction_pattern,
+			lblock->get_data(), lrank,
+			const_cast<segment_size_array_t&>(lblock->shape().segment_sizes_),
+			rblock->get_data(), rrank,
+			const_cast<segment_size_array_t&>(rblock->shape().segment_sizes_),
+			dblock->get_data(), drank,
+			const_cast<segment_size_array_t&>(dblock->shape().segment_sizes_),
+			ierr);
 	//std::cout <<"scalar:" << dblock.get_data()[0] << std::endl;
 	if (d_is_scalar){
 		set_scalar_value(op_table_.result_array(pc), *(dblock->get_data()));
@@ -1313,7 +1307,7 @@ void Interpreter::handle_sum_op(int pc, double factor) {
 				dblock->get_data() + 0);
 	}
 
-	tensor_block_add__(nthreads, drank, dblock->shape().segment_sizes_,
+	tensor_block_add__(nthreads, drank, const_cast<segment_size_array_t&>(dblock->shape().segment_sizes_),
 			dblock->get_data(), rblock->get_data(), factor, ierr);
 	check(ierr == 0, "error returned from tensor_block_add__");
 }

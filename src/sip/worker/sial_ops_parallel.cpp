@@ -113,7 +113,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 	SIPMPIUtils::check_err(
 			MPI_Irecv(block->get_data(), block->size(), MPI_DOUBLE, server_rank,
 					get_tag, MPI_COMM_WORLD, &request));
-	block->state_.mpi_request_ = request;
+	block->state().mpi_request_ = request;
 }
 
 //NOTE:  I can't remember why the source block was copied.
@@ -195,7 +195,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 	//immediately follow with the data
 	//TODO  should we wait for ack before sending data???
 	SIPMPIUtils::check_err(
-			MPI_Send(source_block->data_, source_block->size_, MPI_DOUBLE,
+			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 					server_rank, put_data_tag, MPI_COMM_WORLD));
 
 	//the data message should be acked
@@ -237,7 +237,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 //
 //	SIP_LOG(
 //			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT_ACCUMULATE for block " << lhs_id << " to server rank " << server_rank << std::endl);
-//
+//size_
 //	//it is legal to accumulate into the block multiple so keep the block
 //	//around until the update_state_at_barrier.
 //}
@@ -276,7 +276,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 	//immediately follow with the data
 	//like put--maybe we should wait for ack from server
 	SIPMPIUtils::check_err(
-			MPI_Send(source_block->data_, source_block->size_, MPI_DOUBLE,
+			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
 
 	//ack
@@ -482,8 +482,8 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 }
 
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b) {
-	if (b->state_.pending()) {
-		b->state_.wait(b->size());
+	if (b->state().pending()) {
+		b->state().wait(b->size());
 	}
 	return b;
 }

@@ -79,7 +79,7 @@ void predefined_scalar_array(const char*aname, int& num_dims, int **dims,
 		std::pair<int,sip::Block::BlockPtr> rankblock = sip::Interpreter::global_interpreter->sip_tables_.setup_reader().name_to_predefined_contiguous_array_map_.at(std::string(aname));
 		num_dims = rankblock.first;
 		sip::Block::BlockPtr block = rankblock.second;
-		*dims = block->shape().segment_sizes_;
+		*dims = const_cast<sip::segment_size_array_t&>(block->shape().segment_sizes_);
 		*values = block->get_data();
 		return;
 	} catch (const std::out_of_range& oor) {

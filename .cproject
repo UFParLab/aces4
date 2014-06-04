@@ -238,6 +238,7 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
@@ -259,7 +260,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.135808611" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -269,6 +269,7 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
@@ -290,7 +291,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

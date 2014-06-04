@@ -100,7 +100,7 @@ int Block::size() {
 	return size_;
 }
 
-BlockShape Block::shape() {
+const BlockShape& Block::shape() {
 	return shape_;
 }
 

@@ -330,7 +330,7 @@ void BlockManager::lazy_gpu_read_on_device(const Block::BlockPtr& blk) {
 
 void BlockManager::lazy_gpu_write_on_device(Block::BlockPtr& blk, const BlockId &id, const BlockShape& shape) {
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		remove_block(id); // Get rid of block, create a new one
+		block_map_.delete_block(id); // Get rid of block, create a new one
 		blk = create_gpu_block(id, shape);
 //		if (is_scope_extent) {
 //			temp_block_list_stack_.back()->push_back(id);
@@ -381,7 +381,7 @@ void BlockManager::lazy_gpu_read_on_host(const Block::BlockPtr& blk) {
 
 void BlockManager::lazy_gpu_write_on_host(Block::BlockPtr& blk, const BlockId &id, const BlockShape& shape) {
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		remove_block(id); // Get rid of block, create a new one
+		block_map_.delete_block(id); // Get rid of block, create a new one
 		blk = create_block(id, shape);
 //		if (is_scope_extent) {
 //			temp_block_list_stack_.back()->push_back(id);
