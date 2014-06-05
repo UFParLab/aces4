@@ -174,6 +174,7 @@ private:
 	friend class SIPServer;
 	friend class SIPMPIUtils;
 	friend class SipTables;
+	friend class DataDistribution;
 
 };
 
