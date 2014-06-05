@@ -25,7 +25,9 @@
 							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1477415650" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/aces4nj}/MPI" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.1726199187" keepEnvironmentInBuildfile="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="CUDA"/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="MPI"/>
 								</outputEntries>
 							</builder>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.618096942" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
@@ -38,8 +40,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -51,14 +54,13 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1018706944" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.393052691" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -68,8 +70,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -81,14 +84,13 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1921683653" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -125,7 +127,9 @@
 							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1327525936" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
 							<builder autoBuildTarget="" buildPath="${workspace_loc:/aces4nj}/BUILD" cleanBuildTarget="" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.2093687" incrementalBuildTarget="" keepEnvironmentInBuildfile="false" managedBuildOn="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="BUILD"/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="CUDA"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="MPI"/>
 								</outputEntries>
 							</builder>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.2046759658" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
@@ -138,8 +142,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -151,14 +156,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2107047516" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -168,8 +169,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -181,14 +183,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -225,7 +223,9 @@
 							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1782543334" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/aces4nj}/CUDA" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.1540544695" keepEnvironmentInBuildfile="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name=""/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="MPI"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="BUILD"/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="CUDA"/>
 								</outputEntries>
 							</builder>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.620063565" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
@@ -238,10 +238,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -254,12 +253,12 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.2051225921" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_CUDA=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.135808611" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -269,10 +268,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -285,12 +283,12 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/fused-src/gtest}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.241509187" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_CUDA=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

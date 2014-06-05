@@ -97,10 +97,10 @@ public:
 
 #ifdef HAVE_CUDA
 	// GPU
-	Block::BlockPtr get_gpu_block_for_writing(const BlockId& id, bool is_scope_extent);
+	Block::BlockPtr get_gpu_block_for_writing(const BlockId& id, bool is_scope_extent=false);
 	Block::BlockPtr get_gpu_block_for_updating(const BlockId& id);
 	Block::BlockPtr get_gpu_block_for_reading(const BlockId& id);
-	Block::BlockPtr get_gpu_block_for_accumulate(const BlockId& id, bool is_scope_extent);
+	Block::BlockPtr get_gpu_block_for_accumulate(const BlockId& id, bool is_scope_extent=false);
 
 	/**
 	 * Lazily copy block from host to device for reading if needed
