@@ -19,6 +19,8 @@ namespace sip {
 class SIPMPIAttr {
 public:
 
+	~SIPMPIAttr();
+
 	static const int COMPANY_MASTER_RANK = 0;
 	static SIPMPIAttr *instance_;
 	static bool destroyed_;
@@ -26,13 +28,10 @@ public:
 	// Singleton factory
 	static SIPMPIAttr& get_instance() ;
 
-	/**
-	 * Delete singleton instance
-	 */
+	/** Delete singleton instance */
 	static void cleanup() ;
 
 	int company_rank_; 
-~SIPMPIAttr();
 
 	const std::vector<int>& server_ranks() const { return servers_; }
 	const std::vector<int>& worker_ranks() const { return workers_; }
@@ -86,8 +85,6 @@ private:
 	MPI_Group server_group;
 	MPI_Group worker_group;
 	MPI_Group univ_group;
-
-
 
 	DISALLOW_COPY_AND_ASSIGN(SIPMPIAttr);
 

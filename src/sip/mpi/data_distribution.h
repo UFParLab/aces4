@@ -27,11 +27,17 @@ public:
 	 * @return
 	 */
 	int get_server_rank(const sip::BlockId&) const;
+	int block_cyclic_distribution_server_rank(const sip::BlockId& bid) const;
+	int hashed_indices_based_server_rank(const sip::BlockId& bid) const;
 
 private:
 
 	SipTables& sip_tables_;
 	SIPMPIAttr& sip_mpi_attr_;
+
+	long block_position_in_array(const sip::BlockId& bid) const;
+	void validate_block_position(const sip::BlockId& bid, long block_num) const;
+	int server_rank_from_hash(std::size_t hash) const;
 
 };
 
