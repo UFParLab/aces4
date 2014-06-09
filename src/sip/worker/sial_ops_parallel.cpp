@@ -414,7 +414,7 @@ void SialOpsParallel::print_to_stdout(const std::string& to_print){
 	 * Otherwise just print from company master.
 	 */
 	if (sip::should_all_ranks_print()){
-		std::cout << to_print << std::flush;
+		std::cout << "W " << sip_mpi_attr_.global_rank() << " : " << to_print << std::flush;
 	} else {
 		if (sip_mpi_attr_.is_company_master()){
 			std::cout << to_print << std::flush;

@@ -1,23 +1,39 @@
 sial pardo_loop
 
-special test_increment_counter w
+	special enable_all_rank_print
+	special disable_all_rank_print  
 
-	index i = 1,5
-	index j=7,10
-	index k = 30,33
+	index i  = 1,5
+	index j  = 7,10
+	index k  = 30,33
 	index aa = 1,8
 	index bb = 1,8
 	scalar counter
+	scalar total
 	
 	counter = 0.0
 	
-	pardo j,k,i
+    execute enable_all_rank_print
+    
+	pardo i,j,k
 		print_index j
 		print_index k
 		print_index i
 		#execute test_increment_counter counter
 		counter = counter + 1
 	
-	endpardo j,k,i
+	endpardo i,j,k
+	
+	sip_barrier
+    collective total += counter
+    sip_barrier
+    
+    
+    
+    print_scalar counter
+    print_scalar total
+    
+    execute disable_all_rank_print
+	
 	
 endsial pardo_loop

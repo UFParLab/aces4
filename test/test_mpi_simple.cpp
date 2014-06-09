@@ -886,6 +886,66 @@ TEST(SimpleMPI,Message_Number_Wraparound){
 }
 
 
+TEST(SimpleMPI,Pardo_Loop_Test){
+
+	sip::GlobalState::reset_program_count();
+	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+
+	std::cout << "****************************************\n";
+	sip::DataManager::scope_count=0;
+	//create setup_file
+	std::string job("pardo_loop");
+	std::cout << "JOBNAME = " << job << std::endl;
+
+	if (sip_mpi_attr.global_rank() == 0){
+		init_setup(job.c_str());
+		set_constant("norb",1);
+		std::string tmp = job + ".siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		int segs[]  = {1};
+		set_aoindex_info(1,segs);
+		finalize_setup();
+	}
+
+	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
+
+	setup::BinaryInputFile setup_file(job + ".dat");
+	setup::SetupReader setup_reader(setup_file);
+
+	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+
+	//get siox name from setup, load and print the sip tables
+	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+	sip::SipTables sipTables(setup_reader, siox_file);
+
+	//create worker and server
+	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
+
+
+	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+	sip::GlobalState::set_program_name(prog_name);
+	sip::GlobalState::increment_program();
+	if (sip_mpi_attr.is_server()){
+		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
+		MPI_Barrier(MPI_COMM_WORLD);
+		std::cout<<"starting server" << std::endl;
+		server.run();
+		std::cout << "Server state after termination" << server << std::endl;
+	} else {
+		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+		sip::Interpreter runner(sipTables, sialxTimer,  NULL);
+		MPI_Barrier(MPI_COMM_WORLD);
+		std::cout << "starting worker for "<< job  << std::endl;
+		runner.interpret();
+		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+		ASSERT_DOUBLE_EQ(80, runner.data_manager_.scalar_value("total"));
+	}
+}
+
+
 int main(int argc, char **argv) {
 
 	MPI_Init(&argc, &argv);

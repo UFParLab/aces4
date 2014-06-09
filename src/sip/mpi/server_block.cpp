@@ -37,7 +37,7 @@ ServerBlock::ServerBlock(int size, bool initialize): size_(size){
 }
 
 ServerBlock::ServerBlock(int size, dataPtr data): size_(size), data_(data) {
-	status_[ServerBlock::inMemory] = data_ == NULL ? false : true;
+	status_[ServerBlock::inMemory] = (data_ == NULL) ? false : true;
 	status_[ServerBlock::onDisk] = false;
 	status_[ServerBlock::dirtyInMemory] = false;
 
@@ -51,12 +51,12 @@ ServerBlock::ServerBlock(int size, dataPtr data): size_(size), data_(data) {
 ServerBlock::~ServerBlock(){
 	const std::size_t bytes_in_block = size_ * sizeof(double);
 	std::stringstream ss;
-	ss << "Allocated bytes [ " << allocated_bytes_ <<" ] less than size of block being destroyed "
-			<< " [ " << bytes_in_block << " ] ";
-	sip::check(allocated_bytes_ >= bytes_in_block, ss.str());
-	allocated_bytes_ -= bytes_in_block;
+	if (data_ != NULL) {
+		ss << "Allocated bytes [ " << allocated_bytes_ <<" ] less than size of block being destroyed "
+				<< " [ " << bytes_in_block << " ] ";
+		sip::check(allocated_bytes_ >= bytes_in_block, ss.str());
+		allocated_bytes_ -= bytes_in_block;
 
-	if (data_){
 		sip::check(status_[ServerBlock::inMemory], "ServerBlock not in memory yet data_ is not NULL");
 		delete [] data_;
 	}

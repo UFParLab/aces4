@@ -212,7 +212,6 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& lab
 
     std::list<BlockId>::const_iterator it;
     for (it = all_blocks.begin(); it != all_blocks.end(); ++it){
-//std::cout << " Restoring blockid : " << *it << std::endl;
         int size = sip_tables_.block_size(*it);         // Number of FP numbers
         double *data = NULL;
         ServerBlock *sb = new ServerBlock(size, data);   // ServerBlock which doesn't "take up any memory"

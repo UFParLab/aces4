@@ -471,9 +471,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			double value = scalar_value(array_table_slot);
 			std::string name = sip_tables_.array_name(array_table_slot);
 			const std::streamsize old = std::cout.precision();
-			std::cout << name << " = " << std::setprecision(20) << value
-					<< " at line " << op_table_.line_number(pc) << std::endl
-					<< std::flush;
+			std::stringstream ss;
+			ss << name << " = " << value << " at line " << op_table_.line_number(pc) << std::endl;
+			//std::cout << name << " = " << std::setprecision(20) << value
+			//		<< " at line " << op_table_.line_number(pc) << std::endl
+			//		<< std::flush;
+			std::cout.precision(20);
+			sial_ops_.print_to_stdout(ss.str());
 			std::cout.precision(old);
 			++pc;
 		}

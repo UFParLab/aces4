@@ -397,7 +397,6 @@ TEST(Sial,loop_over_simple_indices){
 		ASSERT_EQ(0, sip::DataManager::scope_count);
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 	}
-
 }
 
 TEST(Sial,pardo_loop){
