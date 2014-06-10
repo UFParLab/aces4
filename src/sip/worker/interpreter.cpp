@@ -472,13 +472,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			std::string name = sip_tables_.array_name(array_table_slot);
 			const std::streamsize old = std::cout.precision();
 			std::stringstream ss;
+			ss.precision(20);
 			ss << name << " = " << value << " at line " << op_table_.line_number(pc) << std::endl;
 			//std::cout << name << " = " << std::setprecision(20) << value
 			//		<< " at line " << op_table_.line_number(pc) << std::endl
 			//		<< std::flush;
-			std::cout.precision(20);
 			sial_ops_.print_to_stdout(ss.str());
-			std::cout.precision(old);
+			//std::cout.precision(old);
 			++pc;
 		}
 			break;

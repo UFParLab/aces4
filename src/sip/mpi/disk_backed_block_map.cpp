@@ -105,8 +105,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
 		std::stringstream msg;
-		msg << " W " << sip_mpi_attr_.global_rank();
-		msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
+		msg << "S " << sip_mpi_attr_.global_rank();
+		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
 		block = allocate_block(NULL, block_size);
 	    block_map_.insert_block(block_id, block);
@@ -135,8 +135,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
 		std::stringstream msg;
-		msg << " W " << sip_mpi_attr_.global_rank();
-		msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
+		msg << "S " << sip_mpi_attr_.global_rank();
+		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
 		block = allocate_block(NULL, block_size);
 	    block_map_.insert_block(block_id, block);
@@ -160,13 +160,26 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 	ServerBlock* block = block_map_.block(block_id);
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
-		// TODO Error !
-		std::stringstream msg;
-		msg << " W " << sip_mpi_attr_.global_rank();
-		msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
-		std::cout << msg.str() << std::flush;
-		block = allocate_block(NULL, block_size);
-	    block_map_.insert_block(block_id, block);
+		// Error !
+
+		std::stringstream errmsg;
+		errmsg << " S " << sip_mpi_attr_.global_rank();
+		errmsg << " : Asking for block " << block_id << ". It has not been put/prepared before !"<< std::endl;
+		std::cout << errmsg.str() << std::flush;
+		
+		sip::fail(errmsg.str());
+
+		// WARNING DISABLED !
+		if (false){
+			std::stringstream msg;
+			msg << "S " << sip_mpi_attr_.global_rank();
+			msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
+			std::cout << msg.str() << std::flush;
+			block = allocate_block(NULL, block_size);
+			block_map_.insert_block(block_id, block);
+		}
+
+
 	} else {
 		if(!block->is_in_memory())
 			if (block->is_on_disk()){
