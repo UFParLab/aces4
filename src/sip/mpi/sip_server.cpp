@@ -17,7 +17,8 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
 				sip_tables, sip_mpi_attr, data_distribution), sip_mpi_attr_(
 				sip_mpi_attr), persistent_array_manager_(
-				persistent_array_manager), terminated_(false) {
+				persistent_array_manager), terminated_(false),
+				mode_(sip_tables.num_arrays(), NONE){
 }
 
 SIPServer::~SIPServer() {
@@ -40,46 +41,48 @@ void SIPServer::run() {
 		int mpi_tag = status.MPI_TAG;
 		int mpi_source = status.MPI_SOURCE;
 
-		SIPMPIData::MessageType_t message_type;
+		SIPMPIConstants::MessageType_t message_type;
 		int section_number;
 		int transaction_number;
 
-		state_.decode_tag_and_check_invariant(mpi_tag, message_type,
+		bool section_number_changed = state_.decode_tag_and_check_invariant(mpi_tag, message_type,
 				section_number, transaction_number);
 		SIP_LOG(
-				std::cout<< "\nS " << my_rank << " has message with tag " << mpi_tag << " of type " << message_type << " section_number=" << section_number << " transaction_number=" << transaction_number << std::endl << std::flush);
+				std::cout<< "S " << my_rank << " : has message with tag " << mpi_tag << " of type " << SIPMPIConstants::messageTypeToName(message_type) << " section_number=" << section_number << " transaction_number=" << transaction_number << std::endl << std::flush);
+
+		handle_section_number_change(section_number_changed);
 
 		//handle the message
 		switch (message_type) {
 		//case SIPMPIData::CREATE:
 		//	// NO OP - Create blocks on the fly.
 		//	break;
-		case SIPMPIData::GET:
+		case SIPMPIConstants::GET:
 			handle_GET(mpi_source, mpi_tag);
 			break;
-		case SIPMPIData::PUT:
+		case SIPMPIConstants::PUT:
 			int put_data_tag;
-			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIData::PUT_DATA,
+			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA,
 					section_number, transaction_number);
 			handle_PUT(mpi_source, mpi_tag, put_data_tag);
 			break;
-		case SIPMPIData::PUT_ACCUMULATE:
+		case SIPMPIConstants::PUT_ACCUMULATE:
 			int put_accumulate_data_tag;
 			put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
-					SIPMPIData::PUT_ACCUMULATE_DATA, section_number,
+					SIPMPIConstants::PUT_ACCUMULATE_DATA, section_number,
 					transaction_number);
 			handle_PUT_ACCUMULATE(mpi_source, mpi_tag, put_accumulate_data_tag);
 			break;
-		case SIPMPIData::DELETE:
+		case SIPMPIConstants::DELETE:
 			handle_DELETE(mpi_source, mpi_tag);
 			break;
-		case SIPMPIData::SET_PERSISTENT:
+		case SIPMPIConstants::SET_PERSISTENT:
 			handle_SET_PERSISTENT(mpi_source, mpi_tag);
 			break;
-		case SIPMPIData::RESTORE_PERSISTENT:
+		case SIPMPIConstants::RESTORE_PERSISTENT:
 			handle_RESTORE_PERSISTENT(mpi_source, mpi_tag);
 			break;
-		case SIPMPIData::END_PROGRAM:
+		case SIPMPIConstants::END_PROGRAM:
 			handle_END_PROGRAM(mpi_source, mpi_tag);
 			break;
 		default:
@@ -103,9 +106,14 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId block_id(buffer);
+
+	check_array_mode(block_id.array_id(), READ);
+
 	size_t block_size = sip_tables_.block_size(block_id);
 
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
+
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()<< " : get for block " << block_id.str(sip_tables_) << ", size = " << block_size << std::endl;)
 
 //	ServerBlock* block = block_map_.block(block_id);
 //	if (block == NULL) {
@@ -135,12 +143,13 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 	//construct a BlockId object from the message contents
 	BlockId block_id(buffer);
+	check_array_mode(block_id.array_id(), WRITE);
 
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(
-			std::cout << "server " << sip_mpi_attr_.global_rank()<< " put to receive block " << block_id << ", size = " << block_size << std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : put to receive block " << block_id.str(sip_tables_) << ", size = " << block_size << std::endl;)
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
 
 	//receive data
@@ -170,12 +179,13 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	//construct a BlockId object from the message contents
 	BlockId block_id(buffer);
+	check_array_mode(block_id.array_id(), UPDATE);
 
 	//get the block size
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(
-			std::cout << "server " << sip_mpi_attr_.global_rank() << " put accumulate to receive block " << block_id.str() << ", size = " << block_size << std::endl << std::flush;)
+			std::cout << "S " << sip_mpi_attr_.global_rank() << " : put accumulate to receive block " << block_id.str(sip_tables_) << ", size = " << block_size << std::endl << std::flush;)
 
 	//allocate a temporary buffer and post irecv.
 	ServerBlock::dataPtr temp = new double[block_size];
@@ -205,7 +215,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
 
 	//receive and check the message
 	int array_id;
@@ -216,7 +226,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	check_int_count(status, 1);
 
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : server deleting array " << sip_tables_.array_name(array_id)<< std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : deleting array " << sip_tables_.array_name(array_id)<< std::endl;)
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -229,7 +239,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 
 void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : In END_PROGRAM at server " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In END_PROGRAM at server " << std::endl);
 
 	//receive the message (which is empty)
 	MPI_Status status;
@@ -248,7 +258,7 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 
 void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : In SET_PERSISTENT at server " << std::endl);
+			std::cout <<"S " << sip_mpi_attr_.global_rank()<< " : In SET_PERSISTENT at server " << std::endl);
 
 	//receive and check the message
 	MPI_Status status;
@@ -274,7 +284,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 		int restore_persistent_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
 	//receive and check the message
 	int buffer[2];  //array_id, string_slot
 	MPI_Status status;
@@ -307,6 +317,36 @@ void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
 	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count));
 	check(received_count == expected_count,
 			"message double count different than expected");
+}
+
+void SIPServer::handle_section_number_change(bool section_number_changed) {
+	// If section number is changed, reset the "mode" of all arrays to "NONE".
+	if (section_number_changed) {
+		std::fill(mode_.begin(), mode_.end(), NONE);
+	}
+}
+
+void SIPServer::check_array_mode(int array_id, const array_mode_t required_mode) {
+	std::stringstream ss;
+	const std::string& array_name = sip_tables_.array_name(array_id);
+	ss << "Array \"" << array_name << "\" with id " << array_id
+			<< " in mode " << arrayModeToString(mode_[array_id])
+			<< ", whereas it should have been in mode " << arrayModeToString(required_mode)
+			<< std::endl;
+	sip::check(NONE == mode_[array_id] || required_mode == mode_[array_id],
+			ss.str());
+	mode_[array_id] = required_mode;
+}
+
+std::string SIPServer::arrayModeToString(array_mode_t m){
+	switch(m){
+	case NONE : return "NONE"; break;
+	case READ : return "READ"; break;
+	case WRITE : return "WRITE"; break;
+	case UPDATE : return "UPDATE"; break;
+	default : sip::fail("No such supported array mode !");
+	}
+	return "";
 }
 
 std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {

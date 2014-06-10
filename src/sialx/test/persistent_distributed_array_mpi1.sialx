@@ -31,7 +31,9 @@ sial persistent_distributed_array_mpi1
 			
 		enddo j
 	enddo i
-
+	
+	sip_barrier
+	
     do i
         do j
             get b(i, j)

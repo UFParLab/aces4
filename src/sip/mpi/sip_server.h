@@ -59,9 +59,6 @@ public:
 	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*);
 	~SIPServer();
 
-
-	//static SipTables& instance() ;
-
 	/**
 	 * Main server loop
 	 */
@@ -109,6 +106,7 @@ public:
     void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
     Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
 
+
 private:
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
@@ -133,6 +131,32 @@ private:
 	 * Interface to disk backed block manager.
 	 */
 	DiskBackedBlockMap disk_backed_block_map_;
+
+
+	/** values for mode_ array */
+	enum array_mode_t {
+		NONE, READ, WRITE, UPDATE
+	};
+
+	std::string arrayModeToString(array_mode_t m);
+
+	/** vector of mode for each array
+	 * Used to detect data races
+	 * An array cannot be in 2 modes
+	 */
+	std::vector<array_mode_t> mode_;
+
+	/**
+	 * Resets the "mode" for all arrays
+	 * @param section_number_changed
+	 */
+	void handle_section_number_change(bool section_number_changed);
+
+	/** Checks if array is in the required mode or NONE
+	 * @param array_id
+	 * @param required_mode
+	 */
+	void check_array_mode(int array_id, const array_mode_t required_mode);
 
 	/**
 	 * Get

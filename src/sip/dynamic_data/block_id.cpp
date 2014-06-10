@@ -139,12 +139,12 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	return false;
 }
 
-std::string BlockId::str() const{
+std::string BlockId::str(const SipTables& sip_tables) const{
 	std::stringstream ss;
 //	SipTables& tables = SipTables::instance();
 //	int rank = tables.array_rank(array_id_);
 //	ss << (tables.array_name(array_id_));
-	ss << array_id_;
+	ss << "\"" <<sip_tables.array_name(array_id_) << "\" : " << array_id_ << " : ";
 	ss << '[';
 	int i;
 	for (i = 0; i < MAX_RANK; ++i) {

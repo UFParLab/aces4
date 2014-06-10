@@ -160,7 +160,7 @@ public:
 	 *
 	 * @return a string representation of this BlockId
 	 */
-	std::string str() const;
+	std::string str(const SipTables& sip_tables) const;
 
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
 

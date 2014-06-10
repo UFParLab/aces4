@@ -82,11 +82,11 @@ public:
 	 * @param mpi_tag
 	 * @return
 	 */
-	static SIPMPIData::MessageType_t extract_message_type(int mpi_tag){
+	static SIPMPIConstants::MessageType_t extract_message_type(int mpi_tag){
 		SIPMPITagBitFieldConverter bc;
         bc.i = 0;
 		bc.i = mpi_tag;
-		return SIPMPIData::intToMessageType(bc.bf.message_type);
+		return SIPMPIConstants::intToMessageType(bc.bf.message_type);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public:
 	 * @param transaction_number
 	 * @return
 	 */
-	static int make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int transaction_number){
+	static int make_mpi_tag(SIPMPIConstants::MessageType_t message_type, int section_number, int transaction_number){
 		SIPMPITagBitFieldConverter bc;
         bc.i = 0;
 		bc.bf.message_type = message_type;
@@ -136,18 +136,24 @@ public:
 	/**
 	 * Called by the server loop for each message it receives.  Extracts message_type, section_number, and transaction_number,
 	 * checks the invariant, and updates the section number.
+	 * Returns true if the section number was updated.
 	 *
 	 * @param tag
 	 * @param message_type
 	 * @param section_number
 	 * @param transaction_number
+	 * @return true if section number was different that this->section_number_.
 	 */
-	void decode_tag_and_check_invariant(int mpi_tag, SIPMPIData::MessageType_t& message_type, int& section_number, int& transaction_number){
+	bool decode_tag_and_check_invariant(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& section_number, int& transaction_number){
 		message_type = extract_message_type(mpi_tag);
 		transaction_number = extract_transaction_number(mpi_tag);
 		section_number = extract_section_number(mpi_tag);
 		check (section_number >= this->section_number_, "Section number invariant violated. Received request from an older section !");
-		this->section_number_ = section_number;
+		if (section_number > this->section_number_){
+			this->section_number_ = section_number;
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -162,7 +168,7 @@ public:
 	int make_mpi_tag_for_PUT_ACCUMULATE_DATA(int put_accumulate_tag){
 		int transaction_number = extract_transaction_number(put_accumulate_tag);
 		int section_number = extract_section_number(put_accumulate_tag);
-		return make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
+		return make_mpi_tag(SIPMPIConstants::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
 	}
 
 	/**
@@ -175,10 +181,10 @@ public:
 	 * @return
 	 */
 	int make_mpi_tag_for_PUT_DATA(int put_tag){
-		SIPMPIData::MessageType_t message_type = extract_message_type(put_tag);
+		SIPMPIConstants::MessageType_t message_type = extract_message_type(put_tag);
 		int transaction_number = extract_transaction_number(put_tag);
 		int section_number = extract_section_number(put_tag);
-		return make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, transaction_number_);
+		return make_mpi_tag(SIPMPIConstants::PUT_DATA, section_number_, transaction_number_);
 	}
 
 
@@ -191,8 +197,8 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_GET(){
-		int tag = make_mpi_tag(SIPMPIData::GET, section_number_, transaction_number_);
-		transaction_number_ = (transaction_number_ + 1) % 1 << NUM_TRANSACTION_NUMBER_BITS;
+		int tag = make_mpi_tag(SIPMPIConstants::GET, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return tag;
 	}
 
@@ -206,9 +212,9 @@ public:
 	 * @return PUT tag
 	 */
 	int make_mpi_tags_for_PUT(int& put_data_tag){
-		int put_tag = make_mpi_tag(SIPMPIData::PUT, section_number_, transaction_number_);
-		put_data_tag = make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, transaction_number_);
-		transaction_number_ = (transaction_number_ + 1) % 1 << NUM_TRANSACTION_NUMBER_BITS;
+		int put_tag = make_mpi_tag(SIPMPIConstants::PUT, section_number_, transaction_number_);
+		put_data_tag = make_mpi_tag(SIPMPIConstants::PUT_DATA, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return put_tag;
 	}
 
@@ -223,8 +229,8 @@ public:
 	 * @return PUT_ACCUMULATE tag
 	 */
 	int make_mpi_tags_for_PUT_ACCUMULATE(int& put_accumulate_data_tag){
-		int put_accumulate_tag = make_mpi_tag(SIPMPIData::PUT_ACCUMULATE, section_number_, transaction_number_);
-		put_accumulate_data_tag = make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
+		int put_accumulate_tag = make_mpi_tag(SIPMPIConstants::PUT_ACCUMULATE, section_number_, transaction_number_);
+		put_accumulate_data_tag = make_mpi_tag(SIPMPIConstants::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
 		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return put_accumulate_tag;
 	}
@@ -237,7 +243,7 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_DELETE(){
-		int tag = make_mpi_tag(SIPMPIData::DELETE, section_number_, transaction_number_);
+		int tag = make_mpi_tag(SIPMPIConstants::DELETE, section_number_, transaction_number_);
 		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return tag;
 	}
@@ -248,7 +254,7 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_END_PROGRAM(){
-		int tag = make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, transaction_number_);
+		int tag = make_mpi_tag(SIPMPIConstants::END_PROGRAM, section_number_, transaction_number_);
 		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return tag;
 	}
@@ -260,7 +266,7 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_SET_PERSISTENT(){
-		int tag = make_mpi_tag(SIPMPIData::SET_PERSISTENT, section_number_, transaction_number_);
+		int tag = make_mpi_tag(SIPMPIConstants::SET_PERSISTENT, section_number_, transaction_number_);
 		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return tag;
 	}
@@ -272,7 +278,7 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_RESTORE_PERSISTENT(){
-		int tag = make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT, section_number_, transaction_number_);
+		int tag = make_mpi_tag(SIPMPIConstants::RESTORE_PERSISTENT, section_number_, transaction_number_);
 		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return tag;
 	}
