@@ -27,7 +27,7 @@ void print_block(int& array_slot, int& rank, int* index_values, int& size, int* 
     for (i = 0; i < size && i < MAX_TO_PRINT; ++i){
     	if (i%OUTPUT_ROW_SIZE == 0) std::cout << std::endl;
     //	std::cout << std::endl;
-    	std::cout.width(10);
+    	std::cout.width(14);
     	std::cout << *(data+i);
     }
     if (i == MAX_TO_PRINT){

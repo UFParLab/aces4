@@ -1558,6 +1558,7 @@ import "scf_defs.sialx"
 #        Replace 'old' HF density by 'new' HF density 
 #        -------------------------------------------- 
 #
+         sip_barrier
          CALL HFDENS_REPLACE 
          sip_barrier
 #
