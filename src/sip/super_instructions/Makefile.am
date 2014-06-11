@@ -46,6 +46,7 @@ QM_SOURCE_FILES=\
 ./qm/compute_int_scratchmem.F\
 ./qm/imemory.h\
 ./qm/energy_denominator_rhf.F\
+./qm/energy_numerator_rhf.F\
 ./qm/return_vpq.F\
 ./qm/return_diagonal.F\
 ./qm/eig.F\
