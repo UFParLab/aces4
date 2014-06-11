@@ -143,6 +143,8 @@ c---------------------------------------------------------------------------
          endif 
          if (a+offset_1 .eq. b+offset_2) then 
              diag_sum = diag_sum + array(a,b) 
+c            write(6,*) ' Diag elements:', a+offset_1,b+offset_2,
+c    *                    array(a,b), diag_sum  
          endif 
       enddo 
       enddo 
