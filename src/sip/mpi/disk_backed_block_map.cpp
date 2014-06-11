@@ -302,6 +302,20 @@ void DiskBackedBlockMap::save_persistent_array(const int array_id,
 }
 
 
+void DiskBackedBlockMap::reset_consistency_status_for_all_blocks(){
+	int num_arrays = block_map_.size();
+	for (int i=0; i<num_arrays; i++){
+		typedef IdBlockMap<ServerBlock>::PerArrayMap PerArrayMap;
+		typedef IdBlockMap<ServerBlock>::PerArrayMap::iterator PerArrayMapIterator;
+		PerArrayMap *map = block_map_.per_array_map(i);
+		PerArrayMapIterator it = map->begin();
+		for (; it != map->end(); ++it){
+			it->second->reset_consistency_status();
+		}
+	}
+}
+
+
 std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj){
 	os << "block map : " << std::endl;
 	os << obj.block_map_;

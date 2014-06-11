@@ -132,32 +132,6 @@ private:
 	 */
 	DiskBackedBlockMap disk_backed_block_map_;
 
-
-	/** values for mode_ array */
-	enum array_mode_t {
-		NONE, READ, WRITE, UPDATE
-	};
-
-	std::string arrayModeToString(array_mode_t m);
-
-	/** vector of mode for each array
-	 * Used to detect data races
-	 * An array cannot be in 2 modes
-	 */
-	std::vector<array_mode_t> mode_;
-
-	/**
-	 * Resets the "mode" for all arrays
-	 * @param section_number_changed
-	 */
-	void handle_section_number_change(bool section_number_changed);
-
-	/** Checks if array is in the required mode or NONE
-	 * @param array_id
-	 * @param required_mode
-	 */
-	void check_array_mode(int array_id, const array_mode_t required_mode);
-
 	/**
 	 * Get
 	 *
@@ -286,6 +260,9 @@ private:
 	 * @param expected_count
 	 */
 	void check_double_count(MPI_Status& status, int expected_count);
+
+
+	void handle_section_number_change(bool section_number_changed);
 
 
     friend ServerPersistentArrayManager;

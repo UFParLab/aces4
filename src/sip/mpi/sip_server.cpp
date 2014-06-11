@@ -16,9 +16,8 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		ServerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
 				sip_tables, sip_mpi_attr, data_distribution), sip_mpi_attr_(
-				sip_mpi_attr), persistent_array_manager_(
-				persistent_array_manager), terminated_(false),
-				mode_(sip_tables.num_arrays(), NONE){
+				sip_mpi_attr), persistent_array_manager_(persistent_array_manager),
+				terminated_(false){
 }
 
 SIPServer::~SIPServer() {
@@ -107,8 +106,6 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId block_id(buffer);
 
-	check_array_mode(block_id.array_id(), READ);
-
 	size_t block_size = sip_tables_.block_size(block_id);
 
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
@@ -128,6 +125,10 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	SIPMPIUtils::check_err(
 			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
 					get_tag, MPI_COMM_WORLD));
+
+	check(block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source),
+			"Incorrect block semantics !");
+
 }
 
 void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
@@ -143,7 +144,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 	//construct a BlockId object from the message contents
 	BlockId block_id(buffer);
-	check_array_mode(block_id.array_id(), WRITE);
+//	check_array_mode(block_id.array_id(), WRITE);
 
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
@@ -153,11 +154,13 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
 
 	//receive data
-	//TODO  Make this asynchrounous????
 	SIPMPIUtils::check_err(
 			MPI_Recv(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
 					put_data_tag, MPI_COMM_WORLD, &status));
 	check_double_count(status, block_size);
+
+	check(block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source),
+			"Incorrect block semantics !");
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -179,7 +182,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	//construct a BlockId object from the message contents
 	BlockId block_id(buffer);
-	check_array_mode(block_id.array_id(), UPDATE);
+//	check_array_mode(block_id.array_id(), UPDATE);
 
 	//get the block size
 	int block_size;
@@ -200,6 +203,9 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	//wait for data to arrive
 	MPI_Wait(&request, &status2);
 	check_double_count(status2, block_size);
+
+	check(block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source),
+			"Incorrect block semantics !");
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -319,35 +325,14 @@ void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
 			"message double count different than expected");
 }
 
+
 void SIPServer::handle_section_number_change(bool section_number_changed) {
-	// If section number is changed, reset the "mode" of all arrays to "NONE".
+	// If section number is changed, reset the "mode" of all blocks to "OPEN, NONE".
 	if (section_number_changed) {
-		std::fill(mode_.begin(), mode_.end(), NONE);
+		disk_backed_block_map_.reset_consistency_status_for_all_blocks();
 	}
 }
 
-void SIPServer::check_array_mode(int array_id, const array_mode_t required_mode) {
-	std::stringstream ss;
-	const std::string& array_name = sip_tables_.array_name(array_id);
-	ss << "Array \"" << array_name << "\" with id " << array_id
-			<< " in mode " << arrayModeToString(mode_[array_id])
-			<< ", whereas it should have been in mode " << arrayModeToString(required_mode)
-			<< std::endl;
-	sip::check(NONE == mode_[array_id] || required_mode == mode_[array_id],
-			ss.str());
-	mode_[array_id] = required_mode;
-}
-
-std::string SIPServer::arrayModeToString(array_mode_t m){
-	switch(m){
-	case NONE : return "NONE"; break;
-	case READ : return "READ"; break;
-	case WRITE : return "WRITE"; break;
-	case UPDATE : return "UPDATE"; break;
-	default : sip::fail("No such supported array mode !");
-	}
-	return "";
-}
 
 std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
 	os << "\nblock_map_:" << std::endl << obj.disk_backed_block_map_;
