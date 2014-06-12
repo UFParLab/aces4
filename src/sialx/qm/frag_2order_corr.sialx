@@ -21,7 +21,7 @@ import "trans_frag_defs.sialx"
 # Declare indeces 
 # --------------- 
 #
-      index   kiter  = 1, 10 # microiterations 
+      index   kiter  = 1, 25 # microiterations 
       index   jiter  = 1, 10 # macroiterations 
       index   ifrag  = 1, nfrags # Nsolute   
       index  iifrag  = 1, nfrags # Nsolute    
@@ -237,6 +237,7 @@ import "trans_frag_defs.sialx"
       temp t2p(ifrag) 
       distributed wC(p,p1)  
       distributed VE(p,p1)  
+      distributed VE_x(p,p1)  
       distributed t1old(b,j)  
       distributed t1old_x(b,j)  
       distributed t1new(b,j)  
@@ -1786,7 +1787,7 @@ import "trans_frag_defs.sialx"
          jcount = 0.0 
          DO jfrag 
             jcount += 1.0 
-            if jfrag != ifrag 
+            if jfrag != kfrag 
 
             DO mu 
                x1(mu)     = wAO_frag(mu)     
@@ -1811,8 +1812,7 @@ import "trans_frag_defs.sialx"
                         execute return_sval xj(j)  l  
                         if l == jcount  
                            t1pp(i,j) = tpx(i,nu)*ca(nu,j) 
-                           tpp(i,j) = t1pp(i,j) 
-                           PUT VE(i,j) += t1pp(i,j) 
+                           PUT VE_x(i,j) += t1pp(i,j) 
                         endif # s == icount 
                      enddo j 
 
@@ -1957,7 +1957,7 @@ import "trans_frag_defs.sialx"
          if etemp < zero  
             etemp *= -1.0 
          endif 
-         print_scalar etemp 
+        #print_scalar etemp 
       IF etemp > ecrit 
          GET     e10c_old(ifrag) 
          e1old = e10c_old(ifrag) 
@@ -2791,14 +2791,14 @@ import "trans_frag_defs.sialx"
             ENDIF 
          ENDDO iifrag 
          println "Performing a CCPT2 calc on fragment "
-         print_scalar icount
+        #print_scalar icount
 
          GET     e2error(ifrag) 
          execute return_sval e2error(ifrag) etemp  
          if etemp < zero  
             etemp *= -1.0 
          endif 
-         print_scalar etemp 
+        #print_scalar etemp 
       IF etemp > ecrit 
          GET     e20c_old(ifrag) 
          e1old = e20c_old(ifrag) 
@@ -2811,7 +2811,6 @@ import "trans_frag_defs.sialx"
         et2_correction = 0.0 
         esum = 0.0  
 
-        sip_barrier 
         DO a
          xa(a)      = wVirtA_frag(a)     
          execute return_sval xa(a)  m  
@@ -3484,8 +3483,8 @@ import "trans_frag_defs.sialx"
 #
 
       DO kiter 
-         sip_barrier 
          do_iter = 0.0 
+         sip_barrier 
 #
       PARDO ifrag, jfrag   
          if jfrag != ifrag 
@@ -3512,7 +3511,7 @@ import "trans_frag_defs.sialx"
          if etemp < zero  
             etemp *= -1.0 
          endif 
-         print_scalar etemp 
+        #print_scalar etemp 
       IF etemp > ecrit 
          GET     d20c_old(ifrag,jfrag) 
          e1old = d20c_old(ifrag,jfrag) 
@@ -4197,9 +4196,6 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag, jfrag   
       sip_barrier 
 
-      if do_iter < one 
-         exit 
-      endif 
       PARDO ifrag, jfrag  
          WHERE ifrag != jfrag 
          icount = 0.0 
@@ -4230,6 +4226,9 @@ import "trans_frag_defs.sialx"
          endif 
       ENDPARDO ifrag, jfrag  
       sip_barrier 
+     #if do_iter < one 
+     #   exit 
+     #endif 
 #
       ENDDO kiter 
 # 
@@ -4279,10 +4278,10 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag 
       sip_barrier 
 
-      PARDO mu, nu 
-                  execute return_ovl txx(mu,nu)  
-                  PUT oed_ovl(mu,nu) = txx(mu,nu) 
-      ENDPARDO mu, nu 
+     #PARDO mu, nu 
+     #            execute return_ovl txx(mu,nu)  
+     #            PUT oed_ovl(mu,nu) = txx(mu,nu) 
+     #ENDPARDO mu, nu 
 
       sip_barrier
 # 
@@ -5002,9 +5001,11 @@ import "trans_frag_defs.sialx"
          ENDDO i1 
             endif 
          ENDDO i 
-                  GET          VE(j,i2) 
-                  t1pp(i2,j) = VE(j,i2) 
-                 #t1pp(i2,j)*= 0.5  
+                  GET          VE_x(j,i2) 
+                  GET          VE_x(i2,j) 
+                  t1pp(i2,j) = VE_x(j,i2) 
+                  t1pp(i2,j)+= VE_x(i2,j) 
+                  t1pp(i2,j)*= 0.5  
                   tpp(i2,j) += t1pp(i2,j) 
                   etemp = SOVL(j,i2)*tpp(i2,j) 
                   etemp *= -2.0 
@@ -5143,7 +5144,7 @@ import "trans_frag_defs.sialx"
                            GET         SOVL(i,j) 
                            tpp(i1,j) = VE(i1,i)*SOVL(i,j) 
                            etemp     = tpp(i1,j)*SOVL(j,i1)
-                          #etemp    *=  2.0  
+                           etemp    *=  2.0  
                            esum     += etemp 
                   endif 
                ENDDO j 
@@ -5156,24 +5157,24 @@ import "trans_frag_defs.sialx"
          print_scalar esum 
          esum = 0. 
 
-         DO i
-            xi(i)      = wOccA_frag(i)
-            execute return_sval xi(i)  m
-            if m == icount
-         DO j 
-               xj(j)     = wOccA_frag(j)
-               execute return_sval xj(j)  n
-               if n == jcount
-                 GET SOVL(i,j) 
-                 etemp = SOVL(i,j)*SOVL(i,j) 
-                 etemp *= nn_rep 
-                 etemp *= 0.5  
-                 esum += etemp 
-               endif 
-         ENDDO j 
-               endif 
-         ENDDO i 
-         print_scalar esum 
+#        DO i
+#           xi(i)      = wOccA_frag(i)
+#           execute return_sval xi(i)  m
+#           if m == icount
+#        DO j 
+#              xj(j)     = wOccA_frag(j)
+#              execute return_sval xj(j)  n
+#              if n == jcount
+#                GET SOVL(i,j) 
+#                etemp = SOVL(i,j)*SOVL(i,j) 
+#                etemp *= nn_rep 
+#                etemp *= 0.5  
+#                esum += etemp 
+#              endif 
+#        ENDDO j 
+#              endif 
+#        ENDDO i 
+#        print_scalar esum 
 # 
          endif 
       ENDPARDO ifrag, jfrag  
@@ -5374,16 +5375,19 @@ import "trans_frag_defs.sialx"
 
 # Start macro-iterations 
       DO jiter 
+         sip_barrier 
 
          PARDO ifrag 
            GET                   e20c(ifrag) 
            PUT e2_macro(ifrag) = e20c(ifrag) 
          ENDPARDO ifrag  
 
+         sip_barrier 
          CALL FORM_T2_GUESS 
          println "Done forming T2 guess before Dimer calculation" 
          sip_barrier 
          CALL FORM_T2_FRAGMENT_ITERS 
+         sip_barrier 
          CALL FORM_T2_DIMER_ITERS 
          sip_barrier 
 # Print out energies after each macroiteration  
@@ -5416,7 +5420,6 @@ import "trans_frag_defs.sialx"
             exit 
          endif 
 #
-      sip_barrier 
       ENDDO jiter 
 #
 # Compute the second-order exchange energy 
