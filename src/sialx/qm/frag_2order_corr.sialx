@@ -148,6 +148,7 @@ import "trans_frag_defs.sialx"
       static sxx(mu,nu) 
 #
       temp aoint(mu,nu,lambda,sigma) 
+      distributed Daoint(mu,nu,lambda,sigma) 
       temp txxxq(mu,nu,lambda,q)   
       temp txpxq(mu,p,lambda,q)    
       temp txpxqS(mu,p,lambda,q)    
@@ -438,6 +439,168 @@ import "trans_frag_defs.sialx"
 #
       PROC FRAG_TRAN    
 #     -------------- 
+#
+# Compute the two-electron integrals 
+
+      sip_barrier
+
+      PARDO kfrag 
+         icount = 0.0
+         DO kkfrag
+            icount   += 1.0
+            IF kkfrag == kfrag
+               exit
+            ENDIF
+         ENDDO kkfrag 
+#
+#     aaaa type 
+#
+      DO mu
+            x1(mu)     = wAO_frag(mu)
+            execute return_sval x1(mu)  m
+            if m == icount
+      DO nu
+            x2(nu)     = wAO_frag(nu)
+            execute return_sval x2(nu)  n
+            if n == icount
+      DO lambda
+            x3(lambda) = wAO_frag(lambda)
+            execute return_sval x3(lambda)  l
+            if l == icount
+      DO sigma
+            x4(sigma)  = wAO_frag(sigma)
+            execute return_sval x4(sigma)  s
+            if s == icount
+
+                  aoint(mu,nu,lambda,sigma)  = 0.0
+                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  PUT Daoint(mu,nu,lambda,sigma) = aoint(mu,nu,lambda,sigma) 
+
+             endif # s 
+      ENDDO sigma
+             endif # j 
+      ENDDO lambda
+             endif # n 
+      ENDDO nu
+             endif # m 
+      ENDDO mu
+      ENDPARDO kfrag 
+
+      PARDO kfrag, jfrag
+      WHERE jfrag != kfrag
+         icount = 0.0
+         DO kkfrag
+            icount   += 1.0
+            IF kkfrag == kfrag
+               exit
+            ENDIF
+         ENDDO kkfrag 
+         jcount = 0.0
+         DO jjfrag
+            jcount   += 1.0
+            IF jjfrag == jfrag
+               exit
+            ENDIF
+         ENDDO jjfrag
+#
+#
+#     aabb type 
+#
+      DO mu
+            x1(mu)     = wAO_frag(mu)
+            execute return_sval x1(mu)  m
+            if m == icount
+      DO nu
+            x2(nu)     = wAO_frag(nu)
+            execute return_sval x2(nu)  n
+            if n == icount
+      DO lambda
+            x3(lambda) = wAO_frag(lambda)
+            execute return_sval x3(lambda)  l
+            if l == jcount
+      DO sigma
+            x4(sigma)  = wAO_frag(sigma)
+            execute return_sval x4(sigma)  s
+            if s == jcount
+
+                  aoint(mu,nu,lambda,sigma)  = 0.0
+                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  PUT Daoint(mu,nu,lambda,sigma) = aoint(mu,nu,lambda,sigma) 
+
+             endif # s 
+      ENDDO sigma
+             endif # j 
+      ENDDO lambda
+             endif # n 
+      ENDDO nu
+             endif # m 
+      ENDDO mu
+#
+#     abba type 
+#
+      DO mu
+            x1(mu)     = wAO_frag(mu)
+            execute return_sval x1(mu)  m
+            if m == icount
+      DO nu
+            x2(nu)     = wAO_frag(nu)
+            execute return_sval x2(nu)  n
+            if n == jcount
+      DO lambda
+            x3(lambda) = wAO_frag(lambda)
+            execute return_sval x3(lambda)  l
+            if l == jcount
+      DO sigma
+            x4(sigma)  = wAO_frag(sigma)
+            execute return_sval x4(sigma)  s
+            if s == icount
+
+                  aoint(mu,nu,lambda,sigma)  = 0.0
+                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  PUT Daoint(mu,nu,lambda,sigma) = aoint(mu,nu,lambda,sigma) 
+
+             endif # s 
+      ENDDO sigma
+             endif # j 
+      ENDDO lambda
+             endif # n 
+      ENDDO nu
+             endif # m 
+      ENDDO mu
+#
+#     aaab type 
+#
+      DO mu
+            x1(mu)     = wAO_frag(mu)
+            execute return_sval x1(mu)  m
+            if m == icount
+      DO nu
+            x2(nu)     = wAO_frag(nu)
+            execute return_sval x2(nu)  n
+            if n == icount
+      DO lambda
+            x3(lambda) = wAO_frag(lambda)
+            execute return_sval x3(lambda)  l
+            if l == icount
+      DO sigma
+            x4(sigma)  = wAO_frag(sigma)
+            execute return_sval x4(sigma)  s
+            if s == jcount
+
+                  aoint(mu,nu,lambda,sigma)  = 0.0
+                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  PUT Daoint(mu,nu,lambda,sigma) = aoint(mu,nu,lambda,sigma) 
+
+             endif # s 
+      ENDDO sigma
+             endif # j 
+      ENDDO lambda
+             endif # n 
+      ENDDO nu
+             endif # m 
+      ENDDO mu
+
+      ENDPARDO kfrag, jfrag
 
       sip_barrier
 
@@ -501,14 +664,15 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s
             if s == jcount
 
-                  aoint(mu,nu,lambda,sigma)  = 0.0
-                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                 #aoint(mu,nu,lambda,sigma)  = 0.0
+                 #execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  GET Daoint(mu,nu,lambda,sigma)  
 
                   DO j
                      xj(j)             = wOccA_frag(j)
                      execute return_sval xj(j) pcount
                      if pcount == jcount
-                        txxxq(mu,nu,lambda,j)   = aoint(mu,nu,lambda,sigma)*ca(sigma,j)
+                        txxxq(mu,nu,lambda,j)   = Daoint(mu,nu,lambda,sigma)*ca(sigma,j)
                         LVxxxq(mu,nu,lambda,j) += txxxq(mu,nu,lambda,j)
                      endif # pcount  
                   ENDDO j
@@ -734,14 +898,15 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == jcount  
 
-                  aoint(mu,nu,lambda,sigma)  = 0.0 
-                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                 #aoint(mu,nu,lambda,sigma)  = 0.0 
+                 #execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  GET Daoint(mu,nu,lambda,sigma)  
 
                   DO j 
                      xj(j)             = wOccA_frag(j) 
                      execute return_sval xj(j) pcount 
                      if pcount == jcount  
-                        txxxq(mu,nu,lambda,j)   = aoint(mu,nu,lambda,sigma)*ca(sigma,j) 
+                        txxxq(mu,nu,lambda,j)   = Daoint(mu,nu,lambda,sigma)*ca(sigma,j) 
                         LVxxxq(mu,nu,lambda,j) += txxxq(mu,nu,lambda,j) 
                      endif # pcount  
                   ENDDO j 
@@ -856,14 +1021,15 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == jcount  
 
-                  aoint(mu,nu,lambda,sigma)  = 0.0 
-                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                 #aoint(mu,nu,lambda,sigma)  = 0.0 
+                 #execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  GET Daoint(mu,nu,lambda,sigma)  
 
                   DO j 
                      xj(j)             = wOccA_frag(j) 
                      execute return_sval xj(j) pcount 
                      if pcount == jcount  
-                        txxxq(mu,nu,lambda,j)   = aoint(mu,nu,lambda,sigma)*ca(sigma,j) 
+                        txxxq(mu,nu,lambda,j)   = Daoint(mu,nu,lambda,sigma)*ca(sigma,j) 
                         LVxxxq(mu,nu,lambda,j) += txxxq(mu,nu,lambda,j) 
                      endif # pcount  
                   ENDDO j 
@@ -931,14 +1097,15 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == jcount  
 
-                  aoint(mu,nu,lambda,sigma)  = 0.0 
-                  execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                 #aoint(mu,nu,lambda,sigma)  = 0.0 
+                 #execute compute_integral_batch aoint(mu,nu,lambda,sigma) #  1 1 2 2  
+                  GET Daoint(mu,nu,lambda,sigma)  
 
                   DO j 
                      xj(j)             = wOccA_frag(j) 
                      execute return_sval xj(j) pcount 
                      if pcount == jcount  
-                        txxxq(mu,nu,lambda,j)   = aoint(mu,nu,lambda,sigma)*ca(sigma,j) 
+                        txxxq(mu,nu,lambda,j)   = Daoint(mu,nu,lambda,sigma)*ca(sigma,j) 
                         LVxxxq(mu,nu,lambda,j) += txxxq(mu,nu,lambda,j) 
                      endif # pcount  
                   ENDDO j 
@@ -2946,8 +3113,9 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s  
             if s == icount  
 
-                 aoint(lambda,mu,sigma,nu)  = 0.0 
-                 execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
+                #aoint(lambda,mu,sigma,nu)  = 0.0 
+                #execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
+                 GET Daoint(lambda,mu,sigma,nu)  
 
                  DO i 
                      xi(i)             = wOccA_frag(i) 
@@ -2959,7 +3127,7 @@ import "trans_frag_defs.sialx"
                      if jcount == icount  
 
                      GET                       TAO_ab(lambda,i,sigma,j) 
-                     txixi(mu,i,nu,j)        = aoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j) 
+                     txixi(mu,i,nu,j)        = Daoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j) 
                      PUT T2AO_ab(mu,i,nu,j) += txixi(mu,i,nu,j) 
 
                      endif # jcount == icount 
@@ -3667,8 +3835,9 @@ import "trans_frag_defs.sialx"
             execute return_sval x4(sigma)  s
             if s == jcount
 
-                 aoint(lambda,mu,sigma,nu)  = 0.0
-                 execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
+                #aoint(lambda,mu,sigma,nu)  = 0.0
+                #execute compute_integral_batch aoint(lambda,mu,sigma,nu) #  1 1 2 2  
+                 GET Daoint(lambda,mu,sigma,nu)  
 
                  DO i
                      xi(i)             = wOccA_frag(i)
@@ -3680,7 +3849,7 @@ import "trans_frag_defs.sialx"
                      if qcount == jcount
 
                      GET                       TAO_ab(lambda,i,sigma,j)
-                     txixi(mu,i,nu,j)        = aoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j)
+                     txixi(mu,i,nu,j)        = Daoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j)
                      PUT T2AO_ab(mu,i,nu,j) += txixi(mu,i,nu,j)
 
                      endif # jcount == icount 
