@@ -288,7 +288,7 @@ void save_contiguous(const std::string label, Block* contig) {
 	const std::pair<LabelContiguousArrayMap::iterator, bool> ret =
 			contiguous_array_map_.insert(
 					std::pair<std::string, Block*>(label, contig));
-	std::cout << "save_contiguous: ret= " << ret.second;
+	//std::cout << "save_contiguous: ret= " << ret.second;
 if (!check_and_warn(ret.second, "Label " + label + "already used for contiguous array.  Overwriting previously saved array.")) {
 			contiguous_array_map_.erase(ret.first);
 			contiguous_array_map_.insert(std::pair<std::string, Block*>(label, contig));

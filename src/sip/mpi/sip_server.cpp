@@ -46,7 +46,7 @@ void SIPServer::run() {
 		state_.decode_tag_and_check_invariant(mpi_tag, message_type,
 				section_number, transaction_number);
 		SIP_LOG(
-				std::cout<< "\nS " << my_rank << " has message with tag " << mpi_tag << " of type " << message_type << " section_number=" << section_number << " transaction_number=" << transaction_number << std::endl << std::flush);
+				std::cout<< "S " << my_rank << " has message with tag " << mpi_tag << " of type " << message_type << " section_number=" << section_number << " transaction_number=" << transaction_number << std::endl << std::flush);
 
 		//handle the message
 		switch (message_type) {
@@ -136,7 +136,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(
-			std::cout << "server " << sip_mpi_attr_.global_rank()<< " put to receive block " << block_id << ", size = " << block_size << std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " put to receive block " << block_id << ", size = " << block_size << std::endl;)
 	ServerBlock* block = block_map_.get_or_create_block(block_id, block_size,
 			false);
 
@@ -203,7 +203,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
 
 	//receive and check the message
 	int array_id;
@@ -214,7 +214,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	check_int_count(status, 1);
 
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : server deleting array " << sip_tables_.array_name(array_id)<< std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : server deleting array " << sip_tables_.array_name(array_id)<< std::endl;)
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -227,7 +227,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 
 void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : In END_PROGRAM at server " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In END_PROGRAM at server " << std::endl);
 
 	//receive the message (which is empty)
 	MPI_Status status;
@@ -246,7 +246,7 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 
 void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : In SET_PERSISTENT at server " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In SET_PERSISTENT at server " << std::endl);
 
 	//receive and check the message
 	MPI_Status status;
@@ -272,7 +272,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 		int restore_persistent_tag) {
 	SIP_LOG(
-			std::cout << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
+			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
 	//receive and check the message
 	int buffer[2];  //array_id, string_slot
 	MPI_Status status;
