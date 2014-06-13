@@ -110,7 +110,11 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
 
-	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()<< " : get for block " << block_id.str(sip_tables_) << ", size = " << block_size << std::endl;)
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+			<< " : get for block " << block_id.str(sip_tables_)
+			<< ", size = " << block_size
+			<< ", sent from = " << mpi_source
+			<< std::endl;)
 
 //	ServerBlock* block = block_map_.block(block_id);
 //	if (block == NULL) {
@@ -149,8 +153,11 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
-	SIP_LOG(
-			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : put to receive block " << block_id.str(sip_tables_) << ", size = " << block_size << std::endl;)
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+					<< " : put to receive block " << block_id.str(sip_tables_)
+					<< ", size = " << block_size
+					<< ", from = " << mpi_source
+					<<std::endl;)
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
 
 	//receive data
@@ -187,8 +194,11 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	//get the block size
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
-	SIP_LOG(
-			std::cout << "S " << sip_mpi_attr_.global_rank() << " : put accumulate to receive block " << block_id.str(sip_tables_) << ", size = " << block_size << std::endl << std::flush;)
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+			<< " : put accumulate to receive block " << block_id.str(sip_tables_)
+			<< ", size = " << block_size
+			<< ", from = " << mpi_source
+			<< std::endl << std::flush;)
 
 	//allocate a temporary buffer and post irecv.
 	ServerBlock::dataPtr temp = new double[block_size];
@@ -231,8 +241,9 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 					MPI_COMM_WORLD, &status));
 	check_int_count(status, 1);
 
-	SIP_LOG(
-			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : deleting array " << sip_tables_.array_name(array_id)<< std::endl;)
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+			<< " : deleting array " << sip_tables_.array_name(array_id) << ", id = " << array_id
+			<< ", sent from = " << mpi_source << std::endl;)
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -252,6 +263,10 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	SIPMPIUtils::check_err(
 			MPI_Recv(0, 0, MPI_INT, mpi_source, end_program_tag, MPI_COMM_WORLD,
 					&status));
+
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+				<< " : ending program "
+				<< ", sent from = " << mpi_source << std::endl;)
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -274,6 +289,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 					MPI_COMM_WORLD, &status));
 	check_int_count(status, 2);
 
+
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, set_persistent_tag,
@@ -284,6 +300,10 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	int string_slot = buffer[1];
 //	std::cout << "calling spam set_persistent with array " << array_id << " and string " << string_slot << std::endl;
 	persistent_array_manager_->set_persistent(this, array_id, string_slot);
+
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+				<< " : set persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id
+				<< ", sent from = " << mpi_source << std::endl;);
 
 }
 
@@ -308,6 +328,10 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
 	persistent_array_manager_->restore_persistent(this, array_id, string_slot);
+
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
+				<< " : restored persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id
+				<< ", sent from = " << mpi_source << std::endl;)
 
 }
 

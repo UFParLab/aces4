@@ -206,8 +206,14 @@ void DiskBackedBlockMap::insert_per_array_map(int array_id, IdBlockMap<ServerBlo
 
 void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id){
     policy_.remove_all_blocks_for_array(array_id);          // remove from block replacement policy
-	disk_backed_arrays_io_.delete_array(array_id);			// remove from disk
+    SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank() << " : Removed blocks from block replacement policy" << std::endl;);
+
+    IdBlockMap<ServerBlock>::PerArrayMap *per_array_map = block_map_.per_array_map(array_id);
+	disk_backed_arrays_io_.delete_array(array_id, per_array_map);			// remove from disk
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank() << " : Deleted blocks from disk" << std::endl;);
+
 	block_map_.delete_per_array_map_and_blocks(array_id);	// remove from memory
+	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank() << " : Removed blocks from memory" << std::endl;);
 }
 
 void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& label){

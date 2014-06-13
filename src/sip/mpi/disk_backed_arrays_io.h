@@ -57,7 +57,7 @@ public:
 	 * Deletes the array
 	 * @param array_id
 	 */
-	void delete_array(const int array_id);
+	void delete_array(const int array_id, IdBlockMap<ServerBlock>::PerArrayMap* per_array_map);
 
 	/**
 	 * Writes out all the blocks of an array to disk
@@ -163,7 +163,7 @@ private:
 	 * @param array_id
 	 * @param mpif
 	 */
-	void zero_out_all_disk_blocks(const int array_id, MPI_File mpif);
+	void collectively_zero_out_all_disk_blocks(const int array_id, MPI_File mpif);
 
 	/**
 	 * Collectively (Using MPIIO) copies data from the given MPI File handle

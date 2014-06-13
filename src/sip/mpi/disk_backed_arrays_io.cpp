@@ -84,24 +84,44 @@ void DiskBackedArraysIO::write_block_to_disk(const BlockId& bid, const ServerBlo
 
 }
 
-void DiskBackedArraysIO::delete_array(const int array_id){
-	// Close the current file & delete it
+void DiskBackedArraysIO::delete_array(const int array_id, IdBlockMap<ServerBlock>::PerArrayMap* per_array_map){
+//	// Close the current file & delete it
+//	MPI_File fh = mpi_file_arr_[array_id];
+//	MPI_File_close(&fh);	// Close on delete
+//
+//	char filename[MAX_FILE_NAME_SIZE];
+//	array_file_name(array_id, filename);
+//	int my_rank = sip_mpi_attr_.company_rank();
+//
+//	// Delete the array file
+//	MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
+//	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
+//	if (my_rank == 0)
+//		std::remove(filename);
+//	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
+//	// Create a new array file
+//	mpi_file_arr_[array_id] = create_initialized_file_for_array(array_id);
+
+
+	/** Zero out blocks on disk that this server owns
+	 */
 	MPI_File fh = mpi_file_arr_[array_id];
-	MPI_File_close(&fh);	// Close on delete
+	IdBlockMap<ServerBlock>::PerArrayMap::iterator it = per_array_map->begin();
+	for (; it != per_array_map->end(); ++it){
+		ServerBlock *sb = it->second;
+		BlockId bid = it->first;
+		MPI_Offset offset = calculate_block_offset(bid);
+		int block_size = sb->size();
+		double * zero_block = new double[block_size]();
+		MPI_Offset block_offset = calculate_block_offset(bid);
+		MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+		MPI_Status status;
+		SIPMPIUtils::check_err(MPI_File_write_at(fh, header_offset + block_offset,
+				zero_block, block_size, MPI_DOUBLE, &status));
 
-	char filename[MAX_FILE_NAME_SIZE];
-	array_file_name(array_id, filename);
-	int my_rank = sip_mpi_attr_.company_rank();
+		delete [] zero_block;
+	}
 
-	// Delete the array file
-	MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
-	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
-	if (my_rank == 0)
-		std::remove(filename);
-	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
-
-	// Create a new array file
-	mpi_file_arr_[array_id] = create_initialized_file_for_array(array_id);
 
 }
 
@@ -244,10 +264,10 @@ void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 	MPI_Offset block_offset = calculate_block_offset(bid);
     //std::cout << "Writing block " << bid << " of size " << bptr->size() * sizeof(double) << " to " << block_offset << std::endl;
 	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-	MPI_Status read_status;
+	MPI_Status status;
 	SIPMPIUtils::check_err(
 			MPI_File_write_at(fh, header_offset + block_offset,
-					bptr->get_data(), bptr->size(), MPI_DOUBLE, &read_status));
+					bptr->get_data(), bptr->size(), MPI_DOUBLE, &status));
 }
 
 
@@ -315,7 +335,7 @@ inline bool DiskBackedArraysIO::file_exists(const std::string& name) {
 	return exists;
 }
 
-void DiskBackedArraysIO::zero_out_all_disk_blocks(const int array_id,
+void DiskBackedArraysIO::collectively_zero_out_all_disk_blocks(const int array_id,
 		MPI_File mpif) {
 	long tot_elems = sip_tables_.array_num_elems(array_id);
 	MPI_Offset end_array_offset = tot_elems * sizeof(double);
@@ -370,7 +390,7 @@ MPI_File DiskBackedArraysIO::create_unitialized_file_for_array(int array_id) {
 MPI_File DiskBackedArraysIO::create_initialized_file_for_array(int array_id){
 
 	MPI_File mpif = create_unitialized_file_for_array(array_id);
-	zero_out_all_disk_blocks(array_id, mpif);
+	collectively_zero_out_all_disk_blocks(array_id, mpif);
 
 	return mpif;
 }
