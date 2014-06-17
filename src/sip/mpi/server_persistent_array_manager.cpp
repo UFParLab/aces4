@@ -48,9 +48,9 @@ namespace sip {
 
 
 	void ServerPersistentArrayManager::restore_persistent(SIPServer* runner, int array_id, int string_slot){
-		SIP_LOG(std::cout << "restore_persistent: array= " <<
-				runner->array_name(array_id) << ", label=" <<
-				runner->string_literal(string_slot) << std::endl;)
+//		SIP_LOG(std::cout << "restore_persistent: array= " <<
+//				runner->array_name(array_id) << ", label=" <<
+//				runner->string_literal(string_slot) << std::endl;)
 
 		sip::check ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
 							" Tried to restore a scalar or contiguous array. Something went very wrong in the server.");

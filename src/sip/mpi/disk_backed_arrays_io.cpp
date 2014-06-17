@@ -239,7 +239,7 @@ void DiskBackedArraysIO::restore_persistent_array(const int array_id, const std:
 		std::remove(arr_filename);	// Not needed since file is DELETE_ON_CLOSE.
 		// Rename persistent file to array file.
 		std::rename(persistent_filename, arr_filename);
-		SIP_LOG(std::cout << sip_mpi_attr_.global_rank()<< " : Renamed file " <<persistent_filename << " to "<< arr_filename << std::endl)
+		SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()<< " : Renamed file " <<persistent_filename << " to "<< arr_filename << std::endl)
 	}
 
 	SIPMPIUtils::check_err(MPI_Barrier(server_comm));
