@@ -14,7 +14,7 @@ import "trans_frag_defs.sialx"
 #  The GNU General Public License is included in this distribution
 #  in the file COPYRIGHT.
 #
-                           SIAL FRAG_2ORDER_CORR 
+                           SIAL FRAG_2ORDER_XCORR 
 #
 # ----------------------------------------------------------------------------
 #
@@ -107,6 +107,7 @@ import "trans_frag_defs.sialx"
       scalar esum 
       scalar e1x_at 
       scalar e10pol_at 
+      scalar exchs2_sq  
       scalar singles 
       scalar doubles 
       scalar mono_doubles 
@@ -2035,26 +2036,26 @@ import "trans_frag_defs.sialx"
               GET        wC(a,i) 
               tai(a,i) = wC(a,i) 
               execute energy_denominator_rhf tai(a,i) fock_a  
-              PUT t1old(a,i)+= tai(a,i) 
+             #PUT t1old(a,i)+= tai(a,i) 
 # TEST of exchange amplitudes
-#         jcount = 0.0 
-#         DO jfrag 
-#            jcount += 1.0 
-#            if ifrag != jfrag 
-#              DO j 
-#                 xj(j)      = wOccA_frag(j) 
-#                 execute return_sval xj(j)  r  
-#                 if r == jcount  
-#                    GET SOVL(j,a) 
-#                    GET SOVL(i,j) 
+          jcount = 0.0 
+          DO jfrag 
+             jcount += 1.0 
+             if ifrag != jfrag 
+               DO j 
+                  xj(j)      = wOccA_frag(j) 
+                  execute return_sval xj(j)  r  
+                  if r == jcount  
+                     GET SOVL(j,a) 
+                     GET SOVL(i,j) 
 
-#                    tpp(a,i) = SOVL(i,j)*SOVL(j,a) 
-#                    tpp(a,i)*= -1.0  
-#                    PUT t1old(a,i)+= tpp(a,i) 
-#                 endif 
-#              ENDDO j 
-#              endif 
-#         ENDDO jfrag 
+                     tpp(a,i) = SOVL(i,j)*SOVL(j,a) 
+                     tpp(a,i)*= -1.0  
+                     PUT t1old(a,i)+= tpp(a,i) 
+                  endif 
+               ENDDO j 
+               endif 
+          ENDDO jfrag 
 
             endif # n == icount  
         ENDDO i 
@@ -2177,27 +2178,27 @@ import "trans_frag_defs.sialx"
 
                GET        wC(a,i) 
                tai(a,i) = wC(a,i) 
-               PUT x1new(a,i) += tai(a,i) 
+              #PUT x1new(a,i) += tai(a,i) 
 # TEST of exchange amplitudes
-#         jcount = 0.0 
-#         DO jfrag 
-#            jcount += 1.0 
-#            if ifrag != jfrag 
-#              DO j 
-#                 xj(j)      = wOccA_frag(j) 
-#                 execute return_sval xj(j)  r  
-#                 if r == jcount  
-#                    GET SOVL(j,a) 
-#                    GET SOVL(i,j) 
+          jcount = 0.0 
+          DO jfrag 
+             jcount += 1.0 
+             if ifrag != jfrag 
+               DO j 
+                  xj(j)      = wOccA_frag(j) 
+                  execute return_sval xj(j)  r  
+                  if r == jcount  
+                     GET SOVL(j,a) 
+                     GET SOVL(i,j) 
 
-#                    tpp(a,i) = SOVL(i,j)*SOVL(j,a) 
-#                    execute energy_numerator_rhf tpp(a,i) fock_a 
-#                    tpp(a,i)*= -1.0  
-#                    PUT x1new(a,i)+= tpp(a,i) 
-#                 endif 
-#              ENDDO j 
-#              endif 
-#         ENDDO jfrag 
+                     tpp(a,i) = SOVL(i,j)*SOVL(j,a) 
+                     execute energy_numerator_rhf tpp(a,i) fock_a 
+                     tpp(a,i)*= -1.0  
+                     PUT x1new(a,i)+= tpp(a,i) 
+                  endif 
+               ENDDO j 
+               endif 
+          ENDDO jfrag 
 
             endif # m == icount  
          ENDDO i 
@@ -2579,13 +2580,13 @@ import "trans_frag_defs.sialx"
          GET                             Vaibj(a,i,b,j)  
          tppqq(a,i,b,j)                = Vaibj(a,i,b,j) 
          execute energy_denominator_rhf  tppqq(a,i,b,j) fock_a  
-         PUT T2old(a,i,b,j)           += tppqq(a,i,b,j) 
+        #PUT T2old(a,i,b,j)           += tppqq(a,i,b,j) 
 # Add the experimental exchange term 
-#        GET SOVL(j,a) 
-#        GET SOVL(i,b) 
-#        t1ppqq(a,i,b,j) = SOVL(j,a)^SOVL(i,b)  
-#        t1ppqq(a,i,b,j)*= -1.0  
-#        PUT T2old(a,i,b,j)           += t1ppqq(a,i,b,j) 
+         GET SOVL(j,a) 
+         GET SOVL(i,b) 
+         t1ppqq(a,i,b,j) = SOVL(j,a)^SOVL(i,b)  
+         t1ppqq(a,i,b,j)*= -1.0  
+         PUT T2old(a,i,b,j)           += t1ppqq(a,i,b,j) 
 
          endif 
       ENDDO j  
@@ -2839,15 +2840,15 @@ import "trans_frag_defs.sialx"
          execute return_sval xj(j) n1 
          if n1== jcount  
 
-         GET                            Vaibj(a,i,b,j)  
-         t2ppqq(a,i,b,j)              = Vaibj(a,i,b,j)  
+        #GET                            Vaibj(a,i,b,j)  
+        #t2ppqq(a,i,b,j)              = Vaibj(a,i,b,j)  
 # Add the experimental exchange term 
-#        GET SOVL(j,a) 
-#        GET SOVL(i,b) 
-#        t1ppqq(a,i,b,j)            = SOVL(j,a)^SOVL(i,b)  
-#        t1ppqq(a,i,b,j)           *= -1.0  
-#        execute energy_numerator_rhf t1ppqq(a,i,b,j) fock_a 
-#        t2ppqq(a,i,b,j)           += t1ppqq(a,i,b,j) 
+         GET SOVL(j,a) 
+         GET SOVL(i,b) 
+         t1ppqq(a,i,b,j)            = SOVL(j,a)^SOVL(i,b)  
+         t1ppqq(a,i,b,j)           *= -1.0  
+         execute energy_numerator_rhf t1ppqq(a,i,b,j) fock_a 
+         t2ppqq(a,i,b,j)            = t1ppqq(a,i,b,j) 
 
          DO a1 
             xa1(a1)      = wVirtA_frag(a1)     
@@ -4706,14 +4707,20 @@ import "trans_frag_defs.sialx"
         endif # ifrag != jfrag 
       ENDDO jfrag 
       ENDPARDO ifrag 
+      esum = 0.0 
+      exchs2_sq = 0.0 
       sip_barrier
 
       PARDO ifrag, jfrag 
        if ifrag != jfrag 
          GET e10exch(ifrag,jfrag) 
+         etemp = e10exch(ifrag,jfrag) 
+         esum += etemp 
          execute print_block e10exch(ifrag,jfrag) 
        endif 
       ENDPARDO ifrag, jfrag 
+      sip_barrier
+      collective exchs2_sq += esum 
 
 # Now compute the first-order polarization energy 
 #
@@ -5766,20 +5773,21 @@ import "trans_frag_defs.sialx"
       ENDDO jiter 
 #
       eint_tot  = 0.0 
-      eint_tot += e1x_at  
-      eint_tot += e10pol_at  
+     #eint_tot += e1x_at  
+     #eint_tot += e10pol_at  
       eint_tot += singles  
-      eint_tot += doubles  
-      eint_tot += mono_doubles  
+      eint_tot += doubles   
+      eint_tot -= exchs2_sq  
+     #eint_tot += mono_doubles   
 
-
-      print_scalar e1x_at 
-      print_scalar e10pol_at 
+     #print_scalar e1x_at 
+     #print_scalar e10pol_at 
       print_scalar singles  
       print_scalar doubles  
-      print_scalar mono_doubles  
+      print_scalar exchs2_sq  
+     #print_scalar mono_doubles  
 
-      print_scalar eint_tot 
+      print_scalar eint_tot  
 # Compute the second-order exchange energy 
      #CALL EXCHANGE_TEST  
      #CALL EXCHANGE_ORDER2 
@@ -5788,7 +5796,7 @@ import "trans_frag_defs.sialx"
 #
 # -----------------------------------------------------------------------------
 #
-                           ENDSIAL FRAG_2ORDER_CORR 
+                           ENDSIAL FRAG_2ORDER_XCORR 
 #
 ###############################################################################
 #

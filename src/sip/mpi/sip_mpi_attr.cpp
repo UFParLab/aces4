@@ -64,7 +64,7 @@ SIPMPIAttr::SIPMPIAttr() {
 			std::cout<<server_ranks[i]<<" ";
 		std::cout<<std::endl;
 		std::cout<<"There will be " << w << " workers : " << std::endl;
-		for(int i=0; i<s; i++)
+		for(int i=0; i<w; i++)
 			std::cout<<worker_ranks[i]<<" ";
 		std::cout<<std::endl;
 	}

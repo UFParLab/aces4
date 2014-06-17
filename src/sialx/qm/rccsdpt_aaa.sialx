@@ -5997,12 +5997,12 @@
 # Compute the single contribution 
 # ------------------------------- 
 #
-      PARDO a, i1 
-            REQUEST   t1a_old(a,i1) a  
-            GET       Sai(a,i1) 
-            etemp   = t1a_old(a,i1)*Sai(a,i1)
-            esum_s += etemp 
-      ENDPARDO a, i1 
+##    PARDO a, i1 
+##          REQUEST   t1a_old(a,i1) a  
+##          GET       Sai(a,i1) 
+##          etemp   = t1a_old(a,i1)*Sai(a,i1)
+##          esum_s += etemp 
+##    ENDPARDO a, i1 
 #
       PARDO a, ii 
      #      PREQUEST  t1ps(a,ii) = t1a_old(a,i1)   
