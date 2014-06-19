@@ -355,7 +355,7 @@ void DiskBackedArraysIO::collectively_zero_out_all_disk_blocks(const int array_i
 			MPI_File_write_at_all(mpif, offset, file_buf, elems_per_server,
 					MPI_DOUBLE, &write_status));
 	SIPMPIUtils::check_err(MPI_File_sync(mpif));
-    delete file_buf;
+    delete [] file_buf;
 }
 
 MPI_File DiskBackedArraysIO::create_unitialized_file_for_array(int array_id) {
@@ -443,6 +443,8 @@ void DiskBackedArraysIO::collectively_copy_block_data(
 			MPI_File_write_at_all(mpif_array, offset, file_buf, elems_read,
 					MPI_DOUBLE, &write_status));
 	SIPMPIUtils::check_err(MPI_File_close(&mpif_persistent));
+
+    delete [] file_buf;
 }
 
 
