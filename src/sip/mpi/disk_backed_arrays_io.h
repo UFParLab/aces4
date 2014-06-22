@@ -106,7 +106,7 @@ private:
 	 * @param array_id
 	 * @return
 	 */
-	MPI_File create_unitialized_file_for_array(int array_id);
+	MPI_File create_uninitialized_file_for_array(int array_id);
 
 	/**
 	 * Returns the offset on where to write block data in the file.

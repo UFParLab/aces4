@@ -34,7 +34,8 @@ DiskBackedArraysIO::DiskBackedArraysIO(const SipTables& sip_tables,
 	for (int i=0; i<num_arrays; ++i){
 		bool is_remote = sip_tables_.is_distributed(i) || sip_tables_.is_served(i);
 		if (is_remote){
-			mpi_file_arr_[i] = create_initialized_file_for_array(i);
+			//mpi_file_arr_[i] = create_initialized_file_for_array(i);
+			mpi_file_arr_[i] = create_uninitialized_file_for_array(i);
 		}
 	}
 }
@@ -324,7 +325,7 @@ inline bool DiskBackedArraysIO::file_exists(const std::string& name) {
 	return exists;
 }
 
-MPI_File DiskBackedArraysIO::create_unitialized_file_for_array(int array_id) {
+MPI_File DiskBackedArraysIO::create_uninitialized_file_for_array(int array_id) {
 	int my_rank = sip_mpi_attr_.company_rank();
 	const MPI_Comm& server_comm = sip_mpi_attr_.company_communicator();
 	char filename[MAX_FILE_NAME_SIZE];
@@ -480,7 +481,7 @@ void DiskBackedArraysIO::collectively_zero_out_all_disk_blocks(
 
 MPI_File DiskBackedArraysIO::create_initialized_file_for_array(int array_id) {
 
-	MPI_File mpif = create_unitialized_file_for_array(array_id);
+	MPI_File mpif = create_uninitialized_file_for_array(array_id);
 	collectively_zero_out_all_disk_blocks(array_id, mpif);
 
 	return mpif;
