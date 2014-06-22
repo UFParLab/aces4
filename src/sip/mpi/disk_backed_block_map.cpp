@@ -223,14 +223,15 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& lab
      */ 
 	disk_backed_arrays_io_.restore_persistent_array(array_id, label);
 
-    std::list<BlockId> all_blocks;
-    generate_all_blocks_list(array_id, all_blocks);
+    std::list<BlockId> my_blocks;
+    int this_server_rank = sip_mpi_attr_.global_rank();
+    data_distribution_.generate_server_blocks_list(this_server_rank, array_id, my_blocks, sip_tables_);
     
     // Clear out all existing blocks of array in memory
     block_map_.delete_per_array_map_and_blocks(array_id);
 
     std::list<BlockId>::const_iterator it;
-    for (it = all_blocks.begin(); it != all_blocks.end(); ++it){
+    for (it = my_blocks.begin(); it != my_blocks.end(); ++it){
         int size = sip_tables_.block_size(*it);         // Number of FP numbers
         double *data = NULL;
         ServerBlock *sb = new ServerBlock(size, data);   // ServerBlock which doesn't "take up any memory"
@@ -238,66 +239,6 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& lab
         block_map_.insert_block(*it, sb);
     }
 
-}
-
-void DiskBackedBlockMap::generate_all_blocks_list(int array_id, std::list<BlockId>& all_blocks){
-    index_value_array_t upper;
-    const index_selector_t& selector = sip_tables_.selectors(array_id);
-	int rank = sip_tables_.array_rank(array_id);
-	index_value_array_t upper_index_vals;
-	index_value_array_t lower_index_vals;
-	index_value_array_t current_index_vals;
-	std::fill(upper_index_vals, upper_index_vals + MAX_RANK, unused_index_value);
-	std::fill(lower_index_vals, lower_index_vals + MAX_RANK, unused_index_value);
-	std::fill(current_index_vals, current_index_vals + MAX_RANK, unused_index_value);
-
-    bool at_least_one_iter = false;
-
-	// Initialize
-	for (int i = 0; i < rank; i++) {
-		int selector_index = selector[i];
-		int lower = sip_tables_.lower_seg(selector_index);
-		int upper = lower + sip_tables_.num_segments(selector_index);
-		lower_index_vals[i] = lower;
-		current_index_vals[i] = lower_index_vals[i];
-		upper_index_vals[i] = upper;
-        if (upper - lower >= 1)
-            at_least_one_iter = true;
-	}
-
-    BlockId upper_bid(array_id, upper_index_vals);
-    BlockId lower_bid(array_id, lower_index_vals);
-    //std::cout << " Upper : " << upper_bid << std::endl;
-    //std::cout << " Lower : " << lower_bid << std::endl;
-
-        
-   if (at_least_one_iter){
-        // Save a BlockId into the output list
-        BlockId bid(array_id, current_index_vals);
-        all_blocks.push_back(bid);
-//std::cout << " Generated : " << bid << " of " << sip_tables_.array_name(bid.array_id()) << std::endl;
-   }
-
-   while (increment_indices(rank, upper_index_vals, lower_index_vals, current_index_vals)){
-        BlockId bid(array_id, current_index_vals);
-        all_blocks.push_back(bid);
-//std::cout << " Generated : " << bid << " of " << sip_tables_.array_name(bid.array_id()) << std::endl;
-   }
-}
-
-bool DiskBackedBlockMap::increment_indices(int rank, index_value_array_t& upper, index_value_array_t& lower, index_value_array_t& current){
-    int pos = 0;
-    while (pos < rank){
-        // Increment indices.
-        if (current[pos] >= upper[pos] - 1) {
-            current[pos] = lower[pos];
-            pos++;
-        } else {
-            current[pos]++;
-            return true;
-        }
-    }
-    return false;
 }
 
 

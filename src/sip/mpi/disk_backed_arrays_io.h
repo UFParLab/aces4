@@ -81,6 +81,7 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedArraysIO& obj);
 
+
 private:
 	typedef std::map<BlockId, MPI_Offset> BlockIdOffsetMap;
 
@@ -177,6 +178,16 @@ private:
 	 */
 	void collectively_copy_block_data(
 				char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array);
+
+	/**
+	 * To save the persistent array,
+	 * write out zero for blocks that have not been formed yet.
+	 * Write the block if dirty or not on disk.
+	 * @param my_blocks
+	 * @param array_blocks
+	 */
+	void write_persistent_array_blocks(MPI_File mpif, std::list<BlockId> my_blocks,
+				IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
 };
 

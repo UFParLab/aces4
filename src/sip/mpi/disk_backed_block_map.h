@@ -48,16 +48,10 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
 
 private:
-    /** Generates a list of all blocks for a given array
-     * @param [in] array_id
-     * @param [out] all_blocks
-     */ 
-    void generate_all_blocks_list(int array_id, std::list<BlockId>& all_blocks);
+
 	void read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size);
     void write_block_to_disk(const BlockId& block_id, ServerBlock* block);
 	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, bool initialze=true);
-    bool increment_indices(int rank, index_value_array_t& upper, 
-            index_value_array_t& lower, index_value_array_t& current);
 
 	//ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 
