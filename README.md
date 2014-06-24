@@ -9,7 +9,7 @@ Successor to ACESIII [http://www.qtp.ufl.edu/].
 
 The ACESIII system is described in the paper titled "A Block-Oriented Language and Runtime System for Tensor Algebra with Very Large Arrays" [http://dx.doi.org/10.1109/SC.2010.3]
 
-See the Wiki for more information
+See the Wiki (https://github.com/UFParLab/aces4/wiki for more information
 
 
 Prerequisites
