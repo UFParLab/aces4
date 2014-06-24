@@ -28,7 +28,7 @@ do dd
  print_index dd
 enddo dd
 
-println "should print e = [0,10]"
+println "should print ee = [0,10]"
 do ee
  print_index ee
 enddo ee
