@@ -96,7 +96,10 @@ enum ArrayAttribute {
 	attr_persistent = 0x40,  //0x40 ==  64 == "01000000"
 
 	/*! the object has rank 0.  If the integer attribute it set, it is an integer, otherwise it holds a double*/
-	attr_scalar = 0x80  //0x80 == 128 == "10000000"
+	attr_scalar = 0x80,  //0x80 == 128 == "10000000"
+
+	/*! distributed or served array is sparse */
+	attr_sparse = 0x100 //0x100 == 256 == "100000000"
 };
 
 
@@ -122,7 +125,7 @@ bool is_predefined_attr(int attr);
 bool is_persistent_attr(int attr);
 bool is_scalar_attr(int attr);
 bool is_predefined_scalar_attr(int attr);
-
+bool is_sparse_attr(int attr);
 
 
 ArrayType_t intToArrayType_t(int);
