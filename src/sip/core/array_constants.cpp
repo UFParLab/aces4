@@ -123,14 +123,15 @@ bool is_predefined_attr(int attr){
 bool is_persistent_attr(int attr){
 	return ((attr & attr_persistent)==attr_persistent);
 }
-
 bool is_scalar_attr(int attr){
 	return ((attr & attr_scalar)==attr_scalar );
 }
 bool is_predefined_scalar_attr(int attr){
 	   return (attr & (attr_predefined | attr_scalar)) == (attr_predefined | attr_scalar);
 }
-
+bool is_sparse_attr(int attr){
+	return ((attr & attr_sparse) == attr_sparse);
+}
 
 } // namespace array
 
