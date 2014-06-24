@@ -47,6 +47,8 @@ ACES_DATA_FILES=\
 ./src/sip/static_data/int_table.cpp\
 ./src/sip/static_data/sip_tables.h\
 ./src/sip/static_data/sip_tables.cpp\
+./src/sip/static_data/opcode.h\
+./src/sip/static_data/opcode.cpp\
 ./src/sip/static_data/op_table.h\
 ./src/sip/static_data/op_table.cpp\
 ./src/sip/dynamic_data/block_id.h\
@@ -416,6 +418,7 @@ EXTRA_DIST += \
 ./src/sialx/test/persistent_scalars_1.sialx\
 ./src/sialx/test/persistent_scalars_2.sialx\
 ./src/sialx/test/unmatched_get.sialx\
+./src/sialx/test/enable_trace_test.siox\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\
