@@ -13,6 +13,7 @@
 #include <stack>
 #include <iostream>
 #include "block_id.h"
+#include "sip_mpi_attr.h"
 
 
 namespace sip {
@@ -50,8 +51,13 @@ public:
 	 * destructor, deletes all maps and all of their blocks
 	 */
 	~IdBlockMap(){
+
+		std::cout << "Now in IdBlockMap Destructor !" << std::endl;
+
 		int num_arrays = block_map_.size();
 		for (int array_id=0; array_id< num_arrays; ++array_id) {
+			if (sip::SIPMPIAttr::get_instance().is_server())
+				std::cout << "Deleting array " << array_id << " in IdBlockMap Destructor !" << std::endl;
 			delete_per_array_map_and_blocks(array_id);
 		}
 		block_map_.clear();
@@ -99,7 +105,7 @@ public:
 			map_ptr = new PerArrayMap(); //Will be deleted along with all of its Blocks in the IdBlockMap destructor.
 			                             //Alternatively, ownership may be transferred to PersistentArrayManager, and replaced with
 			                             //NULL in the block_map_ entry.
-			block_map_[array_id] = map_ptr;
+			block_map_.at(array_id) = map_ptr;
 		}
 		std::pair<BlockId, BLOCK_TYPE*> bid_pair (block_id, block_ptr);
 		std::pair<typename PerArrayMap::iterator, bool> ret;
@@ -115,7 +121,7 @@ public:
 	 */
 	BLOCK_TYPE* get_and_remove_block(const BlockId& block_id){
 		int array_id = block_id.array_id();
-		PerArrayMap* map_ptr = block_map_[array_id];
+		PerArrayMap* map_ptr = block_map_.at(array_id);
 		check (map_ptr != NULL, "attempting get_and_remove_block when given array doesn't have a map");
 		typename PerArrayMap::iterator it = map_ptr->find(block_id);
 		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
@@ -142,12 +148,12 @@ public:
 	 * @return pointer to PerArrayMap holding the blocks of the indicated array.
 	 */
 	PerArrayMap* per_array_map(int array_id){
-		PerArrayMap* map_ptr = block_map_[array_id];
+		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL) {
 			map_ptr = new PerArrayMap(); //Will be deleted along with all of its Blocks in the IdBlockMap destructor.
 			                             //Alternatively, may be transferred to PersistentArrayManager, and replaced with
 			                             //NULL in the block_map_ entry.
-			block_map_[array_id] = map_ptr;
+			block_map_.at(array_id) = map_ptr;
 		}
 		return map_ptr;
 	}
@@ -159,16 +165,20 @@ public:
 	 * @param array_id
 	 */
 	void delete_per_array_map_and_blocks(int array_id){
-		PerArrayMap* map_ptr = block_map_[array_id];
+		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr != NULL) {
 			for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
+				if (sip::SIPMPIAttr::get_instance().is_server()) std::cout << "Trying to delete block " << it->first << std::endl;
 				if (it->second != NULL) {
+					if (sip::SIPMPIAttr::get_instance().is_server()) std::cout << "Deleting block " << it->first << " : "<< *(it->second) << std::endl;
                     delete it->second;// Delete the block being pointed to.
                     it->second = NULL;
                 }
 			}
-			delete block_map_[array_id];
-			block_map_[array_id] = NULL;
+			delete block_map_.at(array_id);
+			block_map_.at(array_id) = NULL;
+		} else {
+			if (sip::SIPMPIAttr::get_instance().is_server()) std::cout << "Map for array is null !" << std::endl;
 		}
 	}
 
@@ -183,7 +193,7 @@ public:
 	 */
 	PerArrayMap* get_and_remove_per_array_map(int array_id){
 		PerArrayMap* map_ptr = per_array_map(array_id); //will create one if doesn't exist.
-		block_map_[array_id] = NULL;
+		block_map_.at(array_id) = NULL;
 		return map_ptr;
 	}
 
@@ -198,7 +208,7 @@ public:
 	 */
 	void insert_per_array_map(int array_id, PerArrayMap* map_ptr){
 		//get current map and warn if it contains blocks.  Delete any map that exists
-	    PerArrayMap* current_map = block_map_[array_id];
+	    PerArrayMap* current_map = block_map_.at(array_id);
 	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"));
 	    delete_per_array_map_and_blocks(array_id);
 
@@ -209,14 +219,14 @@ public:
 			BlockId new_id(array_id, it->first); //this constructor updates the array_id
 			(*new_map)[new_id] = it->second;
 		}
-		block_map_[array_id] = new_map;
+		block_map_.at(array_id) = new_map;
 		delete map_ptr;
 	}
 
 	int size() const {return block_map_.size();}
 
-	PerArrayMap* operator[](unsigned i){ return block_map_[i]; }
-    const PerArrayMap* operator[](unsigned i) const { return block_map_[i]; }
+	PerArrayMap* operator[](unsigned i){ return block_map_.at(i); }
+    const PerArrayMap* operator[](unsigned i) const { return block_map_.at(i); }
 
     friend class Interpreter;
 	friend std::ostream& operator<< <> (std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
@@ -241,7 +251,7 @@ template <typename BLOCK_TYPE>
 std::ostream& operator<<(std::ostream& os, const IdBlockMap<BLOCK_TYPE>& obj){
 	typename IdBlockMap<BLOCK_TYPE>::size_type size = obj.size();
 	for (unsigned i = 0; i < size; ++i){
-		const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map_ptr = obj.block_map_[i];
+		const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map_ptr = obj.block_map_.at(i);
 		if (map_ptr != NULL && !map_ptr->empty()){
 			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::const_iterator it;
 			for (it = map_ptr->begin(); it != map_ptr->end(); ++it){

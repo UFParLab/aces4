@@ -59,6 +59,10 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 	while (block_size > remaining_mem){
         BlockId bid = policy_.get_next_block_for_removal();
         ServerBlock* blk = block_map_.block(bid);
+		SIP_LOG(std::cout"S " << sip_mpi_attr_.company_rank()
+								<< " : Freeing block " << bid
+								<< " and writing to disk to make space for new block"
+								<< std::endl);
         if(blk->is_dirty()){
             write_block_to_disk(bid, blk);
         }
@@ -71,10 +75,12 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 			<< block_size << ", Remaining Memory :" << ServerBlock::remaining_memory() << std::endl;
 	sip :: check (block_size <= ServerBlock::remaining_memory(), ss.str());
    
-    if (block == NULL)
+    if (block == NULL) {
 	    block = new ServerBlock(block_size, initialize);
-    else
+    } else {
         block->allocate_in_memory_data();
+    }
+
 	return block;
 
 }
