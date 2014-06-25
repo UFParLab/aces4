@@ -35,6 +35,7 @@ public:
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id);
 	void insert_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr);
 	void delete_per_array_map_and_blocks(int array_id);
+	IdBlockMap<ServerBlock>::PerArrayMap* per_array_map(int array_id);
 
 	/*! Restores a persistent array from disk. Delegates to internal DiskBackedArraysIO object.*/
 	void restore_persistent_array(int array_id, std::string & label);

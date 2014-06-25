@@ -201,6 +201,10 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 	return block;
 }
 
+IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map(int array_id){
+	return block_map_.per_array_map(array_id);
+}
+
 IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::get_and_remove_per_array_map(int array_id){
 	return block_map_.get_and_remove_per_array_map(array_id);
 }

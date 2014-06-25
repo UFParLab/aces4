@@ -29,16 +29,11 @@ namespace sip {
 				it != persistent_array_map_.end(); ++it) {
 			int array_id = it->first;
 			int string_slot = it->second;
-			//DEBUG
-	//			std::cout << "\nsave marked: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl;
 			const std::string label = runner->sip_tables()->string_literal(string_slot);
-
 			sip::check ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
 					" Tried to save a scalar or contiguous array. Something went very wrong in the server.");
 
-			//in parallel implementation, there won't be any of these on worker.
-			IdBlockMap<ServerBlock>::PerArrayMap* per_array_map = runner->get_and_remove_per_array_map(array_id);
-	//				std::cout << " saving distributed array  with label " << label << " and map with " << per_array_map->size() << " blocks" << std::endl;
+			IdBlockMap<ServerBlock>::PerArrayMap* per_array_map = runner->per_array_map(array_id);
 			save_distributed(runner, array_id, label, per_array_map);
 
 			delete per_array_map;

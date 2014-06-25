@@ -64,6 +64,11 @@ public:
 	 */
 	void run();
 
+
+	IdBlockMap<ServerBlock>::PerArrayMap* per_array_map(int array_id){
+		return disk_backed_block_map_.per_array_map(array_id);
+	}
+
 	/**
 	 * Called by persistent_array_manager. Delegates to block_map_.
 	 */
