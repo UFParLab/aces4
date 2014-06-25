@@ -12,7 +12,22 @@ namespace sip {
 
 	WorkerPersistentArrayManager::WorkerPersistentArrayManager() {}
 
-	WorkerPersistentArrayManager::~WorkerPersistentArrayManager() {}
+	WorkerPersistentArrayManager::~WorkerPersistentArrayManager() {
+
+		WorkerPersistentArrayManager::LabelContiguousArrayMap::iterator cit;
+		for (cit = contiguous_array_map_.begin(); cit != contiguous_array_map_.end(); ++cit){
+			delete cit -> second;
+			cit -> second = NULL;
+		}
+
+		WorkerPersistentArrayManager::LabelDistributedArrayMap::iterator dit;
+		for (dit = distributed_array_map_.begin(); dit != distributed_array_map_.end(); ++dit){
+			delete dit -> second;
+			dit -> second = NULL;
+		}
+
+
+	}
 
 
 	void WorkerPersistentArrayManager::set_persistent(Interpreter* runner, int array_id, int string_slot) {

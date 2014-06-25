@@ -50,9 +50,6 @@ public:
 	 * destructor, deletes all maps and all of their blocks
 	 */
 	~IdBlockMap(){
-
-		std::cout << "Now in IdBlockMap Destructor !" << std::endl;
-
 		int num_arrays = block_map_.size();
 		for (int array_id=0; array_id< num_arrays; ++array_id) {
 			delete_per_array_map_and_blocks(array_id);
