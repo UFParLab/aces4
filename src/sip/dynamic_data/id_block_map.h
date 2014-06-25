@@ -13,7 +13,6 @@
 #include <stack>
 #include <iostream>
 #include "block_id.h"
-#include "sip_mpi_attr.h"
 
 
 namespace sip {
@@ -56,8 +55,6 @@ public:
 
 		int num_arrays = block_map_.size();
 		for (int array_id=0; array_id< num_arrays; ++array_id) {
-			if (sip::SIPMPIAttr::get_instance().is_server())
-				std::cout << "Deleting array " << array_id << " in IdBlockMap Destructor !" << std::endl;
 			delete_per_array_map_and_blocks(array_id);
 		}
 		block_map_.clear();
@@ -168,17 +165,13 @@ public:
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr != NULL) {
 			for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
-				if (sip::SIPMPIAttr::get_instance().is_server()) std::cout << "Trying to delete block " << it->first << std::endl;
 				if (it->second != NULL) {
-					if (sip::SIPMPIAttr::get_instance().is_server()) std::cout << "Deleting block " << it->first << " : "<< *(it->second) << std::endl;
                     delete it->second;// Delete the block being pointed to.
                     it->second = NULL;
                 }
 			}
 			delete block_map_.at(array_id);
 			block_map_.at(array_id) = NULL;
-		} else {
-			if (sip::SIPMPIAttr::get_instance().is_server()) std::cout << "Map for array is null !" << std::endl;
 		}
 	}
 

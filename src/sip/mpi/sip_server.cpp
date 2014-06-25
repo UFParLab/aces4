@@ -275,8 +275,6 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 
 	//set terminated flag;
 	terminated_ = true;
-
-	std::cout << "Ended program !" << std::endl;
 }
 
 void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {

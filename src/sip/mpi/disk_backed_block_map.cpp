@@ -59,7 +59,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 	while (block_size > remaining_mem){
         BlockId bid = policy_.get_next_block_for_removal();
         ServerBlock* blk = block_map_.block(bid);
-		SIP_LOG(std::cout"S " << sip_mpi_attr_.company_rank()
+		SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
 								<< " : Freeing block " << bid
 								<< " and writing to disk to make space for new block"
 								<< std::endl);
