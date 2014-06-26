@@ -64,7 +64,6 @@ public:
 	typedef std::map<std::string, Block::BlockPtr> LabelContiguousArrayMap;
 	/**
 	 * Type of map for storing persistent distributed and served arrays between SIAL programs.
-	 * In parallel implementation., only used at servers
 	 */
 	typedef std::map<std::string, IdBlockMap<Block>::PerArrayMap*> LabelDistributedArrayMap;
 	/**

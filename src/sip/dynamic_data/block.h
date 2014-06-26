@@ -90,13 +90,6 @@ public:
 	 */
 	Block(dataPtr);
 
-//	/**
-//	 * Returns a copy of the block
-//	 * @param
-//	 * @return
-//	 */
-//	BlockPtr clone();
-
 	/**
 	 * Deletes data in block if any.  If an MPI request associated with this
 	 * block is pending, it waits until it has been satisfied and issues a warning.
@@ -180,17 +173,12 @@ public:
 
 private:
 
-    //Block();
-
-
 	BlockShape shape_;
     int size_;
 	dataPtr data_;
 
 	//TODO encapsulate this
 	dataPtr gpu_data_;
-
-
 
 
 	// Why bitset is a good idea
@@ -220,6 +208,9 @@ private:
 #endif
 
 	DISALLOW_COPY_AND_ASSIGN(Block);
+
+	friend class DataManager;	// So that data_ of blocks wrapping
+								// Scalars can be set to NULL before destroying them.
 
 };
 

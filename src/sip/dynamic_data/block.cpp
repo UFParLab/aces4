@@ -79,10 +79,19 @@ Block::~Block() {
 		state_.wait(size());
 	}
 #endif //HAVE_MPI
-	if (data_ != NULL && size_ >1) { //Assumption: if size==1, data_ points into the scalar table.
+
+	// Original Assumption was that all blocks of size 1 are scalar blocks.
+	// This didn't turn out to be true (sliced contiguous array blocks could also be size 1).
+	// Memory leaks were being caused by this. Now this is fixed by setting data_ to NULL
+	// for blocks that wrap scalars.
+	//Assumption: if size==1, data_ points into the scalar table.
+	//if (data_ != NULL && size_ >1) {
+
+	if (data_ != NULL) {
 		delete[] data_;
 		data_ = NULL;
 	}
+
 #ifdef HAVE_CUDA
 	if (gpu_data_){
 		std::cout<<"Now freeing gpu_data"<<std::endl;

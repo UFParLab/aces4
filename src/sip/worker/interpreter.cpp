@@ -1061,12 +1061,13 @@ void Interpreter::handle_contraction_op(int pc) {
 	sip::Block::BlockPtr dblock = NULL;
 	sip::index_selector_t dselected_index_ids;
 	if (d_is_scalar) {
-		double *dvalPtr = data_manager_.scalar_address(op_table_.result_array(pc));
-		*dvalPtr = 0; // Initialize to 0 as required by Dmitry's Contraction routine
-		sip::BlockShape scalar_shape;
-		dblock = new sip::Block(scalar_shape, dvalPtr);
-		std::fill(dselected_index_ids + 0, dselected_index_ids + MAX_RANK,
-				sip::unused_index_slot);
+//		double *dvalPtr = data_manager_.scalar_address(op_table_.result_array(pc));
+//		*dvalPtr = 0; // Initialize to 0 as required by Dmitry's Contraction routine
+//		sip::BlockShape scalar_shape;
+//		dblock = new sip::Block(scalar_shape, dvalPtr);
+//		std::fill(dselected_index_ids + 0, dselected_index_ids + MAX_RANK,
+//				sip::unused_index_slot);
+		dblock = data_manager_.scalar_blocks_[op_table_.result_array(pc)];
 	} else {
 		sip::BlockSelector dselector = block_selector_stack_.top();
 		std::copy(dselector.index_ids_ + 0, dselector.index_ids_ + MAX_RANK,
@@ -1116,10 +1117,10 @@ void Interpreter::handle_contraction_op(int pc) {
 			const_cast<segment_size_array_t&>(dblock->shape().segment_sizes_),
 			ierr);
 	//std::cout <<"scalar:" << dblock.get_data()[0] << std::endl;
-	if (d_is_scalar){
-		set_scalar_value(op_table_.result_array(pc), *(dblock->get_data()));
-		delete dblock;
-	}
+//	if (d_is_scalar){
+//		set_scalar_value(op_table_.result_array(pc), *(dblock->get_data()));
+//		delete dblock;
+//	}
 
 }
 

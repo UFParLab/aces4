@@ -7,6 +7,7 @@
 
 #include <worker_persistent_array_manager.h>
 #include "interpreter.h"
+#include "id_block_map.h"
 
 namespace sip {
 
@@ -22,6 +23,7 @@ namespace sip {
 
 		WorkerPersistentArrayManager::LabelDistributedArrayMap::iterator dit;
 		for (dit = distributed_array_map_.begin(); dit != distributed_array_map_.end(); ++dit){
+			IdBlockMap<Block>::delete_blocks_from_per_array_map(dit -> second);
 			delete dit -> second;
 			dit -> second = NULL;
 		}

@@ -153,6 +153,19 @@ public:
 	}
 
 	/**
+	 * Public utility method to delete all blocks in a PerArrayMap
+	 * @param map_ptr
+	 */
+	static void delete_blocks_from_per_array_map(PerArrayMap* map_ptr) {
+		for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
+			if (it->second != NULL) {
+				delete it->second; // Delete the block being pointed to.
+				it->second = NULL;
+			}
+		}
+	}
+
+	/**
 	 *deletes the map containing blocks of the indicated array
 	 *along with the blocks in the map
 	 *
@@ -161,12 +174,7 @@ public:
 	void delete_per_array_map_and_blocks(int array_id){
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr != NULL) {
-			for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
-				if (it->second != NULL) {
-                    delete it->second;// Delete the block being pointed to.
-                    it->second = NULL;
-                }
-			}
+			delete_blocks_from_per_array_map(map_ptr);
 			delete block_map_.at(array_id);
 			block_map_.at(array_id) = NULL;
 		}
@@ -222,8 +230,6 @@ public:
 	friend std::ostream& operator<< <> (std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
 
 private:
-
-
 
 	BlockMapVector block_map_;
 

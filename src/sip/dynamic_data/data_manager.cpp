@@ -42,6 +42,7 @@ DataManager::DataManager(SipTables &sip_tables):
 DataManager::~DataManager() {
     for (int i = 0; i < sip_tables_.array_table_.entries_.size(); ++i){
     	if (sip_tables_.is_scalar(i) ){
+    		scalar_blocks_[i]->data_ = NULL;	// So that scalar that is pointed to is not freed.
     		delete scalar_blocks_[i];
     		scalar_blocks_[i] = NULL;
     	}
