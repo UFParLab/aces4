@@ -70,7 +70,7 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	//send delete message to server if responsible worker
 	int server_rank = sip_mpi_attr_.my_server();
 	if (server_rank > 0) {
-		SIP_LOG(std::cout<<"W" << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
+		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 		SIPMPIUtils::check_err(
 				MPI_Send(&array_id, 1, MPI_INT, server_rank, delete_tag,
@@ -97,7 +97,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
-    SIP_LOG(std::cout<<"W" << sip_mpi_attr_.global_rank()
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
     		<< " : sending GET for block " << block_id
     		<< " to server "<< server_rank << std::endl);
 
@@ -189,7 +189,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
-    SIP_LOG(std::cout<<"W" << sip_mpi_attr_.global_rank()
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
     		<< " : sending PUT for block " << target_id
     		<< " to server "<< server_rank << std::endl);
 
@@ -274,7 +274,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
-    SIP_LOG(std::cout<<"W" << sip_mpi_attr_.global_rank()
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
        		<< " : sending PUT_ACCUMULATE for block " << target_id
        		<< " to server "<< server_rank << std::endl);
 

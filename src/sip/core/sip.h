@@ -35,14 +35,22 @@
 	#ifdef HAVE_MPI
 		#define SIP_MASTER_LOG(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
 		#define SIP_MASTER(x) SIP_MASTER_LOG(x)
-	#else
+	#else // HAVE_MPI
 		#define SIP_MASTER_LOG(x) x
 		#define SIP_MASTER(x) x
-	#endif
-#else
+	#endif // HAVE_MPI
+
+#else // SIP_DEVEL
+
+	#ifdef HAVE_MPI
+		#define SIP_MASTER(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
+	#else
+		#define SIP_MASTER(x) x
+	#endif // HAVE_MPI
+
 	#define SIP_LOG(x) ;
 	#define SIP_MASTER_LOG(x) ;
-	#define SIP_MASTER(x) x
+
 #endif
 
 

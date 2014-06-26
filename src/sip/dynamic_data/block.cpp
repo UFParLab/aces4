@@ -69,7 +69,7 @@ Block::Block(dataPtr data):
 
 
 Block::~Block() {
-	sip::check_and_warn((data_), std::string("in ~Block with NULL data_"));
+	SIP_LOG(sip::check_and_warn((data_), std::string("in ~Block with NULL data_")));
 #ifdef HAVE_MPI
 //	//check to see if block is in transit.  If this is the case, there was a get
 //	//on a block that was never used.  Print a warning.  We probably want to be able
