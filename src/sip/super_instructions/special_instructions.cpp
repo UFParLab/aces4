@@ -22,8 +22,13 @@
 #include "special_instructions.h"
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include "sip.h"
 #include "sip_tables.h"
+
+#ifdef HAVE_MPI
+#include "sip_mpi_attr.h"
+#endif
 
 
 extern "C"{
@@ -233,7 +238,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
    	    procvec_.push_back(procvec_entry_t(func, sig));
 	}
 	catch (const std::out_of_range& oor) {
-      check_and_warn(false, std::string("Special instruction ") + name + " not found");
+        SIP_MASTER(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;

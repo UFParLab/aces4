@@ -13,6 +13,10 @@
 #include "setup_reader.h"
 #include "global_state.h"
 
+#ifdef HAVE_MPI
+#include "sip_mpi_attr.h"
+#endif
+
 namespace sip {
 
 WriteBack::WriteBack(int rank, Block::BlockPtr contiguous_block,
@@ -70,14 +74,13 @@ ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 				setup::SetupReader::NamePredefinedContiguousArrayMapIterator b =
 						setup_reader_.name_to_predefined_contiguous_array_map_.find(
 								name);
-				if (check_and_warn(
-						b
-								!= setup_reader_.name_to_predefined_contiguous_array_map_.end(),
-						"No data for predefined static array " + name)) {
+                if (b != setup_reader_.name_to_predefined_contiguous_array_map_.end()){        
 					//array is predefined and in setup reader
 					block = b->second.second;
 					insert_contiguous_array(i, block);
 				} else { //is predefined, but not in setreader.  Set to zero, insert into setup_reader map so it "owns" it and deletes it.
+
+				    SIP_MASTER(check_and_warn(false, "No data for predefined static array " + name));
 					block = create_contiguous_array(i);
 					int block_rank = sip_tables_.array_rank(i);
 					std::pair<int, Block::BlockPtr> zeroed_block_pair = std::make_pair(i, block);

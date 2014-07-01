@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
 
     signal(SIGSEGV, bt_sighandler);
     signal(SIGFPE, bt_sighandler);
+    signal(SIGTERM, bt_sighandler);
+    signal(SIGINT, bt_sighandler);
+    signal(SIGABRT, bt_sighandler);
 
 #ifdef HAVE_MPI
 	/* MPI Initialization */
