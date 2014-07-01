@@ -782,7 +782,7 @@ TEST(SimpleMPI,all_rank_print){
 		const char* nm= tmp.c_str();
 		add_sial_program(nm);
 		int segs[]  = {2,3};
-		set_aoindex_info(4,segs);
+		set_aoindex_info(2,segs);
 		finalize_setup();
 	}
 
