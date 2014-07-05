@@ -65,7 +65,8 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/data_manager.cpp\
 ./src/sip/dynamic_data/id_block_map.h\
 ./src/sip/dynamic_data/worker_persistent_array_manager.h\
-./src/sip/dynamic_data/worker_persistent_array_manager.cpp
+./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
+./src/sip/dynamic_data/lru_array_policy.h
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -117,10 +118,7 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
-./src/sip/dynamic_data/mpi_state.h\
-./src/sip/mpi/lru_array_policy.h\
-./src/sip/mpi/lru_array_policy.cpp
-
+./src/sip/dynamic_data/mpi_state.h
 
 endif
 

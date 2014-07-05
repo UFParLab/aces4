@@ -43,7 +43,7 @@ TEST(Sial_Unit,LRUArrayPolicy){
 	server_block_map.insert_block(bid4, sb);
 	server_block_map.insert_block(bid5, sb);
 
-	sip::LRUArrayPolicy policy(server_block_map);
+	sip::LRUArrayPolicy<sip::ServerBlock> policy(server_block_map);
 	policy.touch(bid0);
 	policy.touch(bid1);
 	policy.touch(bid2);

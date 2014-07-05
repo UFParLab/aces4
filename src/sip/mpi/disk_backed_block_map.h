@@ -68,7 +68,7 @@ private:
     // of block_map_ here. 
 	DiskBackedArraysIO disk_backed_arrays_io_;	/*! interface to disk io for blocks */
 	IdBlockMap<ServerBlock> block_map_;			/*! interface to memory block map */
-    LRUArrayPolicy policy_;                     /*! block replacement policy */
+    LRUArrayPolicy<ServerBlock> policy_;                     /*! block replacement policy */
 
 };
 
