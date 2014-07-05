@@ -93,7 +93,7 @@ void SIPServer::run() {
 }
 
 void SIPServer::handle_GET(int mpi_source, int get_tag) {
-	int block_id_count = BlockId::MPI_COUNT;
+	int block_id_count = BlockId::MPI_BLOCK_ID_COUNT;
 	BlockId::mpi_block_id_t buffer;
 	MPI_Status status;
 
@@ -136,7 +136,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 }
 
 void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
-	int block_id_count = BlockId::MPI_COUNT;
+	int block_id_count = BlockId::MPI_BLOCK_ID_COUNT;
 	BlockId::mpi_block_id_t buffer;
 	MPI_Status status;
 
@@ -177,7 +177,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 		int put_accumulate_data_tag) {
-	int block_id_count = BlockId::MPI_COUNT;
+	int block_id_count = BlockId::MPI_BLOCK_ID_COUNT;
 	BlockId::mpi_block_id_t buffer;
 	MPI_Status status;
 

@@ -14,7 +14,7 @@ namespace sip {
 
 
 
-const int BlockId::MPI_COUNT;
+const int BlockId::MPI_BLOCK_ID_COUNT;
 
 BlockId::BlockId() :
 		parent_id_ptr_(NULL), array_id_(-1) {

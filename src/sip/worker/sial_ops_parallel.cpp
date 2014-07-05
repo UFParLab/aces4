@@ -102,7 +102,7 @@ void SialOpsParallel::get(BlockId& block_id) {
     		<< " to server "<< server_rank << std::endl);
 
 	SIPMPIUtils::check_err(
-			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
+			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
 					server_rank, get_tag, MPI_COMM_WORLD));
 
 	//allocate block, and insert in block map, using block data as buffer
@@ -194,7 +194,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
     		<< " to server "<< server_rank << std::endl);
 
 	SIPMPIUtils::check_err(
-			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
+			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
 					server_rank, put_tag, MPI_COMM_WORLD));
 
 	//immediately follow with the data
@@ -280,7 +280,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 
 	//send block id
 	SIPMPIUtils::check_err(
-			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
+			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
 					server_rank, put_accumulate_tag, MPI_COMM_WORLD));
 	//immediately follow with the data
 	//like put--maybe we should wait for ack from server
