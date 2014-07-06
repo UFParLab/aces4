@@ -30,9 +30,14 @@ public:
 
 	static void reset_program_count() { prog_num = 0; }
 
+	static void set_max_data_memory_usage(std::size_t m) { max_data_memory_usage = m; }
+
+	static std::size_t get_max_data_memory_usage() { return max_data_memory_usage; }
+
 private:
 	static int prog_num;
 	static std::string prog_name;
+	static std::size_t max_data_memory_usage;
 };
 
 } /* namespace sip */

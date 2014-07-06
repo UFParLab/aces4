@@ -106,7 +106,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 					server_rank, get_tag, MPI_COMM_WORLD));
 
 	//allocate block, and insert in block map, using block data as buffer
-	block = block_manager_.get_block_for_writing(block_id);
+	block = block_manager_.get_block_for_writing(block_id, true);
 
 	//post an asynchronous receive and store the request in the
 	//block's state

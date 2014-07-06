@@ -14,6 +14,7 @@
 #include "global_state.h"
 
 #include <vector>
+#include <sstream>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,28 +90,45 @@ int main(int argc, char* argv[]) {
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
+	std::size_t memory = 2147483648;	// 2 GB
+
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
-	// d: means an argument is required for d. Specifies the .dat file.
-	// s: means an argument is required for s.
+	// d: name of .dat file.
+	// s: directory to look for siox files
+	// m: approximate memory to be used. Actual usage will be more than this.
 	// h & ? are for help. They require no arguments
-	const char *optString = "d:s:h?";
+	const char *optString = "d:s:m:h?";
 	int c;
 	while ((c = getopt(argc, argv, optString)) != -1){
 		switch (c) {
-		case 'd':
+		case 'd':{
 			init_file = optarg;
+		}
 			break;
-		case 's':
+		case 's':{
 			sialx_file_dir = optarg;
+		}
+			break;
+		case 'm':{
+			std::string memory_string(optarg);
+			std::stringstream ss(memory_string);
+			double memory_in_gb;
+			ss >> memory_in_gb;
+			memory = memory_in_gb * 1024 * 1024 * 1024;
+		}
 			break;
 		case 'h':case '?':
 		default:
-			std::cerr<<"Usage : "<<argv[0]<<" -d <init_data_file> -s <sialx_files_directory>"<<std::endl;
-			std::cerr<<"\tDefault data file is \"data.dat\". Default sialx directory is \".\""<<std::endl;
-			std::cerr<<"\t-? or -h to display this usage dialogue"<<std::endl;
+			std::cerr << "Usage : "<< argv[0] <<" -d <init_data_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>" << std::endl;
+			std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
+			std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
+			std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 			return 1;
 		}
 	}
+
+	// Set Approx Max memory usage
+	sip::GlobalState::set_max_data_memory_usage(memory);
 
 	//create setup_file
 	std::string job(init_file);

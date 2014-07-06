@@ -147,16 +147,33 @@ public:
 	}
 
 	/**
+	 * Public utility method to get the total bytes in all the blocks (block data_) in a PerArrayMap
+	 * @param map_ptr
+	 * @return
+	 */
+	static std::size_t total_bytes_per_array_map(PerArrayMap* map_ptr){
+		std::size_t tot_bytes = 0;
+		for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
+			tot_bytes += it->second->size() * sizeof(double);
+		}
+		return tot_bytes;
+	}
+
+	/**
 	 * Public utility method to delete all blocks in a PerArrayMap
 	 * @param map_ptr
+	 * @return bytes (of block data_) deleted
 	 */
-	static void delete_blocks_from_per_array_map(PerArrayMap* map_ptr) {
+	static std::size_t delete_blocks_from_per_array_map(PerArrayMap* map_ptr) {
+		std::size_t tot_bytes_deleted = 0;
 		for (typename PerArrayMap::iterator it = map_ptr->begin(); it != map_ptr->end(); ++it) {
 			if (it->second != NULL) {
+				tot_bytes_deleted += it->second->size() * sizeof(double);
 				delete it->second; // Delete the block being pointed to.
 				it->second = NULL;
 			}
 		}
+		return tot_bytes_deleted;
 	}
 
 	/**
@@ -164,14 +181,17 @@ public:
 	 *along with the blocks in the map
 	 *
 	 * @param array_id
+	 * @return bytes (of block data_) deleted
 	 */
-	void delete_per_array_map_and_blocks(int array_id){
+	std::size_t delete_per_array_map_and_blocks(int array_id){
+		std::size_t tot_bytes_deleted = 0;
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr != NULL) {
-			delete_blocks_from_per_array_map(map_ptr);
+			tot_bytes_deleted += delete_blocks_from_per_array_map(map_ptr);
 			delete block_map_.at(array_id);
 			block_map_.at(array_id) = NULL;
 		}
+		return tot_bytes_deleted;
 	}
 
 	/**
@@ -197,8 +217,10 @@ public:
 	 *
 	 * @param array_id
 	 * @param PerArrayMap*
+	 * @return total bytes(of block data_) inserted
 	 */
-	void insert_per_array_map(int array_id, PerArrayMap* map_ptr){
+	std::size_t insert_per_array_map(int array_id, PerArrayMap* map_ptr){
+		std::size_t tot_byes_inserted = 0;
 		//get current map and warn if it contains blocks.  Delete any map that exists
 	    PerArrayMap* current_map = block_map_.at(array_id);
 	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"));
@@ -208,11 +230,13 @@ public:
 	    PerArrayMap* new_map = new PerArrayMap();
 	    typename PerArrayMap::iterator it;
 		for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
+			tot_byes_inserted += it->second->size() * sizeof(double);
 			BlockId new_id(array_id, it->first); //this constructor updates the array_id
 			(*new_map)[new_id] = it->second;
 		}
 		block_map_.at(array_id) = new_map;
 		delete map_ptr;
+		return tot_byes_inserted;
 	}
 
 	int size() const {return block_map_.size();}

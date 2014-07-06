@@ -48,6 +48,10 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
 
+
+	/** Sets max_allocatable_bytes_ */
+    void set_max_allocatable_bytes(std::size_t size);
+
 private:
 
 	void read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size);
@@ -68,7 +72,10 @@ private:
     // of block_map_ here. 
 	DiskBackedArraysIO disk_backed_arrays_io_;	/*! interface to disk io for blocks */
 	IdBlockMap<ServerBlock> block_map_;			/*! interface to memory block map */
-    LRUArrayPolicy<ServerBlock> policy_;                     /*! block replacement policy */
+    LRUArrayPolicy<ServerBlock> policy_;		/*! block replacement policy */
+
+    /** Maximum number of bytes before spilling over to disk */
+	std::size_t max_allocatable_bytes_;
 
 };
 

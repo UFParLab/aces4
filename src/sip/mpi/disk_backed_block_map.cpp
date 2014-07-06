@@ -8,6 +8,7 @@
 #include <disk_backed_block_map.h>
 #include "server_block.h"
 #include "block_id.h"
+#include "global_state.h"
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -19,7 +20,8 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
 		block_map_(sip_tables.num_arrays()),
 		disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution),
-        policy_(block_map_){
+        policy_(block_map_),
+        max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()) {
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap(){}
@@ -29,15 +31,8 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
      * into newly allocated space, sets the in_memory flag,
      * inserts into block_map_ if needed
      */
-    //bool was_in_map = true;
-    //ServerBlock* block = block_map_.block(block_id);
-    //if (block == NULL)
-    //    was_in_map = false;
 
 	block = allocate_block(block, block_size);
-    //if (!was_in_map)
-    //	block_map_.insert_block(block_id, block);
-
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
 	block->set_in_memory();
 }
@@ -54,7 +49,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
      * till enough memory has been obtained, then allocates
      * and returns block.
      */
-	std::size_t remaining_mem = ServerBlock::remaining_memory();
+	std::size_t remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
 
 	while (block_size > remaining_mem){
         BlockId bid = policy_.get_next_block_for_removal();
@@ -67,13 +62,13 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
             write_block_to_disk(bid, blk);
         }
         blk->free_in_memory_data();
-		remaining_mem = ServerBlock::remaining_memory();
+		remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
 	}
 
 	std::stringstream ss;
 	ss << "S " << sip_mpi_attr_.company_rank() << " : Could not allocate memory for block of size "
-			<< block_size << ", Remaining Memory :" << ServerBlock::remaining_memory() << std::endl;
-	sip :: check (block_size <= ServerBlock::remaining_memory(), ss.str());
+			<< block_size << ", Memory being used :" << ServerBlock::allocated_bytes() << std::endl;
+	sip :: check (block_size <= max_allocatable_bytes_ - ServerBlock::allocated_bytes(), ss.str());
    
     if (block == NULL) {
 	    block = new ServerBlock(block_size, initialize);
@@ -84,21 +79,6 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 	return block;
 
 }
-
-
-//ServerBlock* DiskBackedBlockMap::get_or_create_block(const BlockId& block_id,
-//		size_t block_size, bool initialize) {
-//	// TODO ===============================================
-//	// TODO Complete this method.
-//	// TODO ===============================================
-//	ServerBlock* block = block_map_.block(block_id);
-//	if (block == NULL){
-//		block = read_block_from_disk(block_id, block_size);
-//	}
-//	//ServerBlock* block = block_map_.get_or_create_block(block_id, block_size, initialize);
-//	//return block;
-//	return block;
-//}
 
 
 ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
@@ -272,6 +252,15 @@ void DiskBackedBlockMap::reset_consistency_status_for_all_blocks(){
 	}
 }
 
+void DiskBackedBlockMap::set_max_allocatable_bytes(std::size_t size){
+    static bool done_once = false;
+    if (!done_once){
+        done_once = true;
+        max_allocatable_bytes_ = size;
+    } else {
+        sip::fail("Already set memory limit once !");
+    }
+}
 
 std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj){
 	os << "block map : " << std::endl;

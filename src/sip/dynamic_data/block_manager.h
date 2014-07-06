@@ -170,14 +170,22 @@ private:
 	 * @param block_ptr
 	 */
      void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr){block_map_.insert_block(block_id, block_ptr);}
-	/**
-	 * Removes the given Block from the map and frees its data. It is a fatal error
+
+     /**
+	 * Removes the given Block from the map and caches it if possible. It is a fatal error
 	 * to try to delete a block that doesn't exist.
 	 *
 	 * @param BlockId of block to remove
 	 */
-	void delete_block(const BlockId& id){block_map_.delete_block(id);}
+	void cached_delete_block(const BlockId& id){block_map_.cached_delete_block(id);}
 
+
+	/**
+	 * Removes the given Block from the map and frees its data. It is a fatal error
+	 * to try to delete a block that doesn't exist.
+	 * @param id
+	 */
+	void delete_block(const BlockId& id){block_map_.delete_block(id);}
 
 	/** Creates and returns a new block with the given shape and records it in the block_map_ with the given BlockId.
 	 * Requires the block with given id does not already exist.

@@ -121,10 +121,7 @@ public:
     void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
-
-	static bool limit_reached();			        /*! Whether mem limit reached. Should start writing to disk if true */
-	static std::size_t remaining_memory();	        /*! maximum allocatable mem less used mem (for FP data only) */
-    static void set_memory_limit(std::size_t size); /*! Sets limit for memory allocated for "data_" */
+	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
@@ -204,7 +201,6 @@ private:
 	std::pair<ServerBlockMode, int> consistency_status_; /*! State of block */
 
 	const static std::size_t field_members_size_;
-	static std::size_t max_allocated_bytes_;
 	static std::size_t allocated_bytes_;
 
 	friend DiskBackedArraysIO;

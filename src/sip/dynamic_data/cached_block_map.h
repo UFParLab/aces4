@@ -47,6 +47,12 @@ public:
 	 * Require that the block exist.
 	 * @param block_id
 	 */
+	void cached_delete_block(const BlockId& block_id);
+
+	/**
+	 * Removes given block from block map.
+	 * @param block_id
+	 */
 	void delete_block(const BlockId& block_id);
 
 	/**
@@ -60,7 +66,8 @@ public:
 
 	/**
 	 * Deletes the map containing blocks of the
-	 * indicated array along with the blocks in the map
+	 * indicated array along with the blocks in the map.
+	 * Also deletes them from the cached blocks.
 	 * @param array_id
 	 */
 	void delete_per_array_map_and_blocks(int array_id);
@@ -78,6 +85,10 @@ public:
 
 	friend std::ostream& operator<<(std::ostream&, const CachedBlockMap&);
 
+	/** Sets max_allocatable_bytes_ */
+    void set_max_allocatable_bytes(std::size_t size);
+	void free_up_bytes_in_cache(std::size_t block_size);
+
 private:
 
 	/* A block must be in only one of the two maps : block_map_ or cache_ */
@@ -86,7 +97,11 @@ private:
 	IdBlockMap<Block> cache_;		/*! Backing Cache */
 	LRUArrayPolicy<Block> policy_;	/*! The block replacement Policy */
 
+	/** Maximum number of bytes before deleting blocks from the cache_ */
+	std::size_t max_allocatable_bytes_;
 
+	/** Allocated bytes in blocks */
+	std::size_t allocated_bytes_;
 };
 
 } /* namespace sip */
