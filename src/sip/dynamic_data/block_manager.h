@@ -17,7 +17,7 @@
 #include <vector>
 #include <stack>
 #include "block.h"
-#include "id_block_map.h"
+#include "cached_block_map.h"
 
 
 namespace sip {
@@ -233,7 +233,7 @@ private:
 	SipTables& sip_tables_;
 
 	/** Map from block id's to blocks */
-	IdBlockMap<Block> block_map_;
+	CachedBlockMap block_map_;
 
 	/** Conceptually, a stack of lists of temp blocks.  Each list corresponds to a scope, and the entries in the
 	 * list are blocks that should be deleted when that scope is exited.  The enter_scope and leave_scope methods

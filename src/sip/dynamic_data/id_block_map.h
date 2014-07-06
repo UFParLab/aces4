@@ -38,13 +38,7 @@ public:
 	 *
 	 * @param size
 	 */
-	explicit IdBlockMap(int array_table_size):block_map_(array_table_size, NULL)
-	{
-	}
-
-	IdBlockMap(){
-		fail("executing parameterless constructor for IdBlockMap");
-	}
+	explicit IdBlockMap(int array_table_size):block_map_(array_table_size, NULL){}
 
 	/**
 	 * destructor, deletes all maps and all of their blocks
