@@ -52,17 +52,23 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 	std::size_t remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
 
 	while (block_size > remaining_mem){
-        BlockId bid = policy_.get_next_block_for_removal();
-        ServerBlock* blk = block_map_.block(bid);
-		SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
-								<< " : Freeing block " << bid
-								<< " and writing to disk to make space for new block"
-								<< std::endl);
-        if(blk->is_dirty()){
-            write_block_to_disk(bid, blk);
-        }
-        blk->free_in_memory_data();
-		remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
+		try{
+			BlockId bid = policy_.get_next_block_for_removal();
+			ServerBlock* blk = block_map_.block(bid);
+			SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
+									<< " : Freeing block " << bid
+									<< " and writing to disk to make space for new block"
+									<< std::endl);
+			if(blk->is_dirty()){
+				write_block_to_disk(bid, blk);
+			}
+			blk->free_in_memory_data();
+			remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
+		} catch (const std::out_of_range& oor){
+			std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
+			std::cerr << *this << std::endl;
+			fail(" Could not allocate ServerBlock, out of memory", current_line());
+		}
 	}
 
 	std::stringstream ss;

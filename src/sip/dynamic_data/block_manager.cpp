@@ -194,7 +194,7 @@ void BlockManager::leave_scope() {
 			cached_delete_block(*it);
 		else
 			delete_block(*it);
-		//delete_block(*it);
+//		delete_block(*it);
 	}
 	temp_block_list_stack_.pop_back();
 	delete temps;
@@ -232,9 +232,15 @@ Block::BlockPtr BlockManager::block(const BlockId& id){
  */
 Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
-	Block::BlockPtr block_ptr = new Block(shape);
-	insert_into_blockmap(block_id, block_ptr);
-	return block_ptr;
+	try {
+		Block::BlockPtr block_ptr = new Block(shape);
+		insert_into_blockmap(block_id, block_ptr);
+		return block_ptr;
+	} catch (const std::out_of_range& oor){
+		std::cerr << " In BlockManager::create_block" << std::endl;
+		std::cerr << *this << std::endl;
+		fail(" Could not create block, out of memory", current_line());
+	}
 }
 
 

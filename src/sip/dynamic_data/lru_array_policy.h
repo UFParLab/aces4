@@ -13,6 +13,7 @@
 #include "block_id.h"
 
 #include <list>
+#include <stdexcept>
 
 namespace sip {
 
@@ -55,8 +56,8 @@ public:
 	BlockId get_next_block_for_removal(){
 		/** Return an arbitrary block from the least recently used array
 		 */
-		sip::check(!lru_list_.empty(),
-				"No blocks have been touched, yet block requested for flushing");
+		if(lru_list_.empty())
+			throw std::out_of_range("No blocks have been touched, yet block requested for flushing");
 		while (!lru_list_.empty()) {
 			int to_remove_array = lru_list_.back();
 			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* array_map = block_map_.per_array_map(to_remove_array);
@@ -66,7 +67,8 @@ public:
 			else
 				return it->first;
 		}
-		sip::fail("No blocks to remove !", current_line());
+		throw std::out_of_range("No blocks to remove !");
+		//sip::fail("No blocks to remove !", current_line());
 	}
 
 private:
