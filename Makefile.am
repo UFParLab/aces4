@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 
+bin_PROGRAMS=aces4 print_siptables
 
 noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
@@ -135,11 +135,20 @@ aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
     ./src/aces_main/main.cpp
 
+print_siptables_SOURCES=\
+	$(ACES_SOURCEFILES)\
+	./src/util/print_siptables.cpp
+
 aces4_LDADD = \
 	libtensordil.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
+print_siptables_LDADD=\
+	libtensordil.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+	
 aces4_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
