@@ -454,7 +454,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 				"sip bug: asking for scope-extend dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
-	return block_manager_.get_block_for_writing(id);
+	return block_manager_.get_block_for_writing(id, is_scope_extent);
 }
 
 Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
