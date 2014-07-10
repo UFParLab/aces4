@@ -25,8 +25,8 @@
 #include "contiguous_array_manager.h"
 #include "data_manager.h"
 #include "sialx_timer.h"
-#include "persistent_array_manager.h"
 #include "config.h"
+#include "worker_persistent_array_manager.h"
 
 #ifdef HAVE_MPI
 #include "sial_ops_parallel.h"
@@ -38,12 +38,11 @@ namespace sip {
 
 class LoopManager;
 
-
 class Interpreter {
 public:
 
 
-	Interpreter(SipTables&, SialxTimer&, PersistentArrayManager<Block, Interpreter>* = NULL); //default value used for testing only
+	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
 
 	~Interpreter();
 
@@ -202,7 +201,7 @@ private:
 	 * Owned by main program
 	 * The reference is needed for upcalls to handle set_persistent and restore_persistent instructions
 	 */
-	sip::PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
+	WorkerPersistentArrayManager* persistent_array_manager_;
 
 #ifdef HAVE_MPI
 	SialOpsParallel sial_ops_;  //todo make this a template param

@@ -32,8 +32,8 @@ class SipTables;
 class BlockId {
 public:
 
-	static const int MPI_COUNT = MAX_RANK + 1;
-	typedef int mpi_block_id_t[MPI_COUNT];
+	static const int MPI_BLOCK_ID_COUNT = MAX_RANK + 1;
+	typedef int mpi_block_id_t[MPI_BLOCK_ID_COUNT];
 
 
 	BlockId();
@@ -160,7 +160,7 @@ public:
 	 *
 	 * @return a string representation of this BlockId
 	 */
-	std::string str();
+	std::string str(const SipTables& sip_tables) const;
 
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
 

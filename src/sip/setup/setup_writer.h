@@ -30,7 +30,7 @@ namespace setup {
 
 class SetupWriter {
 public:
-    SetupWriter (std::string, OutputFile *);
+    SetupWriter (std::string, OutputStream *);
     ~SetupWriter ();
 //	void init_(const char * job_name);
     void write_header_file();
@@ -56,7 +56,7 @@ public:
 	typedef std::map<std::string, KeyValueMap > FileConfigMap;
 private:
 	std::string jobname_;
-	OutputFile * file;
+	OutputStream * file;
 	PredefInt header_constants_;  //predefined ints to be defined in header file
 	PredefInt data_constants_;  //predefined ints to be read from data file
 	PredefScalar scalars_;  //predefined scalars

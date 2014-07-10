@@ -13,11 +13,12 @@ namespace sip {
 //#ifndef HAVE_MPI
 
 SialOpsSequential::SialOpsSequential(DataManager & data_manager,
-		PersistentArrayManager<Block, Interpreter> * persistent_array_manager):
-sip_tables_(SipTables::instance()),
-data_manager_(data_manager),
-block_manager_(data_manager.block_manager_),
-persistent_array_manager_(persistent_array_manager) {
+		WorkerPersistentArrayManager* persistent_array_manager,
+		SipTables &sip_tables):
+		sip_tables_(sip_tables),
+		data_manager_(data_manager),
+		block_manager_(data_manager.block_manager_),
+		persistent_array_manager_(persistent_array_manager) {
 }
 
 SialOpsSequential::~SialOpsSequential() {
@@ -116,6 +117,9 @@ void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_i
 void SialOpsSequential::end_program() {
 }
 
+void SialOpsSequential::print_to_stdout(const std::string& to_print){
+	std::cout << to_print << std::flush;
+}
 
 void SialOpsSequential::log_statement(opcode_t type, int line){
 	SIP_LOG(std::cout<<"Line "<<line << ", type: " << opcodeToName(type)<<std::endl);

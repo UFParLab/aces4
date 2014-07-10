@@ -31,7 +31,7 @@ public:
 	typedef std::vector<Block::BlockPtr>  ScalarBlockTable;
 
 
-	DataManager();
+	DataManager(SipTables &sip_tables);
 
 
 

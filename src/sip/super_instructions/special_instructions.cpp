@@ -22,8 +22,13 @@
 #include "special_instructions.h"
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include "sip.h"
 #include "sip_tables.h"
+
+#ifdef HAVE_MPI
+#include "sip_mpi_attr.h"
+#endif
 
 
 extern "C"{
@@ -180,9 +185,11 @@ void list_block_map();
 void disable_debug_print();
 void enable_debug_print();
 
+void enable_all_rank_print();
+void disable_all_rank_print();
+
 
 // Special Super Instructions Just For Testing
-void test_increment_counter(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 
@@ -231,7 +238,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
    	    procvec_.push_back(procvec_entry_t(func, sig));
 	}
 	catch (const std::out_of_range& oor) {
-      check_and_warn(false, std::string("Special instruction ") + name + " not found");
+        SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;
@@ -308,7 +315,6 @@ std::ostream& operator<<(std::ostream& os, const SpecialInstructionManager& obj)
 
 void SpecialInstructionManager::init_procmap(){
     // TEST  The next few instructions are used for testing
-	procmap_["test_increment_counter"]=(fp0)&test_increment_counter;
 	procmap_["dadd"] = (fp0)&dadd;
 	procmap_["dsub"] = (fp0)&dsub;
 	procmap_["print_something"] = (fp0)&print_something;
@@ -359,6 +365,8 @@ void SpecialInstructionManager::init_procmap(){
 
     procmap_["enable_debug_print"]=(fp0)&enable_debug_print;
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
+    procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
+    procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
 
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE

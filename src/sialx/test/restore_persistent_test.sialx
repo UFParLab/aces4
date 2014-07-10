@@ -28,9 +28,10 @@ sial restore_persistent_test
 	
 	do k
 		do l
-#			execute print_block c(k,l)
-#			execute print_block b(k,l)
-#			execute print_block ca2(k,l)
+			println "TESTING !!!!!!!!!!!!"
+			execute print_block c(k,l)
+			execute print_block b(k,l)
+			execute print_block ca2(k,l)
 		enddo l
 	enddo k
 	

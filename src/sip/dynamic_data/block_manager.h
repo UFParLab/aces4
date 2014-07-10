@@ -17,7 +17,7 @@
 #include <vector>
 #include <stack>
 #include "block.h"
-#include "id_block_map.h"
+#include "cached_block_map.h"
 
 
 namespace sip {
@@ -30,7 +30,7 @@ public:
 	typedef std::vector<BlockId> BlockList;
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
-	BlockManager();
+	BlockManager(SipTables &sip_tables);
 	~BlockManager();
 
 	void allocate_local(const BlockId&);
@@ -97,10 +97,10 @@ public:
 
 #ifdef HAVE_CUDA
 	// GPU
-	Block::BlockPtr get_gpu_block_for_writing(const BlockId& id, bool is_scope_extent);
+	Block::BlockPtr get_gpu_block_for_writing(const BlockId& id, bool is_scope_extent=false);
 	Block::BlockPtr get_gpu_block_for_updating(const BlockId& id);
 	Block::BlockPtr get_gpu_block_for_reading(const BlockId& id);
-	Block::BlockPtr get_gpu_block_for_accumulate(const BlockId& id, bool is_scope_extent);
+	Block::BlockPtr get_gpu_block_for_accumulate(const BlockId& id, bool is_scope_extent=false);
 
 	/**
 	 * Lazily copy block from host to device for reading if needed
@@ -170,14 +170,22 @@ private:
 	 * @param block_ptr
 	 */
      void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr){block_map_.insert_block(block_id, block_ptr);}
-	/**
-	 * Removes the given Block from the map and frees its data. It is a fatal error
+
+     /**
+	 * Removes the given Block from the map and caches it if possible. It is a fatal error
 	 * to try to delete a block that doesn't exist.
 	 *
 	 * @param BlockId of block to remove
 	 */
-	void delete_block(const BlockId& id){block_map_.delete_block(id);}
+	void cached_delete_block(const BlockId& id){block_map_.delete_block(id);}
 
+
+	/**
+	 * Removes the given Block from the map and frees its data. It is a fatal error
+	 * to try to delete a block that doesn't exist.
+	 * @param id
+	 */
+	void delete_block(const BlockId& id){block_map_.delete_block(id);}
 
 	/** Creates and returns a new block with the given shape and records it in the block_map_ with the given BlockId.
 	 * Requires the block with given id does not already exist.
@@ -233,7 +241,7 @@ private:
 	SipTables& sip_tables_;
 
 	/** Map from block id's to blocks */
-	IdBlockMap<Block> block_map_;
+	CachedBlockMap block_map_;
 
 	/** Conceptually, a stack of lists of temp blocks.  Each list corresponds to a scope, and the entries in the
 	 * list are blocks that should be deleted when that scope is exited.  The enter_scope and leave_scope methods

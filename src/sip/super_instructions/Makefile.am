@@ -317,20 +317,18 @@ GENERAL_SOURCE_FILES=\
 ./general/print_static_array.cpp\
 ./general/get_my_rank.cpp\
 ./general/swap_blocks.cpp\
-./general/abort_job.f\
 ./general/disable_debug_print.cpp\
-./general/enable_debug_print.cpp
+./general/enable_debug_print.cpp\
+./general/enable_all_rank_print.cpp\
+./general/disable_all_rank_print.cpp\
+./general/abort_job.F
 
-# Super instructions only for Test
-TEST_SOURCE_FILES=\
-./test/test_increment_counter.cpp
 
 libinstr_la_SOURCES=\
 special_instructions.h\
 special_instructions.cpp\
 $(QM_SOURCE_FILES)\
-$(GENERAL_SOURCE_FILES)\
-$(TEST_SOURCE_FILES)
+$(GENERAL_SOURCE_FILES)
 
 
 # We could add in our own lapack library if there wasn't a vendor supplied one on the machine.

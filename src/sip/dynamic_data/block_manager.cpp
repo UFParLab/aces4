@@ -37,9 +37,9 @@
 namespace sip {
 
 
-BlockManager::BlockManager() :
-sip_tables_(SipTables::instance()),
-block_map_(SipTables::instance().num_arrays()){
+BlockManager::BlockManager(SipTables &sip_tables) :
+sip_tables_(sip_tables),
+block_map_(sip_tables.num_arrays()){
 }
 
 
@@ -82,10 +82,10 @@ void BlockManager::allocate_local(const BlockId& id) {
 		generate_local_block_list(id, list);
 		std::vector<BlockId>::iterator it;
 		for (it = list.begin(); it != list.end(); ++it) {
-			get_block_for_writing(*it, false);
+			Block* blk = get_block_for_writing(*it, false);
 		}
 	} else {
-		get_block_for_writing(id, false);
+		Block* blk = get_block_for_writing(id, false);
 	}
 }
 void BlockManager::deallocate_local(const BlockId& id) {
@@ -184,7 +184,17 @@ void BlockManager::leave_scope() {
 	BlockList* temps = temp_block_list_stack_.back();
 	BlockList::iterator it;
 	for (it = temps->begin(); it != temps->end(); ++it) {
-		delete_block(*it);
+		BlockId &block_id = *it;
+		int array_id = block_id.array_id();
+
+		// Cached delete for distributed/served arrays.
+		// Regular delete for temp blocks.
+
+		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id))
+			cached_delete_block(*it);
+		else
+			delete_block(*it);
+//		delete_block(*it);
 	}
 	temp_block_list_stack_.pop_back();
 	delete temps;
@@ -222,9 +232,15 @@ Block::BlockPtr BlockManager::block(const BlockId& id){
  */
 Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
-	Block::BlockPtr block_ptr = new Block(shape);
-	insert_into_blockmap(block_id, block_ptr);
-	return block_ptr;
+	try {
+		Block::BlockPtr block_ptr = new Block(shape);
+		insert_into_blockmap(block_id, block_ptr);
+		return block_ptr;
+	} catch (const std::out_of_range& oor){
+		std::cerr << " In BlockManager::create_block" << std::endl;
+		std::cerr << *this << std::endl;
+		fail(" Could not create block, out of memory", current_line());
+	}
 }
 
 
@@ -330,7 +346,7 @@ void BlockManager::lazy_gpu_read_on_device(const Block::BlockPtr& blk) {
 
 void BlockManager::lazy_gpu_write_on_device(Block::BlockPtr& blk, const BlockId &id, const BlockShape& shape) {
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		remove_block(id); // Get rid of block, create a new one
+		block_map_.cached_delete_block(id); // Get rid of block, create a new one
 		blk = create_gpu_block(id, shape);
 //		if (is_scope_extent) {
 //			temp_block_list_stack_.back()->push_back(id);
@@ -381,7 +397,7 @@ void BlockManager::lazy_gpu_read_on_host(const Block::BlockPtr& blk) {
 
 void BlockManager::lazy_gpu_write_on_host(Block::BlockPtr& blk, const BlockId &id, const BlockShape& shape) {
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		remove_block(id); // Get rid of block, create a new one
+		block_map_.cached_delete_block(id); // Get rid of block, create a new one
 		blk = create_block(id, shape);
 //		if (is_scope_extent) {
 //			temp_block_list_stack_.back()->push_back(id);

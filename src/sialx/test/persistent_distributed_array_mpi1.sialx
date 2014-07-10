@@ -1,12 +1,17 @@
 sial persistent_distributed_array_mpi1
 	special list_block_map
 	special print_block r
+	special fill_block_sequential wr
 	predefined int norb
 	aoindex i = 1,norb
 	aoindex j = 1,norb
 	local a(i,j)
 	distributed b(i,j)
 	distributed c(i,j)
+	
+	scalar count 
+	
+	count = 1.0	
 	
 	create b
 	create c
@@ -15,12 +20,28 @@ sial persistent_distributed_array_mpi1
 	println "Sending blocks"	
 	do i
 		do j
-			a(i,j) = 42.0
+			#a(i,j) = 42.0
+			execute fill_block_sequential a(i,j) count
 			put b(i,j) = a(i,j)
 			put c(i,j) += a(i,j)
 			put c(i,j) += a(i,j)
+			
+			count = count + 1
+
+			
 		enddo j
 	enddo i
+	
+	sip_barrier
+	
+    do i
+        do j
+            get b(i, j)
+            get c(i, j)
+            execute print_block b(i, j)
+            execute print_block c(i, j)
+        enddo j
+    enddo i
 	
 	set_persistent b "savedb"
 	set_persistent c "savedc"

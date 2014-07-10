@@ -12,10 +12,8 @@
 
 namespace sip{
 
-class SIPMPIData {
+class SIPMPIConstants {
 public:
-
-	//TODO  rename this to SIPMPIConstants
 
 /*TODO
  * Currently, we are using the same tag for
@@ -56,6 +54,13 @@ SIP_MESSAGE(RESTORE_PERSISTENT_ACK, 15, "RESTORE_PERSISTENT_ACK")
 	 * @return
 	 */
 	static MessageType_t intToMessageType(int msgtype);
+
+	/**
+	 * Converts a message type to it's string equivalent
+	 * @param
+	 * @return
+	 */
+	static std::string messageTypeToName(MessageType_t);
 
 };
 

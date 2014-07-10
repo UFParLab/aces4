@@ -35,18 +35,36 @@
 	#ifdef HAVE_MPI
 		#define SIP_MASTER_LOG(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
 		#define SIP_MASTER(x) SIP_MASTER_LOG(x)
-	#else
+	#else // HAVE_MPI
 		#define SIP_MASTER_LOG(x) x
 		#define SIP_MASTER(x) x
-	#endif
-#else
+	#endif // HAVE_MPI
+
+#else // SIP_DEVEL
+
+	#ifdef HAVE_MPI
+		#define SIP_MASTER(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
+	#else
+		#define SIP_MASTER(x) x
+	#endif // HAVE_MPI
+
 	#define SIP_LOG(x) ;
 	#define SIP_MASTER_LOG(x) ;
-	#define SIP_MASTER(x) x
+
 #endif
 
 
+// Fortran Callable sip_abort
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void sip_abort();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 namespace sip {
 
@@ -59,8 +77,15 @@ extern const int SIOX_MAGIC;
 extern const int SIOX_VERSION;
 extern const int SIOX_RELEASE;
 
-/*! Debug printintg control */
+/*! Debug printintg control, default:true */
 extern bool _sip_debug_print;
+
+/*! Whether to print from all workers or just master, default:false
+ * This does not affect user defined super instructions; which are
+ * responsible for their own printing */
+extern bool _all_rank_print;
+
+bool should_all_ranks_print();
 
 typedef std::vector<double> ScalarTable;
 typedef std::vector<std::string> StringLiteralTable;

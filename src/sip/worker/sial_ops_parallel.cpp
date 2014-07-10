@@ -13,8 +13,9 @@ namespace sip {
 
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
-		PersistentArrayManager<Block, Interpreter>* persistent_array_manager) :
-		sip_tables_(SipTables::instance()), sip_mpi_attr_(
+		WorkerPersistentArrayManager* persistent_array_manager,
+		SipTables& sip_tables) :
+		sip_tables_(sip_tables), sip_mpi_attr_(
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,
 				sip_mpi_attr_), persistent_array_manager_(
@@ -48,8 +49,7 @@ void SialOpsParallel::sip_barrier() {
 	}
 	reset_mode();
 
-	SIP_LOG(
-			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
+	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
 
 }
 
@@ -68,15 +68,14 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	block_manager_.block_map_.delete_per_array_map_and_blocks(array_id);
 
 	//send delete message to server if responsible worker
-	int my_server = sip_mpi_attr_.my_server();
-	if (my_server > 0) {
-		SIP_LOG(
-				std::cout<<"Worker " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< my_server << std::endl);
+	int server_rank = sip_mpi_attr_.my_server();
+	if (server_rank > 0) {
+		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 		SIPMPIUtils::check_err(
-				MPI_Send(&array_id, 1, MPI_INT, my_server, delete_tag,
+				MPI_Send(&array_id, 1, MPI_INT, server_rank, delete_tag,
 						MPI_COMM_WORLD));
-		ack_handler_.expect_ack_from(my_server, delete_tag);
+		ack_handler_.expect_ack_from(server_rank, delete_tag);
 	}
 }
 
@@ -98,13 +97,16 @@ void SialOpsParallel::get(BlockId& block_id) {
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
+    		<< " : sending GET for block " << block_id
+    		<< " to server "<< server_rank << std::endl);
 
 	SIPMPIUtils::check_err(
-			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
+			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
 					server_rank, get_tag, MPI_COMM_WORLD));
 
 	//allocate block, and insert in block map, using block data as buffer
-	block = block_manager_.get_block_for_writing(block_id);
+	block = block_manager_.get_block_for_writing(block_id, true);
 
 	//post an asynchronous receive and store the request in the
 	//block's state
@@ -112,7 +114,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 	SIPMPIUtils::check_err(
 			MPI_Irecv(block->get_data(), block->size(), MPI_DOUBLE, server_rank,
 					get_tag, MPI_COMM_WORLD, &request));
-	block->state_.mpi_request_ = request;
+	block->state().mpi_request_ = request;
 }
 
 //NOTE:  I can't remember why the source block was copied.
@@ -187,20 +189,24 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
+    		<< " : sending PUT for block " << target_id
+    		<< " to server "<< server_rank << std::endl);
+
 	SIPMPIUtils::check_err(
-			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
+			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
 					server_rank, put_tag, MPI_COMM_WORLD));
 
 	//immediately follow with the data
 	//TODO  should we wait for ack before sending data???
 	SIPMPIUtils::check_err(
-			MPI_Send(source_block->data_, source_block->size_, MPI_DOUBLE,
+			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 					server_rank, put_data_tag, MPI_COMM_WORLD));
 
 	//the data message should be acked
 	ack_handler_.expect_ack_from(server_rank, put_data_tag);
-	SIP_LOG(
-			std::cout << "W " << my_rank << " : Done with PUT for block " << target_id << " to server rank " << server_rank << std::endl;)
+
+	SIP_LOG(std::cout << "W " << my_rank << " : Done with PUT for block " << target_id << " to server rank " << server_rank << std::endl;)
 
 }
 
@@ -236,7 +242,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 //
 //	SIP_LOG(
 //			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with PUT_ACCUMULATE for block " << lhs_id << " to server rank " << server_rank << std::endl);
-//
+//size_
 //	//it is legal to accumulate into the block multiple so keep the block
 //	//around until the update_state_at_barrier.
 //}
@@ -268,14 +274,18 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
+       		<< " : sending PUT_ACCUMULATE for block " << target_id
+       		<< " to server "<< server_rank << std::endl);
+
 	//send block id
 	SIPMPIUtils::check_err(
-			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_COUNT, MPI_INT,
+			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
 					server_rank, put_accumulate_tag, MPI_COMM_WORLD));
 	//immediately follow with the data
 	//like put--maybe we should wait for ack from server
 	SIPMPIUtils::check_err(
-			MPI_Send(source_block->data_, source_block->size_, MPI_DOUBLE,
+			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
 
 	//ack
@@ -312,7 +322,7 @@ void SialOpsParallel::collective_sum(int source_array_slot,
 
 	if (sip_mpi_attr_.num_workers() > 1) {
 		double to_send = val_source + val_dest;
-		MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
+		const MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(
 				MPI_Allreduce(&to_send, &summed, 1, MPI_DOUBLE, MPI_SUM,
 						worker_comm));
@@ -408,6 +418,19 @@ void SialOpsParallel::end_program() {
 	//the program is done and the servers know it.
 }
 
+void SialOpsParallel::print_to_stdout(const std::string& to_print){
+	/** If all ranks should print, do that,
+	 * Otherwise just print from company master.
+	 */
+	if (sip::should_all_ranks_print()){
+		std::cout << "W " << sip_mpi_attr_.global_rank() << " : " << to_print << std::flush;
+	} else {
+		if (sip_mpi_attr_.is_company_master()){
+			std::cout << to_print << std::flush;
+		}
+	}
+}
+
 //enum array_mode {NONE, READ, WRITE};
 bool SialOpsParallel::check_and_set_mode(int array_id, array_mode mode) {
 	array_mode current = mode_.at(array_id);
@@ -468,8 +491,8 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 }
 
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b) {
-	if (b->state_.pending()) {
-		b->state_.wait(b->size());
+	if (b->state().pending()) {
+		b->state().wait(b->size());
 	}
 	return b;
 }

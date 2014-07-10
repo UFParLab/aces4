@@ -52,8 +52,6 @@ public:
 	SipTables(setup::SetupReader&, setup::InputStream&);
 	~SipTables();
 
-	static SipTables& instance() ;
-
 // Convenience method
 	/**
 	 * @return Maximum number of slots to initialize in the timer
@@ -88,7 +86,7 @@ public:
 	std::string string_literal(int slot) const;
 
 //indices and blocks
-	//int index_id(std::string name);
+	int index_id(std::string name) const;
 	std::string index_name(int index_table_slot) const;
 	IndexType_t index_type(int index_table_slot) const;
 	BlockShape shape(const BlockId&) const;
@@ -157,7 +155,8 @@ public:
 private:
 
 
-	static SipTables* instance_;
+    bool increment_indices(int rank, index_value_array_t& upper, index_value_array_t& lower, index_value_array_t& current) const;
+     
 
 	/**
 	 * Helper method to returns the offset of a block in its array

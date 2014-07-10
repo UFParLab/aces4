@@ -90,13 +90,6 @@ public:
 	 */
 	Block(dataPtr);
 
-//	/**
-//	 * Returns a copy of the block
-//	 * @param
-//	 * @return
-//	 */
-//	BlockPtr clone();
-
 	/**
 	 * Deletes data in block if any.  If an MPI request associated with this
 	 * block is pending, it waits until it has been satisfied and issues a warning.
@@ -104,7 +97,7 @@ public:
 	~Block();
 
     int size();
-    BlockShape shape();
+    const BlockShape& shape();
     dataPtr get_data();
     dataPtr fill(double value);
     dataPtr scale(double value);
@@ -174,12 +167,11 @@ public:
 
 #endif
 
-
+#ifdef HAVE_MPI
+	MPIState& state() { return state_; }
+#endif
 
 private:
-
-    //Block();
-
 
 	BlockShape shape_;
     int size_;
@@ -187,8 +179,6 @@ private:
 
 	//TODO encapsulate this
 	dataPtr gpu_data_;
-
-
 
 
 	// Why bitset is a good idea
@@ -201,19 +191,9 @@ private:
 	};
 	std::bitset<4> status_;
 
-//TODO  is all this necessary??
-	friend class BlockManager;
-	friend class Interpreter;
-	friend class ContiguousArrayManager;
-	friend class SIPMPIUtils;
-	friend class SIPServer;
-	friend class SialOpsParallel;
-	friend class SialOpsSequential;
-
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
 	bool operator==(const Block& rhs) const;
-
 
 
 	/** encapsulates MPI related state info.
@@ -228,6 +208,9 @@ private:
 #endif
 
 	DISALLOW_COPY_AND_ASSIGN(Block);
+
+	friend class DataManager;	// So that data_ of blocks wrapping
+								// Scalars can be set to NULL before destroying them.
 
 };
 

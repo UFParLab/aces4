@@ -43,9 +43,15 @@ namespace sip {
 
 class BarrierSupport {
 public:
+
+	const static int NUM_MESSAGE_TYPE_BITS = 4;
+	const static int NUM_SECTION_NUMBER_BITS = 12;
+	const static int NUM_TRANSACTION_NUMBER_BITS = 14;
+	const static int NUM_PADDING_BITS = 1;
+
 	BarrierSupport():
-	section_number_(0),
-	transaction_number_(0){
+		section_number_(0),
+		transaction_number_(0){
 	}
 	~BarrierSupport(){}
 
@@ -56,11 +62,11 @@ public:
 	 * Each tag (a 32 bit integer) contains these fields
 	 */
 	typedef struct {
-        unsigned int :1;
-		unsigned int message_type : 4;
-		unsigned int section_number : 12;
-		unsigned int transaction_number : 14;
-        unsigned int :1;
+        unsigned int :						NUM_PADDING_BITS;
+		unsigned int message_type : 		NUM_MESSAGE_TYPE_BITS;
+		unsigned int section_number : 		NUM_SECTION_NUMBER_BITS;
+		unsigned int transaction_number : 	NUM_TRANSACTION_NUMBER_BITS;
+        unsigned int :						NUM_PADDING_BITS;
 	} SIPMPITagBitField;
 
 	/**
@@ -76,11 +82,11 @@ public:
 	 * @param mpi_tag
 	 * @return
 	 */
-	static SIPMPIData::MessageType_t extract_message_type(int mpi_tag){
+	static SIPMPIConstants::MessageType_t extract_message_type(int mpi_tag){
 		SIPMPITagBitFieldConverter bc;
         bc.i = 0;
-	bc.i = mpi_tag;
-	return SIPMPIData::intToMessageType(bc.bf.message_type);
+		bc.i = mpi_tag;
+		return SIPMPIConstants::intToMessageType(bc.bf.message_type);
 	}
 
 	/**
@@ -114,7 +120,7 @@ public:
 	 * @param transaction_number
 	 * @return
 	 */
-	static int make_mpi_tag(SIPMPIData::MessageType_t message_type, int section_number, int transaction_number){
+	static int make_mpi_tag(SIPMPIConstants::MessageType_t message_type, int section_number, int transaction_number){
 		SIPMPITagBitFieldConverter bc;
         bc.i = 0;
 		bc.bf.message_type = message_type;
@@ -130,18 +136,24 @@ public:
 	/**
 	 * Called by the server loop for each message it receives.  Extracts message_type, section_number, and transaction_number,
 	 * checks the invariant, and updates the section number.
+	 * Returns true if the section number was updated.
 	 *
 	 * @param tag
 	 * @param message_type
 	 * @param section_number
 	 * @param transaction_number
+	 * @return true if section number was different that this->section_number_.
 	 */
-	void decode_tag_and_check_invariant(int mpi_tag, SIPMPIData::MessageType_t& message_type, int& section_number, int& transaction_number){
+	bool decode_tag_and_check_invariant(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& section_number, int& transaction_number){
 		message_type = extract_message_type(mpi_tag);
 		transaction_number = extract_transaction_number(mpi_tag);
 		section_number = extract_section_number(mpi_tag);
 		check (section_number >= this->section_number_, "Section number invariant violated. Received request from an older section !");
-		this->section_number_ = section_number;
+		if (section_number > this->section_number_){
+			this->section_number_ = section_number;
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -156,7 +168,7 @@ public:
 	int make_mpi_tag_for_PUT_ACCUMULATE_DATA(int put_accumulate_tag){
 		int transaction_number = extract_transaction_number(put_accumulate_tag);
 		int section_number = extract_section_number(put_accumulate_tag);
-		return make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
+		return make_mpi_tag(SIPMPIConstants::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
 	}
 
 	/**
@@ -169,10 +181,10 @@ public:
 	 * @return
 	 */
 	int make_mpi_tag_for_PUT_DATA(int put_tag){
-		SIPMPIData::MessageType_t message_type = extract_message_type(put_tag);
+		SIPMPIConstants::MessageType_t message_type = extract_message_type(put_tag);
 		int transaction_number = extract_transaction_number(put_tag);
 		int section_number = extract_section_number(put_tag);
-		return make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, transaction_number_);
+		return make_mpi_tag(SIPMPIConstants::PUT_DATA, section_number_, transaction_number_);
 	}
 
 
@@ -185,7 +197,9 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_GET(){
-		return make_mpi_tag(SIPMPIData::GET, section_number_, transaction_number_++);
+		int tag = make_mpi_tag(SIPMPIConstants::GET, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
 	}
 
 	/**
@@ -198,8 +212,9 @@ public:
 	 * @return PUT tag
 	 */
 	int make_mpi_tags_for_PUT(int& put_data_tag){
-		int put_tag = make_mpi_tag(SIPMPIData::PUT, section_number_, transaction_number_);
-		put_data_tag = make_mpi_tag(SIPMPIData::PUT_DATA, section_number_, transaction_number_++);
+		int put_tag = make_mpi_tag(SIPMPIConstants::PUT, section_number_, transaction_number_);
+		put_data_tag = make_mpi_tag(SIPMPIConstants::PUT_DATA, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return put_tag;
 	}
 
@@ -214,8 +229,9 @@ public:
 	 * @return PUT_ACCUMULATE tag
 	 */
 	int make_mpi_tags_for_PUT_ACCUMULATE(int& put_accumulate_data_tag){
-		int put_accumulate_tag = make_mpi_tag(SIPMPIData::PUT_ACCUMULATE, section_number_, transaction_number_);
-		put_accumulate_data_tag = make_mpi_tag(SIPMPIData::PUT_ACCUMULATE_DATA, section_number_, transaction_number_++);
+		int put_accumulate_tag = make_mpi_tag(SIPMPIConstants::PUT_ACCUMULATE, section_number_, transaction_number_);
+		put_accumulate_data_tag = make_mpi_tag(SIPMPIConstants::PUT_ACCUMULATE_DATA, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
 		return put_accumulate_tag;
 	}
 
@@ -227,7 +243,9 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_DELETE(){
-		return make_mpi_tag(SIPMPIData::DELETE, section_number_, transaction_number_++);
+		int tag = make_mpi_tag(SIPMPIConstants::DELETE, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
 	}
 
 	/**
@@ -236,7 +254,9 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_END_PROGRAM(){
-		return make_mpi_tag(SIPMPIData::END_PROGRAM, section_number_, transaction_number_++);
+		int tag = make_mpi_tag(SIPMPIConstants::END_PROGRAM, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
 	}
 
 	/**
@@ -246,7 +266,9 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_SET_PERSISTENT(){
-		return make_mpi_tag(SIPMPIData::SET_PERSISTENT, section_number_, transaction_number_++);
+		int tag = make_mpi_tag(SIPMPIConstants::SET_PERSISTENT, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
 	}
 
 	/**
@@ -256,7 +278,9 @@ public:
 	 * @return tag
 	 */
 	int make_mpi_tag_for_RESTORE_PERSISTENT(){
-		return make_mpi_tag(SIPMPIData::RESTORE_PERSISTENT, section_number_, transaction_number_++);
+		int tag = make_mpi_tag(SIPMPIConstants::RESTORE_PERSISTENT, section_number_, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
 	}
 
 
@@ -291,14 +315,15 @@ private:
 	 * At the worker, section_number is the current section (starting at 0) or the number of barriers that have been executed.
 	 *
 	 * At the server, this is the largest section number seen so far.  It is an error if a message arrives with a smaller section number.
-	 * This condition is checked in method decode_tag_and_check_invariant
+	 * This condition is checked in method decode_tag_and_check_invariant.
 	 */
-	int section_number_;
+	unsigned int section_number_;
 
 	/**
-	 * The number of the transaction in the current section.  Each
+	 * The number of the transaction in the current section.
+	 * Transaction numbers wrap around after (2^NUM_TRANSACTION_NUMBER_BITS)
 	 */
-	int transaction_number_;
+	unsigned int transaction_number_;
 
 	DISALLOW_COPY_AND_ASSIGN(BarrierSupport);
 };

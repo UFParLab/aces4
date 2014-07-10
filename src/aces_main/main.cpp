@@ -9,11 +9,12 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "persistent_array_manager.h"
+#include "worker_persistent_array_manager.h"
 #include "block.h"
 #include "global_state.h"
 
 #include <vector>
+#include <sstream>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +29,7 @@
 #include "sip_mpi_attr.h"
 #include "sip_server.h"
 #include "sip_mpi_utils.h"
+#include "server_persistent_array_manager.h"
 #endif
 
 
@@ -44,21 +46,24 @@ void bt_sighandler(int signum) {
 }
 
 int main(int argc, char* argv[]) {
-
+    
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);
 
     signal(SIGSEGV, bt_sighandler);
     signal(SIGFPE, bt_sighandler);
+    signal(SIGTERM, bt_sighandler);
+    signal(SIGINT, bt_sighandler);
+    signal(SIGABRT, bt_sighandler);
 
 #ifdef HAVE_MPI
-	  /* MPI Initialization */
-	  MPI_Init(&argc, &argv);
-	  sip::SIPMPIUtils::set_error_handler();
-	  sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
-//	  std::cout<<"Rank "<<sip_mpi_attr.global_rank()<<" of "<<sip_mpi_attr.global_size()<<std::endl;
-	  std::cout<<sip_mpi_attr<<std::endl;
+	/* MPI Initialization */
+	MPI_Init(&argc, &argv);
+
+	sip::SIPMPIUtils::set_error_handler();
+	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
+	std::cout<<sip_mpi_attr<<std::endl;
 #endif
 
 #ifdef HAVE_TAU
@@ -73,6 +78,9 @@ int main(int argc, char* argv[]) {
 
 
 	// Check sizes of data types.
+	// In the MPI version, the TAG is used to communicate information
+	// The various bits needed to send information to other nodes
+	// sums up to 32.
 	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
 	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
 	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
@@ -82,28 +90,45 @@ int main(int argc, char* argv[]) {
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
+	std::size_t memory = 2147483648;	// 2 GB
+
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
-	// d: means an argument is required for d. Specifies the .dat file.
-	// s: means an argument is required for s.
+	// d: name of .dat file.
+	// s: directory to look for siox files
+	// m: approximate memory to be used. Actual usage will be more than this.
 	// h & ? are for help. They require no arguments
-	const char *optString = "d:s:h?";
+	const char *optString = "d:s:m:h?";
 	int c;
 	while ((c = getopt(argc, argv, optString)) != -1){
 		switch (c) {
-		case 'd':
+		case 'd':{
 			init_file = optarg;
+		}
 			break;
-		case 's':
+		case 's':{
 			sialx_file_dir = optarg;
+		}
+			break;
+		case 'm':{
+			std::string memory_string(optarg);
+			std::stringstream ss(memory_string);
+			double memory_in_gb;
+			ss >> memory_in_gb;
+			memory = memory_in_gb * 1024 * 1024 * 1024;
+		}
 			break;
 		case 'h':case '?':
 		default:
-			std::cerr<<"Usage : "<<argv[0]<<" -d <init_data_file> -s <sialx_files_directory>"<<std::endl;
-			std::cerr<<"\tDefault data file is \"data.dat\". Default sialx directory is \".\""<<std::endl;
-			std::cerr<<"\t-? or -h to display this usage dialogue"<<std::endl;
+			std::cerr << "Usage : "<< argv[0] <<" -d <init_data_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>" << std::endl;
+			std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
+			std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
+			std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 			return 1;
 		}
 	}
+
+	// Set Approx Max memory usage
+	sip::GlobalState::set_max_data_memory_usage(memory);
 
 	//create setup_file
 	std::string job(init_file);
@@ -117,19 +142,11 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 
-    //	array::PersistentBlockManager *pbm_read, *pbm_write;
-    //	pbm_read = new array::PersistentBlockManager();
-    //	pbm_write = new array::PersistentBlockManager();
-
-
 #ifdef HAVE_MPI
-	sip::PersistentArrayManager<sip::ServerBlock, sip::SIPServer>* persistent_server;
-	sip::PersistentArrayManager<sip::Block, sip::Interpreter>* persistent_worker;
-	if (sip_mpi_attr.is_server()) persistent_server = new sip::PersistentArrayManager<sip::ServerBlock,sip::SIPServer>();
-	else persistent_worker = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+	sip::ServerPersistentArrayManager persistent_server;
+	sip::WorkerPersistentArrayManager persistent_worker;
 #else
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* persistent_worker;
-	persistent_worker = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
+	sip::WorkerPersistentArrayManager persistent_worker;
 #endif //HAVE_MPI
 
 
@@ -140,6 +157,7 @@ int main(int argc, char* argv[]) {
 		sialfpath.append(*it);
 
 		sip::GlobalState::set_program_name(*it);
+		sip::GlobalState::increment_program();
 #ifdef HAVE_TAU
 		//TAU_REGISTER_EVENT(tau_event, it->c_str());
 		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
@@ -160,24 +178,23 @@ int main(int argc, char* argv[]) {
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, persistent_server);
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
-			persistent_server->save_marked_arrays(&server);
+			persistent_server.save_marked_arrays(&server);
 		} else
 #endif
 
 		//interpret current program on worker
 		{
-			sip::GlobalState::increment_program();
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 
-			sip::Interpreter runner(sipTables, sialxTimer, persistent_worker);
+			sip::Interpreter runner(sipTables, sialxTimer, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
-			persistent_worker->save_marked_arrays(&runner);
+			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
@@ -210,11 +227,8 @@ int main(int argc, char* argv[]) {
 
 
 #ifdef HAVE_MPI
-	  if (sip_mpi_attr.is_server()) delete persistent_server;
-	  else delete persistent_worker;
-	  MPI_Finalize();
-#else
-	  delete persistent_worker;
+	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
+	MPI_Finalize();
 #endif
 
 
