@@ -15,15 +15,19 @@ Executables Built
 -----------------
 
 ```aces4``` - computational chemistry application
+```
 Options : 
 -d : .dat file, generated using acesinit. Contains initialization data
 -s : directory containing .siox files referred to in the .dat file.
--m : approximate upper bound for memory usage. aces4 will use more than this in overhead & bookkeeping.
+-m : approx. upper bound for memory usage. Additional usage in overhead & bookkeeping.
+```
 
 ```print_siptables``` - dumps SipTables to stdout. SipTables store all static data contained in a compiled SIAL program and the .dat file.
+```
 Options :
 -d : .dat file, generated using acesinit. Contains initialization data
 -s : directory containing .siox files referred to in the .dat file.
+```
 
 
 Prerequisites
