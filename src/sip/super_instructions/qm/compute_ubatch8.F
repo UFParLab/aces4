@@ -102,9 +102,9 @@ c     integer(C_INT) n_ao_segs(1), aosegs(6)
 
 c ----------------------------------------------------------------------
 c  END_NFPS 
-      TYPE(C_PTR) :: pnalpha, pend_nfps
-      integer, pointer :: nalpha(:)
-      integer, pointer :: end_nfps(:)
+c      TYPE(C_PTR) :: pnalpha, pend_nfps
+c      integer, pointer :: nalpha(:)
+c      integer, pointer :: end_nfps(:)
 c ----------------------------------------------------------------------
 
       integer(C_INT) norb, nscr, niscr   
@@ -205,10 +205,10 @@ c ----------------------------------------------------------------------
 
 c ----------------------------------------------------------------------
 c  END_NFPS 
-      call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
-     *                                   pnalpha, pend_nfps)
-      call c_f_pointer(pnalpha, nalpha, [1])
-      call c_f_pointer(pend_nfps, end_nfps, nalpha)
+c      call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
+c     *                                   pnalpha, pend_nfps)
+c      call c_f_pointer(pnalpha, nalpha, [1])
+c      call c_f_pointer(pend_nfps, end_nfps, nalpha)
 c     write(6,*) ' END_NFPS', nalpha(1), (end_nfps(i), i=1, 
 c    *                                           nalpha(1))  
 c ----------------------------------------------------------------------
