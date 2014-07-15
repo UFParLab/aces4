@@ -115,7 +115,7 @@ QM_SOURCE_FILES=\
 ./qm/erd/erd__set_derv_sequence.f\
 ./qm/erd/erd__xyz_to_ry_matrix.f\
 ./qm/erd/erd__ctr_rs_expand.f\
-./qm/erd/erd__prepare_ctr.f\
+./qm/erd/erd__prepare_ctr.F\
 ./qm/erd/erd__jacobi.inc\
 ./qm/erd/erd__sppp_pcgto_block.f\
 ./qm/erd/erd__2d_coefficients.f\
