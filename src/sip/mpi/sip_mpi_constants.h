@@ -15,31 +15,25 @@ namespace sip{
 class SIPMPIConstants {
 public:
 
-/*TODO
- * Currently, we are using the same tag for
- * a meesage an its ack. There is no ambiguity since
+/* We are using the same tag for
+ * a message an its ack. There is no ambiguity since
  * messages go from worker to server, and acks from server to
- * worker.  Need to clean this up.
+ * worker.
  */
-
+/** Message tags.  Only four bits available, thus max 15 different tags
+ *
+ * The same tag is used for a message and its ack.*/
 #define SIP_MESSAGE_TYPES \
 SIP_MESSAGE(DELETE, 0, "DELETE")\
-SIP_MESSAGE(DELETE_ACK, 1, "DELETE_ACK")\
-SIP_MESSAGE(GET, 2, "GET")\
-SIP_MESSAGE(GET_DATA, 3, "GET_DATA")\
-SIP_MESSAGE(PUT, 4, "PUT")\
-SIP_MESSAGE(PUT_DATA, 5, "PUT_DATA")\
-SIP_MESSAGE(PUT_ACCUMULATE, 6, "PUT_ACCUMULATE")\
-SIP_MESSAGE(PUT_ACCUMULATE_DATA, 7, "PUT_ACCUMULATE_DATA")\
-SIP_MESSAGE(BARRIER, 8, "BARRIER")\
-SIP_MESSAGE(END_PROGRAM, 9, "END_PROGRAM")\
-SIP_MESSAGE(SET_PERSISTENT, 10, "SET_PERSISTENT")\
-SIP_MESSAGE(RESTORE_PERSISTENT, 11, "RESTORE_PERSISTENT")\
-SIP_MESSAGE(PUT_DATA_ACK, 12, "PUT_DATA_ACK")\
-SIP_MESSAGE(PUT_ACCUMULATE_DATA_ACK, 13, "PUT_ACCUMULATE_DATA_ACK")\
-SIP_MESSAGE(SET_PERSISTENT_ACK, 14, "SET_PERSISTENT_ACK")\
-SIP_MESSAGE(RESTORE_PERSISTENT_ACK, 15, "RESTORE_PERSISTENT_ACK")
-// Type of message allocated 4 bits only.
+SIP_MESSAGE(GET, 1, "GET")\
+SIP_MESSAGE(PUT, 2, "PUT")\
+SIP_MESSAGE(PUT_DATA, 3, "PUT_DATA")\
+SIP_MESSAGE(PUT_ACCUMULATE, 4, "PUT_ACCUMULATE")\
+SIP_MESSAGE(PUT_ACCUMULATE_DATA, 5, "PUT_ACCUMULATE_DATA")\
+SIP_MESSAGE(BARRIER, 6, "BARRIER")\
+SIP_MESSAGE(END_PROGRAM, 7, "END_PROGRAM")\
+SIP_MESSAGE(SET_PERSISTENT, 8, "SET_PERSISTENT")\
+SIP_MESSAGE(RESTORE_PERSISTENT, 9, "RESTORE_PERSISTENT")
 
 	enum MessageType_t {
 	#define SIP_MESSAGE(e,n,s) e = n,
