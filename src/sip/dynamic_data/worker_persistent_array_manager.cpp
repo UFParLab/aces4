@@ -27,8 +27,6 @@ namespace sip {
 			delete dit -> second;
 			dit -> second = NULL;
 		}
-
-
 	}
 
 

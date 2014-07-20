@@ -68,7 +68,9 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
-./src/sip/dynamic_data/cached_block_map.cpp
+./src/sip/dynamic_data/cached_block_map.cpp\
+./src/sip/mpi/sip_attr.h\
+./src/sip/mpi/sip_attr.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
