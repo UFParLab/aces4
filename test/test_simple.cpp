@@ -39,90 +39,216 @@ sip::SIPAttr *attr = &sip::SIPAttr::get_instance();
 void barrier(){}
 #endif
 
-
-TEST(SimpleMPI,Simple_Put_Test){
-	std::cout << "****************************************\n";
-	sip::GlobalState::reset_program_count();
+TEST(Sial,empty){
+	std::cout << "****************************************\n"<< std::flush;
 	sip::DataManager::scope_count=0;
 	//create setup_file
-	std::string job("put_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	int norb = 2;
+	std::string job("empty");
+
+
+	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
+	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
+
+
+
+	std::string prog_name = job + ".siox";
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+	sip::SipTables sipTables(setup_reader, siox_file);
+	if (attr->global_rank() == 0){
+		std::cout << "JOBNAME = " << job << std::endl<< std::flush;
+		std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl<< std::flush;
+	    std::cout << "SIP TABLES" << '\n' << sipTables << std::endl<< std::flush;
+	    std::cout << "COMMENT:  This is an empty program.  It should simply terminate.\n\n" << std::endl<< std::flush;
+	}
+    barrier();
+    sip::WorkerPersistentArrayManager wpam;
+	#ifdef HAVE_MPI
+		sip::ServerPersistentArrayManager spam;
+
+		sip::DataDistribution data_distribution(sipTables, *attr);
+		sip::GlobalState::set_program_name(prog_name);
+		sip::GlobalState::increment_program();
+		if (attr->is_server()){
+			sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
+			barrier();
+			std::cout << "Rank " << attr->global_rank() << " SERVER " << job << " STARTING"<< std::endl << std::flush;
+			server.run();
+			std::cout << "\nRank " << attr->global_rank() <<" SERVER " << job << " TERMINATED"<< std::endl << std::flush;
+			barrier();
+	      //CHECK SERVER STATE HERE
+		} else
+#endif
+//	interpret the program
+	{
+		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+		sip::Interpreter runner(sipTables, sialxTimer);
+		barrier();
+		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job << " STARTING"<< std::endl << std::flush;
+		runner.interpret();
+		std::cout << "\nRank " << attr->global_rank() <<" SIAL PROGRAM " << job << " TERMINATED"<< std::endl << std::flush;
+		barrier();
+	    //CHECK WORKER STATE HERE
+	}
+
+}
+
+TEST(Sial,scalars){
+	std::cout << "****************************************\n"<< std::flush;
+	sip::DataManager::scope_count=0;
+	//create setup_file
+	std::string job("scalars");
+
+
+double x = 3.456;
+double y = -0.1;
+
+if (attr->global_rank() == 0){
+	init_setup(job.c_str());
+	set_scalar("x",x);
+	set_scalar("y",y);
+	std::string tmp = job + ".siox";
+	const char* nm= tmp.c_str();
+	add_sial_program(nm);
+	finalize_setup();
+}
+
+barrier();
+//read and print setup_file
+setup::BinaryInputFile setup_file(job + ".dat");
+setup::SetupReader setup_reader(setup_file);
+
+//get siox name from setup, load and print the sip tables
+std::string prog_name = setup_reader.sial_prog_list_.at(0);
+std::string siox_dir(dir_name);
+setup::BinaryInputFile siox_file(siox_dir + prog_name);
+sip::SipTables sipTables(setup_reader, siox_file);
 
 
 
 	if (attr->global_rank() == 0){
-		init_setup(job.c_str());
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm = tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {3, 4};
-		set_aoindex_info(2,segs);
-		finalize_setup();
+		std::cout << "JOBNAME = " << job << std::endl<< std::flush;
+		std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl<< std::flush;
+	    std::cout << "SIP TABLES" << '\n' << sipTables << std::endl<< std::flush;
+	}
+    barrier();
+    sip::WorkerPersistentArrayManager wpam;
+	#ifdef HAVE_MPI
+		sip::ServerPersistentArrayManager spam;
+
+		sip::DataDistribution data_distribution(sipTables, *attr);
+		sip::GlobalState::set_program_name(prog_name);
+		sip::GlobalState::increment_program();
+		if (attr->is_server()){
+			sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
+			barrier();
+			std::cout << "Rank " << attr->global_rank() << " SERVER " << job << " STARTING"<< std::endl << std::flush;
+			server.run();
+			std::cout << "\nRank " << attr->global_rank() <<" SERVER " << job << " TERMINATED"<< std::endl << std::flush;
+			barrier();
+	      //CHECK SERVER STATE HERE
+		} else
+#endif
+//	interpret the program
+	{
+		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+		sip::Interpreter runner(sipTables, sialxTimer);
+		barrier();
+		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job << " STARTING"<< std::endl << std::flush;
+		runner.interpret();
+		std::cout << "\nRank " << attr->global_rank() <<" SIAL PROGRAM " << job << " TERMINATED"<< std::endl << std::flush;
+		barrier();
+		ASSERT_DOUBLE_EQ(x, scalar_value("x"));
+		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
+		ASSERT_DOUBLE_EQ(x, scalar_value("z"));
+		ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
+		ASSERT_EQ(0, sip::DataManager::scope_count);
 	}
 
-	barrier();
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-
-	//interpret the program
-
-	sip::GlobalState::set_program_name(prog_name);
-	sip::GlobalState::increment_program();
-	sip::WorkerPersistentArrayManager wpam;
-
-#ifdef HAVE_MPI
-	sip::ServerPersistentArrayManager spam;
-
-	sip::DataDistribution data_distribution(sipTables, *attr);
-	sip::GlobalState::set_program_name(prog_name);
-	sip::GlobalState::increment_program();
-	if (attr->is_server()){
-		sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
-		server.run();
-
-	} else {
-#endif
-		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-		sip::Interpreter runner(sipTables, sialxTimer, &wpam);
-		runner.interpret();
-		ASSERT_EQ(0, sip::DataManager::scope_count);
-
-		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
-		int x_slot = sip::Interpreter::global_interpreter->array_slot(std::string("x"));
-		int y_slot = sip::Interpreter::global_interpreter->array_slot(std::string("y"));
-		sip::index_selector_t x_indices, y_indices;
-		for (int i = 0; i < MAX_RANK; i++) x_indices[i] = y_indices[i] = sip::unused_index_value;
-		x_indices[0] = y_indices[0] = 1;
-		x_indices[1] = y_indices[0] = 1;
-		sip::BlockId x_bid(x_slot, x_indices);
-		sip::BlockId y_bid(y_slot, y_indices);
-
-		sip::Block::BlockPtr x_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(x_bid);
-		sip::Block::dataPtr x_data = x_bptr->get_data();
-		sip::Block::BlockPtr y_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(y_bid);
-		sip::Block::dataPtr y_data = y_bptr->get_data();
-
-		for (int i=0; i<3*3; i++){
-			ASSERT_EQ(1, x_data[i]);
-			ASSERT_EQ(2, y_data[i]);
-		}
-#ifdef HAVE_MPI
-		}
-#endif
 }
+//TEST(SimpleMPI,Simple_Put_Test){
+//	std::cout << "****************************************\n";
+//	sip::GlobalState::reset_program_count();
+//	sip::DataManager::scope_count=0;
+//	//create setup_file
+//	std::string job("put_test");
+//	std::cout << "JOBNAME = " << job << std::endl;
+//	int norb = 2;
+//
+//
+//
+//	if (attr->global_rank() == 0){
+//		init_setup(job.c_str());
+//		set_constant("norb",norb);
+//		std::string tmp = job + ".siox";
+//		const char* nm = tmp.c_str();
+//		add_sial_program(nm);
+//		int segs[]  = {3, 4};
+//		set_aoindex_info(2,segs);
+//		finalize_setup();
+//	}
+//
+//	barrier();
+//
+//	setup::BinaryInputFile setup_file(job + ".dat");
+//	setup::SetupReader setup_reader(setup_file);
+//	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+//
+//	//get siox name from setup, load and print the sip tables
+//	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+//	std::string siox_dir(dir_name);
+//	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+//	sip::SipTables sipTables(setup_reader, siox_file);
+//	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+//
+//
+//	//interpret the program
+//
+//	sip::GlobalState::set_program_name(prog_name);
+//	sip::GlobalState::increment_program();
+//	sip::WorkerPersistentArrayManager wpam;
+//
+//#ifdef HAVE_MPI
+//	sip::ServerPersistentArrayManager spam;
+//
+//	sip::DataDistribution data_distribution(sipTables, *attr);
+//	sip::GlobalState::set_program_name(prog_name);
+//	sip::GlobalState::increment_program();
+//	if (attr->is_server()){
+//		sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
+//		server.run();
+//
+//	} else {
+//#endif
+//		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+//		sip::Interpreter runner(sipTables, sialxTimer, &wpam);
+//		runner.interpret();
+//		ASSERT_EQ(0, sip::DataManager::scope_count);
+//
+//		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+//
+//		int x_slot = sip::Interpreter::global_interpreter->array_slot(std::string("x"));
+//		int y_slot = sip::Interpreter::global_interpreter->array_slot(std::string("y"));
+//		sip::index_selector_t x_indices, y_indices;
+//		for (int i = 0; i < MAX_RANK; i++) x_indices[i] = y_indices[i] = sip::unused_index_value;
+//		x_indices[0] = y_indices[0] = 1;
+//		x_indices[1] = y_indices[0] = 1;
+//		sip::BlockId x_bid(x_slot, x_indices);
+//		sip::BlockId y_bid(y_slot, y_indices);
+//
+//		sip::Block::BlockPtr x_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(x_bid);
+//		sip::Block::dataPtr x_data = x_bptr->get_data();
+//		sip::Block::BlockPtr y_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(y_bid);
+//		sip::Block::dataPtr y_data = y_bptr->get_data();
+//
+//		for (int i=0; i<3*3; i++){
+//			ASSERT_EQ(1, x_data[i]);
+//			ASSERT_EQ(2, y_data[i]);
+//		}
+//#ifdef HAVE_MPI
+//		}
+//#endif
+//}
 
 
 //// Sanity test to check for no compiler errors, crashes, etc.
