@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 
+bin_PROGRAMS=aces4 print_siptables
 
 noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
@@ -66,8 +66,13 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/data_manager.h\
 ./src/sip/dynamic_data/data_manager.cpp\
 ./src/sip/dynamic_data/id_block_map.h\
-./src/sip/dynamic_data/persistent_array_manager.h\
-./src/sip/dynamic_data/mpi_state.h
+./src/sip/dynamic_data/worker_persistent_array_manager.h\
+./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
+./src/sip/dynamic_data/lru_array_policy.h\
+./src/sip/dynamic_data/cached_block_map.h\
+./src/sip/dynamic_data/cached_block_map.cpp\
+./src/sip/mpi/sip_attr.h\
+./src/sip/mpi/sip_attr.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -109,11 +114,17 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/async_acks.cpp\
 ./src/sip/mpi/sip_server.h\
 ./src/sip/mpi/sip_server.cpp\
-./src/sip/server/server_block.h\
-./src/sip/server/server_block.cpp\
 ./src/sip/worker/sial_ops_parallel.h\
-./src/sip/worker/sial_ops_parallel.cpp
-
+./src/sip/worker/sial_ops_parallel.cpp\
+./src/sip/mpi/disk_backed_arrays_io.h\
+./src/sip/mpi/disk_backed_arrays_io.cpp\
+./src/sip/mpi/server_block.h\
+./src/sip/mpi/server_block.cpp\
+./src/sip/mpi/disk_backed_block_map.h\
+./src/sip/mpi/disk_backed_block_map.cpp\
+./src/sip/mpi/server_persistent_array_manager.h\
+./src/sip/mpi/server_persistent_array_manager.cpp\
+./src/sip/dynamic_data/mpi_state.h
 
 endif
 
@@ -128,11 +139,20 @@ aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
     ./src/aces_main/main.cpp
 
+print_siptables_SOURCES=\
+	$(ACES_SOURCEFILES)\
+	./src/util/print_siptables.cpp
+
 aces4_LDADD = \
 	libtensordil.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
+print_siptables_LDADD=\
+	libtensordil.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+	
 aces4_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
@@ -162,14 +182,14 @@ AM_CPPFLAGS = \
 
 
 #######################################################################
-# Single node tests
+# tests
 #######################################################################
 
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm
-check_PROGRAMS = test_mpi_qm
+TESTS = test_mpi_qm test_mpi_simple test_unit
+check_PROGRAMS = test_mpi_qm test_mpi_simple test_unit
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
@@ -177,10 +197,17 @@ TESTS = test_simple test_qm
 check_PROGRAMS = test_simple test_qm
 endif
 
+test_unit_SOURCES = \
+	$(ACES_SOURCEFILES)\
+	test/test_unit.cpp
 
 test_mpi_qm_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_mpi_qm.cpp
+
+test_mpi_simple_SOURCES = \
+	$(ACES_SOURCEFILES)\
+	test/test_mpi_simple.cpp
 
 test_simple_SOURCES = \
     $(ACES_SOURCEFILES) \
@@ -198,12 +225,14 @@ TEST_LDADD_VARS = \
 	test/libgtest_main.la \
 	libtensordil.a \
 	src/sip/super_instructions/libinstr.la\
-	$(AM_LDADD_LIBS) \
-	$(PTHREAD_LIBS) 
+	$(AM_LDADD_LIBS) 
+#	$(PTHREAD_LIBS) 
 	
+test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_simple_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
+test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 
 # Add any initialization files needed by tests here.
 TEST_INIT_DATA_FILES=\
@@ -218,14 +247,17 @@ copy-data-files.stamp:
 	cp $(top_srcdir)/test/*.dat .
 
 
-if HAVE_PTHREADS
-	test_simple_LDADD += $(PTHREAD_LIBS)
-	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
-	test_qm_LDADD += $(PTHREAD_LIBS)
-	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
-	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
-	test_mpi_qm
-endif
+# Pthreads are not used, to enable, uncomment these. 
+#if HAVE_PTHREADS
+#	test_simple_LDADD += $(PTHREAD_LIBS)
+#	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
+#	test_qm_LDADD += $(PTHREAD_LIBS)
+#	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
+#	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
+#	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
+#	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
+#	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
+#endif
 
 # Google TESTS
 check_LTLIBRARIES = test/libgtest.la test/libgtest_main.la
@@ -252,9 +284,11 @@ test_libgtest_main_la_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
 
 # -no-install taken from https://www.flameeyes.eu/autotools-mythbuster/libtool/wrappers.html
 TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) -no-install
+test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
 SUBDIRS = src/sip/super_instructions
 
@@ -313,7 +347,6 @@ SIOX_FILES=\
 ./src/sialx/test/simple_indices_assignments.siox\
 ./src/sialx/test/add_and_subtract_scalars.siox\
 ./src/sialx/test/gpu_contraction_predefined_test.siox\
-./src/sialx/test/reproduce_transpose_problem.siox\
 ./src/sialx/test/assign_to_static_array_test.siox\
 ./src/sialx/test/set_persistent_test.siox\
 ./src/sialx/test/restore_persistent_test.siox\
@@ -332,6 +365,8 @@ SIOX_FILES=\
 ./src/sialx/test/persistent_scalars_1.siox\
 ./src/sialx/test/persistent_scalars_2.siox\
 ./src/sialx/test/unmatched_get.siox\
+./src/sialx/test/all_rank_print_test.siox\
+./src/sialx/test/message_number_wraparound_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -399,7 +434,6 @@ EXTRA_DIST += \
 ./src/sialx/test/simple_indices_assignments.sialx\
 ./src/sialx/test/add_and_subtract_scalars.sialx\
 ./src/sialx/test/gpu_contraction_predefined_test.sialx\
-./src/sialx/test/reproduce_transpose_problem.sialx\
 ./src/sialx/test/assign_to_static_array_test.sialx\
 ./src/sialx/test/set_persistent_test.sialx\
 ./src/sialx/test/restore_persistent_test.sialx\
@@ -418,7 +452,8 @@ EXTRA_DIST += \
 ./src/sialx/test/persistent_scalars_1.sialx\
 ./src/sialx/test/persistent_scalars_2.sialx\
 ./src/sialx/test/unmatched_get.sialx\
-./src/sialx/test/enable_trace_test.siox\
+./src/sialx/test/all_rank_print_test.sialx\
+./src/sialx/test/message_number_wraparound_test.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

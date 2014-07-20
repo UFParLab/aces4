@@ -43,10 +43,10 @@ sial simple_indices_assignments
 
     do k
         do l
-            print_scalar y
+         	y = y + 1
             c(k,l) = y
             execute print_block c(k,l)
-            y = y + 1
+            print_scalar y
         enddo l
     enddo k
 

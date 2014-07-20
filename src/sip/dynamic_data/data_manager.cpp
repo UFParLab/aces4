@@ -23,11 +23,11 @@ const int DataManager::undefined_index_value = INT_MIN;
 int DataManager::scope_count = 0;
 
 
-DataManager::DataManager():
-     sip_tables_(SipTables::instance()),
+DataManager::DataManager(SipTables &sip_tables):
+     sip_tables_(sip_tables),
      scalar_values_(sip_tables_.scalar_table_), /*initialize scalars from sipTables*/
 	 index_values_(sip_tables_.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-     block_manager_(),
+     block_manager_(sip_tables),
      scalar_blocks_(sip_tables_.array_table_.entries_.size(),NULL),
      contiguous_array_manager_(sip_tables_, sip_tables_.setup_reader())
         {
@@ -42,6 +42,7 @@ DataManager::DataManager():
 DataManager::~DataManager() {
     for (int i = 0; i < sip_tables_.array_table_.entries_.size(); ++i){
     	if (sip_tables_.is_scalar(i) ){
+    		scalar_blocks_[i]->data_ = NULL;	// So that scalar that is pointed to is not freed.
     		delete scalar_blocks_[i];
     		scalar_blocks_[i] = NULL;
     	}

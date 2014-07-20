@@ -14,7 +14,7 @@ namespace sip {
 
 
 
-const int BlockId::MPI_COUNT;
+const int BlockId::MPI_BLOCK_ID_COUNT;
 
 BlockId::BlockId() :
 		parent_id_ptr_(NULL), array_id_(-1) {
@@ -139,14 +139,15 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	return false;
 }
 
-std::string BlockId::str() {
+std::string BlockId::str(const SipTables& sip_tables) const{
 	std::stringstream ss;
-	SipTables& tables = SipTables::instance();
-	int rank = tables.array_rank(array_id_);
-	ss << (tables.array_name(array_id_));
+//	SipTables& tables = SipTables::instance();
+//	int rank = tables.array_rank(array_id_);
+//	ss << (tables.array_name(array_id_));
+	ss << "\"" <<sip_tables.array_name(array_id_) << "\" : " << array_id_ << " : ";
 	ss << '[';
 	int i;
-	for (i = 0; i < rank; ++i) {
+	for (i = 0; i < MAX_RANK; ++i) {
 		ss << (i == 0 ? "" : ",") << index_values_[i];
 	}
 	ss << ']';

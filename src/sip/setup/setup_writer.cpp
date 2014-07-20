@@ -33,7 +33,7 @@ void printArray(std::string prefix, std::string name, int rank, int *dims, doubl
 }
 
 
-SetupWriter::SetupWriter(std::string jobname, OutputFile* file):
+SetupWriter::SetupWriter(std::string jobname, OutputStream* file):
 		jobname_(jobname),
 		file(file) {
 }

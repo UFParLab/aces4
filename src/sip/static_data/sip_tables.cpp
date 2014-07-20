@@ -17,17 +17,9 @@ namespace sip {
 
 SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input_file):
 	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader),	sialx_lines_(-1){
-	SipTables::instance_ = this;
 }
 
 SipTables::~SipTables() {
-	SipTables::instance_ = NULL;
-}
-
-SipTables* SipTables::instance_;
-
-SipTables& SipTables::instance(){
-       return *instance_;
 }
 
 int SipTables::max_timer_slots() const{
@@ -117,6 +109,11 @@ int SipTables::int_value(int int_table_slot) const {
 std::string SipTables::string_literal(int slot) const {
 	return string_literal_table_.at(slot);
 }
+
+int SipTables::index_id(std::string name) const {
+	return index_table_.index_id(name);
+}
+
 std::string SipTables::index_name(int index_table_slot) const {
 	return index_table_.index_name(index_table_slot);
 }
@@ -210,8 +207,11 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 	index_value_array_t lower_index_vals;
 	std::fill(lower_index_vals, lower_index_vals + MAX_RANK, unused_index_value);
 	index_value_array_t current_index_vals;
-	std::fill(current_index_vals, current_index_vals + MAX_RANK,
-			unused_index_value);
+	std::fill(current_index_vals, current_index_vals + MAX_RANK, unused_index_value);
+
+
+    bool at_least_one_iter = false;
+
 	// Initialize
 	for (int i = 0; i < rank; i++) {
 		int selector_index = selector[i];
@@ -220,33 +220,43 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 		lower_index_vals[i] = lower;
 		current_index_vals[i] = lower_index_vals[i];
 		upper_index_vals[i] = upper;
+        if (upper - lower >= 1)
+            at_least_one_iter = true;
 	}
 	// Get the upper & lower ranges, increment the "current_seg_vals"
 	// till it reaches the "block_seg_vals".
 	// Sum up the block sizes into "tot_fp_elems"
 	long tot_fp_elems = 0;
-	int pos = 0;
-	while (pos < rank) {
-		// increment block_offset
+    bool more_iters = at_least_one_iter;
+
+    while (more_iters) {
 		bool equal_to_input_blockid = true;
-		for (int i = 0; i < MAX_RANK; i++)
+
+		for (int i = 0; i < rank; i++)
 			equal_to_input_blockid &= current_index_vals[i] == index_vals[i];
-		if (equal_to_input_blockid)
-			break;
-		else {
-			int elems = block_size(array_id, current_index_vals);
-			tot_fp_elems += elems;
-		}
-		// Increment indices.
-		current_index_vals[pos]++;
-		if (current_index_vals[pos] < upper_index_vals[pos]) {
-			break;
-		} else {
-			current_index_vals[pos] = lower_index_vals[pos];
-			pos++;
-		}
-	}
+		
+		if (equal_to_input_blockid) break;
+		else tot_fp_elems += block_size(array_id, current_index_vals);
+
+        more_iters = increment_indices(rank, upper_index_vals, lower_index_vals, current_index_vals);
+    }
+
 	return tot_fp_elems;
+}
+
+bool SipTables::increment_indices(int rank, index_value_array_t& upper, index_value_array_t& lower, index_value_array_t& current) const {
+    int pos = 0;
+    while (pos < rank){
+        // Increment indices.
+        if (current[pos] >= upper[pos] - 1) {
+            current[pos] = lower[pos];
+            pos++;
+        } else {
+            current[pos]++;
+            return true;
+        }
+    }
+    return false;
 }
 
 //array::BlockShape& SipTables::shape(const array::BlockId& block_id) const{

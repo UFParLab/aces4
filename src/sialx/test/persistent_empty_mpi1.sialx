@@ -1,4 +1,5 @@
 sial persistent_empty_mpi1
+
 	special list_block_map
 	special print_block r
 	predefined int norb
@@ -8,6 +9,6 @@ sial persistent_empty_mpi1
 	distributed b(i,j)
 	distributed c(i,j)
 	
-println "in persistent_empty_mpi1"
+	println "in persistent_empty_mpi1"
 	
 endsial persistent_empty_mpi1

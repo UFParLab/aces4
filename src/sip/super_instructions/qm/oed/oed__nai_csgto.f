@@ -429,7 +429,11 @@ C
 C
          NGQP = 1 + SHELLP / 2
          NMOM = 2 * NGQP - 1
-         NGQSCR = 5 * NMOM + 2 * NGQP - 2
+c Original was "NGQSCR = 5 * NMOM + 2 * NGQP - 1" 
+c Changed to "NGQSCR = 5 * NMOM + 2 * NGQP - 2" because for SHELLP=0, 
+c NCQSCR was 1 less than G060 in oed__nai_e0_pcgto_block.f:367      
+C Nakul Jindal / Victor Lotrich - 07/14/2014         
+         NGQSCR = 5 * NMOM + 2 * NGQP - 1
 
          MEMORY = .FALSE.
 

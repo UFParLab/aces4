@@ -10,13 +10,13 @@
 #include <iostream>
 
 // Internal helper functions
-void __gpu_contract_helper(double* y, int ny, int* yDims, int* yInds,
-		double* x1, int n1, int* x1Dims, int* x1Inds, double* x2, int n2,
-		int* x2Dims, int* x2Inds);
-void __gpu_permute_helper(double* y, int ny, int* yDims, int* yInds, double* x1,
-		int n1, int* x1Dims, int* x1Inds);
+void __gpu_contract_helper(double* y, const int ny, const int* yDims, const int* yInds,
+		double* x1, const int n1, const int* x1Dims, const int* x1Inds, double* x2, const int n2,
+		const int* x2Dims, const int* x2Inds);
+void __gpu_permute_helper(double* y, const int ny, const int* yDims, const int* yInds, double* x1,
+		const int n1, const int* x1Dims, const int* x1Inds);
 
-void __gpu_matplus_helper(double* p_y, double* p_x1, double* p_x2, int numElems,
+void __gpu_matplus_helper(double* p_y, double* p_x1, double* p_x2, const int numElems,
 		const double alpha);
 
 void printHostArray(double*, int);
@@ -101,7 +101,7 @@ void _finalize_gpu() {
  * @param alpha     scalar value
  * @param numElems  number of elements
  */
-void _gpu_selfmultiply(double* p_x, const double alpha, int numElems) {
+void _gpu_selfmultiply(double* p_x, const double alpha, const int numElems) {
 	double *x = p_x;
 	CUBLAS_CHECK(cublasDscal(cublasHandle, numElems, &alpha, x, 1));
 	CUDA_CHECK(cudaDeviceSynchronize());
@@ -122,9 +122,9 @@ void _gpu_selfmultiply(double* p_x, const double alpha, int numElems) {
  * @param x2Dims    ranges of indices of x2
  * @param x2Inds    labels of x2
  */
-void _gpu_contract(double* y, int ny, int* yDims, int* yInds,
-		double* x1, int n1, int* x1Dims, int* x1Inds,
-		double* x2, int n2, int* x2Dims, int *x2Inds) {
+void _gpu_contract(double* y, const int ny, const int* yDims, const int* yInds,
+		double* x1, const int n1, const int* x1Dims, const int* x1Inds,
+		double* x2, const int n2, const int* x2Dims, const int *x2Inds) {
 
 //	cudaPointerAttributes ptrAttr;
 //	CUDA_CHECK(cudaPointerGetAttributes(&ptrAttr, y));
@@ -164,8 +164,8 @@ void _gpu_contract(double* y, int ny, int* yDims, int* yInds,
  * @param xDims    ranges of indices of x1
  * @param xInds    labels of x1
  */
-void _gpu_permute(double* y, int ny, int* yDims, int* yInds,
-		double* x, int nx, int* xDims, int* xInds) {
+void _gpu_permute(double* y, const int ny, const int* yDims, const int* yInds,
+		double* x, const int nx, const int* xDims, const int* xInds) {
 //	int yDims[MAX_RANK], x1Dims[MAX_RANK];
 //	int i;
 //	for (i = 0; i < MAX_RANK; i++) {
@@ -180,7 +180,7 @@ void _gpu_permute(double* y, int ny, int* yDims, int* yInds,
  * @param [in] numElems number of elements
  * @return pointer to allocation
  */
-double* _gpu_allocate(int numElems) {
+double* _gpu_allocate(const int numElems) {
 
 //	std::cout<< "_gpu_allocate called from "<<current_line()<<std::endl;
 
@@ -234,7 +234,7 @@ void _gpu_device_to_host(double* h_addr, double* g_addr, int numElems) {
  * @param [in]  g_adr address of block on gpu
  * @param [in]  numElems number of elements
  */
-void _gpu_host_to_device(double* h_addr, double* g_addr, int numElems) {
+void _gpu_host_to_device(double* h_addr, double* g_addr, const int numElems) {
 
 //	cudaPointerAttributes ptrAttr;
 //	CUDA_CHECK(cudaPointerGetAttributes(&ptrAttr, g_addr));
@@ -262,7 +262,7 @@ void _gpu_host_to_device(double* h_addr, double* g_addr, int numElems) {
  * @param [in]  src address of source on device
  * @param [in]  numElems number of elements
  */
-void _gpu_device_to_device(double* dst, double *src, int numElems){
+void _gpu_device_to_device(double* dst, double *src, const int numElems){
 	CUDA_CHECK(cudaMemcpy(dst, src, (numElems) * sizeof(double), cudaMemcpyDeviceToDevice));
 	CUDA_CHECK(cudaDeviceSynchronize());
 }
@@ -366,9 +366,9 @@ void printHostArray(double* h_addr, int size) {
 	printf("\n");
 }
 
-void __gpu_contract_helper(double* p_y, int ny, int* yDims, int* yInds,
-		double* p_x1, int n1, int* x1Dims, int* x1Inds, double* p_x2, int n2,
-		int* x2Dims, int* x2Inds) {
+void __gpu_contract_helper(double* p_y, const int ny, const int* yDims, const int* yInds,
+		double* p_x1, const int n1, const int* x1Dims, const int* x1Inds,
+		double* p_x2, const int n2,	const int* x2Dims, const int* x2Inds) {
 	double *y = p_y;
 	double *x1 = p_x1;
 	double *x2 = p_x2;
@@ -585,8 +585,8 @@ reorderGather<<<REORDER_BLOCKS, REORDER_THREADS>>>(scratch1, scratch3, ny, size)
 
 }
 
-void __gpu_permute_helper(double* p_y, int ny, int* yDims, int* yInds,
-		double* p_x1, int n1, int* x1Dims, int* x1Inds) {
+void __gpu_permute_helper(double* p_y, const int ny, const int* yDims, const int* yInds,
+		double* p_x1, const int n1, const int* x1Dims, const int* x1Inds) {
 	double *y = p_y;
 	double *x1 = p_x1;
 
@@ -689,7 +689,7 @@ reorderGather<<<REORDER_BLOCKS, REORDER_THREADS>>>(scratch1, scratch3, ny, size)
  * @param alpha 	alpha
  * @param numElems  number of elements
  */
-void _gpu_axpy(double *p_y, double *p_x, const double alpha, int numElems){
+void _gpu_axpy(double *p_y, double *p_x, const double alpha, const int numElems){
 	double *y = p_y;
 	double *x = p_x;
 	CUBLAS_CHECK(cublasDaxpy(cublasHandle, numElems, &alpha, x, 1, y, 1));

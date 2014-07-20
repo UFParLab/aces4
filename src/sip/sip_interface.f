@@ -115,3 +115,9 @@ c      end interface
       end subroutine delete_integer_scratch_array
       end interface
 
+      interface
+      subroutine sip_abort() bind(C)
+        use, intrinsic :: ISO_C_BINDING
+      end subroutine sip_abort
+      end interface
+

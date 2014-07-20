@@ -12,14 +12,15 @@
 #include "sip_tables.h"
 #include "block_manager.h"
 #include "data_manager.h"
-#include "persistent_array_manager.h"
+#include "worker_persistent_array_manager.h"
 
 namespace sip {
 
 class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
-			PersistentArrayManager<Block, Interpreter> *);
+			WorkerPersistentArrayManager*,
+			SipTables&);
 	~SialOpsSequential();
 
 	/** implements a global SIAL barrier */
@@ -45,6 +46,8 @@ public:
 	void restore_persistent(Interpreter*, int array_id, int string_slot);
 
 	void end_program();
+
+	void print_to_stdout(const std::string& to_print);
 
 	/**
 	 * Logs type of statement and line number
@@ -72,7 +75,7 @@ private:
 	SipTables& sip_tables_;
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
-	PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
+	WorkerPersistentArrayManager* persistent_array_manager_;
 
 	/**
 	 * values for mode_ array

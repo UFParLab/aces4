@@ -9,6 +9,8 @@ sial persistent_distributed_array_mpi2
 	distributed c(i,j)
 	temp t(i,j)
 	
+	local lb(i,j)
+	allocate lb(*,*)
 
     println "$$$$$$$$$$$$$$ start of second prog $$$$$$$$$"
 	allocate a(*,*)
@@ -32,10 +34,18 @@ sial persistent_distributed_array_mpi2
 	   enddo j
 	enddo i
 	
+	do i
+		do j
+			get b(i, j)
+			lb (i, j) = b(i, j)
+		enddo j
+	enddo i
+	
 	sip_barrier
 	delete b
 	delete c
 	
 	sip_barrier
 	println "!!!!!!!!!! end of second prog!!!!!!!!!!!!!"
+	
 endsial persistent_distributed_array_mpi2

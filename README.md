@@ -9,6 +9,25 @@ Successor to ACESIII [http://www.qtp.ufl.edu/].
 
 The ACESIII system is described in the paper titled "A Block-Oriented Language and Runtime System for Tensor Algebra with Very Large Arrays" [http://dx.doi.org/10.1109/SC.2010.3]
 
+See the Wiki (https://github.com/UFParLab/aces4/wiki) for more information
+
+Executables Built
+-----------------
+
+```aces4``` - computational chemistry application
+```
+Options : 
+-d : .dat file, generated using acesinit. Contains initialization data
+-s : directory containing .siox files referred to in the .dat file.
+-m : approx. upper bound for memory usage. Additional usage in overhead & bookkeeping.
+```
+
+```print_siptables``` - dumps SipTables to stdout. SipTables store all static data contained in a compiled SIAL program and the .dat file.
+```
+Options :
+-d : .dat file, generated using acesinit. Contains initialization data
+-s : directory containing .siox files referred to in the .dat file.
+```
 
 
 Prerequisites

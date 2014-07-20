@@ -15,14 +15,14 @@ C  in the file COPYRIGHT.
       subroutine abort_job()
 
       implicit none
-!      include 'mpif.h'
+      include 'sip_interface.f'
       integer ierr
     
       print *,'aborting job'
 !      call print_opcounter()
 !      write(66,10)
 !      call mpi_abort(mpi_comm_world, 1, ierr)
-      stop
+      call sip_abort()
       return
 
 10    Format(5x,'Aborting job. 

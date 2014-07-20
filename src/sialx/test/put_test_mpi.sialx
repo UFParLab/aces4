@@ -14,17 +14,16 @@ sial put_test_mpi
 	allocate a(*,*)
 	
 	println "Sending blocks"	
-	do i
+	pardo i, j
 		print_index i
-		execute list_block_map
-		do j
-			print_index j
-			a(i,j) = 42.0
-			aa(i,j) = 55.0
-			put b(i,j) = a(i,j)
-			put c(i,j) = aa(i,j)
-		enddo j
-	enddo i
+		print_index j
+		#execute list_block_map
+		a(i,j) = 42.0
+		aa(i,j) = 55.0
+		put b(i,j) = a(i,j)
+		put c(i,j) = aa(i,j)
+		
+	endpardo i, j
 	sip_barrier
 	
 endsial put_test_mpi

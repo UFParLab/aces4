@@ -14,8 +14,6 @@ DataDistribution::DataDistribution(SipTables& sip_tables, SIPMPIAttr& sip_mpi_at
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr) {
 }
 
-DataDistribution::~DataDistribution() {}
-
 int DataDistribution::block_cyclic_distribution_server_rank(
 		const sip::BlockId& bid) const {
 	// Convert rank-dimensional index to 1-dimensional index
@@ -43,8 +41,8 @@ int DataDistribution::hashed_indices_based_server_rank(
 
 int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
 
-	//int server_global_rank = block_cyclic_distribution_server_rank(bid);
-	int server_global_rank = hashed_indices_based_server_rank(bid);
+	int server_global_rank = block_cyclic_distribution_server_rank(bid);
+	//int server_global_rank = hashed_indices_based_server_rank(bid);
 
     return server_global_rank;
 
@@ -101,5 +99,74 @@ long DataDistribution::block_position_in_array(const sip::BlockId& bid) const {
 	}
 	return block_num;
 }
+
+void DataDistribution::generate_server_blocks_list(int global_server_rank,
+		int array_id, std::list<BlockId>& all_blocks,
+		const SipTables& sip_tables) const {
+	index_value_array_t upper;
+	const index_selector_t& selector = sip_tables.selectors(array_id);
+	int rank = sip_tables.array_rank(array_id);
+	index_value_array_t upper_index_vals;
+	index_value_array_t lower_index_vals;
+	index_value_array_t current_index_vals;
+	std::fill(upper_index_vals, upper_index_vals + MAX_RANK,
+			unused_index_value);
+	std::fill(lower_index_vals, lower_index_vals + MAX_RANK,
+			unused_index_value);
+	std::fill(current_index_vals, current_index_vals + MAX_RANK,
+			unused_index_value);
+
+	bool at_least_one_iter = false;
+
+	// Initialize
+	for (int i = 0; i < rank; i++) {
+		int selector_index = selector[i];
+		int lower = sip_tables_.lower_seg(selector_index);
+		int upper = lower + sip_tables_.num_segments(selector_index);
+		lower_index_vals[i] = lower;
+		current_index_vals[i] = lower_index_vals[i];
+		upper_index_vals[i] = upper;
+		if (upper - lower >= 1)
+			at_least_one_iter = true;
+	}
+
+	BlockId upper_bid(array_id, upper_index_vals);
+	BlockId lower_bid(array_id, lower_index_vals);
+	//std::cout << " Upper : " << upper_bid << std::endl;
+	//std::cout << " Lower : " << lower_bid << std::endl;
+
+	if (at_least_one_iter) {
+		// Save a BlockId into the output list
+		BlockId bid(array_id, current_index_vals);
+		if (get_server_rank(bid) == global_server_rank)
+			all_blocks.push_back(bid);
+		//std::cout << " Generated : " << bid << " of " << sip_tables_.array_name(bid.array_id()) << std::endl;
+	}
+
+	while (increment_indices(rank, upper_index_vals, lower_index_vals,
+			current_index_vals)) {
+		BlockId bid(array_id, current_index_vals);
+		if (get_server_rank(bid) == global_server_rank)
+			all_blocks.push_back(bid);
+		//std::cout << " Generated : " << bid << " of " << sip_tables_.array_name(bid.array_id()) << std::endl;
+	}
+}
+
+bool DataDistribution::increment_indices(int rank, index_value_array_t& upper,
+		index_value_array_t& lower, index_value_array_t& current) const {
+	int pos = 0;
+	while (pos < rank) {
+		// Increment indices.
+		if (current[pos] >= upper[pos] - 1) {
+			current[pos] = lower[pos];
+			pos++;
+		} else {
+			current[pos]++;
+			return true;
+		}
+	}
+	return false;
+}
+
 
 } /* namespace sip */

@@ -1,7 +1,7 @@
 sial index_decs
-predefined int norb
-index i = 1,4
-index j = 4,5
-aoindex aoi = 1,norb
+	predefined int norb
+	index i = 1,4
+	index j = 4,5
+	aoindex aoi = 1,norb
 endsial index_decs
 

@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 void init_setup(const char * job_name){
-	   setup::OutputFile * file;
+	   setup::OutputStream * file;
 	   std::string name = std::string(job_name);
 //	   if (sip::SETUP_FILE_TYPE_IS_BINARY){
 		   setup::BinaryOutputFile *bfile = new setup::BinaryOutputFile(name + ".dat");

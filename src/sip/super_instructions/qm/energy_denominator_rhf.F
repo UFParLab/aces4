@@ -134,57 +134,65 @@ c Find the offset index ranges
       offset_4 = 0 
       offset_5 = 0 
       offset_6 = 0 
-      if (index_values_0(1).gt.1) then 
+
+      if (extents_0(1) .eq. 1) then 
+         offset_1 = index_values_0(1) - 1  
+      else
+          if (index_values_0(1).gt.1) then  
           do i = 1, index_values_0(1) - 1 
              offset_1 = offset_1 + paosegs(i) 
           enddo 
+          endif 
       endif 
-      if (index_values_0(2).gt.1) then 
+
+      if (extents_0(2) .eq. 1) then 
+         offset_2 = index_values_0(2) - 1  
+      else 
+          if (index_values_0(2).gt.1) then 
           do i = 1, index_values_0(2) - 1 
              offset_2 = offset_2 + paosegs(i) 
           enddo 
       endif 
-      if (index_values_0(3).gt.1) then 
+      endif 
+      if (extents_0(3) .eq. 1) then 
+         offset_3 = index_values_0(3) - 1  
+      else
+          if (index_values_0(3).gt.1) then 
           do i = 1, index_values_0(3) - 1 
              offset_3 = offset_3 + paosegs(i) 
           enddo 
       endif 
-      if (index_values_0(4).gt.1) then 
+      endif 
+      if (extents_0(4) .eq. 1) then 
+         offset_4 = index_values_0(4) - 1  
+      else
+          if (index_values_0(4).gt.1) then 
           do i = 1, index_values_0(4) - 1 
              offset_4 = offset_4 + paosegs(i) 
           enddo 
       endif 
-      if (index_values_0(5).gt.1) then 
+      endif 
+      if (extents_0(5) .eq. 1) then 
+         offset_5 = index_values_0(5) - 1  
+      else
+          if (index_values_0(5).gt.1) then 
           do i = 1, index_values_0(5) - 1 
              offset_5 = offset_5 + paosegs(i) 
           enddo 
       endif 
-      if (index_values_0(6).gt.1) then 
+      endif 
+      if (extents_0(6) .eq. 1) then 
+         offset_6 = index_values_0(6) - 1  
+      else
+          if (index_values_0(6).gt.1) then 
           do i = 1, index_values_0(6) - 1 
              offset_6 = offset_6 + paosegs(i) 
           enddo 
       endif 
+      endif 
 
 c Check for simple ineces 
 
-      if (extents_0(1) .eq. 1) then 
-         offset_1 = index_values_0(1) - 1  
-      endif 
-      if (extents_0(2) .eq. 1) then 
-         offset_2 = index_values_0(2) - 1  
-      endif 
-      if (extents_0(3) .eq. 1) then 
-         offset_3 = index_values_0(3) - 1  
-      endif 
-      if (extents_0(4) .eq. 1) then 
-         offset_4 = index_values_0(4) - 1  
-      endif 
-      if (extents_0(5) .eq. 1) then 
-         offset_5 = index_values_0(5) - 1  
-      endif 
-      if (extents_0(6) .eq. 1) then 
-         offset_6 = index_values_0(6) - 1  
-      endif 
 
       call do_rhf_den6(start_1, extents_0(1),offset_1, 
      *                 start_2, extents_0(2),offset_2, 
