@@ -152,6 +152,15 @@ public:
 	void interpret();
 
 	/**
+	 *  Should be called after the main interpret loop terminates to
+	 *  cleanly terminate this program.  This is the responsibility of
+	 *  the main program to allow more convenient testing of parallel
+	 *  programs that don't use servers.
+	 */
+	void post_sial_program();
+
+
+	/**
 	 * Returns the line number in the SIAL program corresponding to the
 	 * instruction at op_table[pc].
 	 *
@@ -160,6 +169,8 @@ public:
 	 * @return
 	 *
 	 */
+
+
 	int line_number() {
 		if (pc < op_table_.size())
 			return op_table_.line_number(pc);
@@ -184,11 +195,6 @@ private:
 	/** main interpreter procedure */
 	void interpret(int pc_start, int pc_end);
 
-	/**
-	 *  Called after the main interpret loop terminates to
-	 *  cleanly terminate this program.
-	 */
-	void post_sial_program();
 
 
 	OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience

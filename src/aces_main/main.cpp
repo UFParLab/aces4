@@ -76,14 +76,14 @@ int main(int argc, char* argv[]) {
 	TAU_STATIC_PHASE_START("SIP Main");
 #endif
 
-
-	// Check sizes of data types.
-	// In the MPI version, the TAG is used to communicate information
-	// The various bits needed to send information to other nodes
-	// sums up to 32.
-	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+//TODO  move this to  a test suite.
+//	// Check sizes of data types.
+//	// In the MPI version, the TAG is used to communicate information
+//	// The various bits needed to send information to other nodes
+//	// sums up to 32.
+//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 
 	// Default initialization file is data.dat
 	char *init_file = "data.dat";
@@ -194,6 +194,7 @@ int main(int argc, char* argv[]) {
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
+			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);

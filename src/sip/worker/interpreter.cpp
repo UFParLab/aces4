@@ -613,7 +613,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 	}
 
-	post_sial_program();
+//	post_sial_program();
 
 }
 

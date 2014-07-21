@@ -28,136 +28,148 @@
 #include "sip_attr.h"
 #endif
 
+
+bool VERBOSE_TEST = false;
 void list_block_map();
 static const std::string dir_name("src/sialx/test/");
 
 #ifdef HAVE_MPI
 sip::SIPMPIAttr *attr;
-void barrier(){sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));}
+void barrier() {
+	sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));}
 #else
-sip::SIPAttr *attr = &sip::SIPAttr::get_instance();
-void barrier(){}
+	sip::SIPAttr *attr = &sip::SIPAttr::get_instance();
+	void barrier() {}
 #endif
 
-TEST(Sial,empty){
-	std::cout << "****************************************\n"<< std::flush;
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("empty");
 
+
+/**  This is a template for a test  with no .dat file and no servers */
+TEST(BasicSial,empty) {
+	std::string job("empty");  /* REPLACE WITH TEST NAME */
+if (VERBOSE_TEST){
+	std::cout << "**************** STARTING TEST " << job
+			<< " ***********************\n"
+	        << std::flush;
+}
 
 	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
 	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-
-
-
+	//read .siox file
 	std::string prog_name = job + ".siox";
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
-	if (attr->global_rank() == 0){
-		std::cout << "JOBNAME = " << job << std::endl<< std::flush;
-		std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl<< std::flush;
-	    std::cout << "SIP TABLES" << '\n' << sipTables << std::endl<< std::flush;
-	    std::cout << "COMMENT:  This is an empty program.  It should simply terminate.\n\n" << std::endl<< std::flush;
-	}
-    barrier();
-    sip::WorkerPersistentArrayManager wpam;
-	#ifdef HAVE_MPI
-		sip::ServerPersistentArrayManager spam;
 
-		sip::DataDistribution data_distribution(sipTables, *attr);
-		sip::GlobalState::set_program_name(prog_name);
-		sip::GlobalState::increment_program();
-		if (attr->is_server()){
-			sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
-			barrier();
-			std::cout << "Rank " << attr->global_rank() << " SERVER " << job << " STARTING"<< std::endl << std::flush;
-			server.run();
-			std::cout << "\nRank " << attr->global_rank() <<" SERVER " << job << " TERMINATED"<< std::endl << std::flush;
-			barrier();
-	      //CHECK SERVER STATE HERE
-		} else
-#endif
+if (VERBOSE_TEST){
+	//rank 0 prints and .siox files contents
+	if (attr->global_rank() == 0) {
+		std::cout << "JOBNAME = " << job << std::endl << std::flush;
+		std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl
+				<< std::flush;
+		std::cout << "SIP TABLES" << '\n' << sipTables << std::endl
+				<< std::flush;
+		std::cout
+				/* REPLACE WITH COMMENT FOR USER ABOUT TEST */
+				<< "COMMENT:  This is an empty program.  It should simply terminate.\n\n"
+				<< std::endl << std::flush;
+	}
+}
+
+	barrier();
+	sip::WorkerPersistentArrayManager wpam;
+	{
+		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+		sip::Interpreter runner(sipTables, sialxTimer);
+		barrier();
+		if (VERBOSE_TEST) std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job
+				<< " STARTING" << std::endl << std::flush;
+		runner.interpret();
+		if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM " << job
+				<< " TERMINATED" << std::endl << std::flush;
+		barrier();
+		/* CHECK WORKER STATE HERE */
+		//nothing to check for empty program
+	}
+	if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " TEST " << job
+			<< " TERMINATED" << std::endl << std::flush;
+}
+
+/** This test is a template for test-created .dat file with no servers */
+TEST(BasicSial,scalars) {
+	std::string job("scalars");  /* INSERT TEST NAME HERE */
+	if (VERBOSE_TEST) std::cout << "**************** STARTING TEST " << job
+			<< " ***********************\n"
+	        << std::flush;
+
+	//initialize variables used in test
+	sip::DataManager::scope_count = 0;
+	double x = 3.456;
+	double y = -0.1;
+
+	//create .dat file
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		finalize_setup();
+	}
+
+	barrier();
+
+    //read .dat file into setup_reader object
+	setup::BinaryInputFile setup_file(job + ".dat");
+	setup::SetupReader setup_reader(setup_file);
+
+    //get siox name from setup_reader and load sip tables
+	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+	sip::SipTables sipTables(setup_reader, siox_file);
+
+	if (VERBOSE_TEST)
+	//rank 0 prints .dat and .siox files contents
+	if (attr->global_rank() == 0) {
+		std::cout << "JOBNAME = " << job << std::endl << std::flush;
+		std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl
+				<< std::flush;
+		std::cout << "SIP TABLES" << '\n' << sipTables << std::endl
+				<< std::flush;
+	}
+
+	barrier();
+	sip::WorkerPersistentArrayManager wpam;
+//	#ifdef HAVE_MPI
+//		sip::ServerPersistentArrayManager spam;
+//
+//		sip::DataDistribution data_distribution(sipTables, *attr);
+//		sip::GlobalState::set_program_name(prog_name);
+//		sip::GlobalState::increment_program();
+//		if (attr->is_server()){
+//			sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
+//			barrier();
+//			std::cout << "Rank " << attr->global_rank() << " SERVER " << job << " STARTING"<< std::endl << std::flush;
+//			server.run();
+//			std::cout << "\nRank " << attr->global_rank() <<" SERVER " << job << " TERMINATED"<< std::endl << std::flush;
+//			barrier();
+//	      //CHECK SERVER STATE HERE
+//		} else
+//#endif
 //	interpret the program
 	{
 		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 		sip::Interpreter runner(sipTables, sialxTimer);
 		barrier();
-		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job << " STARTING"<< std::endl << std::flush;
+		if (VERBOSE_TEST) std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job
+				<< " STARTING" << std::endl << std::flush;
 		runner.interpret();
-		std::cout << "\nRank " << attr->global_rank() <<" SIAL PROGRAM " << job << " TERMINATED"<< std::endl << std::flush;
+		if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM " << job
+				<< " TERMINATED" << std::endl << std::flush;
 		barrier();
-	    //CHECK WORKER STATE HERE
-	}
-
-}
-
-TEST(Sial,scalars){
-	std::cout << "****************************************\n"<< std::flush;
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("scalars");
-
-
-double x = 3.456;
-double y = -0.1;
-
-if (attr->global_rank() == 0){
-	init_setup(job.c_str());
-	set_scalar("x",x);
-	set_scalar("y",y);
-	std::string tmp = job + ".siox";
-	const char* nm= tmp.c_str();
-	add_sial_program(nm);
-	finalize_setup();
-}
-
-barrier();
-//read and print setup_file
-setup::BinaryInputFile setup_file(job + ".dat");
-setup::SetupReader setup_reader(setup_file);
-
-//get siox name from setup, load and print the sip tables
-std::string prog_name = setup_reader.sial_prog_list_.at(0);
-std::string siox_dir(dir_name);
-setup::BinaryInputFile siox_file(siox_dir + prog_name);
-sip::SipTables sipTables(setup_reader, siox_file);
-
-
-
-	if (attr->global_rank() == 0){
-		std::cout << "JOBNAME = " << job << std::endl<< std::flush;
-		std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl<< std::flush;
-	    std::cout << "SIP TABLES" << '\n' << sipTables << std::endl<< std::flush;
-	}
-    barrier();
-    sip::WorkerPersistentArrayManager wpam;
-	#ifdef HAVE_MPI
-		sip::ServerPersistentArrayManager spam;
-
-		sip::DataDistribution data_distribution(sipTables, *attr);
-		sip::GlobalState::set_program_name(prog_name);
-		sip::GlobalState::increment_program();
-		if (attr->is_server()){
-			sip::SIPServer server(sipTables, data_distribution, *attr, &spam);
-			barrier();
-			std::cout << "Rank " << attr->global_rank() << " SERVER " << job << " STARTING"<< std::endl << std::flush;
-			server.run();
-			std::cout << "\nRank " << attr->global_rank() <<" SERVER " << job << " TERMINATED"<< std::endl << std::flush;
-			barrier();
-	      //CHECK SERVER STATE HERE
-		} else
-#endif
-//	interpret the program
-	{
-		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-		sip::Interpreter runner(sipTables, sialxTimer);
-		barrier();
-		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job << " STARTING"<< std::endl << std::flush;
-		runner.interpret();
-		std::cout << "\nRank " << attr->global_rank() <<" SIAL PROGRAM " << job << " TERMINATED"<< std::endl << std::flush;
-		barrier();
+		//CHECK WORKER STATE
 		ASSERT_DOUBLE_EQ(x, scalar_value("x"));
 		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
 		ASSERT_DOUBLE_EQ(x, scalar_value("z"));
@@ -249,7 +261,6 @@ sip::SipTables sipTables(setup_reader, siox_file);
 //		}
 //#endif
 //}
-
 
 //// Sanity test to check for no compiler errors, crashes, etc.
 //TEST(SimpleMPI,persistent_empty_mpi){
@@ -1101,10 +1112,11 @@ int main(int argc, char **argv) {
 	int num_procs;
 	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
 
-		if (num_procs < 2){
-			std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
-			return -1;
-		}
+	if (num_procs < 2) {
+		std::cerr << "Please run this test with at least 2 mpi ranks"
+				<< std::endl;
+		return -1;
+	}
 	sip::SIPMPIUtils::set_error_handler();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
@@ -1139,7 +1151,7 @@ int main(int argc, char **argv) {
 	TAU_STATIC_PHASE_STOP("SIP Main");
 #endif
 #ifdef HAVE_MPI
-	 MPI_Finalize();
+	MPI_Finalize();
 #endif
 	return result;
 

@@ -266,7 +266,7 @@ void SetupWriter::write_data_file() {
 
 	}
 	// Write configuration per sial file
-	std::cout<<"Writing config info to file...";
+	std::cout<<"SetupWriter:: Writing config info to file...\n";
 	int num_sialfile_configs = configs_.size();
 	file->write_int(num_sialfile_configs);
 	for (FileConfigMap::iterator it = configs_.begin(); it != configs_.end(); ++it){
