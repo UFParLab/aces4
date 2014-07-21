@@ -3,6 +3,7 @@
 # Find the TAU libraries and include dir
 #
 
+# TAU_LIBRARY       - Path to TAU library
 # TAU_INCLUDE_PATH  - Directories to include to use TAU
 # TAU_LIBRARY_PATH    - Files to link against to use TAU
 # TAU_FOUND        - When false, don't try to use TAU
@@ -14,7 +15,7 @@
 # Just set TAU_PATH it to your specific installation directory
 #
 FIND_LIBRARY(TAU_LIBRARY
-  NAMES TAU
+  NAMES TAU TAU_tf
   PATHS /usr/lib /usr/local/lib ${TAU_PATH}/lib ${TAU_PATH}/x86_64/lib/ ${TAU_PATH}/i386_linux/lib)
 
 IF(TAU_LIBRARY)

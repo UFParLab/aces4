@@ -219,14 +219,16 @@ set (TOLINK_LIBRARIES
 # Append TAU include & library paths
 if (TAU_FOUND)
     # TAU needs these defines to compile properly
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} "${TAU_INCLUDE_PATH} -DPROFILING_ON -DTAU_DOT_H_LESS_HEADERS")
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY_PATH})
+    add_definitions(-DPROFILING_ON)
+    add_definitions(-DTAU_DOT_H_LESS_HEADERS)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TAU_INCLUDE_PATH})
+    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY})
 endif()
 
 # Append PAPI include & library paths
 if (PAPI_FOUND)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} "${PAPI_INCLUDE_PATH}")
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY_PATH})
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PAPI_INCLUDE_PATH})
+    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY})
 endif()
 
 # CUDA Super instructions

@@ -4,6 +4,7 @@
 # Find the PAPI libraries and include dir
 #
 
+# PAPI_LIBRARY       - Path to PAPI library
 # PAPI_INCLUDE_PATH  - Directories to include to use PAPI
 # PAPI_LIBRARY_PATH    - Files to link against to use PAPI
 # PAPI_FOUND        - When false, don't try to use PAPI
