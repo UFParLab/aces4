@@ -53,7 +53,7 @@ public:
 
 	void end_program();
 
-	void print_to_stdout(const std::string& to_print);
+	void print_to_ostream(std::ostream& out, const std::string& to_print);
 
 	/**
 	 * Logs type of statement and line number

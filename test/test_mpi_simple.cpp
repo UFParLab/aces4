@@ -29,7 +29,9 @@
 #endif
 
 
-bool VERBOSE_TEST = false;
+//bool VERBOSE_TEST = false;
+bool VERBOSE_TEST = true;
+
 void list_block_map();
 static const std::string dir_name("src/sialx/test/");
 
@@ -106,6 +108,16 @@ TEST(BasicSial,scalars) {
 	sip::DataManager::scope_count = 0;
 	double x = 3.456;
 	double y = -0.1;
+	std::stringstream expected, output;
+	expected << "my rank = " << attr->global_rank() << "\n";
+	output   << "my rank = " << attr->global_rank() << "\n";
+	expected << "x = 3.4559999999999999609 at line 9\n" <<
+			"y = -0.10000000000000000555 at line 10\n" <<
+			"z = 3.4559999999999999609 at line 14\n" <<
+			"zz = 99.989999999999994884 at line 15\n" <<
+			"e should be 6\n" <<
+			"e = 6 at line 22\n";
+
 
 	//create .dat file
 	if (attr->global_rank() == 0) {
@@ -161,13 +173,16 @@ TEST(BasicSial,scalars) {
 //	interpret the program
 	{
 		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-		sip::Interpreter runner(sipTables, sialxTimer);
+		sip::Interpreter runner(sipTables, sialxTimer, output);
 		barrier();
 		if (VERBOSE_TEST) std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job
 				<< " STARTING" << std::endl << std::flush;
 		runner.interpret();
-		if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM " << job
+		if (VERBOSE_TEST){
+			std::cout << output.str();
+			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM " << job
 				<< " TERMINATED" << std::endl << std::flush;
+		}
 		barrier();
 		//CHECK WORKER STATE
 		ASSERT_DOUBLE_EQ(x, scalar_value("x"));
@@ -175,6 +190,7 @@ TEST(BasicSial,scalars) {
 		ASSERT_DOUBLE_EQ(x, scalar_value("z"));
 		ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
 		ASSERT_EQ(0, sip::DataManager::scope_count);
+		if (attr->global_rank() == 0) {ASSERT_EQ(expected.str(), output.str());}
 	}
 
 }

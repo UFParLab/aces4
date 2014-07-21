@@ -29,9 +29,18 @@ namespace sip {
 
 Interpreter* Interpreter::global_interpreter;
 
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, std::ostream& out,
+		WorkerPersistentArrayManager* persistent_array_manager) :
+		sip_tables_(sipTables), sialx_timers_(sialx_timer), out_(out), data_manager_(sipTables), op_table_(
+				sipTables.op_table_), persistent_array_manager_(
+				persistent_array_manager), sial_ops_(data_manager_,
+						persistent_array_manager, sipTables) {
+	_init(sipTables);
+}
+
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), data_manager_(sipTables), op_table_(
+		sip_tables_(sipTables), sialx_timers_(sialx_timer), out_(std::cout), data_manager_(sipTables), op_table_(
 				sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
 						persistent_array_manager, sipTables) {
@@ -444,7 +453,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case print_op: {
 			int string_slot = op_table_.print_index(pc);
 			//std::cout << string_literal(string_slot) << std::flush;
-			sial_ops_.print_to_stdout(string_literal(string_slot));
+			sial_ops_.print_to_ostream(out_,string_literal(string_slot));
 			++pc;
 		}
 			break;
@@ -453,7 +462,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			//std::cout << string_literal(string_slot) << std::endl << std::flush;
 			std::stringstream ss ;
 			ss << string_literal(string_slot) << std::endl;
-			sial_ops_.print_to_stdout(ss.str());
+			sial_ops_.print_to_ostream(out_, ss.str());
 			++pc;
 		}
 			break;
@@ -462,7 +471,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			//std::cout << index_value_to_string(index_slot) << std::endl << std::flush;
 			std::stringstream ss ;
 			ss << index_value_to_string(index_slot) << std::endl;
-			sial_ops_.print_to_stdout(ss.str());
+			sial_ops_.print_to_ostream(out_, ss.str());
 			++pc;
 		}
 			break;
@@ -477,7 +486,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			//std::cout << name << " = " << std::setprecision(20) << value
 			//		<< " at line " << op_table_.line_number(pc) << std::endl
 			//		<< std::flush;
-			sial_ops_.print_to_stdout(ss.str());
+			sial_ops_.print_to_ostream(out_,ss.str());
 			//std::cout.precision(old);
 			++pc;
 		}

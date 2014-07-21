@@ -42,8 +42,8 @@ class Interpreter {
 public:
 
 
+	Interpreter(SipTables&, SialxTimer&, std::ostream& out, WorkerPersistentArrayManager* wpm = NULL);
 	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
-
 	~Interpreter();
 
 	/** Static pointer to the current Interpreter.  This is
@@ -353,6 +353,11 @@ private:
 			true);
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
 			sip::BlockId& id, bool contiguous_allowed = true);
+
+	/** ostream where output from SIAL print statements are sent.
+	 * Default is cout.  Other values are useful for testing.
+	 */
+	std::ostream& out_;
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

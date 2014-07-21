@@ -117,8 +117,8 @@ void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_i
 void SialOpsSequential::end_program() {
 }
 
-void SialOpsSequential::print_to_stdout(const std::string& to_print){
-	std::cout << to_print << std::flush;
+void SialOpsSequential::print_to_ostream(std::ostream& out, const std::string& to_print){
+	out << to_print << std::flush;
 }
 
 void SialOpsSequential::log_statement(opcode_t type, int line){
