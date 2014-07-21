@@ -14,39 +14,59 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 # Find required packages for aces4.
 find_package(LAPACK REQUIRED)
 
+##################
 # HAVE_MPI Option
+##################
 option(HAVE_MPI "Whether to use MPI" ON)
 
 # Check if MPI available on system
 if (HAVE_MPI)
-    find_package(MPI)
-    if (!MPI_CXX_FOUND)
-        message(FATAL_ERROR "MPI could not be found, consider building with USE_MPI = off")
-    endif()
+    find_package(MPI REQUIRED)
+#    if (!MPI_CXX_FOUND)
+#        message(FATAL_ERROR "MPI could not be found, consider building with USE_MPI = off")
+#    endif()
 endif()
 
+##################
 # HAVE_TAU Option - TAU timers to be used instead of Linux / PAPI timers
+##################
 option(HAVE_TAU "Whether to use TAU timers for SIAL programs" OFF)
 
 # Check if TAU available on system
 if (HAVE_TAU)
-    find_package(TAU)
-    if (!TAU_FOUND)
-        message(FATAL_ERROR "TAU could not be found, 
-            please set the TAU_PATH variable to the TAU installation directory")
-    endif()
+    find_package(TAU REQUIRED)
+#    if (!TAU_FOUND)
+#        message(FATAL_ERROR "TAU could not be found, 
+#            please set the TAU_PATH variable to the TAU installation directory")
+#    endif()
 endif()
 
+####################
 # HAVE_PAPI Options - PAPI Timers to be used instead of Linux Timers
-option(HAVE_PAPI "Whether to use PAPI high resolution timrs" OFF)
+####################
+option(HAVE_PAPI "Whether to use PAPI high resolution timers" OFF)
 
-# Check of PAPI available on system
+# Check if PAPI available on system
 if (HAVE_PAPI)
-    find_package(PAPI)
-    if (!PAPI_FOUND)
-        message(FATAL_ERROR "PAPI could not be found, 
-            please set the PAPI_PREFIX variable to the PAPI installation directory")
-    endif()
+    find_package(PAPI REQUIRED)
+#    if (!PAPI_FOUND)
+#        message(FATAL_ERROR "PAPI could not be found, 
+#            please set the PAPI_PATH variable to the PAPI installation directory")
+#    endif()
+endif()
+
+####################
+# HAVE_CUDA Options - Whether to use CUDA accelerated super instructions
+####################
+option(HAVE_CUDA "Whether to use CUDA accelerated super instructions" OFF)
+
+# Check if CUDA available on system
+if (HAVE_CUDA)
+    find_package(CUDA REQUIRED)
+#    if (!CUDA_FOUND)
+#        message(FATAL_ERROR "CUDA could not be found, 
+#            please set the CUDA_BIN_PATH variable to the CUDA toolkit installation directory")
+#    endif()
 endif()
 
 #Config file 
@@ -101,6 +121,17 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/server_persistent_array_manager.h;
         src/sip/mpi/server_persistent_array_manager.cpp;
         src/sip/dynamic_data/mpi_state.h)
+else ()
+    set(ACES_MPI_FILES "")
+endif()
+
+# CUDA - Conditional compile for CUDA super instructions
+if (HAVE_CUDA AND CUDA_FOUND)
+    set(ACES_CUDA_FILES
+        src/sip/cuda/gpu_super_instructions.cu
+        src/sip/cuda/cuda_check.h)
+else ()
+    set(ACES_CUDA_FILES "")
 endif()
 
 set(ACES_DATA_FILES
@@ -167,17 +198,17 @@ set(tensordil_SRCS src/sip/tensor_algebra/tensor_dil_omp.F90)
 set(INCLUDE_DIRS     
     ${CMAKE_BINARY_DIR};
     ${MPI_INCLUDE_PATH};
-    src/sip;
-    src/sip/super_instructions;
-    src/sip/tensor_algebra;
-    src/sip/core;
-    src/sip/setup;
-    src/sip/worker;
-    src/sip/static_data;
-    src/sip/dynamic_data;
-    src/sip/mpi;
-    src/sip/cuda;
-    test)
+    ${CMAKE_SOURCE_DIR}/src/sip;
+    ${CMAKE_SOURCE_DIR}/src/sip/super_instructions;
+    ${CMAKE_SOURCE_DIR}/src/sip/tensor_algebra;
+    ${CMAKE_SOURCE_DIR}/src/sip/core;
+    ${CMAKE_SOURCE_DIR}/src/sip/setup;
+    ${CMAKE_SOURCE_DIR}/src/sip/worker;
+    ${CMAKE_SOURCE_DIR}/src/sip/static_data;
+    ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
+    ${CMAKE_SOURCE_DIR}/src/sip/mpi;
+    ${CMAKE_SOURCE_DIR}/src/sip/cuda;
+    ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     tensordil;
@@ -187,15 +218,27 @@ set (TOLINK_LIBRARIES
 
 # Append TAU include & library paths
 if (TAU_FOUND)
+    # TAU needs these defines to compile properly
     set(INCLUDE_DIRS ${INCLUDE_DIRS} "${TAU_INCLUDE_PATH} -DPROFILING_ON -DTAU_DOT_H_LESS_HEADERS")
     set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY_PATH})
 endif()
 
 # Append PAPI include & library paths
 if (PAPI_FOUND)
-    # PAPI needs these defines to compile properly
     set(INCLUDE_DIRS ${INCLUDE_DIRS} "${PAPI_INCLUDE_PATH}")
     set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY_PATH})
+endif()
+
+# CUDA Super instructions
+if (CUDA_FOUND)
+    set(CUDA_HOST_COMPILATION_CPP ON)
+    CUDA_INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
+    
+    # Support Double precision
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_13) 
+    CUDA_ADD_LIBRARY(cudasuperinstructions ${ACES_CUDA_FILES})
+    CUDA_ADD_CUBLAS_TO_TARGET(cudasuperinstructions)
+    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} cudasuperinstructions)
 endif()
 
 #----------------------------------------------------------------------
