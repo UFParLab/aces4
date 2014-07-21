@@ -74,7 +74,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_AO,pn_ao_segs)
-         call find_frag_index_range(wfrag, x2, w_frag_AO, pn_ao_segs) 
+         call find_frag_index_range(wfrag,x2,w_frag_AO, pn_ao_segs(1)) 
          go to 100 
       endif 
 
@@ -83,7 +83,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_aocc,pn_ao_segs)
-         call find_frag_index_range(wfrag, x2, w_frag_aocc, pn_ao_segs) 
+         call find_frag_index_range(wfrag,x2,w_frag_aocc,pn_ao_segs(1)) 
          go to 100 
       endif 
 
@@ -92,7 +92,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_bocc,pn_ao_segs)
-         call find_frag_index_range(wfrag, x2, w_frag_bocc, pn_ao_segs) 
+         call find_frag_index_range(wfrag,x2,w_frag_bocc,pn_ao_segs(1)) 
          go to 100 
       endif 
 
@@ -101,7 +101,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_avirt,pn_ao_segs)
-         call find_frag_index_range(wfrag, x2, w_frag_avirt, pn_ao_segs) 
+         call find_frag_index_range(wfrag,x2,w_frag_avirt,pn_ao_segs(1))
          go to 100 
       endif 
 
@@ -110,7 +110,7 @@ c--------------------------------------------------------------------------
      *                           n_ao_segs, aosegs)
          call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
          call c_f_pointer(aosegs,w_frag_bvirt,pn_ao_segs)
-         call find_frag_index_range(wfrag, x2, w_frag_bvirt, pn_ao_segs) 
+         call find_frag_index_range(wfrag,x2,w_frag_bvirt,pn_ao_segs(1))
          go to 100 
       endif 
 c     write(6,*) 'VFL Nfrags = ', nfrags, wfrag, x2 
