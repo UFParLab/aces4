@@ -80,8 +80,8 @@ const int SETUP_VERSION = 1;
 
 
 const int SIOX_MAGIC = 70707;
-const int SIOX_VERSION = 1;
-const int SIOX_RELEASE = 2;
+const int SIOX_VERSION = 2; //EXPECTS NEW OPCODES
+const int SIOX_RELEASE = 0;
 
 const int MAX_OMP_THREADS = 8;
 

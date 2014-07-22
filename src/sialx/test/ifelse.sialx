@@ -1,11 +1,11 @@
 sial ifelse
-	index i = 1,5
-	index j = 7,10
-	index k = 30,33
-	index aa = 1,4
-	index bb = 1,6
+	index i = 1:5
+	index j = 7:10
+	index k = 30:33
+	index aa = 1:4
+	index bb = 1:6
 	
-	scalar counter
+	int counter
 	counter = 0
 	
 	println "starting if loop"
@@ -13,8 +13,8 @@ sial ifelse
 		do bb 
 			where bb <= aa 
 			if aa == bb
-			    print_index aa 
-			    print_index bb 
+			    print aa 
+			    print bb 
 			    counter = counter + 1
 			endif
 		enddo bb 

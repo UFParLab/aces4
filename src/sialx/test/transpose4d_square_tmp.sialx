@@ -2,12 +2,12 @@ sial transpose_tmp
 	predefined int norb
 	special fill_block_cyclic wr
 	special print_block r
-	aoindex i = 1,1
-	aoindex j = 1,1
-	aoindex k = 1,1
-	aoindex l = 1,1
-	distributed a(i,j,k,l)
-	distributed b(k,j,i,l)
+	aoindex i = 1:1
+	aoindex j = 1:1
+	aoindex k = 1:1
+	aoindex l = 1:1
+	distributed a[i,j,k,l]
+	distributed b[k,j,i,l]
 	
 	scalar esum1
 	scalar esum2
@@ -23,17 +23,17 @@ sial transpose_tmp
 	pardo i, j, k, l
 					#allocate b(k,j,i,l)
 					#allocate a(i,j,k,l)
-					execute fill_block_cyclic a(i,j,k,l) 1.0
-					execute print_block a(i,j,k,l)					
-					b(k,j,i,l) = a(i,j,k,l)
-					execute print_block b(k,j,i,l)
+					execute fill_block_cyclic a[i,j,k,l] 1.0
+					execute print_block a[i,j,k,l]					
+					b[k,j,i,l] = a[i,j,k,l]
+					execute print_block b[k,j,i,l]
 					
-					esum1 = a(i,j,k,l) * a(i,j,k,l)
-					esum2 = b(k,j,i,l) * b(k,j,i,l)
-					esum3 = a(i,j,k,l) * b(k,j,i,l)
+					esum1 = a[i,j,k,l] * a[i,j,k,l]
+					esum2 = b[k,j,i,l] * b[k,j,i,l]
+					esum3 = a[i,j,k,l] * b[k,j,i,l]
 					
-					print_scalar esum1
-					print_scalar esum2
+					print esum1
+					print esum2
 	endpardo i,j,k,l					
 	#			enddo l
 	#		enddo k

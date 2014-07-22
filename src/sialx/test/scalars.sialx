@@ -6,19 +6,19 @@ sial predef_scalars
 	scalar zz
 	scalar e
 	
-	print_scalar x
-	print_scalar y
+	print x
+	print y
 	z = x
 	zz = 99.99
 	
-	print_scalar z
-	print_scalar zz
+	print z
+	print zz
 	
 	e = 1.0
 	e *= 2.0
 	e *= 3.0
 	
 	println "e should be 6"
-	print_scalar e
+	print e
 	
 endsial predef_scalars

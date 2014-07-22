@@ -5,52 +5,52 @@ scalar y
 scalar z
 special print_block r
 predefined int norb
-aoindex i = 1,norb
-aoindex j = 1,norb
-local a(i,j)
-local b(i,j)
+aoindex i = 1:norb
+aoindex j = 1:norb
+local a[i,j]
+local b[i,j]
 
 
-x = 42
-y = 41
-print_scalar x
-print_scalar y
+x = 42.0
+y = 41.0
+print x
+print y
 
 println "x += y"
 x += y
-print_scalar x
+print x
 
 println "x -= y"
 x -= y
-print_scalar x
+print x
 
 println "fnished with scalars, now do blocks"
 
 
 
-allocate a(*,*)
-allocate b(*,*)
+allocate a[*,*]
+allocate b[*,*]
 
 do i
 do j
-a(i,j) = 42
-b(i,j) = 41
-execute print_block a(i,j)
-execute print_block b(i,j)
+a[i,j] = 42.0
+b[i,j] = 41.0
+execute print_block a[i,j]
+execute print_block b[i,j]
 enddo j
 enddo i
 
 do i
 do j
-a(i,j) += b(i,j)
-execute print_block a(i,j)
+a[i,j] += b[i,j]
+execute print_block a[i,j]
 enddo j
 enddo i
 
 do i
 do j
-a(i,j) -= b(i,j)
-execute print_block a(i,j)
+a[i,j] -= b[i,j]
+execute print_block a[i,j]
 enddo j
 enddo i
 

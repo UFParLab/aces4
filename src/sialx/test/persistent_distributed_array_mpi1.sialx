@@ -3,11 +3,11 @@ sial persistent_distributed_array_mpi1
 	special print_block r
 	special fill_block_sequential wr
 	predefined int norb
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	local a(i,j)
-	distributed b(i,j)
-	distributed c(i,j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
 	
 	scalar count 
 	
@@ -15,18 +15,18 @@ sial persistent_distributed_array_mpi1
 	
 	create b
 	create c
-	allocate a(*,*)
+	allocate a[*,*]
 	
 	println "Sending blocks"	
 	do i
 		do j
 			#a(i,j) = 42.0
-			execute fill_block_sequential a(i,j) count
-			put b(i,j) = a(i,j)
-			put c(i,j) += a(i,j)
-			put c(i,j) += a(i,j)
+			execute fill_block_sequential a[i,j] count
+			put b[i,j] = a[i,j]
+			put c[i,j] += a[i,j]
+			put c[i,j] += a[i,j]
 			
-			count = count + 1
+			count = count + 1.0
 
 			
 		enddo j
@@ -36,10 +36,10 @@ sial persistent_distributed_array_mpi1
 	
     do i
         do j
-            get b(i, j)
-            get c(i, j)
-            execute print_block b(i, j)
-            execute print_block c(i, j)
+            get b[i, j]
+            get c[i, j]
+            execute print_block b[i, j]
+            execute print_block c[i, j]
         enddo j
     enddo i
 	

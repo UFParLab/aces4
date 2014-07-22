@@ -3,27 +3,27 @@ sial exit_statement_test
 	special list_block_map
 	special print_block r
 	
-	aoindex i = 1,10
-	aoindex j = 1,15
-	temp a(i,j)
-	temp b(i,j)
+	aoindex i = 1:10
+	aoindex j = 1:15
+	temp a[i,j]
+	temp b[i,j]
 	
-	scalar counter_j
-	scalar counter_i
+	int counter_j
+	int counter_i
 	counter_j = 0
 	counter_i = 0
 	
 	do i
 		counter_i = counter_i + 1
-		print_index i
+		print i
 		do j
 			counter_j = counter_j + 1
 			
-			a(i,j) = 42.0
-			b(i,j) = a(i,j)
+			a[i,j] = 42.0
+			b[i,j] = a[i,j]
 			
 			print "in do j "
-			print_index j
+			print j
 			
 			#execute print_block b(i,j)
 			execute list_block_map

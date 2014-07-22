@@ -64,38 +64,38 @@ predefined  int sip_sub_ao_segsize
 
 
 #these are predefined in the index table         
-moindex aces_defs_p = 1, norb   
-moaindex aces_defs_pa = 1,norb  
-mobindex aces_defs_pb = 1, norb  
-aoindex aces_defs_mu = 1, norb  
+moindex aces_defs_p = 1: norb   
+moaindex aces_defs_pa = 1:norb  
+mobindex aces_defs_pb = 1: norb  
+aoindex aces_defs_mu = 1: norb  
 
 
 #these s are predefined in the array and scalar tables
-predefined static c(aces_defs_mu,aces_defs_p)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
-predefined static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
-predefined static cb(aces_defs_mu,aces_defs_pb)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+predefined static c[aces_defs_mu,aces_defs_p]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+predefined static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
+predefined static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
 
 predefined scalar scfeneg  # ????   
 predefined scalar totenerg  #Total energy read in from JOBARC.
           
-predefined static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
+predefined static e[aces_defs_mu,aces_defs_p]  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
 
-predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
-predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static ea[aces_defs_mu, aces_defs_pa]  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static eb[aces_defs_mu, aces_defs_pb ]  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
-predefined static fock_a(aces_defs_pa, aces_defs_pa)
-predefined static fock_b(aces_defs_pb, aces_defs_pb)
+predefined static fock_a[aces_defs_pa, aces_defs_pa]
+predefined static fock_b[aces_defs_pb, aces_defs_pb]
 
-predefined static oed_nai(aces_defs_mu,aces_defs_mu)
-predefined static oed_kin(aces_defs_mu,aces_defs_mu)
-predefined static oed_ovl(aces_defs_mu,aces_defs_mu)
+predefined static oed_nai[aces_defs_mu,aces_defs_mu]
+predefined static oed_kin[aces_defs_mu,aces_defs_mu]
+predefined static oed_ovl[aces_defs_mu,aces_defs_mu]
 
 predefined scalar damp #value of DAMPSCF from ZMAT
 predefined scalar cc_conv  # value of CC_CONV from ZMAT.
 predefined scalar scf_conv  # value of SCF_CONV from ZMAT
 
-predefined static fockrohf_a(aces_defs_mu,aces_defs_mu)
-predefined static fockrohf_b(aces_defs_mu,aces_defs_mu)
+predefined static fockrohf_a[aces_defs_mu,aces_defs_mu]
+predefined static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 predefined scalar stabvalue  #this is used only in guess_scf_uhf_finish.sial.  It is not a 
 

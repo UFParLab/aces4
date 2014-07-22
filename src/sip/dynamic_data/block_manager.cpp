@@ -240,6 +240,7 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		std::cerr << " In BlockManager::create_block" << std::endl;
 		std::cerr << *this << std::endl;
 		fail(" Could not create block, out of memory", current_line());
+		return NULL;
 	}
 }
 

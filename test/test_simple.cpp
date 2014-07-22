@@ -36,7 +36,7 @@ void list_block_map();
 static const std::string dir_name("src/sialx/test/");
 
 #ifdef HAVE_MPI
-sip::SIPMPIAttr *attr;
+sip::SIPMPIAttr *attr = &sip::SIPMPIAttr::get_instance();
 void barrier() {
 	sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));}
 #else
@@ -48,6 +48,57 @@ void barrier() {
 
 /**  This is a template for a test  with no .dat file and no servers */
 TEST(BasicSial,empty) {
+	std::string job("empty");  /* REPLACE WITH TEST NAME */
+if (VERBOSE_TEST){
+	std::cout << "**************** STARTING TEST " << job
+			<< " ***********************\n"
+	        << std::flush;
+}
+
+	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
+	setup::SetupReader* setup_reader = setup::SetupReader::get_empty_reader();
+	//read .siox file
+	std::string prog_name = job + ".siox";
+	std::string siox_dir(dir_name);
+	setup::BinaryInputFile siox_file(siox_dir + prog_name);
+	sip::SipTables sipTables(*setup_reader, siox_file);
+
+if (VERBOSE_TEST){
+	//rank 0 prints and .siox files contents
+	if (attr->global_rank() == 0) {
+		std::cout << "JOBNAME = " << job << std::endl << std::flush;
+		std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl
+				<< std::flush;
+		std::cout << "SIP TABLES" << '\n' << sipTables << std::endl
+				<< std::flush;
+		std::cout
+				/* REPLACE WITH COMMENT FOR USER ABOUT TEST */
+				<< "COMMENT:  This is an empty program.  It should simply terminate.\n\n"
+				<< std::endl << std::flush;
+	}
+}
+    delete setup_reader;
+
+	barrier();
+	sip::WorkerPersistentArrayManager wpam;
+	{
+		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+		sip::Interpreter runner(sipTables, sialxTimer);
+		barrier();
+		if (VERBOSE_TEST) std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job
+				<< " STARTING" << std::endl << std::flush;
+		runner.interpret();
+		if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM " << job
+				<< " TERMINATED" << std::endl << std::flush;
+		barrier();
+		/* CHECK WORKER STATE HERE */
+		EXPECT_TRUE(runner.all_stacks_empty());
+	}
+	if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " TEST " << job
+			<< " TERMINATED" << std::endl << std::flush;
+}
+
+TEST(BasicSial,DISABLED_literals) {
 	std::string job("empty");  /* REPLACE WITH TEST NAME */
 if (VERBOSE_TEST){
 	std::cout << "**************** STARTING TEST " << job
@@ -91,14 +142,14 @@ if (VERBOSE_TEST){
 				<< " TERMINATED" << std::endl << std::flush;
 		barrier();
 		/* CHECK WORKER STATE HERE */
-		//nothing to check for empty program
+		EXPECT_TRUE(runner.all_stacks_empty());
 	}
 	if (VERBOSE_TEST) std::cout << "\nRank " << attr->global_rank() << " TEST " << job
 			<< " TERMINATED" << std::endl << std::flush;
 }
 
 /** This test is a template for test-created .dat file with no servers */
-TEST(BasicSial,scalars) {
+TEST(BasicSial,DISABLED_scalars) {
 	std::string job("scalars");  /* INSERT TEST NAME HERE */
 	if (VERBOSE_TEST) std::cout << "**************** STARTING TEST " << job
 			<< " ***********************\n"
@@ -111,6 +162,12 @@ TEST(BasicSial,scalars) {
 	std::stringstream expected, output;
 	expected << "my rank = " << attr->global_rank() << "\n";
 	output   << "my rank = " << attr->global_rank() << "\n";
+	expected << "x = 3.4559999999999999609 at line 9\n" <<
+			"y = -0.10000000000000000555 at line 10\n" <<
+			"z = 3.4559999999999999609 at line 14\n" <<
+			"zz = 99.989999999999994884 at line 15\n" <<
+			"e should be 6\n" <<
+			"e = 6 at line 22\n";
 
 
 	//create .dat file
@@ -179,20 +236,12 @@ TEST(BasicSial,scalars) {
 		}
 		barrier();
 		//CHECK WORKER STATE
-		ASSERT_DOUBLE_EQ(x, runner.scalar_value("x"));
-		ASSERT_DOUBLE_EQ(y, runner.scalar_value("y"));
-		ASSERT_DOUBLE_EQ(x, runner.scalar_value("z"));
-		ASSERT_DOUBLE_EQ(99.99, runner.scalar_value("zz"));
+		ASSERT_DOUBLE_EQ(x, scalar_value("x"));
+		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
+		ASSERT_DOUBLE_EQ(x, scalar_value("z"));
+		ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
 		ASSERT_EQ(0, sip::DataManager::scope_count);
-		if (attr->global_rank() == 0) {
-			expected << "x = 3.4559999999999999609 at line 9\n" <<
-					"y = -0.10000000000000000555 at line 10\n" <<
-					"z = 3.4559999999999999609 at line 14\n" <<
-					"zz = 99.989999999999994884 at line 15\n" <<
-					"e should be 6\n" <<
-					"e = 6 at line 22\n";
-           ASSERT_EQ(expected.str(), output.str());
-		}
+		if (attr->global_rank() == 0) {ASSERT_EQ(expected.str(), output.str());}
 	}
 
 }

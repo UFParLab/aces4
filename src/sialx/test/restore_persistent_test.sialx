@@ -5,21 +5,21 @@ sial restore_persistent_test
 	special print_static_array r
 	predefined int norb
 	
-	aoindex k = 1,1
-	aoindex k1 = 1,2
-	aoindex l = 1,1
-	aoindex l2 = 1,2
-	local a(k,l)
-	distributed b(k,l)
-	distributed c(k,l)
-	static ca2(k1, l2)
+	aoindex k = 1:1
+	aoindex k1 = 1:2
+	aoindex l = 1:1
+	aoindex l2 = 1:2
+	local a[k,l]
+	distributed b[k,l]
+	distributed c[k,l]
+	static ca2[k1, l2]
 	scalar y
 	scalar z
 	
 	restore_persistent y "s1"
-	print_scalar y
+	print y
 	restore_persistent z "s2"
-	print_scalar z
+	print z
 	
 #	restore_persistent c "arr1"
 #	restore_persistent b "arr2"
@@ -29,9 +29,9 @@ sial restore_persistent_test
 	do k
 		do l
 			println "TESTING !!!!!!!!!!!!"
-			execute print_block c(k,l)
-			execute print_block b(k,l)
-			execute print_block ca2(k,l)
+			execute print_block c[k,l]
+			execute print_block b[k,l]
+			execute print_block ca2[k,l]
 		enddo l
 	enddo k
 	

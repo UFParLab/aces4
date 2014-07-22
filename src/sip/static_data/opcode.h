@@ -1,9 +1,7 @@
 /*
  * opcode.h
  *
- *  Created on: Jun 22, 2014
- *      Author: basbas
- */
+*/
 
 #ifndef OPCODE_H_
 #define OPCODE_H_
@@ -21,177 +19,140 @@ enum where_code_t {
 	where_lt = 4,
 	where_neq = 5
 };
-
 /**opcodes and optable entry contents
  *
  * An optable entry contains the following fields
- * opcode, op1_array, op2_array, result_array, selector[MAX_RANK], line_number
+ * opcode, op0, op1, op2, selector[MAX_RANK], line_number
  *
- * Below, the contents of op1_array, op2_array, result_array, selector[MAX_RANK] for each opcode is indicated
+* Below, the contents of the entry for each opcode is indicated
  * Unused slots are indicate with _
- *
- * X-Macros are used to define the opcodes as an enum and a enum-to-string function.
- *
- */
+*
+* X-Macros are used to define the opcodes as an enum and a enum-to-string function.
+*
+*/
 
 #define SIP_OPCODES \
-SIPOP(contraction_op, 101, "contraction", true)	/*  slot of left arg array or scalar, slot of right arg array or scalar, slot of result array or scalar, [_] */\
-												/*  expects selectors for all arrays (rank != 0) on selector stack,  pushed from left to right. */\
-SIPOP(sum_op, 102, "sum", true)  				/*  slot of left arg array or scalar, slot of right arg array or scalar, slot of result array or scalar, [_] */\
-												/*  expects selectors for all arrays (rank != 0) on selector stack,  pushed from left to right. */\
-SIPOP(push_block_selector_op, 103, "push_block_selector", false) /* rank,_,array id,[index selectors] */\
-SIPOP(do_op, 104, "do", true)  					/*  _,_,optable slot of end_do_op,[slot of index variable,_..] */\
-SIPOP(enddo_op, 105, "enddo", true) 				/*  _,_,_,[slot of index variable,_..] */\
-SIPOP(get_op, 106, "get", true)  				/*  _,_,array_id,[selector indices]   (should be preceded by a push_selector_op) */\
-SIPOP(user_sub_op, 107, "user_sub", true)  		/*  function slot,_,number of arguments,[_] (should be preceded by a push_selector_op for each argument in reverse order) */\
-SIPOP(put_op, 108, "put", true)  				/*  rhs array slot,_, lhs array slot,[_] (should be prededed by push_selector_op for lhs and rhs blocks) */\
-SIPOP(go_to_op, 109, "go_to", false)  			/*  _,_,optable slot of destination, [_] */\
-SIPOP(create_op, 110, "create", true)  			/*  _._,array_id,[_] */\
-SIPOP(delete_op, 111, "delete", true)  			/*  _,_,array_id,[_] */\
-SIPOP(call_op, 112, "procedure", true) 			/* _,_,pc of subroutine,[_] */\
-SIPOP(return_op, 113, "return", true)  			/* _,_,_,[_] */\
-SIPOP(jz_op, 114, "jz", false) 					/*  _,_,optable slot of destination, [_]  (pops value of relational expr from control stack, jumps if zero) */\
-SIPOP(stop_op, 115, "stop", false)  			/* _,_,_,[_] */\
-SIPOP(sp_add_op, 116, "sp_add", false)  		/*  opcode not used */\
-SIPOP(sp_sub_op, 117, "sp_sub", false) 			/*  opcode not used */\
-SIPOP(sp_mult_op, 118, "sp_mult", false)  		/*  opcode not used */\
-SIPOP(sp_div_op, 119, "sp_div", false)  		/*  opcocde not used */\
-SIPOP(sp_equal_op, 120, "sp_equal", false)  	/*  _,_,_,[_] */\
-												/*  pops arguments from control stack, pushes val SIPOP(of, , "of", true)SIPOP(, , "", true)on control stack */\
-SIPOP(sp_nequal_op, 121, "sp_nequal", false)  	/*  _,_,_,[_] */\
-												/*  pops arguments from control stack, pushes val of !SIPOP(, , "", true)on control stack */\
-SIPOP(sp_ge_op, 122, "sp_ge", false)  			/*  _,_,_,[_] */\
-												/*  pops arguments from control stack, rightmost first, pushes val of >SIPOP(, , "", true)on control stack */\
-SIPOP(sp_le_op, 123, "sp_le", false)  			/*  _,_,_,[_] */\
-												/*  pops arguments from control stack, rightmost first, pushes val of <SIPOP(, , "", true)on control stack */\
-SIPOP(sp_gt_op, 124, "sp_gt", false)   			/*  _,_,_,[_] */\
-												/*  pops arguments from control stack, rightmost first, pushes val of >  on control stack */\
-SIPOP(sp_lt_op, 125, "sp_lt", false)   			/*  _,_,_,[_] */\
-												/*  pops arguments from control stack, rightmost first, pushes val of <  on control stack */\
-SIPOP(sp_ldi_op, 126, "sp_ldi", false)   		/*  value,_,_,[_] */\
-												/* pushes value (of int literal) on control stack */\
-SIPOP(sp_ldindex_op, 127, "sp_ldindex", false)  /*  index_value,_,_,[_] */\
-												/*  pushes value of index slot on control stack */\
-SIPOP(pardo_op, 128, "pardo", true)   			/*  number of indices,_,optable slot of end_pardo_op,[slots for indices used in loop] */\
-SIPOP(endpardo_op, 129, "endpardo", true)   		/* _,_,_,[_] */\
-												/*  obtains data from control_stack and loop_manager_stack. */\
-												/*  see loop_start and loop_end methods in Interpreter */\
-SIPOP(exit_op, 130, "exit", false)   				/*  _,_,_,[_] */\
-SIPOP(assignment_op, 131, "assignment", true)  	/*  rhs array_table slot,_, lhs array_table slot, [_] */\
-												/*  expects block selectors on block_selector stack for non-scalars */\
-												/*  this instruction is complex and can handle transpose, dimension-reduction, etc. */\
-												/*  see the Interpreter::handle_assignment_op method for details */\
-SIPOP(cycle_op, 132, "cycle", false)   			/*  not implemented */\
-SIPOP(self_multiply_op, 134, "self_multiply", true) /*  *SIPOP(, , "", true)scalar */\
-SIPOP(subtract_op, 135, "subtract", true)   		/*  slot of left arg array or scalar, slot of right arg array or scalar, slot of result array or scalar, [_] */\
-												/*  expects selectors for all arrays (rank !SIPOP(, 0, "", true)) on selector stack,  pushed from left to right. */\
-SIPOP(collective_sum_op, 136, "collective_sum", true) /*  source_array_slot,_,target_array_slot,[_] */\
-SIPOP(divide_op, 137, "divide", true)  			/*  dividend array_table slot, divisor array_table slot, result array_table slot, [_] */\
-												/*  only defined for scalars */\
-SIPOP(prepare_op, 138, "prepare", true)  		/*  _,_,_,[] */\
-												/*  expects block selectors for source and target to be on selector stack */\
-SIPOP(request_op, 139, "request", true)  		/*  _,_,_,[] */\
-												/*  expects block selector on block_selector_stack */\
-SIPOP(compute_integrals_op, 140, "compute_integrals", true)  /*  not used */\
-SIPOP(put_replace_op, 141, "put_replace", true) 	/*   _,_,_,[] */\
-												/*  expects block selectors for source and target to be on selector stack */\
-SIPOP(tensor_op, 142, "tensor", true)  			/*  slot of left arg array or scalar, slot of right arg array or scalar, slot of result array or scalar, [_] */\
-												/*  expects selectors for all arrays (rank !SIPOP(, 0, "", true)) on selector stack,  pushed from left to right. */\
-SIPOP(fl_add_op, 146, "fl_add", false)  		/*  opcode not used */\
-SIPOP(fl_sub_op, 147, "fl_sub", false)  		/*  opcode not used */\
-SIPOP(fl_mult_op, 148, "fl_mult", false)  		/*  opcode not used */\
-SIPOP(fl_div_op, 149, "fl_div", false)  		/*  opcode  used */\
-SIPOP(fl_eq_op, 150, "fl_eq", false)  			/*   _,_,_,[] */\
-												/*  obtains arguments from expression stack; pushes result on control stack */\
-SIPOP(fl_ne_op, 151, "fl_ne", false)  			/*   _,_,_,[] */\
-												/*  obtains arguments from expression stack; pushes result on control stack */\
-SIPOP(fl_ge_op, 152, "fl_ge", false)  			/*   _,_,_,[] */\
-												/*  obtains arguments from expression stack; pushes result on control stack */\
-SIPOP(fl_le_op, 153, "fl_le", false)  			/*   _,_,_,[] */\
-												/*  obtains arguments from expression stack; pushes result on control stack */\
-SIPOP(fl_gt_op, 154, "fl_gt", false)  			/*   _,_,_,[] */\
-												/*  obtains arguments from expression stack; pushes result on control stack */\
-SIPOP(fl_lt_op, 155, "fl_lt", false)  			/*   _,_,_,[] */\
-												/*  obtains arguments from expression stack; pushes result on control stack */\
-SIPOP(fl_load_value_op, 157, "fl_load_value", false)  /*  array_table slot of scalar,_,_,[_] */\
-												 /*  push scalar's value onto expression_stack */\
-SIPOP(prepare_increment_op, 158, "prepare_increment", true) /*  _,_,_,[] */\
-															/*  expects block selectors for source and target to be on selector stack */\
-SIPOP(allocate_op, 159, "allocate", true)  		/*  _,_,array_table slot,[index selectors] */\
-SIPOP(deallocate_op, 160, "deallocate", true)  	/*  _,_,array_table slot,[index selectors] */\
-SIPOP(sp_ldi_sym_op, 161, "sp_ldi_sym", false)  	/*  int_table_slot,_,_,[_] */\
-												/*  pushes indicated int value onto control stack */\
-SIPOP(destroy_op, 162, "destroy", true)  			/*  _,_,array_table slot,[_] */\
-												/*  destroys indicated served array */\
-SIPOP(prequest_op, 163, "prequest", true)  		/*  not implemented */\
-SIPOP(where_op, 164, "where", false)  			/*  index table slot of arg1, where_op, index_table slot of arg2, [_] */\
-												/*  if true, increment pc */\
-												/*  other wise go to op_table slot on top of control stack */\
-												/*  where_op takes a value from the where_code_t enum. */\
-SIPOP(print_op, 165, "print", true)  			/*  _,_,index in string table,[_] */\
-												/*  prints the indicated string */\
-SIPOP(println_op, 166, "println", true)  		/*  _,_,index in string table,[_] */\
-												/*  prints the indicated string followed by \n */\
-SIPOP(print_index_op, 167, "print_index", true)	/*  _,_,index_table slot of index to print */\
-SIPOP(print_scalar_op, 168, "print_scalar", true) 	/*  _,_,array_table slot of scalar to print */\
-SIPOP(assign_scalar_op, 169, "assign_scalar", true) 	/*  not used */\
-SIPOP(assign_block_op, 170, "assign_block", true)  	/*  not used */\
-SIPOP(assign_fill_op, 180, "assign_fill", true)  		/*  not used */\
-SIPOP(assign_transpose_op, 181, "assign_transpose", true) /*  not used */\
-SIPOP(dosubindex_op, 182, "dosubindex", true)  		/*  _,_,_,[index_slot,_..] */\
-SIPOP(enddosubindex_op, 183, "enddosubindex", true)	/* _,_,_,[_] */\
-												/*  obtains data from control_stack and loop_manager_stack. */\
-												/*  see loop_start and loop_end methods in Interpreter */\
-SIPOP(slice_op, 184, "slice", false) 			/*  slot in array_table for rhs,_,slot in array table for lhs,[_] */\
-												/*  expects selector for rhs block on block_selector_stack */\
-												/*  expects selector for lhs block on block_selector_stack */\
-SIPOP(insert_op, 185, "insert", false) 			/*  _,_,slot in array table for lhs,[_] */\
-												/*  expects selector for rhs on block_selector_stack */\
-												/*  expects selector for lhs block on block_selector_stack */\
-SIPOP(sip_barrier_op, 186, "sip_barrier", true) /* _,_,_,[_] */\
-SIPOP(server_barrier_op, 187, "server_barrier", true) /* _,_,_,[_] */\
-SIPOP(gpu_on_op, 188, "gpu_on", false)  		/* _,_,_,[_] */\
-SIPOP(gpu_off_op, 189, "gpu_off", false)  		/* _,_,_,[_] */\
-SIPOP(gpu_allocate_op, 190, "gpu_allocate", true)/* _,_,_,[_] */\
-											   	/*  expects selector on block_selector_stack */\
-SIPOP(gpu_free_op, 191, "gpu_free", true)  		/* _,_,_,[_] */\
-												/*  expects selector on block_selector_stack */\
-SIPOP(gpu_put_op, 192, "gpu_put", true)   		/* _,_,_,[_] */\
-												/*  expects selector on block_selector_stack */\
-SIPOP(gpu_get_op, 193, "gpu_get", true)   		/* _,_,_,[_] */\
-												/*  expects selector on block_selector_stack */\
-SIPOP(set_persistent_op, 194, "set_persistent", true)  			/*  slot in string_table for name, _ , array_table slot, [_] */\
-SIPOP(restore_persistent_op, 195, "restore_persistent", true) 	/*  slot in string_table for name, _ , array_table slot, [_] */\
+SIPOP(goto_op,100,"goto",false)\
+SIPOP(jump_if_zero_op,101,"jump_if_zero",false)\
+SIPOP(stop_op,102,"stop",false)\
+SIPOP(call_op,103,"call",false)\
+SIPOP(return_op,104,"return",false)\
+SIPOP(execute_op,105,"execute",false)\
+SIPOP(do_op,106,"do",false)\
+SIPOP(enddo_op,107,"enddo",false)\
+SIPOP(dosubindex_op,108,"dosubindex",false)\
+SIPOP(enddosubindex_op,109,"enddosubindex",false)\
+SIPOP(exit_op,110,"exit",false)\
+SIPOP(where_op,111,"where",false)\
+SIPOP(pardo_op,112,"pardo",false)\
+SIPOP(endpardo_op,113,"endpardo",false)\
+SIPOP(begin_pardo_section_op,114,"begin_pardo_section",false)\
+SIPOP(end_pardo_section_op,115,"end_pardo_section",false)\
+SIPOP(sip_barrier_op,116,"sip_barrier",false)\
+SIPOP(broadcast_static_op,117,"broadcast_static",false)\
+SIPOP(push_block_selector_op,118,"push_block_selector",false)\
+SIPOP(allocate_op,119,"allocate",false)\
+SIPOP(deallocate_op,120,"deallocate",false)\
+SIPOP(allocate_contiguous_op,121,"allocate_contiguous",false)\
+SIPOP(deallocate_contiguous_op,122,"deallocate_contiguous",false)\
+SIPOP(get_op,123,"get",false)\
+SIPOP(put_accumulate_op,124,"put_accumulate",false)\
+SIPOP(put_replace_op,125,"put_replace",false)\
+SIPOP(create_op,126,"create",false)\
+SIPOP(delete_op,127,"delete",false)\
+SIPOP(int_load_value_op,128,"int_load_value",false)\
+SIPOP(int_load_literal_op,129,"int_load_literal",false)\
+SIPOP(int_store_op,130,"int_store",false)\
+SIPOP(index_load_value_op,131,"index_load_value",false)\
+SIPOP(int_add_op,132,"int_add",false)\
+SIPOP(int_subtract_op,133,"int_subtract",false)\
+SIPOP(int_multiply_op,134,"int_multiply",false)\
+SIPOP(int_divide_op,135,"int_divide",false)\
+SIPOP(int_equal_op,136,"int_equal",false)\
+SIPOP(int_nequal_op,137,"int_nequal",false)\
+SIPOP(int_ge_op,138,"int_ge",false)\
+SIPOP(int_le_op,139,"int_le",false)\
+SIPOP(int_gt_op,140,"int_gt",false)\
+SIPOP(int_lt_op,141,"int_lt",false)\
+SIPOP(int_neg_op,142,"int_neg",false)\
+SIPOP(cast_to_int_op,143,"cast_to_int",false)\
+SIPOP(scalar_load_value_op,144,"scalar_load_value",false)\
+SIPOP(scalar_store_op,145,"scalar_store",false)\
+SIPOP(scalar_add_op,146,"scalar_add",false)\
+SIPOP(scalar_subtract_op,147,"scalar_subtract",false)\
+SIPOP(scalar_multiply_op,148,"scalar_multiply",false)\
+SIPOP(scalar_divide_op,149,"scalar_divide",false)\
+SIPOP(scalar_exp_op,150,"scalar_exp",false)\
+SIPOP(scalar_eq_op,151,"scalar_eq",false)\
+SIPOP(scalar_ne_op,152,"scalar_ne",false)\
+SIPOP(scalar_ge_op,153,"scalar_ge",false)\
+SIPOP(scalar_le_op,154,"scalar_le",false)\
+SIPOP(scalar_gt_op,155,"scalar_gt",false)\
+SIPOP(scalar_lt_op,156,"scalar_lt",false)\
+SIPOP(scalar_neg_op,157,"scalar_neg",false)\
+SIPOP(scalar_sqrt_op,158,"scalar_sqrt",false)\
+SIPOP(cast_to_scalar_op,159,"cast_to_scalar",false)\
+SIPOP(collective_sum_op,160,"collective_sum",false)\
+SIPOP(assert_same_op,161,"assert_same",false)\
+SIPOP(tensor_op,162,"tensor",false)\
+SIPOP(block_copy_op,163,"block_copy",false)\
+SIPOP(block_permute_op,164,"block_permute",false)\
+SIPOP(fill_block_op,165,"fill_block",false)\
+SIPOP(scale_block_op,166,"scale_block",false)\
+SIPOP(accumulate_scalar_into_block_op,167,"accumulate_scalar_into_block",false)\
+SIPOP(block_add_op,168,"block_add",false)\
+SIPOP(block_subtract_op,169,"block_subtract",false)\
+SIPOP(block_contract_op,170,"block_contract",false)\
+SIPOP(block_contract_accumulate_op,171,"block_contract_accumulate",false)\
+SIPOP(block_contract_to_scalar_op,172,"block_contract_to_scalar",false)\
+SIPOP(block_load_scalar_op,173,"block_load_scalar",false)\
+SIPOP(slice_op,174,"slice",false)\
+SIPOP(insert_op,175,"insert",false)\
+SIPOP(string_load_literal_op,176,"string_load_literal",false)\
+SIPOP(print_string_op,177,"print_string",false)\
+SIPOP(println_op,178,"println",false)\
+SIPOP(print_index_op,179,"print_index",false)\
+SIPOP(print_scalar_op,180,"print_scalar",false)\
+SIPOP(print_int_op,181,"print_int",false)\
+SIPOP(gpu_on_op,182,"gpu_on",false)\
+SIPOP(gpu_off_op,183,"gpu_off",false)\
+SIPOP(gpu_allocate_op,184,"gpu_allocate",false)\
+SIPOP(gpu_free_op,185,"gpu_free",false)\
+SIPOP(gpu_put_op,186,"gpu_put",false)\
+SIPOP(gpu_get_op,187,"gpu_get",false)\
+SIPOP(gpu_get_int_op,188,"gpu_get_int",false)\
+SIPOP(gpu_put_int_op,189,"gpu_put_int",false)\
+SIPOP(set_persistent_op,190,"set_persistent",false)\
+SIPOP(restore_persistent_op,191,"restore_persistent",false)\
+SIPOP(idup_op,192,"idup",false)\
+SIPOP(iswap_op,193,"iswap",false)\
+SIPOP(sswap_op,194,"sswap",false)\
+SIPOP(invalid_op,195,"invalid",false)\
 
 enum opcode_t {
 #define SIPOP(e,n,t,p) e = n,
-	SIP_OPCODES
+				SIP_OPCODES
 #undef SIPOP
-	last_opcode
-};
+				last_op
+			};
 
-/**
- * Converts an opcode to it's string equivalent
- * @param
- * @return
- */
-std::string opcodeToName(opcode_t);
-
-/**
- * Converts an integer to an opcode
- * @param
- * @return
- */
-opcode_t intToOpcode(int);
-
-/**
- * Whether a certain opcode is printable
- * @param
- * @return
- */
-bool printableOpcode(opcode_t);
-
-
-} /* namespace sip */
-
+			/**
+			 * Converts an opcode to it's string equivalent
+			 * @param
+			 * @return
+			 */
+			std::string opcodeToName(opcode_t);
+			/**
+			 * Converts an integer to an opcode
+			 * @param
+			 * @return
+			 */
+			opcode_t intToOpcode(int);
+			/**
+			 * Whether a certain opcode is printable
+			 * @param
+			 * @return
+			 */
+			bool printableOpcode(opcode_t);
+			} /* namespace sip */
 #endif /* OPCODE_H_ */

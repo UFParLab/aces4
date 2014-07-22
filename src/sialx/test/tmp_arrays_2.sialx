@@ -2,29 +2,29 @@ sial tmp_arrays_2
 	special list_block_map
 	special print_block r
 	predefined int norb
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	temp a(i,j)
-	temp b(i,j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	temp a[i,j]
+	temp b[i,j]
 	
 	do i
 		print "in do i"
-		print_index i
+		print i
 		do j
 			print "in do j "
-			print_index j
+			print j
 			
-			a(i,j) = 42.0
+			a[i,j] = 42.0
 			println "all elements of a(i,j) should be 42"
-			execute print_block a(i,j)
+			execute print_block a[i,j]
 			
-			b(i,j) = 55.0
+			b[i,j] = 55.0
 			println "all elements of b(i,j) should be 55"
-			execute print_block b(i,j)
+			execute print_block b[i,j]
 			
-			b(i,j) = a(i,j)
+			b[i,j] = a[i,j]
 			println "all elements of b(i,j) should be 42"
-			execute print_block b(i,j)
+			execute print_block b[i,j]
 			
 			#execute list_block_map
 		enddo j

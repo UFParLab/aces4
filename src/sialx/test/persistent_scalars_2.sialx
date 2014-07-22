@@ -6,18 +6,18 @@ sial persistent_scalars_2
 	scalar e
 	
 	x = 3.456
-	print_scalar x
-	print_scalar y
+	print x
+	print y
 	z = x
 	zz = 99.99
 	
-	print_scalar z
-	print_scalar zz
+	print z
+	print zz
 	
 	restore_persistent e "saved_e"
 #	restore_persistent x "saved_x"
-	x = x + 1
+	x = x + 1.0
 	println "e should be 6"
-	print_scalar e
-	print_scalar x
+	print e
+	print x
 endsial persistent_scalars_2

@@ -4,31 +4,31 @@ sial assign_to_static_array_test
 	special print_block r
 	special print_static_array r
 	special swap_blocks uu
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	static a(i,j)
-	static b(i,j)
-	distributed d(i,j)
-	temp t(i, j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	static a[i,j]
+	static b[i,j]
+	distributed d[i,j]
+	temp t[i, j]
 
 	pardo i, j
-		execute fill_block_sequential t(i, j) 1.0
-		put d(i, j) = t(i, j)
-		execute fill_block_sequential b(i,j) 1001.0
+		execute fill_block_sequential t[i, j] 1.0
+		put d[i, j] = t[i, j]
+		execute fill_block_sequential b[i,j] 1001.0
 	endpardo i, j
 	
 	do i
 		do j
-			get d(i, j)
-			a(i,j) = d(i,j)
+			get d[i, j]
+			a[i,j] = d[i,j]
 		enddo j
 	enddo i
 	
 	
 	do i
 		do j
-			a(i,j) *= 2
-			execute swap_blocks a(i,j) a(i,j)
+			a[i,j] *= 2.0
+			execute swap_blocks a[i,j] a[i,j]
 		enddo j
 	enddo i
 	

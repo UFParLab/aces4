@@ -11,7 +11,7 @@
 namespace sip {
 
 opcode_t intToOpcode(int opcode) {
-	if (101 <= opcode && opcode < last_opcode) {
+	if (goto_op <= opcode && opcode < invalid_op) {
 		return (opcode_t) opcode;
 	}
 	throw std::domain_error("illegal opcode value");

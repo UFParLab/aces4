@@ -75,545 +75,545 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		sip::check(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 		switch (opcode) {
-		case contraction_op: {
-			sialx_timers_.start_timer(line_number());
-			sial_ops_.log_statement(opcode, line_number());
-			handle_contraction_op(pc);
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
+//		case contraction_op: {
+//			sialx_timers_.start_timer(line_number());
+//			sial_ops_.log_statement(opcode, line_number());
+//			handle_contraction_op(pc);
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case sum_op: {
+//			sialx_timers_.start_timer(line_number());
+//			sial_ops_.log_statement(opcode, line_number());
+//			handle_sum_op(pc, 1.0);
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case push_block_selector_op: { //push a block selector on the block_selector_stack to be used in subsequent instructions
+//			int array_id = op_table_.result_array(pc);
+//			int rank = op_table_.op1_array(pc); //this is the rank.  Should rename the optable entry fields.  These are inherited from aces3.
+//			block_selector_stack_.push(
+//					sip::BlockSelector(array_id, rank,
+//							op_table_.index_selectors(pc)));
+//			++pc;
+//		}
+//			break;
+//		case do_op: {
+//			int index_slot = op_table_.do_index_selector(pc);
+//			LoopManager* loop = new DoLoop(index_slot, data_manager_,
+//					sip_tables_);
+//			loop_start(loop);
+//		}
+//			break;
+//		case enddo_op: {
+//			loop_end();
+//		}
+//			break;
+//		case get_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sip::BlockId id = get_block_id_from_selector_stack();
+//			sial_ops_.get(id);
+//
+////Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
+////std::cout << "GET (" << line_number() << ") " << id << "\t" << *block << std::endl;
+//
+//			++pc;
+//		}
+//			break;
+//		case user_sub_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			handle_user_sub_op(pc);
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case put_op: { //this is instruction put a(...) += b(...)
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
+//					true);
+//			sip::BlockId lhs_id = get_block_id_from_selector_stack();
+//			sial_ops_.put_accumulate(lhs_id, rhs_block);
+//			sialx_timers_.pause_timer(line_number());
+//
+////std::cout << "PUT_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+//			++pc;
+//		}
+//			break;
+		case goto_op: {
+			pc = op_table_.arg0(pc);
 		}
 			break;
-		case sum_op: {
-			sialx_timers_.start_timer(line_number());
-			sial_ops_.log_statement(opcode, line_number());
-			handle_sum_op(pc, 1.0);
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case push_block_selector_op: { //push a block selector on the block_selector_stack to be used in subsequent instructions
-			int array_id = op_table_.result_array(pc);
-			int rank = op_table_.op1_array(pc); //this is the rank.  Should rename the optable entry fields.  These are inherited from aces3.
-			block_selector_stack_.push(
-					sip::BlockSelector(array_id, rank,
-							op_table_.index_selectors(pc)));
-			++pc;
-		}
-			break;
-		case do_op: {
-			int index_slot = op_table_.do_index_selector(pc);
-			LoopManager* loop = new DoLoop(index_slot, data_manager_,
-					sip_tables_);
-			loop_start(loop);
-		}
-			break;
-		case enddo_op: {
-			loop_end();
-		}
-			break;
-		case get_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sip::BlockId id = get_block_id_from_selector_stack();
-			sial_ops_.get(id);
-
-//Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
-//std::cout << "GET (" << line_number() << ") " << id << "\t" << *block << std::endl;
-
-			++pc;
-		}
-			break;
-		case user_sub_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			handle_user_sub_op(pc);
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case put_op: { //this is instruction put a(...) += b(...)
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
-					true);
-			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_accumulate(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
-
-//std::cout << "PUT_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
-			++pc;
-		}
-			break;
-		case go_to_op: {
-			pc = op_table_.go_to_target(pc);
-		}
-			break;
-		case create_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			int array_id = sip_tables_.op_table_.result_array(pc);
-			sial_ops_.create_distributed(array_id);
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case delete_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			int array_id = sip_tables_.op_table_.result_array(pc);
-			sial_ops_.delete_distributed(array_id);
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case call_op: {  //compiler ensures every subroutine has return_op
-			sial_ops_.log_statement(opcode, line_number());
-			int target = op_table_.result_array(pc);
-			control_stack_.push(pc + 1);
-			pc = target;
-		}
-			break;
-		case return_op: {
-			pc = control_stack_.top();
-			control_stack_.pop();
-		}
-			break;
-		case jz_op: {
-			int result = control_stack_.top();
-			control_stack_.pop();
-			if (result == 0)
-				pc = op_table_.result_array(pc);
-			else
-				++pc;
-		}
-			break;
-		case stop_op: {
-			sip::check(false, "stop command aborted program.");
-		}
-			break;
-//        case sp_add_op : break;  NOT USED in either original or new acesiii compiler, so we don't use here either until int type added
-//        case sp_sub_op: break;   NOT USED in either original or new acesiii compiler
-//        case sp_mult_op: break;  NOT USED in either original or new acesiii compiler
-//        case sp_div_op: break;   NOT USED in either original or new acesiii compiler
-		case sp_equal_op:
-			//fallthrough all int rel expr evaluated the same way
-		case sp_nequal_op:
-			//fallthrough
-		case sp_ge_op:
-			//fallthrough
-		case sp_le_op:
-			//fallthrough
-		case sp_gt_op:
-			//fallthrough
-		case sp_lt_op: {
-			bool result;
-			result = evaluate_int_relational_expr(pc);
-			control_stack_.push(result);
-			++pc;
-		}
-			break;
-		case sp_ldi_op: { //push int literal value, which is stored in the instruction itself.
-			int value = op_table_.op1_array(pc);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case sp_ldindex_op: { //push index value onto control stack.  Only uses opcode and op1_array entries.  "legacy fields" are ignored.
-			int index_slot = op_table_.op1_array(pc);
-			int value = index_value(index_slot);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case pardo_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			int num_indices = op_table_.num_indices(pc);
-#ifdef HAVE_MPI
-			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(
-					num_indices, op_table_.index_selectors(pc), data_manager_,
-					sip_tables_, SIPMPIAttr::get_instance());
-#else
-			LoopManager* loop = new SequentialPardoLoop(num_indices,
-					op_table_.index_selectors(pc), data_manager_, sip_tables_);
-#endif
-			loop_start(loop);
-		}
-			break;
-		case endpardo_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			loop_end();
-		}
-			break;
-		case exit_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			loop_manager_stack_.top()->set_to_exit();
-			pc = control_stack_.top();
-		}
-			break;
-		case assignment_op:
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			// x = y
-			handle_assignment_op(pc);
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-			break;
-		case cycle_op: {
-			sip::check(false, "cycle command not implemented");
-		}
-			break;
-		case self_multiply_op: { // *= scalar  The compiler should generate better code for this
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			handle_self_multiply_op(pc);
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case subtract_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			handle_sum_op(pc, -1.0); // (x = y - z) is computed as x = y + (z * -1)
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case collective_sum_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			int target_array_slot = op_table_.result_array(pc);
-			int source_array_slot = op_table_.op1_array(pc);
-			sial_ops_.collective_sum(source_array_slot, target_array_slot);
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case divide_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			int darray = op_table_.result_array(pc);
-			int drank = sip_tables_.array_rank(darray);
-			int larray = op_table_.op1_array(pc);
-			int lrank = sip_tables_.array_rank(larray);
-			int rarray = op_table_.op2_array(pc);
-			int rrank = sip_tables_.array_rank(rarray);
-			check(lrank == 0 && rrank == 0 && drank == 0,
-					"divide only defined for scalars");
-			double denom = scalar_value(rarray);
-			double numer = scalar_value(larray);
-			sip::check(denom != 0, "Dividing by 0!", line_number());
-			double div = numer / denom;
-			set_scalar_value(darray, div);
-			++pc;
-		}
-			break;
-
-		case prepare_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
-			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.prepare(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
-
-//std::cout << "PREPARE_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
-
-			++pc;
-		}
-			break;
-		case request_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			sip::BlockId id = get_block_id_from_selector_stack();
-			sial_ops_.request(id);
-			sialx_timers_.pause_timer(line_number());
-//Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
-//std::cout << "REQUEST (" << line_number() << ") " << id << "\t" << *block << std::endl;
-			++pc;
-		}
-			break;
-		case put_replace_op: {  // put a(...) = b(...)
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
-			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_replace(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
-//std::cout << "PUT_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
-
-			++pc;
-		}
-			break;
-		case tensor_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			handle_contraction_op(pc);
-			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-//        case fl_add_op: break;  NOT USED in either original or new acesiii compiler, so we don't use here either
-//        case fl_sub_op: break;  NOT USED in either original or new acesiii compiler, so we don't use here either
-//        case fl_mult_op: break; NOT USED in either original or new acesiii compiler, so we don't use here either
-//        case fl_div_op: break;  NOT USED in either original or new acesiii compiler, so we don't use here either
-		case fl_eq_op: //fallthrough.  All relational exprs handled the same way.
-		case fl_ne_op: //fallthrough
-		case fl_ge_op: //fallthrough
-		case fl_le_op: //fallthrough
-		case fl_gt_op: //fallthrough
-		case fl_lt_op: { //evaluate the expression (with operands from the expr stack) and push the result
-						 //onto the control stack;
-			bool result;
-			result = evaluate_double_relational_expr(pc);
-			control_stack_.push(result);
-			++pc;
-		}
-			break;
-		case fl_load_value_op: { //look up value in scalar table and push onto the stack
-			int array_table_slot = op_table_.op1_array(pc);
-			double value = scalar_value(array_table_slot);
-			expression_stack_.push(value);
-			++pc;
-		}
-			break;
-		case prepare_increment_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
-					true);
-			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.prepare_accumulate(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
-//std::cout << "PREPARE_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
-
-			++pc;
-		}
-			break;
-		case allocate_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			int array_table_slot = op_table_.result_array(pc);
-			int rank = sip_tables_.array_rank(array_table_slot);
-			const sip::index_selector_t& index_array =
-					op_table_.index_selectors(pc);
-			sip::BlockId id = block_id(
-					sip::BlockSelector(array_table_slot, rank, index_array));
-			data_manager_.block_manager_.allocate_local(id);
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case deallocate_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			int array_table_slot = op_table_.result_array(pc);
-			int rank = sip_tables_.array_rank(array_table_slot);
-			const sip::index_selector_t& index_array =
-					op_table_.index_selectors(pc);
-			sip::BlockId id = block_id(
-					sip::BlockSelector(array_table_slot, rank, index_array));
-			data_manager_.block_manager_.deallocate_local(id);
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case sp_ldi_sym_op: { //loads int (aces symbolic constant) onto the control stack
-			int int_table_slot = op_table_.op1_array(pc);
-			int value = int_value(int_table_slot);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case destroy_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			int array_id = sip_tables_.op_table_.result_array(pc);
-			sial_ops_.destroy_served(array_id);
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-		case prequest_op: {
-			sip::check(false, "prequest statement not implemented");
-		}
-			break;
-		case where_op: {
-			if (evaluate_where_clause(pc)) {
-				++pc;
-			} else {
-				pc = control_stack_.top(); //note that this must be in a loop, the enddo (or endX) instruction will pop the value.
-			}
-		}
-			break;
-		case print_op: {
-			int string_slot = op_table_.print_index(pc);
-			//std::cout << string_literal(string_slot) << std::flush;
-			sial_ops_.print_to_ostream(out_,string_literal(string_slot));
-			++pc;
-		}
-			break;
-		case println_op: {
-			int string_slot = op_table_.print_index(pc);
-			//std::cout << string_literal(string_slot) << std::endl << std::flush;
-			std::stringstream ss ;
-			ss << string_literal(string_slot) << std::endl;
-			sial_ops_.print_to_ostream(out_, ss.str());
-			++pc;
-		}
-			break;
-		case print_index_op: {
-			int index_slot = op_table_.print_index(pc);
-			//std::cout << index_value_to_string(index_slot) << std::endl << std::flush;
-			std::stringstream ss ;
-			ss << index_value_to_string(index_slot) << std::endl;
-			sial_ops_.print_to_ostream(out_, ss.str());
-			++pc;
-		}
-			break;
-		case print_scalar_op: {
-			int array_table_slot = op_table_.print_index(pc);
-			double value = scalar_value(array_table_slot);
-			std::string name = sip_tables_.array_name(array_table_slot);
-			const std::streamsize old = std::cout.precision();
-			std::stringstream ss;
-			ss.precision(20);
-			ss << name << " = " << value << " at line " << op_table_.line_number(pc) << std::endl;
-			//std::cout << name << " = " << std::setprecision(20) << value
-			//		<< " at line " << op_table_.line_number(pc) << std::endl
-			//		<< std::flush;
-			sial_ops_.print_to_ostream(out_,ss.str());
-			//std::cout.precision(old);
-			++pc;
-		}
-			break;
-		case dosubindex_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			int index_slot = op_table_.do_index_selector(pc);
-			LoopManager* loop = new SubindexDoLoop(index_slot, data_manager_,
-					sip_tables_);
-			loop_start(loop);
-		}
-			break;
-		case enddosubindex_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			loop_end();
-		}
-			break;
-		case slice_op: {
-			handle_slice_op(pc);
-			//write_back_contiguous();
-			++pc;
-		}
-			break;
-		case insert_op: {
-			handle_insert_op(pc);
-			++pc;
-		}
-			break;
-		case sip_barrier_op: //fallthrough. server and sip barriers the same
-		case server_barrier_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
-			sial_ops_.sip_barrier();
-			sialx_timers_.pause_timer(line_number());
-			++pc;
-		}
-			break;
-#ifdef HAVE_CUDA
-			case gpu_on_op: {
-				sial_ops_.log_statement(opcode, line_number());
-				gpu_enabled_= true;
-				++pc;
-			}
-			break;
-			case gpu_off_op: {
-				sial_ops_.log_statement(opcode, line_number());
-				gpu_enabled_ = false;
-				++pc;
-			}
-			break;
-			case gpu_allocate_op: {
-				sial_ops_.log_statement(opcode, line_number());
-				if (gpu_enabled_) {
-					sialx_timers_.start_timer(line_number());
-					get_gpu_block('w');
-					sialx_timers_.pause_timer(line_number());
-
-				}
-				++pc;
-			}
-			break;
-			case gpu_free_op: {
-				sial_ops_.log_statement(opcode, line_number());
-				if (gpu_enabled_) {
-					sialx_timers_.start_timer(line_number());
-					sip::Block::BlockPtr blk = get_gpu_block('w');
-					blk->free_gpu_data();
-					sialx_timers_.pause_timer(line_number());
-				}
-				++pc;
-			}
-			break;
-			case gpu_put_op: {
-				sial_ops_.log_statement(opcode, line_number());
-				if (gpu_enabled_) {
-					sialx_timers_.start_timer(line_number());
-					get_gpu_block('w'); // TOOD FIXME Temporary solution
-					sialx_timers_.pause_timer(line_number());
-					++pc;
-				}
-				break;
-				case gpu_get_op: {
-					sial_ops_.log_statement(opcode, line_number());
-					if (gpu_enabled_) {
-						sialx_timers_.start_timer(line_number());
-						get_block_from_selector_stack('r'); //TODO FIXME Temporary solution
-						sialx_timers_.pause_timer(line_number());
-					}
-					++pc;
-				}
-				break;
-			}
-#else
-		case gpu_on_op:
-		case gpu_off_op:
-		case gpu_allocate_op:
-		case gpu_free_op:
-		case gpu_put_op:
-		case gpu_get_op:
-			sial_ops_.log_statement(opcode, line_number());
-			sip::check_and_warn(false,
-					"No CUDA Support, ignoring GPU instruction at line ",
-					line_number());
-			++pc;
-			break;
-
-#endif //HAVE_CUDA
-		case set_persistent_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			int array_slot = op_table_.result_array(pc);
-			int string_slot = op_table_.op1_array(pc);
-			SIP_LOG(
-					std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot << " and string \"" << string_literal(string_slot) << "\"" << std::endl;)
-			sial_ops_.set_persistent(this, array_slot, string_slot);
-			++pc;
-		}
-			break;
-		case restore_persistent_op: {
-			sial_ops_.log_statement(opcode, line_number());
-			int array_slot = op_table_.result_array(pc);
-			int string_slot = op_table_.op1_array(pc);
-			SIP_LOG(
-					std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot << " and string \"" << string_literal(string_slot) << "\"" << std::endl;)
-			sial_ops_.restore_persistent(this, array_slot, string_slot);
-			++pc;
-		}
-			break;
+//		case create_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			int array_id = sip_tables_.op_table_.result_array(pc);
+//			sial_ops_.create_distributed(array_id);
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case delete_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			int array_id = sip_tables_.op_table_.result_array(pc);
+//			sial_ops_.delete_distributed(array_id);
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case call_op: {  //compiler ensures every subroutine has return_op
+//			sial_ops_.log_statement(opcode, line_number());
+//			int target = op_table_.result_array(pc);
+//			control_stack_.push(pc + 1);
+//			pc = target;
+//		}
+//			break;
+//		case return_op: {
+//			pc = control_stack_.top();
+//			control_stack_.pop();
+//		}
+//			break;
+//		case jz_op: {
+//			int result = control_stack_.top();
+//			control_stack_.pop();
+//			if (result == 0)
+//				pc = op_table_.result_array(pc);
+//			else
+//				++pc;
+//		}
+//			break;
+//		case stop_op: {
+//			sip::check(false, "stop command aborted program.");
+//		}
+//			break;
+////        case sp_add_op : break;  NOT USED in either original or new acesiii compiler, so we don't use here either until int type added
+////        case sp_sub_op: break;   NOT USED in either original or new acesiii compiler
+////        case sp_mult_op: break;  NOT USED in either original or new acesiii compiler
+////        case sp_div_op: break;   NOT USED in either original or new acesiii compiler
+//		case sp_equal_op:
+//			//fallthrough all int rel expr evaluated the same way
+//		case sp_nequal_op:
+//			//fallthrough
+//		case sp_ge_op:
+//			//fallthrough
+//		case sp_le_op:
+//			//fallthrough
+//		case sp_gt_op:
+//			//fallthrough
+//		case sp_lt_op: {
+//			bool result;
+//			result = evaluate_int_relational_expr(pc);
+//			control_stack_.push(result);
+//			++pc;
+//		}
+//			break;
+//		case sp_ldi_op: { //push int literal value, which is stored in the instruction itself.
+//			int value = op_table_.op1_array(pc);
+//			control_stack_.push(value);
+//			++pc;
+//		}
+//			break;
+//		case sp_ldindex_op: { //push index value onto control stack.  Only uses opcode and op1_array entries.  "legacy fields" are ignored.
+//			int index_slot = op_table_.op1_array(pc);
+//			int value = index_value(index_slot);
+//			control_stack_.push(value);
+//			++pc;
+//		}
+//			break;
+//		case pardo_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			int num_indices = op_table_.num_indices(pc);
+//#ifdef HAVE_MPI
+//			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(
+//					num_indices, op_table_.index_selectors(pc), data_manager_,
+//					sip_tables_, SIPMPIAttr::get_instance());
+//#else
+//			LoopManager* loop = new SequentialPardoLoop(num_indices,
+//					op_table_.index_selectors(pc), data_manager_, sip_tables_);
+//#endif
+//			loop_start(loop);
+//		}
+//			break;
+//		case endpardo_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			loop_end();
+//		}
+//			break;
+//		case exit_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			loop_manager_stack_.top()->set_to_exit();
+//			pc = control_stack_.top();
+//		}
+//			break;
+//		case assignment_op:
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			// x = y
+//			handle_assignment_op(pc);
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//			break;
+//		case cycle_op: {
+//			sip::check(false, "cycle command not implemented");
+//		}
+//			break;
+//		case self_multiply_op: { // *= scalar  The compiler should generate better code for this
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			handle_self_multiply_op(pc);
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case subtract_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			handle_sum_op(pc, -1.0); // (x = y - z) is computed as x = y + (z * -1)
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case collective_sum_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			int target_array_slot = op_table_.result_array(pc);
+//			int source_array_slot = op_table_.op1_array(pc);
+//			sial_ops_.collective_sum(source_array_slot, target_array_slot);
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case divide_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			int darray = op_table_.result_array(pc);
+//			int drank = sip_tables_.array_rank(darray);
+//			int larray = op_table_.op1_array(pc);
+//			int lrank = sip_tables_.array_rank(larray);
+//			int rarray = op_table_.op2_array(pc);
+//			int rrank = sip_tables_.array_rank(rarray);
+//			check(lrank == 0 && rrank == 0 && drank == 0,
+//					"divide only defined for scalars");
+//			double denom = scalar_value(rarray);
+//			double numer = scalar_value(larray);
+//			sip::check(denom != 0, "Dividing by 0!", line_number());
+//			double div = numer / denom;
+//			set_scalar_value(darray, div);
+//			++pc;
+//		}
+//			break;
+//
+//		case prepare_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
+//			sip::BlockId lhs_id = get_block_id_from_selector_stack();
+//			sial_ops_.prepare(lhs_id, rhs_block);
+//			sialx_timers_.pause_timer(line_number());
+//
+////std::cout << "PREPARE_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+//
+//			++pc;
+//		}
+//			break;
+//		case request_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			sip::BlockId id = get_block_id_from_selector_stack();
+//			sial_ops_.request(id);
+//			sialx_timers_.pause_timer(line_number());
+////Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
+////std::cout << "REQUEST (" << line_number() << ") " << id << "\t" << *block << std::endl;
+//			++pc;
+//		}
+//			break;
+//		case put_replace_op: {  // put a(...) = b(...)
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
+//			sip::BlockId lhs_id = get_block_id_from_selector_stack();
+//			sial_ops_.put_replace(lhs_id, rhs_block);
+//			sialx_timers_.pause_timer(line_number());
+////std::cout << "PUT_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+//
+//			++pc;
+//		}
+//			break;
+//		case tensor_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			handle_contraction_op(pc);
+//			contiguous_blocks_post_op();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+////        case fl_add_op: break;  NOT USED in either original or new acesiii compiler, so we don't use here either
+////        case fl_sub_op: break;  NOT USED in either original or new acesiii compiler, so we don't use here either
+////        case fl_mult_op: break; NOT USED in either original or new acesiii compiler, so we don't use here either
+////        case fl_div_op: break;  NOT USED in either original or new acesiii compiler, so we don't use here either
+//		case fl_eq_op: //fallthrough.  All relational exprs handled the same way.
+//		case fl_ne_op: //fallthrough
+//		case fl_ge_op: //fallthrough
+//		case fl_le_op: //fallthrough
+//		case fl_gt_op: //fallthrough
+//		case fl_lt_op: { //evaluate the expression (with operands from the expr stack) and push the result
+//						 //onto the control stack;
+//			bool result;
+//			result = evaluate_double_relational_expr(pc);
+//			control_stack_.push(result);
+//			++pc;
+//		}
+//			break;
+//		case fl_load_value_op: { //look up value in scalar table and push onto the stack
+//			int array_table_slot = op_table_.op1_array(pc);
+//			double value = scalar_value(array_table_slot);
+//			expression_stack_.push(value);
+//			++pc;
+//		}
+//			break;
+//		case prepare_increment_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
+//					true);
+//			sip::BlockId lhs_id = get_block_id_from_selector_stack();
+//			sial_ops_.prepare_accumulate(lhs_id, rhs_block);
+//			sialx_timers_.pause_timer(line_number());
+////std::cout << "PREPARE_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
+//
+//			++pc;
+//		}
+//			break;
+//		case allocate_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			int array_table_slot = op_table_.result_array(pc);
+//			int rank = sip_tables_.array_rank(array_table_slot);
+//			const sip::index_selector_t& index_array =
+//					op_table_.index_selectors(pc);
+//			sip::BlockId id = block_id(
+//					sip::BlockSelector(array_table_slot, rank, index_array));
+//			data_manager_.block_manager_.allocate_local(id);
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case deallocate_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			int array_table_slot = op_table_.result_array(pc);
+//			int rank = sip_tables_.array_rank(array_table_slot);
+//			const sip::index_selector_t& index_array =
+//					op_table_.index_selectors(pc);
+//			sip::BlockId id = block_id(
+//					sip::BlockSelector(array_table_slot, rank, index_array));
+//			data_manager_.block_manager_.deallocate_local(id);
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case sp_ldi_sym_op: { //loads int (aces symbolic constant) onto the control stack
+//			int int_table_slot = op_table_.op1_array(pc);
+//			int value = int_value(int_table_slot);
+//			control_stack_.push(value);
+//			++pc;
+//		}
+//			break;
+//		case destroy_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			int array_id = sip_tables_.op_table_.result_array(pc);
+//			sial_ops_.destroy_served(array_id);
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//		case prequest_op: {
+//			sip::check(false, "prequest statement not implemented");
+//		}
+//			break;
+//		case where_op: {
+//			if (evaluate_where_clause(pc)) {
+//				++pc;
+//			} else {
+//				pc = control_stack_.top(); //note that this must be in a loop, the enddo (or endX) instruction will pop the value.
+//			}
+//		}
+//			break;
+//		case print_op: {
+//			int string_slot = op_table_.print_index(pc);
+//			//std::cout << string_literal(string_slot) << std::flush;
+//			sial_ops_.print_to_ostream(out_,string_literal(string_slot));
+//			++pc;
+//		}
+//			break;
+//		case println_op: {
+//			int string_slot = op_table_.print_index(pc);
+//			//std::cout << string_literal(string_slot) << std::endl << std::flush;
+//			std::stringstream ss ;
+//			ss << string_literal(string_slot) << std::endl;
+//			sial_ops_.print_to_ostream(out_, ss.str());
+//			++pc;
+//		}
+//			break;
+//		case print_index_op: {
+//			int index_slot = op_table_.print_index(pc);
+//			//std::cout << index_value_to_string(index_slot) << std::endl << std::flush;
+//			std::stringstream ss ;
+//			ss << index_value_to_string(index_slot) << std::endl;
+//			sial_ops_.print_to_ostream(out_, ss.str());
+//			++pc;
+//		}
+//			break;
+//		case print_scalar_op: {
+//			int array_table_slot = op_table_.print_index(pc);
+//			double value = scalar_value(array_table_slot);
+//			std::string name = sip_tables_.array_name(array_table_slot);
+//			const std::streamsize old = std::cout.precision();
+//			std::stringstream ss;
+//			ss.precision(20);
+//			ss << name << " = " << value << " at line " << op_table_.line_number(pc) << std::endl;
+//			//std::cout << name << " = " << std::setprecision(20) << value
+//			//		<< " at line " << op_table_.line_number(pc) << std::endl
+//			//		<< std::flush;
+//			sial_ops_.print_to_ostream(out_,ss.str());
+//			//std::cout.precision(old);
+//			++pc;
+//		}
+//			break;
+//		case dosubindex_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			int index_slot = op_table_.do_index_selector(pc);
+//			LoopManager* loop = new SubindexDoLoop(index_slot, data_manager_,
+//					sip_tables_);
+//			loop_start(loop);
+//		}
+//			break;
+//		case enddosubindex_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			loop_end();
+//		}
+//			break;
+//		case slice_op: {
+//			handle_slice_op(pc);
+//			//write_back_contiguous();
+//			++pc;
+//		}
+//			break;
+//		case insert_op: {
+//			handle_insert_op(pc);
+//			++pc;
+//		}
+//			break;
+//		case sip_barrier_op: //fallthrough. server and sip barriers the same
+//		case server_barrier_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			sialx_timers_.start_timer(line_number());
+//			sial_ops_.sip_barrier();
+//			sialx_timers_.pause_timer(line_number());
+//			++pc;
+//		}
+//			break;
+//#ifdef HAVE_CUDA
+//			case gpu_on_op: {
+//				sial_ops_.log_statement(opcode, line_number());
+//				gpu_enabled_= true;
+//				++pc;
+//			}
+//			break;
+//			case gpu_off_op: {
+//				sial_ops_.log_statement(opcode, line_number());
+//				gpu_enabled_ = false;
+//				++pc;
+//			}
+//			break;
+//			case gpu_allocate_op: {
+//				sial_ops_.log_statement(opcode, line_number());
+//				if (gpu_enabled_) {
+//					sialx_timers_.start_timer(line_number());
+//					get_gpu_block('w');
+//					sialx_timers_.pause_timer(line_number());
+//
+//				}
+//				++pc;
+//			}
+//			break;
+//			case gpu_free_op: {
+//				sial_ops_.log_statement(opcode, line_number());
+//				if (gpu_enabled_) {
+//					sialx_timers_.start_timer(line_number());
+//					sip::Block::BlockPtr blk = get_gpu_block('w');
+//					blk->free_gpu_data();
+//					sialx_timers_.pause_timer(line_number());
+//				}
+//				++pc;
+//			}
+//			break;
+//			case gpu_put_op: {
+//				sial_ops_.log_statement(opcode, line_number());
+//				if (gpu_enabled_) {
+//					sialx_timers_.start_timer(line_number());
+//					get_gpu_block('w'); // TOOD FIXME Temporary solution
+//					sialx_timers_.pause_timer(line_number());
+//					++pc;
+//				}
+//				break;
+//				case gpu_get_op: {
+//					sial_ops_.log_statement(opcode, line_number());
+//					if (gpu_enabled_) {
+//						sialx_timers_.start_timer(line_number());
+//						get_block_from_selector_stack('r'); //TODO FIXME Temporary solution
+//						sialx_timers_.pause_timer(line_number());
+//					}
+//					++pc;
+//				}
+//				break;
+//			}
+//#else
+//		case gpu_on_op:
+//		case gpu_off_op:
+//		case gpu_allocate_op:
+//		case gpu_free_op:
+//		case gpu_put_op:
+//		case gpu_get_op:
+//			sial_ops_.log_statement(opcode, line_number());
+//			sip::check_and_warn(false,
+//					"No CUDA Support, ignoring GPU instruction at line ",
+//					line_number());
+//			++pc;
+//			break;
+//
+//#endif //HAVE_CUDA
+//		case set_persistent_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			int array_slot = op_table_.result_array(pc);
+//			int string_slot = op_table_.op1_array(pc);
+//			SIP_LOG(
+//					std::cout << "set_persistent with array " << array_name(array_slot) << " in slot " << array_slot << " and string \"" << string_literal(string_slot) << "\"" << std::endl;)
+//			sial_ops_.set_persistent(this, array_slot, string_slot);
+//			++pc;
+//		}
+//			break;
+//		case restore_persistent_op: {
+//			sial_ops_.log_statement(opcode, line_number());
+//			int array_slot = op_table_.result_array(pc);
+//			int string_slot = op_table_.op1_array(pc);
+//			SIP_LOG(
+//					std::cout << "restore_persistent with array " << array_name(array_slot) << " in slot " << array_slot << " and string \"" << string_literal(string_slot) << "\"" << std::endl;)
+//			sial_ops_.restore_persistent(this, array_slot, string_slot);
+//			++pc;
+//		}
+//			break;
 		default: {
 			std::cout << "opcode =" << opcode;
 			check(false, " unimplemented opcode");
@@ -631,7 +631,7 @@ void Interpreter::post_sial_program() {
 }
 
 void Interpreter::handle_user_sub_op(int pc) {
-	int num_args = op_table_.result_array(pc);
+	int num_args = op_table_.arg2(pc);
 	int func_slot = op_table_.user_sub(pc);
 	int ierr = 0;
 	if (num_args == 0) {
@@ -798,13 +798,13 @@ void Interpreter::handle_user_sub_op(int pc) {
 }
 
 void Interpreter::handle_slice_op(int pc) {
-	int lhs = op_table_.result_array(pc); //slot in array table for lhs
+	int lhs = op_table_.arg2(pc); //slot in array table for lhs
 	int rank = sip_tables_.array_table_.rank(lhs);
 	bool is_scope_extent = sip_tables_.is_scope_extent(lhs);
 
 	//get rhs block, offsets, and extents
 	//this is a special case, because we need to get the superblock
-	int rhs = op_table_.op1_array(pc);    //slot in array table for rhs
+	int rhs = op_table_.arg0(pc);    //slot in array table for rhs
 	sip::BlockSelector rhs_selector = block_selector_stack_.top();
 	block_selector_stack_.pop();
 	sip::check(data_manager_.is_subblock(rhs_selector), //at least one index is subindex
@@ -825,7 +825,7 @@ void Interpreter::handle_slice_op(int pc) {
 }
 
 void Interpreter::handle_insert_op(int pc) {
-	int lhs = op_table_.result_array(pc); //slot in array table for lhs
+	int lhs = op_table_.arg2(pc); //slot in array table for lhs
 	int rank = sip_tables_.array_table_.rank(lhs);
 	bool is_scope_extent = sip_tables_.is_scope_extent(lhs);
 
@@ -849,8 +849,8 @@ void Interpreter::handle_insert_op(int pc) {
 }
 
 void Interpreter::handle_assignment_op(int pc) {
-	int lhs = op_table_.result_array(pc); //slot in array table for lhs
-	int rhs = op_table_.op1_array(pc);    //slot in array table for rhs
+	int lhs = op_table_.arg2(pc); //slot in array table for lhs
+	int rhs = op_table_.arg0(pc);    //slot in array table for rhs
 	if (is_scalar(lhs) && is_scalar(rhs)) { //both scalars
 		set_scalar_value(lhs, scalar_value(rhs));
 		return;
@@ -967,11 +967,11 @@ void Interpreter::handle_assignment_op(int pc) {
 void Interpreter::handle_contraction_op(int pc) {
 	//using dmitry's notation, i.e. d = l * r
 	//determine rank of arguments
-	int darray = op_table_.result_array(pc);
+	int darray = op_table_.arg2(pc);
 	int drank = sip_tables_.array_rank(darray);
-	int larray = op_table_.op1_array(pc);
+	int larray = op_table_.arg0(pc);
 	int lrank = sip_tables_.array_rank(larray);
-	int rarray = op_table_.op2_array(pc);
+	int rarray = op_table_.arg1(pc);
 	int rrank = sip_tables_.array_rank(rarray);
 
 	if (lrank == 0 && rrank == 0) {	//rhs is scalar * scalar
@@ -1007,7 +1007,7 @@ void Interpreter::handle_contraction_op(int pc) {
 	}
 
 	//get destination operand info
-	bool d_is_scalar = is_scalar(op_table_.result_array(pc));
+	bool d_is_scalar = is_scalar(op_table_.arg2(pc));
 
 #ifdef HAVE_CUDA
 	if (gpu_enabled_) {
@@ -1042,7 +1042,7 @@ void Interpreter::handle_contraction_op(int pc) {
 		if (d_is_scalar) {
 			double h_dbl;
 			_gpu_device_to_host(&h_dbl, g_dblock->get_gpu_data(), 1);
-			set_scalar_value(op_table_.result_array(pc), h_dbl);
+			set_scalar_value(op_table_.arg2(pc), h_dbl);
 		}
 
 		return;
@@ -1076,7 +1076,7 @@ void Interpreter::handle_contraction_op(int pc) {
 //		dblock = new sip::Block(scalar_shape, dvalPtr);
 //		std::fill(dselected_index_ids + 0, dselected_index_ids + MAX_RANK,
 //				sip::unused_index_slot);
-		dblock = data_manager_.scalar_blocks_[op_table_.result_array(pc)];
+		dblock = data_manager_.scalar_blocks_[op_table_.arg2(pc)];
 	} else {
 		sip::BlockSelector dselector = block_selector_stack_.top();
 		std::copy(dselector.index_ids_ + 0, dselector.index_ids_ + MAX_RANK,
@@ -1134,10 +1134,10 @@ void Interpreter::handle_contraction_op(int pc) {
 }
 
 bool Interpreter::evaluate_where_clause(int pc) {
-	int op1_slot = op_table_.op1_array(pc);
+	int op1_slot = op_table_.arg0(pc);
 	int op1_value = index_value(op1_slot);
-	int where_op = op_table_.op2_array(pc);
-	int op2_slot = op_table_.result_array(pc);
+	int where_op = op_table_.arg1(pc);
+	int op2_slot = op_table_.arg2(pc);
 	int op2_value = index_value(op2_slot);
 	bool result;
 	switch (where_op) {
@@ -1177,22 +1177,22 @@ bool Interpreter::evaluate_int_relational_expr(int pc) {
 	bool result;
 	int opcode = op_table_.opcode(pc);
 	switch (opcode) {
-	case sp_equal_op:
+	case int_equal_op:
 		result = (val1 == val2);
 		break;
-	case sp_nequal_op:
+	case int_nequal_op:
 		result = (val1 != val2);
 		break;
-	case sp_ge_op:
+	case int_ge_op:
 		result = (val1 >= val2);
 		break;
-	case sp_le_op:
+	case int_le_op:
 		result = (val1 <= val2);
 		break;
-	case sp_gt_op:
+	case int_gt_op:
 		result = (val1 > val2);
 		break;
-	case sp_lt_op:
+	case int_lt_op:
 		result = (val1 < val2);
 		break;
 	default: {
@@ -1211,22 +1211,22 @@ bool Interpreter::evaluate_double_relational_expr(int pc) {
 	bool result;
 	int opcode = op_table_.opcode(pc);
 	switch (opcode) {
-	case fl_eq_op:
+	case scalar_eq_op:
 		result = (val1 == val2);
 		break;
-	case fl_ne_op:
+	case scalar_ne_op:
 		result = (val1 != val2);
 		break;
-	case fl_ge_op:
+	case scalar_ge_op:
 		result = (val1 >= val2);
 		break;
-	case fl_le_op:
+	case scalar_le_op:
 		result = (val1 <= val2);
 		break;
-	case fl_gt_op:
+	case scalar_gt_op:
 		result = (val1 > val2);
 		break;
-	case fl_lt_op:
+	case scalar_lt_op:
 		result = (val1 < val2);
 		break;
 	default: {
@@ -1241,18 +1241,18 @@ void Interpreter::handle_sum_op(int pc, double factor) {
 	//using dmitry's notation, i.e. d = l + r
 
 	bool d_is_scalar, l_is_scalar, r_is_scalar;
-	d_is_scalar = is_scalar(op_table_.result_array(pc));
-	l_is_scalar = is_scalar(op_table_.op1_array(pc));
-	r_is_scalar = is_scalar(op_table_.op2_array(pc));
+	d_is_scalar = is_scalar(op_table_.arg2(pc));
+	l_is_scalar = is_scalar(op_table_.arg0(pc));
+	r_is_scalar = is_scalar(op_table_.arg1(pc));
 	//TODO introduce debug level--or just delete?
 	check(d_is_scalar == l_is_scalar && l_is_scalar == r_is_scalar,
 			"compiler of sip bug:  inconsistent array/scalars in sum");
 
 	if (d_is_scalar) {
-		double lval = scalar_value(op_table_.op1_array(pc));
-		double rval = scalar_value(op_table_.op2_array(pc));
+		double lval = scalar_value(op_table_.arg0(pc));
+		double rval = scalar_value(op_table_.arg1(pc));
 		double dval = lval + (rval * factor);
-		set_scalar_value(op_table_.result_array(pc), dval);
+		set_scalar_value(op_table_.arg2(pc), dval);
 		return;
 	}
 	// this is a  block operation
@@ -1327,18 +1327,18 @@ void Interpreter::handle_sum_op(int pc, double factor) {
 }
 
 void Interpreter::handle_self_multiply_op(int pc) {
-	check(is_scalar(op_table_.op2_array(pc)),
+	check(is_scalar(op_table_.arg1(pc)),
 			"*= only for scalar right hand side", line_number());
-	bool d_is_scalar = is_scalar(op_table_.result_array(pc));
-	double lval = scalar_value(op_table_.op2_array(pc));
+	bool d_is_scalar = is_scalar(op_table_.arg2(pc));
+	double lval = scalar_value(op_table_.arg1(pc));
 	if (d_is_scalar) {
-		double dval = scalar_value(op_table_.result_array(pc));
+		double dval = scalar_value(op_table_.arg2(pc));
 		dval *= lval;
-		set_scalar_value(op_table_.result_array(pc), dval);
+		set_scalar_value(op_table_.arg2(pc), dval);
 	} else {
 		sip::BlockSelector dselector = block_selector_stack_.top();
 		int drank = sip_tables_.array_rank(dselector.array_id_);
-		check(dselector.array_id_ == op_table_.result_array(pc),
+		check(dselector.array_id_ == op_table_.arg2(pc),
 				"compiler or sip bug:  inconsistent array values in self multiply and selector for d value",
 				line_number());
 

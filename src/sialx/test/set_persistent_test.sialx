@@ -8,16 +8,16 @@ sial set_persistent_test
 	predefined scalar x
 	scalar x1
 	scalar y
-	aoindex i = 1,1
-	aoindex j = 1,1
-	local a(i,j)
-	distributed b(i,j)
-	distributed c(i,j)
+	aoindex i = 1:1
+	aoindex j = 1:1
+	local a[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
 	
-	aoindex i2 = 1,2
-	aoindex j2 = 1,2
+	aoindex i2 = 1:2
+	aoindex j2 = 1:2
 	
-	static ca(i2, j2)
+	static ca[i2, j2]
 	
 	x1 = x
 	y = x*x
@@ -32,12 +32,12 @@ sial set_persistent_test
 		do j
 #			b(i,j) = 2.0
 #			c(i,j) = 3.0
-			ca(i, j) = 4.0
+			ca[i, j] = 4.0
 		enddo j
 	enddo i
 	
-	print_scalar x1
-	print_scalar y
+	print x1
+	print y
 	execute print_static_array ca
 	
 	println "end of sial program set_persistent_test"

@@ -16,9 +16,9 @@ OpTableEntry::~OpTableEntry() {}
 void OpTableEntry::read(OpTableEntry &entry, setup::InputStream &file) {
 
 	entry.opcode = intToOpcode(file.read_int());
-	entry.op1_array = file.read_int();
-	entry.op2_array = file.read_int();
-	entry.result_array = file.read_int();
+	entry.arg0 = file.read_int();
+	entry.arg1 = file.read_int();
+	entry.arg2 = file.read_int();
 	for (int i = 0; i < MAX_RANK; ++i) { //the compiler generated sio format requires
 									   //ints to be read individually rather than
 									   //using read_int_array.  It does not write
@@ -32,9 +32,9 @@ void OpTableEntry::read(OpTableEntry &entry, setup::InputStream &file) {
 std::ostream& operator<<(std::ostream& os, const OpTableEntry & entry) {
 	os << opcodeToName(entry.opcode) << ':';
 	os << entry.opcode << ',';
-	os << entry.op1_array << ',';
-	os << entry.op2_array << ',';
-	os << entry.result_array << ",[";
+	os << entry.arg0 << ',';
+	os << entry.arg1 << ',';
+	os << entry.arg2 << ",[";
 	for (int i = 0; i < MAX_RANK; ++i) {
 		os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
 	}

@@ -178,6 +178,28 @@ public:
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
 
+	/** Determine whether any data is left in the interpreter's data structures.
+	 * This method should return true immediately after completion of a sial program.
+	 * @return
+	 */
+	bool all_stacks_empty(){
+		return loop_manager_stack_.size()==0
+				&& block_selector_stack_.size()==0 && control_stack_.size()==0
+				&& expression_stack_.size()==0
+				&& write_back_list_.size()==0
+				&& read_block_list_.size()==0;
+	}
+
+//	bool all_stacks_empty(){
+//		check(loop_manager_stack_.size()==0,"loop_manager_stack_ not empty at end of sial program");
+//		check(block_selector_stack_.size()==0,"block_selector_stack_ not empty at end of sial program");
+//		check(control_stack_.size()==0, "control_stack_ not empty at end of sial program");
+//		check(expression_stack_.size()==0, "expresion_stack_ not empty at end of sial program");
+//		check(write_back_list_.size()==0, "write_back_list_ not empty at end of sial program");
+//		check(read_block_list_.size()==0, "read_block_list_ not empty at end of sial program");
+//		return true;
+//	}
+
 //TODO these should be private.  Made public as expedient way to implement list_block_map super instruction.
 
 	//static data

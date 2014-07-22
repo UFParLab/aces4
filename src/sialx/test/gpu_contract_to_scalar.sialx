@@ -4,21 +4,21 @@ special fill_block_sequential wr
 special fill_block_cyclic wr
 special print_block r
 special print_static_array r
-aoindex i = 1,1
-aoindex j = 1,1
-temp  a(i,j)
-temp b(i,j)
+aoindex i = 1:1
+aoindex j = 1:1
+temp  a[i,j]
+temp b[i,j]
 scalar x
 do i
 do j
-execute fill_block_cyclic a(i,j) 1.0
-execute fill_block_cyclic b(i,j) 5.0
-execute print_block a(i,j)
-execute print_block b(i,j)
+execute fill_block_cyclic a[i,j] 1.0
+execute fill_block_cyclic b[i,j] 5.0
+execute print_block a[i,j]
+execute print_block b[i,j]
 gpu_on
-x = a(i,j)*b(i,j)
+x = a[i,j]*b[i,j]
 gpu_off
-print_scalar x
+print x
 enddo j
 enddo i
 println " finished contract_to_scalar"
