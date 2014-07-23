@@ -23,9 +23,6 @@ option(HAVE_MPI "Whether to use MPI" ON)
 # Check if MPI available on system
 if (HAVE_MPI)
     find_package(MPI REQUIRED)
-#    if (!MPI_CXX_FOUND)
-#        message(FATAL_ERROR "MPI could not be found, consider building with USE_MPI = off")
-#    endif()
 endif()
 
 ##################
@@ -36,10 +33,6 @@ option(HAVE_TAU "Whether to use TAU timers for SIAL programs" OFF)
 # Check if TAU available on system
 if (HAVE_TAU)
     find_package(TAU REQUIRED)
-#    if (!TAU_FOUND)
-#        message(FATAL_ERROR "TAU could not be found, 
-#            please set the TAU_PATH variable to the TAU installation directory")
-#    endif()
 endif()
 
 ####################
@@ -50,10 +43,6 @@ option(HAVE_PAPI "Whether to use PAPI high resolution timers" OFF)
 # Check if PAPI available on system
 if (HAVE_PAPI)
     find_package(PAPI REQUIRED)
-#    if (!PAPI_FOUND)
-#        message(FATAL_ERROR "PAPI could not be found, 
-#            please set the PAPI_PATH variable to the PAPI installation directory")
-#    endif()
 endif()
 
 ####################
@@ -64,11 +53,21 @@ option(HAVE_CUDA "Whether to use CUDA accelerated super instructions" OFF)
 # Check if CUDA available on system
 if (HAVE_CUDA)
     find_package(CUDA REQUIRED)
-#    if (!CUDA_FOUND)
-#        message(FATAL_ERROR "CUDA could not be found, 
-#            please set the CUDA_BIN_PATH variable to the CUDA toolkit installation directory")
-#    endif()
 endif()
+
+####################
+# SIP_DEVEL Options - Whether to enable extra logging for the entire SIP
+####################
+option(SIP_DEVEL "Whether to enable extra logging for the entire SIP" OFF)
+
+if (SIP_DEVEL)
+    message(STATUS "   SIP_DEVEL Flag enabled    ")
+    message(STATUS "-----------------------------")
+    message(STATUS "There will be lots of print !")
+    message(STATUS "-----------------------------")
+endif()
+
+
 
 #Config file 
 configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
