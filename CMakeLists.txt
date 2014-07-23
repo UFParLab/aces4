@@ -13,6 +13,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # Find required packages for aces4.
 find_package(LAPACK REQUIRED)
+find_package(OpenMP)
 
 ##################
 # HAVE_MPI Option
@@ -243,6 +244,35 @@ if (CUDA_FOUND)
     set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} cudasuperinstructions)
 endif()
 
+# Accumulating Compile & Link Flags
+
+set(ACES4_COMPILE_FLAGS "")
+set(LIBTENSORDIL_DEFINITIONS "")
+set(ACES4_LINK_FLAGS "")
+
+# Add LAPACK Linker Flags
+set (ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${LAPACK_LINKER_FLAGS})
+
+# Add OpenMP Flags
+if (OPENMP_FOUND)
+    #add_definitions(-D_OPENMP)
+    #add_definitions(${OpenMP_CXX_FLAGS})
+    #add_definitions(${OpenMP_C_FLAGS})
+    #set_target_properties(aces4 PROPERTIES COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
+    #set_target_properties(aces4 PROPERTIES COMPILE_FLAGS ${OpenMP_C_FLAGS})
+    set(LIBTENSORDIL_DEFINITIONS _OPENMP)
+    #set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${OpenMP_CXX_FLAGS})
+    set(ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${OpenMP_CXX_FLAGS})
+    #set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${OpenMP_C_FLAGS})
+endif()
+
+# Add MPI Flags
+if (MPI_CXX_FOUND)
+    #add_definitions(${MPI_COMPILE_FLAGS})
+    #set_target_properties(aces4 PROPERTIES COMPILE_FLAGS ${MPI_COMPILE_FLAGS})
+    set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
+    set(ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${MPI_LINK_FLAGS})
+endif()
 
 #----------------------------------------------------------------------
 # Testing Using Google Tests
@@ -268,16 +298,26 @@ add_subdirectory(src/sip/super_instructions)
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
+set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DEFINITIONS})
 
 # aces4 executable
 add_executable(aces4 src/aces_main/main.cpp ${aces4_SRCS})
 
 # Setting Compile & link flags
-set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
-set_target_properties(aces4 PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS} ${LAPACK_LINKER_FLAGS}")
+set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
+
+# Dependencies
+if(HAVE_CUDA)
+add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
+else()
+add_dependencies(aces4 tensordil superinstructions)
+endif()
+
+add_dependencies(superinstructions tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
@@ -289,13 +329,25 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_executable(test_unit        test/test_unit.cpp          ${aces4_SRCS})
 
     # Link test executable against gtest & gtest_main
+    set_target_properties(test_mpi_simple   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_mpi_qm       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+
     target_link_libraries(test_mpi_simple   gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_mpi_qm       gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_unit         gtest gtest_main  ${TOLINK_LIBRARIES})
 
+    set_target_properties(test_mpi_simple   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_mpi_qm       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+
     add_test(NAME test_mpi_simple   COMMAND mpirun -np 2 test_mpi_simple)
     add_test(NAME test_mpi_qm       COMMAND mpirun -np 2 test_mpi_qm)
     add_test(NAME test_unit         COMMAND mpirun -np 2 test_unit)
+
+    add_dependencies(test_mpi_simple gtest gtest_main)
+    add_dependencies(test_mpi_qm gtest gtest_main)
+    add_dependencies(test_unit gtest gtest_main)
 
 else() # Single Node Version Tests
     add_executable(test_simple  test/test_simple.cpp    
@@ -306,11 +358,20 @@ else() # Single Node Version Tests
     add_executable(test_qm      test/test_qm.cpp        ${aces4_SRCS})
 
     # Link test executable against gtest & gtest_main
+    set_target_properties(test_simple   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_qm       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+
     target_link_libraries(test_simple   gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm       gtest gtest_main  ${TOLINK_LIBRARIES})
 
+    set_target_properties(test_simple   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_qm       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+
     add_test(NAME test_simple   COMMAND test_simple)
     add_test(NAME test_qm       COMMAND test_qm)
+
+    add_dependencies(test_simple gtest gtest_main)
+    add_dependencies(test_qm gtest gtest_main)
 
 endif()
 
@@ -425,9 +486,6 @@ foreach(F ${SIAL_FILES})
 endforeach()
 
 add_custom_target(SIAL_FILES_COMPILE ALL DEPENDS ${SIAL_COMPILED_FILES})
-
-
-
 
 
 
