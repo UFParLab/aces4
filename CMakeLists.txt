@@ -186,12 +186,12 @@ set(ACES_WORKER_FILES
     src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
     src/sip/cuda/gpu_super_instructions.h)
     
-set(aces4_SRCS
-    ${ACES_SETUP_FILES};
-    ${ACES_CORE_FILES};
-    ${ACES_DATA_FILES};
-    ${ACES_MPI_FILES};
-    ${ACES_WORKER_FILES})
+#set(aces4_SRCS
+#    ${ACES_SETUP_FILES};
+#    ${ACES_CORE_FILES};
+#    ${ACES_DATA_FILES};
+#    ${ACES_MPI_FILES};
+#    ${ACES_WORKER_FILES})
 
 # Dmitry's Tensor library
 set(tensordil_SRCS src/sip/tensor_algebra/tensor_dil_omp.F90)
@@ -212,9 +212,10 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
+    ${TOLINK_LIBRARIES}
     tensordil;
     ${MPI_LIBRARIES};
-    ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
+    superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
 
 # Append TAU include & library paths
@@ -255,21 +256,12 @@ set (ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${LAPACK_LINKER_FLAGS})
 
 # Add OpenMP Flags
 if (OPENMP_FOUND)
-    #add_definitions(-D_OPENMP)
-    #add_definitions(${OpenMP_CXX_FLAGS})
-    #add_definitions(${OpenMP_C_FLAGS})
-    #set_target_properties(aces4 PROPERTIES COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
-    #set_target_properties(aces4 PROPERTIES COMPILE_FLAGS ${OpenMP_C_FLAGS})
     set(LIBTENSORDIL_DEFINITIONS _OPENMP)
-    #set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${OpenMP_CXX_FLAGS})
     set(ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${OpenMP_CXX_FLAGS})
-    #set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${OpenMP_C_FLAGS})
 endif()
 
 # Add MPI Flags
 if (MPI_CXX_FOUND)
-    #add_definitions(${MPI_COMPILE_FLAGS})
-    #set_target_properties(aces4 PROPERTIES COMPILE_FLAGS ${MPI_COMPILE_FLAGS})
     set(ACES4_COMPILE_FLAGS ${ACES4_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
     set(ACES4_LINK_FLAGS ${ACES4_LINK_FLAGS} ${MPI_LINK_FLAGS})
 endif()
@@ -293,6 +285,16 @@ configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COP
 
 include_directories(${INCLUDE_DIRS})
 
+# Static Libraries for ACES4 
+add_library(aces4_sip     
+            ${ACES_SETUP_FILES}     
+            ${ACES_CORE_FILES}
+            ${ACES_WORKER_FILES}
+            ${ACES_DATA_FILES}
+            ${ACES_MPI_FILES})
+
+set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
+
 # All Super instructions are in this directory
 add_subdirectory(src/sip/super_instructions)
 
@@ -301,7 +303,7 @@ add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DEFINITIONS})
 
 # aces4 executable
-add_executable(aces4 src/aces_main/main.cpp ${aces4_SRCS})
+add_executable(aces4 src/aces_main/main.cpp)
 
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
@@ -317,16 +319,16 @@ else()
 add_dependencies(aces4 tensordil superinstructions)
 endif()
 
-add_dependencies(superinstructions tensordil)
+add_dependencies(superinstructions aces4_core tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
 #----------------------------------------------------------------------
 
 if (HAVE_MPI) # Multi Node Version Tests
-    add_executable(test_mpi_simple  test/test_mpi_simple.cpp    ${aces4_SRCS})
-    add_executable(test_mpi_qm      test/test_mpi_qm.cpp        ${aces4_SRCS})
-    add_executable(test_unit        test/test_unit.cpp          ${aces4_SRCS})
+    add_executable(test_mpi_simple  test/test_mpi_simple.cpp)
+    add_executable(test_mpi_qm      test/test_mpi_qm.cpp)
+    add_executable(test_unit        test/test_unit.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_mpi_simple   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
@@ -353,9 +355,8 @@ else() # Single Node Version Tests
     add_executable(test_simple  test/test_simple.cpp    
                                 test/test_transpose_op.F 
                                 test/test_transpose4d_op.F
-                                test/test_contraction_small2.F
-                                ${aces4_SRCS})
-    add_executable(test_qm      test/test_qm.cpp        ${aces4_SRCS})
+                                test/test_contraction_small2.F)
+    add_executable(test_qm      test/test_qm.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_simple   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
