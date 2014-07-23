@@ -243,6 +243,20 @@ if (CUDA_FOUND)
     set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} cudasuperinstructions)
 endif()
 
+
+#----------------------------------------------------------------------
+# Testing Using Google Tests
+#----------------------------------------------------------------------
+
+##############
+# Setup Tests
+##############
+
+add_subdirectory (test/gtest-1.7.0)
+enable_testing()
+set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+
 #----------------------------------------------------------------------
 # Build aces4 executable
 #----------------------------------------------------------------------
@@ -264,6 +278,41 @@ set_target_properties(aces4 PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS} ${LAPACK_LI
 
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
+
+#----------------------------------------------------------------------
+# Add Tests
+#----------------------------------------------------------------------
+
+if (HAVE_MPI) # Multi Node Version Tests
+    add_executable(test_mpi_simple  test/test_mpi_simple.cpp    ${aces4_SRCS})
+    add_executable(test_mpi_qm      test/test_mpi_qm.cpp        ${aces4_SRCS})
+    add_executable(test_unit        test/test_unit.cpp          ${aces4_SRCS})
+
+    # Link test executable against gtest & gtest_main
+    target_link_libraries(test_mpi_simple   gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_mpi_qm       gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_unit         gtest gtest_main  ${TOLINK_LIBRARIES})
+
+    add_test(NAME test_mpi_simple   COMMAND mpirun -np 2 test_mpi_simple)
+    add_test(NAME test_mpi_qm       COMMAND mpirun -np 2 test_mpi_qm)
+    add_test(NAME test_unit         COMMAND mpirun -np 2 test_unit)
+
+else() # Single Node Version Tests
+    add_executable(test_simple  test/test_simple.cpp    
+                                test/test_transpose_op.F 
+                                test/test_transpose4d_op.F
+                                test/test_contraction_small2.F
+                                ${aces4_SRCS})
+    add_executable(test_qm      test/test_qm.cpp        ${aces4_SRCS})
+
+    # Link test executable against gtest & gtest_main
+    target_link_libraries(test_simple   gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_qm       gtest gtest_main  ${TOLINK_LIBRARIES})
+
+    add_test(NAME test_simple   COMMAND test_simple)
+    add_test(NAME test_qm       COMMAND test_qm)
+
+endif()
 
 
 #----------------------------------------------------------------------
@@ -364,7 +413,7 @@ foreach(F ${SIAL_FILES})
         get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
     get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 
-    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/siox/${SIALX_FILE_LAST_PATH}")
+    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
     add_custom_command(
         OUTPUT ${SIAL_COMPILE_DIR}/${F_WE}.siox
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}
@@ -376,6 +425,9 @@ foreach(F ${SIAL_FILES})
 endforeach()
 
 add_custom_target(SIAL_FILES_COMPILE ALL DEPENDS ${SIAL_COMPILED_FILES})
+
+
+
 
 
 

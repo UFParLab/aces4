@@ -74,7 +74,7 @@ public:
 	friend std::ostream& operator<< (std::ostream& os, const LRUArrayPolicy<BLOCK_TYPE>& obj){
 		std::list<int>::const_iterator it = obj.lru_list_.begin();
 		os << "LRU Array : [";
-		if (it == obj.lru_list_.end()){
+		if (it != obj.lru_list_.end()){
 			os << *it ;
 			++it;
 		}
