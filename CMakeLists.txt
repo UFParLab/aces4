@@ -164,7 +164,9 @@ set(ACES_DATA_FILES
     src/sip/dynamic_data/worker_persistent_array_manager.cpp;
     src/sip/dynamic_data/lru_array_policy.h;
     src/sip/dynamic_data/cached_block_map.h;
-    src/sip/dynamic_data/cached_block_map.cpp)
+    src/sip/dynamic_data/cached_block_map.cpp;
+    src/sip/dynamic_data/sip_timer.h;
+	src/sip/dynamic_data/sip_timer.cpp)
 #need only header files for templates--these include .cpp
 
 set(ACES_WORKER_FILES
@@ -279,7 +281,7 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
 configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 
 #----------------------------------------------------------------------
-# Build aces4 executable
+# Build aces4 & print_siptables executable
 #----------------------------------------------------------------------
 
 include_directories(${INCLUDE_DIRS})
@@ -304,18 +306,27 @@ set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DE
 # aces4 executable
 add_executable(aces4 src/aces_main/main.cpp)
 
+# print_siptables executable
+add_executable(print_siptables src/util/print_siptables.cpp)
+
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
+target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
 
 # Dependencies
 if(HAVE_CUDA)
-add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
+	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 else()
-add_dependencies(aces4 tensordil superinstructions)
+	add_dependencies(aces4 tensordil superinstructions)
+	add_dependencies(print_siptables tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_core tensordil)
