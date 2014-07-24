@@ -121,6 +121,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 	block->set_in_memory();
 	block->set_dirty();
 
+	policy_.touch(block_id);
+
 	return block;
 }
 
@@ -145,6 +147,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 
 	block->set_in_memory();
 	block->set_dirty();
+
+	policy_.touch(block_id);
 
 	return block;
 }
@@ -188,6 +192,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 	}
 
 	block->set_in_memory();
+
+	policy_.touch(block_id);
 
 	sip::check(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
 	return block;
