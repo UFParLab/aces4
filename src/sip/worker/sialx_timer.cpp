@@ -100,31 +100,39 @@ public:
 	MultiNodePrint(const std::vector<std::string> &line_to_str) : line_to_str_(line_to_str) {}
 	virtual ~MultiNodePrint(){}
 	virtual void execute(TIMER& timer){
-		long long * timers = timer.get_timers();
-		long long * timer_counts = timer.get_timer_count();
-		const int LW = 10;	// Line num
-		const int CW = 15;	// String
-		const int SW = 20;	// Time
 
-		assert(timer.check_timers_off());
-		std::cout<<"Timers"<<std::endl
-			<<std::setw(LW)<<std::left<<"Line"
-			<<std::setw(SW)<<std::left<<"Type"
-			<<std::setw(CW)<<std::left<<"Total"
-			<<std::setw(CW)<<std::left<<"Average"
-			<<std::endl;
-		for (int i=0; i<timer.max_slots; i++){
-			if (timer_counts[i] > 0L){
-				double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
-				double avg_time = tot_time / timer_counts[i];
-				std::cout<<std::setw(LW)<<std::left << i
-						<< std::setw(SW)<< std::left << line_to_str_.at(i)
-				        << std::setw(CW)<< std::left << tot_time
-				        << std::setw(CW)<< std::left << avg_time
-				        << std::endl;
+		mpi_reduce_timers(timer);
+
+		// Print from the worker master.
+
+		if (SIPMPIAttr::get_instance().is_company_master()){
+
+			long long * timers = timer.get_timers();
+			long long * timer_counts = timer.get_timer_count();
+			const int LW = 10;	// Line num
+			const int CW = 15;	// String
+			const int SW = 20;	// Time
+
+			assert(timer.check_timers_off());
+			std::cout<<"Timers"<<std::endl
+				<<std::setw(LW)<<std::left<<"Line"
+				<<std::setw(SW)<<std::left<<"Type"
+				<<std::setw(CW)<<std::left<<"Total"
+				<<std::setw(CW)<<std::left<<"Average"
+				<<std::endl;
+			for (int i=0; i<timer.max_slots; i++){
+				if (timer_counts[i] > 0L){
+					double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
+					double avg_time = tot_time / timer_counts[i];
+					std::cout<<std::setw(LW)<<std::left << i
+							<< std::setw(SW)<< std::left << line_to_str_.at(i)
+							<< std::setw(CW)<< std::left << tot_time
+							<< std::setw(CW)<< std::left << avg_time
+							<< std::endl;
+				}
 			}
+			std::cout<<std::endl;
 		}
-		std::cout<<std::endl;
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
