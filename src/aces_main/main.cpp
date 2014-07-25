@@ -198,15 +198,9 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-
 			std::vector<std::string> lno2name = sipTables.line_num_to_name();
-#ifdef HAVE_MPI
-			sialxTimer.mpi_reduce_timers();
-			if (sip_mpi_attr.is_company_master())
-				sialxTimer.print_timers(lno2name);
-#else
 			sialxTimer.print_timers(lno2name);
-#endif
+
 
 		}// end of worker or server
 

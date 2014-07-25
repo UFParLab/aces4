@@ -11,6 +11,9 @@
 #include <ctime>
 #include <algorithm>
 
+#include "global_state.h"
+#include "sip_interface.h"
+
 #ifdef HAVE_PAPI
 	#include "papi.h"
 	#define PAPI
@@ -23,14 +26,16 @@
 
 namespace sip {
 
+const long long LinuxSIPTimers::_timer_off_value_ = -1;
+
 //*********************************************************************
 //								Linux Timers
 //*********************************************************************
 
-LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots_(max_slots) {
-	timer_list_ = new long long[max_slots_];
-	timer_on_ = new long long[max_slots_];
-	timer_switched_ = new long long[max_slots_];
+LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots(max_slots) {
+	timer_list_ = new long long[max_slots];
+	timer_on_ = new long long[max_slots];
+	timer_switched_ = new long long[max_slots];
 	assert (clock() != -1); // Make sure that clock() works
 
 	// Initialize the lists
@@ -50,7 +55,7 @@ void LinuxSIPTimers::start_timer(int slot) {
 }
 
 void LinuxSIPTimers::pause_timer(int slot) {
-	assert (slot < max_slots_);
+	assert (slot < max_slots);
 	assert (timer_on_[slot] != _timer_off_value_);
 	timer_list_[slot] += clock() - timer_on_[slot];
 	timer_on_[slot] = _timer_off_value_;
@@ -70,7 +75,7 @@ void LinuxSIPTimers::print_timers (PrintTimers<LinuxSIPTimers>& p){
 }
 
 bool LinuxSIPTimers::check_timers_off() {
-	for (int i = 0; i < max_slots_; i++)
+	for (int i = 0; i < max_slots; i++)
 		if (timer_on_[i] != _timer_off_value_)
 			return false;
 	return true;
@@ -91,8 +96,7 @@ PAPISIPTimers::PAPISIPTimers(int max_slots) : LinuxSIPTimers(max_slots) {
 }
 
 PAPISIPTimers::~PAPISIPTimers(){
-	~LinuxSIPTimers();
-
+	//Automatically calls LinuxSIPTimers::~LinuxSIPTimers();
 }
 
 void PAPISIPTimers::start_timer(int slot) {
@@ -100,7 +104,7 @@ void PAPISIPTimers::start_timer(int slot) {
 }
 
 void PAPISIPTimers::pause_timer(int slot) {
-	assert (slot < max_slots_);
+	assert (slot < max_slots);
 	assert (timer_on_[slot] != _timer_off_value_);
 	timer_list_[slot] += PAPI_get_real_usec() - timer_on_[slot];
 	timer_on_[slot] = _timer_off_value_;
@@ -121,9 +125,9 @@ void PAPISIPTimers::print_timers(PrintTimers<PAPISIPTimers>& p){
 //								TAU Timers
 //*********************************************************************
 #ifdef HAVE_TAU
-TAUSIPTimers::TAUSIPTimers(int max_slots) : max_slots_(max_slots) {
-	tau_timers_ = new void*[max_slots_];
-	for (int i=0; i<max_slots_; i++)
+TAUSIPTimers::TAUSIPTimers(int max_slots) : max_slots(max_slots) {
+	tau_timers_ = new void*[max_slots];
+	for (int i=0; i<max_slots; i++)
 		tau_timers_[i] = NULL;
 }
 
@@ -151,29 +155,11 @@ void TAUSIPTimers::pause_timer(int slot) {
 	sip::check(timer != NULL, "Error in Tau Timer management !", current_line());
 	TAU_PROFILER_STOP(timer);
 }
+
+void TAUSIPTimers::print_timers(PrintTimers<TAUSIPTimers>& p){
+	p.execute(*this);
+}
 #endif // HAVE_TAU
-
-
-//*********************************************************************
-//								MPI Reduce Method
-//*********************************************************************
-//#ifdef HAVE_MPI
-//void sialx_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Datatype *type){
-//	long long * in = (long long*)r_in;
-//	long long * inout = (long long*)r_inout;
-//	for (int l=0; l<*len; l++){
-//		long long num_timers = in[0];
-//		sip::check(inout[0] == in[0], "Data corruption when trying to reduce timers !");
-//		// Sum up the number of times each timer is switched on & off
-//		// Sum up the the total time spent at each line.
-//		in++; inout++;	// 0th position has the length
-//		for (int i=0; i<num_timers*2; i++){
-//			*inout += *in;
-//			in++; inout++;
-//		}
-//	}
-//}
-//#endif // HAVE_MPI
 
 
 } /* namespace sip */
