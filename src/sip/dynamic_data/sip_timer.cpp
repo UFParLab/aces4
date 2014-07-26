@@ -6,7 +6,9 @@
  */
 
 #include "config.h"
+#include "sip.h"
 #include <sip_timer.h>
+#include <iostream>
 #include <cassert>
 #include <ctime>
 #include <algorithm>
@@ -76,8 +78,10 @@ void LinuxSIPTimers::print_timers (PrintTimers<LinuxSIPTimers>& p){
 
 bool LinuxSIPTimers::check_timers_off() {
 	for (int i = 0; i < max_slots; i++)
-		if (timer_on_[i] != _timer_off_value_)
+		if (timer_on_[i] != _timer_off_value_){
+			SIP_LOG(std::cerr<<"Timer left on : "<<i<<std::endl);
 			return false;
+		}
 	return true;
 }
 
@@ -137,10 +141,10 @@ TAUSIPTimers::~TAUSIPTimers(){
 }
 
 void TAUSIPTimers::start_timer(int slot) {
-	char name[MAX_TAU_IDENT_LEN];
-	sprintf(name, "%d : Line %d", sip::GlobalState::get_program_num(), slot);
 	void *timer = tau_timers_[slot];
 	if (timer == NULL){
+		char name[MAX_TAU_IDENT_LEN];
+		sprintf(name, "%d : Line %d", sip::GlobalState::get_program_num(), slot);
 		TAU_PROFILER_CREATE(timer, name, "", TAU_USER);
 		tau_timers_[slot] = timer;
 	}

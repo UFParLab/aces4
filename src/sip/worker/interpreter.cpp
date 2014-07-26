@@ -67,20 +67,20 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 		switch (opcode) {
 		case contraction_op: {
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sial_ops_.log_statement(opcode, line_number());
 			handle_contraction_op(pc);
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
 		case sum_op: {
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sial_ops_.log_statement(opcode, line_number());
 			handle_sum_op(pc, 1.0);
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -117,21 +117,21 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case user_sub_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			handle_user_sub_op(pc);
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
 		case put_op: { //this is instruction put a(...) += b(...)
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.put_accumulate(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 
 //std::cout << "PUT_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
 			++pc;
@@ -143,19 +143,19 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case create_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			int array_id = sip_tables_.op_table_.result_array(pc);
 			sial_ops_.create_distributed(array_id);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
 		case delete_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			int array_id = sip_tables_.op_table_.result_array(pc);
 			sial_ops_.delete_distributed(array_id);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -245,11 +245,11 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case assignment_op:
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			// x = y
 			handle_assignment_op(pc);
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 			break;
 		case cycle_op: {
@@ -258,29 +258,29 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case self_multiply_op: { // *= scalar  The compiler should generate better code for this
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			handle_self_multiply_op(pc);
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
 		case subtract_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			handle_sum_op(pc, -1.0); // (x = y - z) is computed as x = y + (z * -1)
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
 		case collective_sum_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			int target_array_slot = op_table_.result_array(pc);
 			int source_array_slot = op_table_.op1_array(pc);
 			sial_ops_.collective_sum(source_array_slot, target_array_slot);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -305,11 +305,11 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		case prepare_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.prepare(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 
 //std::cout << "PREPARE_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
 
@@ -318,10 +318,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case request_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sip::BlockId id = get_block_id_from_selector_stack();
 			sial_ops_.request(id);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 //Block::BlockPtr block = sial_ops_.get_block_for_reading(id);
 //std::cout << "REQUEST (" << line_number() << ") " << id << "\t" << *block << std::endl;
 			++pc;
@@ -329,11 +329,11 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case put_replace_op: {  // put a(...) = b(...)
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r');
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.put_replace(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 //std::cout << "PUT_REPLACE (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
 
 			++pc;
@@ -341,10 +341,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case tensor_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			handle_contraction_op(pc);
 			contiguous_blocks_post_op();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -374,12 +374,12 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case prepare_increment_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			sial_ops_.prepare_accumulate(lhs_id, rhs_block);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 //std::cout << "PREPARE_ACC (" << line_number() << ") " << lhs_id << "\t" << *rhs_block << std::endl;
 
 			++pc;
@@ -387,7 +387,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case allocate_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			int array_table_slot = op_table_.result_array(pc);
 			int rank = sip_tables_.array_rank(array_table_slot);
 			const sip::index_selector_t& index_array =
@@ -395,13 +395,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId id = block_id(
 					sip::BlockSelector(array_table_slot, rank, index_array));
 			data_manager_.block_manager_.allocate_local(id);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
 		case deallocate_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			int array_table_slot = op_table_.result_array(pc);
 			int rank = sip_tables_.array_rank(array_table_slot);
 			const sip::index_selector_t& index_array =
@@ -409,7 +409,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId id = block_id(
 					sip::BlockSelector(array_table_slot, rank, index_array));
 			data_manager_.block_manager_.deallocate_local(id);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -422,10 +422,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case destroy_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			int array_id = sip_tables_.op_table_.result_array(pc);
 			sial_ops_.destroy_served(array_id);
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -509,9 +509,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case sip_barrier_op: //fallthrough. server and sip barriers the same
 		case server_barrier_op: {
 			sial_ops_.log_statement(opcode, line_number());
-			sialx_timers_.start_timer(line_number());
+			sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 			sial_ops_.sip_barrier();
-			sialx_timers_.pause_timer(line_number());
+			sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 			++pc;
 		}
 			break;
@@ -531,9 +531,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			case gpu_allocate_op: {
 				sial_ops_.log_statement(opcode, line_number());
 				if (gpu_enabled_) {
-					sialx_timers_.start_timer(line_number());
+					sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 					get_gpu_block('w');
-					sialx_timers_.pause_timer(line_number());
+					sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 
 				}
 				++pc;
@@ -542,10 +542,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			case gpu_free_op: {
 				sial_ops_.log_statement(opcode, line_number());
 				if (gpu_enabled_) {
-					sialx_timers_.start_timer(line_number());
+					sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 					sip::Block::BlockPtr blk = get_gpu_block('w');
 					blk->free_gpu_data();
-					sialx_timers_.pause_timer(line_number());
+					sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 				}
 				++pc;
 			}
@@ -553,18 +553,18 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			case gpu_put_op: {
 				sial_ops_.log_statement(opcode, line_number());
 				if (gpu_enabled_) {
-					sialx_timers_.start_timer(line_number());
+					sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 					get_gpu_block('w'); // TOOD FIXME Temporary solution
-					sialx_timers_.pause_timer(line_number());
+					sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 					++pc;
 				}
 				break;
 				case gpu_get_op: {
 					sial_ops_.log_statement(opcode, line_number());
 					if (gpu_enabled_) {
-						sialx_timers_.start_timer(line_number());
+						sialx_timers_.start_timer(line_number(), SialxTimer::TOTALTIME);
 						get_block_from_selector_stack('r'); //TODO FIXME Temporary solution
-						sialx_timers_.pause_timer(line_number());
+						sialx_timers_.pause_timer(line_number(), SialxTimer::TOTALTIME);
 					}
 					++pc;
 				}
@@ -1409,52 +1409,59 @@ sip::Block::BlockPtr Interpreter::get_block_from_selector_stack(char intent,
 sip::Block::BlockPtr Interpreter::get_block(char intent,
 		sip::BlockSelector& selector, sip::BlockId& id,
 		bool contiguous_allowed) {
+
+	int line_num = current_line();
+	sialx_timers_.start_timer(line_num, SialxTimer::BLOCKWAITTIME);
+
 	int array_id = selector.array_id_;
 	sip::Block::BlockPtr block;
 	if (sip_tables_.array_rank(selector.array_id_) == 0) { //this "array" was declared to be a scalar.  Nothing to remove from selector stack.
 		id = sip::BlockId(array_id);
 		block = data_manager_.get_scalar_block(array_id);
-		return block;
+		//return block;
 	}
-	if (selector.rank_ == 0) { //this is a static array provided without a selector, block is entire array
+	else if (selector.rank_ == 0) { //this is a static array provided without a selector, block is entire array
 		block = data_manager_.contiguous_array_manager_.get_array(array_id);
 		id = sip::BlockId(array_id);
-		return block;
+		//return block;
+	} else {
+		//argument is a block with an explicit selector
+		sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
+				"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
+		id = block_id(selector);
+		bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
+		sip::check(!is_contiguous || contiguous_allowed,
+				"using contiguous block in a context that doesn't support it");
+		switch (intent) {
+		case 'r': {
+			block = is_contiguous ?
+					data_manager_.contiguous_array_manager_.get_block_for_reading(
+							id, read_block_list_) :
+					sial_ops_.get_block_for_reading(id);
+		}
+			break;
+		case 'w': {
+			bool is_scope_extent = sip_tables_.is_scope_extent(selector.array_id_);
+			block = is_contiguous ?
+					data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
+							id, write_back_list_) :
+					sial_ops_.get_block_for_writing(id, is_scope_extent);
+		}
+			break;
+		case 'u': {
+			block = is_contiguous ?
+					data_manager_.contiguous_array_manager_.get_block_for_updating(
+							id, write_back_list_) :
+					sial_ops_.get_block_for_updating(id);
+		}
+			break;
+		default:
+			sip::check(false,
+					"SIP bug:  illegal or unsupported intent given to get_block");
+		}
 	}
-	//argument is a block with an explicit selector
-	sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
-			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
-	id = block_id(selector);
-	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-	sip::check(!is_contiguous || contiguous_allowed,
-			"using contiguous block in a context that doesn't support it");
-	switch (intent) {
-	case 'r': {
-		block = is_contiguous ?
-				data_manager_.contiguous_array_manager_.get_block_for_reading(
-						id, read_block_list_) :
-				sial_ops_.get_block_for_reading(id);
-	}
-		break;
-	case 'w': {
-		bool is_scope_extent = sip_tables_.is_scope_extent(selector.array_id_);
-		block = is_contiguous ?
-				data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
-						id, write_back_list_) :
-				sial_ops_.get_block_for_writing(id, is_scope_extent);
-	}
-		break;
-	case 'u': {
-		block = is_contiguous ?
-				data_manager_.contiguous_array_manager_.get_block_for_updating(
-						id, write_back_list_) :
-				sial_ops_.get_block_for_updating(id);
-	}
-		break;
-	default:
-		sip::check(false,
-				"SIP bug:  illegal or unsupported intent given to get_block");
-	}
+	sialx_timers_.pause_timer(line_num, SialxTimer::BLOCKWAITTIME);
+
 	return block;
 
 }

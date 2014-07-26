@@ -18,10 +18,24 @@ namespace sip{
 class SialxTimer{
 
 public:
-	SialxTimer(int max_slots);
+	/**
+	 * The types of timer supported per sialx line
+	 */
+#define SIALX_TIMERKINDS\
+	TIMERKINDS(TOTALTIME, 0, "Total Time")			/*! Total Time for a sialx line*/ \
+	TIMERKINDS(BLOCKWAITTIME, 1, "Block Wait Time")	/*! Block wait time for a sialx line*/
 
-	void start_timer(int slot); /*! Starts timer for a given slot */
-	void pause_timer(int slot); /*! Pauses timer for a given slot. */
+	enum TimerKind_t {
+	#define TIMERKINDS(e, n, s) e = n,
+		SIALX_TIMERKINDS
+	#undef TIMERKINDS
+		NUMBER_TIMER_KINDS_
+	};
+
+	SialxTimer(int sialx_lines);
+
+	void start_timer(int line_number, TimerKind_t kind); /*! Starts timer for a sialx line */
+	void pause_timer(int line_number, TimerKind_t kind); /*! Pauses timer for a sialx line. */
 	void print_timers(std::vector<std::string> line_to_str); /*! For each slot, the total time and the average time is printed */
 
 private:
@@ -36,6 +50,7 @@ private:
 #endif
 
 	TimerType_t delegate_;
+	const int sialx_lines_;
 
 	DISALLOW_COPY_AND_ASSIGN(SialxTimer);
 };

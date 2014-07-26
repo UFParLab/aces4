@@ -58,8 +58,8 @@ void sip_abort() {
 	//throw std::logic_error("logic error");
 	MPI_Abort(MPI_COMM_WORLD, -1);
 #else
-	throw std::logic_error("logic error");
-	//exit(EXIT_FAILURE);
+	//throw std::logic_error("logic error");
+	exit(EXIT_FAILURE);
 #endif
 
 

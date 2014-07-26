@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
-	std::size_t memory = 2147483648;	// 2 GB
+	std::size_t memory = 2147483648;	// Default memory usage : 2 GB
 
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
 	// d: name of .dat file.

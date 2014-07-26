@@ -27,7 +27,8 @@ namespace sip{
 template<typename TIMER>
 class SingleNodePrint : public PrintTimers<TIMER> {
 public:
-	SingleNodePrint(const std::vector<std::string> &line_to_str) : line_to_str_(line_to_str) {}
+	SingleNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines)
+		: line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
 	virtual ~SingleNodePrint(){}
 	virtual void execute(TIMER& timer){
 		long long * timers = timer.get_timers();
@@ -40,24 +41,41 @@ public:
 		std::cout<<"Timers"<<std::endl
 			<<std::setw(LW)<<std::left<<"Line"
 			<<std::setw(SW)<<std::left<<"Type"
-			<<std::setw(CW)<<std::left<<"Total"
-			<<std::setw(CW)<<std::left<<"Average"
+			<<std::setw(CW)<<std::left<<"Avg"
+			<<std::setw(CW)<<std::left<<"AvgBlkWait"
+			<<std::setw(CW)<<std::left<<"Tot"
+			<<std::setw(CW)<<std::left<<"TotBlkWait"
 			<<std::endl;
-		for (int i=0; i<timer.max_slots; i++){
-			if (timer_counts[i] > 0L){
-				double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
-				double avg_time = tot_time / timer_counts[i];
+
+		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
+		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
+		for (int i=1; i<timer.max_slots - sialx_lines_; i++){
+
+			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
+				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
+				double avg_time = tot_time / timer_counts[i + total_time_timer_offset * sialx_lines_];
+				double tot_blk_wait = 0;
+				double avg_blk_wait = 0;
+
+				if (timer_counts[i + block_wait_timer_offset * sialx_lines_] > 0L){
+					tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
+					avg_blk_wait = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
+				}
+
 				std::cout<<std::setw(LW)<<std::left << i
 						<< std::setw(SW)<< std::left << line_to_str_.at(i)
-				        << std::setw(CW)<< std::left << tot_time
-				        << std::setw(CW)<< std::left << avg_time
-				        << std::endl;
+						<< std::setw(CW)<< std::left << avg_time
+						<< std::setw(CW)<< std::left << avg_blk_wait
+						<< std::setw(CW)<< std::left << tot_time
+						<< std::setw(CW)<< std::left << tot_blk_wait
+						<< std::endl;
 			}
 		}
 		std::cout<<std::endl;
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
+	const int sialx_lines_;
 };
 
 //*********************************************************************
@@ -97,7 +115,8 @@ void sialx_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Dat
 template<typename TIMER>
 class MultiNodePrint : public PrintTimers<TIMER> {
 public:
-	MultiNodePrint(const std::vector<std::string> &line_to_str) : line_to_str_(line_to_str) {}
+	MultiNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines) :
+		line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
 	virtual ~MultiNodePrint(){}
 	virtual void execute(TIMER& timer){
 
@@ -117,17 +136,33 @@ public:
 			std::cout<<"Timers"<<std::endl
 				<<std::setw(LW)<<std::left<<"Line"
 				<<std::setw(SW)<<std::left<<"Type"
-				<<std::setw(CW)<<std::left<<"Total"
-				<<std::setw(CW)<<std::left<<"Average"
+				<<std::setw(CW)<<std::left<<"Avg"
+				<<std::setw(CW)<<std::left<<"AvgBlkWait"
+				<<std::setw(CW)<<std::left<<"Tot"
+				<<std::setw(CW)<<std::left<<"TotBlkWait"
 				<<std::endl;
-			for (int i=0; i<timer.max_slots; i++){
-				if (timer_counts[i] > 0L){
-					double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
-					double avg_time = tot_time / timer_counts[i];
+
+			int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
+			int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
+			for (int i=1; i<timer.max_slots - sialx_lines_; i++){
+
+				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
+					double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
+					double avg_time = tot_time / timer_counts[i + total_time_timer_offset * sialx_lines_];
+					double tot_blk_wait = 0;
+					double avg_blk_wait = 0;
+
+					if (timer_counts[i + block_wait_timer_offset * sialx_lines_] > 0L){
+						tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
+						avg_blk_wait = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
+					}
+
 					std::cout<<std::setw(LW)<<std::left << i
 							<< std::setw(SW)<< std::left << line_to_str_.at(i)
-							<< std::setw(CW)<< std::left << tot_time
 							<< std::setw(CW)<< std::left << avg_time
+							<< std::setw(CW)<< std::left << avg_blk_wait
+							<< std::setw(CW)<< std::left << tot_time
+							<< std::setw(CW)<< std::left << tot_blk_wait
 							<< std::endl;
 				}
 			}
@@ -136,6 +171,7 @@ public:
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
+	const int sialx_lines_;
 	void mpi_reduce_timers(TIMER& timer){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
@@ -195,17 +231,26 @@ public:
 // 						Methods for SialxTimers
 //*********************************************************************
 
-SialxTimer::SialxTimer(int max_slots) : delegate_(max_slots+1){}
-
-void SialxTimer::start_timer(int slot){
-	delegate_.start_timer(slot);
+SialxTimer::SialxTimer(int sialx_lines) :
+		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)),
+		sialx_lines_(sialx_lines){
+	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
+	 * one for each kind defined in the TimerKind_t enum.
+	 * One extra added since line numbers begin at 1.
+	 */
 }
 
-void SialxTimer::pause_timer(int slot){
-	delegate_.pause_timer(slot);
+void SialxTimer::start_timer(int line_number, TimerKind_t kind){
+	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", current_line());
+	check(line_number <= sialx_lines_, "Invalid line number", current_line());
+	delegate_.start_timer(line_number + ((int)kind) * sialx_lines_);
 }
 
-
+void SialxTimer::pause_timer(int line_number, TimerKind_t kind){
+	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", current_line());
+	check(line_number <= sialx_lines_, "Invalid line number", current_line());
+	delegate_.pause_timer(line_number + ((int)kind) * sialx_lines_);
+}
 
 
 void SialxTimer::print_timers(std::vector<std::string> line_to_str) {
@@ -216,7 +261,7 @@ void SialxTimer::print_timers(std::vector<std::string> line_to_str) {
 #else
 	typedef SingleNodePrint<TimerType_t> PrintTimersType_t;
 #endif
-	PrintTimersType_t p(line_to_str);
+	PrintTimersType_t p(line_to_str, sialx_lines_);
 	delegate_.print_timers(p);
 }
 
