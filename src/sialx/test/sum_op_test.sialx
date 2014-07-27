@@ -20,15 +20,16 @@ do i
 		allocate e[i, j]
 		
 		execute fill_block_sequential a[i,j] 100.0
+		print a[i,j]
 		execute fill_block_sequential c[i,j] 50.0
-#FIXME		d[i,j] = a[i,j] + c[i,j]
+		d[i,j] = a[i,j] + c[i,j]
 		println  "*******"
 		print i
 		print j
-		execute print_block d[i,j]
+		print d[i,j]
 		println "++++++++"
-#FIXME		e[i,j] = d[i,j] - c[i,j]
-		execute print_block e[i,j]
+		e[i,j] = d[i,j] - c[i,j]
+		print e[i,j]
 		
 	enddo j
 enddo i

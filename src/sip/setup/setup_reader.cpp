@@ -175,13 +175,28 @@ void SetupReader::dump_data(std::ostream& os) {
 }
 
 int SetupReader::predefined_int(std::string name) {
+	try{
 	return predefined_int_map_.at(name);
+	}
+	catch (const std::out_of_range& oor) {
+		sip::input_check(false, "No value provided  in setup for predefined int \"" + name + "\".");
+		throw;
+	}
 }
 
 double SetupReader::predefined_scalar(std::string name) {
+	try{
 	return predefined_scalar_map_.at(name);
+	}
+	catch (const std::out_of_range& oor) {
+		sip::input_check(false, "No value provided  in setup for predefined scalar \"" + name + "\"." );
+		throw;
+	}
 }
 
+bool SetupReader::aces_validate(){
+	return sip::input_warn(sial_prog_list_.size() > 0,"setup file is missing sial program" );
+}
 void SetupReader::read_and_check_magic() {
 	int fmagic = stream_.read_int();
 	sip::check(fmagic == sip::SETUP_MAGIC,

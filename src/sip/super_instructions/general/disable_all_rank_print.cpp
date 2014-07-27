@@ -7,9 +7,12 @@
 
 #include "config.h"
 #include "sip.h"
+#include "interpreter.h"
+#include "sial_printer.h"
 
 void disable_all_rank_print(){
-	sip::_all_rank_print = false;
+//	sip::_all_rank_print = false;
+	sip::Interpreter::global_interpreter->printer_->disable_all_rank_print();
 }
 
 

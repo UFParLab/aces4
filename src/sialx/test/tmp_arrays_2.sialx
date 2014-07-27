@@ -8,7 +8,7 @@ sial tmp_arrays_2
 	temp b[i,j]
 	
 	do i
-		print "in do i"
+		print "in do i "
 		print i
 		do j
 			print "in do j "
@@ -16,17 +16,17 @@ sial tmp_arrays_2
 			
 			a[i,j] = 42.0
 			println "all elements of a(i,j) should be 42"
-			execute print_block a[i,j]
+			print a[i,j]
 			
 			b[i,j] = 55.0
 			println "all elements of b(i,j) should be 55"
-			execute print_block b[i,j]
+			print b[i,j]
 			
 			b[i,j] = a[i,j]
 			println "all elements of b(i,j) should be 42"
-			execute print_block b[i,j]
+			print b[i,j]
 			
-			#execute list_block_map
+			execute list_block_map
 		enddo j
 		
 		println "end of loop body in do i"
@@ -34,6 +34,6 @@ sial tmp_arrays_2
 	enddo i
 	
 	println "end of program tmp_array_2."
-	#execute list_block_map
+	execute list_block_map
 	
 endsial tmp_arrays_2

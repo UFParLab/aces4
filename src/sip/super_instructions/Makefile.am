@@ -321,6 +321,7 @@ GENERAL_SOURCE_FILES=\
 ./general/enable_debug_print.cpp\
 ./general/enable_all_rank_print.cpp\
 ./general/disable_all_rank_print.cpp\
+./general/TEST_print_block.cpp\
 ./general/abort_job.F
 
 

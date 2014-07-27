@@ -178,6 +178,7 @@ void set_ijk_aab(
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -238,7 +239,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
    	    procvec_.push_back(procvec_entry_t(func, sig));
 	}
 	catch (const std::out_of_range& oor) {
-        SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+        sial_warn(false, std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;
@@ -320,6 +321,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["print_something"] = (fp0)&print_something;
 	procmap_["fill_block_sequential"]= (fp0)&fill_block_sequential;
 	procmap_["fill_block_cyclic"]= (fp0)&fill_block_cyclic;
+	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
 	procmap_["print_static_array"]=(fp0)&print_static_array;

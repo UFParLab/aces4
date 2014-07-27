@@ -1,3 +1,10 @@
 sial helloworld
 	print "hello world"
+	println "  this should be on the same line as hello world"
+	print 3.14159
+	print "  "
+	print 100
+	println 44.5
+	println 123
+	println 456
 endsial helloworld

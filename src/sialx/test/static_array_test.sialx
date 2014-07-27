@@ -14,22 +14,23 @@ sial static_array_test
 		do j
 		
 			execute fill_block_sequential a 1.0
-			#execute print_block a(i,j)
+			#print a(i,j)
 			
 			b[i, j] = a[i, j]
 			
-			println "execute print_block a(i,j)"
-			execute print_block a[i,j]
+			println "print_block a(i,j)"
+			print a[i,j]
 			
-			println "execute print_block b"
-			execute print_block b[i, j] 
+			println "print_block b[i,j]"
+			print b[i, j] 
 			
 		enddo j
 	enddo i
 	
-	println "execute print_block a"
-	execute print_block a
-	
+	println "print a"
+	print a
+	print a
+	deallocate  b[*,*]
 	
 	println " finished static_array_test"
 

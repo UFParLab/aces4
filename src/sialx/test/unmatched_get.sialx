@@ -31,7 +31,7 @@ sial unmatched_get
 	      get b[i,j]
 	      get c[i,j]
 #FIXME	      a[i,j] = b[i,j] + c[i,j]
-	      execute print_block a[i,j]
+	      print a[i,j]
 	   enddo j
 	enddo i
 	
@@ -41,7 +41,7 @@ sial unmatched_get
 	      get b[i,j]
 	      get c[i,j]
 #	      a(i,j) = b(i,j) + c(i,j)
-#	      execute print_block a(i,j)
+#	      print a(i,j)
 	   enddo j
 	enddo i
 	sip_barrier

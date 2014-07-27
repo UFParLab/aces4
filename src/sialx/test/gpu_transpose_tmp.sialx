@@ -16,10 +16,10 @@ sial transpose_tmp
 				allocate b[j,k,i]
 				execute fill_block_sequential a[i,j,k] 53.0
 				b[j,k,i] = a[i,j,k]
-				execute print_block a[i,j,k]
+				print a[i,j,k]
 				
 				gpu_off
-                execute print_block b[j, k, i]
+                print b[j, k, i]
 			enddo k
 		enddo j
 	enddo i

@@ -16,14 +16,14 @@ sial contraction_small
 		do j
 			#b (j, k) = 1.0
 			execute fill_block_cyclic b [j, k] 1.0
-			#execute print_block b (j, k)
+			#print b (j, k)
 			do i
 				do l
 					allocate c[i, l]
 					execute fill_block_cyclic a[i, j, k, l] 1.0			
-					execute print_block  a[i, j, k, l]
+					print  a[i, j, k, l]
 					c[i, l] = a[i, j, k, l] * b[j, k]
-					execute print_block c[i,l]
+					print c[i,l]
 					
 				enddo l
 			enddo i

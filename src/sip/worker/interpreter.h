@@ -27,6 +27,8 @@
 #include "sialx_timer.h"
 #include "config.h"
 #include "worker_persistent_array_manager.h"
+#include "sial_math.h"
+
 
 #ifdef HAVE_MPI
 #include "sial_ops_parallel.h"
@@ -37,13 +39,16 @@
 namespace sip {
 
 class LoopManager;
+class SialPrinter;
+class Tracer;
 
 class Interpreter {
 public:
 
 
-	Interpreter(SipTables&, SialxTimer&, std::ostream& out, WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
 	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(SipTables&, SialPrinter* printer);
 	~Interpreter();
 
 	/** Static pointer to the current Interpreter.  This is
@@ -55,6 +60,7 @@ public:
 
 	friend class DoLoop;
 	friend class SequentialPardoLoop;
+	friend class Tracer;
 
 	//data_access routines.  These are just for convenience and just call the
 	//appropriate routine in the sipTable or dataManager.  The definitions are given
@@ -82,6 +88,9 @@ public:
 	}
 	int int_value(int int_table_slot) {
 		return sip_tables_.int_value(int_table_slot);
+	}
+	void set_int_value(int int_table_slot, int value){
+		data_manager_.set_int_value(int_table_slot, value);
 	}
 	int index_value(int index_table_slot) {
 		return data_manager_.index_value(index_table_slot);
@@ -113,6 +122,12 @@ public:
 	}
 	std::string array_name(int array_table_slot) {
 		return sip_tables_.array_name(array_table_slot);
+	}
+	std::string int_name(int int_table_slot){
+		return sip_tables_.int_name(int_table_slot);
+	}
+	std::string index_name(int index_table_slot){
+		return sip_tables_.index_name(index_table_slot);
 	}
 	int array_slot(std::string array_name) {
 		return sip_tables_.array_table_.array_slot(array_name);
@@ -160,6 +175,12 @@ public:
 	void post_sial_program();
 
 
+
+	int arg0(){ return op_table_.arg0(pc); }
+	int arg1(){ return op_table_.arg1(pc); }
+	int arg2(){ return op_table_.arg2(pc); }
+    sip::index_selector_t& index_selectors(){return op_table_.index_selectors(pc);}
+
 	/**
 	 * Returns the line number in the SIAL program corresponding to the
 	 * instruction at op_table[pc].
@@ -169,8 +190,6 @@ public:
 	 * @return
 	 *
 	 */
-
-
 	int line_number() {
 		if (pc < op_table_.size())
 			return op_table_.line_number(pc);
@@ -178,7 +197,8 @@ public:
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
 
-	/** Determine whether any data is left in the interpreter's data structures.
+	/** For testing.
+	 * Determine whether any data is left in the interpreter's data structures.
 	 * This method should return true immediately after completion of a sial program.
 	 * @return
 	 */
@@ -190,22 +210,33 @@ public:
 				&& read_block_list_.size()==0;
 	}
 
-//	bool all_stacks_empty(){
-//		check(loop_manager_stack_.size()==0,"loop_manager_stack_ not empty at end of sial program");
-//		check(block_selector_stack_.size()==0,"block_selector_stack_ not empty at end of sial program");
-//		check(control_stack_.size()==0, "control_stack_ not empty at end of sial program");
-//		check(expression_stack_.size()==0, "expresion_stack_ not empty at end of sial program");
-//		check(write_back_list_.size()==0, "write_back_list_ not empty at end of sial program");
-//		check(read_block_list_.size()==0, "read_block_list_ not empty at end of sial program");
-//		return true;
-//	}
+	/** For testing
+	 * Determines the total number of blocks in the block map, including both the
+	 * cache and the active map.  This means that the value may be non-deterministic,
+	 * or at least difficult to predict, except at certain points where it is know to
+	 * be zero.
+	 * @return
+	 */
+	std::size_t num_blocks_in_blockmap(){
+    	return data_manager_.block_manager_.total_blocks();
+    }
 
-//TODO these should be private.  Made public as expedient way to implement list_block_map super instruction.
+	/** allows superinstructions to use the same ostream as sial. */
+	SialPrinter* printer(){
+		return printer_;
+	}
+
+/**TODO these should be private.  Made public as expedient way to implement
+ * list_block_map super instruction, and enable- and disable_all_rank_print
+ * super instructions.
+ */
 
 	//static data
 	SipTables& sip_tables_;
 	//dynamic data
 	DataManager data_manager_;
+	//printer module
+	SialPrinter* printer_;
 private:
 
 	/**
@@ -223,7 +254,7 @@ private:
 	/**
 	 * Timer manager
 	 */
-	sip::SialxTimer& sialx_timers_;
+	const sip::SialxTimer& sialx_timers_;
 
 	/**
 	 * Owned by main program
@@ -295,21 +326,26 @@ private:
 
 	/**
 	 * Records whether or not we are executing in a section of code where gpu_on has been invoked
+	 * TODO  is nesting of gpu sections allowed?  If so, this needs to be an int.  If not, need check.
 	 */
 	bool gpu_enabled_;
 
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
-	void handle_assignment_op(int pc);
+//	void handle_assignment_op(int pc);
+	void handle_contraction(int drank, index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
+	void handle_contraction(int drank, index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
 	void handle_contraction_op(int pc);
-	void handle_where_op(int pc);
-	bool evaluate_where_clause(int pc);
-	bool evaluate_double_relational_expr(int pc);
-	bool evaluate_int_relational_expr(int pc);
-	void handle_collective_sum_op(int source_array_slot, int dest_array_slot);
-	void handle_sum_op(int pc, double factor);
-	void handle_self_multiply_op(int pc);
+//	void handle_where_op(int pc);
+//	bool evaluate_where_clause(int pc);
+//	bool evaluate_double_relational_expr(int pc);
+//	bool evaluate_int_relational_expr(int pc);
+//	void handle_collective_sum_op(int source_array_slot, int dest_array_slot);
+//	void handle_sum_op(int pc, double factor);
+	void handle_block_add(int pc);
+	void handle_block_subtract(int pc);
+//	void handle_self_multiply_op(int pc);
 	void handle_slice_op(int pc);
 	void handle_insert_op(int pc);
 
@@ -354,8 +390,22 @@ private:
 	 */
 	sip::Block::BlockPtr get_block_from_selector_stack(char intent,
 			bool contiguous_allowed = true);
+
+
 	/**
-	 * Returns the block identified by the given b
+	 * Returns a pointer to the block indicated by the arg0 (rank), arg1 (array slot), and index selector
+	 * taken from the current instruction  This is the same as get_block_from_selector_stack except that
+	 * the information is in the instruction instead of on the block_selector_stack.
+	 *
+	 * @param intent
+	 * @param contiguous_allowed
+	 * @return
+	 */
+	Block::BlockPtr get_block_from_instruction(char intent, bool contiguous_allowed = true);
+
+
+	/**
+	 * Returns the block identified by the given block selector
 	 *
 	 * @param[in] intent, either 'r' for read,  'w' for write,  or 'u' for update.
 	 * @param[in] a BlockSelector
@@ -376,10 +426,13 @@ private:
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
 			sip::BlockId& id, bool contiguous_allowed = true);
 
-	/** ostream where output from SIAL print statements are sent.
-	 * Default is cout.  Other values are useful for testing.
+	/** Object that manages and formats output from SIAL print statements.
+	 * A subclass with desired properties is passed to the constructor.
+	 * One such subclass is used for tests that compare sial output to
+	 * an expected string.
 	 */
-	std::ostream& out_;
+
+	Tracer* tracer_;
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

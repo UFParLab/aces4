@@ -88,6 +88,9 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/siox_reader.cpp\
 ./src/sip/worker/sial_ops_sequential.h\
 ./src/sip/worker/sial_ops_sequential.cpp\
+./src/sip/worker/sial_printer.h\
+./src/sip/worker/sial_math.h\
+./src/sip/worker/sial_math.cpp\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
@@ -188,13 +191,18 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm test_mpi_simple test_unit
-check_PROGRAMS = test_mpi_qm test_mpi_simple test_unit
+#TESTS = test_mpi_qm test_mpi_simple test_unit
+#check_PROGRAMS = test_mpi_qm test_mpi_simple test_unit
+#TESTS = test_simple
+TESTS = test_simple
+check_PROGRAMS = test_simple
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_simple test_qm
-check_PROGRAMS = test_simple test_qm
+#TESTS = test_simple test_qm
+#check_PROGRAMS = test_simple test_qm
+TESTS = test_simple
+check_PROGRAMS = test_simple
 endif
 
 test_unit_SOURCES = \
@@ -203,14 +211,17 @@ test_unit_SOURCES = \
 
 test_mpi_qm_SOURCES = \
 	$(ACES_SOURCEFILES)\
+	test/test_controller.h\
 	test/test_mpi_qm.cpp
 
 test_mpi_simple_SOURCES = \
 	$(ACES_SOURCEFILES)\
+	test/test_controller.h\
 	test/test_mpi_simple.cpp
 
 test_simple_SOURCES = \
     $(ACES_SOURCEFILES) \
+    test/test_controller.h\
     test/test_simple.cpp\
     test/test_transpose_op.F\
     test/test_transpose4d_op.F\
@@ -218,6 +229,7 @@ test_simple_SOURCES = \
 
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
+	 test/test_controller.h\
 	 test/test_qm.cpp
 
 TEST_LDADD_VARS = \
@@ -326,6 +338,8 @@ SIOX_FILES=\
 ./src/sialx/test/aces_defs.siox\
 ./src/sialx/test/fill_sequential_test.siox\
 ./src/sialx/test/local_arrays_wild.siox\
+./src/sialx/test/local_arrays_wild_fail.siox\
+./src/sialx/test/basic_assign_to_static_array_test.siox\
 ./src/sialx/test/sum_op_test.siox\
 ./src/sialx/test/transpose_tmp.siox\
 ./src/sialx/test/transpose4d_tmp.siox\
@@ -367,6 +381,15 @@ SIOX_FILES=\
 ./src/sialx/test/unmatched_get.siox\
 ./src/sialx/test/all_rank_print_test.siox\
 ./src/sialx/test/message_number_wraparound_test.siox\
+./src/sialx/test/pardo_loop_1d.siox\
+./src/sialx/test/pardo_loop_2d.siox\
+./src/sialx/test/pardo_loop_3d.siox\
+./src/sialx/test/pardo_loop_4d.siox\
+./src/sialx/test/pardo_loop_5d.siox\
+./src/sialx/test/pardo_loop_6d.siox\
+./src/sialx/test/scalar_ops.siox\
+./src/sialx/test/int_ops.siox\
+./src/sialx/test/scalar_valued_blocks.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -413,6 +436,8 @@ EXTRA_DIST += \
 ./src/sialx/test/aces_defs.sialx\
 ./src/sialx/test/fill_sequential_test.sialx\
 ./src/sialx/test/local_arrays_wild.sialx\
+./src/sialx/test/local_arrays_wild_fail.sialx\
+./src/sialx/test/basic_assign_to_static_array_test.sialx\
 ./src/sialx/test/sum_op_test.sialx\
 ./src/sialx/test/transpose_tmp.sialx\
 ./src/sialx/test/transpose4d_tmp.sialx\
@@ -454,6 +479,15 @@ EXTRA_DIST += \
 ./src/sialx/test/unmatched_get.sialx\
 ./src/sialx/test/all_rank_print_test.sialx\
 ./src/sialx/test/message_number_wraparound_test.sialx\
+./src/sialx/test/pardo_loop_1d.sialx\
+./src/sialx/test/pardo_loop_2d.sialx\
+./src/sialx/test/pardo_loop_3d.sialx\
+./src/sialx/test/pardo_loop_4d.sialx\
+./src/sialx/test/pardo_loop_5d.sialx\
+./src/sialx/test/pardo_loop_6d.sialx\
+./src/sialx/test/scalar_ops.sialx\
+./src/sialx/test/int_ops.sialx\
+./src/sialx/test/scalar_valued_blocks.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

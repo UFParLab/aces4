@@ -2,16 +2,49 @@ sial tmp_arrays
 	predefined int norb
 	aoindex i = 1:norb
 	aoindex j = 1:norb
+	special test_print_block r
+	special fill_block_sequential wr
 	temp a[i,j]
 	temp b[i,j]
-	
+	temp c[i,j]
+	temp d[j,i]
+	index k = 1:3
+	temp v[k]
+	scalar x
+	scalar y
+
 	do i
-		do j
-			a[i,j] = 42.0
-			b[i,j] = a[i,j]
-		enddo j
+	do j
+	a[i,j] = 9.0
+	a[i,j] *= -1.0
+	a[i,j] += 29.0
+	b[i,j] = 3.0
+	a[i,j] = a[i,j] + b[i,j]
+	print a[i,j]
+	a[i,j] = a[i,j] - b[i,j]
+	enddo j
 	enddo i
 	
-	println "end of tmp_arrays"
+	println "starting second loop"
+	do i
+	do j
+	c[i,j] = -1.0
+	x = (scalar) j
+    c[i,j] *= -x
+	print c[i,j]
+	enddo j
+	enddo i
 	
+	println "starting third loop"
+	do i
+	do j
+	x = (scalar) j
+    execute fill_block_sequential a[i,j] x
+	print a[i,j]
+	d[j,i] = a[i,j]
+    print d[j,i]
+	enddo j
+	enddo i
+
 endsial tmp_arrays
+

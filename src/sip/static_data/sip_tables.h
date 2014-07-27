@@ -32,10 +32,12 @@
 //#include "segment_table.h"
 
 //forward references
+class TestController;
 namespace sip {
 class SegmentTable;
 class ContiguousArrayManager;
 class DiskBackedArraysIO;
+class Tracer;
 }
 
 namespace master {
@@ -81,6 +83,7 @@ public:
 
 //int (symbolic constants)
 	int int_value(int int_table_slot) const;
+	std::string int_name(int int_table_slot){return int_table_.name(int_table_slot);}
 
 // strint literals
 	std::string string_literal(int slot) const;
@@ -186,6 +189,8 @@ private:
 	friend class DataManager;
 	friend class ContiguousArrayManager;
 	friend class DiskBackedArraysIO;
+	friend class ::TestController;
+	friend class Tracer;
 
 	DISALLOW_COPY_AND_ASSIGN(SipTables);
 };

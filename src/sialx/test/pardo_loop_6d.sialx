@@ -1,0 +1,34 @@
+sial pardo_loop_6d
+
+	predefined int lower0
+	predefined int upper0
+	predefined int lower1
+	predefined int upper1
+	predefined int lower2
+	predefined int upper2
+	predefined int lower3
+	predefined int upper3	
+	predefined int lower4
+	predefined int upper4
+	predefined int lower5
+	predefined int upper5
+	
+	index i0 = lower0:upper0
+	index i1 = lower1:upper1
+	index i2 = lower2:upper2
+	index i3 = lower3:upper3
+    index i4 = lower4:upper4
+    index i5 = lower5:upper5
+    
+	int counter = 0
+	scalar total = 0.0
+		
+	pardo i0, i1, i2, i3, i4, i5
+		counter += 1	
+	endpardo i0, i1, i2, i3, i4, i5
+	
+	sip_barrier
+    collective total += (scalar)counter
+    sip_barrier
+    	
+endsial pardo_loop_6d

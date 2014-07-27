@@ -13,7 +13,7 @@ sial fill_sequential_test
 		do j
 			execute fill_block_sequential a[i,j] 2.0
 			b[j,i] = a[i,j]
-			execute print_block b[j,i]
+			print b[j,i]
 		enddo j
 	enddo i
 	
@@ -21,7 +21,7 @@ sial fill_sequential_test
 		do j
 			execute fill_block_sequential a[i,j] 2.0
 			b[j,i] = a[i,j]
-			execute print_block b[j,i]
+			print b[j,i]
 		enddo j
 	enddo i
 	

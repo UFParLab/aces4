@@ -93,7 +93,9 @@ public:
 		block_map_.delete_per_array_map_and_blocks(array_id);
 	}
 
-
+	std::size_t total_blocks(){
+		return block_map_.total_blocks();
+	}
 
 #ifdef HAVE_CUDA
 	// GPU

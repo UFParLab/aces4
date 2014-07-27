@@ -13,8 +13,8 @@ do i
 do j
 execute fill_block_cyclic a[i,j] 1.0
 execute fill_block_cyclic b[i,j] 5.0
-execute print_block a[i,j]
-execute print_block b[i,j]
+print a[i,j]
+print b[i,j]
 gpu_on
 x = a[i,j]*b[i,j]
 gpu_off

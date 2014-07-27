@@ -14,19 +14,26 @@ sial local_arrays_wild
 		execute list_block_map
 		
 		do j
+		  if i==j
 			print j
 			allocate b[i,j]
-			a[i,j] = 42.0
+			a[i,j] = (scalar)j
 			b[i,j] = a[i,j]
-			execute print_block b[i,j]
+			print b[i,j]		
+		  endif
 		enddo j
 	enddo i
 	
 	println "block map before deallocates:"
 	execute list_block_map
 	
+	do i
+	do j
+	print a[i,j]
+	enddo j
+	enddo i
+	
 	deallocate a[*,*]
-	deallocate b[*,*]
 	
 	println "block map after deallocates:"
 	

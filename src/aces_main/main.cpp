@@ -137,9 +137,12 @@ int main(int argc, char* argv[]) {
 	//initialize setup data
 	setup::BinaryInputFile setup_file(job);
 	setup::SetupReader setup_reader(setup_file);
+	setup_reader.aces_validate();
+
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
+
 	setup::SetupReader::SialProgList::iterator it;
 
 #ifdef HAVE_MPI

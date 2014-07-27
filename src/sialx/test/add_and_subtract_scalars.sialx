@@ -35,22 +35,22 @@ do i
 do j
 a[i,j] = 42.0
 b[i,j] = 41.0
-execute print_block a[i,j]
-execute print_block b[i,j]
+print a[i,j]
+print b[i,j]
 enddo j
 enddo i
 
 do i
 do j
 a[i,j] += b[i,j]
-execute print_block a[i,j]
+print a[i,j]
 enddo j
 enddo i
 
 do i
 do j
 a[i,j] -= b[i,j]
-execute print_block a[i,j]
+print a[i,j]
 enddo j
 enddo i
 

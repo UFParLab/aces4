@@ -28,10 +28,10 @@ do i
 		println  "*******"
 		print i
 		print j
-		execute print_block d[i,j]	# Copy it back to host for test to examine
+		print d[i,j]	# Copy it back to host for test to examine
 		println "++++++++"
 #FIXME		e[i,j] = d[i,j] - c[i,j]
-		execute print_block e[i,j]	# Copy it back to host for test to examine
+		print e[i,j]	# Copy it back to host for test to examine
 		
 		gpu_off
 		

@@ -8,10 +8,8 @@ sial exit_statement_test
 	temp a[i,j]
 	temp b[i,j]
 	
-	int counter_j
-	int counter_i
-	counter_j = 0
-	counter_i = 0
+	int counter_j = 0
+	int counter_i = 0
 	
 	do i
 		counter_i = counter_i + 1
@@ -22,12 +20,9 @@ sial exit_statement_test
 			a[i,j] = 42.0
 			b[i,j] = a[i,j]
 			
-			print "in do j "
+			println "in do j "
 			print j
-			
-			#execute print_block b(i,j)
-			execute list_block_map
-			
+						
 			if j == 3 
 				println "exit inner loop"
 				exit
@@ -35,7 +30,6 @@ sial exit_statement_test
 			
 		enddo j
 		
-		#print "end of loop body in do i"
 		execute list_block_map
 		
 		if i == 4 

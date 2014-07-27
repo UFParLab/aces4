@@ -14,8 +14,8 @@ sial contract_to_scalar
 		do j
 			execute fill_block_cyclic a[i,j] 1.0
 			execute fill_block_cyclic b[i,j] 5.0
-			execute print_block a[i,j]
-			execute print_block b[i,j]
+			print a[i,j]
+			print b[i,j]
 			x = a[i,j]*b[i,j]
 			print x
 		enddo j

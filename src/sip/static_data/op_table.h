@@ -17,7 +17,7 @@
 
 namespace sip {
 
-
+class Tracer;
 
 class OpTableEntry {
 public:
@@ -112,6 +112,7 @@ public:
 
 	friend class SipTables;
 	friend class Interpreter;
+	friend class Tracer;
 
 private:
 	std::vector<OpTableEntry> entries_;

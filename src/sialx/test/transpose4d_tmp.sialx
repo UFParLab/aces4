@@ -25,9 +25,9 @@ sial transpose_tmp
 					print l
 					#allocate b(k,j,i,l)
 					execute fill_block_sequential a[i,j,k,l] 53.0
-					execute print_block a[i,j,k,l]
+					print a[i,j,k,l]
 					b[k,j,i,l] = a[i,j,k,l]
-					execute print_block b[k,j,i,l]
+					print b[k,j,i,l]
 				enddo l
 			enddo k
 		enddo j

@@ -14,7 +14,7 @@ do i
 		allocate a[i, j]
 		execute fill_block_sequential a[i,j] 100.0
 		a[i, j] *= 3.0
-		execute print_block a[i, j]
+		print a[i, j]
 		gpu_off	
 	enddo j
 enddo i

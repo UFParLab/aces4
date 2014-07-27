@@ -23,8 +23,8 @@ sial persistent_distributed_array_test2
 	do i
 		do j
 			print j
-			println "execute print_block b(i,j)"
-			execute print_block b[i,j]
+			println "print b(i,j)"
+			print b[i,j]
 		enddo j
 	enddo i
 	

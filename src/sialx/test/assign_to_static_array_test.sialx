@@ -41,7 +41,7 @@ sial assign_to_static_array_test
 	#println "printing blocks of d"
 	#do i
 	#do j
-	#execute print_block d(i,j)
+	#print d(i,j)
 	#enddo j
 	#enddo i
 	

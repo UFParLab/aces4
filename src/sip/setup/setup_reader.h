@@ -71,6 +71,12 @@ public:
 
 	NamePredefinedContiguousArrayMap name_to_predefined_contiguous_array_map_;
 
+	/** performs sanity checks on input
+	 *
+	 * right now, this just checks for the existence of a sial program name
+	 */
+	bool aces_validate();
+
 	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
 
 

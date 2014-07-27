@@ -89,6 +89,14 @@ public:
     void set_max_allocatable_bytes(std::size_t size);
 	void free_up_bytes_in_cache(std::size_t block_size);
 
+	/**
+	 * Returns total number of blocks in the active map + cached mape.  Used for testing.
+	 * @return
+	 */
+	std::size_t total_blocks(){
+		return block_map_.total_blocks() + cache_.total_blocks();
+	}
+
 private:
 
 	/* A block must be in only one of the two maps : block_map_ or cache_ */

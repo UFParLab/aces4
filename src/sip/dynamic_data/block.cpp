@@ -171,6 +171,15 @@ Block::dataPtr Block::scale(double value) {
 	return ptr;
 }
 
+Block::dataPtr Block::increment_elements(double delta){
+	dataPtr ptr = get_data();
+	int n = size();
+	for (int i = 0; i < n; ++i) {
+		ptr[i] += delta;
+	}
+	return ptr;
+}
+
 //void tensor_block_copy_(int&,int*,int*,double*,double*,int&);
 Block::dataPtr Block::transpose_copy(BlockPtr source, int rank,
 		permute_t& permute) {

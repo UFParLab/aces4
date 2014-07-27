@@ -28,7 +28,7 @@ public:
 	/** no arg function pointer.  All pointers are cast to this type to be able to store in a common map and vector. */
 	typedef void(*fp0)(int& ierr);
 
-	/** The Fortran header for a super instruction with two arguments
+	/** The Fortran header for a super instruction with one argument
 	 *
 	       subroutine SUB(
 	     c array_slot, rank, index_values, size, extents, data,
@@ -73,7 +73,7 @@ public:
     typedef void(*fp2)(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
     		           int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 
-
+/** And you can figure the rest out */
 
     typedef void(*fp3)(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
     		           int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,

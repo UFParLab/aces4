@@ -7,11 +7,13 @@ special print_block r
 aoindex i = 1:1
 aoindex j = 1:1
 local a[i,j]
+scalar x
 
 do i
 	do j
-		allocate a[i, j]
-		execute fill_block_sequential a[i,j] 100.0
+#		allocate a[i, j]
+		x = 100.0
+		execute fill_block_sequential a[i,j] x
 		a[i, j] *= 2.0
 	enddo j
 enddo i
@@ -19,10 +21,11 @@ enddo i
 do i
 	do j
 		a[i, j] *= 1.5
-		execute print_block a[i, j]
+		print a[i, j]
 	enddo j
 enddo i
 
 println "end of self_multiply_test"
 
 endsial self_multiply_test
+

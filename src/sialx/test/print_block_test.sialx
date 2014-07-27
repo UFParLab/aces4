@@ -1,3 +1,4 @@
+#NOT USED
 sial print_block_test
 	predefined int norb
 	special fill_block_sequential wr
@@ -9,10 +10,10 @@ sial print_block_test
 	
 	do i
 		execute fill_block_sequential b[i] 1000.0
-		execute print_block b[i]
+		print b[i]
 		do j
 			execute fill_block_sequential a[j,i] 2.0
-			execute print_block a[j,i]
+			print a[j,i]
 		enddo j
 	enddo i
 	

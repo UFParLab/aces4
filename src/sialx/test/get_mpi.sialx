@@ -29,7 +29,7 @@ sial get_mpi
 	      get b[i,j]
 	      get c[i,j]
 #FIXME	      a[i,j] = b[i,j] + c[i,j]
-	      execute print_block a[i,j]
+	      print a[i,j]
 	   enddo j
 	enddo i
 	

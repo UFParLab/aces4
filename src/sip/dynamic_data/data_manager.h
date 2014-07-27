@@ -45,8 +45,11 @@ public:
 	void set_scalar_value(const std::string& name, double value);
 	sip::Block::BlockPtr get_scalar_block(int array_table_slot);
 
-	//for ints (aces symbolic constants)
+	//for ints
 	int int_value(int int_table_slot);
+	int int_value(const std::string& name);
+	void set_int_value(std::string& name, int value);
+	void set_int_value(int int_table_slot, int value);
 
     //for indices
 	int index_value(int index_table_slot);

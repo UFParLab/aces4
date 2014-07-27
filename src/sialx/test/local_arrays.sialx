@@ -14,9 +14,9 @@ sial local_arrays
             print j
             allocate a[i,j]
             allocate b[i,j]
-            a[i,j] = 42.0
+            a[i,j] = (scalar)j
             b[i,j] = a[i,j]
-            execute print_block b[i,j]
+            print b[i,j] #should be full of value of j
         enddo j
     enddo i
 

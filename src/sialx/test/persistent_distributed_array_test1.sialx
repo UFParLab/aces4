@@ -10,9 +10,9 @@ sial persistent_distributed_array_test1
 	do i
 		do j
 			execute fill_block_sequential a[i,j] 1.0
-			#execute print_block a(i,j)
-			println "execute print_block a(i,j)"
-			execute print_block a[i,j]
+			#print a(i,j)
+			println "print a(i,j)"
+			print a[i,j]
 		enddo j
 	enddo i
 	

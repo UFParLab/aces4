@@ -103,6 +103,22 @@ bool check_and_warn(bool, std::string, int line = 0);
 /*! fails with message */
 void fail(std::string, int line = 0);
 
+/** This test is intended for checking for fatal errors that are caused by the input data or sial program.
+ * This is in contrast to checks that find bugs in the sip.
+ * This feature was recently added, so is not used consistently.
+ *
+ * @param condition
+ * @param m
+ * @param line
+ */
+void input_check(bool condition, std::string m, int line = 0);
+
+bool input_warn(bool condition, std::string m, int line = 0);
+
+void sial_check(bool condition, std::string m, int line = 0);
+
+bool sial_warn(bool condition, std::string m, int line = 0);
+
 }//namespace sip
 
 #endif /* SIP_H_*/

@@ -24,9 +24,9 @@ sial transpose_tmp
 					#allocate b(k,j,i,l)
 					#allocate a(i,j,k,l)
 					execute fill_block_cyclic a[i,j,k,l] 1.0
-					execute print_block a[i,j,k,l]					
+					print a[i,j,k,l]					
 					b[k,j,i,l] = a[i,j,k,l]
-					execute print_block b[k,j,i,l]
+					print b[k,j,i,l]
 					
 					esum1 = a[i,j,k,l] * a[i,j,k,l]
 					esum2 = b[k,j,i,l] * b[k,j,i,l]

@@ -16,12 +16,12 @@
 	do k
 		do j
 			execute fill_block_cyclic b [j, k] 1.0
-			#execute print_block b (j, k)
+			#print b (j, k)
 			do i
 				do l
 					allocate c[i, l]
 					execute fill_block_cyclic a[i, j, k, l] 1.0			
-					#execute print_block  a(i, j, k, l)
+					#print  a(i, j, k, l)
 					
 					gpu_on
 					gpu_put a[i, j, k, l]
@@ -37,8 +37,8 @@
 
 					gpu_off
 					
-					execute print_block c[i,l]
-					#execute print_block b(j, k)
+					print c[i,l]
+					#print b(j, k)
 					
 				enddo l
 			enddo i

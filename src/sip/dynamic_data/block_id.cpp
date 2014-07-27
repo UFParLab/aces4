@@ -144,10 +144,11 @@ std::string BlockId::str(const SipTables& sip_tables) const{
 //	SipTables& tables = SipTables::instance();
 //	int rank = tables.array_rank(array_id_);
 //	ss << (tables.array_name(array_id_));
+	int rank = sip_tables.array_rank(array_id_);
 	ss << "\"" <<sip_tables.array_name(array_id_) << "\" : " << array_id_ << " : ";
 	ss << '[';
 	int i;
-	for (i = 0; i < MAX_RANK; ++i) {
+	for (i = 0; i < rank; ++i) {
 		ss << (i == 0 ? "" : ",") << index_values_[i];
 	}
 	ss << ']';

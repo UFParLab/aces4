@@ -29,14 +29,29 @@ void OpTableEntry::read(OpTableEntry &entry, setup::InputStream &file) {
 }
 
 
+//std::ostream& operator<<(std::ostream& os, const OpTableEntry & entry) {
+//	os << opcodeToName(entry.opcode) << ':';
+//	os << entry.opcode << ',';
+//	os << entry.arg0 << ',';
+//	os << entry.arg1 << ',';
+//	os << entry.arg2 << ",[";
+//	for (int i = 0; i < MAX_RANK; ++i) {
+//		os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
+//	}
+//	os << entry.line_number;
+//	return os;
+//}
+
+/* This version shows unused entries as _ */
 std::ostream& operator<<(std::ostream& os, const OpTableEntry & entry) {
 	os << opcodeToName(entry.opcode) << ':';
 	os << entry.opcode << ',';
-	os << entry.arg0 << ',';
-	os << entry.arg1 << ',';
-	os << entry.arg2 << ",[";
+	if (entry.arg0 >= 0) os << entry.arg0 << ','; else os << "_,";
+	if (entry.arg1 >= 0) os << entry.arg1 << ','; else os << "_,";
+	if (entry.arg2 >= 0) os << entry.arg2 << ",["; else os <<  "_,[";
 	for (int i = 0; i < MAX_RANK; ++i) {
-		os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
+		if (entry.selector[i] >= 0) os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
+		else os << "_" << (i < MAX_RANK - 1 ? "," : "],");
 	}
 	os << entry.line_number;
 	return os;

@@ -49,6 +49,8 @@
 !second argument should be a scalar
       if (rank_1.ne.0) then
       ierr = rank_1
+      print *, 'rank_0=',rank_0,' rank1_1=',rank_1
+      print *, 'slot_0=',array_slot_0,' slot_1=',array_slot_1
       return
       endif
 

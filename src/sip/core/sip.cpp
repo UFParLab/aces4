@@ -8,6 +8,7 @@
 #include "config.h"
 #include "sip.h"
 #include <iostream>
+#include <sstream>
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
@@ -65,13 +66,48 @@ void sip_abort() {
 
 }
 
+void sip_abort(std::string m) {
 
+//// Get backtrace
+//#ifdef __GNUC__
+//
+////	std::cerr<<"Error at line number :"<<current_line()<<std::endl;
+//
+//	std::cerr << "\nBacktrace:" << std::endl;
+//
+//	//std::cerr<<"__GNUC__ defined !" << std::endl;
+//
+//	void *array[10];
+//	size_t size;
+//
+//	// get void*'s for all entries on the stack
+//	size = backtrace(array, 10);
+//
+//	// print out all the frames to stderr
+//	backtrace_symbols_fd(array, size, STDERR_FILENO);
+//	fflush(stdout);
+//	fflush(stderr);
+#ifdef HAVE_TAU
+	TAU_PROFILE_EXIT("Collecting TAU info before exiting...");
+#endif
+//#endif
+
+#ifdef HAVE_MPI
+	std::cerr << m << std::flush;
+	MPI_Abort(MPI_COMM_WORLD, -1);
+#else
+	throw std::logic_error(m);
+	//exit(EXIT_FAILURE);
+#endif
+
+
+}
 namespace sip {
 
 bool _sip_debug_print = true;
 bool _all_rank_print = false;
 
-bool should_all_ranks_print() { return _all_rank_print; }
+//bool should_all_ranks_print() { return _all_rank_print; }
 
 
 const int SETUP_MAGIC = 23121991;
@@ -88,14 +124,22 @@ const int MAX_OMP_THREADS = 8;
 
 void check(bool condition, std::string message, int line){
 	if (condition) return;
-	std::cerr << "FATAL ERROR: " << message;
+//	std::cerr << "FATAL ERROR: " << message;
+//	if (line > 0){
+//		std::string prog = GlobalState::get_program_name();
+//		int length = prog.size()-std::string(".siox").size();
+//		std::cerr << " at "<< prog.substr(0,length) << ":" << line;
+//	}
+//	std::cerr << std::endl << std::flush;
+	std::stringstream s;
+	s << "FATAL ERROR: " << message;
 	if (line > 0){
 		std::string prog = GlobalState::get_program_name();
 		int length = prog.size()-std::string(".siox").size();
-		std::cerr << " at "<< prog.substr(0,length) << ":" << line;
+		s << " at "<< prog.substr(0,length) << ":" << line;
 	}
-	std::cerr << std::endl << std::flush;
-	sip_abort();
+	s << std::endl << std::flush;
+	sip_abort(s.str());
 	//throw std::logic_error("logic error");
 }
 
@@ -114,5 +158,20 @@ void fail(std::string message, int line){
 	check(false, message, line);
 }
 
+void input_check(bool condition, std::string m, int line){
+	check(condition, "INVALID SETUP OR SIAL PROGRAM:  " + m, line);
+}
+
+bool input_warn(bool condition, std::string m, int line){
+	return check_and_warn(condition, "INVALID SETUP OR SIAL PROGRAM:  " + m, line);
+}
+
+void sial_check(bool condition, std::string m, int line){
+    check(condition, "likely due to erroneous sial program.  " + m, line);
+}
+
+bool sial_warn(bool condition, std::string m, int line){
+    return check_and_warn(condition, "POSSIBLY ERRONEOUS SIAL PROGRAM:  " + m, line);
+}
 
 } //namespace sip

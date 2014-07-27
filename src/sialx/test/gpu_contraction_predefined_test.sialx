@@ -24,8 +24,8 @@
 	    	ca[mu, nu] = 1.0
 	        v1 = v2[mu, nu] * ca [mu, nu]
 	        
-	        execute print_block v2[mu, nu]
-	        execute print_block ca[mu, nu]
+	        print v2[mu, nu]
+	        print ca[mu, nu]
 	        print v1 
 	     	gpu_off 
 	         

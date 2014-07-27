@@ -19,7 +19,7 @@
 
 namespace sip {
 
-const int DataManager::undefined_index_value = INT_MIN;
+const int DataManager::undefined_index_value = -1;
 int DataManager::scope_count = 0;
 
 
@@ -87,6 +87,22 @@ Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
 
 int DataManager::int_value(int int_table_slot) {
 	return sip_tables_.int_table_.value(int_table_slot);
+}
+
+
+int DataManager::int_value(const std::string& name){
+	int int_table_slot = sip_tables_.int_table_.slot(name);
+	return sip_tables_.int_table_.value(int_table_slot);
+}
+
+//TODO move dynamic int data to data manager
+void DataManager::set_int_value(std::string& name, int value){
+	int int_table_slot = sip_tables_.int_table_.slot(name);
+	sip_tables_.int_table_.set_value(int_table_slot, value);
+}
+
+void DataManager::set_int_value(int int_table_slot, int value){
+	sip_tables_.int_table_.set_value(int_table_slot, value);
 }
 
 int DataManager::index_value(int index_table_slot) {

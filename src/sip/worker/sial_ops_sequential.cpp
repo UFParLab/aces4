@@ -95,14 +95,11 @@ void SialOpsSequential::prepare_accumulate(BlockId& lhs_id,
 
 
 
-void SialOpsSequential::collective_sum(int source_array_slot,
-               int dest_array_slot) {
-       double val_source = data_manager_.scalar_value(source_array_slot);
-       double val_dest = data_manager_.scalar_value(dest_array_slot);
-       double summed = 0.0;
-       summed = val_source + val_dest;
-       data_manager_.set_scalar_value(dest_array_slot, summed);
+void SialOpsSequential::collective_sum(double rhs_value, int dest_array_slot) {
+       double lhs_value = data_manager_.scalar_value(dest_array_slot);
+       data_manager_.set_scalar_value(dest_array_slot, lhs_value + rhs_value);
 }
+
 
 
 void SialOpsSequential::set_persistent(Interpreter* interpreter,
@@ -117,18 +114,16 @@ void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_i
 void SialOpsSequential::end_program() {
 }
 
-void SialOpsSequential::print_to_ostream(std::ostream& out, const std::string& to_print){
-	out << to_print << std::flush;
-}
 
-void SialOpsSequential::log_statement(opcode_t type, int line){
-	SIP_LOG(std::cout<<"Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
-}
+//
+//void SialOpsSequential::log_statement(opcode_t type, int line){
+//	SIP_LOG(std::cout<<"Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
+//}
 
 
 /** wrapper around these methods in the block_manager.  Checks for data
  * races due to missing barrier and implements the wait for blocks of
- * distributed and served arrays.
+ * distributed and served arrays (in parallel version)
  *
  * @param id
  * @return

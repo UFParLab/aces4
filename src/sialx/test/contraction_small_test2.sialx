@@ -22,7 +22,7 @@ sial contraction_small
 
 			execute fill_block_cyclic b[lambda,a1] 1.0
 			#b(lambda,a1) = 2.0
-			execute print_block b[lambda,a1]
+			print b[lambda,a1]
 			
 			do i
 				do i1
@@ -34,21 +34,21 @@ sial contraction_small
 						
 						execute fill_block_cyclic a[mu,i1,i,lambda] 1.0	
 						#a(mu,i1,lambda,i) = 2.0			
-						execute print_block  a[mu,i1,i,lambda]
+						print  a[mu,i1,i,lambda]
 					
                         
                         gpu_on
 						c[mu,i1,a1,i] = b[lambda,a1] * a[mu,i1,i,lambda]
-						execute print_block c[mu,i1,a1,i]
+						print c[mu,i1,a1,i]
                         gpu_off
 
                         c[mu,i1,a1,i] = 0.0
 						c[mu,i1,a1,i] = b[lambda,a1] * a[mu,i1,i,lambda]
-						execute print_block c[mu,i1,a1,i]
+						print c[mu,i1,a1,i]
 
                         #c(mu,i1,a1,i) = 0.0
 						#c(mu,i1,a1,i) = a(mu,i1,i,lambda)*b(lambda,a1)
-						#execute print_block c(mu,i1,a1,i)
+						#print c(mu,i1,a1,i)
 						
 						
 					#gpu_off 

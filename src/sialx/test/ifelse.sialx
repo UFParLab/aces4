@@ -5,20 +5,20 @@ sial ifelse
 	index aa = 1:4
 	index bb = 1:6
 	
-	int counter
-	counter = 0
-	
-	println "starting if loop"
+	int eq_counter 
+	int neq_counter
+	eq_counter = 0
+	neq_counter = 0
 	do aa 
 		do bb 
-			where bb <= aa 
 			if aa == bb
-			    print aa 
-			    print bb 
-			    counter = counter + 1
+			    eq_counter = eq_counter + 1
+			else
+				neq_counter += 1
 			endif
 		enddo bb 
 	enddo aa
+	print eq_counter
+	print neq_counter
 	
-
 endsial ifelse

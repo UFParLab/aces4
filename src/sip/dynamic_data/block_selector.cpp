@@ -10,7 +10,7 @@
 
 namespace sip {
 
-BlockSelector::BlockSelector(int array_id, int rank,
+BlockSelector::BlockSelector(int rank, int array_id,
 		const index_selector_t& index_ids) :
 		array_id_(array_id),
 		rank_(rank){

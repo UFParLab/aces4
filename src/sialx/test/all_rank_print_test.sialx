@@ -13,7 +13,7 @@ sial all_rank_print
 		print i
 		print j
 		execute fill_block_cyclic b[i, j] 1.0
-		execute print_block b[i, j] 
+		print b[i, j] 
 	endpardo i, j
 	
 	execute enable_all_rank_print
@@ -23,7 +23,7 @@ sial all_rank_print
 		print i
 		print j
 		execute fill_block_cyclic b[i, j] 1.0
-		execute print_block b [i, j]
+		print b [i, j]
 	endpardo i, j
 	
 	execute disable_all_rank_print
@@ -33,7 +33,7 @@ sial all_rank_print
 		print i
 		print j
 		execute fill_block_cyclic b[i, j] 1.0
-		execute print_block b [i, j]
+		print b [i, j]
 	endpardo i, j
 	
 	sip_barrier

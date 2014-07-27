@@ -1,0 +1,16 @@
+To convert files to new SIAL syntax:
+
+1. copy jar file to directory containing files
+Sialx1toSialx2.jar
+
+2.  Run the following bash script
+for sialfile in *.sialx; do java -jar  Sialx1toSialx2.jar $sialfile; done
+
+This leaves the original files intact and creates new ones called *.temp
+If it looks like all is well, delete the originals and rename the new ones
+
+rm *.sialx
+for sialfile in *.temp; do mv "$sialfile" "${sialfile%.temp}.sialx"; done
+
+
+Note:  comments are not touched, so commented out code may need to be manually changed if it is uncommented later.

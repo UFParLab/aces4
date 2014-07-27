@@ -1,0 +1,146 @@
+23:  printing 4 of 4 elements of block a[1,1] in the order stored in memory
+            23             23
+            23             23
+23:  printing 6 of 6 elements of block a[1,2] in the order stored in memory
+            23             23
+            23             23
+            23             23
+23:  printing 8 of 8 elements of block a[1,3] in the order stored in memory
+            23             23
+            23             23
+            23             23
+            23             23
+23:  printing 6 of 6 elements of block a[2,1] in the order stored in memory
+            23             23             23
+            23             23             23
+23:  printing 9 of 9 elements of block a[2,2] in the order stored in memory
+            23             23             23
+            23             23             23
+            23             23             23
+23:  printing 12 of 12 elements of block a[2,3] in the order stored in memory
+            23             23             23
+            23             23             23
+            23             23             23
+            23             23             23
+23:  printing 8 of 8 elements of block a[3,1] in the order stored in memory
+            23             23             23             23
+            23             23             23             23
+23:  printing 12 of 12 elements of block a[3,2] in the order stored in memory
+            23             23             23             23
+            23             23             23             23
+            23             23             23             23
+23:  printing 16 of 16 elements of block a[3,3] in the order stored in memory
+            23             23             23             23
+            23             23             23             23
+            23             23             23             23
+            23             23             23             23
+starting second loop
+34:  printing 4 of 4 elements of block c[1,1] in the order stored in memory
+             1              1
+             1              1
+34:  printing 6 of 6 elements of block c[1,2] in the order stored in memory
+             2              2
+             2              2
+             2              2
+34:  printing 8 of 8 elements of block c[1,3] in the order stored in memory
+             3              3
+             3              3
+             3              3
+             3              3
+34:  printing 6 of 6 elements of block c[2,1] in the order stored in memory
+             1              1              1
+             1              1              1
+34:  printing 9 of 9 elements of block c[2,2] in the order stored in memory
+             2              2              2
+             2              2              2
+             2              2              2
+34:  printing 12 of 12 elements of block c[2,3] in the order stored in memory
+             3              3              3
+             3              3              3
+             3              3              3
+             3              3              3
+34:  printing 8 of 8 elements of block c[3,1] in the order stored in memory
+             1              1              1              1
+             1              1              1              1
+34:  printing 12 of 12 elements of block c[3,2] in the order stored in memory
+             2              2              2              2
+             2              2              2              2
+             2              2              2              2
+34:  printing 16 of 16 elements of block c[3,3] in the order stored in memory
+             3              3              3              3
+             3              3              3              3
+             3              3              3              3
+             3              3              3              3
+starting third loop
+43:  printing 4 of 4 elements of block a[1,1] in the order stored in memory
+             1              2
+             3              4
+45:  printing 4 of 4 elements of block d[1,1] in the order stored in memory
+             1              3
+             2              4
+43:  printing 6 of 6 elements of block a[1,2] in the order stored in memory
+             2              3
+             4              5
+             6              7
+45:  printing 6 of 6 elements of block d[2,1] in the order stored in memory
+             2              4              6
+             3              5              7
+43:  printing 8 of 8 elements of block a[1,3] in the order stored in memory
+             3              4
+             5              6
+             7              8
+             9             10
+45:  printing 8 of 8 elements of block d[3,1] in the order stored in memory
+             3              5              7              9
+             4              6              8             10
+43:  printing 6 of 6 elements of block a[2,1] in the order stored in memory
+             1              2              3
+             4              5              6
+45:  printing 6 of 6 elements of block d[1,2] in the order stored in memory
+             1              4
+             2              5
+             3              6
+43:  printing 9 of 9 elements of block a[2,2] in the order stored in memory
+             2              3              4
+             5              6              7
+             8              9             10
+45:  printing 9 of 9 elements of block d[2,2] in the order stored in memory
+             2              5              8
+             3              6              9
+             4              7             10
+43:  printing 12 of 12 elements of block a[2,3] in the order stored in memory
+             3              4              5
+             6              7              8
+             9             10             11
+            12             13             14
+45:  printing 12 of 12 elements of block d[3,2] in the order stored in memory
+             3              6              9             12
+             4              7             10             13
+             5              8             11             14
+43:  printing 8 of 8 elements of block a[3,1] in the order stored in memory
+             1              2              3              4
+             5              6              7              8
+45:  printing 8 of 8 elements of block d[1,3] in the order stored in memory
+             1              5
+             2              6
+             3              7
+             4              8
+43:  printing 12 of 12 elements of block a[3,2] in the order stored in memory
+             2              3              4              5
+             6              7              8              9
+            10             11             12             13
+45:  printing 12 of 12 elements of block d[2,3] in the order stored in memory
+             2              6             10
+             3              7             11
+             4              8             12
+             5              9             13
+43:  printing 16 of 16 elements of block a[3,3] in the order stored in memory
+             3              4              5              6
+             7              8              9             10
+            11             12             13             14
+            15             16             17             18
+45:  printing 16 of 16 elements of block d[3,3] in the order stored in memory
+             3              7             11             15
+             4              8             12             16
+             5              9             13             17
+             6             10             14             18

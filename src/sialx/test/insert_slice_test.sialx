@@ -17,8 +17,8 @@ sial insert_slice_test
 		do j
 			execute fill_block_sequential a[i,j] 0.0
 			c[i,j] = 99.99
-			execute print_block a[i,j]
-			execute print_block c[i,j]
+			print a[i,j]
+			print c[i,j]
 			do ii in i
 				asub1[ii,j] = a[ii,j]
 				c[ii,j] = asub1[ii,j]
@@ -26,7 +26,7 @@ sial insert_slice_test
 			print "c(i,j)"
 			print i
 			print j
-			execute print_block c[i,j]
+			print c[i,j]
 		enddo j
 	enddo i
 	

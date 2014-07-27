@@ -18,14 +18,14 @@ sial subindex_test
 #	do i
 #		do j
 #			execute fill_block_sequential a[i,j] 0.0
-#			execute print_block a[i,j]
+#			print a[i,j]
 #			do ii in i
 #				asub1[ii,j] = a[ii,j]
 #				println "asub1(ii,j) = a(ii,j)"
 #				print i
 #				print j
 #				print ii
-#				execute print_block asub1[ii,j]
+#				print asub1[ii,j]
 #			enddo ii in i
 #		enddo j
 #	enddo i

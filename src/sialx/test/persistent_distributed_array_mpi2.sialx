@@ -30,7 +30,7 @@ sial persistent_distributed_array_mpi2
 	      get c[i,j]
 	      t[i,j] = b[i,j] * 5.0
 #FIXME	      a[i,j] = t[i,j] + c[i,j] 
-	      execute print_block a[i,j]
+	      print a[i,j]
 	   enddo j
 	enddo i
 	

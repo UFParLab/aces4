@@ -1,0 +1,42 @@
+sial basic_assign_to_static_array_test
+	predefined int norb
+	special fill_block_sequential wr
+	special print_block r
+	special print_static_array r
+	special swap_blocks uu
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	aoindex k= 1:norb
+	aoindex n = 1:norb
+	static a[i,j, k , n]
+	static ap[j, k, n, i]
+	scalar x
+
+	
+	do i
+		do j
+		do k
+		do n
+		x = (scalar)i
+		execute fill_block_sequential a[i,j,k,n]  x
+		enddo n
+		enddo k
+		enddo j
+	enddo i
+	
+	do i
+	do j
+	do k
+	do n
+	ap[j,k,n,i] = a[i,j,k,n]
+	enddo n
+	enddo k
+	enddo j
+	enddo i
+
+	
+	
+print a
+print ap
+
+endsial basic_assign_to_static_array_test

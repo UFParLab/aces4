@@ -24,8 +24,8 @@ sial put_test
 		put b[i,j] = t[i,j]
 		put c[i,j] += t[i,j]
 		put c[i,j] += t[i,j]
-		#execute print_block b(i,j)
-		#execute print_block c(i,j)
+		#print b(i,j)
+		#print c(i,j)
 	endpardo i, j
 	
 	#execute list_block_map
@@ -37,8 +37,8 @@ sial put_test
 		do j
 			get b[i,j] 
 			get c[i,j] 
-			execute print_block b[i,j]
-			execute print_block c[i,j]
+			print b[i,j]
+			print c[i,j]
 
 			x[i, j] = b[i, j]
 			y[i, j] = c[i, j]
