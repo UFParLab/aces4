@@ -79,7 +79,9 @@ public:
 	void start_timer(int slot);
 	void pause_timer(int slot);
 
-	void print_timers(PrintTimers<TAUSIPTimers>& p); /*! Print out the timers */
+	void print_timers(PrintTimers<TAUSIPTimers>& p); /*! Fixes the string associated with each timer. */
+
+	void ** get_tau_timers();
 
 protected:
 	const int max_slots;	/*!	Maximum number of timer slots */

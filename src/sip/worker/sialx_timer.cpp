@@ -7,12 +7,17 @@
 #include <iomanip>
 #include <cstdio>
 #include <cstdlib>
+#include <sstream>
 
 
 #ifdef HAVE_MPI
 #include <mpi.h>
 #include "sip_mpi_attr.h"
 #include "sip_mpi_utils.h"
+#endif
+
+#ifdef HAVE_TAU
+#include <TAU.h>
 #endif
 
 namespace sip{
@@ -219,13 +224,48 @@ private:
 //*********************************************************************
 // 						Dummy Print for TAUTimers
 //*********************************************************************
+#ifdef HAVE_TAU
 template<typename TIMER>
 class TAUTimersPrint : public PrintTimers<TIMER> {
 public:
-	TAUTimersPrint(const std::vector<std::string> &line_to_str) {/* Do Nothing */}
+	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines)
+		:line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
 	virtual ~TAUTimersPrint() {/* Do Nothing */}
-	virtual void execute(TIMER& timer) {}
+	virtual void execute(TIMER& timer) {
+		void ** tau_timers = timer.get_tau_timers();
+
+		std::vector<std::string>::const_iterator it = line_to_str_.begin();
+		for (int line_num = 0; it!= line_to_str_.end(); ++it, ++line_num){
+			const std::string &line_str = *it;
+			if (line_str != ""){
+
+				int total_time_timer_offset = line_num + sialx_lines_ * static_cast<int>(SialxTimer::TOTALTIME);
+				if (tau_timers[total_time_timer_offset] != NULL){
+					// Set total time string
+					std::stringstream tot_sstr;
+					tot_sstr << sip::GlobalState::get_program_num() << ": " << line_num << ": "  << " Total " << line_str;
+					const char *tau_string = tot_sstr.str().c_str();
+					TAU_PROFILE_TIMER_SET_NAME(tau_timers[total_time_timer_offset], tau_string);
+				}
+
+				int block_wait_timer_offset = line_num + sialx_lines_ * static_cast<int>(SialxTimer::BLOCKWAITTIME);
+				if (tau_timers[block_wait_timer_offset] != NULL){
+					// Set block wait time string
+					std::stringstream blkw_sstr;
+					blkw_sstr << sip::GlobalState::get_program_num() << ":" << line_num <<":" << " Blkwait " << line_str ;
+					const char *tau_string = blkw_sstr.str().c_str();
+					TAU_PROFILE_TIMER_SET_NAME(tau_timers[block_wait_timer_offset], tau_string);
+				}
+
+			}
+		}
+	}
+
+private:
+	const std::vector<std::string>& line_to_str_;
+	const int sialx_lines_;
 };
+#endif // HAVE_TAU
 
 //*********************************************************************
 // 						Methods for SialxTimers

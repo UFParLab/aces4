@@ -38,7 +38,7 @@ int SipTables::max_timer_slots() const{
 }
 
 std::vector<std::string> SipTables::line_num_to_name() const{
-	std::vector<std::string> lno2name(max_timer_slots()+1, "");
+	std::vector<std::string> lno2name(max_timer_slots()+1, "");	// "" is the sentinel value checked in printing.
 	int size = op_table_.size();
 	for (int i=0; i<size; i++){
 		int line = op_table_.line_number(i);

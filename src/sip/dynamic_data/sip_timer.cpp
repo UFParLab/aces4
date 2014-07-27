@@ -163,6 +163,11 @@ void TAUSIPTimers::pause_timer(int slot) {
 void TAUSIPTimers::print_timers(PrintTimers<TAUSIPTimers>& p){
 	p.execute(*this);
 }
+
+void ** TAUSIPTimers::get_tau_timers(){
+	return tau_timers_;
+}
+
 #endif // HAVE_TAU
 
 
