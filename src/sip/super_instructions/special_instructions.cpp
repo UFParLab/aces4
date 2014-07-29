@@ -173,6 +173,30 @@ void set_ijk_aaa(
 
 void set_ijk_aab(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+
+ void cis_unit_guess(
+         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
+//        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+
+ void cis_energy_numerator(
+         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+
+void cis_invert_diagonal(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+
+void update_cis_bvec(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+
+void energy_ty_denominator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
 }
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
@@ -362,7 +386,11 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["set_ijk_aaa"]=(fp0)&set_ijk_aaa;
     procmap_["set_ijk_aab"]=(fp0)&set_ijk_aab;
     procmap_["swap_blocks"]=(fp0)&swap_blocks;
-
+    procmap_["cis_unit_guess"]=(fp0)&cis_unit_guess;
+    procmap_["cis_energy_numerator"]=(fp0)&cis_energy_numerator;
+    procmap_["cis_invert_diagonal"]=(fp0)&cis_invert_diagonal;
+    procmap_["update_cis_bvec"]=(fp0)&update_cis_bvec;
+    procmap_["energy_ty_denominator_rhf"]=(fp0)&energy_ty_denominator_rhf;
     procmap_["enable_debug_print"]=(fp0)&enable_debug_print;
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
