@@ -83,9 +83,11 @@ import "cis_rhf_defs.sialx"
 #
       served ck0(kstate,a,i)
       served Cai(a,i)
+      served Cai_ao(mu,i)
       served T2old_ab(a,i,b,j)
       served T2old_aa(a,i,b,j)
       served Ctau(a,i,b,j)
+      served Ctau_ao(mu,i,lambda,j)
       served CT_ab(a,i,b,j)
       served Vxxxi(mu,nu,lambda,i)
       served Vxixi(mu,i1,lambda,i)
@@ -121,9 +123,11 @@ import "cis_rhf_defs.sialx"
       temp T2aiai(a,i,b,j)
       temp Tk(kstate)
       temp Tai(a,i)
+      temp Txi(mu,i)
       temp Tkai(kstate,a,i)
       temp T1kai(kstate,a,i)
       temp Txixi(mu,i1,lambda,i)
+      temp Taixj(a,i,mu,j)
       temp Txxii(mu,nu,i1,i)
       temp Tixxi(i1,nu,lambda,i)
       temp Txipi(mu,i,p,i1)
@@ -149,6 +153,7 @@ import "cis_rhf_defs.sialx"
       local Lxxxi(mu,nu,lambda,i)
       local Lxxai(mu,nu,a,i) 
       local Lxaai(mu,a1,a,i) 
+      local LDaixj(a,i,nu,j)
 ##########################################
 #
 #
@@ -194,12 +199,12 @@ import "cis_rhf_defs.sialx"
            ENDDO i1
            ENDDO i
 #    
-          DO i
-           DO a
-              Txxai(mu,nu,a,i)          = Lxxxi(mu,nu,lambda,i)*ca(lambda,a)
-              PREPARE Vxxai(mu,nu,a,i) += Txxai(mu,nu,a,i)
-           ENDDO a
-           ENDDO i
+#          DO i
+#           DO a
+#              Txxai(mu,nu,a,i)          = Lxxxi(mu,nu,lambda,i)*ca(lambda,a)
+#              PREPARE Vxxai(mu,nu,a,i) += Txxai(mu,nu,a,i)
+#           ENDDO a
+#           ENDDO i
 #
           deallocate Lxxxi(mu,nu,lambda,*)
 #
@@ -259,13 +264,13 @@ import "cis_rhf_defs.sialx"
 
      ENDPARDO mu, nu, i, i1
 #
-     pardo mu,nu,a,i
-         request Vxxai(mu,nu,a,i) i
-         do a1
-             Txaai(mu,a1,a,i) = Vxxai(mu,nu,a,i)*Ca(nu,a1)
-             prepare Vxaai(mu,a1,a,i) += Txaai(mu,a1,a,i)
-         enddo a1
-     endpardo mu,nu,a,i
+#     pardo mu,nu,a,i
+#         request Vxxai(mu,nu,a,i) i
+#         do a1
+#             Txaai(mu,a1,a,i) = Vxxai(mu,nu,a,i)*Ca(nu,a1)
+#             prepare Vxaai(mu,a1,a,i) += Txaai(mu,a1,a,i)
+#         enddo a1
+#     endpardo mu,nu,a,i
 #
 #    ------------------------------------------------------------------------
 #
@@ -326,13 +331,13 @@ import "cis_rhf_defs.sialx"
 #
      ENDPARDO mu, a, i, i1
 #
-         pardo mu, a, a1, i
-             request Vxaai(mu,a,a1,i) i
-             do a2
-                 Taaai(a2,a,a1,i) = Vxaai(mu,a,a1,i)*Ca(mu,a2)
-                 prepare Vaaai(a2,a,a1,i) += Taaai(a2,a,a1,i)
-             enddo a2
-         endpardo mu, a, a1, i
+#         pardo mu, a, a1, i
+#             request Vxaai(mu,a,a1,i) i
+#             do a2
+#                 Taaai(a2,a,a1,i) = Vxaai(mu,a,a1,i)*Ca(mu,a2)
+#                 prepare Vaaai(a2,a,a1,i) += Taaai(a2,a,a1,i)
+#             enddo a2
+#         endpardo mu, a, a1, i
 
          server_barrier
 #
@@ -437,6 +442,52 @@ import "cis_rhf_defs.sialx"
          prepare Ctau(a,i,b,j) = Taiai(a,i,b,j)
          prepare CT_ab(a,i,b,j) = Taiai(a,i,b,j)
      endpardo a,i,b,j
+     pardo mu,i
+         Txi(mu,i) = 0.0
+         prepare Cai_ao(mu,i) = Txi(mu,i)
+     endpardo mu,i
+     pardo mu,i,lambda,j
+         Txixi(mu,i,lambda,j) = 0.0
+         prepare Ctau_ao(mu,i,lambda,j) = Txixi(mu,i,lambda,j)
+     endpardo mu,i,lambda,j
+     server_barrier
+#
+# back transform CIS vector
+     pardo a,i
+         request Cai(a,i) i
+         do mu
+             Txi(mu,i) = Cai(a,i)*ca(mu,a)
+             prepare Cai_ao(mu,i) += Txi(mu,i)
+         enddo mu
+     endpardo a,i
+#
+     server_barrier
+#
+     pardo mu,nu,lambda
+
+          allocate Lxxxi(mu,nu,lambda,*)
+          DO sigma
+             execute compute_integral_batch aoint(mu,nu,lambda,sigma)
+             DO i   
+                 T1xxxi(mu,nu,lambda,i)  = aoint(mu,nu,lambda,sigma)*ca(sigma,i)
+                 Lxxxi(mu,nu,lambda,i)  += T1xxxi(mu,nu,lambda,i)
+             ENDDO i
+          ENDDO sigma
+
+          do i
+              request Cai_ao(nu,i) i
+          do j
+
+              Txixi(mu,i,lambda,j) = Cai_ao(nu,i)*Lxxxi(mu,nu,lambda,j)
+              prepare Ctau_ao(mu,i,lambda,j) += Txixi(mu,i,lambda,j)
+
+          enddo j
+          enddo i
+
+          deallocate Lxxxi(mu,nu,lambda,*)
+
+     endpardo mu,nu,lambda
+#
      server_barrier
      pardo a,i,b,j
          Taiai(a,i,b,j) = 0.0
@@ -449,16 +500,33 @@ import "cis_rhf_defs.sialx"
          Taiai(a,i,b,j) *= -1.0
          prepare Ctau(a,i,b,j) += Taiai(a,i,b,j)
      endpardo a,i,b,j
-     pardo a,i,b,j
-         Taiai(a,i,b,j) = 0.0
-         do a1
-             request Vaaai(a,a1,b,j) j
-             request cai(a1,i) i
-             T1aiai(a,i,b,j) = Vaaai(a,a1,b,j)*cai(a1,i)
-             Taiai(a,i,b,j) += T1aiai(a,i,b,j)
-         enddo a1
-         prepare Ctau(a,i,b,j) += Taiai(a,i,b,j)
-     endpardo a,i,b,j
+
+     pardo nu,i,j
+
+              allocate LDaixj(*,i,nu,j)
+#
+              DO mu
+#
+                 REQUEST Ctau_ao(mu,i,nu,j) j
+#
+                 DO a
+                    Taixj(a,i,nu,j)   = Ctau_ao(mu,i,nu,j)*ca(mu,a)
+                    LDaixj(a,i,nu,j) += Taixj(a,i,nu,j)
+                 ENDDO a
+#
+              ENDDO mu
+
+              DO a
+              DO b
+                 Taibj(a,i,b,j)             = LDaixj(a,i,nu,j)*ca(nu,b)
+                 PREPARE Ctau(a,i,b,j) += Taibj(a,i,b,j)
+              ENDDO b
+              ENDDO a
+#
+              deallocate LDaixj(*,i,nu,j)
+
+     endpardo nu,i,j
+
      server_barrier
      pardo a,i,b,j
          request Ctau(a,i,b,j) j
