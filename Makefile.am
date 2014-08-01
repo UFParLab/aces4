@@ -95,6 +95,8 @@ ACES_SOURCEFILES=\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
 ./src/sip/cuda/gpu_super_instructions.h\
+./src/sip/mpi/sip_mpi_attr.h\
+./src/sip/mpi/sip_mpi_attr.cpp\
 $(ACES_SETUPFILES)\
 $(ACES_CORE_FILES)\
 $(ACES_DATA_FILES)
@@ -191,18 +193,15 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-#TESTS = test_mpi_qm test_mpi_simple test_unit
-#check_PROGRAMS = test_mpi_qm test_mpi_simple test_unit
-#TESTS = test_simple
-TESTS = test_simple
-check_PROGRAMS = test_simple
+TESTS = test_mpi_qm test_simple test_unit
+check_PROGRAMS = test_mpi_qm test_simple test_unit
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-#TESTS = test_simple test_qm
-#check_PROGRAMS = test_simple test_qm
-TESTS = test_simple
-check_PROGRAMS = test_simple
+TESTS = test_simple test_qm
+check_PROGRAMS = test_simple test_qm
+#TESTS = test_simple
+#check_PROGRAMS = test_simple
 endif
 
 test_unit_SOURCES = \
@@ -211,17 +210,22 @@ test_unit_SOURCES = \
 
 test_mpi_qm_SOURCES = \
 	$(ACES_SOURCEFILES)\
-	test/test_controller.h\
+	test/test_controller_parallel.h\
 	test/test_mpi_qm.cpp
 
 test_mpi_simple_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_controller.h\
-	test/test_mpi_simple.cpp
+	test/test_controller_parallel.h\
+	test/test_simple.cpp\
+	test/test_transpose_op.F\
+    test/test_transpose4d_op.F\
+    test/test_contraction_small2.F
 
 test_simple_SOURCES = \
     $(ACES_SOURCEFILES) \
     test/test_controller.h\
+    test/test_controller_parallel.h\
     test/test_simple.cpp\
     test/test_transpose_op.F\
     test/test_transpose4d_op.F\

@@ -29,7 +29,6 @@ sial static_array_test
 	
 	println "print a"
 	print a
-	print a
 	deallocate  b[*,*]
 	
 	println " finished static_array_test"

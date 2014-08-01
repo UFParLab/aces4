@@ -49,6 +49,7 @@ public:
 	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
 	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
 	Interpreter(SipTables&, SialPrinter* printer);
+	Interpreter(SipTables&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
 	~Interpreter();
 
 	/** Static pointer to the current Interpreter.  This is

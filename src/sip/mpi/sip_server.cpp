@@ -26,16 +26,20 @@ SIPServer::~SIPServer() {
 void SIPServer::run() {
 
 	int my_rank = sip_mpi_attr_.global_rank();
-
+	std::cout << "DEBUG started server at rank " << my_rank << std::endl << std::flush;
 	while (!terminated_) {
 
 		MPI_Status status;
 
 		// Check to see if a request has arrived from any worker.
-		SIPMPIUtils::check_err(
-				MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-						&status));
+//		SIPMPIUtils::check_err(
+//				MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+//						&status));
 
+		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+						&status);
+
+		std::cout << " DEBUG returned from probe without checking status" << std::endl << std::flush;
 		//extract info about the message
 		int mpi_tag = status.MPI_TAG;
 		int mpi_source = status.MPI_SOURCE;
@@ -131,7 +135,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 					get_tag, MPI_COMM_WORLD));
 
 	check(block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source),
-			"Incorrect block semantics !");
+			"Incorrect block semantics in handle_GET!");
 
 }
 
@@ -167,7 +171,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	check_double_count(status, block_size);
 
 	check(block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source),
-			"Incorrect block semantics !");
+			"Incorrect block semantics in handle_PUT!");
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -215,7 +219,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	check_double_count(status2, block_size);
 
 	check(block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source),
-			"Incorrect block semantics !");
+			"Incorrect block semantics in handle_PUT_ACCUMULATE!");
 
 	//send ack
 	SIPMPIUtils::check_err(

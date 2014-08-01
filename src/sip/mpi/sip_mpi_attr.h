@@ -8,14 +8,21 @@
 #ifndef SIP_MPI_ATTR_H_
 #define SIP_MPI_ATTR_H_
 
-#include  <mpi.h>
+
+//TODO  come up with a less military naming scheme
+
 #include "sip.h"
+
+#ifdef HAVE_MPI
+
+
+
+#include  <mpi.h>
 #include "rank_distribution.h"
 
 //TODO  come up with a less military naming scheme
 
 namespace sip {
-
 class SIPMPIAttr {
 public:
 
@@ -89,7 +96,75 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(SIPMPIAttr);
 
 };
+}/* namespace sip */
 
-} /* namespace sip */
+
+
+
+
+#else  //do not have mpi
+
+
+
+
+
+//TODO  come up with a less military naming scheme
+
+namespace sip {
+
+
+class SIPMPIAttr {
+public:
+
+	~SIPMPIAttr();
+
+	static const int COMPANY_MASTER_RANK = 0;
+	static SIPMPIAttr *instance_;
+	static bool destroyed_;
+
+	// Singleton factory
+	static SIPMPIAttr& get_instance() ;
+
+	/** Delete singleton instance */
+	static void cleanup() ;
+
+
+//	const std::vector<int>& server_ranks() const { return servers_; }
+//	const std::vector<int>& worker_ranks() const { return workers_; }
+
+	int num_servers() const { return 0; }
+	int num_workers() const { return 1; }
+
+	int global_rank() const { return 0; }
+	int global_size() const { return 1; }
+
+	// Each worker is in a worker company. Each server is in a server company.
+	int company_rank() const { return 1; }
+	int company_size() const { return 1; }
+	bool is_company_master() const { return true; }
+
+	bool is_worker() const {return true;}
+	bool is_server() const {return false;}
+
+	int worker_master() const { return 0; }
+	int server_master() const { return 0; }
+
+	int my_server(){return -1;}
+
+	friend std::ostream& operator<<(std::ostream&, const SIPMPIAttr&);
+
+
+private:
+	SIPMPIAttr();
+
+	DISALLOW_COPY_AND_ASSIGN(SIPMPIAttr);
+
+};
+}/* namespace sip */
+
+
+#endif //HAVE_MPI
+
+
 
 #endif /* SIP_MPI_ATTR_H_ */

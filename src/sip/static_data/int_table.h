@@ -14,6 +14,7 @@
 #include <iostream>
 #include <exception>
 #include "setup_reader.h"
+#include <stdexcept>
 
 namespace sip {
 
@@ -24,11 +25,27 @@ public:
 	~IntTable();
 	static void read(IntTable&, setup::InputStream&, setup::SetupReader&);
 	/** returns the value associated with the given slot */
-	int value(int slot) const {return values_.at(slot);}
+	int value(int slot) const {
+		try{
+		return values_.at(slot);
+		}
+		  catch (const std::out_of_range& oor) {
+		    fail("out of range error when looking up value in int table");
+		  }
+return 0.0; //should never get here
+		}
 	/** set the indicated int to the given value */
 	void set_value(int slot, int value){ values_[slot]=value; }
 	/** returns the name associated with the given slot */
-	std::string name(int slot) const {return slot_name_map_.at(slot);}
+	std::string name(int slot) const {
+		try{
+			return slot_name_map_.at(slot);
+	}
+	    catch(const std::out_of_range& oor) {
+		    fail("out of range error when looking up name associated with a slot in the int table");
+		  }
+	    return "error";  //should never get here
+}
 	/** returns the slot associated with the given name */
 //	int slot(std::string name) const{
 //		try {return name_slot_map_.at(name);}
@@ -38,7 +55,14 @@ public:
 //		}
 //		return -1;
 //	}
-	int slot(std::string name) const {return name_slot_map_.at(name);}
+	int slot(std::string name) const {
+		try
+		{ return name_slot_map_.at(name);}
+		catch (const std::out_of_range& oor) {
+		    fail("out of range error when looking up int tables slot  associated with name");
+		  }
+		return -1; //should never get here
+	}
 
 	friend std::ostream& operator<<(std::ostream&, const IntTable &);
 	friend class SipTables;

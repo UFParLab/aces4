@@ -13,9 +13,9 @@
 #include "setup_reader.h"
 #include "global_state.h"
 
-#ifdef HAVE_MPI
+
 #include "sip_mpi_attr.h"
-#endif
+
 
 namespace sip {
 
