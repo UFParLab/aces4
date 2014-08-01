@@ -158,7 +158,8 @@ public:
 
 	/**
 	 *
-	 * @return a string representation of this BlockId
+	 * @return a string representation of this BlockId.
+	 * Usess the SipTable to look up the name.
 	 */
 	std::string str(const SipTables& sip_tables) const;
 

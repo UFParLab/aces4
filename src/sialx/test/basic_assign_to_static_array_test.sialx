@@ -12,12 +12,12 @@ sial basic_assign_to_static_array_test
 	static ap[j, k, n, i]
 	scalar x
 
-	
+	print norb
 	do i
 		do j
 		do k
 		do n
-		x = (scalar)i
+		x = (scalar)n
 		execute fill_block_sequential a[i,j,k,n]  x
 		enddo n
 		enddo k

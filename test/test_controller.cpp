@@ -1,3 +1,5 @@
+$%$%$%$%$$%$%$%
+
 #include "gtest/gtest.h"
 #include <fenv.h>
 #include <execinfo.h>
@@ -40,6 +42,7 @@
 
 
 //bool VERBOSE_TEST = false;
+
 bool VERBOSE_TEST = true;
 
 void list_block_map();

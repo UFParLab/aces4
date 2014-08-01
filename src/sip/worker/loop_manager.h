@@ -14,9 +14,9 @@
 #include "array_constants.h"
 #include "data_manager.h"
 
-#ifdef HAVE_MPI
+
 #include "sip_mpi_attr.h"
-#endif
+
 
 namespace sip {
 
