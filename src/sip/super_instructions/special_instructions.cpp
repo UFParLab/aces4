@@ -178,7 +178,7 @@ void set_ijk_aab(
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
-void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+//void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -321,7 +321,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["print_something"] = (fp0)&print_something;
 	procmap_["fill_block_sequential"]= (fp0)&fill_block_sequential;
 	procmap_["fill_block_cyclic"]= (fp0)&fill_block_cyclic;
-	procmap_["test_print_block"]=(fp0)&test_print_block;
+//	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
 	procmap_["print_static_array"]=(fp0)&print_static_array;

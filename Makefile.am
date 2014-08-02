@@ -70,9 +70,7 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
-./src/sip/dynamic_data/cached_block_map.cpp\
-./src/sip/mpi/sip_attr.h\
-./src/sip/mpi/sip_attr.cpp
+./src/sip/dynamic_data/cached_block_map.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -104,8 +102,6 @@ $(ACES_DATA_FILES)
 # MPI
 if WORKING_MPI
 ACES_SOURCEFILES +=\
-./src/sip/mpi/sip_mpi_attr.h\
-./src/sip/mpi/sip_mpi_attr.cpp\
 ./src/sip/mpi/rank_distribution.h \
 ./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \

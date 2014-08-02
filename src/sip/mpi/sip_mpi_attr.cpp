@@ -5,14 +5,10 @@
  *      Author: njindal
  */
 
-#include <sip_mpi_attr.h>
+#include "sip_mpi_attr.h"
 #include <iostream>
 
-#ifdef HAVE_MPI
 
-#include "config.h"
-
-#include "mpi.h"
 #include "sip_mpi_utils.h"
 
 
@@ -146,37 +142,37 @@ SIPMPIAttr::~SIPMPIAttr() {
 } /* namespace sip */
 
 
-#else  //not HAVE_MPI
-
-
-namespace sip{
-
-
-
-SIPMPIAttr* SIPMPIAttr::instance_ = NULL;
-bool SIPMPIAttr::destroyed_ = false;
-
-SIPMPIAttr& SIPMPIAttr::get_instance() {
-	if (destroyed_)
-		sip::fail("SIPMPIAttr instance has been destroyed !");
-	if (instance_ == NULL)
-		instance_ = new SIPMPIAttr();
-	return *instance_;
-}
-
-void SIPMPIAttr::cleanup() {
-	delete instance_;
-	destroyed_ = true;
-}
-
-
-SIPMPIAttr::SIPMPIAttr() {
-	std::cout << "creating sip mpi attr " << std::endl;
-}
-SIPMPIAttr::~SIPMPIAttr() {
-}
-}//namespace sip
-
-#endif  //HAVE_MPI
+//#else  //not HAVE_MPI
+//
+//
+//namespace sip{
+//
+//
+//
+//SIPMPIAttr* SIPMPIAttr::instance_ = NULL;
+//bool SIPMPIAttr::destroyed_ = false;
+//
+//SIPMPIAttr& SIPMPIAttr::get_instance() {
+//	if (destroyed_)
+//		sip::fail("SIPMPIAttr instance has been destroyed !");
+//	if (instance_ == NULL)
+//		instance_ = new SIPMPIAttr();
+//	return *instance_;
+//}
+//
+//void SIPMPIAttr::cleanup() {
+//	delete instance_;
+//	destroyed_ = true;
+//}
+//
+//
+//SIPMPIAttr::SIPMPIAttr() {
+//	std::cout << "creating sip mpi attr " << std::endl;
+//}
+//SIPMPIAttr::~SIPMPIAttr() {
+//}
+//}//namespace sip
+//
+//#endif  //HAVE_MPI
 
 
