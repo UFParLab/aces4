@@ -5,12 +5,11 @@
  *      Author: njindal
  */
 
+
 #include "sip_mpi_attr.h"
 #include <iostream>
-
-
+#include "mpi.h"
 #include "sip_mpi_utils.h"
-
 
 namespace sip {
 
@@ -142,6 +141,7 @@ SIPMPIAttr::~SIPMPIAttr() {
 } /* namespace sip */
 
 
+
 //#else  //not HAVE_MPI
 //
 //
@@ -174,5 +174,6 @@ SIPMPIAttr::~SIPMPIAttr() {
 //}//namespace sip
 //
 //#endif  //HAVE_MPI
+
 
 

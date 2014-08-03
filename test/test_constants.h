@@ -21,10 +21,10 @@ static sip::SIPMPIAttr *attr;
 
 #ifdef HAVE_MPI
     void barrier() {
-    	std::cout<< "calling barrier from rank "<< attr->global_rank() << std::endl << std::flush;
-//    			sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));
-    	MPI_Barrier(MPI_COMM_WORLD);
-        std::cout<< "passing barrier from rank "<< attr->global_rank() << std::endl << std::flush;
+//    	std::cout<< "calling barrier from rank "<< attr->global_rank() << std::endl << std::flush;
+    			sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));
+//    	MPI_Barrier(MPI_COMM_WORLD);
+//        std::cout<< "passing barrier from rank "<< attr->global_rank() << std::endl << std::flush;
     }
 #else
 	void barrier(){}

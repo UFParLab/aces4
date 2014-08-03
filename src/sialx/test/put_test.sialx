@@ -13,16 +13,16 @@ scalar x
 
 
 print "starting loop"
-do i
+pardo i
 do j
 t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
 put a[i,j] = t[i,j]
 print i
 print t[i,j]
 enddo j
-enddo i
+endpardo i
 
-do i
+pardo i
 do j
 get a[i,j]
 x = a[i,j] * a[i,j]
@@ -33,6 +33,6 @@ print k
 println result[k]
 enddo k
 enddo j
-enddo i
+endpardo i
 
 endsial put_test

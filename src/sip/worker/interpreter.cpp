@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iomanip>
 
+#include "aces_defs.h"
 #include "loop_manager.h"
 #include "special_instructions.h"
 #include "block.h"
@@ -49,9 +50,6 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
 				persistent_array_manager, sipTables) {
-	std::cout
-			<< "WARNING WARINNG WARNING:  Did not pass printer to INterpreter constructor--this will crash when printing"
-			<< std::endl << std::flush;
 	_init(sipTables);
 }
 
@@ -63,17 +61,26 @@ Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer) :
 	_init(sipTables);
 }
 
+Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer, WorkerPersistentArrayManager* wpm):
+				sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
+						op_table_.max_line_number()), printer_(printer), data_manager_(
+						sipTables), persistent_array_manager_(wpm), sial_ops_(
+						data_manager_, persistent_array_manager_, sipTables) {
+			_init(sipTables);
+}
+
 Interpreter::~Interpreter() {
 	delete tracer_;
 }
 
-void Interpreter::_init(SipTables& sipTables) {
-	int num_indices = sipTables.index_table_.entries_.size();
+void Interpreter::_init(SipTables& sip_tables) {
+	int num_indices = sip_tables.index_table_.entries_.size();
 	//op_table_ = sipTables.op_table_;
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	tracer_ = new Tracer(this, sip_tables_, std::cout);
+	tracer_ = new Tracer(this, sip_tables, std::cout);
+	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 #ifdef HAVE_CUDA
 	int devid;
 	int rank = 0;
@@ -94,6 +101,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
 		tracer_->trace(pc, opcode);
+
 
 
 		switch (opcode) {
@@ -786,6 +794,32 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 		break;
+		/* other gpu instruction omitted for now */
+//		case set_persistent_op: {
+//
+//			++pc;
+//		}
+//		break;
+//		case restore_persistent_op:{
+//
+//
+//			++pc;
+//		}
+//		break;
+		case set_persistent_op: {
+			int array_slot = arg1();
+			int string_slot = arg0();;
+			sial_ops_.set_persistent(this, array_slot, string_slot);
+			++pc;
+		}
+			break;
+		case restore_persistent_op: {
+			int array_slot = arg1();
+			int string_slot = arg0();
+			sial_ops_.restore_persistent(this, array_slot, string_slot);
+			++pc;
+		}
+			break;
 		case idup_op: {
 			control_stack_.push(control_stack_.top());
 			++pc;
@@ -817,7 +851,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		}// swith
 
-		//TODO  only call where necessary??
+		//TODO  only call where necessary
 		contiguous_blocks_post_op();
 	}// while
 

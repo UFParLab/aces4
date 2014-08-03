@@ -27,10 +27,12 @@ sial scalar_valued_blocks
 	
 	allocate w[*,*]
 	
-	pardo j,k
+	do j
+	do k
 	z = (scalar)j + (scalar)k
 	w[j,k] = z
-	endpardo j,k
+	enddo k
+	enddo j
 	
 	do k
 	do j

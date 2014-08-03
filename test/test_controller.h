@@ -36,27 +36,7 @@
 #endif
 
 #include "test_constants.h"
-//	setup::BinaryInputFile setup_file(job + ".dat");
-//	setup::SetupReader setup_reader(setup_file);
 
-
-
-//bool VERBOSE_TEST = false;
-//bool VERBOSE_TEST = true;
-
-//void list_block_map();
-//static const std::string dir_name("src/sialx/test/");
-//static const std::string qm_dir_name("src/sialx/qm/");
-//static const std::string expected_output_dir_name("../test/expected_output/");
-//sip::SIPMPIAttr *attr;
-//
-//#ifdef HAVE_MPI
-//    void barrier() {sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));}
-//#else
-//	void barrier(){}
-//#endif
-
-//void barrier();
 
 /** This class controls tests with no servers.  Multiple MPI processes just execute the same program and don't communicate.
  * For programs that need servers, use a TestControllerParallel object.
@@ -85,6 +65,7 @@ public:
 			setup_reader_= setup::SetupReader::get_empty_reader();
 			std::string prog_name = job_ + ".siox";
 			siox_path = dir_name + prog_name;
+			std::cout <<"siox_path: " << siox_path << std::endl << std::flush;
 		}
 		if (verbose) {
 			std::cout << "**************** STARTING TEST " << job_
@@ -135,6 +116,10 @@ public:
 					<< " TERMINATED" << std::endl << std::flush;
 		if (printer_) delete printer_;
 	}
+
+
+
+
 	const std::string job_;
 	const std::string comment_;
 	bool verbose_;
@@ -148,6 +133,24 @@ public:
 	std::string siox_path;
 
 	sip::IntTable* int_table(){return &(sip_tables_->int_table_);}
+
+
+	void initSipTables() {
+		setup::BinaryInputFile siox_file(siox_path);
+		sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
+		if (verbose_) {
+			//rank 0 prints and .siox files contents
+			if (attr->global_rank() == 0) {
+				std::cout << "JOBNAME = " << job_ << std::endl << std::flush;
+				std::cout << "SETUP READER DATA:\n" << *setup_reader_
+						<< std::endl << std::flush;
+				std::cout << "SIP TABLES" << '\n' << *sip_tables_ << std::endl
+						<< std::flush;
+				std::cout << comment_ << std::endl << std::flush;
+			}
+		}
+		printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(), *sip_tables_);
+	}
 
 	int int_value(const std::string& name){
 		try{
@@ -196,22 +199,7 @@ public:
 		}
 	}
 
-	void initSipTables() {
-		setup::BinaryInputFile siox_file(siox_path);
-		sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
-		if (verbose_) {
-			//rank 0 prints and .siox files contents
-			if (attr->global_rank() == 0) {
-				std::cout << "JOBNAME = " << job_ << std::endl << std::flush;
-				std::cout << "SETUP READER DATA:\n" << *setup_reader_
-						<< std::endl << std::flush;
-				std::cout << "SIP TABLES" << '\n' << *sip_tables_ << std::endl
-						<< std::flush;
-				std::cout << comment_ << std::endl << std::flush;
-			}
-		}
-		printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(), *sip_tables_);
-	}
+
 
 	void runWorker() {
 		worker_ = new sip::Interpreter(*sip_tables_, printer_);

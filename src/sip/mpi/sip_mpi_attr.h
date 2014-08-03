@@ -9,6 +9,7 @@
 #define SIP_MPI_ATTR_H_
 
 
+
 //TODO  come up with a less military naming scheme
 
 
@@ -18,7 +19,9 @@
 
 
 #include  <mpi.h>
+
 #include "sip.h"
+
 #include "rank_distribution.h"
 
 //TODO  come up with a less military naming scheme
@@ -97,6 +100,7 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(SIPMPIAttr);
 
 };
+
 }/* namespace sip */
 
 
@@ -165,6 +169,7 @@ private:
 //
 //
 //#endif //HAVE_MPI
+
 
 
 
