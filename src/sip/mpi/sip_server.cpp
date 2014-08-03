@@ -32,14 +32,10 @@ void SIPServer::run() {
 		MPI_Status status;
 
 		// Check to see if a request has arrived from any worker.
-//		SIPMPIUtils::check_err(
-//				MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-//						&status));
+		SIPMPIUtils::check_err(
+				MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+						&status));
 
-		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-						&status);
-
-		std::cout << " DEBUG returned from probe without checking status" << std::endl << std::flush;
 		//extract info about the message
 		int mpi_tag = status.MPI_TAG;
 		int mpi_source = status.MPI_SOURCE;

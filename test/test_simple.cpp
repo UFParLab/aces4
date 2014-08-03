@@ -155,11 +155,11 @@ TEST(BasicSial,index_decs) {
 		finalize_setup();
 	}
 
-	barrier();
+
 	TestController controller(job, true, VERBOSE_TEST,
 			"sial program is only declarations, does not execute anything",
 			std::cout);
-	barrier();
+
 	controller.initSipTables();
 	//check some properties of the sip tables.
 	int i_index_slot = controller.sip_tables_->index_id("i");
@@ -783,7 +783,6 @@ TEST(BasicSial,static_array_test) { //tests extracting blocks from contiguous ar
 }
 
 TEST(BasicSial,local_arrays) {
-	barrier();
 	std::string job("local_arrays");
 	double x = 3.456;
 	int norb = 2;
@@ -798,7 +797,6 @@ TEST(BasicSial,local_arrays) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -806,11 +804,10 @@ TEST(BasicSial,local_arrays) {
 	if (attr->global_rank() == 0)
 		EXPECT_EQ(controller.expectedOutput(), output.str());
 	EXPECT_TRUE(controller.worker_->all_stacks_empty());
-	barrier();
 }
 
 TEST(BasicSial,local_arrays_wild) {
-	barrier();
+
 	std::string job("local_arrays_wild");
 	double x = 3.456;
 	int norb = 2;
@@ -826,7 +823,7 @@ TEST(BasicSial,local_arrays_wild) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-	barrier();
+
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -834,13 +831,15 @@ TEST(BasicSial,local_arrays_wild) {
 	if (attr->global_rank() == 0)
 		EXPECT_EQ(controller.expectedOutput(), output.str());
 	EXPECT_TRUE(controller.worker_->all_stacks_empty());
-	barrier();
+
 }
+
+
 
 #ifndef HAVE_MPI
 //testing framework cannot gracefully handle errors from MPI processes
 TEST(Sial,local_arrays_wild_fail) {
-	barrier();
+
 	std::string job("local_arrays_wild_fail");
 	double x = 3.456;
 	int norb = 2;
@@ -856,7 +855,7 @@ TEST(Sial,local_arrays_wild_fail) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-	barrier();
+
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output, false);
 	controller.initSipTables();
@@ -868,9 +867,8 @@ TEST(Sial,local_arrays_wild_fail) {
 
 
 #ifdef HAVE_MPI
-
 TEST(Sial,put_test) {
-	barrier();
+
 	std::string job("put_test");
 	int norb = 3;
 	int segs[] = {2,3,2};
@@ -884,13 +882,12 @@ TEST(Sial,put_test) {
 		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
-	barrier();
+
 	std::stringstream output;
 		TestControllerParallel controller(job, true, VERBOSE_TEST, " ", output);
 		controller.initSipTables();
+		controller.run();
 		if (attr->is_worker()) {
-			std::cout << "creating and starting a worker" << std::endl << std::flush;
-			controller.runWorker();
 			EXPECT_TRUE(controller.worker_->all_stacks_empty());
 			std::vector<int> index_vec;
 			for (int i = 0; i < norb; ++i){
@@ -905,13 +902,9 @@ TEST(Sial,put_test) {
 					index_vec.clear();
 				}
 			}
-		} else {
-			std::cout << "creating and starting a server" << std::endl << std::flush;
-			controller.runServer();
 		}
-
-	barrier();
 }
+
 #else
 TEST(Sial,put_test) {
 	std::string job("put_test");
@@ -1476,11 +1469,13 @@ TAU_STATIC_PHASE_START("SIP Main");
 
 printf("Running main() from test_simple.cpp\n");
 testing::InitGoogleTest(&argc, argv);
+barrier();
 int result = RUN_ALL_TESTS();
 
 #ifdef HAVE_TAU
 TAU_STATIC_PHASE_STOP("SIP Main");
 #endif
+barrier();
 #ifdef HAVE_MPI
 MPI_Finalize();
 #endif

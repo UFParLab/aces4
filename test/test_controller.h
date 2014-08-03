@@ -53,6 +53,7 @@ public:
 	wpam_(NULL),
 	expect_success_(expect_success),
 	worker_(NULL) {
+		barrier();
 		if (has_dot_dat_file){
 			barrier();
 			setup::BinaryInputFile setup_file(job + ".dat");
@@ -72,6 +73,7 @@ public:
 			<< " ***********************!!!\n"
 			<< std::flush;
 		}
+		barrier();
 	}
 
 
@@ -136,6 +138,7 @@ public:
 
 
 	void initSipTables() {
+		barrier();
 		setup::BinaryInputFile siox_file(siox_path);
 		sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
 		if (verbose_) {
@@ -150,6 +153,7 @@ public:
 			}
 		}
 		printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(), *sip_tables_);
+		barrier();
 	}
 
 	int int_value(const std::string& name){
