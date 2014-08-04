@@ -120,6 +120,8 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/disk_backed_block_map.cpp;
         src/sip/mpi/server_persistent_array_manager.h;
         src/sip/mpi/server_persistent_array_manager.cpp;
+        src/sip/mpi/server_timer.h;
+        src/sip/mpi/server_timer.cpp;        
         src/sip/dynamic_data/mpi_state.h)
 else ()
     set(ACES_MPI_FILES "")

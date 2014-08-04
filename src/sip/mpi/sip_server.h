@@ -14,6 +14,7 @@
 #include "barrier_support.h"
 #include "server_persistent_array_manager.h"
 #include "disk_backed_block_map.h"
+#include "server_timer.h"
 
 
 
@@ -56,8 +57,16 @@ namespace sip {
 class SIPServer {
 
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*, ServerTimer&);
 	~SIPServer();
+
+
+	/** Static pointer to the current SIPServer.  This is
+	 * initialized in the SIPServer constructor and reset to NULL
+	 * in its destructor.  There should be at most on SIPServer instance
+	 * at any given time.
+	 */
+	static SIPServer* global_sipserver;
 
 	/**
 	 * Main server loop
@@ -112,10 +121,21 @@ public:
     Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
 
 
+    /**
+     * Gets the last seen <worker, sialx_line> pair
+     * @return
+     */
+    std::pair<int, int> last_seen_worker_line_pair();
+
 private:
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
 	const DataDistribution &data_distribution_;
+
+	ServerTimer& server_timer_;
+
+	int last_seen_line_;
+	int last_seen_worker_;
 
 	/** maintains message, section number, etc for barrier.  This
 	 * object's check_section_number_invariant should be invoked

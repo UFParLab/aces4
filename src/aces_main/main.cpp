@@ -175,13 +175,16 @@ int main(int argc, char* argv[]) {
 
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
+			sip::ServerTimer server_timer(sipTables.max_timer_slots());
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
+			server_timer.print_timers(lno2name);
 		} else
 #endif
 
@@ -198,7 +201,6 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-			std::vector<std::string> lno2name = sipTables.line_num_to_name();
 			sialxTimer.print_timers(lno2name);
 
 

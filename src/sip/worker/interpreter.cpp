@@ -27,7 +27,7 @@
 
 namespace sip {
 
-Interpreter* Interpreter::global_interpreter;
+Interpreter* Interpreter::global_interpreter = NULL;
 
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 		WorkerPersistentArrayManager* persistent_array_manager) :

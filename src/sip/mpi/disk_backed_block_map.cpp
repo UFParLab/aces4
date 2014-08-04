@@ -16,12 +16,14 @@
 namespace sip {
 
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
-		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution) :
+		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution,
+		ServerTimer& server_timer) :
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
 		block_map_(sip_tables.num_arrays()),
 		disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution),
         policy_(block_map_),
-        max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()) {
+        max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
+        server_timer_(server_timer){
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap(){}

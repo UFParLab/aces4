@@ -70,10 +70,12 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	//send delete message to server if responsible worker
 	int server_rank = sip_mpi_attr_.my_server();
 	if (server_rank > 0) {
+		int line_number = current_line();
+		int to_send[2] = { array_id, line_number };
 		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 		SIPMPIUtils::check_err(
-				MPI_Send(&array_id, 1, MPI_INT, server_rank, delete_tag,
+				MPI_Send(to_send, 2, MPI_INT, server_rank, delete_tag,
 						MPI_COMM_WORLD));
 		ack_handler_.expect_ack_from(server_rank, delete_tag);
 	}
@@ -101,8 +103,16 @@ void SialOpsParallel::get(BlockId& block_id) {
     		<< " : sending GET for block " << block_id
     		<< " to server "<< server_rank << std::endl);
 
+    // Construct int array to send to server.
+    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 1;
+    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+    int to_send[to_send_size]; // BlockId & line number
+    int *serialized_block_id = block_id.to_mpi_array();
+    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
+    to_send[line_num_offset] = current_line();
+
 	SIPMPIUtils::check_err(
-			MPI_Send(block_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
+			MPI_Send(to_send, to_send_size, MPI_INT,
 					server_rank, get_tag, MPI_COMM_WORLD));
 
 	//allocate block, and insert in block map, using block data as buffer
@@ -193,8 +203,16 @@ void SialOpsParallel::put_replace(BlockId& target_id,
     		<< " : sending PUT for block " << target_id
     		<< " to server "<< server_rank << std::endl);
 
+    // Construct int array to send to server.
+    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 1;
+    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+    int to_send[to_send_size]; // BlockId & line number
+    int *serialized_block_id = target_id.to_mpi_array();
+    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
+    to_send[line_num_offset] = current_line();
+
 	SIPMPIUtils::check_err(
-			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
+			MPI_Send(to_send, to_send_size, MPI_INT,
 					server_rank, put_tag, MPI_COMM_WORLD));
 
 	//immediately follow with the data
@@ -278,9 +296,18 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
        		<< " : sending PUT_ACCUMULATE for block " << target_id
        		<< " to server "<< server_rank << std::endl);
 
+
+    // Construct int array to send to server.
+    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 1;
+    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+    int to_send[to_send_size]; // BlockId & line number
+    int *serialized_block_id = target_id.to_mpi_array();
+    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
+    to_send[line_num_offset] = current_line();
+
 	//send block id
 	SIPMPIUtils::check_err(
-			MPI_Send(target_id.to_mpi_array(), BlockId::MPI_BLOCK_ID_COUNT, MPI_INT,
+			MPI_Send(to_send, to_send_size, MPI_INT,
 					server_rank, put_accumulate_tag, MPI_COMM_WORLD));
 	//immediately follow with the data
 	//like put--maybe we should wait for ack from server
@@ -351,9 +378,10 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 			int set_persistent_tag;
 			set_persistent_tag =
 					barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
-			int buffer[2] = { array_slot, string_slot };
+			int line_number = current_line();
+			int buffer[3] = { array_slot, string_slot, line_number};
 			SIPMPIUtils::check_err(
-					MPI_Send(buffer, 2, MPI_INT, my_server, set_persistent_tag,
+					MPI_Send(buffer, 3, MPI_INT, my_server, set_persistent_tag,
 							MPI_COMM_WORLD));
 
 			//ack
@@ -386,9 +414,10 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 			int restore_persistent_tag;
 			restore_persistent_tag =
 					barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
-			int buffer[2] = { array_slot, string_slot };
+			int line_number = current_line();
+			int buffer[3] = { array_slot, string_slot, line_number};
 			SIPMPIUtils::check_err(
-					MPI_Send(buffer, 2, MPI_INT, my_server,
+					MPI_Send(buffer, 3, MPI_INT, my_server,
 							restore_persistent_tag, MPI_COMM_WORLD));
 			//expect ack
 			ack_handler_.expect_ack_from(my_server, restore_persistent_tag);
