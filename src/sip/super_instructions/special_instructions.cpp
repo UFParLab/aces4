@@ -23,6 +23,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include "sip.h"
 #include "sip_tables.h"
 
@@ -257,20 +258,32 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 	SIP_LOG(std::cout << "sig: " << sig << std::endl);
 	proc_index_name_map_[index] = name;
 	try{
-		fp0 func = procmap_.at(name);
-//		procvec_[index] = procvec_entry_t(func,sig);
-   	    procvec_.push_back(procvec_entry_t(func, sig));
+		std::map<std::string, fp0>::iterator it = procmap_.find(name);
+		if (it == procmap_.end()){
+			SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+			procvec_.push_back(procvec_entry_t(NULL, sig));
+		} else {
+			fp0 func = it->second;
+			//procvec_[index] = procvec_entry_t(func,sig);
+			procvec_.push_back(procvec_entry_t(func, sig));
+		}
 	}
 	catch (const std::out_of_range& oor) {
-        SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
-        procvec_.push_back(procvec_entry_t(NULL, sig));
+
     };
 	return index;
 
 }
 
 std::string SpecialInstructionManager::name(int procvec_slot){
-	return proc_index_name_map_.at(procvec_slot);
+	//return proc_index_name_map_.at(procvec_slot);
+	proc_index_name_map_t::iterator it = proc_index_name_map_.find(procvec_slot);
+	if(it == proc_index_name_map_.end()){
+		std::stringstream ss;
+		ss << "Could not find procedure slot " << procvec_slot ;
+		throw std::out_of_range(ss.str());
+	}
+	return it->second;
 }
 void SpecialInstructionManager::add_special_finalize(){
 //	procmap_.clear();
@@ -331,7 +344,13 @@ const std::string SpecialInstructionManager::get_signature(int function_slot){
 std::ostream& operator<<(std::ostream& os, const SpecialInstructionManager& obj){
 	int n = obj.procvec_.size();
 	for (int i = 0; i != n; ++i){
-		os << i << ": " << obj.proc_index_name_map_.at(i) << ": " << obj.procvec_.at(i).second << std::endl;
+		SpecialInstructionManager::proc_index_name_map_t::const_iterator it = obj.proc_index_name_map_.find(i);
+		if(it == obj.proc_index_name_map_.end()){
+			std::stringstream ss;
+			ss << "Could not find proc index for value " << i ;
+			throw std::out_of_range(ss.str());
+		}
+		os << i << ": " << it->second << ": " << obj.procvec_.at(i).second << std::endl;
 	}
 	return os;
 }

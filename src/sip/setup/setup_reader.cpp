@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream& os, const SetupReader & obj) {
 	os << "Segment table info:" << std::endl;
 	SetupReader::SetupSegmentInfoMap::const_iterator itg;
 	for (itg = obj.segment_map_.begin(); itg != obj.segment_map_.end(); ++itg) {
-		os << itg->first << ":[";
+		os << index_type_name(itg->first) << ":[";
 		std::vector<int>::const_iterator sit;
 		for (sit = (itg->second).begin(); sit != (itg->second).end(); ++sit) {
 			os << (sit == (itg->second).begin()?"":",") << *sit;

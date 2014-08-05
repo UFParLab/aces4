@@ -6,6 +6,7 @@
  */
 
 #include "int_table.h"
+#include <stdexcept>
 
 namespace sip {
 
@@ -33,7 +34,11 @@ std::string IntTable::name(int index) const{
 	return entryindex_name_map_.at(index);
 }
 int IntTable::index(std::string name) const{
-	return name_entry_map_.at(name);
+	std::map<std::string, int>::const_iterator it = name_entry_map_.find(name);
+	if (it == name_entry_map_.end()){
+		throw std::out_of_range("Could not find index : " + name);
+	}
+	return it->second;
 }
 
 void IntTable::clear(){
