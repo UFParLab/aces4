@@ -175,11 +175,19 @@ void SetupReader::dump_data(std::ostream& os) {
 }
 
 int SetupReader::predefined_int(std::string name) {
-	return predefined_int_map_.at(name);
+	PredefIntMap::iterator it = predefined_int_map_.find(name);
+	if (it == predefined_int_map_.end()){
+		throw std::out_of_range("Could not find predefined integer : " + name);
+	}
+	return it->second;
 }
 
 double SetupReader::predefined_scalar(std::string name) {
-	return predefined_scalar_map_.at(name);
+	PredefScalarMap::iterator it = predefined_scalar_map_.find(name);
+	if (it == predefined_scalar_map_.end()){
+		throw std::out_of_range("Could not find predefined scalar : " + name);
+	}
+	return it->second;
 }
 
 void SetupReader::read_and_check_magic() {
