@@ -122,10 +122,11 @@ public:
 
 
     /**
-     * Gets the last seen <worker, sialx_line> pair
+     * Gets the last seen sialx line from which a worker
+     * sent a message. Line 0 is seen for PROGRAM_END.
      * @return
      */
-    std::pair<int, int> last_seen_worker_line_pair();
+    int last_seen_line();
 
 private:
     const SipTables &sip_tables_;

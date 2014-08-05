@@ -123,7 +123,9 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	size_t block_size = sip_tables_.block_size(block_id);
 
+	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 			<< " : get for block " << block_id.str(sip_tables_)
@@ -184,7 +186,11 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 					<< ", from = " << mpi_source
 					<< ", at line = " << last_seen_line_
 					<<std::endl;)
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+
 
 	//receive data
 	SIPMPIUtils::check_err(
@@ -244,7 +250,10 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			MPI_COMM_WORLD, &request);
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
+	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_updating(block_id);
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+
 
 	//wait for data to arrive
 	MPI_Wait(&request, &status2);
@@ -440,9 +449,8 @@ std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
 	return os;
 }
 
-
-std::pair<int, int> SIPServer::last_seen_worker_line_pair(){
-	return std::make_pair(last_seen_worker_, last_seen_line_);
+int SIPServer::last_seen_line(){
+	return last_seen_line_;
 }
 
 } /* namespace sip */

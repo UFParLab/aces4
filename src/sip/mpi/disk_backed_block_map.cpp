@@ -35,12 +35,19 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
      */
 
 	block = allocate_block(block, block_size);
+
+	server_timer_.start_timer(current_line(), ServerTimer::READTIME);
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
+	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
+
 	block->set_in_memory();
 }
 
 void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBlock* block){
+	server_timer_.start_timer(current_line(), ServerTimer::WRITETIME);
     disk_backed_arrays_io_.write_block_to_disk(block_id, block);
+	server_timer_.pause_timer(current_line(), ServerTimer::WRITETIME);
+
     block->unset_dirty();
     block->set_on_disk();
 }
@@ -255,7 +262,10 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& lab
 void DiskBackedBlockMap::save_persistent_array(const int array_id,
 		const std::string& array_label,
 		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
+	server_timer_.start_timer(current_line(), ServerTimer::WRITETIME);
 	disk_backed_arrays_io_.save_persistent_array(array_id, array_label, array_blocks);
+	server_timer_.pause_timer(current_line(), ServerTimer::WRITETIME);
+
 }
 
 

@@ -20,6 +20,8 @@
 #include "sip_mpi_attr.h"
 #include "sip_mpi_utils.h"
 
+#include "global_state.h"
+
 #ifdef HAVE_TAU
 #include <TAU.h>
 #endif
@@ -74,17 +76,18 @@ public:
 	virtual ~ServerPrint(){}
 	virtual void execute(TIMER& timer){
 
-		mpi_reduce_timers(timer);
+		mpi_reduce_timers(timer); // Reduce timers to server master.
 
-		// Print from the worker master.
-
+		// Print from the server master.
 		if (SIPMPIAttr::get_instance().is_company_master()){
+
+			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 
 			long long * timers = timer.get_timers();
 			long long * timer_counts = timer.get_timer_count();
 			const int LW = 10;	// Line num
-			const int CW = 15;	// String
-			const int SW = 20;	// Time
+			const int CW = 15;	// Time
+			const int SW = 20;	// String
 
 			assert(timer.check_timers_off());
 			std::cout<<"Timers"<<std::endl
@@ -92,31 +95,50 @@ public:
 				<<std::setw(SW)<<std::left<<"Type"
 				<<std::setw(CW)<<std::left<<"Avg"
 				<<std::setw(CW)<<std::left<<"AvgBlkWait"
+				<<std::setw(CW)<<std::left<<"AvgDiskRead"
+				<<std::setw(CW)<<std::left<<"AvgDiskWrite"
 				<<std::setw(CW)<<std::left<<"Tot"
-				<<std::setw(CW)<<std::left<<"TotBlkWait"
 				<<std::endl;
 
-			int total_time_timer_offset = static_cast<int>(ServerTimer::TOTALTIME);
-			int block_wait_timer_offset = static_cast<int>(ServerTimer::BLOCKWAITTIME);
-			for (int i=1; i<timer.max_slots - sialx_lines_; i++){
+			for (int i=1; i<sialx_lines_; i++){
 
-				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
-					double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
-					double avg_time = tot_time / timer_counts[i + total_time_timer_offset * sialx_lines_];
+				int tot_time_offset = i + static_cast<int>(ServerTimer::TOTALTIME) * sialx_lines_;
+				if (timer_counts[tot_time_offset] > 0L){
+					double tot_time = timer.to_seconds(timers[tot_time_offset]);	// Microsecond to second
+					double avg_time = tot_time / timer_counts[tot_time_offset];
+
 					double tot_blk_wait = 0;
 					double avg_blk_wait = 0;
+					double tot_disk_read = 0;
+					double avg_disk_read = 0;
+					double tot_disk_write = 0;
+					double avg_disk_write = 0;
 
-					if (timer_counts[i + block_wait_timer_offset * sialx_lines_] > 0L){
-						tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
-						avg_blk_wait = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
+					int blk_wait_offset = i + static_cast<int>(ServerTimer::BLOCKWAITTIME) * sialx_lines_;
+					if (timer_counts[blk_wait_offset] > 0L){
+						tot_blk_wait = timer.to_seconds(timers[blk_wait_offset]);
+						avg_blk_wait = tot_blk_wait / timer_counts[blk_wait_offset];
+					}
+
+					int read_timer_offset = i + static_cast<int>(ServerTimer::READTIME) * sialx_lines_;
+					if (timer_counts[read_timer_offset] > 0L){
+						tot_disk_read = timer.to_seconds(timers[read_timer_offset]);
+						avg_disk_read = tot_disk_read / timer_counts[read_timer_offset];
+					}
+
+					int write_timer_offset = i + static_cast<int>(ServerTimer::WRITETIME) * sialx_lines_;
+					if (timer_counts[write_timer_offset] > 0L){
+						tot_disk_write = timer.to_seconds(timers[write_timer_offset]);
+						avg_disk_write = tot_disk_write / timer_counts[write_timer_offset];
 					}
 
 					std::cout<<std::setw(LW)<<std::left << i
 							<< std::setw(SW)<< std::left << line_to_str_.at(i)
 							<< std::setw(CW)<< std::left << avg_time
 							<< std::setw(CW)<< std::left << avg_blk_wait
+							<< std::setw(CW)<< std::left << avg_disk_read
+							<< std::setw(CW)<< std::left << avg_disk_write
 							<< std::setw(CW)<< std::left << tot_time
-							<< std::setw(CW)<< std::left << tot_blk_wait
 							<< std::endl;
 				}
 			}
@@ -126,6 +148,11 @@ public:
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+
+	/**
+	 * Reduce all server timers to server master.
+	 * @param timer
+	 */
 	void mpi_reduce_timers(TIMER& timer){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_server(), "Trying to reduce timer on a non-server rank !");
@@ -144,8 +171,8 @@ private:
 
 		long long * recvbuf = new long long[2*timer.max_slots + 1]();
 
-		int worker_master = attr.worker_master();
-		MPI_Comm worker_company = attr.company_communicator();
+		int server_master = attr.COMPANY_MASTER_RANK;
+		MPI_Comm server_company = attr.company_communicator();
 
 		MPI_Datatype server_timer_reduce_dt; // MPI Type for timer data to be reduced.
 		MPI_Op server_timer_reduce_op;	// MPI OP to reduce timer data.
@@ -153,7 +180,7 @@ private:
 		SIPMPIUtils::check_err(MPI_Type_commit(&server_timer_reduce_dt));
 		SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)server_timer_reduce_op_function, 1, &server_timer_reduce_op));
 
-		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, server_timer_reduce_dt, server_timer_reduce_op, worker_master, worker_company));
+		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, server_timer_reduce_dt, server_timer_reduce_op, server_master, server_company));
 
 		if (attr.is_company_master()){
 			std::copy(recvbuf+1, recvbuf+1+timer.max_slots, timer_counts);
@@ -203,6 +230,24 @@ public:
 					blkw_sstr << sip::GlobalState::get_program_num() << ":" << line_num <<":" << " Blkwait " << line_str ;
 					const char *tau_string = blkw_sstr.str().c_str();
 					TAU_PROFILE_TIMER_SET_NAME(tau_timers[block_wait_timer_offset], tau_string);
+				}
+
+				int read_timer_offset = line_num + sialx_lines_ * static_cast<int>(ServerTimer::READTIME);
+				if (tau_timers[read_timer_offset] != NULL){
+					// Set disk read time string
+					std::stringstream readd_sstr;
+					readd_sstr << sip::GlobalState::get_program_num() << ":" << line_num <<":" << " ReadDisk " << line_str ;
+					const char *tau_string = readd_sstr.str().c_str();
+					TAU_PROFILE_TIMER_SET_NAME(tau_timers[read_timer_offset], tau_string);
+				}
+
+				int write_timer_offset = line_num + sialx_lines_ * static_cast<int>(ServerTimer::WRITETIME);
+				if (tau_timers[write_timer_offset] != NULL){
+					// Set disk write time string
+					std::stringstream writed_sstr;
+					writed_sstr << sip::GlobalState::get_program_num() << ":" << line_num <<":" << " WriteDisk " << line_str ;
+					const char *tau_string = blkw_sstr.str().c_str();
+					TAU_PROFILE_TIMER_SET_NAME(tau_timers[write_timer_offset], tau_string);
 				}
 
 			}

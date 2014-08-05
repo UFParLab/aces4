@@ -36,6 +36,9 @@ public:
 		: line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
 	virtual ~SingleNodePrint(){}
 	virtual void execute(TIMER& timer){
+
+		std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
 		const int LW = 10;	// Line num
@@ -54,7 +57,7 @@ public:
 
 		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
 		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
-		for (int i=1; i<timer.max_slots - sialx_lines_; i++){
+		for (int i=1; i<sialx_lines_; i++){
 
 			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
 				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
@@ -131,6 +134,8 @@ public:
 
 		if (SIPMPIAttr::get_instance().is_company_master()){
 
+			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+
 			long long * timers = timer.get_timers();
 			long long * timer_counts = timer.get_timer_count();
 			const int LW = 10;	// Line num
@@ -149,7 +154,7 @@ public:
 
 			int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
 			int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
-			for (int i=1; i<timer.max_slots - sialx_lines_; i++){
+			for (int i=1; i<sialx_lines_; i++){
 
 				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
 					double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
