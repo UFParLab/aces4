@@ -379,7 +379,6 @@ SIOX_FILES=\
 ./src/sialx/qm/cis_rhf_defs.siox\
 ./src/sialx/qm/cis_d_rhf.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
-./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
@@ -388,6 +387,7 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab_defs.siox\
 ./src/sialx/qm/rccsdpt_aab.siox
+#./src/sialx/qm/rcis_ccpt2_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
