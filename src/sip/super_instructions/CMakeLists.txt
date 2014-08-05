@@ -3,6 +3,11 @@ project(super_instructions_library)
 
 # Quantum Methods
 set(QM_SOURCE_FILES
+    qm/cis_unit_guess.F;
+    qm/cis_energy_numerator.F;
+    qm/cis_invert_diagonal.F;
+    qm/update_cis_bvec.F;
+    qm/energy_ty_denominator_rhf.F;
     qm/aoladder_contraction.F;
     qm/compute_nn_repulsion.F;
     qm/int_gen_parms.hf;
