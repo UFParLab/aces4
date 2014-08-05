@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 	setup::BinaryInputFile setup_file(job);
 	setup::SetupReader setup_reader(setup_file);
 
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 
 	for (it = progs.begin(); it != progs.end(); ++it) {

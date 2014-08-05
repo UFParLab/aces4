@@ -29,7 +29,7 @@ DataManager::DataManager(SipTables &sip_tables):
 	 index_values_(sip_tables_.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
      block_manager_(sip_tables),
      scalar_blocks_(sip_tables_.array_table_.entries_.size(),NULL),
-     contiguous_array_manager_(sip_tables_, sip_tables_.setup_reader())
+     contiguous_array_manager_(sip_tables_, sip_tables_.setup_reader_)
         {
 		for (int i = 0; i < sip_tables_.array_table_.entries_.size(); ++i) {
 			if (sip_tables_.is_scalar(i)) {
@@ -49,14 +49,14 @@ DataManager::~DataManager() {
     }
 }
 
-double DataManager::scalar_value(int array_table_slot) {
+double DataManager::scalar_value(int array_table_slot) const {
 	assert(sip_tables_.is_scalar(array_table_slot));
 	int scalar_table_slot = sip_tables_.array_table_.scalar_selector(
 			array_table_slot);
 	return scalar_values_.at(scalar_table_slot);
 }
 
-double DataManager::scalar_value(const std::string& name) {
+double DataManager::scalar_value(const std::string& name) const {
 	int array_table_slot = sip_tables_.array_table_.array_slot(name);
 	return scalar_value(array_table_slot);
 }
@@ -85,14 +85,14 @@ Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
 	return b;
 }
 
-int DataManager::int_value(int int_table_slot) {
+int DataManager::int_value(int int_table_slot) const {
 	return sip_tables_.int_table_.value(int_table_slot);
 }
 
-int DataManager::index_value(int index_table_slot) {
+int DataManager::index_value(int index_table_slot) const {
 	return index_values_.at(index_table_slot);
 }
-std::string DataManager::index_value_to_string(int index_table_slot) {
+std::string DataManager::index_value_to_string(int index_table_slot) const {
 	int value = index_value(index_table_slot);
 	std::stringstream ss; //create a stringstream
 	ss << value; //add number to the stream
@@ -114,7 +114,7 @@ void DataManager::set_index_undefined(int index_table_slot) {
 }
 
 //for arrays and blocks
-BlockId DataManager::block_id(const BlockSelector& selector) {
+BlockId DataManager::block_id(const BlockSelector& selector) const {
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_table_.rank(array_id);
 	index_value_array_t index_values;
@@ -137,7 +137,7 @@ BlockId DataManager::block_id(const BlockSelector& selector) {
 
 
 /** Determine if selected block  is a subblock */
-bool DataManager::is_subblock(const BlockSelector& selector){
+bool DataManager::is_subblock(const BlockSelector& selector) const {
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_table_.rank(array_id);
 	for (int i = 0; i < rank; ++i){
@@ -153,14 +153,14 @@ bool DataManager::is_subblock(const BlockSelector& selector){
 /** Determines if selected block is a block of a static array.  This will be the case if the
  * selector rank is 0 while the declared rank > 0
  */
-bool DataManager::is_complete_contiguous_array(const BlockSelector& selector){
+bool DataManager::is_complete_contiguous_array(const BlockSelector& selector) const {
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_table_.rank(array_id);
 	return selector.rank_== 0 && rank > 0;
 }
 
 /** The current implementation only allows one level of nesting for subblocks */
-BlockId DataManager::super_block_id(const BlockSelector& subblock_selector){
+BlockId DataManager::super_block_id(const BlockSelector& subblock_selector) const {
 	int array_id = subblock_selector.array_id_;
 	int rank = sip_tables_.array_table_.rank(array_id);
 	int index_values[MAX_RANK];
@@ -183,7 +183,7 @@ BlockId DataManager::super_block_id(const BlockSelector& subblock_selector){
 
 
 void DataManager::get_subblock_offsets_and_shape(Block::BlockPtr super_block, const BlockSelector& subblock_selector,
-		offset_array_t& offsets, BlockShape& subblock_shape){
+		offset_array_t& offsets, BlockShape& subblock_shape) const {
 	   BlockShape super_block_shape = super_block->shape();
 	   int sub_array_id = subblock_selector.array_id_;
 	   int rank = sip_tables_.array_table_.rank(sub_array_id);

@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader setup_reader(setup_file);
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 
 #ifdef HAVE_MPI
