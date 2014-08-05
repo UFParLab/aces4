@@ -26,6 +26,7 @@
 
 #ifdef HAVE_MPI
 #include "mpi.h"
+#include "sip_mpi_attr.h"
 #endif
 
 
@@ -93,7 +94,12 @@ void sip_abort(std::string m) {
 //#endif
 
 #ifdef HAVE_MPI
-	std::cerr << m << std::flush;
+	if (sip::SIPMPIAttr::get_instance().is_worker())
+		std::cerr << "worker rank " << sip::SIPMPIAttr::get_instance().global_rank() << ": " << m << std::endl<< std::flush;
+	else
+		std::cerr << "server rank " << sip::SIPMPIAttr::get_instance().global_rank() << ": " << m << std::endl<< std::flush;
+
+	usleep(1000000); //give output time to appear before aborting
 	MPI_Abort(MPI_COMM_WORLD, -1);
 #else
 	throw std::logic_error(m);
@@ -167,7 +173,7 @@ bool input_warn(bool condition, std::string m, int line){
 }
 
 void sial_check(bool condition, std::string m, int line){
-    check(condition, "likely due to erroneous sial program.  " + m, line);
+    check(condition, "LIKELY ERRONEOUS SIAL PROGRAM. " + m, line);
 }
 
 bool sial_warn(bool condition, std::string m, int line){

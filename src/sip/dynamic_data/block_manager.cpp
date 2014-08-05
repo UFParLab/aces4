@@ -139,7 +139,7 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 //TODO TEMPORARY FIX WHILE SEMANTICS BEING WORKED OUT
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	sial_check(blk != NULL, "attempting to read non-existent block " + id.str(sip_tables_), current_line());
+	sial_check(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
 	////
 	//#ifdef HAVE_CUDA
 	//	// Lazy copying of data from gpu to host if needed.
