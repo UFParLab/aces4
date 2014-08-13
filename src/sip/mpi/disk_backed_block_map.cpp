@@ -66,6 +66,12 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 			remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
 		} catch (const std::out_of_range& oor){
 			std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
+			std::cerr << oor.what() << std::endl;
+			std::cerr << *this << std::endl;
+			fail(" Something got messed up in the internal data structures of the Server", current_line());
+		} catch(const std::bad_alloc& ba){
+			std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
+			std::cerr << ba.what() << std::endl;
 			std::cerr << *this << std::endl;
 			fail(" Could not allocate ServerBlock, out of memory", current_line());
 		}
@@ -115,6 +121,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 	block->set_in_memory();
 	block->set_dirty();
 
+	policy_.touch(block_id);
+
 	return block;
 }
 
@@ -139,6 +147,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 
 	block->set_in_memory();
 	block->set_dirty();
+
+	policy_.touch(block_id);
 
 	return block;
 }
@@ -182,6 +192,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 	}
 
 	block->set_in_memory();
+
+	policy_.touch(block_id);
 
 	sip::check(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
 	return block;
@@ -274,6 +286,9 @@ std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj){
 
 	os << "disk_backed_arrays_io : " << std::endl;
 	os << obj.disk_backed_arrays_io_;
+
+	os << "policy_ : " << std::endl;
+	os << obj.policy_;
 
 	os << std::endl;
 

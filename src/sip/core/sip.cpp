@@ -74,20 +74,20 @@ void sip_abort(std::string m) {
 //
 ////	std::cerr<<"Error at line number :"<<current_line()<<std::endl;
 //
-//	std::cerr << "\nBacktrace:" << std::endl;
+	std::cerr << "\nBacktrace:" << std::endl;
 //
 //	//std::cerr<<"__GNUC__ defined !" << std::endl;
 //
-//	void *array[10];
-//	size_t size;
+	void *array[10];
+	size_t size;
 //
 //	// get void*'s for all entries on the stack
-//	size = backtrace(array, 10);
+	size = backtrace(array, 10);
 //
 //	// print out all the frames to stderr
-//	backtrace_symbols_fd(array, size, STDERR_FILENO);
-//	fflush(stdout);
-//	fflush(stderr);
+	backtrace_symbols_fd(array, size, STDERR_FILENO);
+	fflush(stdout);
+	fflush(stderr);
 #ifdef HAVE_TAU
 	TAU_PROFILE_EXIT("Collecting TAU info before exiting...");
 #endif

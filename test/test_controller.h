@@ -107,8 +107,6 @@ public:
 	~TestController() {
 		if (setup_reader_)
 			delete setup_reader_;
-		if (sip_tables_)
-			delete sip_tables_;
 		if (wpam_)
 			delete wpam_;
 		if (worker_)
@@ -117,6 +115,8 @@ public:
 			std::cout << "\nRank " << attr->global_rank() << " TEST " << job_
 					<< " TERMINATED" << std::endl << std::flush;
 		if (printer_) delete printer_;
+		if (sip_tables_)
+			delete sip_tables_;
 	}
 
 

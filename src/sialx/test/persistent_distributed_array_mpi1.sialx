@@ -18,7 +18,7 @@ sial persistent_distributed_array_mpi1
 	allocate a[*,*]
 	
 	println "Sending blocks"	
-	do i
+	pardo i
 		do j
 			#a(i,j) = 42.0
 			execute fill_block_sequential a[i,j] count
@@ -30,7 +30,7 @@ sial persistent_distributed_array_mpi1
 
 			
 		enddo j
-	enddo i
+	endpardo i
 	
 	sip_barrier
 	

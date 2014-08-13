@@ -71,7 +71,8 @@ public:
 	spam_(NULL),
 	server_(NULL),
 #endif
-	worker_(NULL) {
+	worker_(NULL),
+	printer_(NULL){
 		printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank());
 		if (has_dot_dat_file){
 			setup::BinaryInputFile setup_file(job + ".dat");
@@ -90,10 +91,6 @@ public:
 
 
 	~TestController() {
-		if (setup_reader_)
-			delete setup_reader_;
-		if (sip_tables_)
-			delete sip_tables_;
 		if (wpam_)
 			delete wpam_;
 #ifdef HAVE_MPI
@@ -107,7 +104,12 @@ public:
 		if (verbose_)
 			std::cout << "\nRank " << attr->global_rank() << " TEST " << job_
 					<< " TERMINATED" << std::endl << std::flush;
-		if (printer_) delete printer_;
+		if (setup_reader_)
+			delete setup_reader_;
+		if (sip_tables_)
+			delete sip_tables_;
+		if (printer_)
+			delete printer_;
 	}
 	const std::string job_;
 	const std::string comment_;

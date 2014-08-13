@@ -72,6 +72,7 @@ TEST(Sial_QM,ccsdpt_test){
 				sip::Interpreter runner(sipTables, sialxTimer,  &persistent_worker);
 				std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 				runner.interpret();
+				runner.post_sial_program();
 				persistent_worker.save_marked_arrays(&runner);
 				ASSERT_EQ(0, sip::DataManager::scope_count);
 				std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;

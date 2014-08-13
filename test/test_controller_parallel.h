@@ -37,18 +37,14 @@
 #include "test_constants.h"
 
 
-////static const std::string dir_name("src/sialx/test/");
-////static const std::string expected_output_dir_name("../test/expected_output/");
-////
-////
-////    sip::SIPMPIAttr *attr;
-////    void barrier() {sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));}
-//extern sip::SIPMPIAttr *attr;
-// void barrier();
-// extern const std::string dir_name;
-// extern const std::string expected_output_dir_name;
-///** This class controls tests with at least one worker and one server*/
 
+/** This class controls tests with at least one worker and at least one server.  The configuration is
+ * determined by the sip built-in sip_mpi_attr.
+ *
+ * Currently, failures in the sip (check, input_check, sial_check) whether expected or not, cause the main
+ * test program to call mpi abort and crash.
+ *
+ */
 class TestControllerParallel {
 public:
 	TestControllerParallel(std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
@@ -64,8 +60,10 @@ public:
 	prog_number_(0),
 	spam_(NULL),
 	server_(NULL),
-	worker_(NULL) {
+	worker_(NULL),
+	printer_(NULL){
 		barrier();
+		sip::GlobalState::reinitialize();
 		if (has_dot_dat_file){
 			setup::BinaryInputFile setup_file(job + ".dat");
 			setup_reader_ = new setup::SetupReader(setup_file);
@@ -79,7 +77,7 @@ public:
 		if (attr->is_worker())	wpam_ = new sip::WorkerPersistentArrayManager();
 		else spam_ = new sip::ServerPersistentArrayManager();
 		if (verbose) {
-			std::cout << "**************** STARTING TEST " << job_
+			std::cout << "**************** Creating controller for test " << job_
 			<< " ***********************!!!\n"
 			<< std::flush;
 		}
@@ -87,13 +85,10 @@ public:
 	}
 
 
-
-
 	~TestControllerParallel() {
-		if (setup_reader_)
-			delete setup_reader_;
-		if (sip_tables_)
-			delete sip_tables_;
+		if (verbose_)
+			std::cout << "\nRank " << attr->global_rank() << " Controller for  " << job_
+					<< " is being deleted" << std::endl << std::flush;
 		if (wpam_)
 			delete wpam_;
 		if (spam_)
@@ -102,11 +97,14 @@ public:
 			delete server_;
 		if (worker_)
 			delete worker_;
-		if (verbose_)
-			std::cout << "\nRank " << attr->global_rank() << " TEST " << job_
-					<< " TERMINATED" << std::endl << std::flush;
-		if (printer_) delete printer_;
+		if (printer_)
+			delete printer_;
+		if (setup_reader_)
+			delete setup_reader_;
+		if (sip_tables_)
+			delete sip_tables_;
 	}
+
 	const std::string job_;
 	const std::string comment_;
 	bool verbose_;
@@ -121,19 +119,21 @@ public:
 	bool this_test_enabled_;
 	bool expect_success_;
 	int prog_number_;
+	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
 
 	void initSipTables() {
 		barrier();
-		std::string prog_name = progs_->at(prog_number_++);
-		sip::GlobalState::set_program_name(prog_name);
-		std::string siox_path = dir_name + prog_name;
+		prog_name_ = progs_->at(prog_number_++);
+		sip::GlobalState::set_program_name(prog_name_);
+		sip::GlobalState::increment_program();
+		std::string siox_path = dir_name + prog_name_;
 		setup::BinaryInputFile siox_file(siox_path);
 		sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
 		if (verbose_) {
 			//rank 0 prints and .siox files contents
 			if (attr->global_rank() == 0) {
-				std::cout << "JOBNAME = " << job_ << std::endl << std::flush;
+				std::cout << "JOBNAME = " << job_ << ", PROGRAM NAME = " << prog_name_ << std::endl << std::flush;
 				std::cout << "SETUP READER DATA:\n" << *setup_reader_
 						<< std::endl << std::flush;
 				std::cout << "SIP TABLES" << '\n' << *sip_tables_ << std::endl
@@ -172,75 +172,11 @@ public:
 	}
 
 
-	bool runWorker() {
-		if (this_test_enabled_){
 
-		worker_ = new sip::Interpreter(*sip_tables_, printer_, wpam_);
-		barrier();
-
-		if (verbose_)
-			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
-					<< job_ << " STARTING" << std::endl << std::flush;
-		if (expect_success_){ //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
-		try{
-		worker_->interpret();
-		}
-		catch (const std::exception& e){
-			std::cerr << "exception thrown in worker: " << e.what();
-		    ADD_FAILURE();
-		}
-		}
-			else{
-				worker_->interpret();
-			}
-
-
-		if (verbose_){
-			if (std::cout != sial_output_) std::cout << sial_output_.rdbuf();
-			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
-					<< job_ << " TERMINATED" << std::endl << std::flush;
-		}
-
-		}
-		return this_test_enabled_;
-	}
-	bool runServer() {
-		if (this_test_enabled_){
-			sip::DataDistribution data_distribution(*sip_tables_, *attr);
-			server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr, spam_);
-			barrier();
-			if (verbose_)
-				std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
-						<< job_ << " STARTING SERVER" << std::endl << std::flush;
-			if (expect_success_){ //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
-			try{
-			server_->run();
-			}
-			catch (const std::exception& e){
-				std::cerr << "exception thrown in server: " << e.what();
-			    ADD_FAILURE();
-			}
-			}
-				else{
-					server_->run();
-				}
-
-
-			if (verbose_){
-				if (std::cout != sial_output_) std::cout << sial_output_.rdbuf();
-				std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
-						<< job_ << "SERVER TERMINATED" << std::endl << std::flush;
-			}
-
-			}
-			return this_test_enabled_;
-
-	}
 	void run(){
 		barrier();
 		if (attr->is_worker()){
 			runWorker();
-			worker_->post_sial_program();
 		}
 		else {
 			runServer();
@@ -267,24 +203,90 @@ public:
 		try{
 			int array_slot = sip_tables_->array_slot(name);
 			int rank = sip_tables_->array_rank(array_slot);
-//			int *indices_to_pass = new int[MAX_RANK];
-//			std::copy(indices, indices + rank, indices_to_pass);
-//			std::fill(indices_to_pass + rank, indices_to_pass + MAX_RANK, sip::unused_index_value);
-//			for (int i = 0 ; i < MAX_RANK; ++i){
-//				std::cout << indices_to_pass[i];
-//			}
-//			sip::BlockId id(array_slot, indices_to_pass);
 			sip::BlockId id(array_slot, rank, indices);
 			std::cout << "this is the block id " << id.str(*sip_tables_) << std::endl;
 		    sip::Block::BlockPtr block =  worker_->data_manager_.block_manager_.get_block_for_reading(id);
 		    return block->get_data();
-//		    delete [] indices_to_pass;
 		}
 		catch(const std::exception& e){
 			std::cerr << "FAILURE: block of array " << name << " not found.  This is probably a bug in the test." << std::endl << std::flush;
 			ADD_FAILURE();
 			return NULL;
 		}
+	}
+
+private:
+	bool runServer() {
+		if (this_test_enabled_){
+			sip::DataDistribution data_distribution(*sip_tables_, *attr);
+			server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr, spam_);
+			barrier();
+			if (verbose_)
+				std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
+						<< prog_name_ << " STARTING SERVER " << std::endl << std::flush;
+			if (expect_success_){ //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
+			try{
+			server_->run();
+			}
+			catch (const std::exception& e){
+				std::cerr << "exception thrown in server: " << e.what();
+			    ADD_FAILURE();
+			}
+			}
+				else{
+					server_->run();
+				}
+
+
+			if (verbose_){
+				if (std::cout != sial_output_) std::cout << sial_output_.rdbuf();
+				std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
+						<< job_ << "SERVER TERMINATED " << std::endl << std::flush;
+			}
+
+			std::cout << "before save_marked_arrays_ " << spam_ << std::endl << std::flush;
+		    spam_->save_marked_arrays(server_);
+			std::cout << "after save_marked_arrays_ " << spam_ << std::endl << std::flush;
+		}
+			return this_test_enabled_;
+
+
+	}
+
+	bool runWorker() {
+		if (this_test_enabled_) {
+
+			worker_ = new sip::Interpreter(*sip_tables_, printer_, wpam_);
+			barrier();
+
+			if (verbose_)
+				std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
+						<< prog_name_ << " STARTING WORKER " << std::endl
+						<< std::flush;
+			if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
+				try {
+					worker_->interpret();
+				} catch (const std::exception& e) {
+					std::cerr << "exception thrown in worker: " << e.what();
+					ADD_FAILURE();
+				}
+			} else {
+				worker_->interpret();
+			}
+
+			if (verbose_) {
+				if (std::cout != sial_output_)
+					std::cout << sial_output_.rdbuf();
+				std::cout << "\nRank " << attr->global_rank()
+						<< " SIAL PROGRAM " << prog_name_
+						<< " TERMINATED WORKER " << std::endl << std::flush;
+			}
+
+			worker_->post_sial_program();
+			wpam_->save_marked_arrays(worker_);
+		}
+
+		return this_test_enabled_;
 	}
 
 };

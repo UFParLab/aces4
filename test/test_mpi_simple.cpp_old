@@ -556,7 +556,7 @@ TEST(SimpleMPI,unmatched_get){
 // TODO ===========================================
 // TODO AUTOMATE
 // TODO ===========================================
-// Nothing should crash. Find something to test.
+// Nothing should crash. Find something to test.mpiru
 TEST(SimpleMPI,delete_mpi){
 
 	sip::GlobalState::reset_program_count();

@@ -87,6 +87,7 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/sial_ops_sequential.h\
 ./src/sip/worker/sial_ops_sequential.cpp\
 ./src/sip/worker/sial_printer.h\
+./src/sip/worker/sial_printer.cpp\
 ./src/sip/worker/sial_math.h\
 ./src/sip/worker/sial_math.cpp\
 ./src/sip/sip_interface.h\
@@ -189,13 +190,13 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm test_simple test_unit
-check_PROGRAMS = test_mpi_qm test_simple test_unit
+TESTS = test_mpi_qm test_sial test_unit test_basic_sial
+check_PROGRAMS = test_mpi_qm  test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_simple test_qm
-check_PROGRAMS = test_simple test_qm
+TESTS = test_basic_sial test_qm
+check_PROGRAMS = test_basic_sial test_qm
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
@@ -209,24 +210,22 @@ test_mpi_qm_SOURCES = \
 	test/test_controller_parallel.h\
 	test/test_mpi_qm.cpp
 
-test_mpi_simple_SOURCES = \
-	$(ACES_SOURCEFILES)\
-	test/test_controller.h\
-	test/test_controller_parallel.h\
-	test/test_simple.cpp\
-	test/test_transpose_op.F\
-    test/test_transpose4d_op.F\
-    test/test_contraction_small2.F
 
-test_simple_SOURCES = \
+test_sial_SOURCES = \
     $(ACES_SOURCEFILES) \
     test/test_controller.h\
     test/test_controller_parallel.h\
-    test/test_simple.cpp\
+    test/test_sial.cpp
+
+test_basic_sial_SOURCES = \
+    $(ACES_SOURCEFILES) \
+    test/test_controller.h\
+    test/test_basic_sial.cpp\
     test/test_transpose_op.F\
     test/test_transpose4d_op.F\
     test/test_contraction_small2.F
-
+    
+    
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
 	 test/test_controller.h\
@@ -241,11 +240,11 @@ TEST_LDADD_VARS = \
 #	$(PTHREAD_LIBS) 
 	
 test_unit_LDADD = $(TEST_LDADD_VARS)	
-test_simple_LDADD = $(TEST_LDADD_VARS)
+test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
-
+test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 # Add any initialization files needed by tests here.
 TEST_INIT_DATA_FILES=\
 test/ccsdpt_test.dat
@@ -297,10 +296,11 @@ test_libgtest_main_la_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
 # -no-install taken from https://www.flameeyes.eu/autotools-mythbuster/libtool/wrappers.html
 TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) -no-install
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
-test_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
 SUBDIRS = src/sip/super_instructions
 

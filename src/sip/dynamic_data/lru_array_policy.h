@@ -18,7 +18,7 @@
 namespace sip {
 
 class BlockId;
-template <class BLOCK_TYPE>
+template <typename BLOCK_TYPE>
 
 /**
  * Policy for block replacement on servers.
@@ -71,6 +71,20 @@ public:
 		//sip::fail("No blocks to remove !", current_line());
 	}
 
+	friend std::ostream& operator<< (std::ostream& os, const LRUArrayPolicy<BLOCK_TYPE>& obj){
+		std::list<int>::const_iterator it = obj.lru_list_.begin();
+		os << "LRU Array : [";
+		if (it != obj.lru_list_.end()){
+			os << *it ;
+			++it;
+		}
+		for (; it!= obj.lru_list_.end(); ++it){
+			os << ", " << *it;
+		}
+		os << "]" << std::endl;
+		return os;
+	}
+
 private:
 	std::list<int> lru_list_; /*! List of least recently ysed arrays  */
     IdBlockMap<BLOCK_TYPE>& block_map_;
@@ -78,5 +92,6 @@ private:
 };
 
 } /* namespace sip */
+
 
 #endif /* LRU_ARRAY_POLICY_H_ */

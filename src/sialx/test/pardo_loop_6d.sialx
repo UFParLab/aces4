@@ -22,6 +22,19 @@ sial pardo_loop_6d
     
 	int counter = 0
 	scalar total = 0.0
+	
+	println lower0
+	println upper0
+	println lower1
+	println upper1
+	println lower2
+	println upper2
+	println lower3
+	println upper3
+	println lower4
+	println upper4
+	println lower5
+	println upper5
 		
 	pardo i0, i1, i2, i3, i4, i5
 		counter += 1	

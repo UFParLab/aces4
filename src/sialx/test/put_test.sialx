@@ -22,7 +22,9 @@ print t[i,j]
 enddo j
 endpardo i
 
-pardo i
+sip_barrier
+
+do i
 do j
 get a[i,j]
 x = a[i,j] * a[i,j]
@@ -33,6 +35,6 @@ print k
 println result[k]
 enddo k
 enddo j
-endpardo i
+enddo i
 
 endsial put_test

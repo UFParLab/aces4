@@ -34,6 +34,12 @@ public:
 
 	static std::size_t get_max_data_memory_usage() { return max_data_memory_usage; }
 
+	static void reinitialize(){
+		prog_num = -1;
+		prog_name = "";
+		max_data_memory_usage = 2147483648; // Default 2GB
+	}
+
 private:
 	static int prog_num;
 	static std::string prog_name;

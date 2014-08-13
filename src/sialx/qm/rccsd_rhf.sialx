@@ -1937,7 +1937,8 @@
 # 
                tbj[b,j1]          = t1a_old[b,j1] 
                T2bjbj[b1,j,b,j1]  = t1a_old[b1,j]^tbj[b,j1] 
-               T1bjbj[b1,j,b,j1]  = 0.5*T2old_aa[b1,j,b,j1] 
+               T1bjbj[b1,j,b,j1]  = T2old_aa[b1,j,b,j1] 
+               T1bjbj[b1,j,b,j1]  *= 0.5
                T1bjbj[b1,j,b,j1] += T2bjbj[b1,j,b,j1] 
 #
                DO i  
@@ -2129,7 +2130,8 @@
          tai[a1,i] = t1a_old[a1,i] 
 
          Taibj[a1,i,b,j1]   = tai[a1,i]^t1a_old[b,j1]
-         T1aibj[a1,i,b,j1]  = 0.5*T2old_ab[a1,i,b,j1]
+         T1aibj[a1,i,b,j1]  = T2old_ab[a1,i,b,j1]
+         T1aibj[a1,i,b,j1]  *= 0.5
          T1aibj[a1,i,b,j1] += Taibj[a1,i,b,j1]
 #
          DO i1

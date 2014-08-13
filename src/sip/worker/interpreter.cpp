@@ -46,7 +46,7 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), data_manager_(
+		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
 				persistent_array_manager, sipTables) {
@@ -563,11 +563,11 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
-		case tensor_op: {
-			//TODO
-			++pc;
-		}
-			break;
+//		case tensor_op: {
+//			//TODO
+//			++pc;
+//		}
+//			break;
 		case block_copy_op: {
 			//get rhs selector from selector stack
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);

@@ -1,2 +1,5 @@
-sial empty
-endsial empty
+sial empty_distributed
+	aoindex i = 1:1
+	aoindex j = 1:1
+	distributed a[i,j]
+endsial empty_distributed

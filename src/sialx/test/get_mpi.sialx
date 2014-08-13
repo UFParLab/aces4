@@ -28,7 +28,7 @@ sial get_mpi
 	   do j
 	      get b[i,j]
 	      get c[i,j]
-#FIXME	      a[i,j] = b[i,j] + c[i,j]
+	      a[i,j] = b[i,j] + c[i,j]
 	      print a[i,j]
 	   enddo j
 	enddo i
