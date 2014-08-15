@@ -21,7 +21,6 @@
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
-#include "server_persistent_array_manager.h"
 
 #include "block.h"
 
@@ -29,14 +28,15 @@
 #include <TAU.h>
 #endif
 
-//#ifdef HAVE_MPI
-//#include "sip_server.h"
+#ifdef HAVE_MPI
+#include "sip_server.h"
+#include "server_persistent_array_manager.h"
 //#include "sip_mpi_attr.h"
 //#include "global_state.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"
-//#endif
+#endif
 
 #include "test_constants.h"
 #include "test_controller.h"

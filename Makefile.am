@@ -208,18 +208,30 @@ test_unit_SOURCES = \
 test_mpi_qm_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_controller_parallel.h\
+	test/test_controller_parallel.cpp\
+	test/test_constants.h\
+	test/test_constants.cpp\
 	test/test_mpi_qm.cpp
 
 
 test_sial_SOURCES = \
     $(ACES_SOURCEFILES) \
     test/test_controller.h\
+    test/test_controller.cpp\
     test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+    test/test_constants.h\
+	test/test_constants.cpp\
     test/test_sial.cpp
 
 test_basic_sial_SOURCES = \
     $(ACES_SOURCEFILES) \
     test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+    test/test_constants.h\
+	test/test_constants.cpp\
     test/test_basic_sial.cpp\
     test/test_transpose_op.F\
     test/test_transpose4d_op.F\
@@ -229,6 +241,9 @@ test_basic_sial_SOURCES = \
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
 	 test/test_controller.h\
+	 test/test_controller.cpp\
+	 test/test_constants.h\
+	 test/test_constants.cpp\
 	 test/test_qm.cpp
 
 TEST_LDADD_VARS = \
