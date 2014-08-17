@@ -6,6 +6,10 @@
  */
 
 #include "test_controller_parallel.h"
+#include "config.h"
+
+#ifdef HAVE_MPI // Only compile if MPI version compiled.
+
 
 #include "gtest/gtest.h"
 #include <fenv.h>
@@ -274,3 +278,4 @@ bool TestControllerParallel::runWorker() {
 	return this_test_enabled_;
 }
 
+#endif // HAVE_MPI

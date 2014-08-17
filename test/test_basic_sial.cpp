@@ -23,7 +23,6 @@
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
-#include "server_persistent_array_manager.h"
 
 #include "block.h"
 
@@ -31,18 +30,13 @@
 #include <TAU.h>
 #endif
 
-//#ifdef HAVE_MPI
-//#include "sip_server.h"
-//#include "sip_mpi_attr.h"
-//#include "global_state.h"
-//#include "sip_mpi_utils.h"
-//#else
-//#include "sip_attr.h"
-//#endif
+#ifdef HAVE_MPI
+#include "test_controller_parallel.h"
+#include "server_persistent_array_manager.h"
+#endif
 
 #include "test_constants.h"
 #include "test_controller.h"
-#include "test_controller_parallel.h"
 
 extern "C" {
 int test_transpose_op(double*);
@@ -266,17 +260,31 @@ void basic_pardo_test(int max_dims, int lower[], int upper[],
 			finalize_setup();
 		}
 
-		TestControllerParallel controller(job, true, VERBOSE_TEST,
-				"This is a test of " + job, std::cout, expect_success);
+//#ifdef HAVE_MPI
+		//TestControllerParallel controller(job, true, VERBOSE_TEST,
+		//		"This is a test of " + job, std::cout, expect_success);
+//#else
+		TestController controller(job, true, VERBOSE_TEST,
+						"This is a test of " + job, std::cout, expect_success);
+//#endif
 		controller.initSipTables();
-		controller.run();
+		controller.runWorker();
 		if (attr->global_rank() == 0) {
 			double total = controller.worker_->scalar_value("total");
 			if (VERBOSE_TEST) {
 				std::cout << "num_iters=" << num_iters << ", total=" << total
 						<< std::endl;
 			}
-			EXPECT_EQ(num_iters, int(total));
+			int num_workers = attr->num_workers();
+			if (num_workers < num_iters && num_iters % num_workers == 0){
+				EXPECT_EQ(num_iters / num_workers, int(total));
+			} else if (num_workers < num_iters && num_iters % num_workers != 0){// When work can be somewhat evenly distributed.
+				int per_worker_iters = num_iters / num_workers;
+				int remainder_worker_iters = num_iters % num_workers;
+				ASSERT_TRUE(int(total) == per_worker_iters || int(total) == remainder_worker_iters);
+			} else if (num_iters >= num_workers){
+				ASSERT_TRUE(1 == int(total) || 0 == int(total));
+			}
 		}
 	}
 }

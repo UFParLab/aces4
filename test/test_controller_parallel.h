@@ -2,7 +2,7 @@
 #ifndef __TEST_CONTROLLER_PARALLEL__
 #define __TEST_CONTROLLER_PARALLEL__
 
-
+#include "config.h"
 #include <string>
 #include <iostream>
 #include "setup_reader.h"
@@ -60,7 +60,6 @@ public:
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
 
-private:
 	bool runServer();
 	bool runWorker();
 
