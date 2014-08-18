@@ -260,13 +260,13 @@ void basic_pardo_test(int max_dims, int lower[], int upper[],
 			finalize_setup();
 		}
 
-//#ifdef HAVE_MPI
-		//TestControllerParallel controller(job, true, VERBOSE_TEST,
-		//		"This is a test of " + job, std::cout, expect_success);
-//#else
+#ifdef HAVE_MPI
+		TestControllerParallel controller(job, true, VERBOSE_TEST,
+				"This is a test of " + job, std::cout, expect_success);
+#else
 		TestController controller(job, true, VERBOSE_TEST,
 						"This is a test of " + job, std::cout, expect_success);
-//#endif
+#endif
 		controller.initSipTables();
 		controller.runWorker();
 		if (attr->global_rank() == 0) {

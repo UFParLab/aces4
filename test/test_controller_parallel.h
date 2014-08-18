@@ -26,6 +26,24 @@ class SIPServer;
  * Currently, failures in the sip (check, input_check, sial_check) whether expected or not, cause the main
  * test program to call mpi abort and crash.
  *
+ * To run a test, create the .dat file if desired with name job.dat and pass it to the TestControllerParallel constructor
+ *
+ * Then, for each SIAL program in the test, call
+ *
+ * initSipTables();
+ * run();
+ * perform checks
+ *
+ * initSiptTables();
+ * run();
+ * perform checks
+ *
+ * etc.
+ *
+ * The sial program names are obtained from the .dat file.  The controller keeps track of the sial program, so calling initSipTables() will
+ * The get the next program.
+ *
+ * The run method does the right thing, depending on whether the process is a worker or server.
  */
 class TestControllerParallel {
 public:
@@ -34,15 +52,17 @@ public:
 	~TestControllerParallel() ;
 
 	void initSipTables();
-	sip::IntTable* int_table();
+	void run();
+
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
-	void run();
+	double* local_block(const std::string& name, const std::vector<int>indices);
+
 	int num_workers();
 	int num_servers();
 	std::string expectedOutput();
-	double* local_block(const std::string& name, const std::vector<int>indices);
 
+	sip::IntTable* int_table();
 	const std::string job_;
 	const std::string comment_;
 	bool verbose_;
