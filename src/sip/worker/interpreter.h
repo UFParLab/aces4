@@ -63,12 +63,6 @@ public:
 	friend class SequentialPardoLoop;
 	friend class Tracer;
 
-	//data_access routines.  These are just for convenience and just call the
-	//appropriate routine in the sipTable or dataManager.  The definitions are given
-	//here to allow inlining.
-
-	SipTables* sip_tables(){return &sip_tables_;}
-
 	std::string string_literal(int slot) {
 		return sip_tables_.string_literal(slot);
 	}
@@ -227,18 +221,22 @@ public:
 		return printer_;
 	}
 
-/**TODO these should be private.  Made public as expedient way to implement
- * list_block_map super instruction, and enable- and disable_all_rank_print
- * super instructions.
- */
+	//data_access routines.  These are just for convenience and just call the
+	//appropriate routine in the sipTable or dataManager.  The definitions are given
+	//here to allow inlining.
+	const DataManager& data_manager() const { return data_manager_; }
+	const SipTables& sip_tables() const { return sip_tables_; }
+	SialPrinter& printer() const { return *printer_; }
 
+
+private:
 	//static data
 	SipTables& sip_tables_;
 	//dynamic data
 	DataManager data_manager_;
 	//printer module
 	SialPrinter* printer_;
-private:
+
 
 	/**
 	 * Called by constructor

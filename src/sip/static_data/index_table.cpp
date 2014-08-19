@@ -191,9 +191,14 @@ void IndexTableEntry::init(const std::string& name, IndexTableEntry& entry,
     
 	entry.index_type_ = intToIndexType_t(siox_file.read_int());
 	if (entry.index_type_ != subindex) { //set subindex_descriptor in IndexTable::init rather than here
-		entry.segment_descriptor_ptr_ = table.segment_descriptors_.at(
-				entry.index_type_);
-		;
+		//entry.segment_descriptor_ptr_ = table.segment_descriptors_.at(entry.index_type_);
+		IndexTable::SegmentDescriptorMap::iterator it = table.segment_descriptors_.find(entry.index_type_);
+		if (it == table.segment_descriptors_.end()){
+			std::stringstream ss;
+			ss << "Could not find segment descriptor for " << index_type_name(entry.index_type_);
+			throw std::out_of_range(ss.str());
+		}
+		entry.segment_descriptor_ptr_ = it->second;
 	}
 
 }
@@ -276,7 +281,11 @@ std::string IndexTable::index_name(int index_slot) const {
 }
 
 int IndexTable::index_id(std::string name) const {
-	return name_entry_map_.at(name);
+	std::map<std::string, int>::const_iterator it = name_entry_map_.find(name);
+	if (it == name_entry_map_.end()){
+		throw std::out_of_range("Could not find index value for : " + name);
+	}
+	return it->second;
 }
 
 IndexType_t IndexTable::index_type(int index_slot) const {

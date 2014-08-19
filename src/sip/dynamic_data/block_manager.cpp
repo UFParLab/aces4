@@ -199,7 +199,7 @@ void BlockManager::leave_scope() {
 
 
 
-std::ostream& operator<<(std::ostream& os, const BlockManager& obj) {
+std::ostream& operator<<(std::ostream& os, const BlockManager& obj){
 	os << "block_map_:" << std::endl;
 	os << obj.block_map_ << std::endl;
 

@@ -340,7 +340,7 @@ AM_CONDITIONAL([HAVE_PYTHON],[test "$PYTHON" != ":"])
 AM_CONDITIONAL([WORKING_NVCC], [test "x$cuda_enable" = "xyes"])
 
 
-AM_INIT_AUTOMAKE([foreign -Wall tar-ustar])
+AM_INIT_AUTOMAKE([foreign -Wall tar-ustar parallel-tests])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/sip/super_instructions/Makefile])
 AC_OUTPUT

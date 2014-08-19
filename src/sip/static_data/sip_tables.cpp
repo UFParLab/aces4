@@ -38,7 +38,7 @@ int SipTables::max_timer_slots() const{
 }
 
 std::vector<std::string> SipTables::line_num_to_name() const{
-	std::vector<std::string> lno2name(max_timer_slots()+1, "");
+	std::vector<std::string> lno2name(max_timer_slots()+1, "");	// "" is the sentinel value checked in printing.
 	int size = op_table_.size();
 	for (int i=0; i<size; i++){
 		int line = op_table_.line_number(i);
@@ -149,7 +149,7 @@ void SipTables::calculate_seq_sizes(const int array_table_slot,
 		int index_id = selectors[i];
 		if (is_subindex(index_id)) {
 			int parent_value =
-					sip::Interpreter::global_interpreter->data_manager_.index_value(
+					sip::Interpreter::global_interpreter->data_manager().index_value(
 							parent_index(index_id));
 			seg_sizes[i] = index_table_.subsegment_extent(index_id,
 					parent_value, index_vals[i]);
