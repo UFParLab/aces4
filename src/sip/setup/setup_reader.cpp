@@ -34,8 +34,8 @@ SetupReader::SetupReader(InputStream & stream, bool to_read) : stream_(stream) {
 SetupReader::~SetupReader() {
 	for(PredefIntArrayIterator iter = predef_int_arr_.begin(); iter != predef_int_arr_.end(); ++iter){
 		SIP_LOG(std::cout<<"From SetupReader, freeing "<<iter->first<<std::endl);
-		delete [] iter->second.second.first;  //dims
-		delete [] iter->second.second.second; //data
+		delete [] iter->second.dims;  //dims
+		delete [] iter->second.data; //data
 	}
 //    for (PredefArrayIterator iter = predef_arr_.begin(); iter != predef_arr_.end(); ++iter){
 //    	SIP_LOG(std::cout<<"From SetupReader, freeing "<<iter->first<<std::endl);
@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream& os, const SetupReader & obj) {
 	os << "Segment table info:" << std::endl;
 	SetupReader::SetupSegmentInfoMap::const_iterator itg;
 	for (itg = obj.segment_map_.begin(); itg != obj.segment_map_.end(); ++itg) {
-		os << itg->first << ":[";
+		os << index_type_name(itg->first) << ":[";
 		std::vector<int>::const_iterator sit;
 		for (sit = (itg->second).begin(); sit != (itg->second).end(); ++sit) {
 			os << (sit == (itg->second).begin()?"":",") << *sit;
@@ -119,9 +119,9 @@ std::ostream& operator<<(std::ostream& os, const SetupReader & obj) {
 	os << "Predefined integer arrays:" << std::endl;
 	SetupReader::PredefIntArrMap::const_iterator itpi;
 	for (itpi = obj.predef_int_arr_.begin(); itpi != obj.predef_int_arr_.end(); ++itpi){
-		int rank = itpi->second.first;
-		int * dims = itpi->second.second.first;
-		int * data = itpi->second.second.second;
+		int rank = itpi->second.rank;
+		int * dims = itpi->second.dims;
+		int * data = itpi->second.data;
 		int num_elems = 1;
 		for (int i = 0; i < rank; i++) {
 			num_elems *= dims[i];
@@ -174,12 +174,36 @@ void SetupReader::dump_data(std::ostream& os) {
 	std::cout << this;
 }
 
-int SetupReader::predefined_int(std::string name) {
-	return predefined_int_map_.at(name);
+int SetupReader::predefined_int(const std::string& name) {
+	PredefIntMap::iterator it = predefined_int_map_.find(name);
+	if (it == predefined_int_map_.end()){
+		throw std::out_of_range("Could not find predefined integer : " + name);
+	}
+	return it->second;
 }
 
-double SetupReader::predefined_scalar(std::string name) {
-	return predefined_scalar_map_.at(name);
+double SetupReader::predefined_scalar(const std::string& name) {
+	PredefScalarMap::iterator it = predefined_scalar_map_.find(name);
+	if (it == predefined_scalar_map_.end()){
+		throw std::out_of_range("Could not find predefined scalar : " + name);
+	}
+	return it->second;
+}
+
+PredefContigArray SetupReader::predefined_contiguous_array(const std::string& name){
+	NamePredefinedContiguousArrayMap::iterator it = name_to_predefined_contiguous_array_map_.find(name);
+	if (it == name_to_predefined_contiguous_array_map_.end()){
+		throw std::out_of_range("Could not find predefined contiguous array : " + name);
+	}
+	return it->second;
+}
+
+PredefIntArray SetupReader::predefined_integer_array(const std::string& name){
+	PredefIntArrMap::iterator it = predef_int_arr_.find(name);
+	if (it == predef_int_arr_.end()){
+		throw std::out_of_range("Could not find predefined integer array : " + name);
+	}
+	return it->second;
 }
 
 void SetupReader::read_and_check_magic() {
@@ -283,10 +307,12 @@ void SetupReader::read_predefined_integer_arrays(){
 		}
 		//read the elements
 		int * data = stream_.read_int_array(&num_data_elems);
-		std::pair<int *, int *> dataPair = std::pair<int *, int *>(dims, data);
+
+		PredefIntArray predef_int_array = { rank, dims, data};
+		//std::pair<int *, int *> dataPair = std::pair<int *, int *>(dims, data);
 		//predef_int_arr_[name] = std::pair<int, std::pair<int *, int *> >(rank, dataPair);
 		std::pair<PredefIntArrMap::iterator, bool> ret =
-				predef_int_arr_.insert (make_pair(name, make_pair(rank, dataPair)));
+				predef_int_arr_.insert (make_pair(name, predef_int_array));
 		sip::check(ret.second, "Trying to read another array by name : " + name);
 
 	}

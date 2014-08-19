@@ -55,7 +55,7 @@ TEST(SimpleMPI,Simple_Put_Test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -143,7 +143,7 @@ TEST(SimpleMPI,persistent_empty_mpi){
 
 	//Execute first program
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -182,7 +182,7 @@ TEST(SimpleMPI,persistent_empty_mpi){
 	   std::cout << "SETUP READER DATA FOR SECOND PROGRAM:\n" << setup_reader<< std::endl;
    }
 
-	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+	std::string prog_name2 = setup_reader.sial_prog_list().at(1);
 	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
 	sip::SipTables sipTables2(setup_reader, siox_file2);
 	if (sip_mpi_attr.global_rank()==0){
@@ -258,7 +258,7 @@ TEST(SimpleMPI,persistent_distributed_array_mpi){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -303,7 +303,7 @@ TEST(SimpleMPI,persistent_distributed_array_mpi){
 		std::cout << "SETUP READER DATA FOR SECOND PROGRAM:\n" << setup_reader<< std::endl;
 	}
 
-	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+	std::string prog_name2 = setup_reader.sial_prog_list().at(1);
 	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
 	sip::SipTables sipTables2(setup_reader, siox_file2);
 
@@ -437,7 +437,7 @@ TEST(SimpleMPI,get_mpi){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -524,7 +524,7 @@ TEST(SimpleMPI,unmatched_get){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -590,7 +590,7 @@ TEST(SimpleMPI,delete_mpi){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -660,7 +660,7 @@ TEST(SimpleMPI,put_accumulate_mpi){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -727,7 +727,7 @@ TEST(SimpleMPI,put_test_mpi){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -794,7 +794,7 @@ TEST(SimpleMPI,all_rank_print){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -857,7 +857,7 @@ TEST(SimpleMPI,Message_Number_Wraparound){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -916,7 +916,7 @@ TEST(SimpleMPI,Pardo_Loop_Test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -941,7 +941,7 @@ TEST(SimpleMPI,Pardo_Loop_Test){
 		std::cout << "starting worker for "<< job  << std::endl;
 		runner.interpret();
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-		ASSERT_DOUBLE_EQ(80, runner.data_manager_.scalar_value("total"));
+		ASSERT_DOUBLE_EQ(80, runner.data_manager().scalar_value("total"));
 	}
 }
 

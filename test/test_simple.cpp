@@ -79,7 +79,7 @@ TEST(Sial,scalars){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -132,7 +132,7 @@ TEST(Sial,persistent_scalars){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -155,7 +155,7 @@ TEST(Sial,persistent_scalars){
 
 	//Now do the second program
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name1 = setup_reader.sial_prog_list_.at(1);
+	std::string prog_name1 = setup_reader.sial_prog_list().at(1);
 	setup::BinaryInputFile siox_file1(siox_dir + prog_name1);
 	sip::SipTables sipTables1(setup_reader, siox_file1);
 	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
@@ -267,7 +267,7 @@ TEST(Sial,index_decs) {
 	setup_reader.dump_data();
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -324,7 +324,7 @@ TEST(Sial,where_clause){
 		std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 		runner.interpret();
 		ASSERT_EQ(0, sip::DataManager::scope_count);
-		double counter_val = runner.data_manager_.scalar_value("counter");
+		double counter_val = runner.data_manager().scalar_value("counter");
 		ASSERT_DOUBLE_EQ(10, counter_val);
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 	}
@@ -356,7 +356,7 @@ TEST(Sial,ifelse){
 		sip::Interpreter runner(sipTables, sialxTimer);
 		std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 		runner.interpret();
-		double counter_val = runner.data_manager_.scalar_value("counter");
+		double counter_val = runner.data_manager().scalar_value("counter");
 		ASSERT_DOUBLE_EQ(4, counter_val);
 		ASSERT_EQ(0, sip::DataManager::scope_count);
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
@@ -425,7 +425,7 @@ TEST(Sial,pardo_loop){
 		std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 		runner.interpret();
 		ASSERT_EQ(0, sip::DataManager::scope_count);
-		ASSERT_DOUBLE_EQ(80, runner.data_manager_.scalar_value("counter"));
+		ASSERT_DOUBLE_EQ(80, runner.data_manager().scalar_value("counter"));
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 	}
 }
@@ -468,7 +468,7 @@ TEST(Sial,tmp_arrays){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -521,7 +521,7 @@ TEST(Sial,tmp_arrays_2){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -571,7 +571,7 @@ TEST(Sial,exit_statement_test){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -584,8 +584,8 @@ TEST(Sial,exit_statement_test){
 		sip::Interpreter runner(sipTables, sialxTimer);
 		std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
 		runner.interpret();
-		double counter_i = runner.data_manager_.scalar_value("counter_i");
-		double counter_j = runner.data_manager_.scalar_value("counter_j");
+		double counter_i = runner.data_manager().scalar_value("counter_i");
+		double counter_j = runner.data_manager().scalar_value("counter_j");
 		ASSERT_DOUBLE_EQ(12, counter_j);
 		ASSERT_DOUBLE_EQ(4, counter_i);
 		ASSERT_EQ(0, sip::DataManager::scope_count);
@@ -623,7 +623,7 @@ TEST(Sial,transpose_tmp){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -685,7 +685,7 @@ TEST(Sial,fill_sequential){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -760,7 +760,7 @@ TEST(Sial,contraction_small_test){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -865,7 +865,7 @@ TEST(Sial,contraction_small_test2){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -929,7 +929,7 @@ TEST(Sial,sum_op){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1054,7 +1054,7 @@ TEST(Sial,print_block_test){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1104,7 +1104,7 @@ TEST(Sial,subindex_test){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1153,7 +1153,7 @@ TEST(Sial,insert_slice_test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1199,7 +1199,7 @@ TEST(Sial,static_array_test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1281,7 +1281,7 @@ TEST(Sial,local_arrays){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1329,7 +1329,7 @@ TEST(Sial,local_arrays_wild){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1375,7 +1375,7 @@ TEST(Sial,put_test){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1437,7 +1437,7 @@ TEST(Sial,gpu_contraction_small){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1536,7 +1536,7 @@ TEST(Sial,gpu_sum_op){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1656,7 +1656,7 @@ TEST(Sial,gpu_ops){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1701,7 +1701,7 @@ TEST(Sial,contract_to_scalar){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1716,7 +1716,7 @@ TEST(Sial,contract_to_scalar){
 		runner.interpret();
 		ASSERT_EQ(0, sip::DataManager::scope_count);
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-		double actual_x = runner.data_manager_.scalar_value("x");
+		double actual_x = runner.data_manager().scalar_value("x");
 
 		// Compare it with the reference
 		const int I = 8;
@@ -1773,7 +1773,7 @@ TEST(Sial,gpu_contract_to_scalar){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1788,7 +1788,7 @@ TEST(Sial,gpu_contract_to_scalar){
 		runner.interpret();
 		ASSERT_EQ(0, sip::DataManager::scope_count);
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-		double actual_c = runner.data_manager_.scalar_value("x");
+		double actual_c = runner.data_manager().scalar_value("x");
 
 		// Compare it with the reference
 		const int I = 8;
@@ -1849,7 +1849,7 @@ TEST(Sial,gpu_transpose_tmp){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1908,7 +1908,7 @@ TEST(Sial,simple_indices_assignments){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -1923,8 +1923,8 @@ TEST(Sial,simple_indices_assignments){
 		runner.interpret();
 		ASSERT_EQ(0, sip::DataManager::scope_count);
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-		ASSERT_DOUBLE_EQ(50, runner.data_manager_.scalar_value("x"));
-		ASSERT_DOUBLE_EQ(50, runner.data_manager_.scalar_value("y"));
+		ASSERT_DOUBLE_EQ(50, runner.data_manager().scalar_value("x"));
+		ASSERT_DOUBLE_EQ(50, runner.data_manager().scalar_value("y"));
 	}
 }
 
@@ -1957,7 +1957,7 @@ TEST(Sial,self_multiply_op){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2030,7 +2030,7 @@ TEST(Sial,gpu_self_multiply_op){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2111,7 +2111,7 @@ TEST(Sial,get_int_array_test){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
@@ -2179,7 +2179,7 @@ TEST(Sial,get_scalar_array_test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2240,7 +2240,7 @@ TEST(Sial,get_scratch_array_test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2308,7 +2308,7 @@ TEST(Sial,gpu_contraction_predefined){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2324,7 +2324,7 @@ TEST(Sial,gpu_contraction_predefined){
 		ASSERT_EQ(0, sip::DataManager::scope_count);
 
 		// Get value of scalar "v1"
-		double actual_v1 = runner.data_manager_.scalar_value("v1");
+		double actual_v1 = runner.data_manager().scalar_value("v1");
 
 		// Compare it with the reference
 		int cntr = 0;
@@ -2380,7 +2380,7 @@ TEST(Sial,transpose4d_tmp){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2397,7 +2397,7 @@ TEST(Sial,transpose4d_tmp){
 		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 
 		std::cout << "PRINTING BLOCK MAP" << std::endl;
-		std::cout << runner.data_manager_.block_manager_ << std::endl;
+		std::cout << runner.data_manager().block_manager() << std::endl;
 
 		// Get the data for local array block "b"
 		int b_slot = runner.array_slot(std::string("b"));
@@ -2444,7 +2444,7 @@ TEST(Sial,transpose4d_square_tmp){
 
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2506,9 +2506,9 @@ TEST(Sial,transpose4d_square_tmp){
 						esum3 += a[i][j][k][l] * b[k][j][i][l];
 					}
 
-		double actual_esum1 = runner.data_manager_.scalar_value("esum1");
-		double actual_esum2 = runner.data_manager_.scalar_value("esum2");
-		double actual_esum3 = runner.data_manager_.scalar_value("esum3");
+		double actual_esum1 = runner.data_manager().scalar_value("esum1");
+		double actual_esum2 = runner.data_manager().scalar_value("esum2");
+		double actual_esum3 = runner.data_manager().scalar_value("esum3");
 
 		ASSERT_DOUBLE_EQ(esum1, actual_esum1);
 		ASSERT_DOUBLE_EQ(esum2, actual_esum2);
@@ -2547,7 +2547,7 @@ TEST(Sial,assign_to_static_array_test){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);
@@ -2603,7 +2603,7 @@ TEST(Sial,set_persistent_scalar_test){
 
 	{
 		//get siox name from setup, load and print the sip tables
-		std::string prog_name = setup_reader.sial_prog_list_.at(0);
+		std::string prog_name = setup_reader.sial_prog_list().at(0);
 		sip::GlobalState::set_program_name(prog_name);
 		std::string siox_dir(dir_name);
 		setup::BinaryInputFile siox_file(siox_dir + prog_name);
@@ -2628,7 +2628,7 @@ TEST(Sial,set_persistent_scalar_test){
 
 	{
 		//get siox name from setup, load and print the sip tables
-		std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+		std::string prog_name2 = setup_reader.sial_prog_list().at(1);
 		std::string siox_dir(dir_name);
 		setup::BinaryInputFile siox_file(siox_dir + prog_name2);
 		sip::GlobalState::set_program_name(prog_name2);
@@ -2644,8 +2644,8 @@ TEST(Sial,set_persistent_scalar_test){
 			ASSERT_EQ(0, sip::DataManager::scope_count);
 			std::cout << "\nSIAL PROGRAM TERMINATED" << std::endl;
 
-			double y_val = runner.data_manager_.scalar_value("y");
-			double z_val = runner.data_manager_.scalar_value("z");
+			double y_val = runner.data_manager().scalar_value("y");
+			double z_val = runner.data_manager().scalar_value("z");
 			ASSERT_DOUBLE_EQ(x, y_val);
 			ASSERT_DOUBLE_EQ(z_val, x*x);
 		}
@@ -2692,7 +2692,7 @@ TEST(Sial,persistent_static_array_test){
 		std::string siox_dir(dir_name);
 	{
 		//get siox name from setup, load and print the sip tables
-		std::string prog_name = setup_reader.sial_prog_list_.at(0);
+		std::string prog_name = setup_reader.sial_prog_list().at(0);
 		setup::BinaryInputFile siox_file(siox_dir + prog_name);
 		sip::SipTables sipTables(setup_reader, siox_file);
 		std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
@@ -2712,7 +2712,7 @@ TEST(Sial,persistent_static_array_test){
 
 	{
 		//get siox name from setup, load and print the sip tables
-		std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+		std::string prog_name2 = setup_reader.sial_prog_list().at(1);
 		setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
 		sip::SipTables sipTables2(setup_reader, siox_file2);
 		std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables2
@@ -2821,7 +2821,7 @@ TEST(Sial,persistent_distributed_array_test){
 
 	{
 		//get siox name from setup, load and print the sip tables
-		std::string prog_name = setup_reader.sial_prog_list_.at(0);
+		std::string prog_name = setup_reader.sial_prog_list().at(0);
 		setup::BinaryInputFile siox_file(siox_dir + prog_name);
 		sip::SipTables sipTables(setup_reader, siox_file);
 		std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
@@ -2840,7 +2840,7 @@ TEST(Sial,persistent_distributed_array_test){
 
 	{
 		//get siox name from setup, load and print the sip tables
-		std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
+		std::string prog_name2 = setup_reader.sial_prog_list().at(1);
 		setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
 		sip::SipTables sipTables2(setup_reader, siox_file2);
 		std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables2
