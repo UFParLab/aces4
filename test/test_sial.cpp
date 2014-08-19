@@ -52,7 +52,7 @@ int test_contraction_small2(double*);
 bool VERBOSE_TEST = true;
 
 
-TEST(Sial,empty){
+TEST(Sial,DISABLED_empty){
 	std::string job("empty");
 	int norb = 3;
         int segs[] = {2,2,2};
@@ -126,7 +126,7 @@ void basic_pardo_test(int max_dims, int lower[], int upper[],
 	}
 }
 
-TEST(Sial,pardo_loop) {
+TEST(Sial,DISABLED_pardo_loop) {
 	int MAX_DIMS = 6;
 	int lower[] = { 3, 2, 4, 1, 99, -1 };
 	int upper[] = { 7, 6, 5, 1, 101, 2 };
@@ -153,7 +153,7 @@ TEST(Sial,DISABLED_pardo_loop_corner_case) {
 //}
 
 
-TEST(Sial,put_test) {
+TEST(Sial,DISABLED_put_test) {
 	std::string job("put_test");
 	int norb = 3;
 	int segs[] = { 2, 3, 2 };
@@ -237,7 +237,7 @@ TEST(Sial,DISABLED_persistent_scalars) {
 	}
 }
 
-TEST(Sial,get_mpi){
+TEST(Sial,DISABLED_get_mpi){
 	std::string job("get_mpi");
 	//create setup_file
 	double x = 3.456;
@@ -330,7 +330,7 @@ TEST(Sial,DISABLED_delete_mpi){
 }
 
 
-TEST(Sial,put_accumulate_mpi){
+TEST(Sial,DISABLED_put_accumulate_mpi){
 	std::string job("put_accumulate_mpi");
 	double x = 3.456;
 	int norb = 4;
@@ -351,6 +351,9 @@ TEST(Sial,put_accumulate_mpi){
 	controller.run();
 
 }
+
+
+/* TODO  check what this is testing.  It isn't clear that id doesn anyting */
 
 TEST(Sial,DISABLED_all_rank_print){
 	std::string job("all_rank_print_test");
@@ -375,18 +378,13 @@ TEST(Sial,DISABLED_all_rank_print){
 	controller.run();
 }
 
-TEST(Sip,DISABLED_Message_Number_Wraparound){
 
-	sip::GlobalState::reset_program_count();
-	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+/* TODO check what this test does.  */
+TEST(Sip,DISABLED_message_number_wraparound){
 
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
 	std::string job("message_number_wraparound_test");
-	std::cout << "JOBNAME = " << job << std::endl;
 
-	if (sip_mpi_attr.global_rank() == 0){
+	if (attr->global_rank() == 0){
 		init_setup(job.c_str());
 		set_constant("norb",1);
 		std::string tmp = job + ".siox";
@@ -397,81 +395,64 @@ TEST(Sip,DISABLED_Message_Number_Wraparound){
 		finalize_setup();
 	}
 
-	sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	sip::SipTables sipTables(setup_reader, siox_file);
-
-	//create worker and server
-	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
-
-
-	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-	sip::GlobalState::set_program_name(prog_name);
-	sip::GlobalState::increment_program();
-	if (sip_mpi_attr.is_server()){
-		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
-		MPI_Barrier(MPI_COMM_WORLD);
-		std::cout<<"starting server" << std::endl;
-		server.run();
-		std::cout << "Server state after termination" << server << std::endl;
-	} else {
-		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-		sip::Interpreter runner(sipTables, sialxTimer,  NULL);
-		MPI_Barrier(MPI_COMM_WORLD);
-		std::cout << "starting worker for "<< job  << std::endl;
-		runner.interpret();
-		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
+	std::stringstream output;
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
 }
 
 /* THIS TEST CURRENTLY Crashes with  Error 35: MPI_ERR_IO input/output error at server*/
-//TEST(Sial,persistent_distributed_array_mpi){
-//	std::string job("persistent_distributed_array_mpi");
-//	double x = 3.456;
-//	int norb = 2;
-//	int segs[]  = {2,3};
-//
-//	if (attr->global_rank() == 0){
-//		init_setup(job.c_str());
-//		set_scalar("x",x);
-//		set_constant("norb",norb);
-//		std::string tmp = job + "1.siox";
-//		const char* nm= tmp.c_str();
-//		add_sial_program(nm);
-//		std::string tmp1 = job + "2.siox";
-//		const char* nm1= tmp1.c_str();
-//		add_sial_program(nm1);
-//		set_aoindex_info(2,segs);
-//		finalize_setup();
-//	}
-//
-//
-//	std::stringstream output;
-//	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-//
-//	//run first program
-//	controller.initSipTables();
-//	controller.run();
-////	if(attr->is_worker()){
-////		//do worker stuff
-////	}
-////	else {
-////		//do server stuff
-////	}
-//
-//	//run second program
-//	controller.initSipTables();
-//	controller.run();
-//	if (attr->is_worker()) {
+TEST(Sial,persistent_distributed_array_mpi){
+	std::string job("persistent_distributed_array_mpi");
+	double x = 3.456;
+	int norb = 2;
+	int segs[]  = {2,3};
+
+	if (attr->global_rank() == 0){
+		init_setup(job.c_str());
+		set_scalar("x",x);
+		set_constant("norb",norb);
+		std::string tmp = job + "1.siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		std::string tmp1 = job + "2.siox";
+		const char* nm1= tmp1.c_str();
+		add_sial_program(nm1);
+		set_aoindex_info(2,segs);
+		finalize_setup();
+	}
+
+
+	std::stringstream output;
+	TestControllerParallel controller(job, true, true, "", output);
+
+	//run first program
+	controller.initSipTables();
+	controller.run();
+
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
+
+	//run second program
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		int i,j;
+		for (i=1; i <= norb ; ++i ){
+			for (j = 1; j <= norb; ++j){
+			    double firstval = (i-1)*norb + j;
+			    std::vector<int> indices;
+			    indices.push_back(i);
+			    indices.push_back(j);
+			    double * block_data = controller.local_block(std::string("a"),indices);
+			    size_t block_size = segs[i-1] * segs[j-1];
+			    for (size_t count = 0; count < block_size; ++count){
+			    	ASSERT_DOUBLE_EQ(3*firstval, block_data[count]);
+			    	firstval++;
+			    }
+			}
+		}
+	}
+}
 //        // Test contents of blocks of distributed array "b"
 //
 //		// Get the data for local array block "b"
@@ -527,12 +508,9 @@ TEST(Sip,DISABLED_Message_Number_Wraparound){
 //				fill_seq_2_1++;
 //			}
 //		}
-//
-//
-//	}
-//
-//
-//}
+
+
+
 
 //****************************************************************************************************************
 
@@ -557,7 +535,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
 	int num_procs;
-	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
+	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs), __LINE__,__FILE__);
 
 	if (num_procs < 2) {
 		std::cerr << "Please run this test with at least 2 mpi ranks"
@@ -594,6 +572,8 @@ int main(int argc, char **argv) {
 	testing::InitGoogleTest(&argc, argv);
 	barrier();
 	int result = RUN_ALL_TESTS();
+
+	std::cout << "Rank  " << attr->global_rank() << " Finished RUN_ALL_TEST() " << std::endl << std::flush;
 
 #ifdef HAVE_TAU
 	TAU_STATIC_PHASE_STOP("SIP Main");

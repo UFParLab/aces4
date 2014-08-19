@@ -74,6 +74,7 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	int server_rank = sip_mpi_attr_.my_server();
 	if (server_rank > 0) {
 		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE for array " << array_id << " to server "<< server_rank << std::endl);
+		std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE for array " << array_id << " to server "<< server_rank << std::endl;  //DEBUG
 		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 		SIPMPIUtils::check_err(
 				MPI_Send(&array_id, 1, MPI_INT, server_rank, delete_tag,

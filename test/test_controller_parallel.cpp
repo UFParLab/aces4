@@ -85,14 +85,14 @@ TestControllerParallel::~TestControllerParallel() {
 	if (verbose_)
 		std::cout << "\nRank " << attr->global_rank() << " Controller for  "
 				<< job_ << " is being deleted" << std::endl << std::flush;
-	if (wpam_)
-		delete wpam_;
-	if (spam_)
-		delete spam_;
 	if (server_)
 		delete server_;
 	if (worker_)
 		delete worker_;
+	if (wpam_)
+		delete wpam_;
+	if (spam_)
+		delete spam_;
 	if (printer_)
 		delete printer_;
 	if (setup_reader_)
@@ -108,6 +108,7 @@ void TestControllerParallel::initSipTables() {
 	sip::GlobalState::increment_program();
 	std::string siox_path = dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
+	if (!sip_tables_) delete sip_tables_;
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
 	if (verbose_) {
 		//rank 0 prints and .siox files contents
@@ -185,13 +186,10 @@ std::string TestControllerParallel::expectedOutput() {
 
 double* TestControllerParallel::local_block(const std::string& name,
 		const std::vector<int> indices) {
-	std::cout << "looking up block " << name << " " << indices[0] << std::endl;
 	try {
 		int array_slot = sip_tables_->array_slot(name);
 		int rank = sip_tables_->array_rank(array_slot);
 		sip::BlockId id(array_slot, rank, indices);
-		std::cout << "this is the block id " << id.str(*sip_tables_)
-				<< std::endl;
 		sip::Block::BlockPtr block =
 				worker_->data_manager_.block_manager_.get_block_for_reading(id);
 		return block->get_data();

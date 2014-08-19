@@ -14,7 +14,7 @@ sial delete_mpi
 	allocate a[*,*]
 	
 	println "Sending blocks"	
-	do i
+	pardo i
 		print i
 		execute list_block_map
 		do j
@@ -25,7 +25,7 @@ sial delete_mpi
 			put c[i,j] += aa[i,j]
 			put c[i,j] += aa[i,j]
 		enddo j
-	enddo i
+	endpardo  i
 	sip_barrier
 	delete b
 	delete c

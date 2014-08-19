@@ -10,9 +10,9 @@ sial persistent_distributed_array_mpi2
 	temp t[i,j]
 	
 	local lb[i,j]
+	
+	println "$$$$$$$$$$$$$$ start of second prog $$$$$$$$$"
 	allocate lb[*,*]
-
-    println "$$$$$$$$$$$$$$ start of second prog $$$$$$$$$"
 	allocate a[*,*]
 	
 	restore_persistent b "savedb"
@@ -28,8 +28,7 @@ sial persistent_distributed_array_mpi2
 	   	  print j
 	      get b[i,j]
 	      get c[i,j]
-	      t[i,j] = b[i,j] * 5.0
-#FIXME	      a[i,j] = t[i,j] + c[i,j] 
+          a[i,j] = b[i,j] + c[i,j] 
 	      print a[i,j]
 	   enddo j
 	enddo i

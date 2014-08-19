@@ -18,10 +18,10 @@ namespace sip {
 
 
 void SIPMPIUtils::set_error_handler(){
-	std::cout << "  in SIPMPIUtils::set_error_handler" << std::endl << std::flush;
+//	std::cout << "  in SIPMPIUtils::set_error_handler" << std::endl << std::flush;
 	MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 	SIPMPIAttr & mpi_attr = SIPMPIAttr::get_instance();
-	std::cout << "Rank " << mpi_attr.global_rank()  << "  in SIPMPIUtils::set_error_handler:  mpi_attr.company_communicator()==NULL " << (mpi_attr.company_communicator() == NULL) << std::endl << std::flush;
+//	std::cout << "Rank " << mpi_attr.global_rank()  << "  in SIPMPIUtils::set_error_handler:  mpi_attr.company_communicator()!=NULL " << (mpi_attr.company_communicator() != NULL) << std::endl << std::flush;
 	MPI_Errhandler_set(mpi_attr.company_communicator(), MPI_ERRORS_RETURN);
 }
 
