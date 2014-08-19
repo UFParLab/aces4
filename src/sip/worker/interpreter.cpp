@@ -794,18 +794,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 		break;
-		/* other gpu instruction omitted for now */
-//		case set_persistent_op: {
-//
-//			++pc;
-//		}
-//		break;
-//		case restore_persistent_op:{
-//
-//
-//			++pc;
-//		}
-//		break;
+		/* FIX ME:  other gpu instruction omitted for now */
 		case set_persistent_op: {
 			int array_slot = arg1();
 			int string_slot = arg0();;
@@ -849,7 +838,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			check(false, opcodeToName(opcode) + " not yet implemented ");
 		}
 
-		}// swith
+		}// switch
 
 		//TODO  only call where necessary
 		contiguous_blocks_post_op();
