@@ -83,6 +83,7 @@ import "cis_rhf_defs.sialx"
 #
       served ck0(kstate,a,i)
       served Cai(a,i)
+      static SCai(a,i)
       served Cai_ao(mu,i)
       served T2old_ab(a,i,b,j)
       served T2old_aa(a,i,b,j)
@@ -103,7 +104,7 @@ import "cis_rhf_defs.sialx"
       served Vxxai(mu,nu,a,i)
       served Vaaai(a2,a,a1,i)
       served VSaaai(a2,a,a1,i)
-      served LSFai(a,i)
+      served SFai(a,i)
       served Vxixj(mu,i,nu,j)
       served Vxiqj(mu,i,q,j)
       served Vpiqj(p,i,q,j)
@@ -363,18 +364,24 @@ import "cis_rhf_defs.sialx"
 #
       proc setroot
 #
-      pardo a,i
-          Tai(a,i) = 0.0
-          prepare Cai(a,i) = Tai(a,i)
-      endpardo a,i
-      server_barrier
+#      pardo a,i
+#          Tai(a,i) = 0.0
+#          prepare Cai(a,i) = Tai(a,i)
+#      endpardo a,i
+#      server_barrier
       Tk(kstate) = 1.0
-      pardo a,i
+#      pardo a,i
+#          request ck0(kstate,a,i) i
+#          Tai(a,i) = ck0(kstate,a,i)*Tk(kstate)
+#          prepare Cai(a,i) = Tai(a,i)
+#      endpardo a,i
+      do a
+      do i
           request ck0(kstate,a,i) i
           Tai(a,i) = ck0(kstate,a,i)*Tk(kstate)
-          prepare Cai(a,i) = Tai(a,i)
-      endpardo a,i
-#
+          SCai(a,i) = Tai(a,i)
+      enddo i
+      enddo a
       server_barrier
       endproc setroot
 #
@@ -382,6 +389,7 @@ import "cis_rhf_defs.sialx"
 # 
 #    ------------------------------------------------------------------------ 
 #
+     server_barrier
      PARDO a, b, i, j 
 #
            REQUEST                     Vpiqj(a,i,b,j) j  
@@ -393,6 +401,16 @@ import "cis_rhf_defs.sialx"
            PREPARE T2old_ab(a,i,b,j) = Taibj(a,i,b,j)  
 #
      ENDPARDO a, b, i, j 
+     server_barrier
+         pardo a,i,b,j
+             request T2old_ab(a,i,b,j) j
+             request T2old_ab(a,j,b,i) i
+             Taibj(a,i,b,j)  = T2old_ab(a,i,b,j)
+             T1aibj(a,i,b,j) = T2old_ab(a,j,b,i)
+             Taibj(a,i,b,j) -= T1aibj(a,i,b,j)
+             prepare T2old_aa(a,i,b,j) = Taibj(a,i,b,j)
+         endpardo a,i,b,j
+     server_barrier
 #
 #    ------------------------------------------------------------------------ 
 # 
@@ -454,9 +472,9 @@ import "cis_rhf_defs.sialx"
 #
 # back transform CIS vector
      pardo a,i
-         request Cai(a,i) i
+#         request Cai(a,i) i
          do mu
-             Txi(mu,i) = Cai(a,i)*ca(mu,a)
+             Txi(mu,i) = SCai(a,i)*ca(mu,a)
              prepare Cai_ao(mu,i) += Txi(mu,i)
          enddo mu
      endpardo a,i
@@ -493,8 +511,8 @@ import "cis_rhf_defs.sialx"
          Taiai(a,i,b,j) = 0.0
          do i1
              request Vpiqj(i1,i,b,j) j
-             request cai(a,i1) a
-             T1aiai(a,i,b,j) = Vpiqj(i1,i,b,j)*cai(a,i1)
+#             request cai(a,i1) a
+             T1aiai(a,i,b,j) = Vpiqj(i1,i,b,j)*SCai(a,i1)
              Taiai(a,i,b,j) += T1aiai(a,i,b,j)
          enddo i1
          Taiai(a,i,b,j) *= -1.0
@@ -569,6 +587,7 @@ import "cis_rhf_defs.sialx"
 #
      endpardo a,i,b,j
 #
+     server_barrier
      endproc hbar_ab
 #
      proc hbar_ij
@@ -600,47 +619,45 @@ import "cis_rhf_defs.sialx"
 #
      endpardo a,i,b,j
 #
+     server_barrier
      endproc hbar_ij
 #
      proc hbar_ai
-#
-     pardo a,i
-#
-         do a1
-         do i1
-         request VSpipi(a,i,a1,i1) i1
-         request Vpiqj(a,i,a1,i1) i1
-         request cai(a1,i1) i1
-         T1pp(a,i) = VSpipi(a,i,a1,i1)*cai(a1,i1)
-         T2pp(a,i) = Vpiqj(a,i,a1,i1)*cai(a1,i1)
-         T1pp(a,i)+= T2pp(a,i)
-#
-         enddo i1
-         enddo a1
-#
-         prepare LSFai(a,i) = T1pp(a,i)
-#
-     endpardo a,i
-     server_barrier
+
      pardo a,i,a1,i1
-#
-         request T2old_aa(a,i,a1,i1) i1
-         request LSFai(a1,i1) i1
-#
-         Tpp(a,i) = T2old_aa(a,i,a1,i1)*LSFai(a1,i1)
-#
-         prepare Fai(a,i) += Tpp(a,i)
-#
+         request VSpipi(a,i,a1,i1) i1
+
+         Taibj(a,i,a1,i1) = VSpipi(a,i,a1,i1)
+         T1pp(a1,i1)      = SCai(a1,i1)
+         Tpp(a,i)         = Taibj(a,i,a1,i1)*T1pp(a1,i1)
+
+         prepare SFai(a,i) += Tpp(a,i)
      endpardo a,i,a1,i1
      pardo a,i,a1,i1
-#
-         request T2old_ab(a,i,a1,i1) i1
-         request LSFai(a1,i1) i1
-#
-         Tpp(a,i) = T2old_ab(a,i,a1,i1)*LSFai(a1,i1)
-#
+         request Vpiqj(a,i,a1,i1) i1
+
+         Taibj(a,i,a1,i1) = Vpiqj(a,i,a1,i1)
+         T1pp(a1,i1)      = SCai(a1,i1)
+         Tpp(a,i)         = Taibj(a,i,a1,i1)*T1pp(a1,i1)
+
+         prepare SFai(a,i) += Tpp(a,i)
+     endpardo a,i,a1,i1
+     server_barrier
+     pardo a,i,a1,i1
+         request T2old_aa(a,i,a1,i1) i1
+         request SFai(a1,i1) i
+         Taibj(a,i,a1,i1) = T2old_aa(a,i,a1,i1)
+         T1pp(a1,i1)      = SFai(a1,i1)
+         Tpp(a,i)         = Taibj(a,i,a1,i1)*T1pp(a1,i1)
          prepare Fai(a,i) += Tpp(a,i)
-#
+     endpardo a,i,a1,i1
+     pardo a,i,a1,i1
+         request T2old_ab(a,i,a1,i1) i1
+         request SFai(a1,i1) i
+         Taibj(a,i,a1,i1) = T2old_ab(a,i,a1,i1)
+         T1pp(a1,i1)      = SFai(a1,i1)
+         Tpp(a,i)         = Taibj(a,i,a1,i1)*T1pp(a1,i1)
+         prepare Fai(a,i) += Tpp(a,i)
      endpardo a,i,a1,i1
      server_barrier
 #
@@ -648,14 +665,6 @@ import "cis_rhf_defs.sialx"
 #
      proc hbar_prep
          server_barrier
-         pardo a,i,b,j
-             request T2old_ab(a,i,b,j) j
-             request T2old_ab(a,j,b,i) i
-             Taibj(a,i,b,j)  = T2old_ab(a,i,b,j)
-             T1aibj(a,i,b,j) = T2old_ab(a,j,b,i)
-             Taibj(a,i,b,j) -= T1aibj(a,i,b,j)
-             prepare T2old_aa(a,i,b,j) = Taibj(a,i,b,j)
-         endpardo a,i,b,j
          pardo a,b
              Tpp(a,b) = 0.0
              prepare Faa(a,b) = Tpp(a,b)
@@ -666,8 +675,11 @@ import "cis_rhf_defs.sialx"
          endpardo i,j
          pardo a,i
              Tpp(a,i) = 0.0
-             prepare LSFai(a,i) = Tpp(a,i)
              prepare Fai(a,i) = Tpp(a,i)
+         endpardo a,i
+         pardo a,i
+             Tpp(a,i) = 0.0
+             prepare SFai(a,i) = Tpp(a,i)
          endpardo a,i
          server_barrier
      endproc hbar_prep
@@ -707,25 +719,25 @@ import "cis_rhf_defs.sialx"
          esum2 += etemp
      endpardo a,i,b,j
      pardo a,i
-         request cai(a,i) i
+#         request cai(a,i) i
          request Fai(a,i) i
          Tpp(a,i) = Fai(a,i)
 #
          do b
              request Faa(a,b) a
-             request cai(b,i) i
-             T1pp(a,i) = Faa(a,b)*cai(b,i)
+#             request cai(b,i) i
+             T1pp(a,i) = Faa(a,b)*SCai(b,i)
              Tpp(a,i) += T1pp(a,i)
          enddo b
 #
          do j
              request Fii(i,j) i
-             request cai(a,j) a
-             T1pp(a,i) = Fii(i,j)*cai(a,j)
+#             request cai(a,j) a
+             T1pp(a,i) = Fii(i,j)*SCai(a,j)
              Tpp(a,i) += T1pp(a,i)
          enddo j
 #
-         etemp = cai(a,i)*tpp(a,i)
+         etemp = SCai(a,i)*tpp(a,i)
          esum3+= etemp
 #
      endpardo a,i
@@ -741,6 +753,7 @@ import "cis_rhf_defs.sialx"
      if rank == 0.0
          print_scalar edoubles
          print_scalar etriples
+         print_scalar ecis_d
      endif #rank == 0.0
 #
      endproc cisd_energy
@@ -760,7 +773,11 @@ import "cis_rhf_defs.sialx"
       restore_persistent ck0 "Ck0"
       restore_persistent Ek "CEk"
       server_barrier
-      call tran_uhf
+#      call tran_uhf
+      restore_persistent     Viaai  "Viaai"
+      restore_persistent     Vaaii  "Vaaii"
+      restore_persistent     Vpiqj  "Vpiqj"
+      restore_persistent     VSpipi "VSpipi"
       server_barrier
 #
       call iguess_uhf
@@ -769,16 +786,16 @@ import "cis_rhf_defs.sialx"
       kroot = 1.0
       do kstate
           server_barrier
-          execute get_my_rank rank
-          if rank == 0.0
-              print_scalar kroot
-          endif
+          println " "
+          print_scalar kroot
 #
           execute return_sval Ek(kstate) shift
+          server_barrier
           call setroot
           call Caibj
           call make_hbar
           call cisd_energy
+          server_barrier
 #
           kroot += 1.0
 #
@@ -794,13 +811,9 @@ import "cis_rhf_defs.sialx"
       set_persistent     ck0 "Ck0"
       set_persistent     Ek "CEk"
 #
-#      restore_persistent Viaai  "Viaai"
-#      restore_persistent Vaaii  "Vaaii"
-#      restore_persistent Vpiqj  "Vpiqj"
-#      restore_persistent VSpipi "VSpipi"
-#      set_persistent     Viaai  "Viaai"
-#      set_persistent     Vaaii  "Vaaii"
-#      set_persistent     Vpiqj  "Vpiqj"
-#      set_persistent     VSpipi "VSpipi"
+      set_persistent Viaai  "Viaai"
+      set_persistent Vaaii  "Vaaii"
+      set_persistent Vpiqj  "Vpiqj"
+      set_persistent VSpipi "VSpipi"
 ###########################################
                            ENDSIAL CIS_D_RHF

@@ -473,6 +473,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			const std::streamsize old = std::cout.precision();
 			std::stringstream ss;
 			ss.precision(20);
+                        ss.setf(std::ios_base::fixed);
 			ss << name << " = " << value << " at line " << op_table_.line_number(pc) << std::endl;
 			//std::cout << name << " = " << std::setprecision(20) << value
 			//		<< " at line " << op_table_.line_number(pc) << std::endl
