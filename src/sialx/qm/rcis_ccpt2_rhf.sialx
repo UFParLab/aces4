@@ -739,6 +739,7 @@
     collective ecorrab += esumab
     ecorrT = ecorrab
     ecorrT += ecis_d
+    Ekd(kstate) = ecorrT
     print_scalar ecorrT
 #
     server_barrier
@@ -1048,12 +1049,11 @@
      server_barrier
      ecis_d  = edoubles
      ecis_d += etriples
-     Ekd(kstate) = ecis_d
      execute get_my_rank rank
      if rank == 0.0
          print_scalar edoubles
          print_scalar etriples
-         print_scalar ecis_d
+#         print_scalar ecis_d
      endif #rank == 0.0
 #
      endproc cisd_energy
@@ -1707,7 +1707,10 @@
 
       enddo kstate
 #
+      execute get_my_rank rank
+      if rank == 1.0
       execute print_static_array Ekd
+      endif
 #
       server_barrier
 #
