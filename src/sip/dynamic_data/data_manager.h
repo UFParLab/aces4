@@ -20,6 +20,9 @@
 #include "contiguous_array_manager.h"
 #include "special_instructions.h"
 
+class TestControllerParallel;
+class TestController;
+
 namespace sip {
 class SialOpsParallel;
 class SialOpsSequential;
@@ -102,6 +105,8 @@ private:
 	friend class Interpreter;
 	friend class SialOpsParallel;
 	friend class SialOpsSequential;
+	friend class ::TestControllerParallel;
+	friend class ::TestController;
 
 	DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

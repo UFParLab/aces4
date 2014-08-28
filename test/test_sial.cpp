@@ -405,7 +405,7 @@ TEST(Sip,DISABLED_Message_Number_Wraparound){
 	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
+	std::string prog_name = setup_reader.sial_prog_list().at(0);
 	std::string siox_dir(dir_name);
 	setup::BinaryInputFile siox_file(siox_dir + prog_name);
 	sip::SipTables sipTables(setup_reader, siox_file);

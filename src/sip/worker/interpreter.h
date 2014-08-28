@@ -36,6 +36,9 @@
 #include "sial_ops_sequential.h"
 #endif //HAVE_MPI
 
+class TestControllerParallel;
+class TestController;
+
 namespace sip {
 
 class LoopManager;
@@ -221,9 +224,7 @@ public:
 		return printer_;
 	}
 
-	//data_access routines.  These are just for convenience and just call the
-	//appropriate routine in the sipTable or dataManager.  The definitions are given
-	//here to allow inlining.
+	// inlined data_access routines.
 	const DataManager& data_manager() const { return data_manager_; }
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
@@ -236,7 +237,6 @@ private:
 	DataManager data_manager_;
 	//printer module
 	SialPrinter* printer_;
-
 
 	/**
 	 * Called by constructor
@@ -432,6 +432,9 @@ private:
 	 */
 
 	Tracer* tracer_;
+
+	friend class ::TestControllerParallel;
+	friend class ::TestController;
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

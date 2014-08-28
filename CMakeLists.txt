@@ -396,8 +396,8 @@ else() # Single Node Version Tests
     set_target_properties(test_basic_sial PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
-    target_link_libraries(test_basic_sial   test_contollersgtest gtest_main  ${TOLINK_LIBRARIES})
-    target_link_libraries(test_qm           test_contollersgtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
