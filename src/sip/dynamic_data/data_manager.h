@@ -18,6 +18,7 @@
 #include "block.h"
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
+#include "contiguous_local_array_manager.h"
 #include "special_instructions.h"
 
 namespace sip {
@@ -86,8 +87,10 @@ public:
 	//immutable data for convenience
 	SipTables& sip_tables_;
 
-	sip::BlockManager block_manager_;  //this should probably be private
+	//these should really be private
+	sip::BlockManager block_manager_;
 	sip::ContiguousArrayManager contiguous_array_manager_;
+	sip::ContiguousLocalArrayManager contiguous_local_array_manager_;
 
 
 private:

@@ -55,7 +55,7 @@ class Block;
 
 /** A block of data together with its shape. Size is derived from the shape
  * and is stored for convenience.  The shape of a block cannot change once
- * created, although the data may.  In contrast to the other classes, which are
+ * created, although the data may.  In contrast to BlockIds, which are
  * small enough to freely copy, Blocks need to manage their data carefully.  Also,
  * generally, data structures will hold Block pointers, allowing for polymorphism
  * later if we ever want to have some other kind of block later.

@@ -34,6 +34,10 @@ public:
 	 */
 	Block* block(const BlockId& block_id);
 
+	Block* GLB(const BlockId& block_id, BlockId& glb_id) const {
+		return block_map_.GLB(block_id, glb_id);
+	}
+
 	/**
 	 * Inserts given block in the IdBlockMap.
 	 * It is a fatal error to insert a block that already exists.

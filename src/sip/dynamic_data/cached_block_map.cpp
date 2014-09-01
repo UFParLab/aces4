@@ -39,9 +39,6 @@ void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
 		BlockId block_id = policy_.get_next_block_for_removal();
 		Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
 		allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
-		sip::check(allocated_bytes_ >= 0,
-				"Allocated bytes in CachedBlockMap is less than 0!",
-				current_line());
 	}
 }
 

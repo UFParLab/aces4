@@ -268,7 +268,7 @@ void SetupReader::read_predefined_arrays(){
 		sip::segment_size_array_t dim_sizes;
 		std::copy(dims+0, dims+rank,dim_sizes);
 		std::fill(dim_sizes+rank, dim_sizes+MAX_RANK, 1);
-		sip::BlockShape shape(dim_sizes);
+		sip::BlockShape shape(dim_sizes, rank);
 		delete [] dims;
 //
 //		double * data2 = new double[num_data_elems];

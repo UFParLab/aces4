@@ -50,6 +50,14 @@ BlockId::BlockId(int array_id, int rank, const std::vector<int>& index_values) :
 			unused_index_value); //fill in unused slots
 }
 
+BlockId::BlockId(int array_id, const index_value_array_t& lower, const index_value_array_t& upper):
+	array_id_(array_id){
+	std::copy(lower + 0, lower + MAX_RANK, index_values_ + 0);
+	parent_id_ptr_ = new BlockId(array_id, upper);
+
+	sial_check(this->is_well_formed(), "block is not well formed, invalid ranges", current_line());
+}
+
 BlockId::BlockId(const BlockId& rhs) {
 	array_id_ = rhs.array_id_;
 	std::copy(rhs.index_values_ + 0, rhs.index_values_ + MAX_RANK,
@@ -106,12 +114,28 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	if (array_id_ != rhs.array_id_) {  //compare by arrays
 		return (array_id_ < rhs.array_id_);
 	}
-	//same arrays, neither is a subblock
+	//same arrays, neither is a subblock nor contiguous local
 	if (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL) {
 		return std::lexicographical_compare(index_values_ + 0,
 				index_values_ + MAX_RANK, rhs.index_values_ + 0,
 				rhs.index_values_ + MAX_RANK);
 	}
+	//same arrays, both are contiguous local (compiler ensures that all Ids for arrays declared contig local
+	// are given with a[l0:u0, l1:u1...] so either both have non-null parents with same array in parent or neither do.
+	if (is_contiguous_local()) {
+		//can remove this check after debugging
+		check(rhs.is_contiguous_local(), "comparing contiguous local with non-contiguous local", current_line());
+		if (std::lexicographical_compare(index_values_ + 0,
+				index_values_ + MAX_RANK, rhs.index_values_ + 0,
+				rhs.index_values_ + MAX_RANK))
+		return true;
+		if (std::equal(index_values_ + 0,
+				index_values_ + MAX_RANK, rhs.index_values_ + 0)) //the lower bounds are equal, compare upper
+		{  return (*parent_id_ptr_ < *(rhs.parent_id_ptr_ ));
+	    }
+		return false;
+	}
+
 	//lhs is a subblock, rhs isn't, compare lhs parent with rhs
 	if (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ == NULL) {
 		if (*parent_id_ptr_ < rhs)
@@ -137,6 +161,53 @@ bool BlockId::operator<(const BlockId& rhs) const {
 				rhs.index_values_ + MAX_RANK);
 	}
 	return false;
+}
+
+
+//two blocks overlap if they are from the same array, and they overlap in all dimensions.
+//If they are not contiguous local, then overlap is the same as ==.
+bool BlockId::overlaps(const BlockId& other) const{
+	if (array_id_ != other.array_id_) return false;
+	if (! is_contiguous_local()) return *this == other;
+	//now we're left with two contiguous local blocks of same array.
+	for (int i = 0; i < MAX_RANK; ++i){
+		if( !(index_values_[i] <= other.parent_id_ptr_->index_values_[i] &&
+				other.index_values_[i] <= parent_id_ptr_->index_values_[i])) return false;
+	}
+	return true;
+}
+
+
+
+bool BlockId::encloses(const BlockId& other) const{
+if (is_contiguous_local()){
+	if (array_id_ != other.array_id_) return false;
+	for (int i = 0; i < MAX_RANK; ++i){
+		if(! (index_values_[i] <= other.index_values_[i] &&
+				other.parent_id_ptr_->index_values_[i] <= parent_id_ptr_->index_values_[i])) return false;
+	}
+	return true;
+}
+fail("applying encloses on noncontiguous locals.  We may want to allow this later");
+return false;
+}
+
+
+
+
+
+
+/**
+ * if this is a contiguous array, then checks whether, in each dimension, lower <= upper.
+ * Returns true if not a contiguous array.
+ * @return
+ */
+bool BlockId::is_well_formed(){
+	if (!is_contiguous_local()) return true;
+	for (int i = 0; i < MAX_RANK; ++i ){
+		if (index_values_[i] > parent_id_ptr_->index_values_[i]) return false;
+	}
+	return true;
 }
 
 std::string BlockId::str(const SipTables& sip_tables) const{

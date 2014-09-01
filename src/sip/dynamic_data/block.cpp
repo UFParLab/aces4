@@ -73,9 +73,9 @@ Block::~Block() {
 #ifdef HAVE_MPI
 //	//check to see if block is in transit.  If this is the case, there was a get
 //	//on a block that was never used.  Print a warning.  We probably want to be able
-//	//disable this check.  The logic is a bit convoluted--check_and_warn=true, means no pending.
-	//we wait if this is not the case
-	if (!check_and_warn( !state_.pending() ,"deleting block with pending request, probably get with no use")){
+//	//disable this check.  The logic is a bit convoluted--sial_warn=true, means not pending.
+	//we wait if this is not the case, i.e. if this block has pending request.
+	if (!sial_warn( !state_.pending() ,"deleting block with pending request, probably due to a get for a block that is not used")){
 		state_.wait(size());
 	}
 #endif //HAVE_MPI
@@ -113,7 +113,9 @@ const BlockShape& Block::shape() {
 	return shape_;
 }
 
-
+//const BlockShape Block::shape() {
+//	return shape_;
+//}
 
 Block::dataPtr Block::copy_data_(BlockPtr source_block, int offset) {
 	dataPtr target = get_data();
@@ -291,7 +293,7 @@ void Block::insert_slice(int rank, offset_array_t& offsets, BlockPtr source){
 }
 
 std::ostream& operator<<(std::ostream& os, const Block& block) {
-	os << "SHAPE=" << block.shape_ << std::endl;
+	os << "SHAPE="<< block.shape_ << std::endl;
 	os << "SIZE=" << block.size_ << std::endl;
 	int i = 0;
 	int MAX_TO_PRINT = 800;

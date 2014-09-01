@@ -66,29 +66,95 @@ public:
 		return it != map_ptr->end() ? it->second : NULL;  //return NULL if not found
 	}
 
-	/** Obtains requested block, creating if it doesn't exist.
+	/** returns the id and block with the largest id <= the id of the given block.  Useful for
+	 * finding enclosing block of contiguous local. The return value indicate whether a block
+	 * was found.
 	 *
-	 * @param [in] block_id
-	 * @param [out] size
-	 * @returns pointer to existing or new block
+	 * @param block_id
+	 * @return
 	 */
-	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size, bool initialize = true){
-		BLOCK_TYPE* b = block(block_id);
-		if (b == NULL) {
-			b = new BLOCK_TYPE(size, initialize);
-			insert_block(block_id,b);
+//	bool GLB(const BlockId& block_id, BlockId& glb_id, BLOCK_TYPE * glb_block) const{
+//        std::cout << "in glb, printing map " << *this << std::endl;
+//		int array_id = block_id.array_id();
+//		PerArrayMap* map_ptr = block_map_.at(array_id);
+//		std::cout << "in GLB "<< std::endl;
+//		if (map_ptr == NULL || map_ptr->empty()) return false;
+//		std::cout << "in GLB 2"<< std::endl;
+//		typename PerArrayMap::iterator it_upper =  map_ptr->upper_bound(block_id);
+//		std::cout << "in GLB 3, it_upper->first   " << it_upper ->first << std::endl;
+//	    std::cout << "map_ptr->begin()->first " << map_ptr->begin()->first << std::endl;
+//		if (it_upper == map_ptr->begin()) return false;  //everything in map is bigger than block_id
+//		--it_upper;
+//		glb_id = it_upper->first;
+//		glb_block = it_upper->second;
+//		return true;
+//	}
+
+	BLOCK_TYPE* GLB(const BlockId& block_id, BlockId& glb_id) const{
+		std::cout << "in glb looking for id " << block_id;
+		int array_id = block_id.array_id();
+		PerArrayMap* map_ptr = block_map_.at(array_id);
+		if (map_ptr == NULL || map_ptr->empty()) return NULL;
+		std::cout << "starting search in map " << *this << std::endl;
+		typename PerArrayMap::iterator it =  map_ptr->begin();
+		for (it; it != map_ptr->end(); ++it){
+			std::cout << "found id  "	<< 	 	it->first << std::endl;
+			std::cout << "found < block_id = " << (it->first < block_id) << std::endl;
+			std::cout << "block_id < found= " << (it->first < block_id) << std::endl;
+			std::cout << "found encloses block_id " << (it->first).encloses(block_id) << std::endl;
+			if (it->first.encloses(block_id)){
+				glb_id = it->first;
+				return it->second;
+			}
 		}
-		return b;
+		return NULL;
+	}
+
+//	/** Obtains requested block, creating if it doesn't exist.
+//	 *
+//	 * @param [in] block_id
+//	 * @param [out] size
+//	 * @returns pointer to existing or new block
+//	 */
+//	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size, bool initialize = true){
+//		BLOCK_TYPE* b = block(block_id);
+//		if (b == NULL) {
+//			b = new BLOCK_TYPE(size, initialize);
+//			insert_block(block_id,b);
+//		}
+//		return b;
+//	}
+
+
+	/** Checks whether given block is disjoint from all other in the map
+	 *
+	 * @param block_id
+	 * @return
+	 */
+	bool is_disjoint(const BlockId & block_id){
+		int array_id = block_id.array_id();
+		PerArrayMap* map_ptr = block_map_.at(array_id);
+		if (map_ptr == NULL) return true;
+		typename PerArrayMap::iterator it;
+		for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
+			BlockId nid = it->first;
+			if (block_id.overlaps(nid) && block_id != nid) return false;
+		}
+		return true;
 	}
 
 	/** inserts given block in the IdBlockMap.
 	 *
-	 * It is a fatal error to insert a block that already exists.
+	 * It is a fatal error to insert a block that already exists in the map, or overlaps one that exists
 	 *
 	 * @param id BlockId of block to insert
 	 * @param block_ptr pointer to Block to insert
 	 */
 	void insert_block(const BlockId& block_id, BLOCK_TYPE* block_ptr) {
+		if (block_id.is_contiguous_local()){
+			sial_check(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " +
+					     current_line());
+		}
 		int array_id = block_id.array_id();
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL) {

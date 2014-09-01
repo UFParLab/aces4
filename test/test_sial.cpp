@@ -52,7 +52,7 @@ int test_contraction_small2(double*);
 bool VERBOSE_TEST = true;
 
 
-TEST(Sial,DISABLED_empty){
+TEST(Sial,empty){
 	std::string job("empty");
 	int norb = 3;
         int segs[] = {2,2,2};
@@ -126,14 +126,14 @@ void basic_pardo_test(int max_dims, int lower[], int upper[],
 	}
 }
 
-TEST(Sial,DISABLED_pardo_loop) {
+TEST(Sial,pardo_loop) {
 	int MAX_DIMS = 6;
 	int lower[] = { 3, 2, 4, 1, 99, -1 };
 	int upper[] = { 7, 6, 5, 1, 101, 2 };
 	basic_pardo_test(6, lower, upper);
 }
 
-TEST(Sial,DISABLED_pardo_loop_corner_case) {
+TEST(Sial,pardo_loop_corner_case) {
 	int MAX_DIMS = 6;
 	int lower[] = { 1, 1, 1, 1, 1, 1 };
 	int upper[] = { 1, 1, 1, 1, 1, 1 };
@@ -153,7 +153,7 @@ TEST(Sial,DISABLED_pardo_loop_corner_case) {
 //}
 
 
-TEST(Sial,DISABLED_put_test) {
+TEST(Sial,put_test) {
 	std::string job("put_test");
 	int norb = 3;
 	int segs[] = { 2, 3, 2 };
@@ -195,7 +195,7 @@ TEST(Sial,DISABLED_put_test) {
 //TODO  restore functionality for single node version.  Was lost when PersistentArrayManager.h was refactored into
 //worker and server versions.
 
-TEST(Sial,DISABLED_persistent_scalars) {
+TEST(Sial,persistent_scalars) {
 	std::string job("persistent_scalars");
 	double x = 3.456;
 	double y = -0.1;
@@ -237,7 +237,7 @@ TEST(Sial,DISABLED_persistent_scalars) {
 	}
 }
 
-TEST(Sial,DISABLED_get_mpi){
+TEST(Sial,get_mpi){
 	std::string job("get_mpi");
 	//create setup_file
 	double x = 3.456;
@@ -306,7 +306,7 @@ TEST(Sial,DISABLED_get_mpi){
 //}
 
 
-TEST(Sial,DISABLED_delete_mpi){
+TEST(Sial,delete_mpi){
 	std::string job("delete_mpi");
 	double x = 3.456;
 	int norb = 4;
@@ -330,7 +330,7 @@ TEST(Sial,DISABLED_delete_mpi){
 }
 
 
-TEST(Sial,DISABLED_put_accumulate_mpi){
+TEST(Sial,put_accumulate_mpi){
 	std::string job("put_accumulate_mpi");
 	double x = 3.456;
 	int norb = 4;
@@ -355,7 +355,7 @@ TEST(Sial,DISABLED_put_accumulate_mpi){
 
 /* TODO  check what this is testing.  It isn't clear that id doesn anyting */
 
-TEST(Sial,DISABLED_all_rank_print){
+TEST(Sial,all_rank_print){
 	std::string job("all_rank_print_test");
 	std::cout << "JOBNAME = " << job << std::endl;
 	double x = 3.456;
@@ -380,7 +380,7 @@ TEST(Sial,DISABLED_all_rank_print){
 
 
 /* TODO check what this test does.  */
-TEST(Sip,DISABLED_message_number_wraparound){
+TEST(Sip,message_number_wraparound){
 
 	std::string job("message_number_wraparound_test");
 
@@ -401,7 +401,7 @@ TEST(Sip,DISABLED_message_number_wraparound){
 	controller.run();
 }
 
-/* THIS TEST CURRENTLY Crashes with  Error 35: MPI_ERR_IO input/output error at server*/
+
 TEST(Sial,persistent_distributed_array_mpi){
 	std::string job("persistent_distributed_array_mpi");
 	double x = 3.456;
@@ -453,61 +453,6 @@ TEST(Sial,persistent_distributed_array_mpi){
 		}
 	}
 }
-//        // Test contents of blocks of distributed array "b"
-//
-//		// Get the data for local array block "b"
-//		int b_slot = controller.worker_->array_slot(std::string("lb"));
-//
-//		// Test b(1,1)
-//		sip::index_selector_t b_indices_1;
-//		b_indices_1[0] = 1; b_indices_1[1] = 1;
-//		for (int i = 2; i < MAX_RANK; i++) b_indices_1[i] = sip::unused_index_value;
-//		sip::BlockId b_bid_1(b_slot, b_indices_1);
-//		std::cout << b_bid_1 << std::endl;
-//		sip::Block::BlockPtr b_bptr_1 = controller.worker_->get_block_for_reading(b_bid_1);
-//		sip::Block::dataPtr b_data_1 = b_bptr_1->get_data();
-//		std::cout << " Comparing block " << b_bid_1 << std::endl;
-//		double fill_seq_1_1 = 1.0;
-//		for (int i=0; i<segs[0]; i++){
-//			for (int j=0; j<segs[0]; j++){
-//				ASSERT_DOUBLE_EQ(fill_seq_1_1, b_data_1[i*segs[0] + j]);
-//				fill_seq_1_1++;
-//			}
-//		}
-//
-//		// Test b(2, 2)
-//		sip::index_selector_t b_indices_2;
-//		b_indices_2[0] = 2; b_indices_2[1] = 2;
-//		for (int i = 2; i < MAX_RANK; i++) b_indices_2[i] = sip::unused_index_value;
-//		sip::BlockId b_bid_2(b_slot, b_indices_2);
-//		std::cout << b_bid_2 << std::endl;
-//		sip::Block::BlockPtr b_bptr_2 = controller.worker_->get_block_for_reading(b_bid_2);
-//		sip::Block::dataPtr b_data_2 = b_bptr_2->get_data();
-//		std::cout << " Comparing block " << b_bid_2 << std::endl;
-//		double fill_seq_2_2 = 4.0;
-//		for (int i=0; i<segs[1]; i++){
-//			for (int j=0; j<segs[1]; j++){
-//				ASSERT_DOUBLE_EQ(fill_seq_2_2, b_data_2[i*segs[1] + j]);
-//				fill_seq_2_2++;
-//			}
-//		}
-//
-//		// Test b(2,1)
-//		sip::index_selector_t b_indices_3;
-//		b_indices_3[0] = 2; b_indices_3[1] = 1;
-//		for (int i = 2; i < MAX_RANK; i++) b_indices_3[i] = sip::unused_index_value;
-//		sip::BlockId b_bid_3(b_slot, b_indices_3);
-//		std::cout << b_bid_3 << std::endl;
-//		sip::Block::BlockPtr b_bptr_3 = controller.worker_->get_block_for_reading(b_bid_3);
-//		sip::Block::dataPtr b_data_3 = b_bptr_3->get_data();
-//		std::cout << " Comparing block " << b_bid_3 << std::endl;
-//		double fill_seq_2_1 = 3.0;
-//		for (int i=0; i<segs[1]; i++){
-//			for (int j=0; j<segs[0]; j++){
-//				ASSERT_DOUBLE_EQ(fill_seq_2_1, b_data_3[i*segs[0] + j]);
-//				fill_seq_2_1++;
-//			}
-//		}
 
 
 

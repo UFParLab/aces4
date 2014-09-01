@@ -80,6 +80,7 @@ public:
 	bool is_predefined(int array_table_slot) const;
 	bool is_distributed(int array_table_slot) const;
 	bool is_served(int array_table_slot) const;
+	bool is_contiguous_local(int array_table_slot) const;
 	int num_arrays() const;
 
 //int (symbolic constants)
@@ -95,6 +96,7 @@ public:
 	IndexType_t index_type(int index_table_slot) const;
 	BlockShape shape(const BlockId&) const;
 
+
 	/**
 	 * Calculates segment sizes.
 	 * @param array_table_slot [in]
@@ -104,7 +106,10 @@ public:
 	void calculate_seq_sizes(const int array_table_slot,
 			const index_value_array_t& index_vals, int seg_sizes[MAX_RANK]) const;
 	BlockShape contiguous_array_shape(int array_id) const;
+	BlockShape contiguous_region_shape(int array_id,
+			const index_value_array_t& lower, const index_value_array_t& upper) const;
 	int offset_into_contiguous(int selector, int value) const;
+	int offset_into_contiguous_region(int selector, int lower, int value) const;
 	const index_selector_t& selectors(int array_id) const;
 
 	/**
@@ -146,9 +151,9 @@ public:
 
 //special instructions
 	std::string special_instruction_name(int func_slot);
-	SpecialInstructionManager::fp0 zero_arg_special_instruction(int func_slot) const;
-	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
-	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot) const;
+//	SpecialInstructionManager::fp0 zero_arg_special_instruction(int func_slot) const;
+//	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
+//	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot) const;
 
     void print() const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);

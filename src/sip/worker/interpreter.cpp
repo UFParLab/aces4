@@ -199,7 +199,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case allocate_op: {
-
 			sip::BlockId id = block_id(
 					BlockSelector(arg0(), arg1(), index_selectors()));
 			data_manager_.block_manager_.allocate_local(id);
@@ -213,9 +212,21 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
-
-			//Omitting allocate and deallocate contiguous
-
+		case allocate_contiguous_op: {
+			check(sip_tables_.is_contiguous_local(arg1()), "attempting to allocate_contiguous with array that is not contiguous_local", line_number());
+			BlockId id = get_block_id_from_instruction();
+			std::cout << "contiguous local to allocate " << id << std::endl;
+			data_manager_.contiguous_local_array_manager_.allocate_contiguous_local(id);
+			++pc;
+		}
+		break;
+		case deallocate_contiguous_op: {
+				check(sip_tables_.is_contiguous_local(arg1()), "attemping to allocate_contiguous with array that is not contiguous_local", line_number());
+				BlockId id = get_block_id_from_instruction();
+				data_manager_.contiguous_local_array_manager_.deallocate_contiguous_local(id);
+				++pc;
+			}
+			break;
 		case get_op: { //TODO  check this.  Have compiler put block info in instruction?
 			sip::BlockId id = get_block_id_from_selector_stack();
 			sial_ops_.get(id);
@@ -657,7 +668,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
-		case scale_block_op: {
+		case block_scale_op: {
 			sip::Block::BlockPtr lhs_block = get_block_from_instruction('u',
 					true);
 			lhs_block->scale(expression_stack_.top());
@@ -665,7 +676,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
-		case accumulate_scalar_into_block_op: {
+		case block_accumulate_scalar_op: {
 			sip::Block::BlockPtr lhs_block = get_block_from_instruction('u',
 					true);
 			lhs_block->increment_elements(expression_stack_.top());
@@ -786,6 +797,11 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 		break;
+		case println_op: {
+			printer_->print_string("\n");
+			++pc;
+		}
+		break;
 		case gpu_on_op:{
 			++pc;
 		}
@@ -835,9 +851,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		default: {
-			check(false, opcodeToName(opcode) + " not yet implemented ");
+			check(false, opcodeToName(opcode) + " not yet implemented ", line_number());
 		}
-
 		}// switch
 
 		//TODO  only call where necessary
@@ -1360,6 +1375,22 @@ void Interpreter::loop_end() {
 	}
 }
 
+
+//BlockId Interpreter::get_block_id_from_instruction(){
+//   int rank = arg0();
+//   int array_id = arg1();
+//	int upper[MAX_RANK];
+//	int lower[MAX_RANK];
+//	for (int j = rank-1; j >=0; --j){
+//		upper[j] = control_stack_.top();
+//		control_stack_.pop();
+//		lower[j] = control_stack_.top();
+//		control_stack_.pop();
+//	}
+//	return BlockId id(array_id, lower, upper);
+//}
+
+
 Block::BlockPtr Interpreter::get_block_from_instruction(char intent,
 		bool contiguous_allowed) {
 	BlockSelector selector(arg0(), arg1(), index_selectors());
@@ -1368,9 +1399,68 @@ Block::BlockPtr Interpreter::get_block_from_instruction(char intent,
 	return block;
 }
 
+BlockId Interpreter::get_block_id_from_instruction(){
+	std::cout << "entering get_block_id_from_instruction()" <<std::endl << std::flush;
+	int rank = arg0();
+	int array_id = arg1();
+	if (sip_tables_.is_contiguous_local(array_id)){
+		int upper[MAX_RANK];
+		int lower[MAX_RANK];
+		for (int j = rank-1; j >=0; --j){
+			std::cout << ", control_stack size = " << j << "," << control_stack_.size() << std::endl << std::flush;
+			upper[j] = control_stack_.top();
+			std::cout << "j, upper[j]" << j << "," << upper[j] << std::endl<< std::flush;
+			control_stack_.pop();
+			lower[j] = control_stack_.top();
+			std::cout << "j, lower[j]" << j << "," << lower[j] << std::endl<< std::flush;
+			control_stack_.pop();
+		}
+		for (int j = rank; j < MAX_RANK; ++j){
+			upper[j] = unused_index_value;
+			lower[j] = unused_index_value;
+		}
+		std::cout << "lower and upper: [";
+		for (int i = 0; i < MAX_RANK; ++i){
+			std::cout << lower[i] << ",";
+		}
+		std::cout << "][";
+		for (int i = 0; i < MAX_RANK; ++i){
+			std::cout << upper[i] << ",";
+		}
+		std::cout << "]" << std::endl;
+//		return BlockId(array_id, lower, upper);
+		BlockId tmp(array_id, lower, upper);
+		std::cout << "block id to return (tmp) from get block id from inst " << tmp << std::endl;
+		return tmp;
+	}
+	return BlockId(array_id, index_selectors());
+}
+
+
 sip::BlockId Interpreter::get_block_id_from_selector_stack() {
 	sip::BlockSelector selector = block_selector_stack_.top();
 	block_selector_stack_.pop();
+	int array_id = selector.array_id_;
+	int rank = sip_tables_.array_rank(array_id);
+	if (sip_tables_.is_contiguous_local(array_id)){
+		check (selector.rank_ == rank,
+				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",line_number() );
+		int upper[MAX_RANK];
+		int lower[MAX_RANK];
+		for (int j = rank-1; j >=0; --j){
+			upper[j] = control_stack_.top();
+			control_stack_.pop();
+			lower[j] = control_stack_.top();
+			control_stack_.pop();
+		}
+		for (int j = rank; j < MAX_RANK; ++j){
+			upper[j] = unused_index_value;
+			lower[j] = unused_index_value;
+		}
+		BlockId tmp(array_id, lower, upper);
+		std::cout << "block id to return (tmp) from get block id from stack " << tmp << std::endl;
+		return tmp;
+	}
 	return block_id(selector);
 }
 
@@ -1391,7 +1481,45 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		sip::BlockSelector& selector, sip::BlockId& id,
 		bool contiguous_allowed) {
 	int array_id = selector.array_id_;
-	sip::Block::BlockPtr block;
+	Block::BlockPtr block;
+	if (sip_tables_.is_contiguous_local(array_id)){
+		int rank = sip_tables_.array_rank(selector.array_id_);
+		check (selector.rank_ == rank,
+				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",line_number() );
+		int upper[MAX_RANK];
+		int lower[MAX_RANK];
+		for (int j = rank-1; j >=0; --j){
+			upper[j] = control_stack_.top();
+			control_stack_.pop();
+			lower[j] = control_stack_.top();
+			control_stack_.pop();
+		}
+		for (int j = rank; j < MAX_RANK; ++j){
+			upper[j] = unused_index_value;
+			lower[j] = unused_index_value;
+		}
+		BlockId tmp_id(array_id, lower, upper);
+		id = tmp_id;
+		Block::BlockPtr block;
+		switch(intent){
+		case 'w': {
+		block = data_manager_.contiguous_local_array_manager_.get_block_for_writing(id, write_back_list_);
+		}
+		break;
+		case 'r': {
+			block = data_manager_.contiguous_local_array_manager_.get_block_for_reading(id, read_block_list_);
+		}
+		break;
+		case 'u': {
+			block = data_manager_.contiguous_local_array_manager_.get_block_for_updating(id, write_back_list_);
+		}
+		break;
+		default:
+			fail("SIP bug:  illegal or unsupported intent given to get_block");
+
+	}
+		return block;
+	}
 	if (sip_tables_.array_rank(selector.array_id_) == 0) { //this "array" was declared to be a scalar.  Nothing to remove from selector stack.
 		id = sip::BlockId(array_id);
 		block = data_manager_.get_scalar_block(array_id);
@@ -1407,8 +1535,8 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 	id = block_id(selector);
 	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-	sip::check(!is_contiguous || contiguous_allowed,
-			"using contiguous block in a context that doesn't support it");
+	sial_check(!is_contiguous || contiguous_allowed,
+			"using contiguous block in a context that doesn't support it", line_number());
 	switch (intent) {
 	case 'r': {
 		block = is_contiguous ?
@@ -1443,11 +1571,12 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 
 void Interpreter::handle_block_add(int pc) {
 	//d = l + r
-	Block::BlockPtr rblock = get_block_from_selector_stack('r',  true);
+	BlockId did, lid, rid;
+	Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
 	double *rdata  = rblock->get_data();
-	Block::BlockPtr lblock = get_block_from_selector_stack('r',  true);
+	Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
 	double *ldata = lblock->get_data();
-	Block::BlockPtr dblock = get_block_from_instruction('w', true);
+	Block::BlockPtr dblock = get_block_from_instruction('w',  true);
 	double *ddata = dblock->get_data();
 	size_t size = dblock->size();
 	for(size_t i = 0; i != size; ++i){

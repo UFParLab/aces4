@@ -353,6 +353,19 @@ private:
 	void loop_start(LoopManager * loop);
 	void loop_end();
 
+
+	/** Gets the rank and array Id index_selector array from the instruction.
+	 *
+	 * @return
+	 */
+	BlockId get_block_id_from_instruction();
+
+	/** Pops the selector off the top of the block_selector_stack, reads the bound off the control_stack
+	 * and returns the ContiguousLocalBlockId.
+	 *
+	 * @return
+	 */
+	BlockId get_contiguous_local_id_from_selector_stack();
 	/** Pops the selector off the top of the block_selector_stack_, and obtains the BlockId of the selected block.
 	 * Used when only the ID, but not the block itself is needed, such as the left hand side of a put, or prepare.
 	 */

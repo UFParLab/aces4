@@ -91,12 +91,15 @@ SialPrinterForTests::~SialPrinterForTests() {}
 std::string SialPrinterForTests::BlockId2String(const BlockId& id){
 
 		std::stringstream ss;
+		bool contiguous_local = sip_tables_.is_contiguous_local(id.array_id());
+		if (contiguous_local) ss << "contiguous local ";
 		int rank = sip_tables_.array_rank(id.array_id());
 		ss << sip_tables_.array_name(id.array_id()) ;
 		ss << '[';
 		int i;
 		for (i = 0; i < rank; ++i) {
 			ss << (i == 0 ? "" : ",") << id.index_values(i);
+			if (contiguous_local) ss << ":" << id.upper_index_values(i);
 		}
 		ss << ']';
 		return ss.str();
@@ -144,7 +147,7 @@ void SialPrinterForTests::do_print_block(const BlockId& id, Block::BlockPtr bloc
 		double* data = block->get_data();
 		out_ << line_number << ":  ";
 		out_ << "printing " << (size < MAX_TO_PRINT?size:MAX_TO_PRINT);
-		out_ << " of " <<size << " elements of block " <<  BlockId2String(id);
+		out_ << " of " <<size << " elements of " <<  BlockId2String(id);
 		out_ << " in the order stored in memory ";
 		int i;
 	    for (i = 0; i < size && i < MAX_TO_PRINT; ++i){

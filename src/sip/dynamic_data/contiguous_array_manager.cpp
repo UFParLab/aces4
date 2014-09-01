@@ -24,12 +24,16 @@ WriteBack::WriteBack(int rank, Block::BlockPtr contiguous_block,
 		rank_(rank), contiguous_block_(contiguous_block), block_(block), done_(
 				false) {
 	std::copy(offsets + 0, offsets + MAX_RANK, offsets_ + 0);
+	std::cout << "write_back constructor "
+			<< *this
+			<< std::endl << std::flush;
 }
 
 WriteBack::~WriteBack() {
 	delete block_;
 }
 void WriteBack::do_write_back() {
+//	std::cout << "write_back " << *this << std::endl << std::flush;
 	sip::check(!done_, "SIP bug:  called doWriteBack twice");
 	contiguous_block_->insert_slice(rank_, offsets_, block_);
 	done_ = true;
@@ -38,13 +42,13 @@ void WriteBack::do_write_back() {
 std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 	os << "WriteBack: rank= " << obj.rank_ << " offset_array_t=[";
 	for (int i = 0; i < MAX_RANK; ++i) {
-		os << (i == 0 ? "" : ",") << obj.offsets_[i];
+//		os << (i == 0 ? "" : ",") << obj.offsets_[i];
 	}
 	os << "]" << std::endl;
 	os << "target contiguous_block_ :" << std::endl;
-	os << *obj.contiguous_block_ << std::endl;
+//	os << *obj.contiguous_block_ << std::endl;
 	os << "source block " << std::endl;
-	os << *obj.block_;
+//	os << *obj.block_;
 	bool done_;
 	os << "contiguous_array_map_:" << std::endl;
 	return os;

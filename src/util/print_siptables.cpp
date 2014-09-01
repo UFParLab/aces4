@@ -72,6 +72,8 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
 	setup::SetupReader::SialProgList::iterator it;
 
+	std::cout << "SetupReader::" <<std::endl << setup_reader << std::endl;
+
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::string sialfpath;
 		sialfpath.append(sialx_file_dir);

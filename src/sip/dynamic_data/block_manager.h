@@ -23,6 +23,7 @@
 namespace sip {
 class SipTables;
 class SialOpsParallel;
+class ContiguousLocalArrayManager;
 
 class BlockManager {
 public:
@@ -256,6 +257,7 @@ private:
 
 
 	friend class SialOpsParallel;
+	friend class ContiguousLocalArrayManager;
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

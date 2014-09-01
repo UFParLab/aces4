@@ -113,7 +113,8 @@ enum ArrayType_t {
     scalar_value_t = (attr_contiguous | attr_auto_allocate | attr_scalar), //==140
     predefined_scalar_value_t = (scalar_value_t | attr_predefined), //=172
     local_array_t = 0, //all defaults give a local_array
-    int_value_t = (attr_integer | scalar_value_t)
+    int_value_t = (attr_integer | scalar_value_t),
+    contiguous_local_t = (attr_contiguous)
 };
 
 bool is_integer_attr(int attr);
@@ -126,7 +127,7 @@ bool is_persistent_attr(int attr);
 bool is_scalar_attr(int attr);
 bool is_predefined_scalar_attr(int attr);
 bool is_sparse_attr(int attr);
-
+bool is_contiguous_local_attr(int attr);
 
 ArrayType_t intToArrayType_t(int);
 int indexTypeToInt(IndexType_t);
