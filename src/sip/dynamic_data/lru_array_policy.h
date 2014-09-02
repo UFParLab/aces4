@@ -11,6 +11,7 @@
 #include "sip_interface.h"
 #include "id_block_map.h"
 #include "block_id.h"
+#include "server_block.h"
 
 #include <list>
 #include <stdexcept>
@@ -62,10 +63,14 @@ public:
 			int to_remove_array = lru_list_.back();
 			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* array_map = block_map_.per_array_map(to_remove_array);
 			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::iterator it = array_map->begin();
-			if (it == array_map->end())
-				lru_list_.pop_back();
-			else
-				return it->first;
+                        
+                        for (; it != array_map->end(); it ++) {
+			    BLOCK_TYPE *blk = it->second;
+                            if (blk->get_data() != NULL) {
+                                return it->first;
+                            }
+                        }
+			lru_list_.pop_back();
 		}
 		throw std::out_of_range("No blocks to remove !");
 		//sip::fail("No blocks to remove !", current_line());

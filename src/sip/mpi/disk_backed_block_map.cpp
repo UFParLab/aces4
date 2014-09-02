@@ -21,10 +21,17 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		block_map_(sip_tables.num_arrays()),
 		disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution),
         policy_(block_map_),
-        max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()) {
+        max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
+        block_access_counter(0), disk_read_counter(0), disk_write_counter(0), total_stay_in_memory_counter(0) {
 }
 
-DiskBackedBlockMap::~DiskBackedBlockMap(){}
+DiskBackedBlockMap::~DiskBackedBlockMap(){
+    std::cout << "Block access counter: " << block_access_counter << std::endl;
+    std::cout << "Disk read counter: " << disk_read_counter << std::endl;
+    std::cout << "Disk write counter: " << disk_write_counter << std::endl;
+    std::cout << "Average stay in memory counter: " << total_stay_in_memory_counter / (disk_write_counter+1) << std::endl;
+
+}
 
 void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size){
     /** Allocates space for a block, reads block from disk
@@ -35,12 +42,19 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
 	block = allocate_block(block, block_size);
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
 	block->set_in_memory();
+        disk_read_counter++;
+    std::cout << "disk read: " << disk_read_counter << std::endl;
 }
 
 void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBlock* block){
+    std::cout << "disk write: " << disk_write_counter << std::endl;
     disk_backed_arrays_io_.write_block_to_disk(block_id, block);
     block->unset_dirty();
     block->set_on_disk();
+    block->leave_memory_counter = block_access_counter;
+    total_stay_in_memory_counter += block->leave_memory_counter - block->enter_memory_counter;
+    disk_write_counter++;
+    std::cout << "disk write: " << disk_write_counter << std::endl;
 }
 
 ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, bool initialize){
@@ -53,17 +67,25 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 
 	while (block_size > remaining_mem){
 		try{
-			BlockId bid = policy_.get_next_block_for_removal();
-			ServerBlock* blk = block_map_.block(bid);
-			SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
+                        while (1) {
+			    BlockId bid = policy_.get_next_block_for_removal();
+			    ServerBlock* blk = block_map_.block(bid);
+			    SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
 									<< " : Freeing block " << bid
 									<< " and writing to disk to make space for new block"
 									<< std::endl);
-			if(blk->is_dirty()){
+			    if(blk->is_dirty()){
 				write_block_to_disk(bid, blk);
-			}
-			blk->free_in_memory_data();
+			    }
+			    blk->free_in_memory_data();
+			    if (remaining_mem < max_allocatable_bytes_ - ServerBlock::allocated_bytes()) {
+                                break;
+                            } else {
+                                throw std::out_of_range("Break now.");
+                            }
+                        }
 			remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
+                        std::cout << "Freeing memory ... " << remaining_mem << std::endl;
 		} catch (const std::out_of_range& oor){
 			std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
 			std::cerr << oor.what() << std::endl;
@@ -87,6 +109,8 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
     } else {
         block->allocate_in_memory_data();
     }
+    
+    block->enter_memory_counter = block_access_counter;
 
 	return block;
 
@@ -122,6 +146,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 	block->set_dirty();
 
 	policy_.touch(block_id);
+        block_access_counter++;
 
 	return block;
 }
@@ -149,6 +174,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	block->set_dirty();
 
 	policy_.touch(block_id);
+        block_access_counter++;
 
 	return block;
 }
@@ -194,6 +220,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 	block->set_in_memory();
 
 	policy_.touch(block_id);
+        block_access_counter++;
 
 	sip::check(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
 	return block;

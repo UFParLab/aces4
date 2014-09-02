@@ -60,7 +60,10 @@ private:
 
 	//ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 
-
+    long long block_access_counter;
+    long long disk_read_counter;
+    long long disk_write_counter;
+    long long total_stay_in_memory_counter;
 
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
