@@ -74,6 +74,7 @@ private:
 	 * @return
 	 */
 	Block::BlockPtr  create_block(const BlockId& block_id);
+
 	DISALLOW_COPY_AND_ASSIGN(ContiguousLocalArrayManager);
 
 };

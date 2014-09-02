@@ -84,20 +84,23 @@ BlockId BlockId::operator=(BlockId tmp) { //param passed by value, makes a copy.
 }
 
 //TODO subindices may not be implemented properly any more:
-//check delete.  Can there be multiple children of the parent?  Is this correct?
 BlockId::~BlockId() {
 	if (parent_id_ptr_ != NULL)
-		delete parent_id_ptr_;
+		delete parent_id_ptr_;  //this should be a copy
 }
 
 bool BlockId::operator==(const BlockId& rhs) const {
-	bool is_equal = (array_id_ == rhs.array_id_);
-	is_equal &= std::equal(index_values_ + 0, index_values_ + MAX_RANK,
-			rhs.index_values_);
-	is_equal &= (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL)
-			|| (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ != NULL
-					&& *parent_id_ptr_ == *rhs.parent_id_ptr_);
-	return is_equal;
+//	bool is_equal = (array_id_ == rhs.array_id_);
+//	is_equal &= std::equal(index_values_ + 0, index_values_ + MAX_RANK,
+//			rhs.index_values_);
+//	is_equal &= (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL)
+//			|| (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ != NULL
+//					&& *parent_id_ptr_ == *rhs.parent_id_ptr_);
+//	return is_equal;
+	return (array_id_ == rhs.array_id_) && std::equal(index_values_+0, index_values_+MAX_RANK, rhs.index_values_)
+	     && ((parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL)
+	     			|| (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ != NULL
+	    					&& *parent_id_ptr_ == *rhs.parent_id_ptr_));
 }
 
 //Since the blockId is used as a key in the BlockMap, which is currently
@@ -210,20 +213,36 @@ bool BlockId::is_well_formed(){
 	return true;
 }
 
+//std::string BlockId::str(const SipTables& sip_tables) const{
+//	std::stringstream ss;
+////	SipTables& tables = SipTables::instance();
+////	int rank = tables.array_rank(array_id_);
+////	ss << (tables.array_name(array_id_));
+//	int rank = sip_tables.array_rank(array_id_);
+//	ss  <<sip_tables.array_name(array_id_); // << " : " << array_id_ << " : ";
+//	ss << '[';
+//	int i;
+//	for (i = 0; i < rank; ++i) {
+//		ss << (i == 0 ? "" : ",") << index_values_[i];
+//	}
+//	ss << ']';
+//	return ss.str();
+//}
+
 std::string BlockId::str(const SipTables& sip_tables) const{
-	std::stringstream ss;
-//	SipTables& tables = SipTables::instance();
-//	int rank = tables.array_rank(array_id_);
-//	ss << (tables.array_name(array_id_));
-	int rank = sip_tables.array_rank(array_id_);
-	ss  <<sip_tables.array_name(array_id_); // << " : " << array_id_ << " : ";
-	ss << '[';
-	int i;
-	for (i = 0; i < rank; ++i) {
-		ss << (i == 0 ? "" : ",") << index_values_[i];
-	}
-	ss << ']';
-	return ss.str();
+std::stringstream ss;
+bool contiguous_local = sip_tables.is_contiguous_local(array_id_);
+if (contiguous_local) ss << "contiguous local ";
+int rank = sip_tables.array_rank(array_id_);
+ss << sip_tables.array_name(array_id_) ;
+ss << '[';
+int i;
+for (i = 0; i < rank; ++i) {
+	ss << (i == 0 ? "" : ",") << index_values(i);
+	if (contiguous_local) ss << ":" << upper_index_values(i);
+}
+ss << ']';
+return ss.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const BlockId& id) {

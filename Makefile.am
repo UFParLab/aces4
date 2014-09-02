@@ -410,6 +410,7 @@ SIOX_FILES=\
 ./src/sialx/test/pardo_loop_6d.siox\
 ./src/sialx/test/scalar_ops.siox\
 ./src/sialx/test/int_ops.siox\
+./src/sialx/test/int_self_ops.siox\
 ./src/sialx/test/scalar_valued_blocks.siox\
 ./src/sialx/test/contiguous_local.siox\
 ./src/sialx/qm/scf_defs.siox\
@@ -509,6 +510,7 @@ EXTRA_DIST += \
 ./src/sialx/test/pardo_loop_6d.sialx\
 ./src/sialx/test/scalar_ops.sialx\
 ./src/sialx/test/int_ops.sialx\
+./src/sialx/test/int_self_ops.sialx\
 ./src/sialx/test/scalar_valued_blocks.sialx\
 ./src/sialx/test/contiguous_local.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\

@@ -66,42 +66,14 @@ public:
 		return it != map_ptr->end() ? it->second : NULL;  //return NULL if not found
 	}
 
-	/** returns the id and block with the largest id <= the id of the given block.  Useful for
-	 * finding enclosing block of contiguous local. The return value indicate whether a block
-	 * was found.
-	 *
-	 * @param block_id
-	 * @return
-	 */
-//	bool GLB(const BlockId& block_id, BlockId& glb_id, BLOCK_TYPE * glb_block) const{
-//        std::cout << "in glb, printing map " << *this << std::endl;
-//		int array_id = block_id.array_id();
-//		PerArrayMap* map_ptr = block_map_.at(array_id);
-//		std::cout << "in GLB "<< std::endl;
-//		if (map_ptr == NULL || map_ptr->empty()) return false;
-//		std::cout << "in GLB 2"<< std::endl;
-//		typename PerArrayMap::iterator it_upper =  map_ptr->upper_bound(block_id);
-//		std::cout << "in GLB 3, it_upper->first   " << it_upper ->first << std::endl;
-//	    std::cout << "map_ptr->begin()->first " << map_ptr->begin()->first << std::endl;
-//		if (it_upper == map_ptr->begin()) return false;  //everything in map is bigger than block_id
-//		--it_upper;
-//		glb_id = it_upper->first;
-//		glb_block = it_upper->second;
-//		return true;
-//	}
 
-	BLOCK_TYPE* GLB(const BlockId& block_id, BlockId& glb_id) const{
-		std::cout << "in glb looking for id " << block_id;
+
+	BLOCK_TYPE* enclosing_contiguous(const BlockId& block_id, BlockId& glb_id) const{
 		int array_id = block_id.array_id();
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL || map_ptr->empty()) return NULL;
-		std::cout << "starting search in map " << *this << std::endl;
 		typename PerArrayMap::iterator it =  map_ptr->begin();
 		for (it; it != map_ptr->end(); ++it){
-			std::cout << "found id  "	<< 	 	it->first << std::endl;
-			std::cout << "found < block_id = " << (it->first < block_id) << std::endl;
-			std::cout << "block_id < found= " << (it->first < block_id) << std::endl;
-			std::cout << "found encloses block_id " << (it->first).encloses(block_id) << std::endl;
 			if (it->first.encloses(block_id)){
 				glb_id = it->first;
 				return it->second;

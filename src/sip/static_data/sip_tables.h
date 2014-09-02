@@ -106,7 +106,7 @@ public:
 	void calculate_seq_sizes(const int array_table_slot,
 			const index_value_array_t& index_vals, int seg_sizes[MAX_RANK]) const;
 	BlockShape contiguous_array_shape(int array_id) const;
-	BlockShape contiguous_region_shape(int array_id,
+	BlockShape contiguous_region_shape(int rank, int array_id,
 			const index_value_array_t& lower, const index_value_array_t& upper) const;
 	int offset_into_contiguous(int selector, int value) const;
 	int offset_into_contiguous_region(int selector, int lower, int value) const;

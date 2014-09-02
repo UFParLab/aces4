@@ -147,7 +147,7 @@ void SialPrinterForTests::do_print_block(const BlockId& id, Block::BlockPtr bloc
 		double* data = block->get_data();
 		out_ << line_number << ":  ";
 		out_ << "printing " << (size < MAX_TO_PRINT?size:MAX_TO_PRINT);
-		out_ << " of " <<size << " elements of " <<  BlockId2String(id);
+		out_ << " of " <<size << " elements of block " <<  id.str(sip_tables_);//BlockId2String(id);
 		out_ << " in the order stored in memory ";
 		int i;
 	    for (i = 0; i < size && i < MAX_TO_PRINT; ++i){

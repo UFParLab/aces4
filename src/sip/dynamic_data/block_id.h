@@ -206,6 +206,11 @@ public:
 	 * @return
 	 */
 	bool is_subblock(){return parent_id_ptr_ != NULL && array_id_ != parent_id_ptr_->array_id_;}
+
+	/**
+	 *
+	 * @return if ths block is a contiguous local region
+	 */
 	bool is_contiguous_local() const {return parent_id_ptr_ != NULL && array_id_ == parent_id_ptr_->array_id_;}
 
 	/**

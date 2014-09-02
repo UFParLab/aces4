@@ -1,5 +1,5 @@
-sial contiguous_local
-special fill_block_sequential wr
+sial contiguous_local_fail
+
 # in test_basic_sial
 #		set_constant("norb", 4);
 #		int segs[] = { 5, 6, 7, 8 };
@@ -20,21 +20,14 @@ loc1[3:4,3:4] = 55.0
 do i 
 do j
 
-if i == 1
-if j == 1
+  if i == 1
+  if j == 1
   tmp[i,j] = loc1[i:i, j:j]
   print tmp[i,j]
   tmp[i,j] *= 2.0
   loc1[i:i,j:j] = tmp[i,j]
 endif
 endif
-
-if i == 1
-if j == 2
-  execute fill_block_sequential loc1[i:i,j:j] 345.0
-endif
-endif
-
 
 
 #println "starting [4,4]"
@@ -56,4 +49,4 @@ print loc1[3:4,3:4]
 
 
 
-endsial contiguous_local
+endsial contiguous_local_fail

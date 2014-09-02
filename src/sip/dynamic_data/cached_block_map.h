@@ -34,8 +34,14 @@ public:
 	 */
 	Block* block(const BlockId& block_id);
 
-	Block* GLB(const BlockId& block_id, BlockId& glb_id) const {
-		return block_map_.GLB(block_id, glb_id);
+	/** Looks for a block that encloses the block_id.
+	 *
+	 * @param [in] block_id id of input block
+	 * @param [out] enclosing_id  If an enclosing block is found, this is set to its id
+	 * @return pointer to enclosing block, or NULL if no enclosing block is found.
+	 */
+	Block* enclosing_contiguous(const BlockId& block_id, BlockId& enclosing_id) const {
+		return block_map_.enclosing_contiguous(block_id, enclosing_id);
 	}
 
 	/**

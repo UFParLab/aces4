@@ -454,6 +454,19 @@ TEST(BasicSial,int_ops) {
 
 }
 
+TEST(BasicSial,int_self_ops){
+	std::string job("int_self_ops");
+	std::stringstream out;
+	TestController controller(job, false, true, "", out);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(76,controller.int_value("x"));
+	EXPECT_EQ(44,controller.int_value("y"));
+	EXPECT_EQ(-28,controller.int_value("z"));
+	EXPECT_EQ(15200,controller.int_value("w"));
+}
+
 TEST(BasicSial,tmp_arrays) {
 	std::string job("tmp_arrays");
 	std::stringstream output;

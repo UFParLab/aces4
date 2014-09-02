@@ -304,8 +304,7 @@ BlockShape SipTables::contiguous_array_shape(int array_id) const{
 	return sip::BlockShape(seg_sizes, rank);
 }
 
-BlockShape SipTables::contiguous_region_shape(int array_id, const index_value_array_t& lower, const index_value_array_t& upper) const{
-	int rank = array_table_.rank(array_id);
+BlockShape SipTables::contiguous_region_shape(int rank, int array_id, const index_value_array_t& lower, const index_value_array_t& upper) const{
 	const sip::index_selector_t& selector = array_table_.index_selectors(array_id);
 	segment_size_array_t seg_sizes;
 	for (int i = 0; i < rank; ++i){

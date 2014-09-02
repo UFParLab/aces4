@@ -14,7 +14,8 @@ do i
 #		allocate a[i, j]
 		x = 100.0
 		execute fill_block_sequential a[i,j] x
-		a[i, j] *= 2.0
+#		a[i, j] *= 2.0
+        a[i,j] += a[i,j]
 	enddo j
 enddo i
 

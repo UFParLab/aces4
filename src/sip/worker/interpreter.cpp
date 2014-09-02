@@ -215,13 +215,12 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case allocate_contiguous_op: {
 			check(sip_tables_.is_contiguous_local(arg1()), "attempting to allocate_contiguous with array that is not contiguous_local", line_number());
 			BlockId id = get_block_id_from_instruction();
-			std::cout << "contiguous local to allocate " << id << std::endl;
 			data_manager_.contiguous_local_array_manager_.allocate_contiguous_local(id);
 			++pc;
 		}
 		break;
 		case deallocate_contiguous_op: {
-				check(sip_tables_.is_contiguous_local(arg1()), "attemping to allocate_contiguous with array that is not contiguous_local", line_number());
+				check(sip_tables_.is_contiguous_local(arg1()), "attempting to allocate_contiguous with array that is not contiguous_local", line_number());
 				BlockId id = get_block_id_from_instruction();
 				data_manager_.contiguous_local_array_manager_.deallocate_contiguous_local(id);
 				++pc;
@@ -574,11 +573,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
-//		case tensor_op: {
-//			//TODO
-//			++pc;
-//		}
-//			break;
 		case block_copy_op: {
 			//get rhs selector from selector stack
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
@@ -1376,19 +1370,6 @@ void Interpreter::loop_end() {
 }
 
 
-//BlockId Interpreter::get_block_id_from_instruction(){
-//   int rank = arg0();
-//   int array_id = arg1();
-//	int upper[MAX_RANK];
-//	int lower[MAX_RANK];
-//	for (int j = rank-1; j >=0; --j){
-//		upper[j] = control_stack_.top();
-//		control_stack_.pop();
-//		lower[j] = control_stack_.top();
-//		control_stack_.pop();
-//	}
-//	return BlockId id(array_id, lower, upper);
-//}
 
 
 Block::BlockPtr Interpreter::get_block_from_instruction(char intent,
@@ -1400,37 +1381,22 @@ Block::BlockPtr Interpreter::get_block_from_instruction(char intent,
 }
 
 BlockId Interpreter::get_block_id_from_instruction(){
-	std::cout << "entering get_block_id_from_instruction()" <<std::endl << std::flush;
 	int rank = arg0();
 	int array_id = arg1();
 	if (sip_tables_.is_contiguous_local(array_id)){
 		int upper[MAX_RANK];
 		int lower[MAX_RANK];
 		for (int j = rank-1; j >=0; --j){
-			std::cout << ", control_stack size = " << j << "," << control_stack_.size() << std::endl << std::flush;
 			upper[j] = control_stack_.top();
-			std::cout << "j, upper[j]" << j << "," << upper[j] << std::endl<< std::flush;
 			control_stack_.pop();
 			lower[j] = control_stack_.top();
-			std::cout << "j, lower[j]" << j << "," << lower[j] << std::endl<< std::flush;
 			control_stack_.pop();
 		}
 		for (int j = rank; j < MAX_RANK; ++j){
 			upper[j] = unused_index_value;
 			lower[j] = unused_index_value;
 		}
-		std::cout << "lower and upper: [";
-		for (int i = 0; i < MAX_RANK; ++i){
-			std::cout << lower[i] << ",";
-		}
-		std::cout << "][";
-		for (int i = 0; i < MAX_RANK; ++i){
-			std::cout << upper[i] << ",";
-		}
-		std::cout << "]" << std::endl;
-//		return BlockId(array_id, lower, upper);
 		BlockId tmp(array_id, lower, upper);
-		std::cout << "block id to return (tmp) from get block id from inst " << tmp << std::endl;
 		return tmp;
 	}
 	return BlockId(array_id, index_selectors());
@@ -1458,7 +1424,6 @@ sip::BlockId Interpreter::get_block_id_from_selector_stack() {
 			lower[j] = unused_index_value;
 		}
 		BlockId tmp(array_id, lower, upper);
-		std::cout << "block id to return (tmp) from get block id from stack " << tmp << std::endl;
 		return tmp;
 	}
 	return block_id(selector);
