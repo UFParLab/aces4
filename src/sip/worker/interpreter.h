@@ -51,8 +51,7 @@ public:
 
 	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
 	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(SipTables&, SialPrinter* printer);
-	Interpreter(SipTables&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer);
 	~Interpreter();
 
 	/** Static pointer to the current Interpreter.  This is
@@ -247,13 +246,17 @@ private:
 	/** main interpreter procedure */
 	void interpret(int pc_start, int pc_end);
 
+	/** auxillary field needed by sialx timers. Must be initialized to a negative number. **/
+	int last_seen_line_number_;
 
+	/** collects performance information per SIALX line **/
+	void timer_trace(int pc, opcode_t opcode);
 
 	OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 	/**
 	 * Timer manager
 	 */
-	const sip::SialxTimer& sialx_timers_;
+	SialxTimer& sialx_timers_;
 
 	/**
 	 * Owned by main program

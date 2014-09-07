@@ -161,7 +161,8 @@ double* TestController::local_block(const std::string& name,
 }
 
 void TestController::runWorker() {
-	worker_ = new sip::Interpreter(*sip_tables_, printer_);
+	sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
+	worker_ = new sip::Interpreter(*sip_tables_, sialx_timers, printer_);
 	barrier();
 	if (verbose_)
 		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_

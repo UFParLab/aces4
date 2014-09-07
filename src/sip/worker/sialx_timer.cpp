@@ -54,6 +54,8 @@ public:
 
 		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
 		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
+
+		std::cout.precision(6); // Reset precision to 6 places.
 		for (int i=1; i<timer.max_slots - sialx_lines_; i++){
 
 			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
@@ -149,6 +151,8 @@ public:
 
 			int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
 			int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
+
+			std::cout.precision(6); // Reset precision to 6 places.
 			for (int i=1; i<timer.max_slots - sialx_lines_; i++){
 
 				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
@@ -161,7 +165,6 @@ public:
 						tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
 						avg_blk_wait = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
 					}
-
 					std::cout<<std::setw(LW)<<std::left << i
 							<< std::setw(SW)<< std::left << line_to_str_.at(i)
 							<< std::setw(CW)<< std::left << avg_time

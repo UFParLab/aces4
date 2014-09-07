@@ -448,7 +448,7 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 	} else {
 		persistent_array_manager_->restore_persistent(worker, array_slot,
 				string_slot);
-		std::cout << "returned from restore_persistent" << std::endl << std::flush;
+		SIP_LOG(std::cout << "returned from restore_persistent" << std::endl << std::flush);
 	}
 
 }
@@ -460,7 +460,7 @@ void SialOpsParallel::end_program() {
 	sip_barrier();
 	int my_server = sip_mpi_attr_.my_server();
 //	std::cout << "in end_program, attr =\n" << sip_mpi_attr_ << std::endl << std::flush;
-	std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush;
+	SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
 	//send end_program message to server, if designated worker and wait for ack.
 	if (my_server > 0) {
 		int end_program_tag;
@@ -471,7 +471,7 @@ void SialOpsParallel::end_program() {
 		ack_handler_.expect_sync_ack_from(my_server, end_program_tag);
 	}
 	//the program is done and the servers know it.
-	std::cout << "leaving end_program" << std::endl << std::flush;
+	SIP_LOG(std::cout << "leaving end_program" << std::endl << std::flush);
 }
 
 //void SialOpsParallel::print_to_ostream(std::ostream& out, const std::string& to_print){

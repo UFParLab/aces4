@@ -425,7 +425,7 @@ TEST(Sip,DISABLED_Message_Number_Wraparound){
 		std::cout << "Server state after termination" << server << std::endl;
 	} else {
 		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-		sip::Interpreter runner(sipTables, sialxTimer,  NULL);
+		sip::Interpreter runner(sipTables, sialxTimer);
 		MPI_Barrier(MPI_COMM_WORLD);
 		std::cout << "starting worker for "<< job  << std::endl;
 		runner.interpret();

@@ -53,20 +53,12 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer) :
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer, SialPrinter* printer) :
 		sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
-				op_table_.max_line_number()), printer_(printer), data_manager_(
+				sialx_timer), printer_(printer), data_manager_(
 				sipTables), persistent_array_manager_(NULL), sial_ops_(
 				data_manager_, persistent_array_manager_, sipTables) {
 	_init(sipTables);
-}
-
-Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer, WorkerPersistentArrayManager* wpm):
-				sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
-						op_table_.max_line_number()), printer_(printer), data_manager_(
-						sipTables), persistent_array_manager_(wpm), sial_ops_(
-						data_manager_, persistent_array_manager_, sipTables) {
-			_init(sipTables);
 }
 
 Interpreter::~Interpreter() {
@@ -81,6 +73,7 @@ void Interpreter::_init(SipTables& sip_tables) {
 	gpu_enabled_ = false;
 	tracer_ = new Tracer(this, sip_tables, std::cout);
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+	last_seen_line_number_ = -99;
 #ifdef HAVE_CUDA
 	int devid;
 	int rank = 0;
@@ -101,8 +94,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
 		tracer_->trace(pc, opcode);
-
-
+		timer_trace(pc, opcode);
 
 		switch (opcode) {
 		case goto_op: {
@@ -851,6 +843,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		}// swith
 
+		// Switch off the last timer that was started
+		timer_trace(pc, opcode);
+
 		//TODO  only call where necessary
 		contiguous_blocks_post_op();
 	}// while
@@ -860,6 +855,55 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 void Interpreter::post_sial_program() {
 	sial_ops_.end_program();
 }
+
+void Interpreter::timer_trace(int pc, opcode_t opcode){
+	const int pc_end = op_table_.size();
+	int line_number = 0;
+	if (pc < pc_end)
+		line_number = current_line();
+
+	check (line_number >= 0, "Invalid line number at timer_trace!");
+
+	if (last_seen_line_number_ == line_number) {
+		return;
+	} else if (last_seen_line_number_ >= 0){
+		sialx_timers_.pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
+		last_seen_line_number_ = -99; // Switches timer off.
+		return;
+	} else { // Turn on a new timer
+		// Colect data for sialx lines with only these opcodes.
+		switch(opcode){
+		case execute_op:
+		case sip_barrier_op:
+		case broadcast_static_op:
+		case allocate_op:
+		case deallocate_op:
+		case get_op:
+		case put_accumulate_op:
+		case put_replace_op:
+		case create_op:
+		case delete_op:
+		case collective_sum_op:
+		case assert_same_op:
+		case block_copy_op:
+		case block_permute_op:
+		case block_fill_op:
+		case scale_block_op:
+		case accumulate_scalar_into_block_op:
+		case block_add_op:
+		case block_subtract_op:
+		case block_contract_op:
+		case block_contract_to_scalar_op:
+		case set_persistent_op:
+		case restore_persistent_op:
+			sialx_timers_.start_timer(line_number, SialxTimer::TOTALTIME);
+			last_seen_line_number_ = line_number;
+			break;
+		}
+	}
+
+}
+
 
 void Interpreter::handle_user_sub_op(int pc) {
 	int num_args = arg1();
@@ -1401,54 +1445,61 @@ sip::Block::BlockPtr Interpreter::get_block_from_selector_stack(char intent,
 sip::Block::BlockPtr Interpreter::get_block(char intent,
 		sip::BlockSelector& selector, sip::BlockId& id,
 		bool contiguous_allowed) {
+
+	int line = current_line();
+	sialx_timers_.start_timer(line, SialxTimer::BLOCKWAITTIME);
+
 	int array_id = selector.array_id_;
 	sip::Block::BlockPtr block;
+
 	if (sip_tables_.array_rank(selector.array_id_) == 0) { //this "array" was declared to be a scalar.  Nothing to remove from selector stack.
 		id = sip::BlockId(array_id);
 		block = data_manager_.get_scalar_block(array_id);
-		return block;
-	}
-	if (selector.rank_ == 0) { //this is a static array provided without a selector, block is entire array
+		//return block;
+	} else if (selector.rank_ == 0) { //this is a static array provided without a selector, block is entire array
 		block = data_manager_.contiguous_array_manager_.get_array(array_id);
 		id = sip::BlockId(array_id);
-		return block;
+		//return block;
+	} else {
+		//argument is a block with an explicit selector
+		sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
+				"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
+		id = block_id(selector);
+		bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
+		sip::check(!is_contiguous || contiguous_allowed,
+				"using contiguous block in a context that doesn't support it");
+		switch (intent) {
+		case 'r': {
+			block = is_contiguous ?
+					data_manager_.contiguous_array_manager_.get_block_for_reading(
+							id, read_block_list_) :
+					sial_ops_.get_block_for_reading(id);
+		}
+			break;
+		case 'w': {
+			bool is_scope_extent = sip_tables_.is_scope_extent(selector.array_id_);
+			block = is_contiguous ?
+					data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
+							id, write_back_list_) :
+					sial_ops_.get_block_for_writing(id, is_scope_extent);
+		}
+			break;
+		case 'u': {
+			bool is_scope_extent = sip_tables_.is_scope_extent(selector.array_id_);
+			block = is_contiguous ?
+					data_manager_.contiguous_array_manager_.get_block_for_updating(
+							id, write_back_list_) :
+					sial_ops_.get_block_for_updating(id);
+		}
+			break;
+		default:
+			sip::check(false,
+					"SIP bug:  illegal or unsupported intent given to get_block");
+		}
 	}
-	//argument is a block with an explicit selector
-	sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
-			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
-	id = block_id(selector);
-	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-	sip::check(!is_contiguous || contiguous_allowed,
-			"using contiguous block in a context that doesn't support it");
-	switch (intent) {
-	case 'r': {
-		block = is_contiguous ?
-				data_manager_.contiguous_array_manager_.get_block_for_reading(
-						id, read_block_list_) :
-				sial_ops_.get_block_for_reading(id);
-	}
-		break;
-	case 'w': {
-		bool is_scope_extent = sip_tables_.is_scope_extent(selector.array_id_);
-		block = is_contiguous ?
-				data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
-						id, write_back_list_) :
-				sial_ops_.get_block_for_writing(id, is_scope_extent);
-	}
-		break;
-	case 'u': {
-		bool is_scope_extent = sip_tables_.is_scope_extent(selector.array_id_);
-		block = is_contiguous ?
-				data_manager_.contiguous_array_manager_.get_block_for_updating(
-						id, write_back_list_) :
-				sial_ops_.get_block_for_updating(id);
-	}
-		break;
-	default:
-		sip::check(false,
-				"SIP bug:  illegal or unsupported intent given to get_block");
-	}
+	sialx_timers_.pause_timer(line, SialxTimer::BLOCKWAITTIME);
 	return block;
+
 
 }
 
