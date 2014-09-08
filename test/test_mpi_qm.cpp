@@ -41,7 +41,7 @@ TEST(Sial_QM,ccsdpt_test){
 	if (am_master) std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//interpret the program
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 	{
 		sip::ServerPersistentArrayManager persistent_server;

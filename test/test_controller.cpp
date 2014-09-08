@@ -50,7 +50,7 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 		barrier();
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);
-		setup::SetupReader::SialProgList &progs = setup_reader_->sial_prog_list_;
+		setup::SetupReader::SialProgList &progs = setup_reader_->sial_prog_list();
 		std::string prog_name = progs[0];
 		siox_path = dir_name + prog_name;
 	} else {

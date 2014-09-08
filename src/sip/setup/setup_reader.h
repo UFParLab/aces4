@@ -19,12 +19,21 @@
 #include "block.h"
 #define MAX_PRINT_ELEMS 512
 
-//namespace array {
-//   class Block;
-//}
+namespace sip {
+class IndexTable;
+class ContiguousArrayManager;
+}
 
 namespace setup {
 
+/** Encapsulates all needed data for predefined integer arrays */
+typedef struct { int rank; int* dims; int* data; } PredefIntArray;
+
+/** Encapsulates all needed data for predefined double arrays */
+// typedef struct { int rank; int* dims; double* data; } PredefDoubleArray; // Not used
+
+/** Encapsulates all needed data for predefined contiguous arrays */
+typedef std::pair<int, sip::Block::BlockPtr> PredefContigArray;
 
 /*!
  *
@@ -46,22 +55,34 @@ public:
 	typedef std::vector<int> SegmentDescriptor;
 	typedef std::map<sip::IndexType_t, std::vector<int> > SetupSegmentInfoMap;
 	typedef std::vector<std::string> SialProgList;
-	typedef std::map<std::string, std::pair<int, std::pair<int *, double *> > > PredefArrMap;
-	typedef PredefArrMap::iterator PredefArrayIterator;
-	typedef std::map<std::string, std::pair<int, std::pair<int *, int *> > > PredefIntArrMap;
+	// typedef std::map<std::string, PredefDoubleArray > PredefArrMap; 	// Not used
+	// typedef PredefArrMap::iterator PredefArrayIterator;				// Not used
+	typedef std::map<std::string, PredefIntArray > PredefIntArrMap;
 	typedef PredefIntArrMap::iterator PredefIntArrayIterator;
 	typedef std::map<std::string, std::string> KeyValueMap;
 	typedef std::map<std::string, KeyValueMap > FileConfigMap;
-	typedef std::map<std::string, std::pair<int,sip::Block::BlockPtr> > NamePredefinedContiguousArrayMap;
-    typedef std::map<std::string, std::pair<int,sip::Block::BlockPtr> >::iterator NamePredefinedContiguousArrayMapIterator;
+	typedef std::map<std::string, PredefContigArray > NamePredefinedContiguousArrayMap;
+    typedef std::map<std::string, PredefContigArray >::iterator NamePredefinedContiguousArrayMapIterator;
 
-	int predefined_int(std::string);
-    double predefined_scalar(std::string);
-    //array::Block * predefined_contiguous_array(std::string);
-    //array::Block * predefined_contiguous_integer_array(std::string);
+	int predefined_int(const std::string&);
+    double predefined_scalar(const std::string&);
+    PredefContigArray predefined_contiguous_array(const std::string&);
+    PredefIntArray predefined_integer_array(const std::string&);
+
     int num_segments(sip::IndexType_t);
     //int * segment_array(sip::IndexType_t);
-    SialProgList sial_prog_list_;
+
+    SialProgList& sial_prog_list() { return sial_prog_list_; }
+
+	/** performs sanity checks on input
+	 *
+	 * right now, this just checks for the existence of a sial program name
+	 */
+	bool aces_validate();
+
+private:
+
+	SialProgList sial_prog_list_;
 	PredefIntMap predefined_int_map_;
 	PredefScalarMap predefined_scalar_map_;
 	SetupSegmentInfoMap segment_map_;
@@ -71,16 +92,6 @@ public:
 
 	NamePredefinedContiguousArrayMap name_to_predefined_contiguous_array_map_;
 
-	/** performs sanity checks on input
-	 *
-	 * right now, this just checks for the existence of a sial program name
-	 */
-	bool aces_validate();
-
-	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
-
-
-private:
 
 	/**
 	 * Constructs SetupReader instance, optionally calling "read()" of the InputStream reference.
@@ -101,7 +112,6 @@ private:
     void read_predefined_integer_arrays();
     void read_sialfile_configs();
 
-
 	void dump_predefined_int_map(std::ostream&);
 	void dump_predefined_scalar_map(std::ostream&);
 	void dump_sial_prog_list(std::ostream&);
@@ -110,9 +120,13 @@ private:
 
 	InputStream& stream_;
 
+	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
 
+	friend class sip::IndexTable;
+	friend class sip::ContiguousArrayManager;
 
 	DISALLOW_COPY_AND_ASSIGN(SetupReader);
+
 
 };
 

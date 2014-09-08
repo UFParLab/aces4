@@ -64,7 +64,7 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);
-		progs_ = &setup_reader_->sial_prog_list_;
+		progs_ = &setup_reader_->sial_prog_list();
 	} else {
 		setup_reader_ = setup::SetupReader::get_empty_reader();
 		progs_ = new std::vector<std::string>();
@@ -131,7 +131,7 @@ sip::IntTable* TestControllerParallel::int_table() {
 
 int TestControllerParallel::int_value(const std::string& name) {
 	try {
-		return worker_->data_manager_.int_value(name);
+		return worker_->data_manager().int_value(name);
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: " << name
 				<< " not found in int map.  This is probably a bug in the test."
@@ -143,7 +143,7 @@ int TestControllerParallel::int_value(const std::string& name) {
 
 double TestControllerParallel::scalar_value(const std::string& name) {
 	try {
-		return worker_->data_manager_.scalar_value(name);
+		return worker_->data_manager().scalar_value(name);
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: " << name
 				<< " not found in scalar map.  This is probably a bug in the test."

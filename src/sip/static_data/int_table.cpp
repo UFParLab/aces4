@@ -6,6 +6,7 @@
  */
 
 #include "int_table.h"
+#include <stdexcept>
 
 namespace sip {
 
@@ -31,6 +32,37 @@ void IntTable::read(IntTable& intTable, setup::InputStream& siox_file, setup::Se
 }
 
 
+/** returns the value associated with the given slot */
+int IntTable::value(int slot) const {
+	try {
+		return values_.at(slot);
+	} catch (const std::out_of_range& oor) {
+		fail("out of range error when looking up value in int table");
+	}
+	return 0.0; //should never get here
+}
+/** set the indicated int to the given value */
+void IntTable::set_value(int slot, int value) {
+	values_[slot] = value;
+}
+/** returns the name associated with the given slot */
+std::string IntTable::name(int slot) const {
+	try {
+		return slot_name_map_.at(slot);
+	} catch (const std::out_of_range& oor) {
+		fail("out of range error when looking up name associated with a slot in the int table");
+	}
+	return "error";  //should never get here
+}
+/** returns the slot associated with the given name */
+int IntTable::slot(std::string name) const {
+	try {
+		return name_slot_map_.at(name);
+	} catch (const std::out_of_range& oor) {
+		fail("out of range error when looking up int tables slot  associated with name");
+	}
+	return -1; //should never get here
+}
 
 void IntTable::clear(){
    values_.clear();

@@ -21,7 +21,6 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
-#include "contiguous_local_block_id.h"
 
 #include "worker_persistent_array_manager.h"
 
@@ -948,7 +947,7 @@ TEST(BasicSial,contract_to_scalar) {
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
 	controller.runWorker();
-	double actual_x = controller.worker_->data_manager_.scalar_value("x");
+	double actual_x = controller.worker_->data_manager().scalar_value("x");
 
 // Compare it with the reference
 	const int I = 8;
