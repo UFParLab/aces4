@@ -34,6 +34,15 @@ namespace sip {
 
 Interpreter* Interpreter::global_interpreter;
 
+
+Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
+		SialPrinter* printer) :
+		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
+				NULL), sial_ops_(data_manager_,
+				NULL, sipTables){
+	_init(sipTables);
+}
 Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
@@ -53,21 +62,21 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer) :
-		sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
-				op_table_.max_line_number()), printer_(printer), data_manager_(
-				sipTables), persistent_array_manager_(NULL), sial_ops_(
-				data_manager_, persistent_array_manager_, sipTables) {
-	_init(sipTables);
-}
+//Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer) :
+//		sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
+//				op_table_.max_line_number()), printer_(printer), data_manager_(
+//				sipTables), persistent_array_manager_(NULL), sial_ops_(
+//				data_manager_, persistent_array_manager_, sipTables) {
+//	_init(sipTables);
+//}
 
-Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer, WorkerPersistentArrayManager* wpm):
-				sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
-						op_table_.max_line_number()), printer_(printer), data_manager_(
-						sipTables), persistent_array_manager_(wpm), sial_ops_(
-						data_manager_, persistent_array_manager_, sipTables) {
-			_init(sipTables);
-}
+//Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer, WorkerPersistentArrayManager* wpm):
+//				sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
+//						op_table_.max_line_number()), printer_(printer), data_manager_(
+//						sipTables), persistent_array_manager_(wpm), sial_ops_(
+//						data_manager_, persistent_array_manager_, sipTables) {
+//			_init(sipTables);
+//}
 
 Interpreter::~Interpreter() {
 	delete tracer_;
@@ -859,6 +868,55 @@ void Interpreter::post_sial_program() {
 	sial_ops_.end_program();
 }
 
+void Interpreter::timer_trace(int pc, opcode_t opcode){
+        const int pc_end = op_table_.size();
+        int line_number = 0;
+        if (pc < pc_end)
+                line_number = current_line();
+
+        check (line_number >= 0, "Invalid line number at timer_trace!");
+
+        if (last_seen_line_number_ == line_number) {
+                return;
+        } else if (last_seen_line_number_ >= 0){
+                sialx_timers_.pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
+                last_seen_line_number_ = -99; // Switches timer off.
+                return;
+        } else { // Turn on a new timer
+                // Colect data for sialx lines with only these opcodes.
+                switch(opcode){
+                case execute_op:
+                case sip_barrier_op:
+                case broadcast_static_op:
+                case allocate_op:
+                case deallocate_op:
+                case get_op:
+                case put_accumulate_op:
+                case put_replace_op:
+                case create_op:
+                case delete_op:
+                case collective_sum_op:
+                case assert_same_op:
+                case block_copy_op:
+                case block_permute_op:
+                case block_fill_op:
+                case block_scale_op:
+                case block_accumulate_scalar_op:
+                case block_add_op:
+                case block_subtract_op:
+                case block_contract_op:
+                case block_contract_to_scalar_op:
+                case set_persistent_op:
+                case restore_persistent_op:
+                        sialx_timers_.start_timer(line_number, SialxTimer::TOTALTIME);
+                        last_seen_line_number_ = line_number;
+                        break;
+                }
+        }
+
+}
+
+
 void Interpreter::handle_user_sub_op(int pc) {
 	int num_args = arg1();
 	int func_slot = arg0();
@@ -1496,6 +1554,15 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		return block;
 	}
 	//argument is a block with an explicit selector
+
+
+	//TODO move to sialops
+    int line = current_line();
+    sialx_timers_.start_timer(line, SialxTimer::BLOCKWAITTIME);
+
+
+
+
 	sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
 			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 	id = block_id(selector);
@@ -1530,6 +1597,8 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		sip::check(false,
 				"SIP bug:  illegal or unsupported intent given to get_block");
 	}
+
+    sialx_timers_.pause_timer(line, SialxTimer::BLOCKWAITTIME);
 	return block;
 
 }

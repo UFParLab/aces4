@@ -31,20 +31,40 @@ typedef int offset_array_t[MAX_RANK];
 /*! IndexType_t.  An enum with values for the index types defined in Sial.
  *
  * These constants are also defined in the compiler in sial.codegen.SipConstants.java
- * */
+ */
+
+#define INDEX_TYPES_T\
+	INDEX_TYPE_T(aoindex, 	1001, "aoindex")\
+	INDEX_TYPE_T(moindex, 	1002, "moindex")\
+	INDEX_TYPE_T(moaindex, 	1003, "moaindex")\
+	INDEX_TYPE_T(mobindex, 	1004, "mobindex")\
+	INDEX_TYPE_T(simple, 	1005, "simple")\
+	INDEX_TYPE_T(laindex, 	1006, "laindex")\
+	INDEX_TYPE_T(subindex, 	1007, "subindex")\
+
 enum IndexType_t {
-	aoindex=1001,
-	moindex=1002,
-	moaindex=1003,
-	mobindex=1004,
-	simple=1005,
-	laindex=1006,
-	subindex=1007,
+#define INDEX_TYPE_T(e,n,s) e = n,
+	INDEX_TYPES_T
+#undef INDEX_TYPE_T
 	unused=1008
 };
 
+//enum IndexType_t {
+//	aoindex=1001,
+//	moindex=1002,
+//	moaindex=1003,
+//	mobindex=1004,
+//	simple=1005,
+//	laindex=1006,
+//	subindex=1007,
+//	unused=1008
+//};
+
 /*! returns the index type given the lower case name of the index ("aoindex", "index", etc.) */
 IndexType_t map_index_type(std::string name);
+
+std::string index_type_name(IndexType_t t);
+
 
 /*! bit flags representing constants for new array attributes these can be combined
  * with bitwise or as below

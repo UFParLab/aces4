@@ -41,7 +41,7 @@ TEST(Sial_QM,ccsdpt_test){
 	if (am_master) std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
 
 	//interpret the program
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 	{
 		sip::ServerPersistentArrayManager persistent_server;
@@ -85,6 +85,8 @@ TEST(Sial_QM,ccsdpt_test){
 					double esaab = runner.scalar_value("esaab");
 					ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
 				}
+				std::vector<std::string> lno2name = sipTables.line_num_to_name();
+				sialxTimer.print_timers(lno2name);
 			}
 
 		}

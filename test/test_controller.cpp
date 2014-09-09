@@ -50,7 +50,7 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 		barrier();
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);
-		setup::SetupReader::SialProgList &progs = setup_reader_->sial_prog_list_;
+		setup::SetupReader::SialProgList &progs = setup_reader_->sial_prog_list();
 		std::string prog_name = progs[0];
 		siox_path = dir_name + prog_name;
 	} else {
@@ -161,7 +161,8 @@ double* TestController::local_block(const std::string& name,
 }
 
 void TestController::runWorker() {
-	worker_ = new sip::Interpreter(*sip_tables_, printer_);
+	sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
+	worker_ = new sip::Interpreter(*sip_tables_, sialx_timers, printer_);
 	barrier();
 	if (verbose_)
 		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_

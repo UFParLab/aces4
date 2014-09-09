@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
-	std::size_t memory = 2147483648;	// 2 GB
+	std::size_t memory = 2147483648;	// Default memory usage : 2 GB
 
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
 	// d: name of .dat file.
@@ -141,8 +141,7 @@ int main(int argc, char* argv[]) {
 
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
-
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 
 #ifdef HAVE_MPI
@@ -202,15 +201,9 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-
 			std::vector<std::string> lno2name = sipTables.line_num_to_name();
-#ifdef HAVE_MPI
-			sialxTimer.mpi_reduce_timers();
-			if (sip_mpi_attr.is_company_master())
-				sialxTimer.print_timers(lno2name);
-#else
 			sialxTimer.print_timers(lno2name);
-#endif
+
 
 		}// end of worker or server
 

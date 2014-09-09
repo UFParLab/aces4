@@ -36,6 +36,9 @@
 #include "sial_ops_sequential.h"
 #endif //HAVE_MPI
 
+class TestControllerParallel;
+class TestController;
+
 namespace sip {
 
 class LoopManager;
@@ -48,8 +51,7 @@ public:
 
 	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
 	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(SipTables&, SialPrinter* printer);
-	Interpreter(SipTables&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer);
 	~Interpreter();
 
 	/** Static pointer to the current Interpreter.  This is
@@ -62,12 +64,6 @@ public:
 	friend class DoLoop;
 	friend class SequentialPardoLoop;
 	friend class Tracer;
-
-	//data_access routines.  These are just for convenience and just call the
-	//appropriate routine in the sipTable or dataManager.  The definitions are given
-	//here to allow inlining.
-
-	SipTables* sip_tables(){return &sip_tables_;}
 
 	std::string string_literal(int slot) {
 		return sip_tables_.string_literal(slot);
@@ -227,18 +223,26 @@ public:
 		return printer_;
 	}
 
-/**TODO these should be private.  Made public as expedient way to implement
- * list_block_map super instruction, and enable- and disable_all_rank_print
- * super instructions.
- */
+	// inlined data_access routines.
+	const DataManager& data_manager() const { return data_manager_; }
+	const SipTables& sip_tables() const { return sip_tables_; }
+	SialPrinter& printer() const { return *printer_; }
+
+
+private:
 
 	//static data
 	SipTables& sip_tables_;
+
 	//dynamic data
 	DataManager data_manager_;
-	//printer module
+
+	/** Object that manages and formats output from SIAL print statements.
+	 * A subclass with desired properties is passed to the constructor.
+	 * One such subclass is used for tests that compare sial output to
+	 * an expected string.
+	 */
 	SialPrinter* printer_;
-private:
 
 	/**
 	 * Called by constructor
@@ -249,13 +253,17 @@ private:
 	/** main interpreter procedure */
 	void interpret(int pc_start, int pc_end);
 
+	/** auxillary field needed by sialx timers. Must be initialized to a negative number. **/
+	int last_seen_line_number_;
 
+	/** collects performance information per SIALX line **/
+	void timer_trace(int pc, opcode_t opcode);
 
 	OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 	/**
 	 * Timer manager
 	 */
-	const sip::SialxTimer& sialx_timers_;
+	SialxTimer& sialx_timers_;
 
 	/**
 	 * Owned by main program
@@ -440,13 +448,12 @@ private:
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
 			sip::BlockId& id, bool contiguous_allowed = true);
 
-	/** Object that manages and formats output from SIAL print statements.
-	 * A subclass with desired properties is passed to the constructor.
-	 * One such subclass is used for tests that compare sial output to
-	 * an expected string.
-	 */
+
 
 	Tracer* tracer_;
+
+	friend class ::TestControllerParallel;
+	friend class ::TestController;
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

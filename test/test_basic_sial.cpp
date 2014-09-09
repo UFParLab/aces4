@@ -21,7 +21,7 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
-#include "contiguous_local_block_id.h"
+
 
 #include "worker_persistent_array_manager.h"
 
@@ -128,12 +128,15 @@ TEST(BasicSial,contiguous_local){
 	controller.runWorker();
 }
 
+#ifndef HAVE_MPI
+//mpi can't handle failures
 TEST(SipUnit,BlockIdInvalidRange){
 	std::cout << "\n\n\nTHIS TEST IS EXPECTED TO HAVE A FATAL ERROR!!!\n\n\n" << std::endl << std::flush;
 	int lower1[] = {2,3,2,3,2,3};
 	int upper1[] = {2,2,3,4,3,4};
 	ASSERT_THROW(sip::BlockId id1(1, lower1, upper1),std::logic_error);
 }
+#endif
 
 TEST(BasicSial,helloworld) {
 	TestController controller("helloworld", false, VERBOSE_TEST,
@@ -948,7 +951,7 @@ TEST(BasicSial,contract_to_scalar) {
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
 	controller.runWorker();
-	double actual_x = controller.worker_->data_manager_.scalar_value("x");
+	double actual_x = controller.worker_->data_manager().scalar_value("x");
 
 // Compare it with the reference
 	const int I = 8;
