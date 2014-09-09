@@ -127,12 +127,14 @@ TEST(BasicSial,contiguous_local){
 	controller.runWorker();
 }
 
+#ifndef HAVE_MPI
 TEST(SipUnit,BlockIdInvalidRange){
 	std::cout << "\n\n\nTHIS TEST IS EXPECTED TO HAVE A FATAL ERROR!!!\n\n\n" << std::endl << std::flush;
 	int lower1[] = {2,3,2,3,2,3};
 	int upper1[] = {2,2,3,4,3,4};
 	ASSERT_THROW(sip::BlockId id1(1, lower1, upper1),std::logic_error);
 }
+#endif
 
 TEST(BasicSial,helloworld) {
 	TestController controller("helloworld", false, VERBOSE_TEST,
