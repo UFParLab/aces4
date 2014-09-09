@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include "setup_reader.h"
+#include "test_constants.h"
 
 
 
@@ -51,7 +52,7 @@ public:
 			bool expect_success=true);
 	~TestControllerParallel() ;
 
-	void initSipTables();
+	void initSipTables(const std::string& sial_dir_name = dir_name);
 	void run();
 
 	int int_value(const std::string& name);

@@ -194,13 +194,13 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm test_sial test_unit test_basic_sial
-check_PROGRAMS = test_mpi_qm  test_unit test_basic_sial test_sial
+TESTS = test_qm test_sial test_unit test_basic_sial
+check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_basic_sial test_qm
-check_PROGRAMS = test_basic_sial test_qm
+TESTS = test_basic_sial test_sial test_qm
+check_PROGRAMS = test_basic_sial test_sial test_qm
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
@@ -244,11 +244,12 @@ test_basic_sial_SOURCES = \
     
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
-	 test/test_controller.h\
-	 test/test_controller.cpp\
-	 test/test_constants.h\
-	 test/test_constants.cpp\
-	 test/test_qm.cpp
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
+    test/test_qm.cpp
 
 TEST_LDADD_VARS = \
 	test/libgtest.la \

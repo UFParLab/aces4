@@ -8,6 +8,8 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
+#include "test_controller_parallel.h"
+#include "test_constants.h"
 
 #include "block.h"
 
@@ -15,58 +17,41 @@
 #include <TAU.h>
 #endif
 
-static const std::string dir_name("src/sialx/qm/");
 
-/** Single node ccsd test*/
+//bool VERBOSE_TEST = false;
+bool VERBOSE_TEST = true;
+
+//static const std::string dir_name("src/sialx/qm/");
+
 TEST(Sial_QM,ccsdpt_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
 	std::string job("ccsdpt_test");
-	std::cout << "JOBNAME = " << job << std::endl;
+	std::stringstream output;
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 
-	//read and print setup_file
-	setup::BinaryInputFile setup_file(job + ".dat");
+	controller.initSipTables(qm_dir_name);
+	controller.run();
 
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+	controller.initSipTables(qm_dir_name);
+	controller.run();
 
-	//interpret the program
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
-	setup::SetupReader::SialProgList::iterator it;
-	{
-		sip::WorkerPersistentArrayManager* pbm;
-		pbm = new sip::WorkerPersistentArrayManager();
-		it = progs.begin();
-		while (it != progs.end()){
-			std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< *it << std::endl;
-			std::string sialfpath(dir_name);
-			sialfpath.append(*it);
-			setup::BinaryInputFile siox_file(sialfpath);
-			sip::SipTables sipTables(setup_reader, siox_file);
-			//std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm);
+	controller.initSipTables(qm_dir_name);
+	controller.run();
 
-			runner.interpret();
-			std::cout<<"Persistent Array manager right after program " << sialfpath << " :"<<std::endl<< *pbm;
-			pbm->save_marked_arrays(&runner);
-			std::cout<<"Persistent Array Manager after saving " << sialfpath << " :"<<std::endl<< *pbm;
-			ASSERT_EQ(0, sip::DataManager::scope_count);
-			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+	controller.initSipTables(qm_dir_name);
+	controller.run();
 
-			++it;
-			if (it == progs.end()){	// Last Program
-				double eaab = runner.scalar_value("eaab");
-				ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
-				double esaab = runner.scalar_value("esaab");
-				ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
-			}
-		}
-		delete pbm;
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double eaab = controller.scalar_value("eaab");
+		ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
+		double esaab =controller.scalar_value("esaab");
+		ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
 	}
 }
+
+
 
 int main(int argc, char **argv) {
 

@@ -432,7 +432,6 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
 
-//<<<<<<< HEAD
 	//run second program
 	controller.initSipTables();
 	controller.run();

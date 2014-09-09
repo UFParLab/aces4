@@ -8,7 +8,7 @@
 #include "test_controller_parallel.h"
 #include "config.h"
 
-#ifdef HAVE_MPI // Only compile if MPI version compiled.
+
 
 
 #include "gtest/gtest.h"
@@ -75,8 +75,8 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	else
 		spam_ = new sip::ServerPersistentArrayManager();
 	if (verbose) {
-		std::cout << "**************** Creating controller for test " << job_
-				<< " ***********************!!!\n" << std::flush;
+		std::cout << "****** Creating controller for test " << job_
+				<< " *********!!!\n" << std::flush;
 	}
 	barrier();
 }
@@ -85,14 +85,18 @@ TestControllerParallel::~TestControllerParallel() {
 	if (verbose_)
 		std::cout << "\nRank " << attr->global_rank() << " Controller for  "
 				<< job_ << " is being deleted" << std::endl << std::flush;
+#ifdef HAVE_MPI
 	if (server_)
 		delete server_;
+#endif
 	if (worker_)
 		delete worker_;
 	if (wpam_)
 		delete wpam_;
+#ifdef HAVE_MPI
 	if (spam_)
 		delete spam_;
+#endif
 	if (printer_)
 		delete printer_;
 	if (setup_reader_)
@@ -101,12 +105,13 @@ TestControllerParallel::~TestControllerParallel() {
 		delete sip_tables_;
 }
 
-void TestControllerParallel::initSipTables() {
+
+void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	barrier();
 	prog_name_ = progs_->at(prog_number_++);
 	sip::GlobalState::set_program_name(prog_name_);
 	sip::GlobalState::increment_program();
-	std::string siox_path = dir_name + prog_name_;
+	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
 	if (!sip_tables_) delete sip_tables_;
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
@@ -202,6 +207,7 @@ double* TestControllerParallel::local_block(const std::string& name,
 	}
 }
 
+#ifdef HAVE_MPI
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
@@ -239,6 +245,7 @@ bool TestControllerParallel::runServer() {
 	return this_test_enabled_;
 
 }
+#endif
 
 bool TestControllerParallel::runWorker() {
 	if (this_test_enabled_) {
@@ -276,4 +283,4 @@ bool TestControllerParallel::runWorker() {
 	return this_test_enabled_;
 }
 
-#endif // HAVE_MPI
+

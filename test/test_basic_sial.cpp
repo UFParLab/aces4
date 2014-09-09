@@ -49,8 +49,8 @@ int test_contraction_small2(double*);
 //static const std::string expected_output_dir_name("../test/expected_output/");
 
 
-bool VERBOSE_TEST = false;
-//bool VERBOSE_TEST = true;
+//bool VERBOSE_TEST = false;
+bool VERBOSE_TEST = true;
 
 // TODO FIXME
 // commented out since the empty program has a distributed array
