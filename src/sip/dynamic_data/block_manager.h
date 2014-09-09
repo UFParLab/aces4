@@ -26,6 +26,7 @@ class SialOpsParallel;
 class ContiguousLocalArrayManager;
 class SialOpsSequential;
 
+
 class BlockManager {
 public:
 
@@ -259,6 +260,8 @@ private:
 	friend class SialOpsSequential;
 	friend class SialOpsParallel;
 	friend class ContiguousLocalArrayManager;
+	friend class SialOpsSequential;
+
 
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);

@@ -22,7 +22,6 @@
 #include "global_state.h"
 #include "sial_printer.h"
 
-
 #include "worker_persistent_array_manager.h"
 
 #include "block.h"
@@ -50,8 +49,8 @@ int test_contraction_small2(double*);
 //static const std::string expected_output_dir_name("../test/expected_output/");
 
 
-bool VERBOSE_TEST = false;
-//bool VERBOSE_TEST = true;
+//bool VERBOSE_TEST = false;
+bool VERBOSE_TEST = true;
 
 // TODO FIXME
 // commented out since the empty program has a distributed array
@@ -128,8 +127,8 @@ TEST(BasicSial,contiguous_local){
 	controller.runWorker();
 }
 
+
 #ifndef HAVE_MPI
-//mpi can't handle failures
 TEST(SipUnit,BlockIdInvalidRange){
 	std::cout << "\n\n\nTHIS TEST IS EXPECTED TO HAVE A FATAL ERROR!!!\n\n\n" << std::endl << std::flush;
 	int lower1[] = {2,3,2,3,2,3};

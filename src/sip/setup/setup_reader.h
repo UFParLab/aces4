@@ -112,7 +112,6 @@ private:
     void read_predefined_integer_arrays();
     void read_sialfile_configs();
 
-
 	void dump_predefined_int_map(std::ostream&);
 	void dump_predefined_scalar_map(std::ostream&);
 	void dump_sial_prog_list(std::ostream&);

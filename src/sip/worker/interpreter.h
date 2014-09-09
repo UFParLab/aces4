@@ -223,14 +223,13 @@ public:
 		return printer_;
 	}
 
+
 	// inlined data_access routines.
 	const DataManager& data_manager() const { return data_manager_; }
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
 
-
 private:
-
 	//static data
 	SipTables& sip_tables_;
 

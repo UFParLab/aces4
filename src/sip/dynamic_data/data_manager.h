@@ -88,20 +88,24 @@ public:
 	void enter_scope();
 	void leave_scope();
 
+
+	//immutable data for convenience
 	const BlockManager& block_manager() const { return block_manager_; }	// For printing
 
+
 private:
-	//immutable data for convenience
-	SipTables& sip_tables_;
+
 
 	//dynamic state
 	std::vector<int> index_values_; //maps index_table id's into current value of the represented index.  undefined_index_value if not defined.
 	ScalarTable scalar_values_; //scalar values, initialized from "scalar table" read from siox file
 	ScalarBlockTable scalar_blocks_; //blocks wrapped around pointers to scalars.
 
+
 	BlockManager block_manager_;
 	ContiguousArrayManager contiguous_array_manager_;
 	ContiguousLocalArrayManager contiguous_local_array_manager_;  //this shares the map with block_manager_
+
 
 	friend class Interpreter;
 	friend class SialOpsParallel;
