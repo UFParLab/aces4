@@ -516,6 +516,7 @@ set(SIAL_FILES
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_rhf_no4v_defs.sialx;
+    src/sialx/qm/tran_rhf_no3v.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx;
     src/sialx/qm/rccsdpt_aaa_defs.sialx;
@@ -525,8 +526,8 @@ set(SIAL_FILES
     src/sialx/qm/cis_rhf.sialx;
     src/sialx/qm/cis_rhf_defs.sialx;
     src/sialx/qm/cis_d_rhf.sialx;
-    src/sialx/qm/rccsd_rhf_defs.sialx)
-    #src/sialx/qm/rcis_ccpt2_rhf.sialx;
+    src/sialx/qm/rccsd_rhf_defs.sialx;
+    src/sialx/qm/rcis_ccpt2_rhf.sialx)
 
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)

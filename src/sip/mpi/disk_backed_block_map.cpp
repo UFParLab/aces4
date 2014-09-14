@@ -33,13 +33,10 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
      * into newly allocated space, sets the in_memory flag,
      * inserts into block_map_ if needed
      */
-
 	block = allocate_block(block, block_size);
-
 	server_timer_.start_timer(current_line(), ServerTimer::READTIME);
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
 	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
-
 	block->set_in_memory();
 }
 
@@ -60,28 +57,36 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
      */
 	std::size_t remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
 
-	while (block_size > remaining_mem){
-		try{
-			BlockId bid = policy_.get_next_block_for_removal();
-			ServerBlock* blk = block_map_.block(bid);
-			SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
-									<< " : Freeing block " << bid
-									<< " and writing to disk to make space for new block"
-									<< std::endl);
-			if(blk->is_dirty()){
-				write_block_to_disk(bid, blk);
-			}
-			blk->free_in_memory_data();
-			remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
-		} catch (const std::out_of_range& oor){
-			std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
-			std::cerr << oor.what() << std::endl;
-			std::cerr << *this << std::endl;
-			fail(" Something got messed up in the internal data structures of the Server", current_line());
-		} catch(const std::bad_alloc& ba){
-			std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
-			std::cerr << ba.what() << std::endl;
-			std::cerr << *this << std::endl;
+    while (block_size > remaining_mem){
+        try{
+            while (1) {
+                BlockId bid = policy_.get_next_block_for_removal();
+                ServerBlock* blk = block_map_.block(bid);
+                SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
+                        << " : Freeing block " << bid
+                        << " and writing to disk to make space for new block"
+                        << std::endl);
+                if(blk->is_dirty()){
+                    write_block_to_disk(bid, blk);
+                }
+                blk->free_in_memory_data();
+                if (remaining_mem < max_allocatable_bytes_ - ServerBlock::allocated_bytes()) {
+                    break;
+                } else {
+                    throw std::out_of_range("Break now.");
+                }
+            }
+            remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
+            std::cout << "Freeing memory ... " << remaining_mem << std::endl;
+        } catch (const std::out_of_range& oor){
+            std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
+            std::cerr << oor.what() << std::endl;
+            std::cerr << *this << std::endl;
+            fail(" Something got messed up in the internal data structures of the Server", current_line());
+        } catch(const std::bad_alloc& ba){
+            std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
+            std::cerr << ba.what() << std::endl;
+            std::cerr << *this << std::endl;
 			fail(" Could not allocate ServerBlock, out of memory", current_line());
 		}
 	}
@@ -98,7 +103,6 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
     }
 
 	return block;
-
 }
 
 

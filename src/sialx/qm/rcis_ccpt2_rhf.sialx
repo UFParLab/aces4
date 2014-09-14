@@ -30,6 +30,11 @@
       index   j1diis = 1: 30 
       index      D1  = 1: 30 
       index      D2  = 1: 30 
+      index kstate   = 1: eom_roots
+      index kstate1  = 1: eom_roots
+      index pstate   = eom_roots2: eom_subspc
+      index ksub  = 1: eom_subspc
+      index ksub1 = 1: eom_subspc
 #
       aoindex mu     = 1: norb 
       aoindex nu     = 1: norb
@@ -304,6 +309,40 @@
 #
       served Wiibb[i1,i,b,b1]    
       served Wjjaa[j1,j,a,a1]      
+#
+# CIS
+      scalar ecorr2
+      scalar shift
+      scalar rank
+      scalar esum2
+      scalar esum3
+      scalar edoubles
+      scalar etriples
+      scalar ecis_d
+      scalar kroot
+#
+      static Ek[kstate]
+      static Ekd[kstate]
+      static SCai[a,i]
+#
+      served M2old_ab[a,i,b,j]
+      served ck0[kstate,a,i]
+      served Cai[a,i]
+      served Cai_ao[mu,i]
+      served Faa[a,a1]
+      served Fii[i,i1]
+      served Fai[a,i]
+      served SFai[a,i]
+      served Ctau[a,i,b,j]
+      served Ctau_ao[mu,i,lambda,j]
+      served CT_ab[a,i,b,j]
+#
+      temp Tk[kstate]
+      temp Tkai[kstate,a,i]
+      temp T1kai[kstate,a,i]
+      temp Tpp[p,p1]
+      temp T1pp[p,p1]
+      temp T2pp[p,p1]
 #
 # Declare served arrays 
 # --------------------- 
@@ -636,23 +675,40 @@
                              #     two-electron integral transformation.
 #
      ENDPROC TRAN_UHF
+#
+      proc setroot
+#
+      Tk[kstate] = 1.0
+      do a
+      do i
+          request ck0[kstate,a,i] 
+          Tai[a,i] = ck0[kstate,a,i]*Tk[kstate]
+          SCai[a,i] = Tai[a,i]
+      enddo i
+      enddo a
+      server_barrier
+      endproc setroot
+#
 #    ------------------------------------------------------------------------ 
     PROC IGUESS_UHF
-
-#
     pardo a,b,i,j
 #
-           REQUEST                     Vpiqj[a,i,b,j]   
-           REQUEST                     Vpiqj[b,j,a,i]   
-           Taibj[a,i,b,j]            = Vpiqj[b,j,a,i]
-           Taibj[a,i,b,j]           += Vpiqj[a,i,b,j]
-           execute energy_denominator_rhf  Taibj[a,i,b,j] fock_a  
-           Taibj[a,i,b,j]           *= 0.5  
-           PREPARE T2old_ab[a,i,b,j] = Taibj[a,i,b,j]  
-           PREPARE D0aibj[a,i,b,j]  = Taibj[a,i,b,j]  
+        request M2old_ab[a,i,b,j] 
+        Taibj[a,i,b,j] = M2old_ab[a,i,b,j]
+        prepare T2old_ab[a,i,b,j] = Taibj[a,i,b,j]
+        prepare D0aibj[a,i,b,j] = Taibj[a,i,b,j]
 #
     endpardo a,b,i,j
     server_barrier
+    pardo a,i,b,j
+         request T2old_ab[a,i,b,j] 
+         request T2old_ab[a,j,b,i] 
+         Taibj[a,i,b,j]  = T2old_ab[a,i,b,j]
+         T1aibj[a,i,b,j] = T2old_ab[a,j,b,i]
+         Taibj[a,i,b,j] -= T1aibj[a,i,b,j]
+         prepare T2old_aa[a,i,b,j] = Taibj[a,i,b,j]
+     endpardo a,i,b,j
+     server_barrier
 #
     ENDPROC IGUESS_UHF
 #
@@ -682,10 +738,325 @@
 #
     collective ecorrab += esumab
     ecorrT = ecorrab
+    ecorrT += ecis_d
+    Ekd[kstate] = ecorrT
     print ecorrT
 #
     server_barrier
     ENDPROC energy
+#
+#
+     proc Caibj
+#
+     pardo a,i,b,j
+         Taiai[a,i,b,j] = 0.0
+         prepare Ctau[a,i,b,j] = Taiai[a,i,b,j]
+         prepare CT_ab[a,i,b,j] = Taiai[a,i,b,j]
+     endpardo a,i,b,j
+     pardo mu,i
+         Txi[mu,i] = 0.0
+         prepare Cai_ao[mu,i] = Txi[mu,i]
+     endpardo mu,i
+     pardo mu,i,lambda,j
+         Txixi[mu,i,lambda,j] = 0.0
+         prepare Ctau_ao[mu,i,lambda,j] = Txixi[mu,i,lambda,j]
+     endpardo mu,i,lambda,j
+     server_barrier
+#
+# back transform CIS vector
+     pardo a,i
+#         request Cai(a,i) i
+         do mu
+             Txi[mu,i] = SCai[a,i]*ca[mu,a]
+             prepare Cai_ao[mu,i] += Txi[mu,i]
+         enddo mu
+     endpardo a,i
+#
+     server_barrier
+#
+     pardo mu,nu,lambda
+
+          allocate Lxxxi[mu,nu,lambda,*]
+          DO sigma
+             execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+             DO i   
+                 T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
+                 Lxxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]
+             ENDDO i
+          ENDDO sigma
+
+          do i
+              request Cai_ao[nu,i] 
+          do j
+
+              Txixi[mu,i,lambda,j] = Cai_ao[nu,i]*Lxxxi[mu,nu,lambda,j]
+              prepare Ctau_ao[mu,i,lambda,j] += Txixi[mu,i,lambda,j]
+
+          enddo j
+          enddo i
+
+          deallocate Lxxxi[mu,nu,lambda,*]
+
+     endpardo mu,nu,lambda
+#
+     server_barrier
+     pardo a,i,b,j
+         Taiai[a,i,b,j] = 0.0
+         do i1
+             request Vpiqj[i1,i,b,j] 
+#             request cai(a,i1) a
+             T1aiai[a,i,b,j] = Vpiqj[i1,i,b,j]*SCai[a,i1]
+             Taiai[a,i,b,j] += T1aiai[a,i,b,j]
+         enddo i1
+         Taiai[a,i,b,j] *= -1.0
+         prepare Ctau[a,i,b,j] += Taiai[a,i,b,j]
+     endpardo a,i,b,j
+
+     pardo nu,i,j
+
+              allocate LDaixj[*,i,nu,j]
+#
+              DO mu
+#
+                 REQUEST Ctau_ao[mu,i,nu,j] 
+#
+                 DO a
+                    Taixj[a,i,nu,j]   = Ctau_ao[mu,i,nu,j]*ca[mu,a]
+                    LDaixj[a,i,nu,j] += Taixj[a,i,nu,j]
+                 ENDDO a
+#
+              ENDDO mu
+
+              DO a
+              DO b
+                 Taibj[a,i,b,j]             = LDaixj[a,i,nu,j]*ca[nu,b]
+                 PREPARE Ctau[a,i,b,j] += Taibj[a,i,b,j]
+              ENDDO b
+              ENDDO a
+#
+              deallocate LDaixj[*,i,nu,j]
+
+     endpardo nu,i,j
+
+     server_barrier
+     pardo a,i,b,j
+         request Ctau[a,i,b,j] 
+         request Ctau[b,j,a,i] 
+         Taiai[a,i,b,j]  = Ctau[a,i,b,j]
+         T1aiai[a,i,b,j] = Ctau[b,j,a,i]
+         Taiai[a,i,b,j] += T1aiai[a,i,b,j]
+         prepare CT_ab[a,i,b,j] = Taiai[a,i,b,j]
+     endpardo a,i,b,j
+     server_barrier
+     pardo a,i,b,j
+         request CT_ab[a,i,b,j] 
+         Taibj[a,i,b,j] = CT_ab[a,i,b,j]
+         execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
+         prepare T2old_ab[a,i,b,j] += Taibj[a,i,b,j]
+         prepare D0aibj[a,i,b,j] += Taibj[a,i,b,j]
+     endpardo a,i,b,j
+     server_barrier
+#
+     endproc Caibj
+#
+     proc hbar_ab
+#
+     pardo a,i,b,j
+#
+         Tpp[a,b] = 0.0
+         do a1
+             request VSpipi[b,i,a1,j] 
+             request T2old_aa[a,i,a1,j] 
+             T1pp[a,b] = VSpipi[b,i,a1,j]*T2old_aa[a,i,a1,j]
+             Tpp[a,b] += T1pp[a,b]
+         enddo a1
+         Tpp[a,b] *= -0.5
+         prepare Faa[a,b] += Tpp[a,b]
+#
+     endpardo a,i,b,j
+     pardo a,i,b,j
+#
+         Tpp[a,b] = 0.0
+         do a1
+             request Vpiqj[b,i,a1,j] 
+             request T2old_ab[a,i,a1,j] 
+             T1pp[a,b] = Vpiqj[b,i,a1,j]*T2old_ab[a,i,a1,j]
+             Tpp[a,b] += T1pp[a,b]
+         enddo a1
+         Tpp[a,b] *= -1.0
+         prepare Faa[a,b] += Tpp[a,b]
+#
+     endpardo a,i,b,j
+#
+     server_barrier
+     endproc hbar_ab
+#
+     proc hbar_ij
+#
+     pardo a,i,b,j
+#
+         Tpp[i,j] = 0.0
+         do i1
+             request VSpipi[a,j,b,i1] 
+             request T2old_aa[a,i,b,i1] 
+             T1pp[i,j] = VSpipi[a,j,b,i1]*T2old_aa[a,i,b,i1]
+             Tpp[i,j] += T1pp[i,j]
+         enddo i1
+         Tpp[i,j] *= -0.5
+         prepare Fii[i,j] += Tpp[i,j]
+#
+     endpardo a,i,b,j
+     pardo a,i,b,j
+#
+         Tpp[i,j] = 0.0
+         do i1
+             request Vpiqj[a,j,b,i1] 
+             request T2old_ab[a,i,b,i1] 
+             T1pp[i,j] = Vpiqj[a,j,b,i1]*T2old_ab[a,i,b,i1]
+             Tpp[i,j] += T1pp[i,j]
+         enddo i1
+         Tpp[i,j] *= -1.0
+         prepare Fii[i,j] += Tpp[i,j]
+#
+     endpardo a,i,b,j
+#
+     server_barrier
+     endproc hbar_ij
+#
+     proc hbar_ai
+
+     pardo a,i,a1,i1
+         request VSpipi[a,i,a1,i1] 
+
+         Taibj[a,i,a1,i1] = VSpipi[a,i,a1,i1]
+         T1pp[a1,i1]      = SCai[a1,i1]
+         Tpp[a,i]         = Taibj[a,i,a1,i1]*T1pp[a1,i1]
+
+         prepare SFai[a,i] += Tpp[a,i]
+     endpardo a,i,a1,i1
+     pardo a,i,a1,i1
+         request Vpiqj[a,i,a1,i1] 
+
+         Taibj[a,i,a1,i1] = Vpiqj[a,i,a1,i1]
+         T1pp[a1,i1]      = SCai[a1,i1]
+         Tpp[a,i]         = Taibj[a,i,a1,i1]*T1pp[a1,i1]
+
+         prepare SFai[a,i] += Tpp[a,i]
+     endpardo a,i,a1,i1
+     server_barrier
+     pardo a,i,a1,i1
+         request T2old_aa[a,i,a1,i1] 
+         request SFai[a1,i1] 
+         Taibj[a,i,a1,i1] = T2old_aa[a,i,a1,i1]
+         T1pp[a1,i1]      = SFai[a1,i1]
+         Tpp[a,i]         = Taibj[a,i,a1,i1]*T1pp[a1,i1]
+         prepare Fai[a,i] += Tpp[a,i]
+     endpardo a,i,a1,i1
+     pardo a,i,a1,i1
+         request T2old_ab[a,i,a1,i1] 
+         request SFai[a1,i1] 
+         Taibj[a,i,a1,i1] = T2old_ab[a,i,a1,i1]
+         T1pp[a1,i1]      = SFai[a1,i1]
+         Tpp[a,i]         = Taibj[a,i,a1,i1]*T1pp[a1,i1]
+         prepare Fai[a,i] += Tpp[a,i]
+     endpardo a,i,a1,i1
+     server_barrier
+#
+     endproc hbar_ai
+#
+     proc hbar_prep
+         server_barrier
+         pardo a,b
+             Tpp[a,b] = 0.0
+             prepare Faa[a,b] = Tpp[a,b]
+         endpardo a,b
+         pardo i,j
+             Tpp[i,j] = 0.0
+             prepare Fii[i,j] = Tpp[i,j]
+         endpardo i,j
+         pardo a,i
+             Tpp[a,i] = 0.0
+             prepare Fai[a,i] = Tpp[a,i]
+         endpardo a,i
+         pardo a,i
+             Tpp[a,i] = 0.0
+             prepare SFai[a,i] = Tpp[a,i]
+         endpardo a,i
+         server_barrier
+     endproc hbar_prep
+#
+     proc make_hbar
+#
+     call hbar_prep
+     call hbar_ab
+     call hbar_ij
+     call hbar_ai
+     server_barrier
+#
+     endproc make_hbar
+#
+     proc cisd_energy
+#
+     server_barrier
+     esum2 = 0.0
+     esum3 = 0.0
+     ecorr2 = 0.0
+     edoubles = 0.0
+     etriples = 0.0
+     ecis_d = 0.0
+     server_barrier
+#
+     pardo a,i,b,j
+         request T2old_ab[a,i,b,j] 
+         REQUEST CT_ab[a,i,b,j] 
+         REQUEST CT_ab[b,i,a,j] 
+         Taibj[a,i,b,j]  = CT_ab[a,i,b,j]
+         T1aibj[a,i,b,j] = CT_ab[b,i,a,j]
+         Taibj[a,i,b,j] *= 2.0
+         Taibj[a,i,b,j] -= T1aibj[a,i,b,j]
+#
+         etemp  = Taibj[a,i,b,j]*T2old_ab[a,i,b,j]
+         etemp *= 0.5
+         esum2 += etemp
+     endpardo a,i,b,j
+     pardo a,i
+#         request cai(a,i) i
+         request Fai[a,i] 
+         Tpp[a,i] = Fai[a,i]
+#
+         do b
+             request Faa[a,b] 
+#             request cai(b,i) i
+             T1pp[a,i] = Faa[a,b]*SCai[b,i]
+             Tpp[a,i] += T1pp[a,i]
+         enddo b
+#
+         do j
+             request Fii[i,j] 
+#             request cai(a,j) a
+             T1pp[a,i] = Fii[i,j]*SCai[a,j]
+             Tpp[a,i] += T1pp[a,i]
+         enddo j
+#
+         etemp = SCai[a,i]*tpp[a,i]
+         esum3+= etemp
+#
+     endpardo a,i
+     server_barrier
+#
+     collective edoubles += esum2
+     collective etriples += esum3
+     server_barrier
+     ecis_d  = edoubles
+     ecis_d += etriples
+     execute get_my_rank rank
+     if rank == 0.0
+         print edoubles
+         print etriples
+#         print_scalar ecis_d
+     endif #rank == 0.0
+#
+     endproc cisd_energy
 #    ------------------------------------------------------------------------ 
 # AA t2 amps
     PROC T2oldaa
@@ -724,6 +1095,11 @@
         prepare T2new_ab[b,j,a,i] += T1aibj[b,j,a,i]
 #
     endpardo a,b,i,j
+    pardo a,i,b,j
+        request CT_ab[a,i,b,j] 
+        Taibj[a,i,b,j] = CT_ab[a,i,b,j]
+        prepare T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+    endpardo a,i,b,j
 #
     endproc T2newab
 #    ------------------------------------------------------------------------ 
@@ -1177,6 +1553,30 @@
       delete DIST_BB
 
       ENDPROC DIISN
+#
+      proc clear_diis
+#
+      do d1
+      do d2
+          Tbb[d1,d2] = 0.0
+          BB[d1,d2] = 0.0
+      enddo d2
+      enddo d1
+      pardo a,i,b,j
+          Taibj[a,i,b,j] = 0.0
+          prepare D0aibj[a,i,b,j] = Taibj[a,i,b,j]
+      endpardo a,i,b,j
+      pardo a,i,b,j,kdiis
+          Taibjk[a,i,b,j,kdiis] = 0.0
+          prepare Daibj[a,i,b,j,kdiis] = Taibjk[a,i,b,j,kdiis]
+      endpardo a,i,b,j,kdiis
+      pardo a,i,b,j,kdiis
+          Taibjk[a,i,b,j,kdiis] = 0.0
+          prepare Eaibj[a,i,b,j,kdiis] = Taibjk[a,i,b,j,kdiis]
+      endpardo a,i,b,j,kdiis
+#
+      server_barrier
+      endproc clear_diis
 #     -------------
       PROC MOVET2
 #     ------------
@@ -1207,6 +1607,7 @@
 #    ------------------------------------------------------------------------ 
 #           MAIN
 #    ------------------------------------------------------------------------ 
+    println "starting CIS-CCPT(2)"
     ecrit = 0.00000001
     zero = 0.0
     one = 1.0
@@ -1223,25 +1624,35 @@
 #
     restore_persistent ca "ca"
     restore_persistent Fock_a "fock_a"
-    #  server_barrier
-    #  call tran_uhf
-    #  server_barrier
+    restore_persistent     ck0 "Ck0"
+    restore_persistent     Ek "CEk"
+    restore_persistent M2old_ab "T2old_ab"
     call read_2el
     server_barrier
 # second-order starting guess for the T2 amps
-    call iguess_uhf
-# second-order energy
-    call energy
-    mp2_energy  = ecorrT
-    mp2_energy += scfeneg
-    print mp2_energy
 #
+      kroot = 1.0
+      do kstate
+          server_barrier
+          println " "
+          print kroot
+#
+          execute return_sval Ek[kstate] shift
+          server_barrier
+          call iguess_uhf
+          server_barrier
+          call setroot
+          call Caibj
+          server_barrier
+#
+          kroot += 1.0
+#
+    eold = 0.0
     niter = 0.0
     do kiter
         niter += 1.0
         server_barrier
 #
-#        call T2oldaa
         call t2new_zero
 #
         call t2newab
@@ -1252,6 +1663,9 @@
         server_barrier
 #
         call updatet2
+        server_barrier
+        call make_hbar
+        call cisd_energy
         server_barrier
         call energy
         server_barrier
@@ -1284,10 +1698,20 @@
 #
     enddo kiter
 #
+    call clear_diis
+#
     server_barrier
     totenerg  = ecorrT
     totenerg += scfeneg
     print totenerg
+
+      enddo kstate
+#
+      execute get_my_rank rank
+      if rank == 1.0
+      execute print_static_array Ekd
+      endif
+#
       server_barrier
 #
       server_barrier
@@ -1298,6 +1722,8 @@
       set_persistent     Vaaii  "Vaaii"
       set_persistent     Vpiqj  "Vpiqj"
       set_persistent     VSpipi "VSpipi"
+      set_persistent     ck0 "Ck0"
+      set_persistent     Ek "CEk"
 #
 #    ------------------------------------------------------------------------ 
                            ENDSIAL CCSD_RHF_SV1
