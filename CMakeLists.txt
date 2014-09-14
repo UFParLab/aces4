@@ -168,7 +168,9 @@ set(ACES_DATA_FILES
     src/sip/dynamic_data/cached_block_map.h;
     src/sip/dynamic_data/cached_block_map.cpp;
     src/sip/dynamic_data/sip_timer.h;
-	src/sip/dynamic_data/sip_timer.cpp)
+	src/sip/dynamic_data/sip_timer.cpp;
+    src/sip/dynamic_data/contiguous_local_array_manager.h;
+    src/sip/dynamic_data/contiguous_local_array_manager.cpp;)
 #need only header files for templates--these include .cpp
 
 set(ACES_WORKER_FILES
@@ -348,8 +350,8 @@ add_library(test_controllers
             test/test_controller.cpp;
             test/test_controller_parallel.h;
             test/test_controller_parallel.cpp;
-	    test/test_constants.h;
-	    test/test_constants.cpp)
+            test/test_constants.h;
+            test/test_constants.cpp)
 
 
 if (HAVE_MPI) # Multi Node Version Tests
@@ -358,33 +360,39 @@ if (HAVE_MPI) # Multi Node Version Tests
                                         test/test_transpose4d_op.F;
                                         test/test_contraction_small2.F)
     add_executable(test_sial  	        test/test_sial.cpp)
-    add_executable(test_mpi_qm          test/test_mpi_qm.cpp)
+    #add_executable(test_mpi_qm          test/test_mpi_qm.cpp)
+    add_executable(test_qm              test/test_qm.cpp)
     add_executable(test_unit            test/test_unit.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_basic_sial   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-    set_target_properties(test_mpi_qm       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    #set_target_properties(test_mpi_qm       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
-    target_link_libraries(test_mpi_qm       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    #target_link_libraries(test_mpi_qm       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-    set_target_properties(test_mpi_qm       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    #set_target_properties(test_mpi_qm       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND mpirun -np 2 test_basic_sial)
     add_test(NAME test_sial         COMMAND mpirun -np 2 test_sial)
-    add_test(NAME test_mpi_qm       COMMAND mpirun -np 2 test_mpi_qm)
+    #add_test(NAME test_mpi_qm       COMMAND mpirun -np 2 test_mpi_qm)
+    add_test(NAME test_qm           COMMAND mpirun -np 2 test_qm)
     add_test(NAME test_unit         COMMAND mpirun -np 2 test_unit)
 
     add_dependencies(test_basic_sial   gtest gtest_main test_contollers)
     add_dependencies(test_sial         gtest gtest_main test_contollers)
-    add_dependencies(test_mpi_qm       gtest gtest_main test_contollers)
+    #add_dependencies(test_mpi_qm       gtest gtest_main test_contollers)
+    add_dependencies(test_qm           gtest gtest_main test_contollers)
     add_dependencies(test_unit         gtest gtest_main test_contollers)
 
 else() # Single Node Version Tests
@@ -438,13 +446,13 @@ set(SIAL_FILES
     src/sialx/test/subindex_test.sialx;
     src/sialx/test/local_arrays.sialx;
     src/sialx/test/scalarTable.sialx;
-    src/sialx/test/pardo_loop_1d.sialx;
     src/sialx/test/stringLiterals.sialx;
     src/sialx/test/aces_defs.sialx;
     src/sialx/test/fill_sequential_test.sialx;
     src/sialx/test/local_arrays_wild.sialx;
     src/sialx/test/local_arrays_wild_fail.sialx;
     src/sialx/test/basic_assign_to_static_array_test.sialx;
+    src/sialx/test/contiguous_local.sialx;
     src/sialx/test/sum_op_test.sialx;
     src/sialx/test/transpose_tmp.sialx;
     src/sialx/test/transpose4d_tmp.sialx;
@@ -494,6 +502,7 @@ set(SIAL_FILES
     src/sialx/test/pardo_loop_6d.sialx;
     src/sialx/test/scalar_ops.sialx;
     src/sialx/test/int_ops.sialx;
+    src/sialx/test/int_self_ops.sialx;
     src/sialx/test/scalar_valued_blocks.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_mp2_rhf.sialx;

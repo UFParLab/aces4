@@ -212,13 +212,13 @@ test_unit_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_unit.cpp
 
-test_mpi_qm_SOURCES = \
-	$(ACES_SOURCEFILES)\
-	test/test_controller_parallel.h\
-	test/test_controller_parallel.cpp\
-	test/test_constants.h\
-	test/test_constants.cpp\
-	test/test_mpi_qm.cpp
+#test_mpi_qm_SOURCES = \
+#	$(ACES_SOURCEFILES)\
+#	test/test_controller_parallel.h\
+#	test/test_controller_parallel.cpp\
+#	test/test_constants.h\
+#	test/test_constants.cpp\
+#	test/test_mpi_qm.cpp
 
 
 test_sial_SOURCES = \
@@ -266,7 +266,7 @@ TEST_LDADD_VARS = \
 test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
-test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
+#test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 # Add any initialization files needed by tests here.
@@ -322,7 +322,7 @@ TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
-test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
+#test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
