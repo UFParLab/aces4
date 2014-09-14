@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include "setup_reader.h"
+#include "test_constants.h"
 
 
 
@@ -26,7 +27,8 @@ public:
 	~TestController();
 	sip::IntTable* int_table();
 
-	void initSipTables();
+	void initSipTables(const std::string& sial_dir_name = dir_name);
+	void run();
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
 	double* local_block(const std::string& name, const std::vector<int>indices);
@@ -46,7 +48,10 @@ public:
 	std::ostream& sial_output_;
 	sip::SialPrinterForTests* printer_;
 	bool expect_success_;
-	std::string siox_path;
+
+	int prog_number_;
+	std::string prog_name_;
+	setup::SetupReader::SialProgList *progs_;
 
 };
 

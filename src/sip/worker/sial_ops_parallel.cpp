@@ -17,7 +17,7 @@ namespace sip {
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 		WorkerPersistentArrayManager* persistent_array_manager,
-		SipTables& sip_tables) :
+		const SipTables& sip_tables) :
 		sip_tables_(sip_tables), sip_mpi_attr_(
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,

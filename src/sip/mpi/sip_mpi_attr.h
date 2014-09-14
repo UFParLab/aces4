@@ -21,8 +21,6 @@
 #include "sip.h"
 #include "rank_distribution.h"
 
-//TODO  come up with a less military naming scheme
-
 namespace sip {
 class SIPMPIAttr {
 public:
@@ -30,11 +28,11 @@ public:
 	~SIPMPIAttr();
 
 	static const int COMPANY_MASTER_RANK = 0;
-	static SIPMPIAttr *instance_;
 	static bool destroyed_;
 
 	// Singleton factory
 	static SIPMPIAttr& get_instance() ;
+	static void set_rank_distribution(RankDistribution *rank_dist);
 
 	/** Delete singleton instance */
 	static void cleanup() ;
@@ -69,7 +67,11 @@ public:
 
 
 private:
-	SIPMPIAttr();
+
+	static SIPMPIAttr *instance_;
+	static RankDistribution * rank_distribution_;
+
+	SIPMPIAttr(RankDistribution& rank_distribution);
 
 	std::vector<int> servers_; // Server MPI ranks;
 	std::vector<int> workers_; // Worker MPI ranks

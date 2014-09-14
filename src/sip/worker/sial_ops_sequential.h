@@ -20,7 +20,7 @@ class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
 			WorkerPersistentArrayManager*,
-			SipTables&);
+			const SipTables&);
 	~SialOpsSequential();
 
 	/** implements a global SIAL barrier */
@@ -74,7 +74,7 @@ public:
 
 private:
 
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;

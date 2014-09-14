@@ -22,6 +22,7 @@ namespace sip {
 class IntTable {
 public:
 	IntTable();
+	IntTable(const IntTable&);	// Copy Constructor
 	~IntTable();
 	static void read(IntTable&, setup::InputStream&, setup::SetupReader&);
 
@@ -42,7 +43,8 @@ private:
 	std::vector<int> attributes_; //maps slot to attribute
 	std::map<std::string, int> name_slot_map_;  //maps name to slot
 	std::vector<std::string> slot_name_map_;  //maps slot to name
-	DISALLOW_COPY_AND_ASSIGN(IntTable);
+
+	void operator=(const IntTable&); // Disallow assignment.
 };
 
 } /* namespace sip */

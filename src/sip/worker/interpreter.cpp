@@ -35,7 +35,7 @@ namespace sip {
 Interpreter* Interpreter::global_interpreter;
 
 
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
 		SialPrinter* printer) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
@@ -43,7 +43,7 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 				NULL, sipTables){
 	_init(sipTables);
 }
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
@@ -53,7 +53,7 @@ Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(SipTables& sipTables, SialxTimer& sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
@@ -82,7 +82,7 @@ Interpreter::~Interpreter() {
 	delete tracer_;
 }
 
-void Interpreter::_init(SipTables& sip_tables) {
+void Interpreter::_init(const SipTables& sip_tables) {
 	int num_indices = sip_tables.index_table_.entries_.size();
 	//op_table_ = sipTables.op_table_;
 	pc = 0;
@@ -111,7 +111,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		tracer_->trace(pc, opcode);
 
-
+		SIP_LOG(std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank()
+		                 << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
 
 		switch (opcode) {
 		case goto_op: {
@@ -699,7 +700,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case block_contract_op: {
 			int drank = arg0();
-			index_selector_t& selectors = index_selectors();
+			const index_selector_t& selectors = index_selectors();
 			Block::BlockPtr dblock = get_block_from_instruction('w',true);
 			handle_contraction(drank, selectors, dblock->get_data(),const_cast<segment_size_array_t&>(dblock->shape().segment_sizes_) );
 			++pc;
@@ -714,7 +715,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			Block::BlockPtr dblock = data_manager_.scalar_blocks_[arg1()];
 			double result;
 			segment_size_array_t dummy_dsegment_sizes;
-			handle_contraction(0, index_selectors(), &result, dummy_dsegment_sizes);
+			const index_selector_t& selectors = index_selectors();
+			handle_contraction(0, selectors, &result, dummy_dsegment_sizes);
 			expression_stack_.push(result);
 			++pc;
 		}
@@ -923,18 +925,18 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int ierr = 0;
 	if (num_args == 0) {
 		SpecialInstructionManager::fp0 func =
-				sip_tables_.special_instruction_manager_.get_no_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_no_arg_special_instruction_ptr(
 						func_slot);
 		func(ierr);
 		check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
 	// num_args >= 1.  Set up first argument
 	const std::string signature(
-			sip_tables_.special_instruction_manager_.get_signature(func_slot));
+			sip_tables_.special_instruction_manager().get_signature(func_slot));
 	sip::BlockId block_id0;
 	char intent0 = signature[0];
 	sip::BlockSelector arg_selector0 = block_selector_stack_.top();
@@ -948,14 +950,14 @@ void Interpreter::handle_user_sub_op(int pc) {
 	Block::dataPtr data0 = block0->get_data();
 	if (num_args == 1) {
 		SpecialInstructionManager::fp1 func =
-				sip_tables_.special_instruction_manager_.get_one_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_one_arg_special_instruction_ptr(
 						func_slot);
 		//	typedef void(*fp1)(int& array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
@@ -973,7 +975,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	Block::dataPtr data1 = block1->get_data();
 	if (num_args == 2) {
 		SpecialInstructionManager::fp2 func =
-				sip_tables_.special_instruction_manager_.get_two_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_two_arg_special_instruction_ptr(
 						func_slot);
 
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
@@ -981,7 +983,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				seg_sizes1, data1, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
@@ -999,7 +1001,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	Block::dataPtr data2 = block2->get_data();
 	if (num_args == 3) {
 		SpecialInstructionManager::fp3 func =
-				sip_tables_.special_instruction_manager_.get_three_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_three_arg_special_instruction_ptr(
 						func_slot);
 
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
@@ -1008,7 +1010,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				block2_size, seg_sizes2, data2, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
@@ -1027,7 +1029,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	Block::dataPtr data3 = block3->get_data();
 	if (num_args == 4) {
 		SpecialInstructionManager::fp4 func =
-				sip_tables_.special_instruction_manager_.get_four_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_four_arg_special_instruction_ptr(
 						func_slot);
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, array_id1, rank1, block_id1.index_values_, block1_size,
@@ -1036,7 +1038,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				block_id3.index_values_, block3_size, seg_sizes3, data3, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
@@ -1054,7 +1056,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	Block::dataPtr data4 = block4->get_data();
 	if (num_args == 5) {
 		SpecialInstructionManager::fp5 func =
-				sip_tables_.special_instruction_manager_.get_five_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_five_arg_special_instruction_ptr(
 						func_slot);
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, array_id1, rank1, block_id1.index_values_, block1_size,
@@ -1065,7 +1067,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				seg_sizes4, data4, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
@@ -1083,7 +1085,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	Block::dataPtr data5 = block5->get_data();
 	if (num_args == 6) {
 		SpecialInstructionManager::fp6 func =
-				sip_tables_.special_instruction_manager_.get_six_arg_special_instruction_ptr(
+				sip_tables_.special_instruction_manager().get_six_arg_special_instruction_ptr(
 						func_slot);
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, array_id1, rank1, block_id1.index_values_, block1_size,
@@ -1095,7 +1097,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				block5_size, seg_sizes5, data5, ierr);
 		sip::check(ierr == 0,
 				"error returned from special super instruction"
-						+ sip_tables_.special_instruction_manager_.name(
+						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
 	}
@@ -1104,7 +1106,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 			"Implementation restriction:  At most 6 arguments to a super instruction supported.  This can be increased if necessary");
 }
 
-void Interpreter::handle_contraction(int drank, index_selector_t& dselected_index_ids, double *ddata, segment_size_array_t& dshape) {
+void Interpreter::handle_contraction(int drank, const index_selector_t& dselected_index_ids, double *ddata, segment_size_array_t& dshape) {
 	//using dmitry's notation, i.e. d = l *
 //old CUDA STUFF MOVED TO BOTTOM OF FILE
 

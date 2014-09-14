@@ -84,7 +84,7 @@ public:
 	 *
 	 * @param sipTables
 	 */
-	ContiguousArrayManager(sip::SipTables&, setup::SetupReader&);
+	ContiguousArrayManager(const sip::SipTables&, setup::SetupReader&);
 	~ContiguousArrayManager();
 
 
@@ -204,7 +204,7 @@ private:
 
 	/** map from array slot number to block containing contiguous array */
 	ContiguousArrayMap contiguous_array_map_;
-	sip::SipTables & sip_tables_;
+	const sip::SipTables & sip_tables_;
 	setup::SetupReader & setup_reader_;
 
 

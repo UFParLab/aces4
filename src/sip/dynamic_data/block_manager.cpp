@@ -37,7 +37,7 @@
 namespace sip {
 
 
-BlockManager::BlockManager(SipTables &sip_tables) :
+BlockManager::BlockManager(const SipTables &sip_tables) :
 sip_tables_(sip_tables),
 block_map_(sip_tables.num_arrays()){
 }

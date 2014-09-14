@@ -23,17 +23,18 @@ const int DataManager::undefined_index_value = -1;
 int DataManager::scope_count = 0;
 
 
-DataManager::DataManager(SipTables &sip_tables):
-     sip_tables_(sip_tables),
-     scalar_values_(sip_tables_.scalar_table_), /*initialize scalars from sipTables*/
-	 index_values_(sip_tables_.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-     block_manager_(sip_tables),
-     contiguous_local_array_manager_(sip_tables, block_manager_),
-     scalar_blocks_(sip_tables_.array_table_.entries_.size(),NULL),
-     contiguous_array_manager_(sip_tables_, sip_tables_.setup_reader_)
+DataManager::DataManager(const SipTables &sipTables):
+     sip_tables_(sipTables),
+     scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
+     int_table_(sipTables.int_table_), /* initialize integers from sipTables */
+	 index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
+     block_manager_(sipTables),
+     contiguous_local_array_manager_(sipTables, block_manager_),
+     scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
+     contiguous_array_manager_(sipTables, sipTables.setup_reader_)
         {
-		for (int i = 0; i < sip_tables_.array_table_.entries_.size(); ++i) {
-			if (sip_tables_.is_scalar(i)) {
+		for (int i = 0; i < sipTables.array_table_.entries_.size(); ++i) {
+			if (sipTables.is_scalar(i)) {
 				scalar_blocks_[i] = new Block(scalar_address(i));
 			}
 		}
@@ -93,17 +94,16 @@ int DataManager::int_value(int int_table_slot) const {
 
 int DataManager::int_value(const std::string& name) const{
 	int int_table_slot = sip_tables_.int_table_.slot(name);
-	return sip_tables_.int_table_.value(int_table_slot);
+	return int_table_.value(int_table_slot);
 }
 
-//TODO move dynamic int data to data manager
 void DataManager::set_int_value(std::string& name, int value){
 	int int_table_slot = sip_tables_.int_table_.slot(name);
-	sip_tables_.int_table_.set_value(int_table_slot, value);
+	int_table_.set_value(int_table_slot, value);
 }
 
 void DataManager::set_int_value(int int_table_slot, int value){
-	sip_tables_.int_table_.set_value(int_table_slot, value);
+	int_table_.set_value(int_table_slot, value);
 }
 
 int DataManager::index_value(int index_table_slot) const{

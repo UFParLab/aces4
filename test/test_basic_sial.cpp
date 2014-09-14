@@ -21,7 +21,7 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
-
+#include "rank_distribution.h"
 #include "worker_persistent_array_manager.h"
 
 #include "block.h"
@@ -107,7 +107,7 @@ TEST(SipUnit,contiguous_local_block_id){
 }
 
 
-TEST(BasicSial,contiguous_local){
+TEST(BasicSial,DISABLED_contiguous_local){
 	std::string job("contiguous_local");
 	std::stringstream output;
 	if (attr->global_rank() == 0) {
@@ -1324,6 +1324,22 @@ void bt_sighandler(int signum) {
 	abort();
 }
 
+/**
+ * All workers in rank distribution
+ */
+class AllWorkerRankDistribution : public sip::RankDistribution{
+public:
+	virtual bool is_server(int rank, int size){
+		return false;
+	}
+	virtual int local_server_to_communicate(int rank, int size){
+		return -1;
+	}
+	virtual bool is_local_worker_to_communicate(int rank, int size){
+		return -1;
+	}
+};
+
 int main(int argc, char **argv) {
 
 //    feenableexcept(FE_DIVBYZERO);
@@ -1346,10 +1362,12 @@ int main(int argc, char **argv) {
 				<< std::endl;
 		return -1;
 	}
+	AllWorkerRankDistribution all_workers_rank_dist;
+	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIUtils::set_error_handler();
+#endif
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
-#endif
 	barrier();
 #ifdef HAVE_TAU
 	TAU_PROFILE_SET_NODE(0);
@@ -1360,18 +1378,6 @@ int main(int argc, char **argv) {
 //	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
 //	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 //
-//	int num_procs;
-//	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
-//
-//	if (num_procs < 2){
-//		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
-//		return -1;
-//	}
-//
-//	sip::SIPMPIUtils::set_error_handler();
-//	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
-//
-
 	printf("Running main() from %s\n",__FILE__);
 	testing::InitGoogleTest(&argc, argv);
 	barrier();

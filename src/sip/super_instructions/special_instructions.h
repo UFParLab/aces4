@@ -112,23 +112,23 @@ public:
 	 * @param  index of the desired special super instruction
 	 * @return pointer to function implementing the super instruction
 	 */
-	 fp0 get_no_arg_special_instruction_ptr(int function_slot);
-	 fp1 get_one_arg_special_instruction_ptr(int function_slot);
-	 fp2 get_two_arg_special_instruction_ptr(int function_slot);
-	 fp3 get_three_arg_special_instruction_ptr(int function_slot);
-	 fp4 get_four_arg_special_instruction_ptr(int function_slot);
-	 fp5 get_five_arg_special_instruction_ptr(int function_slot);
-	 fp6 get_six_arg_special_instruction_ptr(int function_slot);
+	 fp0 get_no_arg_special_instruction_ptr(int function_slot) const;
+	 fp1 get_one_arg_special_instruction_ptr(int function_slot) const;
+	 fp2 get_two_arg_special_instruction_ptr(int function_slot) const;
+	 fp3 get_three_arg_special_instruction_ptr(int function_slot) const;
+	 fp4 get_four_arg_special_instruction_ptr(int function_slot) const;
+	 fp5 get_five_arg_special_instruction_ptr(int function_slot) const;
+	 fp6 get_six_arg_special_instruction_ptr(int function_slot) const;
 
 	 /**
 	  * Returns a string containing the signature for the function as declared in the SIAL program.
 	  * The string contains a character for each argument in the SIAL program which is one of 'r', 'w', or 'u' for
 	  * read, write, and update respectively.  The signatures are used for block management.
 	  */
-      const std::string get_signature(int function_slot);
+      const std::string get_signature(int function_slot) const;
 
   	 /** returns the name of the special superinstruction at the given slot */
-  	  std::string name(int procvec_slot);
+  	  std::string name(int procvec_slot) const;
 
 	  friend std::ostream& operator<<(std::ostream&, const SpecialInstructionManager&);
 	  friend class SipTables;
@@ -152,7 +152,7 @@ private:
 	/** returns the address of the special superinstruction at the given slot.
 	 * It is stored as type fp0; if the superinstruction has arguments, this pointer must be cast to the appropriate type.
 	 */
-	fp0 get_instruction_ptr(int function_slot);
+	fp0 get_instruction_ptr(int function_slot) const;
 
 	/** The map from name to function pointer.
 	 * Contains all known super instructions and is initialized in

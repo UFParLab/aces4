@@ -15,7 +15,7 @@ namespace sip {
 
 class Tracer {
 public:
-	Tracer(Interpreter* worker, SipTables& sip_table, std::ostream& out):
+	Tracer(Interpreter* worker, const SipTables& sip_table, std::ostream& out):
 		worker_(worker),
 		sip_tables_(sip_table),
 		out_(out),
@@ -71,7 +71,7 @@ private:
 	bool show_control_stack_;
 	bool show_selector_stack_;
 	bool show_expression_stack_;
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 	Interpreter* worker_;
 	std::ostream& out_;
 	std::vector<int> opcode_histogram_;  //this records the number of times each opcode has been executed

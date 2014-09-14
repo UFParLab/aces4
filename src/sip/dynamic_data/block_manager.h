@@ -33,7 +33,7 @@ public:
 	typedef std::vector<BlockId> BlockList;
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
-	BlockManager(SipTables &sip_tables);
+	BlockManager(const SipTables &sip_tables);
 	~BlockManager();
 
 	void allocate_local(const BlockId&);
@@ -243,7 +243,7 @@ private:
 	 */
 	bool has_wild_slot(const index_selector_t& selector);
 	/** Pointer to static data */
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 
 	/** Map from block id's to blocks */
 	CachedBlockMap block_map_;
@@ -260,7 +260,6 @@ private:
 	friend class SialOpsSequential;
 	friend class SialOpsParallel;
 	friend class ContiguousLocalArrayManager;
-	friend class SialOpsSequential;
 
 
 

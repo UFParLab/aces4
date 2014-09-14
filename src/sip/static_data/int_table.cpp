@@ -12,6 +12,14 @@ namespace sip {
 
 IntTable::IntTable() { /*filled in by calling reader */}
 
+IntTable::IntTable(const IntTable& other):
+		values_ (other.values_),
+		attributes_(other.attributes_),
+		name_slot_map_(other.name_slot_map_),
+		slot_name_map_(other.slot_name_map_)
+		{
+}
+
 IntTable::~IntTable() {}
 
 void IntTable::read(IntTable& intTable, setup::InputStream& siox_file, setup::SetupReader& setup) {

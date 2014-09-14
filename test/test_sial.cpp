@@ -544,10 +544,12 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	sip::SIPMPIUtils::set_error_handler();
+#endif
+
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
-#endif
 	barrier();
+
 #ifdef HAVE_TAU
 	TAU_PROFILE_SET_NODE(0);
 	TAU_STATIC_PHASE_START("SIP Main");

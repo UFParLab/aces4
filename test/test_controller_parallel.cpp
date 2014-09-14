@@ -5,10 +5,12 @@
  *      Author: njindal
  */
 
+
+
 #include "test_controller_parallel.h"
 #include "config.h"
 
-
+#ifdef HAVE_MPI // Only compile if MPI version compiled.
 
 
 #include "gtest/gtest.h"
@@ -68,7 +70,7 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	} else {
 		setup_reader_ = setup::SetupReader::get_empty_reader();
 		progs_ = new std::vector<std::string>();
-		progs_->push_back(job);
+		progs_->push_back(job + ".siox");
 	}
 	if (attr->is_worker())
 		wpam_ = new sip::WorkerPersistentArrayManager();
@@ -210,6 +212,12 @@ double* TestControllerParallel::local_block(const std::string& name,
 #ifdef HAVE_MPI
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
+
+		// Clear out server.
+
+		if (server_ != NULL)
+			delete server_;
+
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
 				spam_);
@@ -250,6 +258,11 @@ bool TestControllerParallel::runServer() {
 bool TestControllerParallel::runWorker() {
 	if (this_test_enabled_) {
 		sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
+
+		// Clear previous worker_ to avoid leak
+		if (worker_ != NULL)
+			delete worker_;
+
 		worker_ = new sip::Interpreter(*sip_tables_, sialx_timers, printer_, wpam_);
 		barrier();
 
@@ -283,4 +296,4 @@ bool TestControllerParallel::runWorker() {
 	return this_test_enabled_;
 }
 
-
+#endif // HAVE_MPI

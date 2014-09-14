@@ -44,26 +44,37 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 		bool expect_success) :
 		job_(job), verbose_(verbose), comment_(comment), sial_output_(
 				sial_output), sip_tables_(NULL), wpam_(NULL), expect_success_(
-				expect_success), worker_(NULL) {
-	barrier();
+				expect_success), worker_(NULL), printer_(NULL),
+				prog_number_(0){
+// 	barrier();
+//	if (has_dot_dat_file) {
+//		barrier();
+//		setup::BinaryInputFile setup_file(job + ".dat");
+//		setup_reader_ = new setup::SetupReader(setup_file);
+//		setup::SetupReader::SialProgList &progs = setup_reader_->sial_prog_list();
+//		std::string prog_name = progs[0];
+//		siox_path = dir_name + prog_name;
+//	} else {
+//		setup_reader_ = setup::SetupReader::get_empty_reader();
+//		std::string prog_name = job_ + ".siox";
+//		siox_path = dir_name + prog_name;
+//		std::cout << "siox_path: " << siox_path << std::endl << std::flush;
+//	}
 	if (has_dot_dat_file) {
-		barrier();
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);
-		setup::SetupReader::SialProgList &progs = setup_reader_->sial_prog_list();
-		std::string prog_name = progs[0];
-		siox_path = dir_name + prog_name;
+		progs_ = &setup_reader_->sial_prog_list();
 	} else {
 		setup_reader_ = setup::SetupReader::get_empty_reader();
-		std::string prog_name = job_ + ".siox";
-		siox_path = dir_name + prog_name;
-		std::cout << "siox_path: " << siox_path << std::endl << std::flush;
+		progs_ = new std::vector<std::string>();
+		progs_->push_back(job + ".siox");
 	}
+	wpam_ = new sip::WorkerPersistentArrayManager();
 	if (verbose) {
 		std::cout << "**************** STARTING TEST " << job_
 				<< " ***********************!!!\n" << std::flush;
 	}
-	barrier();
+//	barrier();
 }
 
 
@@ -87,25 +98,50 @@ sip::IntTable* TestController::int_table() {
 	return &(sip_tables_->int_table_);
 }
 
-void TestController::initSipTables() {
-	barrier();
+void TestController::initSipTables(const std::string& sial_dir_name) {
+//	barrier();
+//	setup::BinaryInputFile siox_file(siox_path);
+//	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
+//	if (verbose_) {
+//		//rank 0 prints and .siox files contents
+//		if (attr->global_rank() == 0) {
+//			std::cout << "JOBNAME = " << job_ << std::endl << std::flush;
+//			std::cout << "SETUP READER DATA:\n" << *setup_reader_ << std::endl
+//					<< std::flush;
+//			std::cout << "SIP TABLES" << '\n' << *sip_tables_ << std::endl
+//					<< std::flush;
+//			std::cout << comment_ << std::endl << std::flush;
+//		}
+//	}
+//	printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(),
+//			*sip_tables_);
+//	barrier();
+	prog_name_ = progs_->at(prog_number_++);
+	sip::GlobalState::set_program_name(prog_name_);
+	sip::GlobalState::increment_program();
+	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
+	if (!sip_tables_) delete sip_tables_;
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
 	if (verbose_) {
 		//rank 0 prints and .siox files contents
 		if (attr->global_rank() == 0) {
-			std::cout << "JOBNAME = " << job_ << std::endl << std::flush;
-			std::cout << "SETUP READER DATA:\n" << *setup_reader_ << std::endl
-					<< std::flush;
+			std::cout << "JOBNAME = " << job_ << ", PROGRAM NAME = " << prog_name_ << std::endl << std::flush;
+			std::cout << "SETUP READER DATA:\n" << *setup_reader_
+			<< std::endl << std::flush;
 			std::cout << "SIP TABLES" << '\n' << *sip_tables_ << std::endl
-					<< std::flush;
+			<< std::flush;
 			std::cout << comment_ << std::endl << std::flush;
 		}
 	}
-	printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(),
-			*sip_tables_);
-	barrier();
+	printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(), *sip_tables_);
+//	barrier();
 }
+
+void TestController::run() {
+	runWorker();
+}
+
 
 int TestController::int_value(const std::string& name) {
 	try {
@@ -160,10 +196,14 @@ double* TestController::local_block(const std::string& name,
 	}
 }
 
+
 void TestController::runWorker() {
+	// Clear previous worker_ to avoid leak
+	if (worker_ != NULL)
+		delete worker_;
 	sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
-	worker_ = new sip::Interpreter(*sip_tables_, sialx_timers, printer_);
-	barrier();
+	worker_ = new sip::Interpreter(*sip_tables_, sialx_timers, printer_, wpam_);
+//	barrier();
 	if (verbose_)
 		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
 				<< " STARTING" << std::endl << std::flush;
@@ -184,7 +224,8 @@ void TestController::runWorker() {
 		std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 				<< job_ << " TERMINATED" << std::endl << std::flush;
 	}
-	barrier();
+//	barrier();
+	wpam_->save_marked_arrays(worker_);
 
 }
 

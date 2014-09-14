@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 
 
 
-ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
+ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 		setup::SetupReader& setup_reader) :
 		sip_tables_(sip_tables), setup_reader_(setup_reader) {
 	//create static arrays in sial program.  All static arrays are allocated a startup

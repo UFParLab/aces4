@@ -49,9 +49,9 @@ class Interpreter {
 public:
 
 
-	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	Interpreter(SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(SipTables&, SialxTimer&, SialPrinter* printer);
+	Interpreter(const SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(const SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(const SipTables&, SialxTimer&, SialPrinter* printer);
 	~Interpreter();
 
 	/** Static pointer to the current Interpreter.  This is
@@ -84,7 +84,7 @@ public:
 		return sip_tables_.is_scalar(array_table_slot);
 	}
 	int int_value(int int_table_slot) {
-		return sip_tables_.int_value(int_table_slot);
+		return data_manager_.int_table_.value(int_table_slot);
 	}
 	void set_int_value(int int_table_slot, int value){
 		data_manager_.set_int_value(int_table_slot, value);
@@ -176,7 +176,7 @@ public:
 	int arg0(){ return op_table_.arg0(pc); }
 	int arg1(){ return op_table_.arg1(pc); }
 	int arg2(){ return op_table_.arg2(pc); }
-    sip::index_selector_t& index_selectors(){return op_table_.index_selectors(pc);}
+    const sip::index_selector_t& index_selectors(){return op_table_.index_selectors(pc);}
 
 	/**
 	 * Returns the line number in the SIAL program corresponding to the
@@ -231,7 +231,7 @@ public:
 
 private:
 	//static data
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 
 	//dynamic data
 	DataManager data_manager_;
@@ -247,7 +247,7 @@ private:
 	 * Called by constructor
 	 * @param
 	 */
-	void _init(SipTables&);
+	void _init(const SipTables&);
 
 	/** main interpreter procedure */
 	void interpret(int pc_start, int pc_end);
@@ -258,7 +258,7 @@ private:
 	/** collects performance information per SIALX line **/
 	void timer_trace(int pc, opcode_t opcode);
 
-	OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
+	const OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 	/**
 	 * Timer manager
 	 */
@@ -342,8 +342,8 @@ private:
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
 //	void handle_assignment_op(int pc);
-	void handle_contraction(int drank, index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
-	void handle_contraction(int drank, index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
+	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
+	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
 	void handle_contraction_op(int pc);
 //	void handle_where_op(int pc);
 //	bool evaluate_where_clause(int pc);

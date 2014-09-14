@@ -54,7 +54,7 @@ public:
 		return entries_.at(pc).arg0;
 	}
 
-	int arg1(int pc){
+	int arg1(int pc) const{
 		return entries_.at(pc).arg1;
 	}
 
@@ -62,7 +62,7 @@ public:
 		return entries_.at(pc).arg2;
 	}
 
-    sip::index_selector_t& index_selectors(int pc){
+    const sip::index_selector_t& index_selectors(int pc) const{
     	return entries_.at(pc).selector;
     }
 

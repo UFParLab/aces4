@@ -107,8 +107,12 @@ int SipTables::num_arrays() const{
 	return array_table_.entries_.size();
 }
 
-int SipTables::int_value(int int_table_slot) const {
-	return int_table_.value(int_table_slot);
+//int SipTables::int_value(int int_table_slot) const {
+//	return int_table_.value(int_table_slot);
+//}
+
+std::string SipTables::int_name(int int_table_slot) const {
+	return int_table_.name(int_table_slot);
 }
 
 std::string SipTables::string_literal(int slot) const {

@@ -26,7 +26,7 @@ public:
 	//beyond SIAL programs.
 	SialOpsParallel(DataManager &,
 			WorkerPersistentArrayManager*,
-			SipTables&);
+			const SipTables&);
 	~SialOpsParallel();
 
 	/** implements a global SIAL barrier */
@@ -81,7 +81,7 @@ public:
 
 private:
 
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 	SIPMPIAttr & sip_mpi_attr_;
 	DataManager& data_manager_;
 	BlockManager& block_manager_;

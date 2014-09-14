@@ -51,7 +51,7 @@ private:
 
 class DoLoop:public LoopManager {
 public:
-	DoLoop(int index_id, DataManager & data_manager, SipTables & sip_tables);
+	DoLoop(int index_id, DataManager & data_manager, const SipTables & sip_tables);
 	virtual ~DoLoop();
 	friend std::ostream& operator<<(std::ostream&, const DoLoop &);
 protected:
@@ -61,7 +61,7 @@ protected:
 	int upper_bound_;  // first_segment_ <= current_value_ < upper_bound
 
 	DataManager & data_manager_;
-	SipTables & sip_tables_;
+	const SipTables & sip_tables_;
 
 	virtual std::string to_string() const;
 private:
@@ -73,7 +73,7 @@ private:
 
 class SubindexDoLoop:public DoLoop {
 public:
-	SubindexDoLoop(int subindex_id, DataManager & data_manager, SipTables & sip_tables);
+	SubindexDoLoop(int subindex_id, DataManager & data_manager, const SipTables & sip_tables);
 	virtual ~SubindexDoLoop();
 	friend std::ostream& operator<<(std::ostream&, const SubindexDoLoop &);
 private:
@@ -84,7 +84,7 @@ private:
 };
 class SequentialPardoLoop: public LoopManager{
 public:
-	SequentialPardoLoop(int num_indices, const int (&index_ids)[MAX_RANK], DataManager & data_manager, SipTables & sip_tables);
+	SequentialPardoLoop(int num_indices, const int (&index_ids)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables);
 	virtual ~SequentialPardoLoop();
 	friend std::ostream& operator<<(std::ostream&, const SequentialPardoLoop &);
 private:
@@ -98,7 +98,7 @@ private:
     sip::index_value_array_t upper_bound_;
 
     DataManager & data_manager_;
-    SipTables & sip_tables_;
+    const SipTables & sip_tables_;
 
 	DISALLOW_COPY_AND_ASSIGN(SequentialPardoLoop);
 };
@@ -106,7 +106,7 @@ private:
 #ifdef HAVE_MPI
 class StaticTaskAllocParallelPardoLoop: public LoopManager{
 public:
-	StaticTaskAllocParallelPardoLoop(int num_indices, const int (&index_ids)[MAX_RANK], DataManager & data_manager, SipTables & sip_tables,
+	StaticTaskAllocParallelPardoLoop(int num_indices, const int (&index_ids)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
 			SIPMPIAttr& sip_mpi_attr);
 	virtual ~StaticTaskAllocParallelPardoLoop();
 	friend std::ostream& operator<<(std::ostream&, const StaticTaskAllocParallelPardoLoop &);
@@ -122,7 +122,7 @@ private:
     sip::index_value_array_t upper_bound_;
 
     DataManager & data_manager_;
-    SipTables & sip_tables_;
+    const SipTables & sip_tables_;
     SIPMPIAttr & sip_mpi_attr_;
 
 	DISALLOW_COPY_AND_ASSIGN(StaticTaskAllocParallelPardoLoop);

@@ -84,8 +84,8 @@ public:
 	int num_arrays() const;
 
 //int (symbolic constants)
-	int int_value(int int_table_slot) const;
-	std::string int_name(int int_table_slot){return int_table_.name(int_table_slot);}
+	//int int_value(int int_table_slot) const;
+	std::string int_name(int int_table_slot) const;
 
 // strint literals
 	std::string string_literal(int slot) const;
@@ -150,6 +150,7 @@ public:
 	int parent_index(int subindex_slot) const;
 
 //special instructions
+	const SpecialInstructionManager& special_instruction_manager() const { return special_instruction_manager_ ;}
 	std::string special_instruction_name(int func_slot);
 //	SpecialInstructionManager::fp0 zero_arg_special_instruction(int func_slot) const;
 //	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
@@ -181,7 +182,7 @@ private:
 	ArrayTable array_table_;
 	IndexTable index_table_;
 	ScalarTable scalar_table_;  //only used for initialization, dynamic value held in data manager
-	IntTable int_table_;  //currently these are all predefined
+	IntTable int_table_;  		//currently these are all predefined
 	StringLiteralTable string_literal_table_;
 	SpecialInstructionManager special_instruction_manager_;
 	SioxReader siox_reader_;

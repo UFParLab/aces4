@@ -14,7 +14,7 @@ namespace sip {
 
 SialOpsSequential::SialOpsSequential(DataManager & data_manager,
 		WorkerPersistentArrayManager* persistent_array_manager,
-		SipTables &sip_tables):
+		const SipTables &sip_tables):
 		sip_tables_(sip_tables),
 		data_manager_(data_manager),
 		block_manager_(data_manager.block_manager_),

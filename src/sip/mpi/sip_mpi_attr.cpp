@@ -18,22 +18,45 @@
 namespace sip {
 
 SIPMPIAttr* SIPMPIAttr::instance_ = NULL;
+RankDistribution* SIPMPIAttr::rank_distribution_ = NULL;
 bool SIPMPIAttr::destroyed_ = false;
 
+/**
+ * Gets instance of Sip attributes.
+ * The default rank distribution is 2 workers : 1 server.
+ * To change this, use the overloaded get_instance method.
+ */
 SIPMPIAttr& SIPMPIAttr::get_instance() {
 	if (destroyed_)
 		sip::fail("SIPMPIAttr instance has been destroyed !");
-	if (instance_ == NULL)
-		instance_ = new SIPMPIAttr();
+	if (instance_ == NULL){
+		rank_distribution_ = new TwoWorkerOneServerRankDistribution();
+		instance_ = new SIPMPIAttr(*rank_distribution_);
+	}
 	return *instance_;
 }
 
+/**
+ * Sets and gets the instance of Sip attributes.
+ * Must only be called once and before all other methods in SIPMPIAttr
+ */
+void SIPMPIAttr::set_rank_distribution(RankDistribution *rank_dist) {
+	if (destroyed_)
+		sip::fail("SIPMPIAttr instance has been destroyed !");
+	if (rank_distribution_ != NULL){
+		fail("RankDistribution instance was already set previously !");
+	}
+	rank_distribution_ = rank_dist;
+}
+
+
 void SIPMPIAttr::cleanup() {
 	delete instance_;
+	delete rank_distribution_;
 	destroyed_ = true;
 }
 
-SIPMPIAttr::SIPMPIAttr() {
+SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution) {
 	SIPMPIUtils::check_err(MPI_Comm_rank(MPI_COMM_WORLD, &global_rank_));
 	SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &global_size_));
 
@@ -49,7 +72,7 @@ SIPMPIAttr::SIPMPIAttr() {
 	int w=0, s=0;
 
 	for (int i=0; i<global_size_; i++){
-		if (sip::RankDistribution::is_server(i, global_size_)){
+		if (rank_distribution.is_server(i, global_size_)){
 			server_ranks[s++] = i;
 			servers_.push_back(i);
 		} else {
@@ -78,7 +101,7 @@ SIPMPIAttr::SIPMPIAttr() {
 	SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, server_group, &server_comm_));
 	SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, worker_group, &worker_comm_));
 
-	is_server_ = sip::RankDistribution::is_server(global_rank_, global_size_);
+	is_server_ = rank_distribution.is_server(global_rank_, global_size_);
 
 	if (is_server_){
 		company_comm_ = server_comm_;
@@ -99,8 +122,8 @@ SIPMPIAttr::SIPMPIAttr() {
 	delete [] worker_ranks;
 	delete [] server_ranks;
 
-	if (RankDistribution::is_local_worker_to_communicate(global_rank_, global_size_))
-		my_server_ = RankDistribution::local_server_to_communicate(global_rank_, global_size_);
+	if (rank_distribution.is_local_worker_to_communicate(global_rank_, global_size_))
+		my_server_ = rank_distribution.local_server_to_communicate(global_rank_, global_size_);
 	else my_server_ =  -1;
 
 }
@@ -156,11 +179,17 @@ namespace sip{
 SIPMPIAttr* SIPMPIAttr::instance_ = NULL;
 bool SIPMPIAttr::destroyed_ = false;
 
+/**
+ * Gets instance of Sip attributes.
+ * The default rank distribution is 2 workers : 1 server.
+ * To change this, use the overloaded get_instance method.
+ */
 SIPMPIAttr& SIPMPIAttr::get_instance() {
 	if (destroyed_)
 		sip::fail("SIPMPIAttr instance has been destroyed !");
-	if (instance_ == NULL)
+	if (instance_ == NULL){
 		instance_ = new SIPMPIAttr();
+	}
 	return *instance_;
 }
 
