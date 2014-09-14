@@ -476,7 +476,12 @@ set(SIAL_FILES
     src/sialx/qm/rccsdpt_aaa_defs.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab_defs.sialx;
-    src/sialx/qm/rccsdpt_aab.sialx)
+    src/sialx/qm/rccsdpt_aab.sialx;
+    src/sialx/qm/cis_rhf.sialx;
+    src/sialx/qm/cis_rhf_defs.sialx;
+    src/sialx/qm/cis_d_rhf.sialx;
+    src/sialx/qm/rccsd_rhf_defs.sialx)
+    #src/sialx/qm/rcis_ccpt2_rhf.sialx;
 
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)

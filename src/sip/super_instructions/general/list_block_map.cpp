@@ -17,7 +17,7 @@
 
 void list_block_map(){
    std::cout <<"LISTING CURRENT BLOCKS" << std::endl;
-   std::cout <<  sip::Interpreter::global_interpreter->data_manager_.block_manager_;
+   std::cout <<  sip::Interpreter::global_interpreter->data_manager().block_manager();
    std::cout << std::endl;
 
 }

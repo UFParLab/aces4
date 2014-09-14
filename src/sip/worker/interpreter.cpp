@@ -1093,7 +1093,7 @@ void Interpreter::handle_contraction_op(int pc) {
 	int contraction_pattern[MAX_RANK * 2];
 	int ierr;
 
-	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
+	get_contraction_ptrn_(drank, lrank, rrank, &aces_pattern[0], //replace c++11 aces_pattern.data(),
 			contraction_pattern, ierr);
 	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
 			line_number());

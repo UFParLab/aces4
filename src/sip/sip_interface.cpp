@@ -50,7 +50,7 @@ void set_scalar_value(const char * name, double value) {
  * @return Value of the constant
  */
 double scalar_constant(const char*cname) {
-	return sip::Interpreter::global_interpreter->sip_tables_.setup_reader().predefined_scalar_map_.at(
+	return sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_scalar(
 			std::string(cname));
 }
 
@@ -60,7 +60,7 @@ double scalar_constant(const char*cname) {
  * @return Value of the constant
  */
 int int_constant(const char*cname) {
-	return sip::Interpreter::global_interpreter->sip_tables_.setup_reader().predefined_int_map_.at(
+	return sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_int(
 			std::string(cname));
 }
 
@@ -77,12 +77,12 @@ void predefined_scalar_array(const char*aname, int& num_dims, int **dims,
 		double **values) {
 	try {
 //		std::pair<int, std::pair<int *, double *> > a =
-//				sip::Interpreter::global_interpreter->sip_tables_.setup_reader().predef_arr_.at(
+//				sip::Interpreter::global_interpreter->sip_tables().setup_reader().predef_arr_.at(
 //						std::string(aname));
 //		num_dims = a.first;
 //		*dims = a.second.first;
 //		*values = a.second.second;
-		std::pair<int,sip::Block::BlockPtr> rankblock = sip::Interpreter::global_interpreter->sip_tables_.setup_reader().name_to_predefined_contiguous_array_map_.at(std::string(aname));
+		setup::PredefContigArray rankblock = sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_contiguous_array(std::string(aname));
 		num_dims = rankblock.first;
 		sip::Block::BlockPtr block = rankblock.second;
 		*dims = const_cast<sip::segment_size_array_t&>(block->shape().segment_sizes_);
@@ -130,13 +130,12 @@ void delete_integer_scratch_array(int **array){
 void predefined_int_array(const char*aname, int& num_dims, int **dims,
 		int **values) {
 	try {
-		std::pair<int, std::pair<int *, int *> > &a =
-				sip::Interpreter::global_interpreter->sip_tables_.setup_reader().predef_int_arr_.at(
-						std::string(aname));
+		setup::PredefIntArray a =
+				sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_integer_array(std::string(aname));
 		//std::cout << "aname= " << aname << ", a=" << a.first << std::endl;
-		num_dims = a.first;
-		*dims = a.second.first;
-		*values = a.second.second;
+		num_dims = a.rank;
+		*dims = a.dims;
+		*values = a.data;
         /*
 		std::cout << num_dims << "," << *dims << "," << *values << std::endl;
         std::cout<<"Dims :"<<std::endl;

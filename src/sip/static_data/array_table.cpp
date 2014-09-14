@@ -87,6 +87,15 @@ void ArrayTable::init(setup::InputStream &file) {
 //	}
 //}
 
+int ArrayTable::array_slot(const std::string & name) const {
+	std::map<std::string, int>::const_iterator it = array_name_slot_map_.find(name);
+	if (it == array_name_slot_map_.end()){
+		throw std::out_of_range("Could not find array with name : " + name);
+	}
+	return it->second;
+
+}
+
 std::ostream& operator<<(std::ostream& os, const ArrayTable& arrayTableObj) {
 	std::vector<ArrayTableEntry> local = arrayTableObj.entries_;
 	std::vector<ArrayTableEntry>::iterator it;

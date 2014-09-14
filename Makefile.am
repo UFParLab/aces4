@@ -378,6 +378,10 @@ SIOX_FILES=\
 ./src/sialx/qm/frag_2order_corr.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
+./src/sialx/qm/cis_rhf.siox\
+./src/sialx/qm/cis_rhf_defs.siox\
+./src/sialx/qm/cis_d_rhf.siox\
+./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
@@ -386,6 +390,7 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab_defs.siox\
 ./src/sialx/qm/rccsdpt_aab.siox
+#./src/sialx/qm/rcis_ccpt2_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -465,6 +470,11 @@ EXTRA_DIST += \
 ./src/sialx/qm/frag_2order_corr.sialx\
 ./src/sialx/qm/trans_frag_defs.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
+./src/sialx/qm/cis_rhf.sialx\
+./src/sialx/qm/cis_rhf_defs.sialx\
+./src/sialx/qm/cis_d_rhf.sialx\
+./src/sialx/qm/rcis_ccpt2_rhf.sialx\
+./src/sialx/qm/rccsd_rhf_defs.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\
 ./src/sialx/qm/tran_rhf_no4v_defs.sialx\
 ./src/sialx/qm/rccsd_rhf.sialx\

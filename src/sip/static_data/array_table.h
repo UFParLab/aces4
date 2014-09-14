@@ -11,6 +11,7 @@
 
 #include <map>
 #include <vector>
+#include <stdexcept>
 #include "aces_defs.h"
 #include "array_constants.h"
 #include "io_utils.h"
@@ -103,12 +104,11 @@ public:
 	 */
 	std::string array_name(int array_slot) const {return entries_.at(array_slot).name_;}
 
-	/** Inlined function
-	 *
+	/**
 	 * @param name
 	 * @return slot number in array table of array with given name
 	 */
-    int array_slot(const std::string & name) const {return array_name_slot_map_.at(name);}
+    int array_slot(const std::string & name) const;
 
     /** Inlined function
      *
