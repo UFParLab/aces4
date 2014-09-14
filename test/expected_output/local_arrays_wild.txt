@@ -1,0 +1,87 @@
+12:  i=1
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+0:[1,1,1,1,1,1] size=4 [0...0]
+0:[1,2,1,1,1,1] size=6 [0...0]
+
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+
+18:  j=1
+22:  printing 4 of 4 elements of block b[1,1] in the order stored in memory 
+             1              1 
+             1              1 
+12:  i=2
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+0:[1,1,1,1,1,1] size=4 [1...1]
+0:[1,2,1,1,1,1] size=6 [0...0]
+0:[2,1,1,1,1,1] size=6 [0...0]
+0:[2,2,1,1,1,1] size=9 [0...0]
+
+1:[1,1,1,1,1,1] size=4 [1...1]
+
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+
+18:  j=2
+22:  printing 9 of 9 elements of block b[2,2] in the order stored in memory 
+             2              2              2 
+             2              2              2 
+             2              2              2 
+block map before deallocates:
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+0:[1,1,1,1,1,1] size=4 [1...1]
+0:[1,2,1,1,1,1] size=6 [0...0]
+0:[2,1,1,1,1,1] size=6 [0...0]
+0:[2,2,1,1,1,1] size=9 [2...2]
+
+1:[1,1,1,1,1,1] size=4 [1...1]
+1:[2,2,1,1,1,1] size=9 [2...2]
+
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+32:  printing 4 of 4 elements of block a[1,1] in the order stored in memory 
+             1              1 
+             1              1 
+32:  printing 6 of 6 elements of block a[1,2] in the order stored in memory 
+             0              0 
+             0              0 
+             0              0 
+32:  printing 6 of 6 elements of block a[2,1] in the order stored in memory 
+             0              0              0 
+             0              0              0 
+32:  printing 9 of 9 elements of block a[2,2] in the order stored in memory 
+             2              2              2 
+             2              2              2 
+             2              2              2 
+block map after deallocates:
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+1:[1,1,1,1,1,1] size=4 [1...1]
+1:[2,2,1,1,1,1] size=9 [2...2]
+
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+end of local_arrays

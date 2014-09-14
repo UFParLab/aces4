@@ -18,7 +18,11 @@
 #include "block.h"
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
+#include "contiguous_local_array_manager.h"
 #include "special_instructions.h"
+
+class TestControllerParallel;
+class TestController;
 
 namespace sip {
 class SialOpsParallel;
@@ -32,7 +36,7 @@ public:
 	typedef std::vector<Block::BlockPtr>  ScalarBlockTable;
 
 
-	DataManager(SipTables &sip_tables);
+	DataManager(const SipTables &sip_tables);
 
 
 
@@ -46,8 +50,11 @@ public:
 	void set_scalar_value(const std::string& name, double value);
 	sip::Block::BlockPtr get_scalar_block(int array_table_slot);
 
-	//for ints (aces symbolic constants)
+	//for ints
 	int int_value(int int_table_slot) const;
+	int int_value(const std::string& name) const;
+	void set_int_value(std::string& name, int value);
+	void set_int_value(int int_table_slot, int value);
 
     //for indices
 	int index_value(int index_table_slot) const;
@@ -81,24 +88,32 @@ public:
 	void enter_scope();
 	void leave_scope();
 
+
+	//immutable data for convenience
 	const BlockManager& block_manager() const { return block_manager_; }	// For printing
 
+
 private:
-	//immutable data for convenience
-	SipTables& sip_tables_;
+
 
 	//dynamic state
 	std::vector<int> index_values_; //maps index_table id's into current value of the represented index.  undefined_index_value if not defined.
 	ScalarTable scalar_values_; //scalar values, initialized from "scalar table" read from siox file
 	ScalarBlockTable scalar_blocks_; //blocks wrapped around pointers to scalars.
+	IntTable int_table_;	// int values, initialized from "int table" read from siox file.
 
 	BlockManager block_manager_;
 	ContiguousArrayManager contiguous_array_manager_;
+	ContiguousLocalArrayManager contiguous_local_array_manager_;  //this shares the map with block_manager_
 
+	//immutable data for convenience
+	const SipTables& sip_tables_;
 
 	friend class Interpreter;
 	friend class SialOpsParallel;
 	friend class SialOpsSequential;
+	friend class ::TestControllerParallel;
+	friend class ::TestController;
 
 	DISALLOW_COPY_AND_ASSIGN(DataManager);
 };

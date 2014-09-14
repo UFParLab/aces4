@@ -13,9 +13,9 @@
 #include "setup_reader.h"
 #include "global_state.h"
 
-#ifdef HAVE_MPI
+
 #include "sip_mpi_attr.h"
-#endif
+
 
 namespace sip {
 
@@ -42,17 +42,17 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 	}
 	os << "]" << std::endl;
 	os << "target contiguous_block_ :" << std::endl;
-	os << *obj.contiguous_block_ << std::endl;
+	if (obj.contiguous_block_ == NULL) os << "NULL" << std::endl;
+	else os <<  *obj.contiguous_block_  << std::endl;
 	os << "source block " << std::endl;
-	os << *obj.block_;
-	bool done_;
-	os << "contiguous_array_map_:" << std::endl;
+	if (obj.block_ == NULL) os << "NULL" << std::endl;
+	else os << *obj.block_;
 	return os;
 }
 
 
 
-ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
+ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 		setup::SetupReader& setup_reader) :
 		sip_tables_(sip_tables), setup_reader_(setup_reader) {
 	//create static arrays in sial program.  All static arrays are allocated a startup

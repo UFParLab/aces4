@@ -25,9 +25,9 @@ predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
 
 #these are predefined in the index table         
-moaindex aces_defs_pa = baocc, eavirt  
-mobindex aces_defs_pb = bbocc, ebvirt   
-aoindex aces_defs_mu = 1, norb  
+moaindex aces_defs_pa = baocc: eavirt  
+mobindex aces_defs_pb = bbocc: ebvirt   
+aoindex aces_defs_mu = 1: norb  
 
 predefined scalar eom_tol
 predefined int eom_roots

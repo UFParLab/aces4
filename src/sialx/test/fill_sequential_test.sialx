@@ -4,24 +4,24 @@ sial fill_sequential_test
 	special fill_block_sequential wr
 	special print_block r
 	
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	local a(i,j)
-	local b(j,i)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	local b[j,i]
 	
 	do i
 		do j
-			execute fill_block_sequential a(i,j) 2.0
-			b(j,i) = a(i,j)
-			execute print_block b(j,i)
+			execute fill_block_sequential a[i,j] 2.0
+			b[j,i] = a[i,j]
+			print b[j,i]
 		enddo j
 	enddo i
 	
 	do i
 		do j
-			execute fill_block_sequential a(i,j) 2.0
-			b(j,i) = a(i,j)
-			execute print_block b(j,i)
+			execute fill_block_sequential a[i,j] 2.0
+			b[j,i] = a[i,j]
+			print b[j,i]
 		enddo j
 	enddo i
 	

@@ -34,6 +34,16 @@ public:
 	 */
 	Block* block(const BlockId& block_id);
 
+	/** Looks for a block that encloses the block_id.
+	 *
+	 * @param [in] block_id id of input block
+	 * @param [out] enclosing_id  If an enclosing block is found, this is set to its id
+	 * @return pointer to enclosing block, or NULL if no enclosing block is found.
+	 */
+	Block* enclosing_contiguous(const BlockId& block_id, BlockId& enclosing_id) const {
+		return block_map_.enclosing_contiguous(block_id, enclosing_id);
+	}
+
 	/**
 	 * Inserts given block in the IdBlockMap.
 	 * It is a fatal error to insert a block that already exists.
@@ -88,6 +98,14 @@ public:
 	/** Sets max_allocatable_bytes_ */
     void set_max_allocatable_bytes(std::size_t size);
 	void free_up_bytes_in_cache(std::size_t block_size);
+
+	/**
+	 * Returns total number of blocks in the active map + cached mape.  Used for testing.
+	 * @return
+	 */
+	std::size_t total_blocks(){
+		return block_map_.total_blocks() + cache_.total_blocks();
+	}
 
 private:
 

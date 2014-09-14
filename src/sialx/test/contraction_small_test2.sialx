@@ -6,23 +6,23 @@ sial contraction_small
 	predefined int baocc
 	predefined int eaocc
 	
-	aoindex mu = 1,1
-	aoindex lambda = 1,1
-	moaindex a1 = bavirt, eavirt
-    moaindex i = baocc, eaocc
-    moaindex i1= baocc, eaocc
+	aoindex mu = 1:1
+	aoindex lambda = 1:1
+	moaindex a1 = bavirt: eavirt
+    moaindex i = baocc: eaocc
+    moaindex i1= baocc: eaocc
 	
-	temp a(mu,i1,i,lambda)
-	temp b(lambda,a1)
-	local c(mu,i1,a1,i)
+	temp a[mu,i1,i,lambda]
+	temp b[lambda,a1]
+	local c[mu,i1,a1,i]
 
 	
 	do lambda
 		do a1
 
-			execute fill_block_cyclic b(lambda,a1) 1.0
+			execute fill_block_cyclic b[lambda,a1] 1.0
 			#b(lambda,a1) = 2.0
-			execute print_block b(lambda,a1)
+			print b[lambda,a1]
 			
 			do i
 				do i1
@@ -30,25 +30,25 @@ sial contraction_small
 						
 					#gpu_on
 					
-						allocate c(mu,i1,a1,i)
+						allocate c[mu,i1,a1,i]
 						
-						execute fill_block_cyclic a(mu,i1,i,lambda) 1.0	
+						execute fill_block_cyclic a[mu,i1,i,lambda] 1.0	
 						#a(mu,i1,lambda,i) = 2.0			
-						execute print_block  a(mu,i1,i,lambda)
+						print  a[mu,i1,i,lambda]
 					
                         
                         gpu_on
-						c(mu,i1,a1,i) = b(lambda,a1) * a(mu,i1,i,lambda)
-						execute print_block c(mu,i1,a1,i)
+						c[mu,i1,a1,i] = b[lambda,a1] * a[mu,i1,i,lambda]
+						print c[mu,i1,a1,i]
                         gpu_off
 
-                        c(mu,i1,a1,i) = 0.0
-						c(mu,i1,a1,i) = b(lambda,a1) * a(mu,i1,i,lambda)
-						execute print_block c(mu,i1,a1,i)
+                        c[mu,i1,a1,i] = 0.0
+						c[mu,i1,a1,i] = b[lambda,a1] * a[mu,i1,i,lambda]
+						print c[mu,i1,a1,i]
 
                         #c(mu,i1,a1,i) = 0.0
 						#c(mu,i1,a1,i) = a(mu,i1,i,lambda)*b(lambda,a1)
-						#execute print_block c(mu,i1,a1,i)
+						#print c(mu,i1,a1,i)
 						
 						
 					#gpu_off 

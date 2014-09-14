@@ -6,28 +6,28 @@ sial transpose_tmp
 	predefined int eavirt
 	special fill_block_sequential wr
 	special print_block r
-	moaindex l = baocc,eaocc
-	moaindex j = baocc,eaocc
-	moaindex k = bavirt,eavirt
-	moaindex i = bavirt,eavirt
-	temp a(i,j,k,l)
-	local b(k,j,i,l)
+	moaindex l = baocc:eaocc
+	moaindex j = baocc:eaocc
+	moaindex k = bavirt:eavirt
+	moaindex i = bavirt:eavirt
+	temp a[i,j,k,l]
+	local b[k,j,i,l]
 	
-	allocate b(*,*,*,*)
+	allocate b[*,*,*,*]
 	
 	do i
-	   print_index i
+	   print i
 		do j
-		    print_index j
+		    print j
 			do k
-				print_index k
+				print k
 				do l
-					print_index l
+					print l
 					#allocate b(k,j,i,l)
-					execute fill_block_sequential a(i,j,k,l) 53.0
-					execute print_block a(i,j,k,l)
-					b(k,j,i,l) = a(i,j,k,l)
-					execute print_block b(k,j,i,l)
+					execute fill_block_sequential a[i,j,k,l] 53.0
+					print a[i,j,k,l]
+					b[k,j,i,l] = a[i,j,k,l]
+					print b[k,j,i,l]
 				enddo l
 			enddo k
 		enddo j

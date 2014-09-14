@@ -46,157 +46,157 @@ import "scf_defs.sialx"
 # --------------- 
 #
 #
-      index   kiter  = 1, scf_iter  
-      index   kbeg   = 1, scf_beg
-      index   korder = 1, scf_hist
-      index   kptr1  = 1, 2
-      index   kptr2  = 1, 2
-      index   kone   = 1, 1
-      index   kdiis  = 1, 30 
-      index   d1     = 1, 30 
-      index   d2     = 1, 30 
-      index   d3     = 1, 30 
-      index   d4     = 1, 30 
-      index   iiter1 = 1, 1
-      index   jjter1 = 1, 1
-      index   jjter2 = 2, 2
+      index   kiter  = 1: scf_iter  
+      index   kbeg   = 1: scf_beg
+      index   korder = 1: scf_hist
+      index   kptr1  = 1: 2
+      index   kptr2  = 1: 2
+      index   kone   = 1: 1
+      index   kdiis  = 1: 30 
+      index   d1     = 1: 30 
+      index   d2     = 1: 30 
+      index   d3     = 1: 30 
+      index   d4     = 1: 30 
+      index   iiter1 = 1: 1
+      index   jjter1 = 1: 1
+      index   jjter2 = 2: 2
 #
-      aoindex mu     = 1, norb
-      aoindex nu     = 1, norb
-      aoindex lambda = 1, norb
-      aoindex sigma  = 1, norb
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
 #
-      moaindex i = baocc, eaocc
-      moaindex i1= baocc, eaocc
-      moaindex i2= baocc, eaocc
-      moaindex i3= baocc, eaocc
+      moaindex i = baocc: eaocc
+      moaindex i1= baocc: eaocc
+      moaindex i2= baocc: eaocc
+      moaindex i3= baocc: eaocc
 #
-      moaindex a = bavirt, eavirt
-      moaindex a1= bavirt, eavirt
-      moaindex a2= bavirt, eavirt
-      moaindex a3= bavirt, eavirt
+      moaindex a = bavirt: eavirt
+      moaindex a1= bavirt: eavirt
+      moaindex a2= bavirt: eavirt
+      moaindex a3= bavirt: eavirt
 #
-      moaindex j = baocc, eaocc
-      moaindex j1= baocc, eaocc
-      moaindex j2= baocc, eaocc
-      moaindex j3= baocc, eaocc
+      moaindex j = baocc: eaocc
+      moaindex j1= baocc: eaocc
+      moaindex j2= baocc: eaocc
+      moaindex j3= baocc: eaocc
 #
-      moaindex b = bavirt, eavirt
-      moaindex b1= bavirt, eavirt
-      moaindex b2= bavirt, eavirt
-      moaindex b3= bavirt, eavirt
+      moaindex b = bavirt: eavirt
+      moaindex b1= bavirt: eavirt
+      moaindex b2= bavirt: eavirt
+      moaindex b3= bavirt: eavirt
 #
-      moaindex p = baocc, eavirt
-      moaindex p1= baocc, eavirt
-      moaindex p2= baocc, eavirt
-      moaindex p3= baocc, eavirt
+      moaindex p = baocc: eavirt
+      moaindex p1= baocc: eavirt
+      moaindex p2= baocc: eavirt
+      moaindex p3= baocc: eavirt
 #
-      moaindex q = baocc, eavirt
-      moaindex q1= baocc, eavirt
-      moaindex q2= baocc, eavirt
-      moaindex q3= baocc, eavirt
+      moaindex q = baocc: eavirt
+      moaindex q1= baocc: eavirt
+      moaindex q2= baocc: eavirt
+      moaindex q3= baocc: eavirt
 # 
 # Declare one-particle density arrays 
 # ----------------------------------- 
 #
-      distributed Dhfa(mu,nu) 
-      distributed Dhfb(mu,nu) 
-      distributed Dhfa_old(mu,nu) 
-      distributed Dhfb_old(mu,nu) 
+      distributed Dhfa[mu,nu] 
+      distributed Dhfb[mu,nu] 
+      distributed Dhfa_old[mu,nu] 
+      distributed Dhfb_old[mu,nu] 
 #
-      distributed Fpq_a(mu,nu) 
-      distributed Fpq_b(mu,nu) 
-      distributed FTpq_a(mu,nu) 
-      distributed FTpq_b(mu,nu) 
-      distributed CBT_a(mu,p) 
-      distributed CBT_b(mu,q) 
-      distributed Dca(mu,p)  
+      distributed Fpq_a[mu,nu] 
+      distributed Fpq_b[mu,nu] 
+      distributed FTpq_a[mu,nu] 
+      distributed FTpq_b[mu,nu] 
+      distributed CBT_a[mu,p] 
+      distributed CBT_b[mu,q] 
+      distributed Dca[mu,p]  
 
-      static dflags11(iiter1,jjter1)
-      static dflags12(iiter1,jjter2)
-      static oed_ovl(mu,nu) 
+      static dflags11[iiter1,jjter1]
+      static dflags12[iiter1,jjter2]
+      static oed_ovl[mu,nu] 
 #
 # Declare temporary arrays 
 # ------------------------ 
 #
-      temp Ixi(mu,i) 
-      temp I1xi(mu,i) 
-      temp Ixj(mu,j) 
-      temp I1xj(mu,j) 
-      temp Tpq(mu,nu) 
-      temp T1pq(mu,nu) 
-      temp Txi(mu,i) 
-      temp T1xi(mu,i) 
-      temp Txj(mu,j) 
-      temp T1xj(mu,j) 
-      temp Txx(mu,nu) 
-      temp TAxx(mu,nu) 
-      temp TBxx(mu,nu) 
-      temp T1xx(mu,nu) 
-      temp T2xx(mu,nu) 
-      temp T3xx(mu,nu) 
-      temp T4xx(mu,nu) 
-      temp T5xx(mu,nu) 
-      temp T6xx(mu,nu) 
-      temp T7xx(mu,nu) 
-      temp T8xx(mu,nu) 
-      temp T9xx(mu,nu) 
-      temp T10xx(mu,nu) 
-      temp T11xx(mu,nu) 
-      temp T12xx(mu,nu) 
-      temp T13xx(mu,nu) 
-      temp T14xx(mu,nu) 
-      temp T15xx(mu,nu) 
-      temp T16xx(mu,nu) 
-      temp T17xx(mu,nu) 
-      temp T18xx(mu,nu) 
-      temp T19xx(mu,nu) 
-      temp T20xx(mu,nu) 
-      temp T21xx(mu,nu) 
-      temp T22xx(mu,nu) 
-      temp Tii(i,i1) 
-      temp T1ii(i,i1) 
-      temp Tjj(j,j1) 
-      temp T1jj(j,j1) 
-      temp Txp(mu,p) 
-      temp T1xp(mu,p) 
-      temp Tpp(p,p1) 
-      temp T1pp(p,p1) 
-      temp Txq(mu,q) 
-      temp T1xq(mu,q) 
-      temp Tqq(q,q1) 
-      temp T1qq(q,q1) 
+      temp Ixi[mu,i] 
+      temp I1xi[mu,i] 
+      temp Ixj[mu,j] 
+      temp I1xj[mu,j] 
+      temp Tpq[mu,nu] 
+      temp T1pq[mu,nu] 
+      temp Txi[mu,i] 
+      temp T1xi[mu,i] 
+      temp Txj[mu,j] 
+      temp T1xj[mu,j] 
+      temp Txx[mu,nu] 
+      temp TAxx[mu,nu] 
+      temp TBxx[mu,nu] 
+      temp T1xx[mu,nu] 
+      temp T2xx[mu,nu] 
+      temp T3xx[mu,nu] 
+      temp T4xx[mu,nu] 
+      temp T5xx[mu,nu] 
+      temp T6xx[mu,nu] 
+      temp T7xx[mu,nu] 
+      temp T8xx[mu,nu] 
+      temp T9xx[mu,nu] 
+      temp T10xx[mu,nu] 
+      temp T11xx[mu,nu] 
+      temp T12xx[mu,nu] 
+      temp T13xx[mu,nu] 
+      temp T14xx[mu,nu] 
+      temp T15xx[mu,nu] 
+      temp T16xx[mu,nu] 
+      temp T17xx[mu,nu] 
+      temp T18xx[mu,nu] 
+      temp T19xx[mu,nu] 
+      temp T20xx[mu,nu] 
+      temp T21xx[mu,nu] 
+      temp T22xx[mu,nu] 
+      temp Tii[i,i1] 
+      temp T1ii[i,i1] 
+      temp Tjj[j,j1] 
+      temp T1jj[j,j1] 
+      temp Txp[mu,p] 
+      temp T1xp[mu,p] 
+      temp Tpp[p,p1] 
+      temp T1pp[p,p1] 
+      temp Txq[mu,q] 
+      temp T1xq[mu,q] 
+      temp Tqq[q,q1] 
+      temp T1qq[q,q1] 
 #
 # Declare served arrays 
 # --------------------- 
 #
-      temp aoint(mu,nu,lambda,sigma)
+      temp aoint[mu,nu,lambda,sigma]
 #
 # Declare static arrays 
 # --------------------- 
 #
-      static FSpq_a(mu,nu) 
-      static FSpq_b(mu,nu) 
-      distributed Qxx(mu,nu) 
-      distributed FTa(p,p1) 
-      distributed FTb(q,q1) 
-      static X1(mu,nu) 
-      local LDHFa(mu,nu) 
-      local LDHFb(mu,nu) 
-      local LFpq_b(mu,nu) 
-      local LFpq_a(mu,nu) 
-      static pinf(kiter,kptr1)
-      temp tpinf(kiter,kptr1)
+      static FSpq_a[mu,nu] 
+      static FSpq_b[mu,nu] 
+      distributed Qxx[mu,nu] 
+      distributed FTa[p,p1] 
+      distributed FTb[q,q1] 
+      static X1[mu,nu] 
+      local LDHFa[mu,nu] 
+      local LDHFb[mu,nu] 
+      local LFpq_b[mu,nu] 
+      local LFpq_a[mu,nu] 
+      static pinf[kiter,kptr1]
+      temp tpinf[kiter,kptr1]
 #
 # Arrays used in DIIS procedure 
 # ----------------------------- 
 #  
-      distributed FFai(a,i) 
-      distributed FFbj(b,j) 
-      temp tai(a,i) 
-      temp t1ai(a,i) 
-      temp tbj(b,j) 
-      temp t1bj(b,j) 
+      distributed FFai[a,i] 
+      distributed FFbj[b,j] 
+      temp tai[a,i] 
+      temp t1ai[a,i] 
+      temp tbj[b,j] 
+      temp t1bj[b,j] 
       scalar dens_check 
       scalar pcount 
       scalar zmax 
@@ -245,16 +245,16 @@ import "scf_defs.sialx"
       scalar n1 
       scalar n2 
 
-      distributed Fa(mu,nu,kdiis) 
-      distributed Fb(mu,nu,kdiis) 
-      distributed Fbj(b,j,kdiis) 
-      distributed Fai(a,i,kdiis) 
-      temp tpqx(mu,nu,d2)   
-      temp taix(a,i,d2)   
-      temp tbjx(b,j,d2)   
-      temp tdd(d1,d2) 
-      temp t1dd(d1,d2) 
-      static BB(d1,d2) 
+      distributed Fa[mu,nu,kdiis] 
+      distributed Fb[mu,nu,kdiis] 
+      distributed Fbj[b,j,kdiis] 
+      distributed Fai[a,i,kdiis] 
+      temp tpqx[mu,nu,d2]   
+      temp taix[a,i,d2]   
+      temp tbjx[b,j,d2]   
+      temp tdd[d1,d2] 
+      temp t1dd[d1,d2] 
+      static BB[d1,d2] 
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -272,38 +272,38 @@ import "scf_defs.sialx"
 #           alpha component first 
 #           --------------------- 
 #
-            GET           DHFa_old(mu,nu) 
-            GET           DHFb_old(mu,nu) 
-            Tpq(mu,nu)  = DHFa_old(mu,nu)   
-            Tpq(mu,nu) *= damp  
+            GET           DHFa_old[mu,nu] 
+            GET           DHFb_old[mu,nu] 
+            Tpq[mu,nu]  = DHFa_old[mu,nu]   
+            Tpq[mu,nu] *= damp  
 #
             DO i 
 #
-               Txi(nu,i)   = ca(nu,i)
-               T1pq(mu,nu) = Txi(nu,i)*ca(mu,i)
-               Tpq(mu,nu) += T1pq(mu,nu) 
+               Txi[nu,i]   = ca[nu,i]
+               T1pq[mu,nu] = Txi[nu,i]*ca[mu,i]
+               Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO i 
 #
-            Tpq(mu,nu)     *= damp1   
-            PUT Dhfa(mu,nu) = Tpq(mu,nu)
+            Tpq[mu,nu]     *= damp1   
+            PUT Dhfa[mu,nu] = Tpq[mu,nu]
 #
 #           beta component next  
 #           ------------------- 
 #
-            Tpq(mu,nu)  = DHFb_old(mu,nu)   
-            Tpq(mu,nu) *= damp  
+            Tpq[mu,nu]  = DHFb_old[mu,nu]   
+            Tpq[mu,nu] *= damp  
 #
             DO j 
 #
-               Txj(nu,j)   = ca(nu,j)
-               T1pq(mu,nu) = ca(mu,j)*Txj(nu,j)
-               Tpq(mu,nu) += T1pq(mu,nu) 
+               Txj[nu,j]   = ca[nu,j]
+               T1pq[mu,nu] = ca[mu,j]*Txj[nu,j]
+               Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO j 
 #
-            Tpq(mu,nu)     *= damp1   
-            PUT Dhfb(mu,nu) = Tpq(mu,nu)
+            Tpq[mu,nu]     *= damp1   
+            PUT Dhfb[mu,nu] = Tpq[mu,nu]
 #
       ENDPARDO mu, nu 
 #
@@ -325,32 +325,32 @@ import "scf_defs.sialx"
 #           alpha component 
 #           --------------- 
 #
-            Tpq(mu,nu) = 0.0 
+            Tpq[mu,nu] = 0.0 
 #
             DO i 
 #
-               Txi(nu,i)   = ca(nu,i)
-               T1pq(mu,nu) = Txi(nu,i)*ca(mu,i)
-               Tpq(mu,nu) += T1pq(mu,nu) 
+               Txi[nu,i]   = ca[nu,i]
+               T1pq[mu,nu] = Txi[nu,i]*ca[mu,i]
+               Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO i 
 # 
-            PUT Dhfa(mu,nu) = Tpq(mu,nu)
+            PUT Dhfa[mu,nu] = Tpq[mu,nu]
 #
 #           beta component 
 #           -------------- 
 #
-            Tpq(mu,nu) = 0.0 
+            Tpq[mu,nu] = 0.0 
 #
             DO j 
 #
-               Txj(nu,j)   = ca(nu,j)
-               T1pq(mu,nu) = ca(mu,j)*Txj(nu,j)
-               Tpq(mu,nu) += T1pq(mu,nu) 
+               Txj[nu,j]   = ca[nu,j]
+               T1pq[mu,nu] = ca[mu,j]*Txj[nu,j]
+               Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO j 
 #
-            PUT Dhfb(mu,nu) = Tpq(mu,nu)
+            PUT Dhfb[mu,nu] = Tpq[mu,nu]
 #
       ENDPARDO mu, nu 
 #
@@ -381,9 +381,9 @@ import "scf_defs.sialx"
        DO mu
        DO nu
 #
-          Txx(mu,nu)        = 0.0
-          Fockrohf_a(mu,nu) = Txx(mu,nu)
-          Fockrohf_b(mu,nu) = Txx(mu,nu)
+          Txx[mu,nu]        = 0.0
+          Fockrohf_a[mu,nu] = Txx[mu,nu]
+          Fockrohf_b[mu,nu] = Txx[mu,nu]
        ENDDO nu
        ENDDO mu 
 
@@ -405,7 +405,7 @@ import "scf_defs.sialx"
                  WHERE nu     != lambda
                  WHERE mu     != sigma
 ##
-                    execute compute_ubatch1 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                    execute compute_ubatch1 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 ##
         ENDPARDO mu, nu, lambda, sigma
 ##
@@ -419,7 +419,7 @@ import "scf_defs.sialx"
           WHERE mu == nu
           WHERE lambda  < sigma
 #
-                execute compute_ubatch2 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                execute compute_ubatch2 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma 
 #
@@ -435,7 +435,7 @@ import "scf_defs.sialx"
                 WHERE lambda < sigma
                 WHERE mu==lambda
 #
-                   execute compute_ubatch4 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                   execute compute_ubatch4 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma
 
@@ -449,7 +449,7 @@ import "scf_defs.sialx"
                 WHERE mu < sigma
                 WHERE nu == lambda
 #
-                   execute compute_ubatch4 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                   execute compute_ubatch4 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma
 #
@@ -464,7 +464,7 @@ import "scf_defs.sialx"
                 WHERE mu < lambda
                 WHERE nu == sigma
 #
-                   execute compute_ubatch4 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                   execute compute_ubatch4 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma
 #
@@ -477,7 +477,7 @@ import "scf_defs.sialx"
                 WHERE nu == sigma
                 WHERE mu == lambda
 #
-                   execute compute_ubatch8 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                   execute compute_ubatch8 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma
 #
@@ -491,7 +491,7 @@ import "scf_defs.sialx"
              WHERE mu == nu
              WHERE lambda == sigma
 #
-                   execute compute_ubatch7 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                   execute compute_ubatch7 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma 
 #
@@ -506,7 +506,7 @@ import "scf_defs.sialx"
              WHERE sigma == mu
              WHERE lambda == mu 
 #
-                   execute compute_ubatch6 aoint(mu,nu,lambda,sigma) oed_kin oed_ovl fockrohf_a fockrohf_b
+                   execute compute_ubatch6 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
 #
        ENDPARDO mu, nu, lambda, sigma
 #
@@ -517,8 +517,8 @@ import "scf_defs.sialx"
        DO mu
        DO nu
 #         
-          Txx(mu,nu)        = Fockrohf_a(mu,nu)
-          PUT Fpq_a(mu,nu) += Txx(mu,nu)
+          Txx[mu,nu]        = Fockrohf_a[mu,nu]
+          PUT Fpq_a[mu,nu] += Txx[mu,nu]
 #      
        ENDDO nu
        ENDDO mu 
@@ -526,8 +526,8 @@ import "scf_defs.sialx"
        DO mu
        DO nu
 #         
-          Txx(mu,nu)        = Fockrohf_b(mu,nu)
-          PUT Fpq_b(mu,nu) += Txx(mu,nu)
+          Txx[mu,nu]        = Fockrohf_b[mu,nu]
+          PUT Fpq_b[mu,nu] += Txx[mu,nu]
 #      
        ENDDO nu
        ENDDO mu 
@@ -539,10 +539,10 @@ import "scf_defs.sialx"
        DO mu    
        DO nu   
 #
-            execute return_h1 txx(mu,nu) 
+            execute return_h1 txx[mu,nu] 
 #
-            PUT Fpq_a(mu,nu) += Txx(mu,nu) 
-            PUT Fpq_b(mu,nu) += Txx(mu,nu) 
+            PUT Fpq_a[mu,nu] += Txx[mu,nu] 
+            PUT Fpq_b[mu,nu] += Txx[mu,nu] 
 #
        ENDDO nu   
        ENDDO mu    
@@ -570,24 +570,24 @@ import "scf_defs.sialx"
           DO mu  
           DO nu 
 #
-             GET Fpq_a(mu,nu)
-             GET Fpq_b(mu,nu)
-             GET DHFa(mu,nu) 
-             GET DHFb(mu,nu) 
+             GET Fpq_a[mu,nu]
+             GET Fpq_b[mu,nu]
+             GET DHFa[mu,nu] 
+             GET DHFb[mu,nu] 
 #
-             Txx(mu,nu)   = 0.0 
-             execute return_h1 txx(mu,nu)  
+             Txx[mu,nu]   = 0.0 
+             execute return_h1 txx[mu,nu]  
 #
-             T1xx(mu,nu)  = Txx(mu,nu) 
-             T1xx(mu,nu) += Fpq_a(mu,nu) 
+             T1xx[mu,nu]  = Txx[mu,nu] 
+             T1xx[mu,nu] += Fpq_a[mu,nu] 
 #
-             etemp        = T1xx(mu,nu)*DHFa(mu,nu)  
+             etemp        = T1xx[mu,nu]*DHFa[mu,nu]  
              esum        += etemp 
 #
-             T1xx(mu,nu)  = Txx(mu,nu) 
-             T1xx(mu,nu) += Fpq_b(mu,nu) 
+             T1xx[mu,nu]  = Txx[mu,nu] 
+             T1xx[mu,nu] += Fpq_b[mu,nu] 
 #
-             etemp        = T1xx(mu,nu)*DHFb(mu,nu)  
+             etemp        = T1xx[mu,nu]*DHFb[mu,nu]  
              esum        += etemp 
 #
           ENDDO nu 
@@ -603,7 +603,7 @@ import "scf_defs.sialx"
        energy += repulsion 
 #
        #print_scalar esum  
-        print_scalar energy 
+        print energy 
 #
        ENDPROC HF_ENERGY   
 #      ----------------- 
@@ -619,8 +619,8 @@ import "scf_defs.sialx"
 #
        DO mu 
        DO nu 
-          execute return_ovl txx(mu,nu) 
-          oed_ovl(mu,nu) = txx(mu,nu)  
+          execute return_ovl txx[mu,nu] 
+          oed_ovl[mu,nu] = txx[mu,nu]  
        ENDDO nu 
        ENDDO mu 
        sip_barrier 
@@ -628,7 +628,7 @@ import "scf_defs.sialx"
 #
        DO mu 
        DO nu 
-          txx(mu,nu) = oed_ovl(mu,nu)  
+          txx[mu,nu] = oed_ovl[mu,nu]  
        ENDDO nu 
        ENDDO mu 
 #
@@ -637,14 +637,14 @@ import "scf_defs.sialx"
 #
        PARDO mu, nu  
 #
-          Txx(mu,nu) = 0.0 
+          Txx[mu,nu] = 0.0 
 #
           DO lambda 
-             T1xx(mu,nu) = x1(mu,lambda)*oed_ovl(lambda,nu) 
-             Txx(mu,nu) += T1xx(mu,nu) 
+             T1xx[mu,nu] = x1[mu,lambda]*oed_ovl[lambda,nu] 
+             Txx[mu,nu] += T1xx[mu,nu] 
           ENDDO lambda  
 #
-          PUT Qxx(mu,nu) = Txx(mu,nu)  
+          PUT Qxx[mu,nu] = Txx[mu,nu]  
 #
        ENDPARDO mu, nu  
 #
@@ -662,32 +662,32 @@ import "scf_defs.sialx"
 #
        PARDO mu, sigma   
 #
-             TAxx(mu,sigma) = 0.0 
-             TBxx(mu,sigma) = 0.0 
+             TAxx[mu,sigma] = 0.0 
+             TBxx[mu,sigma] = 0.0 
 #
              DO lambda 
 #
-                GET Fpq_a(lambda,sigma) 
-                GET Fpq_b(lambda,sigma) 
-                GET Qxx(lambda,mu) 
+                GET Fpq_a[lambda,sigma] 
+                GET Fpq_b[lambda,sigma] 
+                GET Qxx[lambda,mu] 
 #
-                T1xx(mu,sigma)  = Qxx(lambda,mu)*Fpq_a(lambda,sigma)  
-                TAxx(mu,sigma) += T1xx(mu,sigma) 
+                T1xx[mu,sigma]  = Qxx[lambda,mu]*Fpq_a[lambda,sigma]  
+                TAxx[mu,sigma] += T1xx[mu,sigma] 
 #
-                T1xx(mu,sigma)  = Qxx(lambda,mu)*Fpq_b(lambda,sigma)  
-                TBxx(mu,sigma) += T1xx(mu,sigma) 
+                T1xx[mu,sigma]  = Qxx[lambda,mu]*Fpq_b[lambda,sigma]  
+                TBxx[mu,sigma] += T1xx[mu,sigma] 
 #
              ENDDO lambda 
 #
              DO nu 
 #
-                GET Qxx(sigma,nu) 
+                GET Qxx[sigma,nu] 
 #
-                T1xx(mu,nu) =        TAxx(mu,sigma)*Qxx(sigma,nu) 
-                PUT FTpq_a(mu,nu) += T1xx(mu,nu) 
+                T1xx[mu,nu] =        TAxx[mu,sigma]*Qxx[sigma,nu] 
+                PUT FTpq_a[mu,nu] += T1xx[mu,nu] 
 #
-                T2xx(mu,nu)        = TBxx(mu,sigma)*Qxx(sigma,nu) 
-                PUT FTpq_b(mu,nu) += T2xx(mu,nu) 
+                T2xx[mu,nu]        = TBxx[mu,sigma]*Qxx[sigma,nu] 
+                PUT FTpq_b[mu,nu] += T2xx[mu,nu] 
 #
              ENDDO nu 
 #
@@ -707,11 +707,11 @@ import "scf_defs.sialx"
        DO mu   
        DO nu  
 #
-          GET             FTpq_a(mu,nu) 
-          GET             FTpq_b(mu,nu)
+          GET             FTpq_a[mu,nu] 
+          GET             FTpq_b[mu,nu]
 #
-          FSpq_a(mu,nu) = FTpq_a(mu,nu)
-          FSpq_b(mu,nu) = FTpq_b(mu,nu)
+          FSpq_a[mu,nu] = FTpq_a[mu,nu]
+          FSpq_b[mu,nu] = FTpq_b[mu,nu]
 #
        ENDDO nu  
        ENDDO mu   
@@ -731,35 +731,35 @@ import "scf_defs.sialx"
 #
        PARDO mu, p  
 #
-          Txp(mu,p) = 0.0 
+          Txp[mu,p] = 0.0 
 #
           DO nu 
 #
-             GET          Qxx(mu,nu) 
+             GET          Qxx[mu,nu] 
 #
-             T1xp(mu,p) = Qxx(mu,nu)*ca(nu,p)   
-             Txp(mu,p) += T1xp(mu,p) 
+             T1xp[mu,p] = Qxx[mu,nu]*ca[nu,p]   
+             Txp[mu,p] += T1xp[mu,p] 
 #
           ENDDO nu 
 #
-          PUT CBT_a(mu,p) = Txp(mu,p) 
+          PUT CBT_a[mu,p] = Txp[mu,p] 
 #
        ENDPARDO mu, p  
 #
        PARDO mu, q
 # 
-          Txq(mu,q) = 0.0 
+          Txq[mu,q] = 0.0 
 #
           DO nu 
 #
-             GET          Qxx(mu,nu) 
+             GET          Qxx[mu,nu] 
 #
-             T1xq(mu,q) = Qxx(mu,nu)*ca(nu,q)   
-             Txq(mu,q) += T1xq(mu,q) 
+             T1xq[mu,q] = Qxx[mu,nu]*ca[nu,q]   
+             Txq[mu,q] += T1xq[mu,q] 
 #
           ENDDO nu 
 #
-          PUT CBT_b(mu,q) = Txq(mu,q) 
+          PUT CBT_b[mu,q] = Txq[mu,q] 
 #
        ENDPARDO mu, q
        sip_barrier 
@@ -769,8 +769,8 @@ import "scf_defs.sialx"
 #
        DO mu 
        DO p 
-          GET        CBT_a(mu,p) 
-          ca(mu,p) = CBT_a(mu,p) 
+          GET        CBT_a[mu,p] 
+          ca[mu,p] = CBT_a[mu,p] 
        ENDDO p 
        ENDDO mu  
 #
@@ -787,9 +787,9 @@ import "scf_defs.sialx"
 #
        PARDO mu, nu 
 #
-             Txx(mu,nu)   = 0.0   
-             PUT DHFa_old(mu,nu) = Txx(mu,nu)  
-             PUT DHFb_old(mu,nu) = Txx(mu,nu)  
+             Txx[mu,nu]   = 0.0   
+             PUT DHFa_old[mu,nu] = Txx[mu,nu]  
+             PUT DHFb_old[mu,nu] = Txx[mu,nu]  
 #
        ENDPARDO mu, nu 
 #
@@ -806,10 +806,10 @@ import "scf_defs.sialx"
 #
        PARDO mu, nu 
 #
-             GET DHFa(mu,nu) 
-             GET DHFb(mu,nu) 
-             PUT DHFa_old(mu,nu) = DHFa(mu,nu)  
-             PUT DHFb_old(mu,nu) = DHFb(mu,nu)  
+             GET DHFa[mu,nu] 
+             GET DHFb[mu,nu] 
+             PUT DHFa_old[mu,nu] = DHFa[mu,nu]  
+             PUT DHFb_old[mu,nu] = DHFb[mu,nu]  
 #
        ENDPARDO mu, nu 
 #
@@ -826,31 +826,31 @@ import "scf_defs.sialx"
       #CREATE FFai
       #CREATE FFbj
        PARDO a, i 
-             tai(a,i) = 0.0 
-             PUT FFai(a,i) = tai(a,i) 
+             tai[a,i] = 0.0 
+             PUT FFai[a,i] = tai[a,i] 
        ENDPARDO a, i 
        PARDO b, j 
-             tbj(b,j) = 0.0 
-             PUT FFbj(b,j) = tbj(b,j) 
+             tbj[b,j] = 0.0 
+             PUT FFbj[b,j] = tbj[b,j] 
        ENDPARDO b, j 
        sip_barrier 
 #  
        PARDO mu, nu  
-             GET Fpq_a(mu,nu)  
-             GET Fpq_b(mu,nu)  
+             GET Fpq_a[mu,nu]  
+             GET Fpq_b[mu,nu]  
              DO i 
-                txi(mu,i) = Fpq_a(mu,nu)*ca(nu,i) 
+                txi[mu,i] = Fpq_a[mu,nu]*ca[nu,i] 
                 DO a 
-                   tai(a,i)      = txi(mu,i)*ca(mu,a) 
-                   PUT FFai(a,i) += tai(a,i) 
+                   tai[a,i]      = txi[mu,i]*ca[mu,a] 
+                   PUT FFai[a,i] += tai[a,i] 
                 ENDDO a 
              ENDDO i 
 #
              DO j 
-                txj(mu,j) = Fpq_b(mu,nu)*ca(nu,j) 
+                txj[mu,j] = Fpq_b[mu,nu]*ca[nu,j] 
                 DO b 
-                   tbj(b,j)      = txj(mu,j)*ca(mu,b) 
-                   PUT FFbj(b,j) += tbj(b,j) 
+                   tbj[b,j]      = txj[mu,j]*ca[mu,b] 
+                   PUT FFbj[b,j] += tbj[b,j] 
                 ENDDO b 
              ENDDO j 
        ENDPARDO mu, nu  
@@ -863,20 +863,20 @@ import "scf_defs.sialx"
           if n1 == worder  
 #
                 PARDO mu, nu 
-                   GET              Fpq_a(mu,nu) 
-                   GET              Fpq_b(mu,nu) 
-                   txx(mu,nu)     = Fpq_a(mu,nu) 
-                   PUT Fa(mu,nu,d1) = txx(mu,nu)  
-                   txx(mu,nu)     = Fpq_b(mu,nu) 
-                   PUT Fb(mu,nu,d1) = txx(mu,nu)  
+                   GET              Fpq_a[mu,nu] 
+                   GET              Fpq_b[mu,nu] 
+                   txx[mu,nu]     = Fpq_a[mu,nu] 
+                   PUT Fa[mu,nu,d1] = txx[mu,nu]  
+                   txx[mu,nu]     = Fpq_b[mu,nu] 
+                   PUT Fb[mu,nu,d1] = txx[mu,nu]  
                 ENDPARDO mu, nu 
                 PARDO a, i 
-                   GET FFai(a,i) 
-                   PUT Fai(a,i,d1) = FFai(a,i)  
+                   GET FFai[a,i] 
+                   PUT Fai[a,i,d1] = FFai[a,i]  
                 ENDPARDO a, i 
                 PARDO b, j 
-                   GET FFbj(b,j) 
-                   PUT Fbj(b,j,d1) = FFbj(b,j)  
+                   GET FFbj[b,j] 
+                   PUT Fbj[b,j,d1] = FFbj[b,j]  
                 ENDPARDO b, j 
                 exit 
 
@@ -901,8 +901,8 @@ import "scf_defs.sialx"
           n1 = 0.0 
           DO d1 
              n1 += 1.0 
-             GET          Fa(mu,nu,d1) 
-             tpq(mu,nu) = Fa(mu,nu,d1) 
+             GET          Fa[mu,nu,d1] 
+             tpq[mu,nu] = Fa[mu,nu,d1] 
              n2 = 0.0 
           DO d2 
              n2 += 1.0 
@@ -911,7 +911,7 @@ import "scf_defs.sialx"
              if etemp == 1.0 
                #tpqx(mu,nu,d2)   = tpq(mu,nu) 
                #PUT Fa(mu,nu,d2) = tpqx(mu,nu,d2) 
-                PUT Fa(mu,nu,d2) = tpq(mu,nu) 
+                PUT Fa[mu,nu,d2] = tpq[mu,nu] 
              endif 
           ENDDO d2 
           ENDDO d1 
@@ -921,8 +921,8 @@ import "scf_defs.sialx"
           n1 = 0.0 
           DO d1 
              n1 += 1.0 
-             GET        Fai(a,i,d1) 
-             tai(a,i) = Fai(a,i,d1) 
+             GET        Fai[a,i,d1] 
+             tai[a,i] = Fai[a,i,d1] 
              n2 = 0.0 
           DO d2 
              n2 += 1.0 
@@ -931,7 +931,7 @@ import "scf_defs.sialx"
              if etemp == 1.0 
                #taix(a,i,d2)   = tai(a,i) 
                #PUT Fai(a,i,d2) = taix(a,i,d2) 
-                PUT Fai(a,i,d2) = tai(a,i) 
+                PUT Fai[a,i,d2] = tai[a,i] 
              endif 
           ENDDO d2 
           ENDDO d1 
@@ -941,8 +941,8 @@ import "scf_defs.sialx"
           n1 = 0.0 
           DO d1 
              n1 += 1.0 
-             GET          Fb(mu,nu,d1) 
-             tpq(mu,nu) = Fb(mu,nu,d1) 
+             GET          Fb[mu,nu,d1] 
+             tpq[mu,nu] = Fb[mu,nu,d1] 
              n2 = 0.0 
           DO d2 
              n2 += 1.0 
@@ -951,7 +951,7 @@ import "scf_defs.sialx"
              if etemp == 1.0 
                #tpqx(mu,nu,d2)   = tpq(mu,nu) 
                #PUT Fb(mu,nu,d2) = tpqx(mu,nu,d2) 
-                PUT Fb(mu,nu,d2) = tpq(mu,nu) 
+                PUT Fb[mu,nu,d2] = tpq[mu,nu] 
              endif 
           ENDDO d2 
           ENDDO d1 
@@ -961,8 +961,8 @@ import "scf_defs.sialx"
           n1 = 0.0 
           DO d1 
              n1 += 1.0 
-             GET        Fbj(b,j,d1) 
-             tbj(b,j) = Fbj(b,j,d1) 
+             GET        Fbj[b,j,d1] 
+             tbj[b,j] = Fbj[b,j,d1] 
              n2 = 0.0 
           DO d2 
              n2 += 1.0 
@@ -971,7 +971,7 @@ import "scf_defs.sialx"
              if etemp == 1.0 
                #tbjx(b,j,d2)   = tbj(b,j) 
                #PUT Fbj(b,j,d2) = tbjx(b,j,d2) 
-                PUT Fbj(b,j,d2) = tbj(b,j) 
+                PUT Fbj[b,j,d2] = tbj[b,j] 
              endif 
           ENDDO d2 
           ENDDO d1 
@@ -1016,30 +1016,30 @@ import "scf_defs.sialx"
        DO d2 
           n2+= 1.0 
        if n2 <= temp_order # worder 
-          tdd(d1,d2) = 0.0 
+          tdd[d1,d2] = 0.0 
           DO a  
           DO i 
-             GET           Fai(a,i,d1) 
-             GET           Fai(a,i,d2) 
-             tai(a,i)    = Fai(a,i,d1) 
-             t1ai(a,i)   = Fai(a,i,d2) 
-             etemp       = tai(a,i)*t1ai(a,i) 
-             t1dd(d1,d2) = etemp 
-             tdd(d1,d2) += t1dd(d1,d2)  
+             GET           Fai[a,i,d1] 
+             GET           Fai[a,i,d2] 
+             tai[a,i]    = Fai[a,i,d1] 
+             t1ai[a,i]   = Fai[a,i,d2] 
+             etemp       = tai[a,i]*t1ai[a,i] 
+             t1dd[d1,d2] = etemp 
+             tdd[d1,d2] += t1dd[d1,d2]  
           ENDDO i 
           ENDDO a  
           DO b  
           DO j 
-             GET           Fbj(b,j,d1) 
-             GET           Fbj(b,j,d2) 
-             tbj(b,j)    = Fbj(b,j,d1) 
-             t1bj(b,j)   = Fbj(b,j,d2) 
-             etemp       = tbj(b,j)*t1bj(b,j) 
-             t1dd(d1,d2) = etemp 
-             tdd(d1,d2) += t1dd(d1,d2)  
+             GET           Fbj[b,j,d1] 
+             GET           Fbj[b,j,d2] 
+             tbj[b,j]    = Fbj[b,j,d1] 
+             t1bj[b,j]   = Fbj[b,j,d2] 
+             etemp       = tbj[b,j]*t1bj[b,j] 
+             t1dd[d1,d2] = etemp 
+             tdd[d1,d2] += t1dd[d1,d2]  
           ENDDO j 
           ENDDO b  
-          BB(d1,d2) = tdd(d1,d2) 
+          BB[d1,d2] = tdd[d1,d2] 
 
        endif 
        ENDDO d2 
@@ -1061,39 +1061,39 @@ import "scf_defs.sialx"
 #
        PARDO mu, nu 
 #
-           txx(mu,nu) = 0.0 
+           txx[mu,nu] = 0.0 
 #
            n1 = 0.0 
            DO d1   
               n1 += 1.0 
            if n1 <= temp_order # worder 
-              GET            Fa(mu,nu,d1) 
-              t1xx(mu,nu)  = Fa(mu,nu,d1) 
-              execute return_sval BB(d1,d1) etemp 
+              GET            Fa[mu,nu,d1] 
+              t1xx[mu,nu]  = Fa[mu,nu,d1] 
+              execute return_sval BB[d1,d1] etemp 
              #etemp        = BB(d1,d1)        
-              t1xx(mu,nu) *= etemp   
-              txx(mu,nu)  += t1xx(mu,nu) 
+              t1xx[mu,nu] *= etemp   
+              txx[mu,nu]  += t1xx[mu,nu] 
            endif 
            ENDDO d1   
 #
-           PUT Fpq_a(mu,nu) = txx(mu,nu) 
+           PUT Fpq_a[mu,nu] = txx[mu,nu] 
 #
-           txx(mu,nu) = 0.0 
+           txx[mu,nu] = 0.0 
 #
            n1 = 0.0 
            DO d1   
               n1 += 1.0 
            if n1 <= temp_order # worder 
-              GET            Fb(mu,nu,d1) 
-              t1xx(mu,nu)  = Fb(mu,nu,d1) 
-              execute return_sval BB(d1,d1) etemp 
+              GET            Fb[mu,nu,d1] 
+              t1xx[mu,nu]  = Fb[mu,nu,d1] 
+              execute return_sval BB[d1,d1] etemp 
              #etemp        = BB(d1,d1)        
-              t1xx(mu,nu) *= etemp   
-              txx(mu,nu)  += t1xx(mu,nu) 
+              t1xx[mu,nu] *= etemp   
+              txx[mu,nu]  += t1xx[mu,nu] 
            endif 
            ENDDO d1   
 #
-           PUT Fpq_b(mu,nu) = txx(mu,nu) 
+           PUT Fpq_b[mu,nu] = txx[mu,nu] 
 #
        ENDPARDO mu, nu 
 #
@@ -1109,10 +1109,10 @@ import "scf_defs.sialx"
        if rank == 0.0 
          DO mu  
          DO nu 
-            Txx(mu,nu)      = 0.0
-            execute return_h1 Txx(mu,nu)
-            PUT Fpq_a(mu,nu) = Txx(mu,nu)
-            PUT Fpq_b(mu,nu) = Txx(mu,nu)
+            Txx[mu,nu]      = 0.0
+            execute return_h1 Txx[mu,nu]
+            PUT Fpq_a[mu,nu] = Txx[mu,nu]
+            PUT Fpq_b[mu,nu] = Txx[mu,nu]
          ENDDO nu 
          ENDDO mu  
        endif 
@@ -1136,13 +1136,13 @@ import "scf_defs.sialx"
       etemp += damp  
       damp1  = 1.0/etemp         # 1/(1+damp)  
       pcount = 0.0 
-      print_scalar damp 
-      print_scalar damp1
+      print damp 
+      print damp1
 #
 #     Compute the nuclear-nuclear repulsion energy  
 #     -------------------------------------------- 
       execute compute_nn_repulsion repulsion
-      print_scalar repulsion 
+      print repulsion 
 #
 #     New HF density 
 #     -------------- 
@@ -1151,10 +1151,10 @@ import "scf_defs.sialx"
       CREATE DHFb   
 
       PARDO mu, nu 
-            txx(mu,nu)      = 0.0  
-            PUT Dhfa(mu,nu) = txx(mu,nu)
-            txx(mu,nu)      = 0.0  
-            PUT Dhfb(mu,nu) = txx(mu,nu)
+            txx[mu,nu]      = 0.0  
+            PUT Dhfa[mu,nu] = txx[mu,nu]
+            txx[mu,nu]      = 0.0  
+            PUT Dhfb[mu,nu] = txx[mu,nu]
       ENDPARDO mu, nu 
 
 #     Get memory requirements from integral calculation 
@@ -1179,7 +1179,7 @@ import "scf_defs.sialx"
       DO sigma
             IF mu == lambda
             IF nu == sigma
-               execute compute_aabb_batch aoint(mu,nu,lambda,sigma)
+               execute compute_aabb_batch aoint[mu,nu,lambda,sigma]
             ENDIF
             ENDIF
       ENDDO sigma
@@ -1216,24 +1216,24 @@ import "scf_defs.sialx"
 # 
 
       PARDO a, i  
-            tai(a,i) = 0.0 
+            tai[a,i] = 0.0 
             do d1 
-               PUT Fai(a,i,d1) = tai(a,i) 
+               PUT Fai[a,i,d1] = tai[a,i] 
             enddo d1 
       ENDPARDO a, i  
 
       PARDO b, j  
-            tbj(b,j) = 0.0 
+            tbj[b,j] = 0.0 
             do d1 
-               PUT Fbj(b,j,d1) = tbj(b,j) 
+               PUT Fbj[b,j,d1] = tbj[b,j] 
             enddo d1 
       ENDPARDO b, j  
 
       PARDO mu, nu 
-            txx(mu,nu) = 0.0 
+            txx[mu,nu] = 0.0 
             do d1 
-               PUT Fa(mu,nu,d1) = txx(mu,nu)  
-               PUT Fb(mu,nu,d1) = txx(mu,nu)  
+               PUT Fa[mu,nu,d1] = txx[mu,nu]  
+               PUT Fb[mu,nu,d1] = txx[mu,nu]  
             enddo d1 
       ENDPARDO mu, nu 
 
@@ -1288,10 +1288,10 @@ import "scf_defs.sialx"
 
       DO mu
       DO nu
-         GET              DHFa(mu,nu)
-         GET              DHFb(mu,nu)
-         oed_ovl(mu,nu) = DHFa(mu,nu) # 13
-         oed_kin(mu,nu) = DHFb(mu,nu) # 12
+         GET              DHFa[mu,nu]
+         GET              DHFb[mu,nu]
+         oed_ovl[mu,nu] = DHFa[mu,nu] # 13
+         oed_kin[mu,nu] = DHFb[mu,nu] # 12
       ENDDO nu
       ENDDO mu
 
@@ -1332,10 +1332,10 @@ import "scf_defs.sialx"
 
       DO mu 
       DO nu 
-         txx(mu,nu) = 0.0 
-         Fockrohf_a(mu,nu) = txx(mu,nu)  
-         Fockrohf_b(mu,nu) = txx(mu,nu)  
-         txx(mu,nu) = oed_ovl(mu,nu)  
+         txx[mu,nu] = 0.0 
+         Fockrohf_a[mu,nu] = txx[mu,nu]  
+         Fockrohf_b[mu,nu] = txx[mu,nu]  
+         txx[mu,nu] = oed_ovl[mu,nu]  
       ENDDO nu 
       ENDDO mu 
 
@@ -1346,10 +1346,10 @@ import "scf_defs.sialx"
 
          DO mu 
          DO nu 
-            txx(mu,nu)      = Fockrohf_a(mu,nu)  
-            PUT Dhfa(mu,nu) = txx(mu,nu)
-            txx(mu,nu)      = Fockrohf_b(mu,nu)  
-            PUT Dhfb(mu,nu) = txx(mu,nu)
+            txx[mu,nu]      = Fockrohf_a[mu,nu]  
+            PUT Dhfa[mu,nu] = txx[mu,nu]
+            txx[mu,nu]      = Fockrohf_b[mu,nu]  
+            PUT Dhfb[mu,nu] = txx[mu,nu]
          ENDDO nu 
          ENDDO mu 
 
@@ -1409,10 +1409,10 @@ import "scf_defs.sialx"
 
          DO mu
          DO nu
-            GET              DHFa(mu,nu)
-            GET              DHFb(mu,nu)
-            oed_ovl(mu,nu) = DHFa(mu,nu) # 13
-            oed_kin(mu,nu) = DHFb(mu,nu) # 12
+            GET              DHFa[mu,nu]
+            GET              DHFb[mu,nu]
+            oed_ovl[mu,nu] = DHFa[mu,nu] # 13
+            oed_kin[mu,nu] = DHFb[mu,nu] # 12
          ENDDO nu
          ENDDO mu
 
@@ -1513,12 +1513,12 @@ import "scf_defs.sialx"
 #           Alpha component 
 #           --------------- 
 #
-            GET           DHFa_old(mu,nu) 
-            GET           DHFa(mu,nu) 
+            GET           DHFa_old[mu,nu] 
+            GET           DHFa[mu,nu] 
 #
-            T1xx(mu,nu)  = DHFa(mu,nu) 
-            T1xx(mu,nu) -= DHFa_old(mu,nu) 
-            execute check_dconf T1xx(mu,nu) donea  
+            T1xx[mu,nu]  = DHFa[mu,nu] 
+            T1xx[mu,nu] -= DHFa_old[mu,nu] 
+            execute check_dconf T1xx[mu,nu] donea  
             if donea > done 
                done = donea 
             endif 
@@ -1526,19 +1526,19 @@ import "scf_defs.sialx"
 #           Beta component 
 #           -------------- 
 #
-            GET           DHFb_old(mu,nu) 
-            GET           DHFb(mu,nu) 
+            GET           DHFb_old[mu,nu] 
+            GET           DHFb[mu,nu] 
 #
-            Txx(mu,nu)  = DHFb(mu,nu) 
-            Txx(mu,nu) -= DHFb_old(mu,nu) 
-            execute check_dconf Txx(mu,nu) doneb  
+            Txx[mu,nu]  = DHFb[mu,nu] 
+            Txx[mu,nu] -= DHFb_old[mu,nu] 
+            execute check_dconf Txx[mu,nu] doneb  
             if doneb > done 
                done = doneb 
             endif 
 #
          ENDDO nu 
          ENDDO mu 
-         print_scalar done 
+         print done 
 #
 #        Check on convergence using density difference. 
 #        ---------------------------------------------- 
@@ -1600,23 +1600,23 @@ import "scf_defs.sialx"
       CREATE FTb 
       sip_barrier 
       PARDO mu, nu 
-            GET Fpq_a(mu,nu) 
+            GET Fpq_a[mu,nu] 
             DO p 
-               Txp(mu,p) = Fpq_a(mu,nu)*ca(nu,p) 
+               Txp[mu,p] = Fpq_a[mu,nu]*ca[nu,p] 
                DO p1 
-                  Tpp(p1,p) = Txp(mu,p)*ca(mu,p1) 
-                  PUT FTa(p1,p) += Tpp(p1,p) 
+                  Tpp[p1,p] = Txp[mu,p]*ca[mu,p1] 
+                  PUT FTa[p1,p] += Tpp[p1,p] 
                ENDDO p1  
             ENDDO p 
       ENDPARDO mu, nu  
 #     
       PARDO mu, nu 
-            GET Fpq_b(mu,nu) 
+            GET Fpq_b[mu,nu] 
             DO q 
-               Txq(mu,q) = Fpq_b(mu,nu)*ca(nu,q) 
+               Txq[mu,q] = Fpq_b[mu,nu]*ca[nu,q] 
                DO q1 
-                  Tqq(q1,q) = Txq(mu,q)*ca(mu,q1) 
-                  PUT FTb(q1,q) += Tqq(q1,q) 
+                  Tqq[q1,q] = Txq[mu,q]*ca[mu,q1] 
+                  PUT FTb[q1,q] += Tqq[q1,q] 
                ENDDO q1  
             ENDDO q 
       ENDPARDO mu, nu  
@@ -1627,8 +1627,8 @@ import "scf_defs.sialx"
 #
       DO p
       DO p1
-         GET FTa(p,p1)
-         Fock_a(p,p1) = FTa(p,p1)
+         GET FTa[p,p1]
+         Fock_a[p,p1] = FTa[p,p1]
       ENDDO p1
       ENDDO p
 
@@ -1640,8 +1640,8 @@ import "scf_defs.sialx"
      #execute get_my_rank rank
      #if rank == 0.0
          PARDO mu, p
-            txp(mu,p) = ca(mu,p)
-            PUT Dca(mu,p) = txp(mu,p) 
+            txp[mu,p] = ca[mu,p]
+            PUT Dca[mu,p] = txp[mu,p] 
          ENDPARDO mu, p
       #VFL execute print_rel_info zero ca
      #endif

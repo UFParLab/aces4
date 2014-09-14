@@ -206,6 +206,9 @@ PredefIntArray SetupReader::predefined_integer_array(const std::string& name){
 	return it->second;
 }
 
+bool SetupReader::aces_validate(){
+	return sip::input_warn(sial_prog_list_.size() > 0,"setup file is missing sial program" );
+}
 void SetupReader::read_and_check_magic() {
 	int fmagic = stream_.read_int();
 	sip::check(fmagic == sip::SETUP_MAGIC,
@@ -277,7 +280,7 @@ void SetupReader::read_predefined_arrays(){
 		sip::segment_size_array_t dim_sizes;
 		std::copy(dims+0, dims+rank,dim_sizes);
 		std::fill(dim_sizes+rank, dim_sizes+MAX_RANK, 1);
-		sip::BlockShape shape(dim_sizes);
+		sip::BlockShape shape(dim_sizes, rank);
 		delete [] dims;
 //
 //		double * data2 = new double[num_data_elems];

@@ -74,10 +74,11 @@ public:
 
     SialProgList& sial_prog_list() { return sial_prog_list_; }
 
-	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
-
-	friend class sip::IndexTable;
-	friend class sip::ContiguousArrayManager;
+	/** performs sanity checks on input
+	 *
+	 * right now, this just checks for the existence of a sial program name
+	 */
+	bool aces_validate();
 
 private:
 
@@ -90,6 +91,7 @@ private:
 	FileConfigMap configs_;		// Map of sial files to their configurations in the form of a key-value map
 
 	NamePredefinedContiguousArrayMap name_to_predefined_contiguous_array_map_;
+
 
 	/**
 	 * Constructs SetupReader instance, optionally calling "read()" of the InputStream reference.
@@ -110,7 +112,6 @@ private:
     void read_predefined_integer_arrays();
     void read_sialfile_configs();
 
-
 	void dump_predefined_int_map(std::ostream&);
 	void dump_predefined_scalar_map(std::ostream&);
 	void dump_sial_prog_list(std::ostream&);
@@ -118,6 +119,11 @@ private:
 	void dump_predefined_map(std::ostream&);
 
 	InputStream& stream_;
+
+	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
+
+	friend class sip::IndexTable;
+	friend class sip::ContiguousArrayManager;
 
 	DISALLOW_COPY_AND_ASSIGN(SetupReader);
 

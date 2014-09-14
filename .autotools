@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurations>
-<configuration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
+<configuration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971">
 <option id="configure" value="configure"/>
 <option id="configdir" value=""/>
 <option id="cache-file" value=""/>
@@ -35,7 +35,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value="CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
+<option id="user" value="--with-cuda --with-mpi=no CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>
@@ -78,7 +78,7 @@
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>
-<configuration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971">
+<configuration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
 <option id="configure" value="configure"/>
 <option id="configdir" value=""/>
 <option id="cache-file" value=""/>
@@ -113,7 +113,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value="--with-cuda --with-mpi=no CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
+<option id="user" value="CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>

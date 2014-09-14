@@ -4,32 +4,32 @@ sial static_array_test
 	special print_block r
 	special print_static_array r
 	
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	static a(i,j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	static a[i,j]
 	
-	local b(i, j)
+	local b[i, j]
 	
 	do i
 		do j
 		
 			execute fill_block_sequential a 1.0
-			#execute print_block a(i,j)
+			#print a(i,j)
 			
-			b(i, j) = a(i, j)
+			b[i, j] = a[i, j]
 			
-			println "execute print_block a(i,j)"
-			execute print_block a(i,j)
+			println "print_block a(i,j)"
+			print a[i,j]
 			
-			println "execute print_block b"
-			execute print_block b(i, j) 
+			println "print_block b[i,j]"
+			print b[i, j] 
 			
 		enddo j
 	enddo i
 	
-	println "execute print_block a"
-	execute print_block a
-	
+	println "print a"
+	print a
+	deallocate  b[*,*]
 	
 	println " finished static_array_test"
 

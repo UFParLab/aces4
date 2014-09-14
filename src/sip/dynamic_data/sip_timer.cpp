@@ -80,6 +80,7 @@ bool LinuxSIPTimers::check_timers_off() {
 	for (int i = 0; i < max_slots; i++)
 		if (timer_on_[i] != _timer_off_value_){
 			SIP_LOG(std::cerr<<"Timer left on : "<<i<<std::endl);
+			std::cerr<<"Timer left on : "<<i<<std::endl;
 			return false;
 		}
 	return true;

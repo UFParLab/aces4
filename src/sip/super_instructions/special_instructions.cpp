@@ -203,6 +203,7 @@ void energy_ty_denominator_rhf(
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+//void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -269,15 +270,16 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 		}
 	}
 	catch (const std::out_of_range& oor) {
-
+        sial_warn(false, std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
+        procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;
 
 }
 
-std::string SpecialInstructionManager::name(int procvec_slot){
+std::string SpecialInstructionManager::name(int procvec_slot) const{
 	//return proc_index_name_map_.at(procvec_slot);
-	proc_index_name_map_t::iterator it = proc_index_name_map_.find(procvec_slot);
+	proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(procvec_slot);
 	if(it == proc_index_name_map_.end()){
 		std::stringstream ss;
 		ss << "Could not find procedure slot " << procvec_slot ;
@@ -289,52 +291,54 @@ void SpecialInstructionManager::add_special_finalize(){
 //	procmap_.clear();
 }
 
-SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(int function_slot) const{
 	try{
 	fp0 func = procvec_.at(function_slot).first;
 	if (func == NULL){
-		SIP_LOG(std::cout<< "special instruction " << proc_index_name_map_[function_slot] << " at slot " << function_slot << " not installed" << std::endl);
+		//SIP_LOG(std::cout<< "special instruction " << proc_index_name_map_[function_slot] << " at slot " << function_slot << " not installed" << std::endl);
 		throw std::out_of_range(std::string("function not found"));
 	}
 	return func;
 	}
 	catch (const std::out_of_range& oor){
 		std::cout << oor.what() << std::endl;
-		std::cout << "special instruction " << proc_index_name_map_[function_slot] << " at slot " << function_slot << " not installed" << std::endl;
+		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
+		std::cout << "special instruction " << it->second << " at slot " << function_slot << " not installed" << std::endl;
 		sip::check(false, std::string(" terminating get_instruction_ptr "));
 		return NULL;
 	}
 }
 
 
-SpecialInstructionManager::fp0 SpecialInstructionManager::get_no_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp0 SpecialInstructionManager::get_no_arg_special_instruction_ptr(int function_slot) const{
 	return get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp1 SpecialInstructionManager::get_one_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp1 SpecialInstructionManager::get_one_arg_special_instruction_ptr(int function_slot)  const{
 	return (fp1)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp2 SpecialInstructionManager::get_two_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp2 SpecialInstructionManager::get_two_arg_special_instruction_ptr(int function_slot) const{
 	return (fp2)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp3 SpecialInstructionManager::get_three_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp3 SpecialInstructionManager::get_three_arg_special_instruction_ptr(int function_slot) const{
 	return (fp3)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp4 SpecialInstructionManager::get_four_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp4 SpecialInstructionManager::get_four_arg_special_instruction_ptr(int function_slot) const{
 	return (fp4)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp5 SpecialInstructionManager::get_five_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp5 SpecialInstructionManager::get_five_arg_special_instruction_ptr(int function_slot) const{
 	return (fp5)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp6 SpecialInstructionManager::get_six_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp6 SpecialInstructionManager::get_six_arg_special_instruction_ptr(int function_slot) const{
 	return (fp6)get_instruction_ptr(function_slot);
 }
 
-const std::string SpecialInstructionManager::get_signature(int function_slot){
+const std::string SpecialInstructionManager::get_signature(int function_slot) const{
 	try{
 	return procvec_.at(function_slot).second;
 	}
 	catch (const std::out_of_range& oor){
-		std::cout << "special instruction " << proc_index_name_map_[function_slot] << ", at slot " << function_slot << " not installed" << std::endl;
+		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
+		std::cout << "special instruction " << it->second << ", at slot " << function_slot << " not installed" << std::endl;
 		std::cout << *this << std::endl;
 		sip::check(false, std::string(" terminating get_signature"));
 		return std::string("should not get here");
@@ -363,6 +367,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["print_something"] = (fp0)&print_something;
 	procmap_["fill_block_sequential"]= (fp0)&fill_block_sequential;
 	procmap_["fill_block_cyclic"]= (fp0)&fill_block_cyclic;
+//	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
 	procmap_["print_static_array"]=(fp0)&print_static_array;

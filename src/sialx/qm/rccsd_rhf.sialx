@@ -20,81 +20,81 @@
 # Declare indeces 
 # --------------- 
 #
-      index kiter    = 1, cc_iter   
-      index   kbeg   = 1, scf_beg # Change to cc_beg 
-      index   korder = 1, scf_hist # Change to cc_hist 
-      index   kone   = 1, 1
-      index   kdiis  = 1, 30 
-      index   k1diis = 1, 30 
-      index   jdiis  = 1, 30 
-      index   j1diis = 1, 30 
-      index      D1  = 1, 30 
-      index      D2  = 1, 30 
+      index kiter    = 1: cc_iter   
+      index   kbeg   = 1: scf_beg # Change to cc_beg 
+      index   korder = 1: scf_hist # Change to cc_hist 
+      index   kone   = 1: 1
+      index   kdiis  = 1: 30 
+      index   k1diis = 1: 30 
+      index   jdiis  = 1: 30 
+      index   j1diis = 1: 30 
+      index      D1  = 1: 30 
+      index      D2  = 1: 30 
 #
-      aoindex mu     = 1, norb 
-      aoindex nu     = 1, norb
-      aoindex lambda = 1, norb
-      aoindex sigma  = 1, norb
+      aoindex mu     = 1: norb 
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
 #
-      moaindex i = baocc, eaocc
-      moaindex i1= baocc, eaocc
-      moaindex i2= baocc, eaocc
-      moaindex i3= baocc, eaocc
+      moaindex i = baocc: eaocc
+      moaindex i1= baocc: eaocc
+      moaindex i2= baocc: eaocc
+      moaindex i3= baocc: eaocc
 #
-      moaindex a = bavirt, eavirt
-      moaindex a1= bavirt, eavirt
-      moaindex a2= bavirt, eavirt
-      moaindex a3= bavirt, eavirt
+      moaindex a = bavirt: eavirt
+      moaindex a1= bavirt: eavirt
+      moaindex a2= bavirt: eavirt
+      moaindex a3= bavirt: eavirt
 #
-      moaindex j = baocc, eaocc
-      moaindex j1= baocc, eaocc
-      moaindex j2= baocc, eaocc
-      moaindex j3= baocc, eaocc
+      moaindex j = baocc: eaocc
+      moaindex j1= baocc: eaocc
+      moaindex j2= baocc: eaocc
+      moaindex j3= baocc: eaocc
 #
-      moaindex b = bavirt, eavirt
-      moaindex b1= bavirt, eavirt
-      moaindex b2= bavirt, eavirt
-      moaindex b3= bavirt, eavirt
+      moaindex b = bavirt: eavirt
+      moaindex b1= bavirt: eavirt
+      moaindex b2= bavirt: eavirt
+      moaindex b3= bavirt: eavirt
 #
-      moaindex p = baocc, eavirt
-      moaindex p1= baocc, eavirt
-      moaindex p2= baocc, eavirt
-      moaindex p3= baocc, eavirt
+      moaindex p = baocc: eavirt
+      moaindex p1= baocc: eavirt
+      moaindex p2= baocc: eavirt
+      moaindex p3= baocc: eavirt
 #
-      moaindex q = baocc, eavirt
-      moaindex q1= baocc, eavirt
-      moaindex q2= baocc, eavirt
-      moaindex q3= baocc, eavirt
+      moaindex q = baocc: eavirt
+      moaindex q1= baocc: eavirt
+      moaindex q2= baocc: eavirt
+      moaindex q3= baocc: eavirt
 # 
 # Declare static arrays 
 # --------------------- 
 #
-      distributed t1a_old(a,i) 
-      distributed t1a_new(a,i) 
+      distributed t1a_old[a,i] 
+      distributed t1a_new[a,i] 
 #
-      distributed Fae_a(a,a1) 
-      distributed Fme_a(i,a) 
-      distributed Fmi_a(i,i1) 
-      distributed DCa(mu,p) 
-      distributed FTa(p,p1) 
+      distributed Fae_a[a,a1] 
+      distributed Fme_a[i,a] 
+      distributed Fmi_a[i,i1] 
+      distributed DCa[mu,p] 
+      distributed FTa[p,p1] 
 
-      static zz(mu,nu) 
-      static ca(mu,p) 
-      static fock_a(p,p1) 
+      static zz[mu,nu] 
+      static ca[mu,p] 
+      static fock_a[p,p1] 
 #
 # Arrays used in the DIIS 
 # -----------------------
 #
-      served Daibj(a,i,b,j,kdiis) 
-      served Eaibj(a,i,b,j,jdiis) 
-      distributed Dai(a,i,kdiis) 
-      distributed Eai(a,i,jdiis) 
-      served D0aibj(a,i,b,j) 
-      served D0ai(a,i) 
+      served Daibj[a,i,b,j,kdiis] 
+      served Eaibj[a,i,b,j,jdiis] 
+      distributed Dai[a,i,kdiis] 
+      distributed Eai[a,i,jdiis] 
+      served D0aibj[a,i,b,j] 
+      served D0ai[a,i] 
 
-      static BB(d1,d2) 
-      temp tbb(d1,d2) 
-      distributed DIST_BB(d1,d2) 
+      static BB[d1,d2] 
+      temp tbb[d1,d2] 
+      distributed DIST_BB[d1,d2] 
       scalar n1 
       scalar n2 
       scalar worder  
@@ -102,27 +102,27 @@
 # Arrays used in transformation for AO2 algorithm
 # -----------------------------------------------
 #
-      temp Txixi(mu,i1,lambda,i)
-      temp Txxii(mu,nu,i1,i)
-      temp Tixxi(i1,nu,lambda,i)
-      temp Txipi(mu,i,p,i1)
-      temp Tpipi(p1,i,p,i1)
-      temp T1pipi(p1,i,p,i1)
-      temp Tixai(i,mu,a,i1)
-      temp Txaii(mu,a,i,i1)
-      temp Tiaai(i,a1,a,i1)
-      temp Taaii(a,a1,i,i1)
-      temp Txaai(mu,a1,a,i)
-      temp Taaai(a2,a,a1,i)
-      temp Txxai(mu,nu,a,i)
+      temp Txixi[mu,i1,lambda,i]
+      temp Txxii[mu,nu,i1,i]
+      temp Tixxi[i1,nu,lambda,i]
+      temp Txipi[mu,i,p,i1]
+      temp Tpipi[p1,i,p,i1]
+      temp T1pipi[p1,i,p,i1]
+      temp Tixai[i,mu,a,i1]
+      temp Txaii[mu,a,i,i1]
+      temp Tiaai[i,a1,a,i1]
+      temp Taaii[a,a1,i,i1]
+      temp Txaai[mu,a1,a,i]
+      temp Taaai[a2,a,a1,i]
+      temp Txxai[mu,nu,a,i]
 #
-      served VSpipi(p1,i,p,i1)
-      served Viaai(i,a1,a,i1) 
-      served Vaaii(a,a1,i,i1)
-      served Vaaai(a2,a,a1,i)
+      served VSpipi[p1,i,p,i1]
+      served Viaai[i,a1,a,i1] 
+      served Vaaii[a,a1,i,i1]
+      served Vaaai[a2,a,a1,i]
 #
-      temp Txixj(mu,i,nu,j)
-      served Vpiqj(p,i,q,j)
+      temp Txixj[mu,i,nu,j]
+      served Vpiqj[p,i,q,j]
 #
 # End Arrays used in transformation for AO2 algorithm
 # --------------------------------------------------- 
@@ -130,206 +130,206 @@
 # Declare temporary arrays 
 # ------------------------ 
 #
-      temp Txxxi(mu,nu,lambda,i)
-      temp T1xixi(mu,i,nu,i1)
-      temp Txiix(mu,i,i1,nu)
-      temp Txjjx(mu,j,j1,nu)
-      temp Txijx(mu,i,j,nu)
-      temp Txpii(mu,p,i,i1)
-      temp Txqii(mu,q,i,i1)
-      temp Tppii(p,p1,i,i1)
-      temp Tqqii(q,q1,i,i1)
-      temp Txpjj(mu,p,j,j1)
-      temp Txqjj(mu,q,j,j1)
-      temp Tppjj(p,p1,j,j1)
-      temp Tqqjj(q,q1,j,j1)
-      temp Tixpi(i,mu,p,i1)
-      temp Tippi(i,p,p1,i1)
-      temp Tjxqj(j,mu,q,j1)
-      temp Tjqqj(j,q,q1,j1)
-      temp Tixqj(i,mu,q,j)
-      temp Tipqj(i,p,q,j)
+      temp Txxxi[mu,nu,lambda,i]
+      temp T1xixi[mu,i,nu,i1]
+      temp Txiix[mu,i,i1,nu]
+      temp Txjjx[mu,j,j1,nu]
+      temp Txijx[mu,i,j,nu]
+      temp Txpii[mu,p,i,i1]
+      temp Txqii[mu,q,i,i1]
+      temp Tppii[p,p1,i,i1]
+      temp Tqqii[q,q1,i,i1]
+      temp Txpjj[mu,p,j,j1]
+      temp Txqjj[mu,q,j,j1]
+      temp Tppjj[p,p1,j,j1]
+      temp Tqqjj[q,q1,j,j1]
+      temp Tixpi[i,mu,p,i1]
+      temp Tippi[i,p,p1,i1]
+      temp Tjxqj[j,mu,q,j1]
+      temp Tjqqj[j,q,q1,j1]
+      temp Tixqj[i,mu,q,j]
+      temp Tipqj[i,p,q,j]
 #
-      temp Taiai(p,i,p1,i1)
-      temp T1aiai(p,i,p1,i1)
-      temp T2aiai(p,i,p1,i1)
-      temp T3aiai(p,i,p1,i1)
-      temp Tbjbj(q,j,q1,j1)
-      temp T1bjbj(q,j,q1,j1)
-      temp T2bjbj(q,j,q1,j1)
-      temp T3bjbj(q,j,q1,j1)
-      temp Taibj(p,i,q,j)
-      temp T1aibj(p,i,q,j)
-      temp T2aibj(p,i,q,j)
-      temp T3aibj(p,i,q,j)
-      temp T4aibj(p,i,q,j)
-      temp T5aibj(p,i,q,j)
+      temp Taiai[p,i,p1,i1]
+      temp T1aiai[p,i,p1,i1]
+      temp T2aiai[p,i,p1,i1]
+      temp T3aiai[p,i,p1,i1]
+      temp Tbjbj[q,j,q1,j1]
+      temp T1bjbj[q,j,q1,j1]
+      temp T2bjbj[q,j,q1,j1]
+      temp T3bjbj[q,j,q1,j1]
+      temp Taibj[p,i,q,j]
+      temp T1aibj[p,i,q,j]
+      temp T2aibj[p,i,q,j]
+      temp T3aibj[p,i,q,j]
+      temp T4aibj[p,i,q,j]
+      temp T5aibj[p,i,q,j]
 #
-      temp Txxxp(mu,nu,lambda,i)
-      temp Txxxq(mu,nu,lambda,j)
-      temp Txxpp(mu,nu,p1,i)
-      temp Txxqq(mu,nu,q1,j)
-      temp Txppp(mu,p2,p1,i)
-      temp Txqpp(mu,q,p1,i)
-      temp Txqqq(mu,q2,q1,j)
-      temp Txpqq(mu,p,q1,j)
-      temp Tpppp(p3,p2,p1,p)
-      temp Tqqqq(q3,q2,q1,q)
-      temp Tppqq(p1,p,q1,j)
-      temp Tqqpp(q1,q,p1,i)
-      temp Tixxx(i,mu,nu,sigma) 
-      temp Tipxx(i,p,nu,sigma) 
-      temp Tipqx(i,p,q,sigma) 
-      temp Tipqq(i,p,q,q1) 
-      temp Txiai(lambda,i,a1,i1) 
-      temp Txjbj(lambda,j,b1,j1) 
-      temp Txibj(lambda,i,b1,j1) 
+      temp Txxxp[mu,nu,lambda,i]
+      temp Txxxq[mu,nu,lambda,j]
+      temp Txxpp[mu,nu,p1,i]
+      temp Txxqq[mu,nu,q1,j]
+      temp Txppp[mu,p2,p1,i]
+      temp Txqpp[mu,q,p1,i]
+      temp Txqqq[mu,q2,q1,j]
+      temp Txpqq[mu,p,q1,j]
+      temp Tpppp[p3,p2,p1,p]
+      temp Tqqqq[q3,q2,q1,q]
+      temp Tppqq[p1,p,q1,j]
+      temp Tqqpp[q1,q,p1,i]
+      temp Tixxx[i,mu,nu,sigma] 
+      temp Tipxx[i,p,nu,sigma] 
+      temp Tipqx[i,p,q,sigma] 
+      temp Tipqq[i,p,q,q1] 
+      temp Txiai[lambda,i,a1,i1] 
+      temp Txjbj[lambda,j,b1,j1] 
+      temp Txibj[lambda,i,b1,j1] 
 #
-      temp tmp1_aiai(a,i,a1,i1) 
-      temp tmp2_aiai(a,i,a1,i1) 
-      temp tmp3_aiai(a,i,a1,i1) 
-      temp tmp1_aibj(a,i,b,j) 
-      temp tmp2_aibj(a,i,b,j) 
+      temp tmp1_aiai[a,i,a1,i1] 
+      temp tmp2_aiai[a,i,a1,i1] 
+      temp tmp3_aiai[a,i,a1,i1] 
+      temp tmp1_aibj[a,i,b,j] 
+      temp tmp2_aibj[a,i,b,j] 
 #
-      temp Tai(a,i) 
-      temp T1ai(a,i) 
-      temp T2ai(a,i) 
-      temp T3ai(a,i) 
-      temp Tbj(b,j) 
-      temp T1bj(b,j) 
-      temp T2bj(b,j) 
+      temp Tai[a,i] 
+      temp T1ai[a,i] 
+      temp T2ai[a,i] 
+      temp T3ai[a,i] 
+      temp Tbj[b,j] 
+      temp T1bj[b,j] 
+      temp T2bj[b,j] 
 #
-      temp Taa(a,a1) 
-      temp T1aa(a,a1) 
-      temp T1bb(b,b1) 
-      temp Tae_a(a,a1) 
-      temp Tae_b(b,b1) 
+      temp Taa[a,a1] 
+      temp T1aa[a,a1] 
+      temp T1bb[b,b1] 
+      temp Tae_a[a,a1] 
+      temp Tae_b[b,b1] 
 #
-      temp Tia(i,a) 
-      temp T1ia(i,a) 
-      temp Tjb(j,b) 
-      temp T1jb(j,b) 
-      temp Tme_a(i,a) 
-      temp Tme_b(j,b) 
+      temp Tia[i,a] 
+      temp T1ia[i,a] 
+      temp Tjb[j,b] 
+      temp T1jb[j,b] 
+      temp Tme_a[i,a] 
+      temp Tme_b[j,b] 
 #
-      temp Tii(i,i1) 
-      temp T1ii(i,i1) 
-      temp Tjj(j,j1) 
-      temp T1jj(j,j1) 
-      temp Tmi_a(i,i1) 
-      temp Tmi_b(j,j1) 
+      temp Tii[i,i1] 
+      temp T1ii[i,i1] 
+      temp Tjj[j,j1] 
+      temp T1jj[j,j1] 
+      temp Tmi_a[i,i1] 
+      temp Tmi_b[j,j1] 
 #
-      temp T1pppp(p,p1,p2,p3) 
-      temp T1qqqq(q,q1,q2,q3) 
-      temp Taiii(a,i,i1,i2) 
-      temp T1aiii(a,i,i1,i2) 
+      temp T1pppp[p,p1,p2,p3] 
+      temp T1qqqq[q,q1,q2,q3] 
+      temp Taiii[a,i,i1,i2] 
+      temp T1aiii[a,i,i1,i2] 
 #
-      temp  Tiiii(i,i1,i2,i3) 
-      temp T1iiii(i,i1,i2,i3) 
+      temp  Tiiii[i,i1,i2,i3] 
+      temp T1iiii[i,i1,i2,i3] 
 #
-      temp  Tjjjj(j,j1,j2,j3) 
-      temp T1jjjj(j,j1,j2,j3) 
-      temp  Tbjjj(b,j,j1,j2) 
-      temp T1bjjj(b,j,j1,j2) 
+      temp  Tjjjj[j,j1,j2,j3] 
+      temp T1jjjj[j,j1,j2,j3] 
+      temp  Tbjjj[b,j,j1,j2] 
+      temp T1bjjj[b,j,j1,j2] 
 #
-      temp  Tiijj(i,i1,j2,j3) 
-      temp T1iijj(i,i1,j2,j3) 
+      temp  Tiijj[i,i1,j2,j3] 
+      temp T1iijj[i,i1,j2,j3] 
 #
-      temp  tmp_aa(a,a1) 
-      temp tmp1_aa(a,a1) 
-      temp  tmp_ii(i,i1) 
-      temp tmp1_ii(i,i1) 
+      temp  tmp_aa[a,a1] 
+      temp tmp1_aa[a,a1] 
+      temp  tmp_ii[i,i1] 
+      temp tmp1_ii[i,i1] 
 #
-      temp  Tiiai(i,i1,a,i2) 
-      temp T1iiai(i,i1,a,i2) 
+      temp  Tiiai[i,i1,a,i2] 
+      temp T1iiai[i,i1,a,i2] 
 #
-      temp  tmp_bb(b,b1) 
-      temp tmp1_bb(b,b1) 
-      temp  tmp_jj(j,j1) 
-      temp tmp1_jj(j,j1) 
+      temp  tmp_bb[b,b1] 
+      temp tmp1_bb[b,b1] 
+      temp  tmp_jj[j,j1] 
+      temp tmp1_jj[j,j1] 
 #
-      temp  Tjjbj(j,j1,b,j2) 
-      temp T1jjbj(j,j1,b,j2) 
+      temp  Tjjbj[j,j1,b,j2] 
+      temp T1jjbj[j,j1,b,j2] 
 # 
-      temp T1aaai(a,a1,a2,i)  
-      temp T2aaai(a,a1,a2,i)  
-      temp Taaaa(a,a1,a2,a3)  
-      temp T1aaaa(a,a1,a2,a3)  
+      temp T1aaai[a,a1,a2,i]  
+      temp T2aaai[a,a1,a2,i]  
+      temp Taaaa[a,a1,a2,a3]  
+      temp T1aaaa[a,a1,a2,a3]  
 #
-      temp T1bbbj(b,b1,b2,j)  
-      temp T2bbbj(b,b1,b2,j)  
-      temp Tbbbb(b,b1,b2,b3)  
-      temp T1bbbb(b,b1,b2,b3)  
+      temp T1bbbj[b,b1,b2,j]  
+      temp T2bbbj[b,b1,b2,j]  
+      temp Tbbbb[b,b1,b2,b3]  
+      temp T1bbbb[b,b1,b2,b3]  
 #
-      temp Taabb(a,a1,b,b1)  
-      temp T1aabb(a,a1,b,b1)  
+      temp Taabb[a,a1,b,b1]  
+      temp T1aabb[a,a1,b,b1]  
 #
-      temp R1aiai(a,i,a1,i1) 
-      temp R2aiai(a,i,a1,i1) 
-      temp R3aiai(a,i,a1,i1) 
-      temp R4aiai(a,i,a1,i1) 
-      temp R1bjbj(b,j,b1,j1) 
-      temp R2bjbj(b,j,b1,j1) 
-      temp R3bjbj(b,j,b1,j1) 
-      temp R4bjbj(b,j,b1,j1) 
-      temp R1aibj(a,i,b,j) 
-      temp R2aibj(a,i,b,j) 
-      temp R3aibj(a,i,b,j) 
-      temp R4aibj(a,i,b,j) 
+      temp R1aiai[a,i,a1,i1] 
+      temp R2aiai[a,i,a1,i1] 
+      temp R3aiai[a,i,a1,i1] 
+      temp R4aiai[a,i,a1,i1] 
+      temp R1bjbj[b,j,b1,j1] 
+      temp R2bjbj[b,j,b1,j1] 
+      temp R3bjbj[b,j,b1,j1] 
+      temp R4bjbj[b,j,b1,j1] 
+      temp R1aibj[a,i,b,j] 
+      temp R2aibj[a,i,b,j] 
+      temp R3aibj[a,i,b,j] 
+      temp R4aibj[a,i,b,j] 
 #
-      temp T1iaai(i,a,a1,i1) 
-      temp T2iaai(i,a,a1,i1) 
-      temp T1jbbj(j,b,b1,j1) 
-      temp T2jbbj(j,b,b1,j1) 
-      temp T1iabj(i,a,b,j) 
-      temp T2iabj(i,a,b,j) 
-      temp Tjjpp(j,j1,p,p1) 
-      temp T1jjpp(j,j1,p,p1) 
-      temp T2jjpp(j,j1,p,p1) 
-      temp  Tiiqq(i,i1,q,q1) 
-      temp T1iiqq(i,i1,q,q1) 
-      temp T2iiqq(i,i1,q,q1) 
-      temp  Tjjai(j,j1,a,i) 
-      temp T1jjai(j,j1,a,i) 
-      temp T2jjai(j,j1,a,i) 
-      temp  Tiibj(i,i1,b,j) 
-      temp T1iibj(i,i1,b,j) 
-      temp T2iibj(i,i1,b,j) 
-      temp  Tjbai(j,b,a,i)  
-      temp T1jbai(j,b,a,i)  
-      temp T2jbai(j,b,a,i)  
-      temp  Taijj(a,i,j,j1) 
-      temp T1aijj(a,i,j,j1) 
-      temp Tqqip(a,i,b,b1)  
+      temp T1iaai[i,a,a1,i1] 
+      temp T2iaai[i,a,a1,i1] 
+      temp T1jbbj[j,b,b1,j1] 
+      temp T2jbbj[j,b,b1,j1] 
+      temp T1iabj[i,a,b,j] 
+      temp T2iabj[i,a,b,j] 
+      temp Tjjpp[j,j1,p,p1] 
+      temp T1jjpp[j,j1,p,p1] 
+      temp T2jjpp[j,j1,p,p1] 
+      temp  Tiiqq[i,i1,q,q1] 
+      temp T1iiqq[i,i1,q,q1] 
+      temp T2iiqq[i,i1,q,q1] 
+      temp  Tjjai[j,j1,a,i] 
+      temp T1jjai[j,j1,a,i] 
+      temp T2jjai[j,j1,a,i] 
+      temp  Tiibj[i,i1,b,j] 
+      temp T1iibj[i,i1,b,j] 
+      temp T2iibj[i,i1,b,j] 
+      temp  Tjbai[j,b,a,i]  
+      temp T1jbai[j,b,a,i]  
+      temp T2jbai[j,b,a,i]  
+      temp  Taijj[a,i,j,j1] 
+      temp T1aijj[a,i,j,j1] 
+      temp Tqqip[a,i,b,b1]  
 #
-      temp tpx(p,mu) 
-      temp t1px(p,mu) 
-      temp tqx(q,mu) 
-      temp t1qx(q,mu) 
-      temp txi(mu,i) 
-      temp t1xi(mu,i) 
-      temp txj(mu,j) 
-      temp t1xj(mu,j) 
+      temp tpx[p,mu] 
+      temp t1px[p,mu] 
+      temp tqx[q,mu] 
+      temp t1qx[q,mu] 
+      temp txi[mu,i] 
+      temp t1xi[mu,i] 
+      temp txj[mu,j] 
+      temp t1xj[mu,j] 
 #
 # Declare distributed arrays 
 # -------------------------- 
 #
-      served T2new_ab(a,i,b,j)
-      served T2old_aa(a,i,a1,i1)
-      served T2old_ab(a,i,b,j)
+      served T2new_ab[a,i,b,j]
+      served T2old_aa[a,i,a1,i1]
+      served T2old_ab[a,i,b,j]
 #
-      served Tau_ab(a,i,b,j)
-      served Taup_aa(a,i,a1,i1)
-      served Taup_ab(a,i,b,j)
+      served Tau_ab[a,i,b,j]
+      served Taup_aa[a,i,a1,i1]
+      served Taup_ab[a,i,b,j]
 #
-      served Wiibb(i1,i,b,b1)    
-      served Wjjaa(j1,j,a,a1)      
+      served Wiibb[i1,i,b,b1]    
+      served Wjjaa[j1,j,a,a1]      
 #
 # Declare served arrays 
 # --------------------- 
 #
-      temp AOINT(mu,nu,lambda,sigma) 
-      local LTAO_ab(lambda,i,sigma,i1) 
+      temp AOINT[mu,nu,lambda,sigma] 
+      local LTAO_ab[lambda,i,sigma,i1] 
       scalar ncount1
       scalar ncount2
       scalar jcount 
@@ -349,99 +349,99 @@
 # Arrays needed for AOLADDER contribution
 # ---------------------------------------
 #
-     temp Zab(lambda,i,b,j)
-     temp Yab(lambda,i,mu,j)
-     temp Y1ab(lambda,i,mu,j)
+     temp Zab[lambda,i,b,j]
+     temp Yab[lambda,i,mu,j]
+     temp Y1ab[lambda,i,mu,j]
 #
-     temp TXaiai(a,i,nu,i1)
-     temp Taixi(a,i,nu,i1)   
-     temp TYaiai(a,i,a1,i1)
-     temp TY1aiai(a,i,a1,i1)
-     temp TXbjbj(b,j,nu,j1)
-     temp Tbjxj(b,j,nu,j1)
-     temp TYbjbj(b,j,b1,j1)
-     temp TY1bjbj(b,j,b1,j1)
-     temp TXaibj(a,i,nu,j)
-     temp TZaibj(a,i,nu,j)
-     temp Taixj(a,i,nu,j)
-     temp TYaibj(a,i,b,j)
+     temp TXaiai[a,i,nu,i1]
+     temp Taixi[a,i,nu,i1]   
+     temp TYaiai[a,i,a1,i1]
+     temp TY1aiai[a,i,a1,i1]
+     temp TXbjbj[b,j,nu,j1]
+     temp Tbjxj[b,j,nu,j1]
+     temp TYbjbj[b,j,b1,j1]
+     temp TY1bjbj[b,j,b1,j1]
+     temp TXaibj[a,i,nu,j]
+     temp TZaibj[a,i,nu,j]
+     temp Taixj[a,i,nu,j]
+     temp TYaibj[a,i,b,j]
 #
-     served TAO_ab(lambda,i,sigma,j)
-     served T2AO_ab(lambda,i,sigma,j)
-     distributed t1a_ax(a,mu) 
-     distributed t1a_xi(mu,i) 
-     distributed t1b_xj(mu,j) 
-     served TDaixj(a,i,nu,j)
-     local LDaixj(a,i,nu,j) 
+     served TAO_ab[lambda,i,sigma,j]
+     served T2AO_ab[lambda,i,sigma,j]
+     distributed t1a_ax[a,mu] 
+     distributed t1a_xi[mu,i] 
+     distributed t1b_xj[mu,j] 
+     served TDaixj[a,i,nu,j]
+     local LDaixj[a,i,nu,j] 
 #
 # local arrays used for data storage
 # ---------------------------------- 
 #
-     local Liiai(i2,i,a,i1) 
-     local L1iiai(i,i1,a2,i2) 
-     local L2iiai(i2,i1,a2,i)  
-     local L3iiai(i,i1,a,i2)  
-     local L4iiai(i2,i1,a,i)  
-     local Laiai(a,i,a2,i1) 
-     local L1aiai(a,i,a1,i2) 
-     local L2aiai(a1,i1,a2,i) 
-     local L3aiai(a2,i1,a,i2) 
-     local L4aiai(a1,i,a2,i1) 
-     local Laaai(a,a2,a1,i) 
+     local Liiai[i2,i,a,i1] 
+     local L1iiai[i,i1,a2,i2] 
+     local L2iiai[i2,i1,a2,i]  
+     local L3iiai[i,i1,a,i2]  
+     local L4iiai[i2,i1,a,i]  
+     local Laiai[a,i,a2,i1] 
+     local L1aiai[a,i,a1,i2] 
+     local L2aiai[a1,i1,a2,i] 
+     local L3aiai[a2,i1,a,i2] 
+     local L4aiai[a1,i,a2,i1] 
+     local Laaai[a,a2,a1,i] 
 #
-     local Ljjbj(j2,j,b,j1) 
-     local Lbjbj(b,j,b2,j1) 
-     local L1bjbj(b,j,b1,j2) 
-     local L2bjbj(b1,j1,b2,j) 
-     local L3bjbj(b2,j1,b,j2) 
-     local L4bjbj(b1,j,b2,j1) 
-     local Lbbbj(b,b2,b1,j) 
+     local Ljjbj[j2,j,b,j1] 
+     local Lbjbj[b,j,b2,j1] 
+     local L1bjbj[b,j,b1,j2] 
+     local L2bjbj[b1,j1,b2,j] 
+     local L3bjbj[b2,j1,b,j2] 
+     local L4bjbj[b1,j,b2,j1] 
+     local Lbbbj[b,b2,b1,j] 
 #
-     local Laijj(a,i,j1,j) 
-     local Laibj(a,i,b1,j) 
-     local L1aibj(a1,i,b,j) 
-     local L2aibj(a,i,b,j2) 
-     local L3aibj(a,i1,b,j) 
-     local L4aibj(a,i,b1,j) 
-     local Liibj(i1,i,b,j) 
-     local L1iibj(i,i1,b,j) 
-     local Lbbai(b,b1,a,i) 
-     local Laabj(a,a1,b,j) 
-     local LLaiai(a,i,a1,i1) 
-     local Lxiai(lambda,i,a1,i1) 
-     local LLbjbj(b,j,b1,j1) 
-     local Lxjbj(lambda,j,b1,j1) 
-     local LLaibj(a,i,b,j) 
-     local Lxibj(lambda,i,b,j) 
-     local L1xixi(mu,i,nu,i1)  
-     local L2xixi(nu,i1,mu,i)  
-     local L1xjxj(mu,j,nu,j1)  
-     local L2xjxj(nu,j1,mu,j)  
-     local L1xixj(mu,i,nu,j)  
-     local Laiii(a,i,i2,i1) 
-     local L1aiii(a1,i2,i,i1) 
-     local Lbjjj(b,j,j2,j1) 
-     local L1bjjj(b1,j2,j,j1) 
-     local Ljjai(a,i,j,j1) 
+     local Laijj[a,i,j1,j] 
+     local Laibj[a,i,b1,j] 
+     local L1aibj[a1,i,b,j] 
+     local L2aibj[a,i,b,j2] 
+     local L3aibj[a,i1,b,j] 
+     local L4aibj[a,i,b1,j] 
+     local Liibj[i1,i,b,j] 
+     local L1iibj[i,i1,b,j] 
+     local Lbbai[b,b1,a,i] 
+     local Laabj[a,a1,b,j] 
+     local LLaiai[a,i,a1,i1] 
+     local Lxiai[lambda,i,a1,i1] 
+     local LLbjbj[b,j,b1,j1] 
+     local Lxjbj[lambda,j,b1,j1] 
+     local LLaibj[a,i,b,j] 
+     local Lxibj[lambda,i,b,j] 
+     local L1xixi[mu,i,nu,i1]  
+     local L2xixi[nu,i1,mu,i]  
+     local L1xjxj[mu,j,nu,j1]  
+     local L2xjxj[nu,j1,mu,j]  
+     local L1xixj[mu,i,nu,j]  
+     local Laiii[a,i,i2,i1] 
+     local L1aiii[a1,i2,i,i1] 
+     local Lbjjj[b,j,j2,j1] 
+     local L1bjjj[b1,j2,j,j1] 
+     local Ljjai[a,i,j,j1] 
 #
-     local LWaaai(a2,a,a1,i1) 
-     local LWbbbj(b2,b,b1,j1) 
-     local LWbbai(b1,b,a,i) 
-     local LWaabj(a1,a,b,j) 
-     local LXbbai(b1,b,a1,i1) 
-     local LXaabj(a1,a,b1,j1) 
-     local LWaiai(a2,i,a,i1) 
-     local LWbjbj(b2,j,b,j1) 
-     local LWaibj(a,i,b,j) 
-     local LWiaai(i1,a,a2,i)
-     local LWjbai(j,b,a,i)
+     local LWaaai[a2,a,a1,i1] 
+     local LWbbbj[b2,b,b1,j1] 
+     local LWbbai[b1,b,a,i] 
+     local LWaabj[a1,a,b,j] 
+     local LXbbai[b1,b,a1,i1] 
+     local LXaabj[a1,a,b1,j1] 
+     local LWaiai[a2,i,a,i1] 
+     local LWbjbj[b2,j,b,j1] 
+     local LWaibj[a,i,b,j] 
+     local LWiaai[i1,a,a2,i]
+     local LWjbai[j,b,a,i]
 #
 # Distributed two-particle arrays 
 # ------------------------------- 
 #
-     distributed Wminj_aa(i2,i,i3,i1) 
-     distributed Wminj_bb(j2,j,j3,j1) 
-     distributed Wminj_ab(i2,i,j3,j1) 
+     distributed Wminj_aa[i2,i,i3,i1] 
+     distributed Wminj_bb[j2,j,j3,j1] 
+     distributed Wminj_ab[i2,i,j3,j1] 
 #
 # Declare scalars 
 # --------------- 
@@ -464,14 +464,14 @@
 # Arrays/Scalars used exclusively in DIIS procedure. 
 # -------------------------------------------------- 
 #
-       served e1aibj(a,i,b,j)  
-       served e2aibj(a,i,b,j)  
-       served e3aibj(a,i,b,j)  
-       served e4aibj(a,i,b,j)  
-       served e5aibj(a,i,b,j)  
-       served e6aibj(a,i,b,j)  
+       served e1aibj[a,i,b,j]  
+       served e2aibj[a,i,b,j]  
+       served e3aibj[a,i,b,j]  
+       served e4aibj[a,i,b,j]  
+       served e5aibj[a,i,b,j]  
+       served e6aibj[a,i,b,j]  
 #
-       served e5aiai(a,i,b,j) 
+       served e5aiai[a,i,b,j] 
 #
 #    ------------------------------------------------------------------------ 
 #
@@ -508,16 +508,16 @@
 #
      PARDO a, b, i, j 
 #
-           REQUEST                     Vpiqj(a,i,b,j) j  
-           REQUEST                     Vpiqj(b,j,a,i) j  
-           Taibj(a,i,b,j)            = Vpiqj(b,j,a,i)
-           Taibj(a,i,b,j)           += Vpiqj(a,i,b,j)
-           execute energy_denominator_rhf  Taibj(a,i,b,j) fock_a  
-           Taibj(a,i,b,j)           *= 0.5  
-           PREPARE T2old_ab(a,i,b,j) = Taibj(a,i,b,j)  
+           REQUEST                     Vpiqj[a,i,b,j]   
+           REQUEST                     Vpiqj[b,j,a,i]   
+           Taibj[a,i,b,j]            = Vpiqj[b,j,a,i]
+           Taibj[a,i,b,j]           += Vpiqj[a,i,b,j]
+           execute energy_denominator_rhf  Taibj[a,i,b,j] fock_a  
+           Taibj[a,i,b,j]           *= 0.5  
+           PREPARE T2old_ab[a,i,b,j] = Taibj[a,i,b,j]  
           #DO kdiis 
           #   if kdiis == 1 
-                 PREPARE D0aibj(a,i,b,j)  = Taibj(a,i,b,j)  
+                 PREPARE D0aibj[a,i,b,j]  = Taibj[a,i,b,j]  
           #   endif 
           #ENDDO kdiis 
 #
@@ -525,11 +525,11 @@
 #
      PARDO a, i
 #
-           tai(a,i)         = 0.0
-           PUT t1a_old(a,i) = tai(a,i)
+           tai[a,i]         = 0.0
+           PUT t1a_old[a,i] = tai[a,i]
           #DO kdiis 
           #   if kdiis == 1 
-                 PREPARE D0ai(a,i) = tai(a,i)
+                 PREPARE D0ai[a,i] = tai[a,i]
           #   endif 
           #ENDDO kdiis 
 #
@@ -546,21 +546,21 @@
 #
       PARDO a, i, a1, i1 
 #
-            REQUEST T2old_aa(a,i,a1,i1) i1  
-            GET t1a_old(a1,i1) 
-            GET t1a_old(a1,i) 
-            GET t1a_old(a,i1) 
-            GET t1a_old(a,i) 
+            REQUEST T2old_aa[a,i,a1,i1]   
+            GET t1a_old[a1,i1] 
+            GET t1a_old[a1,i] 
+            GET t1a_old[a,i1] 
+            GET t1a_old[a,i] 
 # 
-            tai(a1,i1)                 = t1a_old(a1,i1) 
-            tmp1_aiai(a,i,a1,i1)       = t1a_old(a,i)^tai(a1,i1)  
-            tai(a1,i)                  = t1a_old(a1,i) 
-            tmp2_aiai(a,i,a1,i1)       = t1a_old(a,i1)^tai(a1,i)  
-            tmp1_aiai(a,i,a1,i1)      -= tmp2_aiai(a,i,a1,i1)  
+            tai[a1,i1]                 = t1a_old[a1,i1] 
+            tmp1_aiai[a,i,a1,i1]       = t1a_old[a,i]^tai[a1,i1]  
+            tai[a1,i]                  = t1a_old[a1,i] 
+            tmp2_aiai[a,i,a1,i1]       = t1a_old[a,i1]^tai[a1,i]  
+            tmp1_aiai[a,i,a1,i1]      -= tmp2_aiai[a,i,a1,i1]  
 #
-            tmp1_aiai(a,i,a1,i1)      *= 0.5  
-            tmp1_aiai(a,i,a1,i1)      += T2old_aa(a,i,a1,i1) 
-            PREPARE Taup_aa(a,i,a1,i1) = tmp1_aiai(a,i,a1,i1)  
+            tmp1_aiai[a,i,a1,i1]      *= 0.5  
+            tmp1_aiai[a,i,a1,i1]      += T2old_aa[a,i,a1,i1] 
+            PREPARE Taup_aa[a,i,a1,i1] = tmp1_aiai[a,i,a1,i1]  
 #
       ENDPARDO a, i, a1, i1 
 #
@@ -576,19 +576,19 @@
 #
       PARDO a, i, b, j 
 #
-            REQUEST T2old_ab(a,i,b,j) j  
-            GET t1a_old(a,i) 
-            GET t1a_old(b,j) 
-            tai(a,i) = t1a_old(a,i) 
+            REQUEST T2old_ab[a,i,b,j]   
+            GET t1a_old[a,i] 
+            GET t1a_old[b,j] 
+            tai[a,i] = t1a_old[a,i] 
 #
-            tmp1_aibj(a,i,b,j)       = tai(a,i)^t1a_old(b,j)  
-            tmp2_aibj(a,i,b,j)       = tmp1_aibj(a,i,b,j)  
-            tmp2_aibj(a,i,b,j)      *= 0.5  
+            tmp1_aibj[a,i,b,j]       = tai[a,i]^t1a_old[b,j]  
+            tmp2_aibj[a,i,b,j]       = tmp1_aibj[a,i,b,j]  
+            tmp2_aibj[a,i,b,j]      *= 0.5  
 #
-            tmp1_aibj(a,i,b,j)      += T2old_ab(a,i,b,j) 
-            tmp2_aibj(a,i,b,j)      += T2old_ab(a,i,b,j) 
-            PREPARE Tau_ab(a,i,b,j)  = tmp1_aibj(a,i,b,j)  
-            PREPARE Taup_ab(a,i,b,j) = tmp2_aibj(a,i,b,j)  
+            tmp1_aibj[a,i,b,j]      += T2old_ab[a,i,b,j] 
+            tmp2_aibj[a,i,b,j]      += T2old_ab[a,i,b,j] 
+            PREPARE Tau_ab[a,i,b,j]  = tmp1_aibj[a,i,b,j]  
+            PREPARE Taup_ab[a,i,b,j] = tmp2_aibj[a,i,b,j]  
 #
       ENDPARDO a, i, b, j 
 #
@@ -604,20 +604,20 @@
 #
       PARDO a, i, a1, i1 
 #
-            REQUEST T2old_aa(a,i,a1,i1) i1  
-            GET t1a_old(a1,i1) 
-            GET t1a_old(a1,i) 
-            GET t1a_old(a,i1) 
-            GET t1a_old(a,i) 
+            REQUEST T2old_aa[a,i,a1,i1]   
+            GET t1a_old[a1,i1] 
+            GET t1a_old[a1,i] 
+            GET t1a_old[a,i1] 
+            GET t1a_old[a,i] 
 #
-            tai(a1,i1)                 = t1a_old(a1,i1) 
-            tmp1_aiai(a,i,a1,i1)       = t1a_old(a,i)^tai(a1,i1)  
-            tai(a1,i)                  = t1a_old(a1,i) 
-            tmp2_aiai(a,i,a1,i1)       = t1a_old(a,i1)^tai(a1,i)  
-            tmp1_aiai(a,i,a1,i1)      -= tmp2_aiai(a,i,a1,i1) 
-            tmp1_aiai(a,i,a1,i1)      *= 0.5  
-            tmp1_aiai(a,i,a1,i1)      += T2old_aa(a,i,a1,i1) 
-            PREPARE Taup_aa(a,i,a1,i1) = tmp1_aiai(a,i,a1,i1)  
+            tai[a1,i1]                 = t1a_old[a1,i1] 
+            tmp1_aiai[a,i,a1,i1]       = t1a_old[a,i]^tai[a1,i1]  
+            tai[a1,i]                  = t1a_old[a1,i] 
+            tmp2_aiai[a,i,a1,i1]       = t1a_old[a,i1]^tai[a1,i]  
+            tmp1_aiai[a,i,a1,i1]      -= tmp2_aiai[a,i,a1,i1] 
+            tmp1_aiai[a,i,a1,i1]      *= 0.5  
+            tmp1_aiai[a,i,a1,i1]      += T2old_aa[a,i,a1,i1] 
+            PREPARE Taup_aa[a,i,a1,i1] = tmp1_aiai[a,i,a1,i1]  
 #
       ENDPARDO a, i, a1, i1 
 #
@@ -632,15 +632,15 @@
 #
       PARDO a, i, b, j 
 #
-            REQUEST T2old_ab(a,i,b,j) j  
-            GET t1a_old(a,i) 
-            GET t1a_old(b,j) 
-            tai(a,i) = t1a_old(a,i) 
+            REQUEST T2old_ab[a,i,b,j]   
+            GET t1a_old[a,i] 
+            GET t1a_old[b,j] 
+            tai[a,i] = t1a_old[a,i] 
 # 
-            tmp1_aibj(a,i,b,j)       = tai(a,i)^t1a_old(b,j)  
-            tmp1_aibj(a,i,b,j)      *= 0.5  
-            tmp1_aibj(a,i,b,j)      += T2old_ab(a,i,b,j) 
-            PREPARE Taup_ab(a,i,b,j) = tmp1_aibj(a,i,b,j)  
+            tmp1_aibj[a,i,b,j]       = tai[a,i]^t1a_old[b,j]  
+            tmp1_aibj[a,i,b,j]      *= 0.5  
+            tmp1_aibj[a,i,b,j]      += T2old_ab[a,i,b,j] 
+            PREPARE Taup_ab[a,i,b,j] = tmp1_aibj[a,i,b,j]  
 #
       ENDPARDO a, i, b, j 
 #
@@ -673,26 +673,26 @@
 #
       PARDO a, a2, i
 #     
-               allocate LWiaai(*,a,a2,i)
+               allocate LWiaai[*,a,a2,i]
 #     
                DO a1
 #     
-                  REQUEST            Vaaai(a1,a,a2,i) i
-                  REQUEST            Vaaai(a2,a,a1,i) i
-                  GET                t1a_old(a2,i)
+                  REQUEST            Vaaai[a1,a,a2,i] 
+                  REQUEST            Vaaai[a2,a,a1,i] 
+                  GET                t1a_old[a2,i]
 #     
-                  taaai(a1,a,a2,i) = Vaaai(a1,a,a2,i)
-                  t1aaai(a1,a,a2,i)= Vaaai(a2,a,a1,i)
-                  taaai(a1,a,a2,i)-= t1aaai(a1,a,a2,i)
+                  taaai[a1,a,a2,i] = Vaaai[a1,a,a2,i]
+                  t1aaai[a1,a,a2,i]= Vaaai[a2,a,a1,i]
+                  taaai[a1,a,a2,i]-= t1aaai[a1,a,a2,i]
 #     
-                  Taa(a,a1)        = taaai(a1,a,a2,i)*t1a_old(a2,i)
-                  PUT Fae_a(a,a1) += Taa(a,a1)
+                  Taa[a,a1]        = taaai[a1,a,a2,i]*t1a_old[a2,i]
+                  PUT Fae_a[a,a1] += Taa[a,a1]
 #     
                   DO i1
 #
-                     GET                  t1a_old(a1,i1)
-                     tiaai(i1,a,a2,i)   = taaai(a1,a,a2,i)*t1a_old(a1,i1)
-                     LWiaai(i1,a,a2,i) += tiaai(i1,a,a2,i)
+                     GET                  t1a_old[a1,i1]
+                     tiaai[i1,a,a2,i]   = taaai[a1,a,a2,i]*t1a_old[a1,i1]
+                     LWiaai[i1,a,a2,i] += tiaai[i1,a,a2,i]
 #
                   ENDDO i1
 #
@@ -700,62 +700,62 @@
 #
                DO i1
 #
-                  Taiai(a2,i,a,i1)          = LWiaai(i1,a,a2,i)
-                  PREPARE e5aiai(a2,i,a,i1) = Taiai(a2,i,a,i1)
+                  Taiai[a2,i,a,i1]          = LWiaai[i1,a,a2,i]
+                  PREPARE e5aiai[a2,i,a,i1] = Taiai[a2,i,a,i1]
 #
                ENDDO i1
 #
-               deallocate LWiaai(*,a,a2,i)
+               deallocate LWiaai[*,a,a2,i]
 #
       ENDPARDO a, a2, i
 #
       PARDO a, b, j
 #
-            allocate LWaibj(a,*,b,j)
+            allocate LWaibj[a,*,b,j]
 #
             DO a1
 #
-               REQUEST            Vaaai(a1,a,b,j) j
-               GET                t1a_old(b,j)
+               REQUEST            Vaaai[a1,a,b,j] 
+               GET                t1a_old[b,j]
 #
                DO i
 #
-                  GET                t1a_old(a1,i)
-                  taibj(a,i,b,j)   = Vaaai(a1,a,b,j)*t1a_old(a1,i)
-                  LWaibj(a,i,b,j) += taibj(a,i,b,j)
+                  GET                t1a_old[a1,i]
+                  taibj[a,i,b,j]   = Vaaai[a1,a,b,j]*t1a_old[a1,i]
+                  LWaibj[a,i,b,j] += taibj[a,i,b,j]
 #
                ENDDO i
 #
-               Taa(a,a1)        = Vaaai(a1,a,b,j)*t1a_old(b,j)
-               PUT Fae_a(a,a1) += Taa(a,a1)
+               Taa[a,a1]        = Vaaai[a1,a,b,j]*t1a_old[b,j]
+               PUT Fae_a[a,a1] += Taa[a,a1]
 #
             ENDDO a1
 #
             DO i
 #
-               Taibj(a,i,b,j)          = LWaibj(a,i,b,j)
-               T1aibj(b,j,a,i)         = LWaibj(a,i,b,j)
-               PREPARE e6aibj(a,i,b,j) = Taibj(a,i,b,j)
-               PREPARE e5aibj(b,j,a,i) = T1aibj(b,j,a,i) 
+               Taibj[a,i,b,j]          = LWaibj[a,i,b,j]
+               T1aibj[b,j,a,i]         = LWaibj[a,i,b,j]
+               PREPARE e6aibj[a,i,b,j] = Taibj[a,i,b,j]
+               PREPARE e5aibj[b,j,a,i] = T1aibj[b,j,a,i] 
 #
             ENDDO i
 #
-            deallocate LWaibj(a,*,b,j)
+            deallocate LWaibj[a,*,b,j]
 #
       ENDPARDO a, b, j
 #
       PARDO a1, i, b, j
 #
-           REQUEST Vpiqj(a1,i,b,j) j
+           REQUEST Vpiqj[a1,i,b,j] 
 #
            DO a
 #
-              REQUEST            Taup_ab(a,i,b,j) j
+              REQUEST            Taup_ab[a,i,b,j] 
 #
-              Taa(a,a1)        = Taup_ab(a,i,b,j)*Vpiqj(a1,i,b,j)
-              Taa(a,a1)       *= -1.0
+              Taa[a,a1]        = Taup_ab[a,i,b,j]*Vpiqj[a1,i,b,j]
+              Taa[a,a1]       *= -1.0
 #
-              PUT Fae_a(a,a1) += Taa(a,a1)
+              PUT Fae_a[a,a1] += Taa[a,a1]
 #
            ENDDO a
 #
@@ -763,16 +763,16 @@
 #
       PARDO a1, i, a2, i1
 #
-           REQUEST VSpipi(a1,i1,a2,i) i
+           REQUEST VSpipi[a1,i1,a2,i] 
 #
            DO a
 #
-               REQUEST Taup_aa(a,i,a2,i1) i
+               REQUEST Taup_aa[a,i,a2,i1] 
 #
-               Taa(a,a1)        = Taup_aa(a,i,a2,i1)*VSpipi(a1,i1,a2,i)
-               Taa(a,a1)       *= 0.5
+               Taa[a,a1]        = Taup_aa[a,i,a2,i1]*VSpipi[a1,i1,a2,i]
+               Taa[a,a1]       *= 0.5
 #
-               PUT Fae_a(a,a1) += Taa(a,a1)
+               PUT Fae_a[a,a1] += Taa[a,a1]
 #
             ENDDO a
 #
@@ -790,18 +790,18 @@
 #
       PARDO a, i, b
 #
-            allocate LWjbai(*,b,a,i)
+            allocate LWjbai[*,b,a,i]
 #              
             DO b1
 #           
-               REQUEST Vaaai(b1,b,a,i) i
-               GET     t1a_old(a,i) 
+               REQUEST Vaaai[b1,b,a,i] 
+               GET     t1a_old[a,i] 
 #
                DO j  
 #
-                  GET                t1a_old(b1,j)
-                  tjbai(j,b,a,i)   = Vaaai(b1,b,a,i)*t1a_old(b1,j)
-                  LWjbai(j,b,a,i) += tjbai(j,b,a,i)
+                  GET                t1a_old[b1,j]
+                  tjbai[j,b,a,i]   = Vaaai[b1,b,a,i]*t1a_old[b1,j]
+                  LWjbai[j,b,a,i] += tjbai[j,b,a,i]
 #    
                ENDDO j
 #    
@@ -809,12 +809,12 @@
 #     
             DO j
 #        
-               Taibj(a,i,b,j)          = LWjbai(j,b,a,i)
-               PREPARE e5aibj(a,i,b,j) = Taibj(a,i,b,j)
+               Taibj[a,i,b,j]          = LWjbai[j,b,a,i]
+               PREPARE e5aibj[a,i,b,j] = Taibj[a,i,b,j]
 #     
             ENDDO j
 #    
-            deallocate LWjbai(*,b,a,i)
+            deallocate LWjbai[*,b,a,i]
 #    
       ENDPARDO a, i, b
 #
@@ -841,16 +841,16 @@
 #
       PARDO i, a 
 #
-            Tme_a(i,a) = 0.0
+            Tme_a[i,a] = 0.0
 # 
             DO i1 
             DO a1 
 #
-               REQUEST VSpipi(a,i,a1,i1) i1  
-               GET     t1a_old(a1,i1) 
+               REQUEST VSpipi[a,i,a1,i1]   
+               GET     t1a_old[a1,i1] 
 #
-               Tia(i,a)    = VSpipi(a,i,a1,i1)*t1a_old(a1,i1) 
-               Tme_a(i,a) += Tia(i,a) 
+               Tia[i,a]    = VSpipi[a,i,a1,i1]*t1a_old[a1,i1] 
+               Tme_a[i,a] += Tia[i,a] 
 #
             ENDDO a1 
             ENDDO i1 
@@ -858,16 +858,16 @@
             DO j 
             DO b 
 #
-               REQUEST Vpiqj(a,i,b,j) j  
-               GET     t1a_old(b,j) 
+               REQUEST Vpiqj[a,i,b,j]   
+               GET     t1a_old[b,j] 
 #
-               Tia(i,a)    = Vpiqj(a,i,b,j)*t1a_old(b,j) 
-               Tme_a(i,a) += Tia(i,a) 
+               Tia[i,a]    = Vpiqj[a,i,b,j]*t1a_old[b,j] 
+               Tme_a[i,a] += Tia[i,a] 
 #
             ENDDO b 
             ENDDO j 
 #
-            PUT Fme_a(i,a) = Tme_a(i,a) 
+            PUT Fme_a[i,a] = Tme_a[i,a] 
 #
       ENDPARDO i, a 
 # 
@@ -883,50 +883,50 @@
 #
       PARDO i1, i, a, i2
 #
-            REQUEST VSpipi(a,i2,i,i1) i1  
-            GET t1a_old(a,i2) 
+            REQUEST VSpipi[a,i2,i,i1]   
+            GET t1a_old[a,i2] 
 #
-            Tii(i1,i)        = VSpipi(a,i2,i,i1)*t1a_old(a,i2) 
-            PUT Fmi_a(i1,i) += Tii(i1,i) 
+            Tii[i1,i]        = VSpipi[a,i2,i,i1]*t1a_old[a,i2] 
+            PUT Fmi_a[i1,i] += Tii[i1,i] 
 #
       ENDPARDO i1, i, a, i2  
 #
       PARDO a, a2, i2  
 #
-            allocate L3aiai(a2,*,a,i2) 
+            allocate L3aiai[a2,*,a,i2] 
 #
             DO i1 
 #
-               REQUEST VSpipi(a2,i1,a,i2) i2 
-               L3aiai(a2,i1,a,i2) = VSpipi(a2,i1,a,i2) 
+               REQUEST VSpipi[a2,i1,a,i2]  
+               L3aiai[a2,i1,a,i2] = VSpipi[a2,i1,a,i2] 
 #
             ENDDO i1 
 #
             DO i   
 #
-               REQUEST Taup_aa(a2,i,a,i2) i2 
+               REQUEST Taup_aa[a2,i,a,i2]  
 # 
                DO i1    
 #
-                  Tii(i1,i)        = L3aiai(a2,i1,a,i2)*Taup_aa(a2,i,a,i2) 
-                  Tii(i1,i)       *= 0.5 
-                  PUT Fmi_a(i1,i) += Tii(i1,i) 
+                  Tii[i1,i]        = L3aiai[a2,i1,a,i2]*Taup_aa[a2,i,a,i2] 
+                  Tii[i1,i]       *= 0.5 
+                  PUT Fmi_a[i1,i] += Tii[i1,i] 
 #
                ENDDO i1  
 #
             ENDDO i   
 #
-            deallocate L3aiai(a2,*,a,i2) 
+            deallocate L3aiai[a2,*,a,i2] 
 #
       ENDPARDO a, a2, i2  
 #
       PARDO i1, i, b, j  
 #
-            REQUEST Vpiqj(i,i1,b,j) j  
-            GET t1a_old(b,j) 
+            REQUEST Vpiqj[i,i1,b,j]   
+            GET t1a_old[b,j] 
 #
-            Tii(i1,i)        = Vpiqj(i,i1,b,j)*t1a_old(b,j) 
-            PUT Fmi_a(i1,i) += Tii(i1,i) 
+            Tii[i1,i]        = Vpiqj[i,i1,b,j]*t1a_old[b,j] 
+            PUT Fmi_a[i1,i] += Tii[i1,i] 
 #
       ENDPARDO i1, i, b, j  
 #
@@ -934,11 +934,11 @@
 #
             DO a 
 #
-               REQUEST Vpiqj(a,i1,b,j)  j  
-               REQUEST Taup_ab(a,i,b,j) j 
+               REQUEST Vpiqj[a,i1,b,j]    
+               REQUEST Taup_ab[a,i,b,j]  
  
-               Tii(i1,i)        = Taup_ab(a,i,b,j)*Vpiqj(a,i1,b,j) 
-               PUT Fmi_a(i1,i) += Tii(i1,i) 
+               Tii[i1,i]        = Taup_ab[a,i,b,j]*Vpiqj[a,i1,b,j] 
+               PUT Fmi_a[i1,i] += Tii[i1,i] 
 #
             ENDDO a 
 #
@@ -959,188 +959,188 @@
 #
       PARDO a, i
 #
-            tai(a,i) = 0.0
+            tai[a,i] = 0.0
 #
             DO i1
 #
-               GET t1a_old(a,i1)
-               GET Fmi_a(i1,i)
+               GET t1a_old[a,i1]
+               GET Fmi_a[i1,i]
 #
-               t1ai(a,i) = t1a_old(a,i1)*Fmi_a(i1,i)
-               tai(a,i) -= t1ai(a,i)
+               t1ai[a,i] = t1a_old[a,i1]*Fmi_a[i1,i]
+               tai[a,i] -= t1ai[a,i]
 #
             ENDDO i1
 #
             DO b
             DO j
 #
-               REQUEST T2old_ab(a,i,b,j) j
-               REQUEST Viaai(i,a,b,j) j
-               GET Fme_a(j,b)
-               GET t1a_old(b,j)
+               REQUEST T2old_ab[a,i,b,j] 
+               REQUEST Viaai[i,a,b,j] 
+               GET Fme_a[j,b]
+               GET t1a_old[b,j]
 #
-               t1ai(a,i) = T2old_ab(a,i,b,j)*Fme_a(j,b)
-               tai(a,i) += t1ai(a,i)
+               t1ai[a,i] = T2old_ab[a,i,b,j]*Fme_a[j,b]
+               tai[a,i] += t1ai[a,i]
 #
-               t2ai(a,i)  = Viaai(i,a,b,j)*t1a_old(b,j)
-               tai(a,i) += t2ai(a,i)
+               t2ai[a,i]  = Viaai[i,a,b,j]*t1a_old[b,j]
+               tai[a,i] += t2ai[a,i]
 #
             ENDDO j
             ENDDO b
 #
             DO a1
 #
-               GET t1a_old(a1,i)
-               GET Fae_a(a,a1)
+               GET t1a_old[a1,i]
+               GET Fae_a[a,a1]
 #
-               t1ai(a,i) = t1a_old(a1,i)*Fae_a(a,a1)
-               tai(a,i) += t1ai(a,i)
+               t1ai[a,i] = t1a_old[a1,i]*Fae_a[a,a1]
+               tai[a,i] += t1ai[a,i]
 #
                DO i1
 #
-                  REQUEST T2old_aa(a,i,a1,i1) i1
-                  REQUEST Vaaii(a,a1,i1,i) i
-                  REQUEST Viaai(i1,a1,a,i) i
-                  GET Fme_a(i1,a1)
-                  GET t1a_old(a1,i1)
+                  REQUEST T2old_aa[a,i,a1,i1] 
+                  REQUEST Vaaii[a,a1,i1,i] 
+                  REQUEST Viaai[i1,a1,a,i] 
+                  GET Fme_a[i1,a1]
+                  GET t1a_old[a1,i1]
 #
-                  t1ai(a,i) = T2old_aa(a,i,a1,i1)*Fme_a(i1,a1)
-                  tai(a,i) += t1ai(a,i)
+                  t1ai[a,i] = T2old_aa[a,i,a1,i1]*Fme_a[i1,a1]
+                  tai[a,i] += t1ai[a,i]
 #
-                  Tpppp(i1,a1,a,i)  = Vaaii(a,a1,i1,i)
-                  Tpppp(i1,a1,a,i) -= Viaai(i1,a1,a,i)
+                  Tpppp[i1,a1,a,i]  = Vaaii[a,a1,i1,i]
+                  Tpppp[i1,a1,a,i] -= Viaai[i1,a1,a,i]
 #
-                  t2ai(a,i) = Tpppp(i1,a1,a,i)*t1a_old(a1,i1)
-                  tai(a,i) -= t2ai(a,i)
+                  t2ai[a,i] = Tpppp[i1,a1,a,i]*t1a_old[a1,i1]
+                  tai[a,i] -= t2ai[a,i]
 #
                ENDDO i1
 #
             ENDDO a1
 #
-            PUT t1a_new(a,i) += tai(a,i)
+            PUT t1a_new[a,i] += tai[a,i]
 #
       ENDPARDO a, i
 #
       PARDO a1, a2, i1
 #
-            allocate L4aiai(a1,*,a2,i1)
+            allocate L4aiai[a1,*,a2,i1]
 #
             DO i
 #
-               REQUEST T2old_aa(a1,i,a2,i1) i1
-               L4aiai(a1,i,a2,i1) = T2old_aa(a1,i,a2,i1)
+               REQUEST T2old_aa[a1,i,a2,i1] 
+               L4aiai[a1,i,a2,i1] = T2old_aa[a1,i,a2,i1]
 #
             ENDDO i
 #
             DO a
 #
-               REQUEST Vaaai(a2,a,a1,i1)   i1
-               REQUEST Vaaai(a1,a,a2,i1)   i1
-               taaai(a2,a,a1,i1) = Vaaai(a2,a,a1,i1) 
-               t1aaai(a2,a,a1,i1)= Vaaai(a1,a,a2,i1) 
-               taaai(a2,a,a1,i1)-= t1aaai(a2,a,a1,i1) 
+               REQUEST Vaaai[a2,a,a1,i1]   
+               REQUEST Vaaai[a1,a,a2,i1]   
+               taaai[a2,a,a1,i1] = Vaaai[a2,a,a1,i1] 
+               t1aaai[a2,a,a1,i1]= Vaaai[a1,a,a2,i1] 
+               taaai[a2,a,a1,i1]-= t1aaai[a2,a,a1,i1] 
 #
                DO i
 #
-                  tai(a,i)  = taaai(a2,a,a1,i1)*L4aiai(a1,i,a2,i1)
-                  tai(a,i) *= -0.5
+                  tai[a,i]  = taaai[a2,a,a1,i1]*L4aiai[a1,i,a2,i1]
+                  tai[a,i] *= -0.5
 #
-                  PUT t1a_new(a,i) += tai(a,i)
+                  PUT t1a_new[a,i] += tai[a,i]
 #
                ENDDO i
 #
             ENDDO a
 #
-            deallocate L4aiai(a1,*,a2,i1)
+            deallocate L4aiai[a1,*,a2,i1]
 #
       ENDPARDO a1, a2, i1
 #
       PARDO a1, i1, i2
 #
-            allocate L1aiii(a1,i2,*,i1)
+            allocate L1aiii[a1,i2,*,i1]
 #
             DO i
 #
-               REQUEST VSpipi(a1,i2,i,i1) i1
-               L1aiii(a1,i2,i,i1) = VSpipi(a1,i2,i,i1)
+               REQUEST VSpipi[a1,i2,i,i1] 
+               L1aiii[a1,i2,i,i1] = VSpipi[a1,i2,i,i1]
 #
             ENDDO i
 #
             DO a
 #
-               REQUEST T2old_aa(a,i1,a1,i2) i1
+               REQUEST T2old_aa[a,i1,a1,i2] 
 #
                DO i
 #
-                  tai(a,i)  = L1aiii(a1,i2,i,i1)*T2old_aa(a,i1,a1,i2)
-                  tai(a,i) *= -0.5
+                  tai[a,i]  = L1aiii[a1,i2,i,i1]*T2old_aa[a,i1,a1,i2]
+                  tai[a,i] *= -0.5
 #
-                  PUT t1a_new(a,i) += tai(a,i)
+                  PUT t1a_new[a,i] += tai[a,i]
 #
                ENDDO i
 #
             ENDDO a
 #
-            deallocate L1aiii(a1,i2,*,i1)
+            deallocate L1aiii[a1,i2,*,i1]
 #
       ENDPARDO a1, i1, i2
 #
       PARDO a1, b, j
 #
-            allocate L1aibj(a1,*,b,j)
+            allocate L1aibj[a1,*,b,j]
 #
             DO i
 #
-               REQUEST T2old_ab(a1,i,b,j) j
-               L1aibj(a1,i,b,j) = T2old_ab(a1,i,b,j)
+               REQUEST T2old_ab[a1,i,b,j] 
+               L1aibj[a1,i,b,j] = T2old_ab[a1,i,b,j]
 #
             ENDDO i
 #
             DO a
 #
-               REQUEST Vaaai(a1,a,b,j) j
+               REQUEST Vaaai[a1,a,b,j] 
 #
                DO i
 #
-                  tai(a,i)  = Vaaai(a1,a,b,j)*L1aibj(a1,i,b,j)
+                  tai[a,i]  = Vaaai[a1,a,b,j]*L1aibj[a1,i,b,j]
 #
-                  PUT t1a_new(a,i) += tai(a,i)
+                  PUT t1a_new[a,i] += tai[a,i]
 #
                ENDDO i
 #
             ENDDO a
 #
-            deallocate L1aibj(a1,*,b,j)
+            deallocate L1aibj[a1,*,b,j]
 #
       ENDPARDO a1, b, j
 #
       PARDO b, j, i1
 #
-            allocate L1iibj(*,i1,b,j)
+            allocate L1iibj[*,i1,b,j]
 #
             DO i
 #
-               REQUEST Vpiqj(i,i1,b,j) j
-               L1iibj(i,i1,b,j) = Vpiqj(i,i1,b,j)
+               REQUEST Vpiqj[i,i1,b,j] 
+               L1iibj[i,i1,b,j] = Vpiqj[i,i1,b,j]
 #
             ENDDO i
 #
             DO a
 #
-               REQUEST T2old_ab(a,i1,b,j) j
+               REQUEST T2old_ab[a,i1,b,j] 
 #
                DO i
 #
-                  tai(a,i)  = L1iibj(i,i1,b,j)*T2old_ab(a,i1,b,j)
-                  tai(a,i) *= -1.0
+                  tai[a,i]  = L1iibj[i,i1,b,j]*T2old_ab[a,i1,b,j]
+                  tai[a,i] *= -1.0
 #
-                  PUT t1a_new(a,i) += tai(a,i)
+                  PUT t1a_new[a,i] += tai[a,i]
 #
                ENDDO i
 #
             ENDDO a
 #
-            deallocate L1iibj(*,i1,b,j)
+            deallocate L1iibj[*,i1,b,j]
 #
       ENDPARDO b, j, i1
 #
@@ -1158,23 +1158,23 @@
       sip_barrier
       PARDO i, i1, j, j1
 #
-            REQUEST                    Vpiqj(i1,i,j1,j) j
-            Tiijj(i1,i,j1,j)         = Vpiqj(i1,i,j1,j)
-            PUT Wminj_ab(i1,i,j1,j) += Tiijj(i1,i,j1,j)
+            REQUEST                    Vpiqj[i1,i,j1,j] 
+            Tiijj[i1,i,j1,j]         = Vpiqj[i1,i,j1,j]
+            PUT Wminj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]
 #
       ENDPARDO i, i1, j, j1
 #
       PARDO i,i1,b,j1
 #
-         REQUEST Vpiqj(i,i1,b,j1) j1
+         REQUEST Vpiqj[i,i1,b,j1] 
 
          DO j
 #
-            GET                        t1a_old(b,j)
-            Tiijj(i1,i,j1,j)         = Vpiqj(i,i1,b,j1)*t1a_old(b,j)
-            T1iijj(j1,j,i1,i)        = Tiijj(i1,i,j1,j)  
-            PUT Wminj_ab(i1,i,j1,j) += Tiijj(i1,i,j1,j)
-            PUT Wminj_ab(j1,j,i1,i) += T1iijj(j1,j,i1,i)
+            GET                        t1a_old[b,j]
+            Tiijj[i1,i,j1,j]         = Vpiqj[i,i1,b,j1]*t1a_old[b,j]
+            T1iijj[j1,j,i1,i]        = Tiijj[i1,i,j1,j]  
+            PUT Wminj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]
+            PUT Wminj_ab[j1,j,i1,i] += T1iijj[j1,j,i1,i]
 #
          ENDDO j
 #
@@ -1182,15 +1182,15 @@
 #
       PARDO i1, j1, a, b
 #
-         REQUEST Vpiqj(a,i1,b,j1) j1
+         REQUEST Vpiqj[a,i1,b,j1] 
 #
          DO j
          DO i
 #
-            REQUEST                    Tau_ab(a,i,b,j)  j
-            Tiijj(i1,i,j1,j)         = Tau_ab(a,i,b,j)*Vpiqj(a,i1,b,j1)
-            Tiijj(i1,i,j1,j)        *= 0.5
-            PUT Wminj_ab(i1,i,j1,j) += Tiijj(i1,i,j1,j)
+            REQUEST                    Tau_ab[a,i,b,j]  
+            Tiijj[i1,i,j1,j]         = Tau_ab[a,i,b,j]*Vpiqj[a,i1,b,j1]
+            Tiijj[i1,i,j1,j]        *= 0.5
+            PUT Wminj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j]
 #
          ENDDO i
          ENDDO j
@@ -1200,14 +1200,14 @@
 #
       PARDO i1, j1, a, b
 #
-            REQUEST Tau_ab(a,i1,b,j1) j1
+            REQUEST Tau_ab[a,i1,b,j1] 
 #
             DO i
             DO j
 #
-               GET                          Wminj_ab(i1,i,j1,j)
-               T1aibj(a,i,b,j)            = Tau_ab(a,i1,b,j1)*Wminj_ab(i1,i,j1,j)
-               PREPARE T2new_ab(a,i,b,j) += T1aibj(a,i,b,j)
+               GET                          Wminj_ab[i1,i,j1,j]
+               T1aibj[a,i,b,j]            = Tau_ab[a,i1,b,j1]*Wminj_ab[i1,i,j1,j]
+               PREPARE T2new_ab[a,i,b,j] += T1aibj[a,i,b,j]
 #
             ENDDO j
             ENDDO i
@@ -1246,130 +1246,130 @@
 #
       PARDO i, b, j 
 #
-            allocate Liibj(*,i,b,j) 
-            allocate L1aibj(*,i,b,j)   
+            allocate Liibj[*,i,b,j] 
+            allocate L1aibj[*,i,b,j]   
 #
             DO i1 
 #
-               REQUEST           Vpiqj(i1,i,b,j) j 
-               Liibj(i1,i,b,j) = Vpiqj(i1,i,b,j) 
+               REQUEST           Vpiqj[i1,i,b,j]  
+               Liibj[i1,i,b,j] = Vpiqj[i1,i,b,j] 
 #
             ENDDO i1 
 #
             DO a1 
 #
-               REQUEST            T2old_ab(a1,i,b,j) j 
-               L1aibj(a1,i,b,j) = T2old_ab(a1,i,b,j) 
+               REQUEST            T2old_ab[a1,i,b,j]  
+               L1aibj[a1,i,b,j] = T2old_ab[a1,i,b,j] 
 #
             ENDDO a1 
 #
             DO a 
 #
-               REQUEST          Vpiqj(a,i,b,j) j 
-               Taibj(a,i,b,j) = Vpiqj(a,i,b,j)   
-               Taibj(a,i,b,j)*= 0.5  
+               REQUEST          Vpiqj[a,i,b,j]  
+               Taibj[a,i,b,j] = Vpiqj[a,i,b,j]   
+               Taibj[a,i,b,j]*= 0.5  
 #
                DO i1 
 #
-                  GET t1a_old(a,i1) 
+                  GET t1a_old[a,i1] 
 #
-                  T1aibj(a,i,b,j) = Liibj(i1,i,b,j)*t1a_old(a,i1) 
-                  Taibj(a,i,b,j) -= T1aibj(a,i,b,j) 
+                  T1aibj[a,i,b,j] = Liibj[i1,i,b,j]*t1a_old[a,i1] 
+                  Taibj[a,i,b,j] -= T1aibj[a,i,b,j] 
 #
                ENDDO i1 
 #
                DO a1 
 #
-                  GET Fae_a(a,a1) 
-                  tmp_aa(a,a1) = Fae_a(a,a1)    
+                  GET Fae_a[a,a1] 
+                  tmp_aa[a,a1] = Fae_a[a,a1]    
 #
                   DO i1 
 #
-                     GET t1a_old(a,i1) 
-                     GET Fme_a(i1,a1) 
-                     tmp1_aa(a,a1)  = t1a_old(a,i1)*Fme_a(i1,a1) 
-                     tmp1_aa(a,a1) *= 0.5 
-                     tmp_aa(a,a1)  -= tmp1_aa(a,a1)  
+                     GET t1a_old[a,i1] 
+                     GET Fme_a[i1,a1] 
+                     tmp1_aa[a,a1]  = t1a_old[a,i1]*Fme_a[i1,a1] 
+                     tmp1_aa[a,a1] *= 0.5 
+                     tmp_aa[a,a1]  -= tmp1_aa[a,a1]  
 #
                   ENDDO i1 
 #
-                  T1aibj(a,i,b,j) = L1aibj(a1,i,b,j)*tmp_aa(a,a1)  
-                  Taibj(a,i,b,j) += T1aibj(a,i,b,j) 
+                  T1aibj[a,i,b,j] = L1aibj[a1,i,b,j]*tmp_aa[a,a1]  
+                  Taibj[a,i,b,j] += T1aibj[a,i,b,j] 
 #
                ENDDO a1 
 #
-               T1aibj(b,j,a,i)            = Taibj(a,i,b,j)  
-               PREPARE T2NEW_AB(a,i,b,j) += Taibj(a,i,b,j)  
-               PREPARE T2NEW_AB(b,j,a,i) += T1aibj(b,j,a,i)  
+               T1aibj[b,j,a,i]            = Taibj[a,i,b,j]  
+               PREPARE T2NEW_AB[a,i,b,j] += Taibj[a,i,b,j]  
+               PREPARE T2NEW_AB[b,j,a,i] += T1aibj[b,j,a,i]  
 #
             ENDDO a 
 #
-            deallocate Liibj(*,i,b,j) 
-            deallocate L1aibj(*,i,b,j)   
+            deallocate Liibj[*,i,b,j] 
+            deallocate L1aibj[*,i,b,j]   
 #
       ENDPARDO i, b, j 
 #
       PARDO a, b, j 
 #
-            allocate L3aibj(a,*,b,j) 
-            allocate Laabj(a,*,b,j) 
+            allocate L3aibj[a,*,b,j] 
+            allocate Laabj[a,*,b,j] 
 #
             DO i1 
 #
-               REQUEST T2old_ab(a,i1,b,j) j 
-               L3aibj(a,i1,b,j) = T2old_ab(a,i1,b,j) 
+               REQUEST T2old_ab[a,i1,b,j]  
+               L3aibj[a,i1,b,j] = T2old_ab[a,i1,b,j] 
 #
             ENDDO i1 
 #
             DO a1 
 #
-               REQUEST Vaaai(a,a1,b,j) j  
-               Laabj(a,a1,b,j) = Vaaai(a,a1,b,j)  
+               REQUEST Vaaai[a,a1,b,j]   
+               Laabj[a,a1,b,j] = Vaaai[a,a1,b,j]  
 #
             ENDDO a1 
 #
             DO i 
 #
-               Taibj(a,i,b,j) = 0.0  
+               Taibj[a,i,b,j] = 0.0  
 #
                DO i1 
 #
-                  GET Fmi_a(i1,i) 
-                  tmp_ii(i1,i) = Fmi_a(i1,i) 
+                  GET Fmi_a[i1,i] 
+                  tmp_ii[i1,i] = Fmi_a[i1,i] 
 #
                   DO a1 
 #
-                     GET t1a_old(a1,i) 
-                     GET Fme_a(i1,a1) 
+                     GET t1a_old[a1,i] 
+                     GET Fme_a[i1,a1] 
 #
-                     tmp1_ii(i1,i)  = t1a_old(a1,i)*Fme_a(i1,a1) 
-                     tmp1_ii(i1,i) *= 0.5 
-                     tmp_ii(i1,i)  += tmp1_ii(i1,i) 
+                     tmp1_ii[i1,i]  = t1a_old[a1,i]*Fme_a[i1,a1] 
+                     tmp1_ii[i1,i] *= 0.5 
+                     tmp_ii[i1,i]  += tmp1_ii[i1,i] 
 #
                   ENDDO a1  
 #
-                  T1aibj(a,i,b,j) = L3aibj(a,i1,b,j)*tmp_ii(i1,i) 
-                  Taibj(a,i,b,j) -= T1aibj(a,i,b,j) 
+                  T1aibj[a,i,b,j] = L3aibj[a,i1,b,j]*tmp_ii[i1,i] 
+                  Taibj[a,i,b,j] -= T1aibj[a,i,b,j] 
 #
                ENDDO i1 
 #
                DO a1 
 #
-                  GET t1a_old(a1,i) 
+                  GET t1a_old[a1,i] 
 #
-                  T1aibj(a,i,b,j) = Laabj(a,a1,b,j)*t1a_old(a1,i)  
-                  Taibj(a,i,b,j) += T1aibj(a,i,b,j) 
+                  T1aibj[a,i,b,j] = Laabj[a,a1,b,j]*t1a_old[a1,i]  
+                  Taibj[a,i,b,j] += T1aibj[a,i,b,j] 
 #
                ENDDO a1 
 #
-               T1aibj(b,j,a,i)            = Taibj(a,i,b,j)  
-               PREPARE T2NEW_AB(a,i,b,j) += Taibj(a,i,b,j)  
-               PREPARE T2NEW_AB(b,j,a,i) += T1aibj(b,j,a,i)  
+               T1aibj[b,j,a,i]            = Taibj[a,i,b,j]  
+               PREPARE T2NEW_AB[a,i,b,j] += Taibj[a,i,b,j]  
+               PREPARE T2NEW_AB[b,j,a,i] += T1aibj[b,j,a,i]  
 #
             ENDDO i 
 #
-            deallocate L3aibj(a,*,b,j) 
-            deallocate Laabj(a,*,b,j) 
+            deallocate L3aibj[a,*,b,j] 
+            deallocate Laabj[a,*,b,j] 
 #
       ENDPARDO a, b, j 
 #
@@ -1386,9 +1386,9 @@
 #    ---------------------------------------------
 #
      PARDO mu, nu, i, j
-           Txixj(mu,i,nu,j)           = 0.0
-           PREPARE TAO_ab(mu,i,nu,j)  = Txixj(mu,i,nu,j)
-           PREPARE T2AO_ab(mu,i,nu,j) = Txixj(mu,i,nu,j)
+           Txixj[mu,i,nu,j]           = 0.0
+           PREPARE TAO_ab[mu,i,nu,j]  = Txixj[mu,i,nu,j]
+           PREPARE T2AO_ab[mu,i,nu,j] = Txixj[mu,i,nu,j]
      ENDPARDO mu, nu, i, j
 #
      server_barrier 
@@ -1401,16 +1401,16 @@
 #
      PARDO b, a, j, i
 #
-           REQUEST Tau_ab(a,i,b,j) a
+           REQUEST Tau_ab[a,i,b,j] 
 #
            DO mu
 #
-              Taixj(a,i,mu,j) = Tau_ab(a,i,b,j)*ca(mu,b)
+              Taixj[a,i,mu,j] = Tau_ab[a,i,b,j]*ca[mu,b]
 #
               DO nu
 #
-                 Txixj(nu,i,mu,j)           = Taixj(a,i,mu,j)*ca(nu,a)
-                 PREPARE TAO_ab(nu,i,mu,j) += Txixj(nu,i,mu,j)
+                 Txixj[nu,i,mu,j]           = Taixj[a,i,mu,j]*ca[nu,a]
+                 PREPARE TAO_ab[nu,i,mu,j] += Txixj[nu,i,mu,j]
 #
               ENDDO nu
 #
@@ -1425,60 +1425,60 @@
 #    ----------------------------------------------------    
 #
      PARDO lambda, sigma
-        allocate LTAO_ab(lambda,*,sigma,*) 
+        allocate LTAO_ab[lambda,*,sigma,*] 
         DO i
         DO j
-           REQUEST                     TAO_ab(lambda,i,sigma,j) j
-           LTAO_ab(lambda,i,sigma,j) = TAO_ab(lambda,i,sigma,j)  
+           REQUEST                     TAO_ab[lambda,i,sigma,j] 
+           LTAO_ab[lambda,i,sigma,j] = TAO_ab[lambda,i,sigma,j]  
         ENDDO j
         ENDDO i
 
         DO mu 
         DO nu
         WHERE mu < nu 
-           execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
+           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
            DO i
            DO j
-              Yab(mu,i,nu,j)              = 0.0  
-              execute aoladder_contraction aoint(lambda,mu,sigma,nu) LTAO_ab(lambda,i,sigma,j) Yab(mu,i,nu,j) 
-              Y1ab(nu,j,mu,i)             = Yab(mu,i,nu,j)
+              Yab[mu,i,nu,j]              = 0.0  
+              execute aoladder_contraction aoint[lambda,mu,sigma,nu] LTAO_ab[lambda,i,sigma,j] Yab[mu,i,nu,j] 
+              Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
 #
-              PREPARE T2AO_ab(mu,i,nu,j) += Yab(mu,i,nu,j)
-              PREPARE T2AO_ab(nu,j,mu,i) += Y1ab(nu,j,mu,i)
+              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+              PREPARE T2AO_ab[nu,j,mu,i] += Y1ab[nu,j,mu,i]
 #
            ENDDO j
            ENDDO i
 #
         ENDDO nu
         ENDDO mu 
-        deallocate LTAO_ab(lambda,*,sigma,*) 
+        deallocate LTAO_ab[lambda,*,sigma,*] 
      ENDPARDO lambda, sigma
 #
      PARDO lambda, sigma
-        allocate LTAO_ab(lambda,*,sigma,*) 
+        allocate LTAO_ab[lambda,*,sigma,*] 
         DO i
         DO j
-           REQUEST                     TAO_ab(lambda,i,sigma,j) j
-           LTAO_ab(lambda,i,sigma,j) = TAO_ab(lambda,i,sigma,j)  
+           REQUEST                     TAO_ab[lambda,i,sigma,j] 
+           LTAO_ab[lambda,i,sigma,j] = TAO_ab[lambda,i,sigma,j]  
         ENDDO j
         ENDDO i
         DO mu 
         DO nu
         WHERE mu == nu 
 #
-           execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
+           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
            DO i
            DO j
-              Yab(mu,i,nu,j)              = 0.0  
-              execute aoladder_contraction aoint(lambda,mu,sigma,nu) LTAO_ab(lambda,i,sigma,j) Yab(mu,i,nu,j) 
-              PREPARE T2AO_ab(mu,i,nu,j) += Yab(mu,i,nu,j)
+              Yab[mu,i,nu,j]              = 0.0  
+              execute aoladder_contraction aoint[lambda,mu,sigma,nu] LTAO_ab[lambda,i,sigma,j] Yab[mu,i,nu,j] 
+              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
            ENDDO j
            ENDDO i
 #
         ENDDO nu
         ENDDO mu 
-        deallocate LTAO_ab(lambda,*,sigma,*) 
+        deallocate LTAO_ab[lambda,*,sigma,*] 
      ENDPARDO lambda, sigma
 #
 #    Half transform the t1 arrays. 
@@ -1486,17 +1486,17 @@
 #
      PARDO a, mu
 #
-           tpx(a,mu) = 0.0 
+           tpx[a,mu] = 0.0 
 #
            DO i  
 #
-              GET          t1a_old(a,i) 
-              t1px(a,mu) = t1a_old(a,i)*ca(mu,i) 
-              tpx(a,mu) += t1px(a,mu) 
+              GET          t1a_old[a,i] 
+              t1px[a,mu] = t1a_old[a,i]*ca[mu,i] 
+              tpx[a,mu] += t1px[a,mu] 
 #
            ENDDO i  
 #
-           PUT t1a_ax(a,mu) = tpx(a,mu) 
+           PUT t1a_ax[a,mu] = tpx[a,mu] 
 #
      ENDPARDO a, mu
 #
@@ -1507,44 +1507,44 @@
 #
         PARDO nu, i, j
 #
-              allocate LDaixj(*,i,nu,j)
+              allocate LDaixj[*,i,nu,j]
 #
               DO mu
 #
-                 REQUEST T2AO_ab(mu,i,nu,j) j
+                 REQUEST T2AO_ab[mu,i,nu,j] 
 #
                  DO a
-                    Taixj(a,i,nu,j)   = T2AO_ab(mu,i,nu,j)*ca(mu,a)
-                    LDaixj(a,i,nu,j) += Taixj(a,i,nu,j)
+                    Taixj[a,i,nu,j]   = T2AO_ab[mu,i,nu,j]*ca[mu,a]
+                    LDaixj[a,i,nu,j] += Taixj[a,i,nu,j]
                  ENDDO a
 #
               ENDDO mu
 #
               DO a
-                 PREPARE TDaixj(a,i,nu,j) = LDaixj(a,i,nu,j)
+                 PREPARE TDaixj[a,i,nu,j] = LDaixj[a,i,nu,j]
               ENDDO a
 #
-              deallocate LDaixj(*,i,nu,j)
+              deallocate LDaixj[*,i,nu,j]
 #
         ENDPARDO nu, i, j
         server_barrier
 #
         PARDO a, i, j, nu
 #
-              REQUEST TDaixj(a,i,nu,j) a
+              REQUEST TDaixj[a,i,nu,j] 
 #
               DO b
 #
-                 GET                          t1a_ax(b,nu)
+                 GET                          t1a_ax[b,nu]
 #
-                 Taibj(a,i,b,j)             = TDaixj(a,i,nu,j)*ca(nu,b)
-                 T1aibj(a,i,b,j)            = TDaixj(a,i,nu,j)*t1a_ax(b,nu)
-                 T1aibj(a,i,b,j)           *= -1.0
-                 T2aibj(b,j,a,i)            = T1aibj(a,i,b,j)
+                 Taibj[a,i,b,j]             = TDaixj[a,i,nu,j]*ca[nu,b]
+                 T1aibj[a,i,b,j]            = TDaixj[a,i,nu,j]*t1a_ax[b,nu]
+                 T1aibj[a,i,b,j]           *= -1.0
+                 T2aibj[b,j,a,i]            = T1aibj[a,i,b,j]
 #
-                 PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j)
-                 PREPARE T2new_ab(a,i,b,j) += T1aibj(a,i,b,j)
-                 PREPARE T2new_ab(b,j,a,i) += T2aibj(b,j,a,i)
+                 PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+                 PREPARE T2new_ab[a,i,b,j] += T1aibj[a,i,b,j]
+                 PREPARE T2new_ab[b,j,a,i] += T2aibj[b,j,a,i]
 #
               ENDDO b
 #
@@ -1574,9 +1574,9 @@
 #    ---------------------------------------------
 #
      PARDO mu, nu, i, j
-           Txixj(mu,i,nu,j)           = 0.0
-           PREPARE TAO_ab(mu,i,nu,j)  = Txixj(mu,i,nu,j)
-           PREPARE T2AO_ab(mu,i,nu,j) = Txixj(mu,i,nu,j)
+           Txixj[mu,i,nu,j]           = 0.0
+           PREPARE TAO_ab[mu,i,nu,j]  = Txixj[mu,i,nu,j]
+           PREPARE T2AO_ab[mu,i,nu,j] = Txixj[mu,i,nu,j]
      ENDPARDO mu, nu, i, j
 #
      server_barrier 
@@ -1589,16 +1589,16 @@
 #
      PARDO b, a, j, i
 #
-           REQUEST Tau_ab(a,i,b,j) a
+           REQUEST Tau_ab[a,i,b,j] 
 #
            DO mu
 #
-              Taixj(a,i,mu,j) = Tau_ab(a,i,b,j)*ca(mu,b)
+              Taixj[a,i,mu,j] = Tau_ab[a,i,b,j]*ca[mu,b]
 #
               DO nu
 #
-                 Txixj(nu,i,mu,j)           = Taixj(a,i,mu,j)*ca(nu,a)
-                 PREPARE TAO_ab(nu,i,mu,j) += Txixj(nu,i,mu,j)
+                 Txixj[nu,i,mu,j]           = Taixj[a,i,mu,j]*ca[nu,a]
+                 PREPARE TAO_ab[nu,i,mu,j] += Txixj[nu,i,mu,j]
 #
               ENDDO nu
 #
@@ -1615,17 +1615,17 @@
      PARDO mu, nu, lambda, sigma
         WHERE mu < nu 
 #
-           execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
+           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
            DO i
            DO j
 #
-              REQUEST                       TAO_ab(lambda,i,sigma,j) j
-              Yab(mu,i,nu,j)              = aoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j)
-              Y1ab(nu,j,mu,i)             = Yab(mu,i,nu,j)
+              REQUEST                       TAO_ab[lambda,i,sigma,j] 
+              Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
+              Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
 #
-              PREPARE T2AO_ab(mu,i,nu,j) += Yab(mu,i,nu,j)
-              PREPARE T2AO_ab(nu,j,mu,i) += Y1ab(nu,j,mu,i)
+              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+              PREPARE T2AO_ab[nu,j,mu,i] += Y1ab[nu,j,mu,i]
 #
            ENDDO j
            ENDDO i
@@ -1635,14 +1635,14 @@
      PARDO mu, nu, lambda, sigma
         WHERE mu == nu 
 #
-           execute compute_integral_batch aoint(lambda,mu,sigma,nu) 
+           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
            DO i
            DO j
 #
-              REQUEST                       TAO_ab(lambda,i,sigma,j) j
-              Yab(mu,i,nu,j)              = aoint(lambda,mu,sigma,nu)*TAO_ab(lambda,i,sigma,j)
-              PREPARE T2AO_ab(mu,i,nu,j) += Yab(mu,i,nu,j)
+              REQUEST                       TAO_ab[lambda,i,sigma,j] 
+              Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
+              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
 #
            ENDDO j
            ENDDO i
@@ -1654,17 +1654,17 @@
 #
      PARDO a, mu
 #
-           tpx(a,mu) = 0.0 
+           tpx[a,mu] = 0.0 
 #
            DO i  
 #
-              GET          t1a_old(a,i) 
-              t1px(a,mu) = t1a_old(a,i)*ca(mu,i) 
-              tpx(a,mu) += t1px(a,mu) 
+              GET          t1a_old[a,i] 
+              t1px[a,mu] = t1a_old[a,i]*ca[mu,i] 
+              tpx[a,mu] += t1px[a,mu] 
 #
            ENDDO i  
 #
-           PUT t1a_ax(a,mu) = tpx(a,mu) 
+           PUT t1a_ax[a,mu] = tpx[a,mu] 
 #
      ENDPARDO a, mu
 #
@@ -1675,44 +1675,44 @@
 #
         PARDO nu, i, j
 #
-              allocate LDaixj(*,i,nu,j)
+              allocate LDaixj[*,i,nu,j]
 #
               DO mu
 #
-                 REQUEST T2AO_ab(mu,i,nu,j) j
+                 REQUEST T2AO_ab[mu,i,nu,j] 
 #
                  DO a
-                    Taixj(a,i,nu,j)   = T2AO_ab(mu,i,nu,j)*ca(mu,a)
-                    LDaixj(a,i,nu,j) += Taixj(a,i,nu,j)
+                    Taixj[a,i,nu,j]   = T2AO_ab[mu,i,nu,j]*ca[mu,a]
+                    LDaixj[a,i,nu,j] += Taixj[a,i,nu,j]
                  ENDDO a
 #
               ENDDO mu
 #
               DO a
-                 PREPARE TDaixj(a,i,nu,j) = LDaixj(a,i,nu,j)
+                 PREPARE TDaixj[a,i,nu,j] = LDaixj[a,i,nu,j]
               ENDDO a
 #
-              deallocate LDaixj(*,i,nu,j)
+              deallocate LDaixj[*,i,nu,j]
 #
         ENDPARDO nu, i, j
         server_barrier
 #
         PARDO a, i, j, nu
 #
-              REQUEST TDaixj(a,i,nu,j) a
+              REQUEST TDaixj[a,i,nu,j] 
 #
               DO b
 #
-                 GET                          t1a_ax(b,nu)
+                 GET                          t1a_ax[b,nu]
 #
-                 Taibj(a,i,b,j)             = TDaixj(a,i,nu,j)*ca(nu,b)
-                 T1aibj(a,i,b,j)            = TDaixj(a,i,nu,j)*t1a_ax(b,nu)
-                 T1aibj(a,i,b,j)           *= -1.0
-                 T2aibj(b,j,a,i)            = T1aibj(a,i,b,j)
+                 Taibj[a,i,b,j]             = TDaixj[a,i,nu,j]*ca[nu,b]
+                 T1aibj[a,i,b,j]            = TDaixj[a,i,nu,j]*t1a_ax[b,nu]
+                 T1aibj[a,i,b,j]           *= -1.0
+                 T2aibj[b,j,a,i]            = T1aibj[a,i,b,j]
 #
-                 PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j)
-                 PREPARE T2new_ab(a,i,b,j) += T1aibj(a,i,b,j)
-                 PREPARE T2new_ab(b,j,a,i) += T2aibj(b,j,a,i)
+                 PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+                 PREPARE T2new_ab[a,i,b,j] += T1aibj[a,i,b,j]
+                 PREPARE T2new_ab[b,j,a,i] += T2aibj[b,j,a,i]
 #
               ENDDO b
 #
@@ -1744,14 +1744,14 @@
       sip_barrier 
       PARDO i, j, a, b  
 #
-            REQUEST Tau_ab(a,i,b,j)  j  
+            REQUEST Tau_ab[a,i,b,j]    
 #
             DO i1   
             DO j1  
 #
-               REQUEST                    Vpiqj(a,i1,b,j1) j1  
-               Tiijj(i1,i,j1,j)         = Vpiqj(a,i1,b,j1)*Tau_ab(a,i,b,j) 
-               PUT Wminj_ab(i1,i,j1,j) += Tiijj(i1,i,j1,j) 
+               REQUEST                    Vpiqj[a,i1,b,j1]   
+               Tiijj[i1,i,j1,j]         = Vpiqj[a,i1,b,j1]*Tau_ab[a,i,b,j] 
+               PUT Wminj_ab[i1,i,j1,j] += Tiijj[i1,i,j1,j] 
 #
             ENDDO j1  
             ENDDO i1   
@@ -1761,15 +1761,15 @@
 #
       PARDO a, b, i1, j1  
 #
-            REQUEST Tau_ab(a,i1,b,j1) j1  
+            REQUEST Tau_ab[a,i1,b,j1]   
 #
             DO i   
             DO j  
 #
-               GET                          Wminj_ab(i1,i,j1,j) 
-               Taibj(a,i,b,j)             = Tau_ab(a,i1,b,j1)*Wminj_ab(i1,i,j1,j) 
-               Taibj(a,i,b,j)            *= 0.5  
-               PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j) 
+               GET                          Wminj_ab[i1,i,j1,j] 
+               Taibj[a,i,b,j]             = Tau_ab[a,i1,b,j1]*Wminj_ab[i1,i,j1,j] 
+               Taibj[a,i,b,j]            *= 0.5  
+               PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j] 
 #
             ENDDO j  
             ENDDO i  
@@ -1805,51 +1805,51 @@
 #
       PARDO a, a1, i, i1  
 #
-               REQUEST              Viaai(i1,a1,a,i) i  
-               REQUEST              Vaaii(a,a1,i1,i) i  
-               REQUEST              e5aiai(a1,i1,a,i) i 
+               REQUEST              Viaai[i1,a1,a,i]   
+               REQUEST              Vaaii[a,a1,i1,i]   
+               REQUEST              e5aiai[a1,i1,a,i]  
 #
-               TYaiai(a1,i1,a,i) = 0.0 
+               TYaiai[a1,i1,a,i] = 0.0 
 #
                DO i2
 #
-                  REQUEST              VSpipi(a1,i1,i,i2) i2
-                  GET                  t1a_old(a,i2)
+                  REQUEST              VSpipi[a1,i1,i,i2] 
+                  GET                  t1a_old[a,i2]
 #
-                  T1aiai(a1,i1,a,i)  = VSpipi(a1,i1,i,i2)*t1a_old(a,i2)
-                  TYaiai(a1,i1,a,i) -= T1aiai(a1,i1,a,i)
+                  T1aiai[a1,i1,a,i]  = VSpipi[a1,i1,i,i2]*t1a_old[a,i2]
+                  TYaiai[a1,i1,a,i] -= T1aiai[a1,i1,a,i]
 #
                ENDDO i2
 
-               Taiai(a1,i1,a,i)           = Vaaii(a,a1,i1,i)
-               TYaiai(a1,i1,a,i)         -= Taiai(a1,i1,a,i)
-               Taiai(a1,i1,a,i)           = Viaai(i1,a1,a,i)
-               TYaiai(a1,i1,a,i)         += Taiai(a1,i1,a,i)
-               TYaiai(a1,i1,a,i)         += e5aiai(a1,i1,a,i)
-               PREPARE TAUP_aa(a1,i1,a,i) = TYaiai(a1,i1,a,i) 
+               Taiai[a1,i1,a,i]           = Vaaii[a,a1,i1,i]
+               TYaiai[a1,i1,a,i]         -= Taiai[a1,i1,a,i]
+               Taiai[a1,i1,a,i]           = Viaai[i1,a1,a,i]
+               TYaiai[a1,i1,a,i]         += Taiai[a1,i1,a,i]
+               TYaiai[a1,i1,a,i]         += e5aiai[a1,i1,a,i]
+               PREPARE TAUP_aa[a1,i1,a,i] = TYaiai[a1,i1,a,i] 
 #
       ENDPARDO a, a1, i, i1  
       server_barrier 
 #
       PARDO a, i, a2, i2
 #
-         REQUEST              T2old_aa(a2,i,a,i2) i2  
-         GET                  t1a_old(a2,i) 
-         GET                  t1a_old(a,i2) 
+         REQUEST              T2old_aa[a2,i,a,i2]   
+         GET                  t1a_old[a2,i] 
+         GET                  t1a_old[a,i2] 
  
-         tai(a,i2)          = t1a_old(a,i2) 
-         T1aiai(a2,i2,a,i)  = t1a_old(a2,i)^tai(a,i2) 
-         T2aiai(a2,i2,a,i)  = t2old_aa(a2,i,a,i2) 
-         T2aiai(a2,i2,a,i) *= 0.5 
-         T2aiai(a2,i2,a,i) += T1aiai(a2,i2,a,i) 
+         tai[a,i2]          = t1a_old[a,i2] 
+         T1aiai[a2,i2,a,i]  = t1a_old[a2,i]^tai[a,i2] 
+         T2aiai[a2,i2,a,i]  = t2old_aa[a2,i,a,i2] 
+         T2aiai[a2,i2,a,i] *= 0.5 
+         T2aiai[a2,i2,a,i] += T1aiai[a2,i2,a,i] 
 
          DO i1
          DO a1 
 #
-            REQUEST                       VSpipi(a1,i1,a2,i2) i2  
-            T3aiai(a1,i1,a,i)           = VSpipi(a1,i1,a2,i2)*T2aiai(a2,i2,a,i) 
-            T3aiai(a1,i1,a,i)          *= -1.0  
-            PREPARE TAUP_aa(a1,i1,a,i) += T3aiai(a1,i1,a,i)
+            REQUEST                       VSpipi[a1,i1,a2,i2]   
+            T3aiai[a1,i1,a,i]           = VSpipi[a1,i1,a2,i2]*T2aiai[a2,i2,a,i] 
+            T3aiai[a1,i1,a,i]          *= -1.0  
+            PREPARE TAUP_aa[a1,i1,a,i] += T3aiai[a1,i1,a,i]
 #
          ENDDO a1
          ENDDO i1
@@ -1858,15 +1858,15 @@
 
       PARDO a, i, b, j 
 #
-         REQUEST T2old_ab(a,i,b,j) j 
+         REQUEST T2old_ab[a,i,b,j]  
 #
          DO i1
          DO a1 
 #
-            REQUEST                       Vpiqj(a1,i1,b,j) j 
-            T1aiai(a1,i1,a,i)           = Vpiqj(a1,i1,b,j)*T2old_ab(a,i,b,j)
-            T1aiai(a1,i1,a,i)          *= 0.5
-            PREPARE TAUP_aa(a1,i1,a,i) += T1aiai(a1,i1,a,i)
+            REQUEST                       Vpiqj[a1,i1,b,j]  
+            T1aiai[a1,i1,a,i]           = Vpiqj[a1,i1,b,j]*T2old_ab[a,i,b,j]
+            T1aiai[a1,i1,a,i]          *= 0.5
+            PREPARE TAUP_aa[a1,i1,a,i] += T1aiai[a1,i1,a,i]
 #
          ENDDO a1
          ENDDO i1
@@ -1879,16 +1879,16 @@
 #
       PARDO a, i, a1, i1 
 #
-            REQUEST TAUP_aa(a1,i1,a,i)  i 
+            REQUEST TAUP_aa[a1,i1,a,i]   
 #
             DO j  
             DO b
 #
-               REQUEST                      T2old_ab(a1,i1,b,j) j  
-               R1aibj(a,i,b,j)            = TAUP_aa(a1,i1,a,i)*T2old_ab(a1,i1,b,j) 
-               Taibj(b,j,a,i)             = R1aibj(a,i,b,j) 
-               PREPARE T2new_ab(a,i,b,j) += R1aibj(a,i,b,j)
-               PREPARE T2new_ab(b,j,a,i) += Taibj(b,j,a,i)
+               REQUEST                      T2old_ab[a1,i1,b,j]   
+               R1aibj[a,i,b,j]            = TAUP_aa[a1,i1,a,i]*T2old_ab[a1,i1,b,j] 
+               Taibj[b,j,a,i]             = R1aibj[a,i,b,j] 
+               PREPARE T2new_ab[a,i,b,j] += R1aibj[a,i,b,j]
+               PREPARE T2new_ab[b,j,a,i] += Taibj[b,j,a,i]
 #
             ENDDO b  
             ENDDO j  
@@ -1907,46 +1907,47 @@
 #
       PARDO j, b, i, a
 #
-               REQUEST           Viaai(i,a,b,j) j  
-               REQUEST           e5aibj(a,i,b,j) a 
+               REQUEST           Viaai[i,a,b,j]   
+               REQUEST           e5aibj[a,i,b,j]  
 #
-               Taibj(a,i,b,j) = 0.
+               Taibj[a,i,b,j] = 0.
 #
                DO j1
 #
-                  REQUEST           Vpiqj(a,i,j,j1) j1  
-                  GET               t1a_old(b,j1) 
-                  T1aibj(a,i,b,j) = Vpiqj(a,i,j,j1)*t1a_old(b,j1) 
-                  Taibj(a,i,b,j) -= T1aibj(a,i,b,j) 
+                  REQUEST           Vpiqj[a,i,j,j1]   
+                  GET               t1a_old[b,j1] 
+                  T1aibj[a,i,b,j] = Vpiqj[a,i,j,j1]*t1a_old[b,j1] 
+                  Taibj[a,i,b,j] -= T1aibj[a,i,b,j] 
 #
                ENDDO j1
 
-               T1aibj(a,i,b,j)          = Viaai(i,a,b,j) 
-               Taibj(a,i,b,j)          += T1aibj(a,i,b,j)
-               Taibj(a,i,b,j)          += e5aibj(a,i,b,j) 
-               PREPARE TAUP_ab(a,i,b,j) = Taibj(a,i,b,j) 
+               T1aibj[a,i,b,j]          = Viaai[i,a,b,j] 
+               Taibj[a,i,b,j]          += T1aibj[a,i,b,j]
+               Taibj[a,i,b,j]          += e5aibj[a,i,b,j] 
+               PREPARE TAUP_ab[a,i,b,j] = Taibj[a,i,b,j] 
 #
       ENDPARDO j, b, i, a
       server_barrier
 
       PARDO j, b, j1, b1
 #
-               REQUEST              T2old_aa(b1,j,b,j1) j1 
-               GET                  t1a_old(b1,j) 
-               GET                  t1a_old(b,j1) 
+               REQUEST              T2old_aa[b1,j,b,j1]  
+               GET                  t1a_old[b1,j] 
+               GET                  t1a_old[b,j1] 
 # 
-               tbj(b,j1)          = t1a_old(b,j1) 
-               T2bjbj(b1,j,b,j1)  = t1a_old(b1,j)^tbj(b,j1) 
-               T1bjbj(b1,j,b,j1)  = 0.5*T2old_aa(b1,j,b,j1) 
-               T1bjbj(b1,j,b,j1) += T2bjbj(b1,j,b,j1) 
+               tbj[b,j1]          = t1a_old[b,j1] 
+               T2bjbj[b1,j,b,j1]  = t1a_old[b1,j]^tbj[b,j1] 
+               T1bjbj[b1,j,b,j1]  = T2old_aa[b1,j,b,j1] 
+               T1bjbj[b1,j,b,j1]  *= 0.5
+               T1bjbj[b1,j,b,j1] += T2bjbj[b1,j,b,j1] 
 #
                DO i  
                DO a 
 #
-                  REQUEST                     Vpiqj(a,i,b1,j1) j1  
-                  Taibj(a,i,b,j)            = T1bjbj(b1,j,b,j1)*Vpiqj(a,i,b1,j1) 
-                  Taibj(a,i,b,j)           *= -1.0  
-                  PREPARE TAUP_ab(a,i,b,j) += Taibj(a,i,b,j)
+                  REQUEST                     Vpiqj[a,i,b1,j1]   
+                  Taibj[a,i,b,j]            = T1bjbj[b1,j,b,j1]*Vpiqj[a,i,b1,j1] 
+                  Taibj[a,i,b,j]           *= -1.0  
+                  PREPARE TAUP_ab[a,i,b,j] += Taibj[a,i,b,j]
 #   
                ENDDO a 
                ENDDO i  
@@ -1955,15 +1956,15 @@
 #
       PARDO b, j, a1, i1
 #
-            REQUEST T2old_ab(a1,i1,b,j) j      
+            REQUEST T2old_ab[a1,i1,b,j]       
 #
             DO a
             DO i
 #
-               REQUEST                     VSpipi(a1,i1,a,i) i
-               T1aibj(a,i,b,j)           = T2old_ab(a1,i1,b,j)*VSpipi(a1,i1,a,i)
-               T1aibj(a,i,b,j)          *= 0.5
-               PREPARE TAUP_ab(a,i,b,j) += T1aibj(a,i,b,j)
+               REQUEST                     VSpipi[a1,i1,a,i] 
+               T1aibj[a,i,b,j]           = T2old_ab[a1,i1,b,j]*VSpipi[a1,i1,a,i]
+               T1aibj[a,i,b,j]          *= 0.5
+               PREPARE TAUP_ab[a,i,b,j] += T1aibj[a,i,b,j]
 #
             ENDDO i
             ENDDO a
@@ -1977,16 +1978,16 @@
 #
       PARDO i1, a1, a, i
 #
-            REQUEST T2old_aa(a1,i1,a,i) i 
+            REQUEST T2old_aa[a1,i1,a,i]  
 #
             DO j 
             DO b 
 #
-               REQUEST                        TAUP_ab(a,i,b,j) j  
-               R1aibj(a1,i1,b,j)            = T2old_aa(a1,i1,a,i)*TAUP_ab(a,i,b,j)  
-               Taibj(b,j,a1,i1)             = R1aibj(a1,i1,b,j) 
-               PREPARE T2new_ab(a1,i1,b,j) += R1aibj(a1,i1,b,j) 
-               PREPARE T2new_ab(b,j,a1,i1) += Taibj(b,j,a1,i1) 
+               REQUEST                        TAUP_ab[a,i,b,j]   
+               R1aibj[a1,i1,b,j]            = T2old_aa[a1,i1,a,i]*TAUP_ab[a,i,b,j]  
+               Taibj[b,j,a1,i1]             = R1aibj[a1,i1,b,j] 
+               PREPARE T2new_ab[a1,i1,b,j] += R1aibj[a1,i1,b,j] 
+               PREPARE T2new_ab[b,j,a1,i1] += Taibj[b,j,a1,i1] 
 #
             ENDDO b 
             ENDDO j 
@@ -2008,34 +2009,34 @@
 #
       PARDO i, j, i1, b  
 #
-           Tiibj(i1,i,b,j) = 0.0 
+           Tiibj[i1,i,b,j] = 0.0 
 #
            DO a1 
 # 
-              REQUEST            Viaai(i1,a1,b,j) j  
-              GET                t1a_old(a1,i) 
+              REQUEST            Viaai[i1,a1,b,j]   
+              GET                t1a_old[a1,i] 
 #
-              T1iibj(i1,i,b,j) = Viaai(i1,a1,b,j)*t1a_old(a1,i) 
-              Tiibj(i1,i,b,j) += T1iibj(i1,i,b,j) 
+              T1iibj[i1,i,b,j] = Viaai[i1,a1,b,j]*t1a_old[a1,i] 
+              Tiibj[i1,i,b,j] += T1iibj[i1,i,b,j] 
 #
            ENDDO a1  
 #
            DO b1 
 #
-              REQUEST            Vaaii(b,b1,i1,i) i  
-              GET                t1a_old(b1,j) 
+              REQUEST            Vaaii[b,b1,i1,i]   
+              GET                t1a_old[b1,j] 
 #
-              T1iibj(i1,i,b,j) = Vaaii(b,b1,i1,i)*t1a_old(b1,j)  
-              Tiibj(i1,i,b,j) += T1iibj(i1,i,b,j) 
+              T1iibj[i1,i,b,j] = Vaaii[b,b1,i1,i]*t1a_old[b1,j]  
+              Tiibj[i1,i,b,j] += T1iibj[i1,i,b,j] 
 #
           ENDDO b1  
 #
           DO a 
 #
-             GET                          t1a_old(a,i1) 
-             Taibj(a,i,b,j)             = Tiibj(i1,i,b,j)*t1a_old(a,i1) 
-             Taibj(a,i,b,j)            *= -1.0 
-             PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j) 
+             GET                          t1a_old[a,i1] 
+             Taibj[a,i,b,j]             = Tiibj[i1,i,b,j]*t1a_old[a,i1] 
+             Taibj[a,i,b,j]            *= -1.0 
+             PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j] 
 #
           ENDDO a 
 #
@@ -2043,34 +2044,34 @@
 #
       PARDO i, j, j1, a 
 #
-            Tjjai(j1,j,a,i) = 0.0 
+            Tjjai[j1,j,a,i] = 0.0 
 #
             DO a1 
 #
-               REQUEST            Vaaii(a,a1,j1,j) j  
-               GET                t1a_old(a1,i) 
+               REQUEST            Vaaii[a,a1,j1,j]   
+               GET                t1a_old[a1,i] 
 #
-               T1jjai(j1,j,a,i) = Vaaii(a,a1,j1,j)*t1a_old(a1,i) 
-               Tjjai(j1,j,a,i) += T1jjai(j1,j,a,i)
+               T1jjai[j1,j,a,i] = Vaaii[a,a1,j1,j]*t1a_old[a1,i] 
+               Tjjai[j1,j,a,i] += T1jjai[j1,j,a,i]
 #
             ENDDO a1 
 #
             DO b1 
 # 
-               REQUEST            Viaai(i,a,b1,j1) j1  
-               GET                t1a_old(b1,j) 
+               REQUEST            Viaai[i,a,b1,j1]   
+               GET                t1a_old[b1,j] 
 #
-               T1jjai(j1,j,a,i) = Viaai(i,a,b1,j1)*t1a_old(b1,j) 
-               Tjjai(j1,j,a,i) += T1jjai(j1,j,a,i) 
+               T1jjai[j1,j,a,i] = Viaai[i,a,b1,j1]*t1a_old[b1,j] 
+               Tjjai[j1,j,a,i] += T1jjai[j1,j,a,i] 
 #
             ENDDO b1  
 #
             DO b 
 #
-               GET                          t1a_old(b,j1) 
-               Taibj(a,i,b,j)             = Tjjai(j1,j,a,i)*t1a_old(b,j1) 
-               Taibj(a,i,b,j)            *= -1.0 
-               PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j) 
+               GET                          t1a_old[b,j1] 
+               Taibj[a,i,b,j]             = Tjjai[j1,j,a,i]*t1a_old[b,j1] 
+               Taibj[a,i,b,j]            *= -1.0 
+               PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j] 
 #
             ENDDO b 
 #
@@ -2088,34 +2089,34 @@
 #
       PARDO b, i, b1, i1
 #
-            REQUEST            Vaaii(b,b1,i1,i) i
-            Tiiqq(i1,i,b,b1) = Vaaii(b,b1,i1,i)
+            REQUEST            Vaaii[b,b1,i1,i] 
+            Tiiqq[i1,i,b,b1] = Vaaii[b,b1,i1,i]
 #
             DO j1
 #
-               REQUEST             Vpiqj(i,i1,b1,j1) j1
-               GET                 t1a_old(b,j1)
+               REQUEST             Vpiqj[i,i1,b1,j1] 
+               GET                 t1a_old[b,j1]
 #
-               tbj(b,j1)         = t1a_old(b,j1)
-               T1iiqq(i1,i,b,b1) = Vpiqj(i,i1,b1,j1)*tbj(b,j1)
-               Tiiqq(i1,i,b,b1) -= T1iiqq(i1,i,b,b1)
+               tbj[b,j1]         = t1a_old[b,j1]
+               T1iiqq[i1,i,b,b1] = Vpiqj[i,i1,b1,j1]*tbj[b,j1]
+               Tiiqq[i1,i,b,b1] -= T1iiqq[i1,i,b,b1]
 #
             ENDDO j1
 #
-            PREPARE Wiibb(i1,i,b,b1) = Tiiqq(i1,i,b,b1)
+            PREPARE Wiibb[i1,i,b,b1] = Tiiqq[i1,i,b,b1]
 #
       ENDPARDO b, i, b1, i1
       server_barrier
 
       PARDO a1, b, i1, b1
 #
-         REQUEST Vaaai(b1,b,a1,i1) i1
+         REQUEST Vaaai[b1,b,a1,i1] 
 #
          DO i
 #
-            GET                          t1a_old(a1,i)
-            T1iiqq(i1,i,b,b1)          = Vaaai(b1,b,a1,i1)*t1a_old(a1,i)
-            PREPARE Wiibb(i1,i,b,b1)  += T1iiqq(i1,i,b,b1)
+            GET                          t1a_old[a1,i]
+            T1iiqq[i1,i,b,b1]          = Vaaai[b1,b,a1,i1]*t1a_old[a1,i]
+            PREPARE Wiibb[i1,i,b,b1]  += T1iiqq[i1,i,b,b1]
 #
          ENDDO i
 #
@@ -2123,22 +2124,23 @@
 
       PARDO i, b, a1, j1
 #
-         REQUEST     T2old_ab(a1,i,b,j1) j1
-         GET         t1a_old(a1,i)
-         GET         t1a_old(b,j1)
-         tai(a1,i) = t1a_old(a1,i) 
+         REQUEST     T2old_ab[a1,i,b,j1] 
+         GET         t1a_old[a1,i]
+         GET         t1a_old[b,j1]
+         tai[a1,i] = t1a_old[a1,i] 
 
-         Taibj(a1,i,b,j1)   = tai(a1,i)^t1a_old(b,j1)
-         T1aibj(a1,i,b,j1)  = 0.5*T2old_ab(a1,i,b,j1)
-         T1aibj(a1,i,b,j1) += Taibj(a1,i,b,j1)
+         Taibj[a1,i,b,j1]   = tai[a1,i]^t1a_old[b,j1]
+         T1aibj[a1,i,b,j1]  = T2old_ab[a1,i,b,j1]
+         T1aibj[a1,i,b,j1]  *= 0.5
+         T1aibj[a1,i,b,j1] += Taibj[a1,i,b,j1]
 #
          DO i1
          DO b1
 #
-            REQUEST                     Vpiqj(a1,i1,b1,j1) j1
-            Tiiqq(i1,i,b,b1)          = T1aibj(a1,i,b,j1)*Vpiqj(a1,i1,b1,j1)
-            Tiiqq(i1,i,b,b1)         *= -1.0  
-            PREPARE Wiibb(i1,i,b,b1) += Tiiqq(i1,i,b,b1)
+            REQUEST                     Vpiqj[a1,i1,b1,j1] 
+            Tiiqq[i1,i,b,b1]          = T1aibj[a1,i,b,j1]*Vpiqj[a1,i1,b1,j1]
+            Tiiqq[i1,i,b,b1]         *= -1.0  
+            PREPARE Wiibb[i1,i,b,b1] += Tiiqq[i1,i,b,b1]
 #
          ENDDO b1
          ENDDO i1
@@ -2151,19 +2153,19 @@
 #
       PARDO a, j, i1, b1
 #
-            REQUEST T2old_ab(a,i1,b1,j) j
+            REQUEST T2old_ab[a,i1,b1,j] 
 #
             DO i
             DO b
 #
-               REQUEST                      Wiibb(i1,i,b,b1) i
+               REQUEST                      Wiibb[i1,i,b,b1] 
 #
-               Taibj(a,i,b,j)             = T2old_ab(a,i1,b1,j)*Wiibb(i1,i,b,b1)
-               Taibj(a,i,b,j)            *= -1.0  
+               Taibj[a,i,b,j]             = T2old_ab[a,i1,b1,j]*Wiibb[i1,i,b,b1]
+               Taibj[a,i,b,j]            *= -1.0  
 #
-               T2aibj(b,j,a,i)            = Taibj(a,i,b,j) 
-               PREPARE T2new_ab(a,i,b,j) += Taibj(a,i,b,j)
-               PREPARE T2new_ab(b,j,a,i) += T2aibj(b,j,a,i)
+               T2aibj[b,j,a,i]            = Taibj[a,i,b,j] 
+               PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+               PREPARE T2new_ab[b,j,a,i] += T2aibj[b,j,a,i]
 #
             ENDDO b
             ENDDO i
@@ -2199,23 +2201,23 @@
      sip_barrier 
      PARDO a, b, i, j 
 #
-           REQUEST Vpiqj(a,i,b,j) j  
-           REQUEST Vpiqj(a,j,b,i) j  
+           REQUEST Vpiqj[a,i,b,j]   
+           REQUEST Vpiqj[a,j,b,i]   
 #
-           REQUEST T2old_ab(a,i,b,j) j  
-           GET     t1a_old(a,i) 
-           GET     t1a_old(b,j) 
-           tai(a,i) = t1a_old(a,i) 
+           REQUEST T2old_ab[a,i,b,j]   
+           GET     t1a_old[a,i] 
+           GET     t1a_old[b,j] 
+           tai[a,i] = t1a_old[a,i] 
 #
-           Taibj(a,i,b,j)  = tai(a,i)^t1a_old(b,j) 
-           Taibj(a,i,b,j) += T2old_ab(a,i,b,j)  
+           Taibj[a,i,b,j]  = tai[a,i]^t1a_old[b,j] 
+           Taibj[a,i,b,j] += T2old_ab[a,i,b,j]  
 #
-           T1aibj(a,i,b,j) = Vpiqj(a,i,b,j)  
-           T2aibj(a,i,b,j) = Vpiqj(a,j,b,i)  
-           T1aibj(a,i,b,j)*= 2.0  
-           T1aibj(a,i,b,j)-= T2aibj(a,i,b,j)  
+           T1aibj[a,i,b,j] = Vpiqj[a,i,b,j]  
+           T2aibj[a,i,b,j] = Vpiqj[a,j,b,i]  
+           T1aibj[a,i,b,j]*= 2.0  
+           T1aibj[a,i,b,j]-= T2aibj[a,i,b,j]  
 #
-           etemp = Taibj(a,i,b,j)*T1aibj(a,i,b,j) 
+           etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j] 
            esumab += etemp 
 #
      ENDPARDO a, b, i, j 
@@ -2224,7 +2226,7 @@
 #
      collective ecorrab += esumab
      ecorrT = ecorrab 
-     print_scalar ecorrT  
+     print ecorrT  
 
 #    ------------------------------------------------------------------------ 
 # 
@@ -2239,16 +2241,16 @@
 #     ---------------------------------------- 
 #
           PARDO a, i 
-                tai(a,i) = 0.0 
-                PUT t1a_new(a,i) = tai(a,i) 
+                tai[a,i] = 0.0 
+                PUT t1a_new[a,i] = tai[a,i] 
           ENDPARDO a, i 
 #
 #     Zero out new 2-particle amplitude arrays 
 #     ---------------------------------------- 
 #
           PARDO a, b, i, j 
-                Taibj(a,i,b,j) = 0.0
-                PREPARE T2new_ab(a,i,b,j) = Taibj(a,i,b,j) 
+                Taibj[a,i,b,j] = 0.0
+                PREPARE T2new_ab[a,i,b,j] = Taibj[a,i,b,j] 
           ENDPARDO a, b, i, j 
 # 
      ENDPROC T2NEW_ZERO
@@ -2262,22 +2264,22 @@
 #
       PARDO b, a, j, i
 #
-            REQUEST                    T2old_ab(b,j,a,i) b 
-            REQUEST                    T2new_ab(b,j,a,i) b 
-            Taibj(a,i,b,j)           = T2new_ab(b,j,a,i)
-            T1aibj(a,i,b,j)          = T2old_ab(b,j,a,i)
+            REQUEST                    T2old_ab[b,j,a,i]  
+            REQUEST                    T2new_ab[b,j,a,i]  
+            Taibj[a,i,b,j]           = T2new_ab[b,j,a,i]
+            T1aibj[a,i,b,j]          = T2old_ab[b,j,a,i]
 #
-            REQUEST                    T2old_ab(a,i,b,j) b 
-            REQUEST                    T2new_ab(a,i,b,j) b 
-            Taibj(a,i,b,j)          += T2new_ab(a,i,b,j)
-            T1aibj(a,i,b,j)         += T2old_ab(a,i,b,j)
+            REQUEST                    T2old_ab[a,i,b,j]  
+            REQUEST                    T2new_ab[a,i,b,j]  
+            Taibj[a,i,b,j]          += T2new_ab[a,i,b,j]
+            T1aibj[a,i,b,j]         += T2old_ab[a,i,b,j]
 
-            execute energy_denominator_rhf Taibj(a,i,b,j) fock_a 
-            T1aibj(a,i,b,j) -= Taibj(a,i,b,j)
-            T1aibj(a,i,b,j) *= -0.5
+            execute energy_denominator_rhf Taibj[a,i,b,j] fock_a 
+            T1aibj[a,i,b,j] -= Taibj[a,i,b,j]
+            T1aibj[a,i,b,j] *= -0.5
 
             if niter < diis_order  
-               PREPARE Eaibj(a,i,b,j,kiter) = T1aibj(a,i,b,j) 
+               PREPARE Eaibj[a,i,b,j,kiter] = T1aibj[a,i,b,j] 
             endif  
 
             if niter >= diis_order  
@@ -2285,7 +2287,7 @@
                DO jdiis 
                   kcount += 1.0 
                   if kcount == diis_order 
-                     PREPARE Eaibj(a,i,b,j,jdiis) = T1aibj(a,i,b,j) 
+                     PREPARE Eaibj[a,i,b,j,jdiis] = T1aibj[a,i,b,j] 
                      exit 
                   endif 
                ENDDO jdiis 
@@ -2316,13 +2318,13 @@
 #
       PARDO b, a, j, i
 #
-            REQUEST                    T2new_ab(a,i,b,j) a
-            REQUEST                    T2new_ab(b,j,a,i) a
-            Taibj(a,i,b,j)           = T2new_ab(b,j,a,i)
-            Taibj(a,i,b,j)          += T2new_ab(a,i,b,j)
-            Taibj(a,i,b,j)          *= 0.5  
-            execute energy_denominator_rhf Taibj(a,i,b,j) fock_a 
-            PREPARE T2old_ab(a,i,b,j)    = Taibj(a,i,b,j)
+            REQUEST                    T2new_ab[a,i,b,j] 
+            REQUEST                    T2new_ab[b,j,a,i] 
+            Taibj[a,i,b,j]           = T2new_ab[b,j,a,i]
+            Taibj[a,i,b,j]          += T2new_ab[a,i,b,j]
+            Taibj[a,i,b,j]          *= 0.5  
+            execute energy_denominator_rhf Taibj[a,i,b,j] fock_a 
+            PREPARE T2old_ab[a,i,b,j]    = Taibj[a,i,b,j]
 #
       ENDPARDO b, a, j, i
 #
@@ -2338,16 +2340,16 @@
 #
       PARDO a, i 
 #
-            GET                t1a_new(a,i) 
-            GET                t1a_old(a,i) 
-            tai(a,i)         = t1a_new(a,i) 
-            t1ai(a,i)        = t1a_old(a,i) 
-            execute energy_denominator_rhf tai(a,i) fock_a  
+            GET                t1a_new[a,i] 
+            GET                t1a_old[a,i] 
+            tai[a,i]         = t1a_new[a,i] 
+            t1ai[a,i]        = t1a_old[a,i] 
+            execute energy_denominator_rhf tai[a,i] fock_a  
            #PUT t1a_old(a,i) = tai(a,i) 
-            tai(a,i)        -= t1ai(a,i) 
+            tai[a,i]        -= t1ai[a,i] 
 
             if niter < diis_order  
-               PUT Eai(a,i,kiter) = Tai(a,i) 
+               PUT Eai[a,i,kiter] = Tai[a,i] 
             endif  
 
             if niter >= diis_order  
@@ -2355,7 +2357,7 @@
                DO jdiis 
                   kcount += 1.0 
                   if kcount == diis_order 
-                     PUT Eai(a,i,jdiis) = Tai(a,i) 
+                     PUT Eai[a,i,jdiis] = Tai[a,i] 
                      exit 
                   endif 
                ENDDO jdiis 
@@ -2387,10 +2389,10 @@
 #
       PARDO a, i 
 #
-            GET                t1a_new(a,i) 
-            tai(a,i)         = t1a_new(a,i) 
-            execute energy_denominator_rhf tai(a,i) fock_a  
-            PUT t1a_old(a,i) = tai(a,i) 
+            GET                t1a_new[a,i] 
+            tai[a,i]         = t1a_new[a,i] 
+            execute energy_denominator_rhf tai[a,i] fock_a  
+            PUT t1a_old[a,i] = tai[a,i] 
 #
       ENDPARDO a, i 
 #
@@ -2404,11 +2406,11 @@
 #
       PARDO b, a, j, i
 #
-            REQUEST                    T2old_ab(a,i,b,j) a 
-            Taibj(a,i,b,j)           = T2old_ab(a,i,b,j)
+            REQUEST                    T2old_ab[a,i,b,j]  
+            Taibj[a,i,b,j]           = T2old_ab[a,i,b,j]
 
             if niter < diis_order  
-               PREPARE Daibj(a,i,b,j,kiter) = Taibj(a,i,b,j) 
+               PREPARE Daibj[a,i,b,j,kiter] = Taibj[a,i,b,j] 
             endif  
 
             if niter >= diis_order  
@@ -2416,7 +2418,7 @@
                DO kdiis 
                   kcount += 1.0 
                   if kcount == diis_order 
-                     PREPARE Daibj(a,i,b,j,kdiis) = Taibj(a,i,b,j) 
+                     PREPARE Daibj[a,i,b,j,kdiis] = Taibj[a,i,b,j] 
                      exit 
                   endif 
                ENDDO kdiis 
@@ -2452,11 +2454,11 @@
 #
       PARDO a, i 
 #
-            GET        t1a_old(a,i)
-            tai(a,i) = t1a_old(a,i)
+            GET        t1a_old[a,i]
+            tai[a,i] = t1a_old[a,i]
 
             if niter < diis_order  
-               PUT Dai(a,i,kiter) = Tai(a,i) 
+               PUT Dai[a,i,kiter] = Tai[a,i] 
             endif  
 
             if niter >= diis_order  
@@ -2464,7 +2466,7 @@
                DO kdiis 
                   kcount += 1.0 
                   if kcount == diis_order 
-                     PUT Dai(a,i,kdiis) = Tai(a,i) 
+                     PUT Dai[a,i,kdiis] = Tai[a,i] 
                      exit 
                   endif 
                ENDDO kdiis 
@@ -2510,34 +2512,34 @@
             kcount += 1.0 
             if kcount <= worder  
 
-               REQUEST Eaibj(a,i,b,j,jdiis) a  
-               REQUEST Eaibj(a,j,b,i,jdiis) a  
+               REQUEST Eaibj[a,i,b,j,jdiis]   
+               REQUEST Eaibj[a,j,b,i,jdiis]   
 
-               t1aibj(a,i,b,j) = Eaibj(a,i,b,j,jdiis) 
-               t3aibj(a,j,b,i) = Eaibj(a,j,b,i,jdiis) 
-               t2aibj(a,i,b,j) = t3aibj(a,j,b,i) 
-               t1aibj(a,i,b,j)-= t2aibj(a,i,b,j) 
+               t1aibj[a,i,b,j] = Eaibj[a,i,b,j,jdiis] 
+               t3aibj[a,j,b,i] = Eaibj[a,j,b,i,jdiis] 
+               t2aibj[a,i,b,j] = t3aibj[a,j,b,i] 
+               t1aibj[a,i,b,j]-= t2aibj[a,i,b,j] 
 
          jcount = 0.0 
          DO j1diis 
             jcount += 1.0 
             if jcount <= worder  
 
-               REQUEST Eaibj(a,i,b,j,j1diis) a  
-               REQUEST Eaibj(a,j,b,i,j1diis) a  
+               REQUEST Eaibj[a,i,b,j,j1diis]   
+               REQUEST Eaibj[a,j,b,i,j1diis]   
 
-               t3aibj(a,i,b,j) = Eaibj(a,i,b,j,j1diis) 
-               t2aibj(a,j,b,i) = Eaibj(a,j,b,i,j1diis) 
-               t4aibj(a,i,b,j) = t2aibj(a,j,b,i) 
-               t3aibj(a,i,b,j)-= t4aibj(a,i,b,j) 
+               t3aibj[a,i,b,j] = Eaibj[a,i,b,j,j1diis] 
+               t2aibj[a,j,b,i] = Eaibj[a,j,b,i,j1diis] 
+               t4aibj[a,i,b,j] = t2aibj[a,j,b,i] 
+               t3aibj[a,i,b,j]-= t4aibj[a,i,b,j] 
  
-               tbb(jdiis,j1diis)          = Eaibj(a,i,b,j,jdiis)*Eaibj(a,i,b,j,j1diis) 
-               tbb(jdiis,j1diis)         *= 2.0  
-               PUT DIST_BB(jdiis,j1diis) += tbb(jdiis,j1diis)  
+               tbb[jdiis,j1diis]          = Eaibj[a,i,b,j,jdiis]*Eaibj[a,i,b,j,j1diis] 
+               tbb[jdiis,j1diis]         *= 2.0  
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]  
  
-               etemp                     = t1aibj(a,i,b,j)*t3aibj(a,i,b,j) 
-               tbb(jdiis,j1diis)          = etemp 
-               PUT DIST_BB(jdiis,j1diis) += tbb(jdiis,j1diis)  
+               etemp                     = t1aibj[a,i,b,j]*t3aibj[a,i,b,j] 
+               tbb[jdiis,j1diis]          = etemp 
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]  
             endif 
          ENDDO j1diis 
             endif # kcount <= diis_order  
@@ -2550,18 +2552,18 @@
             kcount += 1.0 
             if kcount <= worder  
 
-               GET Eai(a,i,jdiis) 
+               GET Eai[a,i,jdiis] 
 
          jcount = 0.0 
          DO j1diis 
             jcount += 1.0 
             if jcount <= worder  
 
-               GET Eai(a,i,j1diis) 
+               GET Eai[a,i,j1diis] 
 
-               tbb(jdiis,j1diis)          = Eai(a,i,jdiis)*Eai(a,i,j1diis) 
-               tbb(jdiis,j1diis)         *= 4.0  
-               PUT DIST_BB(jdiis,j1diis) += tbb(jdiis,j1diis)  
+               tbb[jdiis,j1diis]          = Eai[a,i,jdiis]*Eai[a,i,j1diis] 
+               tbb[jdiis,j1diis]         *= 4.0  
+               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]  
  
             endif 
          ENDDO j1diis 
@@ -2579,8 +2581,8 @@
       DO j1diis 
          kcount += 1.0 
          if kcount <= worder  
-            GET DIST_BB(jdiis,j1diis) 
-            BB(jdiis,j1diis) = DIST_BB(jdiis,j1diis) 
+            GET DIST_BB[jdiis,j1diis] 
+            BB[jdiis,j1diis] = DIST_BB[jdiis,j1diis] 
          endif 
       ENDDO j1diis 
          endif 
@@ -2599,13 +2601,13 @@
      #ENDDO jdiis 
 
       PARDO a, i, b, j 
-            taibj(a,i,b,j) = 0.0 
+            taibj[a,i,b,j] = 0.0 
             n1 = 0.0  
             DO kdiis   
                n1 += 1.0  
                if n1 <  worder # temp_order # VFL  
-                  REQUEST           Daibj(a,i,b,j,kdiis) a  
-                  t2aibj(a,i,b,j) = Daibj(a,i,b,j,kdiis) 
+                  REQUEST           Daibj[a,i,b,j,kdiis]   
+                  t2aibj[a,i,b,j] = Daibj[a,i,b,j,kdiis] 
                   n2 = 0.0  
                   DO d2   
                     n2 += 1.0  
@@ -2613,13 +2615,13 @@
                       kcount  = n2 
                       kcount -= n1 
                       if kcount == one 
-                         REQUEST           Eaibj(a,i,b,j,d2) a  
-                         t3aibj(a,i,b,j) = Eaibj(a,i,b,j,d2) 
-                         execute return_sval BB(d2,d2) etemp 
+                         REQUEST           Eaibj[a,i,b,j,d2]   
+                         t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2] 
+                         execute return_sval BB[d2,d2] etemp 
                         #etemp        = BB(d1,d1)        
-                         t3aibj(a,i,b,j) += t2aibj(a,i,b,j) 
-                         t3aibj(a,i,b,j) *= etemp   
-                         taibj(a,i,b,j)  += t3aibj(a,i,b,j)  
+                         t3aibj[a,i,b,j] += t2aibj[a,i,b,j] 
+                         t3aibj[a,i,b,j] *= etemp   
+                         taibj[a,i,b,j]  += t3aibj[a,i,b,j]  
                       endif 
                     endif #n2 <= worder 
                    ENDDO d2 
@@ -2630,29 +2632,29 @@
             DO d2   
                n2 += 1.0  
                if n2 == one 
-                  REQUEST           D0aibj(a,i,b,j) a 
-                  t2aibj(a,i,b,j) = D0aibj(a,i,b,j) 
-                  REQUEST           Eaibj(a,i,b,j,d2) a  
-                  t3aibj(a,i,b,j) = Eaibj(a,i,b,j,d2) 
-                  execute return_sval BB(d2,d2) etemp 
+                  REQUEST           D0aibj[a,i,b,j]  
+                  t2aibj[a,i,b,j] = D0aibj[a,i,b,j] 
+                  REQUEST           Eaibj[a,i,b,j,d2]   
+                  t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2] 
+                  execute return_sval BB[d2,d2] etemp 
                  #etemp        = BB(d1,d1)        
-                  t3aibj(a,i,b,j) += t2aibj(a,i,b,j) 
-                  t3aibj(a,i,b,j) *= etemp   
-                  taibj(a,i,b,j)  += t3aibj(a,i,b,j)  
+                  t3aibj[a,i,b,j] += t2aibj[a,i,b,j] 
+                  t3aibj[a,i,b,j] *= etemp   
+                  taibj[a,i,b,j]  += t3aibj[a,i,b,j]  
                endif 
             ENDDO d2 
 
-            PREPARE T2old_ab(a,i,b,j) = taibj(a,i,b,j)
+            PREPARE T2old_ab[a,i,b,j] = taibj[a,i,b,j]
       ENDPARDO a, i, b, j 
 
       PARDO a, i 
-            tai(a,i) = 0.0 
+            tai[a,i] = 0.0 
             n1 = 0.0  
             DO kdiis    
                n1 += 1.0  
             if n1 <  worder # temp_order # VFL  
-               GET         Dai(a,i,kdiis) 
-               t2ai(a,i) = Dai(a,i,kdiis) 
+               GET         Dai[a,i,kdiis] 
+               t2ai[a,i] = Dai[a,i,kdiis] 
             n2 = 0.0  
             DO d2   
                n2 += 1.0  
@@ -2660,13 +2662,13 @@
                kcount  = n2 
                kcount -= n1 
                if kcount == one 
-                  GET         Eai(a,i,d2) 
-                  t3ai(a,i) = Eai(a,i,d2) 
-                  execute return_sval BB(d2,d2) etemp 
+                  GET         Eai[a,i,d2] 
+                  t3ai[a,i] = Eai[a,i,d2] 
+                  execute return_sval BB[d2,d2] etemp 
                  #etemp        = BB(d1,d1)        
-                  t3ai(a,i) += t2ai(a,i) 
-                  t3ai(a,i) *= etemp   
-                  tai(a,i)  += t3ai(a,i)  
+                  t3ai[a,i] += t2ai[a,i] 
+                  t3ai[a,i] *= etemp   
+                  tai[a,i]  += t3ai[a,i]  
                endif 
             endif 
             ENDDO d2   
@@ -2677,19 +2679,19 @@
             DO d2   
                n2 += 1.0  
                if n2 == one 
-                  REQUEST D0ai(a,i) a 
-                  t2ai(a,i) = D0ai(a,i) 
-                  GET         Eai(a,i,d2) 
-                  t3ai(a,i) = Eai(a,i,d2) 
-                  execute return_sval BB(d2,d2) etemp 
+                  REQUEST D0ai[a,i]  
+                  t2ai[a,i] = D0ai[a,i] 
+                  GET         Eai[a,i,d2] 
+                  t3ai[a,i] = Eai[a,i,d2] 
+                  execute return_sval BB[d2,d2] etemp 
                  #etemp        = BB(d1,d1)        
-                  t3ai(a,i) += t2ai(a,i) 
-                  t3ai(a,i) *= etemp   
-                  tai(a,i)  += t3ai(a,i)  
+                  t3ai[a,i] += t2ai[a,i] 
+                  t3ai[a,i] *= etemp   
+                  tai[a,i]  += t3ai[a,i]  
                endif 
             ENDDO d2   
 
-            PUT t1a_old(a,i) = tai(a,i)  
+            PUT t1a_old[a,i] = tai[a,i]  
       ENDPARDO a, i  
 
       server_barrier
@@ -2705,18 +2707,18 @@
       DO kdiis 
          n1 += 1.0  
          if n1 <  worder # temp_order # VFL 
-         REQUEST Daibj(a,i,b,j,kdiis) a  
-         taibj(a,i,b,j) = Daibj(a,i,b,j,kdiis) 
+         REQUEST Daibj[a,i,b,j,kdiis]   
+         taibj[a,i,b,j] = Daibj[a,i,b,j,kdiis] 
          n2 = 0.0 
       DO k1diis 
          n2 += 1.0  
          etemp = n1 
          etemp -= n2 
          if etemp == 1.0 
-            PREPARE Daibj(a,i,b,j,k1diis) = taibj(a,i,b,j) 
+            PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
          endif 
          if n1 == one 
-            PREPARE D0aibj(a,i,b,j) = taibj(a,i,b,j) 
+            PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j] 
          endif 
       ENDDO k1diis  
          endif 
@@ -2728,18 +2730,18 @@
       DO kdiis 
          n1 += 1.0  
          if n1 <  worder # temp_order # VFL 
-         GET Dai(a,i,kdiis)   
-         tai(a,i) = Dai(a,i,kdiis)   
+         GET Dai[a,i,kdiis]   
+         tai[a,i] = Dai[a,i,kdiis]   
          n2 = 0.0 
       DO k1diis 
          n2 += 1.0  
          etemp = n1 
          etemp -= n2 
          if etemp == 1.0 
-            PUT Dai(a,i,k1diis) = tai(a,i) 
+            PUT Dai[a,i,k1diis] = tai[a,i] 
          endif 
          if n1 == one 
-            PREPARE D0ai(a,i) = tai(a,i) 
+            PREPARE D0ai[a,i] = tai[a,i] 
          endif 
       ENDDO k1diis  
          endif 
@@ -2753,15 +2755,15 @@
       DO kdiis 
          n1 += 1.0  
          if n1 <= worder # temp_order # VFL 
-         REQUEST Eaibj(a,i,b,j,kdiis) a  
-         taibj(a,i,b,j) = Eaibj(a,i,b,j,kdiis) 
+         REQUEST Eaibj[a,i,b,j,kdiis]   
+         taibj[a,i,b,j] = Eaibj[a,i,b,j,kdiis] 
          n2 = 0.0 
       DO k1diis 
          n2 += 1.0  
          etemp = n1 
          etemp -= n2 
          if etemp == 1.0 
-            PREPARE Eaibj(a,i,b,j,k1diis) = taibj(a,i,b,j) 
+            PREPARE Eaibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
          endif 
       ENDDO k1diis  
          endif 
@@ -2773,15 +2775,15 @@
       DO kdiis 
          n1 += 1.0  
          if n1 <= worder # temp_order # VFL 
-         GET Eai(a,i,kdiis)   
-         tai(a,i) = Eai(a,i,kdiis)   
+         GET Eai[a,i,kdiis]   
+         tai[a,i] = Eai[a,i,kdiis]   
          n2 = 0.0 
       DO k1diis 
          n2 += 1.0  
          etemp = n1 
          etemp -= n2 
          if etemp == 1.0 
-            PUT Eai(a,i,k1diis) = tai(a,i) 
+            PUT Eai[a,i,k1diis] = tai[a,i] 
          endif 
       ENDDO k1diis  
          endif 
@@ -2826,8 +2828,8 @@
          diis_order += 1.0
       ENDDO korder
 
-      print_scalar diis_start
-      print_scalar diis_order
+      print diis_start
+      print diis_order
 
      #create Dca 
      #create Fta 
@@ -2857,12 +2859,12 @@
      #ENDPARDO jdiis, j1diis 
 
       PARDO a, i, b, j 
-            REQUEST                     T2old_ab(a,i,b,j) a 
-            REQUEST                     T2old_ab(a,j,b,i) a 
-            taiai(a,i,b,j)            = T2old_ab(a,i,b,j) 
-            t1aiai(a,i,b,j)           = T2old_ab(a,j,b,i) 
-            taiai(a,i,b,j)           -= t1aiai(a,i,b,j) 
-            PREPARE T2old_aa(a,i,b,j) = taiai(a,i,b,j) 
+            REQUEST                     T2old_ab[a,i,b,j]  
+            REQUEST                     T2old_ab[a,j,b,i]  
+            taiai[a,i,b,j]            = T2old_ab[a,i,b,j] 
+            t1aiai[a,i,b,j]           = T2old_ab[a,j,b,i] 
+            taiai[a,i,b,j]           -= t1aiai[a,i,b,j] 
+            PREPARE T2old_aa[a,i,b,j] = taiai[a,i,b,j] 
       ENDPARDO a, i, b, j 
 #
       SERVER_BARRIER  
@@ -2880,12 +2882,12 @@
          SERVER_BARRIER  
 #
          PARDO a, i, b, j 
-               REQUEST                     T2old_ab(a,i,b,j) a 
-               REQUEST                     T2old_ab(a,j,b,i) a 
-               taiai(a,i,b,j)            = T2old_ab(a,i,b,j) 
-               t1aiai(a,i,b,j)           = T2old_ab(a,j,b,i) 
-               taiai(a,i,b,j)           -= t1aiai(a,i,b,j) 
-               PREPARE T2old_aa(a,i,b,j) = taiai(a,i,b,j) 
+               REQUEST                     T2old_ab[a,i,b,j]  
+               REQUEST                     T2old_ab[a,j,b,i]  
+               taiai[a,i,b,j]            = T2old_ab[a,i,b,j] 
+               t1aiai[a,i,b,j]           = T2old_ab[a,j,b,i] 
+               taiai[a,i,b,j]           -= t1aiai[a,i,b,j] 
+               PREPARE T2old_aa[a,i,b,j] = taiai[a,i,b,j] 
          ENDPARDO a, i, b, j 
 #
          SERVER_BARRIER  
@@ -2949,12 +2951,12 @@
 #
          SERVER_BARRIER  
          PARDO a, i, b, j 
-               REQUEST                     T2old_ab(a,i,b,j) a 
-               REQUEST                     T2old_ab(a,j,b,i) a 
-               taiai(a,i,b,j)            = T2old_ab(a,i,b,j) 
-               t1aiai(a,i,b,j)           = T2old_ab(a,j,b,i) 
-               taiai(a,i,b,j)           -= t1aiai(a,i,b,j) 
-               PREPARE T2old_aa(a,i,b,j) = taiai(a,i,b,j) 
+               REQUEST                     T2old_ab[a,i,b,j]  
+               REQUEST                     T2old_ab[a,j,b,i]  
+               taiai[a,i,b,j]            = T2old_ab[a,i,b,j] 
+               t1aiai[a,i,b,j]           = T2old_ab[a,j,b,i] 
+               taiai[a,i,b,j]           -= t1aiai[a,i,b,j] 
+               PREPARE T2old_aa[a,i,b,j] = taiai[a,i,b,j] 
          ENDPARDO a, i, b, j 
          SERVER_BARRIER  
 #
@@ -2985,7 +2987,7 @@
       server_barrier 
       totenerg  = ecorrT  
       totenerg += energy  
-      print_scalar totenerg  
+      print totenerg  
 #
 ######CALL WRITE_2EL   
 #

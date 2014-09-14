@@ -1,0 +1,24 @@
+sial int_self_ops
+
+int x = 30
+int y = 40
+int z = 50
+int w = 100
+
+x += 2
+y +=4
+x += y
+
+z -= 2
+z -= x
+
+w *= 2
+w *= x
+
+print x
+print y
+print z
+print w
+println  "expected x=76, y=44, z = -32, w = 15200"
+
+endsial int_self_ops

@@ -50,6 +50,8 @@ ArrayType_t intToArrayType_t(int j) {
 	switch (j) {
 	case 2:
 		return served_array_t;
+	case 4:
+		return contiguous_local_t;
 	case 12:
 		return static_array_t;
 	case 44:
@@ -145,6 +147,9 @@ bool is_predefined_scalar_attr(int attr){
 }
 bool is_sparse_attr(int attr){
 	return ((attr & attr_sparse) == attr_sparse);
+}
+bool is_contiguous_local_attr(int attr){
+	return is_contiguous_attr(attr)  && !is_auto_allocate_attr(attr);
 }
 
 } // namespace array

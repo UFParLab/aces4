@@ -1,6 +1,6 @@
 sial printscalar
 scalar x
 x = 3.456
-print_scalar x
+print x
 endsial printscalar
 

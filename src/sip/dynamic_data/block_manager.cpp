@@ -37,7 +37,7 @@
 namespace sip {
 
 
-BlockManager::BlockManager(SipTables &sip_tables) :
+BlockManager::BlockManager(const SipTables &sip_tables) :
 sip_tables_(sip_tables),
 block_map_(sip_tables.num_arrays()){
 }
@@ -47,9 +47,8 @@ block_map_(sip_tables.num_arrays()){
  * Delete blocks being managed by the block manager.
  */
 BlockManager::~BlockManager() {
-	check(temp_block_list_stack_.size() == 0,
+	check_and_warn(temp_block_list_stack_.size() == 0,
 			"temp_block_list_stack not empty when destroying block manager!");
-
 	// Free up all blocks managed by this block manager.
 	for (int i = 0; i < sip_tables_.num_arrays(); ++i)
 		delete_per_array_map_and_blocks(i);
@@ -140,26 +139,24 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 //TODO TEMPORARY FIX WHILE SEMANTICS BEING WORKED OUT
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-//	if (blk == NULL) {
-//		std::cout << "get_block_for_reading, block " << id << "    array "
-//				<< sip_tables_.array_name(id.array_id()) << " does not exist\n";
-//		fail("", current_line());
-//	}
-	return get_block_for_accumulate(id);  //TODO
-
-
-#ifdef HAVE_CUDA
-	// Lazy copying of data from gpu to host if needed.
-	lazy_gpu_read_on_host(blk);
-#endif //HAVE_CUDA
-	return blk;
+	sial_check(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
+	////
+	//#ifdef HAVE_CUDA
+	//	// Lazy copying of data from gpu to host if needed.
+	//	lazy_gpu_read_on_host(blk);
+	//#endif //HAVE_CUDA
+    return blk;
 }
+
+
+
+
 
 /* gets block for reading and writing.  The block should already exist.*/
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 //	std::cout << "calling get_block_for_updating for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
-	check(blk != NULL, "attempting to update non-existent block",
+	sial_check(blk != NULL, "attempting to update non-existent block",
 			current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
@@ -240,6 +237,7 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		std::cerr << " In BlockManager::create_block" << std::endl;
 		std::cerr << *this << std::endl;
 		fail(" Could not create block, out of memory", current_line());
+		return NULL;
 	}
 }
 

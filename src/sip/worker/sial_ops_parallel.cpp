@@ -5,8 +5,11 @@
 
 #include <sial_ops_parallel.h>
 #include <iostream>
+#include <cmath>
+#include <cfloat>
 #include "sip_mpi_utils.h"
 #include "interpreter.h"
+
 
 namespace sip {
 
@@ -14,7 +17,7 @@ namespace sip {
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 		WorkerPersistentArrayManager* persistent_array_manager,
-		SipTables& sip_tables) :
+		const SipTables& sip_tables) :
 		sip_tables_(sip_tables), sip_mpi_attr_(
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,
@@ -341,24 +344,74 @@ void SialOpsParallel::prepare_accumulate(BlockId& lhs_id,
 	put_accumulate(lhs_id, source_ptr);
 }
 
-void SialOpsParallel::collective_sum(int source_array_slot,
+void SialOpsParallel::collective_sum(double rhs_value,
 		int dest_array_slot) {
-	double val_source = data_manager_.scalar_value(source_array_slot);
-	double val_dest = data_manager_.scalar_value(dest_array_slot);
-	double summed = 0.0;
 
+	double lhs_value = data_manager_.scalar_value(dest_array_slot);
+
+	double reduced_value = 0.0;
 	if (sip_mpi_attr_.num_workers() > 1) {
-		double to_send = val_source + val_dest;
 		const MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(
-				MPI_Allreduce(&to_send, &summed, 1, MPI_DOUBLE, MPI_SUM,
+				MPI_Allreduce(&rhs_value, &reduced_value, 1, MPI_DOUBLE, MPI_SUM,
 						worker_comm));
 	} else {
-		summed = val_source + val_dest;
+		reduced_value = rhs_value;
 	}
 
-	data_manager_.set_scalar_value(dest_array_slot, summed);
+	data_manager_.set_scalar_value(dest_array_slot,lhs_value + reduced_value);
 }
+
+
+
+
+bool SialOpsParallel::assert_same(int source_array_slot){
+	if (sip_mpi_attr_.num_workers() <= 1) return true;
+	int rank = sip_mpi_attr_.company_rank_;
+	const MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
+	double value;
+	if (rank == 0){
+       value = data_manager_.scalar_value(source_array_slot);
+	   SIPMPIUtils::check_err(MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
+	   return true;
+	}
+		value = 0.0;
+		double EPSILON = .00005;
+		SIPMPIUtils::check_err(MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
+		bool close = nearlyEqual(value, data_manager_.scalar_value(source_array_slot), EPSILON);
+		check (close, "values are too far apart");
+		//replace old value with new value from master.
+		data_manager_.set_scalar_value(source_array_slot, value);
+		return close;
+}
+
+
+/* QUICK SOLUTION.  NEEDS IMPROVEMENT!
+ */
+bool SialOpsParallel::nearlyEqual(double a, double  b, double epsilon) {
+	double absA = std::abs(a);
+	double absB = std::abs(b);
+	double diff = std::abs(a - b);
+
+	if (a == b) { // shortcut, handles infinities
+		return true;
+	} else if (a == 0 || b == 0 || diff < DBL_MIN) {
+		//DBL_MIN is from <cfloat>  and is the smallest representable pos value, 1E-37 or smaller
+		// a or b is zero or both are extremely close to it
+		// relative error is less meaningful here
+		return diff < (epsilon * DBL_MIN);
+	} else { // use relative error
+		return diff / (absA + absB) < epsilon;
+	}
+}
+
+
+void SialOpsParallel::broadcast_static(int source_array_slot, int source_worker){
+	if (sip_mpi_attr_.num_servers() )
+		std::cout<< "placeholder for broadcast_static";
+}
+
+
 
 /**
  * action depends on whether array is local or remote.  If remote,
@@ -404,8 +457,7 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 
 void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 		int string_slot) {
-	SIP_LOG(
-			std::cout << "restore_persistent with array " << sip_tables_.array_name(array_slot) << " in slot " << array_slot << " and string \"" << sip_tables_.string_literal(string_slot) << "\"" << std::endl);
+	SIP_LOG(std::cout << "restore_persistent with array " << sip_tables_.array_name(array_slot) << " in slot " << array_slot << " and string \"" << sip_tables_.string_literal(string_slot) << "\"" << std::endl);
 
 	if (sip_tables_.is_distributed(array_slot)
 			|| sip_tables_.is_served(array_slot)) {
@@ -425,6 +477,7 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 	} else {
 		persistent_array_manager_->restore_persistent(worker, array_slot,
 				string_slot);
+		SIP_LOG(std::cout << "returned from restore_persistent" << std::endl << std::flush);
 	}
 
 }
@@ -435,6 +488,8 @@ void SialOpsParallel::end_program() {
 	//at the server when the end_program message arrives.
 	sip_barrier();
 	int my_server = sip_mpi_attr_.my_server();
+//	std::cout << "in end_program, attr =\n" << sip_mpi_attr_ << std::endl << std::flush;
+	SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
 	//send end_program message to server, if designated worker and wait for ack.
 	if (my_server > 0) {
 		int end_program_tag;
@@ -445,20 +500,21 @@ void SialOpsParallel::end_program() {
 		ack_handler_.expect_sync_ack_from(my_server, end_program_tag);
 	}
 	//the program is done and the servers know it.
+	SIP_LOG(std::cout << "leaving end_program" << std::endl << std::flush);
 }
 
-void SialOpsParallel::print_to_stdout(const std::string& to_print){
-	/** If all ranks should print, do that,
-	 * Otherwise just print from company master.
-	 */
-	if (sip::should_all_ranks_print()){
-		std::cout << "W " << sip_mpi_attr_.global_rank() << " : " << to_print << std::flush;
-	} else {
-		if (sip_mpi_attr_.is_company_master()){
-			std::cout << to_print << std::flush;
-		}
-	}
-}
+//void SialOpsParallel::print_to_ostream(std::ostream& out, const std::string& to_print){
+//	/** If all ranks should print, do that,
+//	 * Otherwise just print from company master.
+//	 */
+//	if (sip::should_all_ranks_print()){
+//		out << "W " << sip_mpi_attr_.global_rank() << " : " << to_print << std::flush;
+//	} else {
+//		if (sip_mpi_attr_.is_company_master()){
+//			out << to_print << std::flush;
+//		}
+//	}
+//}
 
 //enum array_mode {NONE, READ, WRITE};
 bool SialOpsParallel::check_and_set_mode(int array_id, array_mode mode) {

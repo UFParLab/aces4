@@ -11,31 +11,42 @@
 #include "sip.h"
 #include <map>
 #include <vector>
+#include <iostream>
+#include <exception>
 #include "setup_reader.h"
+#include <stdexcept>
 
 namespace sip {
 
+//TODO  this is no longer constant.  Need to move values_ array to a separate class in dynamic_data
 class IntTable {
 public:
 	IntTable();
+	IntTable(const IntTable&);	// Copy Constructor
 	~IntTable();
 	static void read(IntTable&, setup::InputStream&, setup::SetupReader&);
+
 	/** returns the value associated with the given slot */
-	int value(int) const;
+	int value(int slot) const;
+	/** set the indicated int to the given value */
+	void set_value(int slot, int value) ;
 	/** returns the name associated with the given slot */
-	std::string name(int) const; //returns the name associated with indicated location in the int table
-	/** returns the index associated with the given name */
-	int index(std::string) const;
+	std::string name(int slot) const;
+	/** returns the slot associated with the given name */
+	int slot(std::string name) const;
 
 	friend std::ostream& operator<<(std::ostream&, const IntTable &);
 	friend class SipTables;
 private:
-    void clear();
-	std::vector<int> entries_;  //maps index to value
-	std::map<std::string, int> name_entry_map_;  //maps name to entry index
-	std::vector<std::string> entryindex_name_map_;  //maps entry index to name
-	DISALLOW_COPY_AND_ASSIGN(IntTable);
+	void clear();
+	std::vector<int> values_;  //maps slot to value
+	std::vector<int> attributes_; //maps slot to attribute
+	std::map<std::string, int> name_slot_map_;  //maps name to slot
+	std::vector<std::string> slot_name_map_;  //maps slot to name
+
+	void operator=(const IntTable&); // Disallow assignment.
 };
 
 } /* namespace sip */
 #endif /* SIP_INTTABLE_H_ */
+

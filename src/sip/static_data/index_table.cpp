@@ -268,6 +268,27 @@ int IndexTable::offset_into_contiguous(int index_slot, int index_value) const{
 	const IndexTableEntry entry = entries_.at(index_slot);
 	return entry.segment_descriptor_ptr_->offset(entry.lower_seg_, index_value);
 }
+
+int IndexTable::segment_range_extent(int index_slot, int range_lower, int range_upper) const{
+	const IndexTableEntry entry = entries_.at(index_slot);
+	int extent = 0;
+	sial_check(range_upper < (entry.lower_seg_+ entry.num_segments_), std::string("upper bound of range undefined for index"), current_line());
+	for (int j = range_lower; j <= range_upper; ++j){
+		extent += entry.segment_extent(j);
+	}
+	return extent;
+}
+
+int IndexTable::offset_into_contiguous_region(int index_slot, int index_base, int index_value) const{
+	const IndexTableEntry entry = entries_.at(index_slot);
+	sial_check(entry.lower_seg_ <= index_base && index_value < entry.lower_seg_+entry.num_segments_,
+			"region indices out of bounds", current_line());
+	return entry.segment_descriptor_ptr_->offset(index_base, index_value);
+}
+
+
+
+
 int IndexTable::lower_seg(int index_slot) const {
 	return entries_.at(index_slot).lower_seg_;
 }

@@ -1,0 +1,59 @@
+sial contiguous_local
+special fill_block_sequential wr
+# in test_basic_sial
+#		set_constant("norb", 4);
+#		int segs[] = { 5, 6, 7, 8 };
+#		set_aoindex_info(4, segs);
+
+predefined int norb
+aoindex i = 1:norb
+aoindex j = 1:norb
+contiguous local loc1[i,j]
+temp  tmp[i,j]
+
+allocate contiguous loc1[1:2,1:2]
+allocate contiguous loc1[3:4,3:4]
+
+loc1[1:2,1:2] = 42.0
+loc1[3:4,3:4] = 55.0
+
+do i 
+do j
+
+if i == 1
+if j == 1
+  tmp[i,j] = loc1[i:i, j:j]
+  print tmp[i,j]
+  tmp[i,j] *= 2.0
+  loc1[i:i,j:j] = tmp[i,j]
+endif
+endif
+
+if i == 1
+if j == 2
+  execute fill_block_sequential loc1[i:i,j:j] 345.0
+endif
+endif
+
+
+
+#println "starting [4,4]"
+
+if i== 4
+if j==4
+  tmp[i,j] = loc1[i:i, j:j]
+  print tmp[i,j]
+  tmp[i,j] *= 3.0
+  loc1[i:i,j:j] = tmp[i,j]
+endif
+endif
+
+enddo j
+enddo i
+
+print loc1[1:2,1:2]
+print loc1[3:4,3:4]
+
+
+
+endsial contiguous_local

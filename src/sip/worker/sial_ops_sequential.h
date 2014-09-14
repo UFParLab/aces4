@@ -20,7 +20,7 @@ class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
 			WorkerPersistentArrayManager*,
-			SipTables&);
+			const SipTables&);
 	~SialOpsSequential();
 
 	/** implements a global SIAL barrier */
@@ -40,21 +40,23 @@ public:
 	void prepare(BlockId&, Block::BlockPtr);
 	void prepare_accumulate(BlockId&, Block::BlockPtr);
 
-	void collective_sum(int source_array_slot, int dest_array_slot);
+	void collective_sum(double rhs_value, int dest_array_slot);
+	bool assert_same(int source_array_slot){return true;}
+	void broadcast_static(int source_array_slot, int source_worker){}
 
 	void set_persistent(Interpreter*, int array_id, int string_slot);
 	void restore_persistent(Interpreter*, int array_id, int string_slot);
 
 	void end_program();
 
-	void print_to_stdout(const std::string& to_print);
 
-	/**
-	 * Logs type of statement and line number
-	 * @param type
-	 * @param line
-	 */
-	void log_statement(opcode_t type, int line);
+
+//	/**
+//	 * Logs type of statement and line number
+//	 * @param type
+//	 * @param line
+//	 */
+//	void log_statement(opcode_t type, int line);
 
 	/** wrapper around these methods in the block_manager.  Checks for data
 	 * races due to missing barrier and implements the wait for blocks of
@@ -66,13 +68,13 @@ public:
 	Block::BlockPtr get_block_for_reading(const BlockId& id);
 
 	Block::BlockPtr get_block_for_writing(const BlockId& id,
-			bool is_scope_extent = false);
+			bool is_scope_extent);
 
 	Block::BlockPtr get_block_for_updating(const BlockId& id);
 
 private:
 
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;

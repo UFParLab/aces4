@@ -72,6 +72,7 @@ TEST(Sial_QM,ccsdpt_test){
 				sip::Interpreter runner(sipTables, sialxTimer,  &persistent_worker);
 				std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 				runner.interpret();
+				runner.post_sial_program();
 				persistent_worker.save_marked_arrays(&runner);
 				ASSERT_EQ(0, sip::DataManager::scope_count);
 				std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
@@ -84,6 +85,8 @@ TEST(Sial_QM,ccsdpt_test){
 					double esaab = runner.scalar_value("esaab");
 					ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
 				}
+				std::vector<std::string> lno2name = sipTables.line_num_to_name();
+				sialxTimer.print_timers(lno2name);
 			}
 
 		}
