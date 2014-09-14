@@ -173,9 +173,9 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
+		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
