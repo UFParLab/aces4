@@ -107,7 +107,7 @@ TEST(SipUnit,contiguous_local_block_id){
 }
 
 
-TEST(BasicSial,DISABLED_contiguous_local){
+TEST(BasicSial,contiguous_local){
 	std::string job("contiguous_local");
 	std::stringstream output;
 	if (attr->global_rank() == 0) {
@@ -122,6 +122,7 @@ TEST(BasicSial,DISABLED_contiguous_local){
 		add_sial_program(nm);
 		finalize_setup();
 	}
+	barrier();
 	TestController controller(job, true, true, "", output);
 	controller.initSipTables();
 	controller.runWorker();
@@ -161,6 +162,7 @@ TEST(BasicSial,scalars) {
 		add_sial_program(nm);
 		finalize_setup();
 	}
+	barrier();
 	TestController controller(job, true, VERBOSE_TEST, comment, output);
 	controller.initSipTables();
 	controller.runWorker();
@@ -194,7 +196,7 @@ TEST(BasicSial,index_decs) {
 		add_sial_program(nm);
 		finalize_setup();
 	}
-
+	barrier();
 	TestController controller(job, true, VERBOSE_TEST,
 			"sial program is only declarations, does not execute anything",
 			std::cout);
@@ -487,6 +489,7 @@ TEST(BasicSial,tmp_arrays) {
 		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
+	barrier();
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
 	controller.runWorker();
@@ -528,6 +531,7 @@ TEST(BasicSial,tmp_arrays_2) {
 		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
+	barrier();
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
 	controller.runWorker();
@@ -556,6 +560,7 @@ TEST(BasicSial,exit_statement_test) {
 		set_aoindex_info(15, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -586,6 +591,7 @@ TEST(BasicSial,transpose_tmp) {
 		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -621,7 +627,7 @@ TEST(BasicSial,contraction_small_test) {
 		add_sial_program(nm);
 		finalize_setup();
 	}
-
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -704,6 +710,7 @@ TEST(BasicSial,contraction_small_test2) {
 		add_sial_program(nm);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -744,6 +751,7 @@ TEST(BasicSial,sum_op) { //block addition
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -844,6 +852,7 @@ TEST(BasicSial,static_array_test) { //tests extracting blocks from contiguous ar
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -868,6 +877,7 @@ TEST(BasicSial,local_arrays) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -894,7 +904,7 @@ TEST(BasicSial,local_arrays_wild) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -925,6 +935,8 @@ TEST(Sial,local_arrays_wild_fail) {
 		finalize_setup();
 	}
 
+	barrier();
+
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output, false);
 	controller.initSipTables();
@@ -946,6 +958,7 @@ TEST(BasicSial,contract_to_scalar) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -996,7 +1009,7 @@ TEST(BasicSial,simple_indices_assignments) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1021,6 +1034,7 @@ TEST(BasicSial,self_multiply_test) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1071,6 +1085,7 @@ TEST(SipInterface,get_int_array_test) {
 				int_array_data);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1115,6 +1130,7 @@ TEST(SipInterface,get_scalar_array_test) {
 				scalar_array_data);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1153,7 +1169,7 @@ TEST(SipInterface,get_scratch_array_test) {
 		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1198,6 +1214,7 @@ TEST(BasicSial,transpose4d_tmp) {
 		set_constant("eavirt", 2);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1237,6 +1254,7 @@ TEST(BasicSial,transpose4d_square_tmp) {
 		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -1310,6 +1328,7 @@ TEST(BasicSial,assign_to_static_array_test) {
 		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, true, true, "", output);
 	controller.initSipTables();
