@@ -6,35 +6,8 @@
  */
 
 #include "op_table.h"
-#include <stdexcept>
 
-namespace sip {
-
-opcode_t intToOpcode(int opcode) {
-	if (101 <= opcode && opcode < last_opcode) {
-		return (opcode_t) opcode;
-	}
-	throw std::domain_error("illegal opcode value");
-}
-
-std::string opcodeToName(opcode_t op){
-	switch(op){
-#define SIPOP(e,n,t,p) case e: return std::string(t);
-	SIP_OPCODES
-#undef SIPOP
-	}
-	sip::fail("Interal error ! opcode not recognized !");
-	return std::string("");
-}
-
-bool printableOpcode(opcode_t op){
-	switch(op){
-#define SIPOP(e,n,t,p) case e: return p;
-	SIP_OPCODES
-#undef SIPOP
-	}
-	return false;
-}
+namespace sip{
 
 OpTableEntry::OpTableEntry() {}
 
@@ -43,9 +16,9 @@ OpTableEntry::~OpTableEntry() {}
 void OpTableEntry::read(OpTableEntry &entry, setup::InputStream &file) {
 
 	entry.opcode = intToOpcode(file.read_int());
-	entry.op1_array = file.read_int();
-	entry.op2_array = file.read_int();
-	entry.result_array = file.read_int();
+	entry.arg0 = file.read_int();
+	entry.arg1 = file.read_int();
+	entry.arg2 = file.read_int();
 	for (int i = 0; i < MAX_RANK; ++i) { //the compiler generated sio format requires
 									   //ints to be read individually rather than
 									   //using read_int_array.  It does not write
@@ -56,14 +29,29 @@ void OpTableEntry::read(OpTableEntry &entry, setup::InputStream &file) {
 }
 
 
+//std::ostream& operator<<(std::ostream& os, const OpTableEntry & entry) {
+//	os << opcodeToName(entry.opcode) << ':';
+//	os << entry.opcode << ',';
+//	os << entry.arg0 << ',';
+//	os << entry.arg1 << ',';
+//	os << entry.arg2 << ",[";
+//	for (int i = 0; i < MAX_RANK; ++i) {
+//		os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
+//	}
+//	os << entry.line_number;
+//	return os;
+//}
+
+/* This version shows unused entries as _ */
 std::ostream& operator<<(std::ostream& os, const OpTableEntry & entry) {
 	os << opcodeToName(entry.opcode) << ':';
 	os << entry.opcode << ',';
-	os << entry.op1_array << ',';
-	os << entry.op2_array << ',';
-	os << entry.result_array << ",[";
+	if (entry.arg0 >= 0) os << entry.arg0 << ','; else os << "_,";
+	if (entry.arg1 >= 0) os << entry.arg1 << ','; else os << "_,";
+	if (entry.arg2 >= 0) os << entry.arg2 << ",["; else os <<  "_,[";
 	for (int i = 0; i < MAX_RANK; ++i) {
-		os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
+		if (entry.selector[i] >= 0) os << entry.selector[i] << (i < MAX_RANK - 1 ? "," : "],");
+		else os << "_" << (i < MAX_RANK - 1 ? "," : "],");
 	}
 	os << entry.line_number;
 	return os;

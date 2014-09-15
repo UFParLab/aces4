@@ -23,6 +23,9 @@
 namespace sip {
 class SipTables;
 class SialOpsParallel;
+class ContiguousLocalArrayManager;
+class SialOpsSequential;
+
 
 class BlockManager {
 public:
@@ -30,7 +33,7 @@ public:
 	typedef std::vector<BlockId> BlockList;
 	typedef std::map<BlockId, int> BlockIdToIndexMap;
 
-	BlockManager(SipTables &sip_tables);
+	BlockManager(const SipTables &sip_tables);
 	~BlockManager();
 
 	void allocate_local(const BlockId&);
@@ -93,7 +96,9 @@ public:
 		block_map_.delete_per_array_map_and_blocks(array_id);
 	}
 
-
+	std::size_t total_blocks(){
+		return block_map_.total_blocks();
+	}
 
 #ifdef HAVE_CUDA
 	// GPU
@@ -238,7 +243,7 @@ private:
 	 */
 	bool has_wild_slot(const index_selector_t& selector);
 	/** Pointer to static data */
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 
 	/** Map from block id's to blocks */
 	CachedBlockMap block_map_;
@@ -252,8 +257,11 @@ private:
 													//contents.
 
 
-
+	friend class SialOpsSequential;
 	friend class SialOpsParallel;
+	friend class ContiguousLocalArrayManager;
+
+
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

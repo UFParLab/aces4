@@ -8,6 +8,7 @@
 #include "array_constants.h"
 #include <stdexcept>
 #include <iostream>
+#include "sip.h"
 
 
 
@@ -19,16 +20,29 @@ namespace sip{
  * TODO  Is this the right place for this???
  */
 IndexType_t map_index_type(std::string name){
-	if (name == "aoindex"){return aoindex; }
-    if (name == "laindex"){return laindex; }
-	if (name == "moaindex"){return moaindex; }
-	if (name == "mobindex"){return mobindex;}
-	if (name == "moindex"){return moindex;}
-	if (name == "simple"){return simple;}
-	if (name == "subindex"){return subindex;}
+
+#define INDEX_TYPE_T(e,n,s) if (name == s){ return e; }
+	INDEX_TYPES_T
+#undef INDEX_TYPE_T
+//	if (name == "aoindex"){return aoindex; }
+//  if (name == "laindex"){return laindex; }
+//	if (name == "moaindex"){return moaindex; }
+//	if (name == "mobindex"){return mobindex;}
+//	if (name == "moindex"){return moindex;}
+//	if (name == "simple"){return simple;}
+//	if (name == "subindex"){return subindex;}
+
 	//TODO change to throw exception or terminate?????
-	std::cout<< "WARNING:  Undefined index name, defaulting to aoindex "<< name;
-    return aoindex;
+	// std::cout<< "WARNING:  Undefined index name, defaulting to aoindex "<< name;
+    //return aoindex;
+	fail("Trying to get invalid index type : " + name);
+}
+
+std::string index_type_name(IndexType_t t){
+#define INDEX_TYPE_T(e,n,s) if (t == e){ return std::string(s); }
+	INDEX_TYPES_T
+#undef INDEX_TYPE_T
+	fail("Name of invalid IndexType_t requested");
 }
 
 
@@ -36,6 +50,8 @@ ArrayType_t intToArrayType_t(int j) {
 	switch (j) {
 	case 2:
 		return served_array_t;
+	case 4:
+		return contiguous_local_t;
 	case 12:
 		return static_array_t;
 	case 44:
@@ -131,6 +147,9 @@ bool is_predefined_scalar_attr(int attr){
 }
 bool is_sparse_attr(int attr){
 	return ((attr & attr_sparse) == attr_sparse);
+}
+bool is_contiguous_local_attr(int attr){
+	return is_contiguous_attr(attr)  && !is_auto_allocate_attr(attr);
 }
 
 } // namespace array

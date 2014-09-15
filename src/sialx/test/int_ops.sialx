@@ -1,0 +1,128 @@
+sial int_ops
+
+int l
+int nl
+int i
+int ni
+
+
+
+int s0
+int si0
+int sd
+int sr0
+int sr1
+int e0 = 77
+int e1
+int e2
+
+int ci0
+int ci1
+int c0
+int ci2
+
+int re0
+int re1
+int re2
+
+int rgt0
+int rgt1
+int rgt2
+int rgt3
+int rgt4
+int rgt5
+int rgt6
+int rgt7
+int rgt8
+int rgt9
+
+int rlt0
+int rlt1
+int rlt2
+int rlt3
+
+l = 42
+nl = -42
+s0 = l + 2*nl + l  # should be 0
+
+i = 42
+ni = -42 
+si0 = (i + 2*ni + i)
+
+sd = l/2
+
+sr0 = sd/2
+
+sr1 = (sr0 - sd)/4
+
+ci0 = (int) 3.75
+ci1 =  ci0*3
+c0 = (int)-28.444
+ci2 = (3+4*5)/6
+
+re0 = 33
+if re0 == 33
+re1 = 1
+else
+re1 = -1
+endif
+
+if re0 != 33
+re2 = 1
+else
+re2 = -1
+endif
+
+rgt0 = -24
+rgt1 = -23
+if rgt0 >= rgt1
+rgt2 = 1
+else
+rgt2 = 2
+endif
+
+if rgt0 > -24
+rgt3 = 10
+else
+rgt3 = 15
+endif 
+
+if rgt0 >= -24+2
+rgt4 = 10
+else
+rgt4 = 15
+endif
+
+
+if rgt0 > -24-2
+rgt5 = 10
+else
+rgt5 = 15
+endif
+
+if rgt0 <= -24
+rgt6 = 10
+else
+rgt6 = 15
+endif
+
+if rgt0 <= -24 +1
+rgt7 = 10
+else
+rgt7 = 15
+endif
+
+if 3 < (int)3.1
+rgt8 = 10
+else
+rgt8 = 15
+endif
+
+if (int)3.1 < (int)3.7
+rgt9 = 10
+else
+rgt9 = 15
+endif
+
+
+endsial int_ops

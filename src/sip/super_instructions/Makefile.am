@@ -89,6 +89,11 @@ QM_SOURCE_FILES=\
 ./qm/stripi.F\
 ./qm/set_ijk_aaa.F\
 ./qm/set_ijk_aab.F\
+./qm/cis_unit_guess.F\
+./qm/cis_energy_numerator.F\
+./qm/cis_invert_diagonal.F\
+./qm/update_cis_bvec.F\
+./qm/energy_ty_denominator_rhf.F\
 ./qm/direct_integral/move_integrals.f\
 ./qm/compute_aabb_integrals.F\
 ./qm/erd/erd__ctr_tu_expand.f\
@@ -115,7 +120,7 @@ QM_SOURCE_FILES=\
 ./qm/erd/erd__set_derv_sequence.f\
 ./qm/erd/erd__xyz_to_ry_matrix.f\
 ./qm/erd/erd__ctr_rs_expand.f\
-./qm/erd/erd__prepare_ctr.f\
+./qm/erd/erd__prepare_ctr.F\
 ./qm/erd/erd__jacobi.inc\
 ./qm/erd/erd__sppp_pcgto_block.f\
 ./qm/erd/erd__2d_coefficients.f\

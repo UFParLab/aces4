@@ -1,0 +1,117 @@
+l = 42.0
+nl = -42.0
+s0 = l + 2.0*nl + l  # should be 0
+i = 42
+ni = -42 
+si0 = (scalar)(i + 2*ni + i)
+print si0
+sd = l/2.0
+sr0 = sqrt 256.0
+print sr0
+
+
+sr1 = sqrt sr0
+print sr1
+
+
+e0 = (2.0)**(3.0)
+e1 = sr1 ** 2.0
+e2 = 2.0 ** 2.0 + 2.0
+print e0
+print e1
+print e2
+
+
+println  2.0 ** (2.0 + 2.0)
+println  2.0 * 3.0 - 4.0
+println  3.0 - 4.0 * 2.0
+
+print "(int) 1.0 = "
+println (int) 1.0
+print "(int) 1.999999 = "
+println (int) 1.999999
+println (int) -.000001
+println (int) -.999999
+
+
+
+	do i
+		do j
+			a[i,j] = 42.0
+			b[i,j] = a[i,j]
+			c[i,j] = a[i,j] + b[i,j]
+			d[i,j] = a[i,j] - c[i,j]
+			a[i,j] = 2.0
+			d[i,j] = 3.0
+			x = a[i,j]*b[i,j]
+			y += a[i,j]*b[i,j]
+		enddo j
+	enddo i
+	
+	
+	
+	
+	==================
+	sial tmp_arrays
+	predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	temp a[i,j]
+	temp b[i,j]
+	temp c[i,j]
+    temp d[i,j]
+    temp e[i,j]
+    scalar x = 0.0
+    scalar y = 0.0
+	
+	do i
+		do j
+			a[i,j] = 42.0
+#			b[i,j] = a[i,j]
+#			c[i,j] = a[i,j] + b[i,j]
+#			d[i,j] = a[i,j] - c[i,j]
+#			a[i,j] = 2.0
+#			d[i,j] = 3.0
+#			x = a[i,j]*b[i,j]
+#			y += a[i,j]*b[i,j]
+		enddo j
+	enddo i
+	
+	println "end of tmp_arrays"
+	
+endsial tmp_arrays
+
+
+
+
+
+
+
+stop
+	do k
+	x += 3.0
+	v[k] = x
+	y = v[k] + 4.0
+	print "v[k]="
+	println v[k]
+	print y
+	x = v[k] + (v[k] + 2.0)
+	print x
+	enddo k
+	
+	
+		do k
+	x = (scalar)k
+	v[k] = x
+	print "v[k]="
+	println v[k]
+	enddo k
+	
+	
+		do k
+	y = v[k]
+	print y
+	enddo k
+	do k
+	println v[k] + v[k]
+	enddo k

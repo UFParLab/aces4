@@ -20,12 +20,18 @@ class SipTables;
  * A BlockId consists of
  * 	 the array_id
  * 	 an array of values for the indices, which select segments
- * 	 a pointer to a parent block, if this ID is for a subblock.  If not a subblock this field is NULL.
+ * 	 a possibly NULL pointer to another block id
  *
+ * 	 If this block is a contiguous local region then the pointer points to the block that forms the upper
+ * 	 bound of the region, and the array_ids in both are the same.
+ *
+ * 	 If this block is a subblock, the pointer points to the parent block and the array_ids are different.
+
  * 	 Because BlockIds are used as keys in various maps, operators < and = have been provided.
  *
  * 	 The parent_id_ptr_ is a pointer to allow (future) arbitrary nesting of subindices.
- * 	 To simplify memory management, this instance will make its own copy of parent_id_ptr_ and delete it in its
+ * 	 To simplify memory management, this instance will make its own copy of the object
+ * 	 referred to by the parent_id_ptr_ and delete it in its
  * 	 destructor.  The copy constructor has been provided.
  *
  */
@@ -69,6 +75,18 @@ public:
 	 */
 
 	BlockId(int array_id, const BlockId& old_block);
+
+	/**
+	 * Constructor for id contiguous local array region.  This creates two BlockIds.
+	 * The first, which is this one, with the lower index values and a pointer to the
+	 * second, with the upper index values.
+	 *
+	 *
+	 * @param array_id
+	 * @param lower
+	 * @param upper
+	 */
+	BlockId(int array_id, const index_value_array_t& lower, const index_value_array_t& upper);
 
 	/** Constructor for subblocks
 	 *
@@ -116,7 +134,7 @@ public:
 	 * Converts this BlockID into an array that can be sent in an MPI
 	 * message.  In the current implementation, this is just a
 	 * cast. The parent_id_ptr_ field is ignored because distributed/served
-	 * arrays are not subarrays.
+	 * arrays are neither subarrays nor local arrays.
 	 *
 	 * @return
 	 */
@@ -156,9 +174,49 @@ public:
 	 */
 	int index_values (int i) const {return index_values_[i];}
 
+	int upper_index_values (int i) const {return parent_id_ptr_->index_values_[i];}
+
+	/**Indicates whether this block or region overlap the given one
+	 *
+	 * @param
+	 * @return
+	 */
+	bool overlaps(const BlockId&) const;
+
+
+    /** Indicates whether this block or region encloses or is the same as the given one.
+     * Requires that both blocks be contiguous local regions
+     *
+     * @param other
+     * @return
+     */
+	bool encloses(const BlockId& other) const;
+
+	/**
+	 * if this is a contiguous array, then checks whether, in each dimension, lower <= upper.
+	 * Returns true if not a contiguous array.  Since the ranges for each index of a contiguous
+	 * local are values, not index selectors, this cannot be checked at compile time.
+	 *
+	 * @return
+	 */
+	bool is_well_formed();
+
+	/** indicates if this is a subblock.
+	 *
+	 * @return
+	 */
+	bool is_subblock(){return parent_id_ptr_ != NULL && array_id_ != parent_id_ptr_->array_id_;}
+
 	/**
 	 *
-	 * @return a string representation of this BlockId
+	 * @return if ths block is a contiguous local region
+	 */
+	bool is_contiguous_local() const {return parent_id_ptr_ != NULL && array_id_ == parent_id_ptr_->array_id_;}
+
+	/**
+	 *
+	 * @return a string representation of this BlockId.
+	 * Usess the SipTable to look up the name.
 	 */
 	std::string str(const SipTables& sip_tables) const;
 
@@ -175,6 +233,7 @@ private:
 	friend class SIPMPIUtils;
 	friend class SipTables;
 	friend class DataDistribution;
+	friend class ContiguousLocalArrayManager;
 
 };
 

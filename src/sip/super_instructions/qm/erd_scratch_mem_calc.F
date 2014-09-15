@@ -121,6 +121,7 @@ c     return
      *                       ncoeff, ccbeg, ccend, indx_cc,
      *                       ccbeg_pack, ccend_pack) 
 c    *                       nalphas, npcoeff)
+c     write(6,*) ' NALPHA:', m, n, r, s, nalpha 
 
 c-------------------------------------------------------------------------
 c   ERD version 2
@@ -216,6 +217,14 @@ c         do iflag = 1, 12
                   if (der_flags(9) .eq. 1) der_flags(12) = 1
                   if (der_flags(12) .eq. 1) der_flags(9) = 1
                endif
+
+               call pack_coeffs(alpha, ixalpha, pcoeff, ixpcoeff,
+     *                       ncfps, npfps, m, n, r, s,
+     *                       alpha_pack, nalpha, pcoeff_pack,
+     *                       ncoeff, ccbeg, ccend, indx_cc,
+     *                       ccbeg_pack, ccend_pack) 
+c    *                       nalphas, npcoeff)
+c     write(6,*) ' NALPHA:', m, n, r, s, nalpha 
 
 c--------------------------------------------------------------------------
 c   Set the derivative flag arguments.
@@ -450,8 +459,8 @@ c-------------------------------------------------------------------------
       imax = imax + ihrr
       zmax = zmax + zhrr  
 
-c      write(6,*) ' F_IMAX = ', ihrr 
-c      write(6,*) ' F_ZMAX = ', zhrr 
+      write(6,*) ' F_IMAX = ', ihrr 
+      write(6,*) ' F_ZMAX = ', zhrr 
 
       return
       end

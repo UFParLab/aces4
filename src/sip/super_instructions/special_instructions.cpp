@@ -23,6 +23,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include "sip.h"
 #include "sip_tables.h"
 
@@ -173,11 +174,36 @@ void set_ijk_aaa(
 
 void set_ijk_aab(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+
+ void cis_unit_guess(
+         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
+//        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+
+ void cis_energy_numerator(
+         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+
+void cis_invert_diagonal(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+
+void update_cis_bvec(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+
+void energy_ty_denominator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
 }
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+//void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -233,71 +259,86 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 	SIP_LOG(std::cout << "sig: " << sig << std::endl);
 	proc_index_name_map_[index] = name;
 	try{
-		fp0 func = procmap_.at(name);
-//		procvec_[index] = procvec_entry_t(func,sig);
-   	    procvec_.push_back(procvec_entry_t(func, sig));
+		std::map<std::string, fp0>::iterator it = procmap_.find(name);
+		if (it == procmap_.end()){
+			SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+			procvec_.push_back(procvec_entry_t(NULL, sig));
+		} else {
+			fp0 func = it->second;
+			//procvec_[index] = procvec_entry_t(func,sig);
+			procvec_.push_back(procvec_entry_t(func, sig));
+		}
 	}
 	catch (const std::out_of_range& oor) {
-        SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+        sial_warn(false, std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;
 
 }
 
-std::string SpecialInstructionManager::name(int procvec_slot){
-	return proc_index_name_map_.at(procvec_slot);
+std::string SpecialInstructionManager::name(int procvec_slot) const{
+	//return proc_index_name_map_.at(procvec_slot);
+	proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(procvec_slot);
+	if(it == proc_index_name_map_.end()){
+		std::stringstream ss;
+		ss << "Could not find procedure slot " << procvec_slot ;
+		throw std::out_of_range(ss.str());
+	}
+	return it->second;
 }
 void SpecialInstructionManager::add_special_finalize(){
 //	procmap_.clear();
 }
 
-SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(int function_slot) const{
 	try{
 	fp0 func = procvec_.at(function_slot).first;
 	if (func == NULL){
-		SIP_LOG(std::cout<< "special instruction " << proc_index_name_map_[function_slot] << " at slot " << function_slot << " not installed" << std::endl);
+		//SIP_LOG(std::cout<< "special instruction " << proc_index_name_map_[function_slot] << " at slot " << function_slot << " not installed" << std::endl);
 		throw std::out_of_range(std::string("function not found"));
 	}
 	return func;
 	}
 	catch (const std::out_of_range& oor){
 		std::cout << oor.what() << std::endl;
-		std::cout << "special instruction " << proc_index_name_map_[function_slot] << " at slot " << function_slot << " not installed" << std::endl;
+		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
+		std::cout << "special instruction " << it->second << " at slot " << function_slot << " not installed" << std::endl;
 		sip::check(false, std::string(" terminating get_instruction_ptr "));
 		return NULL;
 	}
 }
 
 
-SpecialInstructionManager::fp0 SpecialInstructionManager::get_no_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp0 SpecialInstructionManager::get_no_arg_special_instruction_ptr(int function_slot) const{
 	return get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp1 SpecialInstructionManager::get_one_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp1 SpecialInstructionManager::get_one_arg_special_instruction_ptr(int function_slot)  const{
 	return (fp1)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp2 SpecialInstructionManager::get_two_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp2 SpecialInstructionManager::get_two_arg_special_instruction_ptr(int function_slot) const{
 	return (fp2)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp3 SpecialInstructionManager::get_three_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp3 SpecialInstructionManager::get_three_arg_special_instruction_ptr(int function_slot) const{
 	return (fp3)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp4 SpecialInstructionManager::get_four_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp4 SpecialInstructionManager::get_four_arg_special_instruction_ptr(int function_slot) const{
 	return (fp4)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp5 SpecialInstructionManager::get_five_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp5 SpecialInstructionManager::get_five_arg_special_instruction_ptr(int function_slot) const{
 	return (fp5)get_instruction_ptr(function_slot);
 }
-SpecialInstructionManager::fp6 SpecialInstructionManager::get_six_arg_special_instruction_ptr(int function_slot){
+SpecialInstructionManager::fp6 SpecialInstructionManager::get_six_arg_special_instruction_ptr(int function_slot) const{
 	return (fp6)get_instruction_ptr(function_slot);
 }
 
-const std::string SpecialInstructionManager::get_signature(int function_slot){
+const std::string SpecialInstructionManager::get_signature(int function_slot) const{
 	try{
 	return procvec_.at(function_slot).second;
 	}
 	catch (const std::out_of_range& oor){
-		std::cout << "special instruction " << proc_index_name_map_[function_slot] << ", at slot " << function_slot << " not installed" << std::endl;
+		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
+		std::cout << "special instruction " << it->second << ", at slot " << function_slot << " not installed" << std::endl;
 		std::cout << *this << std::endl;
 		sip::check(false, std::string(" terminating get_signature"));
 		return std::string("should not get here");
@@ -307,7 +348,13 @@ const std::string SpecialInstructionManager::get_signature(int function_slot){
 std::ostream& operator<<(std::ostream& os, const SpecialInstructionManager& obj){
 	int n = obj.procvec_.size();
 	for (int i = 0; i != n; ++i){
-		os << i << ": " << obj.proc_index_name_map_.at(i) << ": " << obj.procvec_.at(i).second << std::endl;
+		SpecialInstructionManager::proc_index_name_map_t::const_iterator it = obj.proc_index_name_map_.find(i);
+		if(it == obj.proc_index_name_map_.end()){
+			std::stringstream ss;
+			ss << "Could not find proc index for value " << i ;
+			throw std::out_of_range(ss.str());
+		}
+		os << i << ": " << it->second << ": " << obj.procvec_.at(i).second << std::endl;
 	}
 	return os;
 }
@@ -320,6 +367,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["print_something"] = (fp0)&print_something;
 	procmap_["fill_block_sequential"]= (fp0)&fill_block_sequential;
 	procmap_["fill_block_cyclic"]= (fp0)&fill_block_cyclic;
+//	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
@@ -362,7 +410,11 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["set_ijk_aaa"]=(fp0)&set_ijk_aaa;
     procmap_["set_ijk_aab"]=(fp0)&set_ijk_aab;
     procmap_["swap_blocks"]=(fp0)&swap_blocks;
-
+    procmap_["cis_unit_guess"]=(fp0)&cis_unit_guess;
+    procmap_["cis_energy_numerator"]=(fp0)&cis_energy_numerator;
+    procmap_["cis_invert_diagonal"]=(fp0)&cis_invert_diagonal;
+    procmap_["update_cis_bvec"]=(fp0)&update_cis_bvec;
+    procmap_["energy_ty_denominator_rhf"]=(fp0)&energy_ty_denominator_rhf;
     procmap_["enable_debug_print"]=(fp0)&enable_debug_print;
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;

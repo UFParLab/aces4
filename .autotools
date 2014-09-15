@@ -35,7 +35,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value="CFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-g -O0&quot; CXXFLAGS=&quot;-g -O0&quot; FCFLAGS=&quot;-g -O0&quot; --with-mpi=yes  --enable-development"/>
+<option id="user" value="CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>
@@ -74,7 +74,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value=" CFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-g -O0&quot; CXXFLAGS=&quot;-g -O0&quot; FCFLAGS=&quot;-g -O0&quot; --with-mpi=no  --enable-development"/>
+<option id="user" value="--with-mpi=no CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>
@@ -113,7 +113,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value="CFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-g -O0&quot; CXXFLAGS=&quot;-g -O0&quot; FCFLAGS=&quot;-g -O0&quot; --with-mpi=no  --enable-development --with-cuda"/>
+<option id="user" value="--with-cuda --with-mpi=no CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>

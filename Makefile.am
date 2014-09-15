@@ -47,6 +47,8 @@ ACES_DATA_FILES=\
 ./src/sip/static_data/int_table.cpp\
 ./src/sip/static_data/sip_tables.h\
 ./src/sip/static_data/sip_tables.cpp\
+./src/sip/static_data/opcode.h\
+./src/sip/static_data/opcode.cpp\
 ./src/sip/static_data/op_table.h\
 ./src/sip/static_data/op_table.cpp\
 ./src/sip/dynamic_data/block_id.h\
@@ -61,6 +63,8 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/block_manager.cpp\
 ./src/sip/dynamic_data/contiguous_array_manager.h\
 ./src/sip/dynamic_data/contiguous_array_manager.cpp\
+./src/sip/dynamic_data/contiguous_local_array_manager.h\
+./src/sip/dynamic_data/contiguous_local_array_manager.cpp\
 ./src/sip/dynamic_data/data_manager.h\
 ./src/sip/dynamic_data/data_manager.cpp\
 ./src/sip/dynamic_data/id_block_map.h\
@@ -68,7 +72,9 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
-./src/sip/dynamic_data/cached_block_map.cpp
+./src/sip/dynamic_data/cached_block_map.cpp\
+./src/sip/dynamic_data/sip_timer.h\
+./src/sip/dynamic_data/sip_timer.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -84,10 +90,16 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/siox_reader.cpp\
 ./src/sip/worker/sial_ops_sequential.h\
 ./src/sip/worker/sial_ops_sequential.cpp\
+./src/sip/worker/sial_printer.h\
+./src/sip/worker/sial_printer.cpp\
+./src/sip/worker/sial_math.h\
+./src/sip/worker/sial_math.cpp\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
 ./src/sip/cuda/gpu_super_instructions.h\
+./src/sip/mpi/sip_mpi_attr.h\
+./src/sip/mpi/sip_mpi_attr.cpp\
 $(ACES_SETUPFILES)\
 $(ACES_CORE_FILES)\
 $(ACES_DATA_FILES)
@@ -95,8 +107,6 @@ $(ACES_DATA_FILES)
 # MPI
 if WORKING_MPI
 ACES_SOURCEFILES +=\
-./src/sip/mpi/sip_mpi_attr.h\
-./src/sip/mpi/sip_mpi_attr.cpp\
 ./src/sip/mpi/rank_distribution.h \
 ./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \
@@ -120,7 +130,10 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
+./src/sip/mpi/server_timer.h\
+./src/sip/mpi/server_timer.cpp\
 ./src/sip/dynamic_data/mpi_state.h
+
 
 endif
 
@@ -184,37 +197,63 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-TESTS = test_mpi_qm test_mpi_simple test_unit
-check_PROGRAMS = test_mpi_qm test_mpi_simple test_unit
+TESTS = test_qm test_sial test_unit test_basic_sial
+check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_simple test_qm
-check_PROGRAMS = test_simple test_qm
+TESTS = test_basic_sial test_qm
+check_PROGRAMS = test_basic_sial test_qm
+#TESTS = test_simple
+#check_PROGRAMS = test_simple
 endif
 
 test_unit_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_unit.cpp
 
-test_mpi_qm_SOURCES = \
-	$(ACES_SOURCEFILES)\
-	test/test_mpi_qm.cpp
+#test_mpi_qm_SOURCES = \
+#	$(ACES_SOURCEFILES)\
+#	test/test_controller_parallel.h\
+#	test/test_controller_parallel.cpp\
+#	test/test_constants.h\
+#	test/test_constants.cpp\
+#	test/test_mpi_qm.cpp
 
-test_mpi_simple_SOURCES = \
-	$(ACES_SOURCEFILES)\
-	test/test_mpi_simple.cpp
 
-test_simple_SOURCES = \
+test_sial_SOURCES = \
     $(ACES_SOURCEFILES) \
-    test/test_simple.cpp\
+    test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+    test/test_constants.h\
+	test/test_constants.cpp\
+    test/test_sial.cpp
+
+test_basic_sial_SOURCES = \
+    $(ACES_SOURCEFILES) \
+    test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+    test/test_constants.h\
+	test/test_constants.cpp\
+    test/test_basic_sial.cpp\
     test/test_transpose_op.F\
     test/test_transpose4d_op.F\
     test/test_contraction_small2.F
-
+    
+    
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
-	 test/test_qm.cpp
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+	test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
+    test/test_qm.cpp
 
 TEST_LDADD_VARS = \
 	test/libgtest.la \
@@ -225,11 +264,11 @@ TEST_LDADD_VARS = \
 #	$(PTHREAD_LIBS) 
 	
 test_unit_LDADD = $(TEST_LDADD_VARS)	
-test_simple_LDADD = $(TEST_LDADD_VARS)
+test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
-test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
+#test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
-
+test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 # Add any initialization files needed by tests here.
 TEST_INIT_DATA_FILES=\
 test/ccsdpt_test.dat
@@ -281,10 +320,11 @@ test_libgtest_main_la_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
 # -no-install taken from https://www.flameeyes.eu/autotools-mythbuster/libtool/wrappers.html
 TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) -no-install
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
-test_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
-test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
+#test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
 SUBDIRS = src/sip/super_instructions
 
@@ -322,6 +362,8 @@ SIOX_FILES=\
 ./src/sialx/test/aces_defs.siox\
 ./src/sialx/test/fill_sequential_test.siox\
 ./src/sialx/test/local_arrays_wild.siox\
+./src/sialx/test/local_arrays_wild_fail.siox\
+./src/sialx/test/basic_assign_to_static_array_test.siox\
 ./src/sialx/test/sum_op_test.siox\
 ./src/sialx/test/transpose_tmp.siox\
 ./src/sialx/test/transpose4d_tmp.siox\
@@ -363,6 +405,17 @@ SIOX_FILES=\
 ./src/sialx/test/unmatched_get.siox\
 ./src/sialx/test/all_rank_print_test.siox\
 ./src/sialx/test/message_number_wraparound_test.siox\
+./src/sialx/test/pardo_loop_1d.siox\
+./src/sialx/test/pardo_loop_2d.siox\
+./src/sialx/test/pardo_loop_3d.siox\
+./src/sialx/test/pardo_loop_4d.siox\
+./src/sialx/test/pardo_loop_5d.siox\
+./src/sialx/test/pardo_loop_6d.siox\
+./src/sialx/test/scalar_ops.siox\
+./src/sialx/test/int_ops.siox\
+./src/sialx/test/int_self_ops.siox\
+./src/sialx/test/scalar_valued_blocks.siox\
+./src/sialx/test/contiguous_local.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -373,14 +426,20 @@ SIOX_FILES=\
 ./src/sialx/qm/frag_2order_corr.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
+./src/sialx/qm/cis_rhf.siox\
+./src/sialx/qm/cis_rhf_defs.siox\
+./src/sialx/qm/cis_d_rhf.siox\
+./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
+./src/sialx/qm/tran_rhf_no3v.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab_defs.siox\
-./src/sialx/qm/rccsdpt_aab.siox
+./src/sialx/qm/rccsdpt_aab.siox\
+./src/sialx/qm/rcis_ccpt2_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -409,6 +468,8 @@ EXTRA_DIST += \
 ./src/sialx/test/aces_defs.sialx\
 ./src/sialx/test/fill_sequential_test.sialx\
 ./src/sialx/test/local_arrays_wild.sialx\
+./src/sialx/test/local_arrays_wild_fail.sialx\
+./src/sialx/test/basic_assign_to_static_array_test.sialx\
 ./src/sialx/test/sum_op_test.sialx\
 ./src/sialx/test/transpose_tmp.sialx\
 ./src/sialx/test/transpose4d_tmp.sialx\
@@ -450,6 +511,17 @@ EXTRA_DIST += \
 ./src/sialx/test/unmatched_get.sialx\
 ./src/sialx/test/all_rank_print_test.sialx\
 ./src/sialx/test/message_number_wraparound_test.sialx\
+./src/sialx/test/pardo_loop_1d.sialx\
+./src/sialx/test/pardo_loop_2d.sialx\
+./src/sialx/test/pardo_loop_3d.sialx\
+./src/sialx/test/pardo_loop_4d.sialx\
+./src/sialx/test/pardo_loop_5d.sialx\
+./src/sialx/test/pardo_loop_6d.sialx\
+./src/sialx/test/scalar_ops.sialx\
+./src/sialx/test/int_ops.sialx\
+./src/sialx/test/int_self_ops.sialx\
+./src/sialx/test/scalar_valued_blocks.sialx\
+./src/sialx/test/contiguous_local.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\
@@ -460,7 +532,13 @@ EXTRA_DIST += \
 ./src/sialx/qm/frag_2order_corr.sialx\
 ./src/sialx/qm/trans_frag_defs.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
+./src/sialx/qm/cis_rhf.sialx\
+./src/sialx/qm/cis_rhf_defs.sialx\
+./src/sialx/qm/cis_d_rhf.sialx\
+./src/sialx/qm/rcis_ccpt2_rhf.sialx\
+./src/sialx/qm/rccsd_rhf_defs.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\
+./src/sialx/qm/tran_rhf_no3v.sialx\
 ./src/sialx/qm/tran_rhf_no4v_defs.sialx\
 ./src/sialx/qm/rccsd_rhf.sialx\
 ./src/sialx/qm/rccsd_rhf_defs.sialx\

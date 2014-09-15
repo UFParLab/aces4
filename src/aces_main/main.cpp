@@ -76,21 +76,21 @@ int main(int argc, char* argv[]) {
 	TAU_STATIC_PHASE_START("SIP Main");
 #endif
 
-
-	// Check sizes of data types.
-	// In the MPI version, the TAG is used to communicate information
-	// The various bits needed to send information to other nodes
-	// sums up to 32.
-	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+//TODO  move this to  a test suite.
+//	// Check sizes of data types.
+//	// In the MPI version, the TAG is used to communicate information
+//	// The various bits needed to send information to other nodes
+//	// sums up to 32.
+//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 
 	// Default initialization file is data.dat
 	char *init_file = "data.dat";
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
-	std::size_t memory = 2147483648;	// 2 GB
+	std::size_t memory = 2147483648;	// Default memory usage : 2 GB
 
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
 	// d: name of .dat file.
@@ -137,9 +137,11 @@ int main(int argc, char* argv[]) {
 	//initialize setup data
 	setup::BinaryInputFile setup_file(job);
 	setup::SetupReader setup_reader(setup_file);
+	setup_reader.aces_validate();
+
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 
-	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list_;
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 
 #ifdef HAVE_MPI
@@ -173,15 +175,18 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
+		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
+			sip::ServerTimer server_timer(sipTables.max_timer_slots());
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
+			server_timer.print_timers(lno2name);
 		} else
 #endif
 
@@ -194,19 +199,13 @@ int main(int argc, char* argv[]) {
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
+			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-
-			std::vector<std::string> lno2name = sipTables.line_num_to_name();
-#ifdef HAVE_MPI
-			sialxTimer.mpi_reduce_timers();
-			if (sip_mpi_attr.is_company_master())
-				sialxTimer.print_timers(lno2name);
-#else
 			sialxTimer.print_timers(lno2name);
-#endif
+
 
 		}// end of worker or server
 

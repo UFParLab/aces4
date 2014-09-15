@@ -1,0 +1,46 @@
+sial scalar_valued_blocks
+    index j = 1:5
+	index k = 1:3
+	local v[k]
+	local w[j,k]
+	scalar x
+	scalar y
+	scalar z
+
+	allocate v[*]
+	
+	do k
+	x = (scalar)k
+	v[k] = x
+	print "v[k]="
+	println v[k]
+	enddo k
+
+	do k
+	y = v[k]
+	print y
+	enddo k
+	
+	do k
+	println v[k] + v[k]
+	enddo k
+	
+	allocate w[*,*]
+	
+	do j
+	do k
+	z = (scalar)j + (scalar)k
+	w[j,k] = z
+	enddo k
+	enddo j
+	
+	do k
+	do j
+	println w[j,k]
+	enddo j
+	enddo k
+	
+	deallocate v[*]
+	deallocate w[*,*]
+	
+endsial scalar_valued_blocks

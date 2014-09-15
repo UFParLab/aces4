@@ -13,6 +13,7 @@
 #include <stack>
 #include <iostream>
 #include "block_id.h"
+#include "sip_interface.h"
 
 
 namespace sip {
@@ -29,6 +30,7 @@ public:
 	typedef std::map<BlockId, BLOCK_TYPE*> PerArrayMap;
 	typedef std::vector<PerArrayMap*> BlockMapVector;
 	typedef typename std::vector<std::map<BlockId, BLOCK_TYPE* >* >::size_type size_type;
+
 
 	/**
 	 * Constructor takes size of array table in order to create a vector
@@ -64,29 +66,67 @@ public:
 		return it != map_ptr->end() ? it->second : NULL;  //return NULL if not found
 	}
 
-	/** Obtains requested block, creating if it doesn't exist.
-	 *
-	 * @param [in] block_id
-	 * @param [out] size
-	 * @returns pointer to existing or new block
-	 */
-	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size, bool initialize = true){
-		BLOCK_TYPE* b = block(block_id);
-		if (b == NULL) {
-			b = new BLOCK_TYPE(size, initialize);
-			insert_block(block_id,b);
+
+
+	BLOCK_TYPE* enclosing_contiguous(const BlockId& block_id, BlockId& glb_id) const{
+		int array_id = block_id.array_id();
+		PerArrayMap* map_ptr = block_map_.at(array_id);
+		if (map_ptr == NULL || map_ptr->empty()) return NULL;
+		typename PerArrayMap::iterator it =  map_ptr->begin();
+		for (it; it != map_ptr->end(); ++it){
+			if (it->first.encloses(block_id)){
+				glb_id = it->first;
+				return it->second;
+			}
 		}
-		return b;
+		return NULL;
+	}
+
+//	/** Obtains requested block, creating if it doesn't exist.
+//	 *
+//	 * @param [in] block_id
+//	 * @param [out] size
+//	 * @returns pointer to existing or new block
+//	 */
+//	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size, bool initialize = true){
+//		BLOCK_TYPE* b = block(block_id);
+//		if (b == NULL) {
+//			b = new BLOCK_TYPE(size, initialize);
+//			insert_block(block_id,b);
+//		}
+//		return b;
+//	}
+
+
+	/** Checks whether given block is disjoint from all other in the map
+	 *
+	 * @param block_id
+	 * @return
+	 */
+	bool is_disjoint(const BlockId & block_id){
+		int array_id = block_id.array_id();
+		PerArrayMap* map_ptr = block_map_.at(array_id);
+		if (map_ptr == NULL) return true;
+		typename PerArrayMap::iterator it;
+		for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
+			BlockId nid = it->first;
+			if (block_id.overlaps(nid) && block_id != nid) return false;
+		}
+		return true;
 	}
 
 	/** inserts given block in the IdBlockMap.
 	 *
-	 * It is a fatal error to insert a block that already exists.
+	 * It is a fatal error to insert a block that already exists in the map, or overlaps one that exists
 	 *
 	 * @param id BlockId of block to insert
 	 * @param block_ptr pointer to Block to insert
 	 */
 	void insert_block(const BlockId& block_id, BLOCK_TYPE* block_ptr) {
+		if (block_id.is_contiguous_local()){
+			sial_check(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " +
+					     current_line());
+		}
 		int array_id = block_id.array_id();
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL) {
@@ -112,7 +152,14 @@ public:
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		check (map_ptr != NULL, "attempting get_and_remove_block when given array doesn't have a map");
 		typename PerArrayMap::iterator it = map_ptr->find(block_id);
-		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
+		//trying to erase the end() iterator causes a segmentation fault, so check for this case and give a good error message.
+//		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
+//		map_ptr->erase(it);
+//		return block_ptr;
+		sial_check(it != map_ptr->end(),
+				"attempting to remove a non-existent block ",
+				current_line() );
+		BLOCK_TYPE* block_ptr = it->second;
 		map_ptr->erase(it);
 		return block_ptr;
     }
@@ -237,6 +284,23 @@ public:
 		block_map_.at(array_id) = new_map;
 		delete map_ptr;
 		return tot_byes_inserted;
+	}
+
+
+	/**
+	 * Returns total number of blocks in this structure.  Used for testing.
+	 * @return
+	 */
+	std::size_t total_blocks(){
+		typename BlockMapVector::iterator it;
+		std::size_t num_blocks = 0;
+		for (it = block_map_.begin(); it != block_map_.end(); ++it){
+			PerArrayMap* per_array_map_ptr = *it;
+			if (per_array_map_ptr != NULL){
+			num_blocks += per_array_map_ptr->size();
+			}
+		}
+		return num_blocks;
 	}
 
 	int size() const {return block_map_.size();}

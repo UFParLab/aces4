@@ -2,18 +2,18 @@ sial persistent_distributed_array_mpi2
 	special list_block_map
 	special print_block r
 	predefined int norb
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	local a(i,j)
-	distributed b(i,j)
-	distributed c(i,j)
-	temp t(i,j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
+	temp t[i,j]
 	
-	local lb(i,j)
-	allocate lb(*,*)
-
-    println "$$$$$$$$$$$$$$ start of second prog $$$$$$$$$"
-	allocate a(*,*)
+	local lb[i,j]
+	
+	println "$$$$$$$$$$$$$$ start of second prog $$$$$$$$$"
+	allocate lb[*,*]
+	allocate a[*,*]
 	
 	restore_persistent b "savedb"
 	sip_barrier
@@ -23,21 +23,20 @@ sial persistent_distributed_array_mpi2
 	
 	println "???????????????????????after the restores"	
 	do i
-	  print_index i
+	  print i
 	   do j
-	   	  print_index j
-	      get b(i,j)
-	      get c(i,j)
-	      t(i,j) = b(i,j) * 5.0
-	      a(i,j) = t(i,j) + c(i,j) 
-	      execute print_block a(i,j)
+	   	  print j
+	      get b[i,j]
+	      get c[i,j]
+          a[i,j] = b[i,j] + c[i,j] 
+	      print a[i,j]
 	   enddo j
 	enddo i
 	
 	do i
 		do j
-			get b(i, j)
-			lb (i, j) = b(i, j)
+			get b[i, j]
+			lb [i, j] = b[i, j]
 		enddo j
 	enddo i
 	

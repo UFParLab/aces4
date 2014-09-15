@@ -1,51 +1,32 @@
 sial assign_to_static_array_test
-	predefined int norb
-	special fill_block_sequential wr
-	special print_block r
-	special print_static_array r
-	special swap_blocks uu
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	static a(i,j)
-	static b(i,j)
-	distributed d(i,j)
-	temp t(i, j)
+    predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	static a[i,j]	
+	static b[j,i]
+	temp t[i, j]
+	temp t1[i,j]
 
-	pardo i, j
-		execute fill_block_sequential t(i, j) 1.0
-		put d(i, j) = t(i, j)
-		execute fill_block_sequential b(i,j) 1001.0
-	endpardo i, j
-	
 	do i
-		do j
-			get d(i, j)
-			a(i,j) = d(i,j)
-		enddo j
+	do j
+	t[i,j] = (scalar)((i-1)*norb+j-1)
+	a[i,j] = t[i,j]
+	enddo j
 	enddo i
 	
-	
-	do i
-		do j
-			a(i,j) *= 2
-			execute swap_blocks a(i,j) a(i,j)
-		enddo j
+	do i 
+	do j
+	t1[i,j] = a[i,j]
+	b[j,i] = a[i,j]
+	enddo j
 	enddo i
 	
-	println "static array a"
-	execute print_static_array a
+	do i
+	do j
+	print a[i,j]
+	print b[i,j]
+	enddo j
+	enddo i
 	
-	#println "static array b"
-	#execute print_static_array b
-	
-	#println "printing blocks of d"
-	#do i
-	#do j
-	#execute print_block d(i,j)
-	#enddo j
-	#enddo i
-	
-	println " "
-	println "finished assigning_to_static_array_test"
 
 endsial assign_to_static_array_test

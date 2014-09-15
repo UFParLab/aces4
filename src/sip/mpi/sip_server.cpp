@@ -11,16 +11,22 @@
 
 namespace sip {
 
+SIPServer* SIPServer::global_sipserver = NULL;
+
 SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		SIPMPIAttr& sip_mpi_attr,
-		ServerPersistentArrayManager* persistent_array_manager) :
+		ServerPersistentArrayManager* persistent_array_manager,
+		ServerTimer& server_timer) :
 		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
-				sip_tables, sip_mpi_attr, data_distribution), sip_mpi_attr_(
+				sip_tables, sip_mpi_attr, data_distribution, server_timer), sip_mpi_attr_(
 				sip_mpi_attr), persistent_array_manager_(persistent_array_manager),
-				terminated_(false){
+				terminated_(false), server_timer_(server_timer),
+				last_seen_line_(0), last_seen_worker_(0){
+	SIPServer::global_sipserver = this;
 }
 
 SIPServer::~SIPServer() {
+	SIPServer::global_sipserver = NULL;
 }
 
 void SIPServer::run() {
@@ -34,7 +40,7 @@ void SIPServer::run() {
 		// Check to see if a request has arrived from any worker.
 		SIPMPIUtils::check_err(
 				MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-						&status));
+						&status), __LINE__, __FILE__);
 
 		//extract info about the message
 		int mpi_tag = status.MPI_TAG;
@@ -93,27 +99,38 @@ void SIPServer::run() {
 }
 
 void SIPServer::handle_GET(int mpi_source, int get_tag) {
-	int block_id_count = BlockId::MPI_BLOCK_ID_COUNT;
-	BlockId::mpi_block_id_t buffer;
+	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 1;
+	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	int recv_buffer[recv_data_count];
 	MPI_Status status;
 
-	//receive the GET message
-	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, block_id_count, MPI_INT, mpi_source, get_tag,
+	//receive the GET message (Block ID & Line Number)
+	SIPMPIUtils::check_err(MPI_Recv(recv_buffer, recv_data_count, MPI_INT, mpi_source, get_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, block_id_count);
+	check_int_count(status, recv_data_count);
+
+	last_seen_line_ = recv_buffer[line_num_offset];
+	last_seen_worker_ = mpi_source;
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 	//construct a BlockId object from the message contents and retrieve the block.
+	BlockId::mpi_block_id_t buffer;
+	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
+
 
 	size_t block_size = sip_tables_.block_size(block_id);
 
+	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 			<< " : get for block " << block_id.str(sip_tables_)
 			<< ", size = " << block_size
 			<< ", sent from = " << mpi_source
+			<< ", at line = " << last_seen_line_
 			<< std::endl;)
 
 //	ServerBlock* block = block_map_.block(block_id);
@@ -128,27 +145,37 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	//send block to worker using same tag as GET
 	SIPMPIUtils::check_err(
 			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
-					get_tag, MPI_COMM_WORLD));
+					get_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	check(block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source),
 			"Incorrect block semantics !");
 
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
 }
 
 void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
-	int block_id_count = BlockId::MPI_BLOCK_ID_COUNT;
-	BlockId::mpi_block_id_t buffer;
+	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 1;
+	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	int recv_buffer[recv_data_count];
 	MPI_Status status;
 
 	//receive the PUT message
 	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, block_id_count, MPI_INT, mpi_source, put_tag,
+			MPI_Recv(recv_buffer, recv_data_count, MPI_INT, mpi_source, put_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, block_id_count);
+	check_int_count(status, recv_data_count);
 
-	//construct a BlockId object from the message contents
+	last_seen_line_ = recv_buffer[line_num_offset];
+	last_seen_worker_ = mpi_source;
+
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
+	//construct a BlockId object from the message contents and retrieve the block.
+	BlockId::mpi_block_id_t buffer;
+	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
-//	check_array_mode(block_id.array_id(), WRITE);
 
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
@@ -157,13 +184,18 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 					<< " : put to receive block " << block_id.str(sip_tables_)
 					<< ", size = " << block_size
 					<< ", from = " << mpi_source
+					<< ", at line = " << last_seen_line_
 					<<std::endl;)
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+
 
 	//receive data
 	SIPMPIUtils::check_err(
 			MPI_Recv(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
-					put_data_tag, MPI_COMM_WORLD, &status));
+					put_data_tag, MPI_COMM_WORLD, &status), __LINE__, __FILE__);
 	check_double_count(status, block_size);
 
 	check(block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source),
@@ -171,25 +203,35 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 	//send ack
 	SIPMPIUtils::check_err(
-			MPI_Send(0, 0, MPI_INT, mpi_source, put_data_tag, MPI_COMM_WORLD));
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_data_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 }
 
 void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 		int put_accumulate_data_tag) {
-	int block_id_count = BlockId::MPI_BLOCK_ID_COUNT;
-	BlockId::mpi_block_id_t buffer;
+	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 1;
+	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	int recv_buffer[recv_data_count];
 	MPI_Status status;
 
 	//receive the PUT_ACCUMULATE message
 	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, block_id_count, MPI_INT, mpi_source,
+			MPI_Recv(recv_buffer, recv_data_count, MPI_INT, mpi_source,
 					put_accumulate_tag, MPI_COMM_WORLD, &status));
-	check_int_count(status, block_id_count);
+	check_int_count(status, recv_data_count);
 
-	//construct a BlockId object from the message contents
+	last_seen_line_ = recv_buffer[line_num_offset];
+	last_seen_worker_ = mpi_source;
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
+
+	//construct a BlockId object from the message contents and retrieve the block.
+	BlockId::mpi_block_id_t buffer;
+	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
-//	check_array_mode(block_id.array_id(), UPDATE);
 
 	//get the block size
 	int block_size;
@@ -198,6 +240,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			<< " : put accumulate to receive block " << block_id.str(sip_tables_)
 			<< ", size = " << block_size
 			<< ", from = " << mpi_source
+			<< ", at line = " << last_seen_line_
 			<< std::endl << std::flush;)
 
 	//allocate a temporary buffer and post irecv.
@@ -208,7 +251,10 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			MPI_COMM_WORLD, &request);
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
+	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_updating(block_id);
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+
 
 	//wait for data to arrive
 	MPI_Wait(&request, &status2);
@@ -220,13 +266,16 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_accumulate_data_tag,
-					MPI_COMM_WORLD));
+					MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//accumulate into block
 	block->accumulate_data(block_size, temp);
 
 	//delete the temporary buffer
 	delete[] temp;
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
 }
 
 void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
@@ -234,23 +283,33 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
 
 	//receive and check the message
-	int array_id;
+	int recv_buffer[2];
 	MPI_Status status;
 	SIPMPIUtils::check_err(
-			MPI_Recv(&array_id, 1, MPI_INT, mpi_source, delete_tag,
+			MPI_Recv(recv_buffer, 2, MPI_INT, mpi_source, delete_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, 1);
+	check_int_count(status, 2);
+	int array_id	= recv_buffer[0];
+
+	last_seen_line_ = recv_buffer[1];
+	last_seen_worker_ = mpi_source;
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 			<< " : deleting array " << sip_tables_.array_name(array_id) << ", id = " << array_id
-			<< ", sent from = " << mpi_source << std::endl;)
+			<< ", sent from = " << mpi_source
+			<< ", at line = " << last_seen_line_ << std::endl;)
 
 	//send ack
 	SIPMPIUtils::check_err(
-			MPI_Send(0, 0, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD));
+			MPI_Send(0, 0, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//delete the block and map for the indicated array
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
 
 }
 
@@ -262,7 +321,12 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	MPI_Status status;
 	SIPMPIUtils::check_err(
 			MPI_Recv(0, 0, MPI_INT, mpi_source, end_program_tag, MPI_COMM_WORLD,
-					&status));
+					&status), __LINE__, __FILE__);
+
+	last_seen_line_ = 0; 	// Special line number for end program
+	last_seen_worker_ = mpi_source;
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 				<< " : ending program "
@@ -271,10 +335,13 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, end_program_tag,
-					MPI_COMM_WORLD));
+					MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//set terminated flag;
 	terminated_ = true;
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
 }
 
 void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
@@ -283,27 +350,36 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 
 	//receive and check the message
 	MPI_Status status;
-	int buffer[2];  //array_id, string_slot
+	int buffer[3];  //array_id, string_slot
 	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, 2, MPI_INT, mpi_source, set_persistent_tag,
+			MPI_Recv(buffer, 3, MPI_INT, mpi_source, set_persistent_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, 2);
+	check_int_count(status, 3);
 
+	int array_id = buffer[0];
+	int string_slot = buffer[1];
+
+	last_seen_line_ = buffer[2];
+	last_seen_worker_ = mpi_source;
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, set_persistent_tag,
-					MPI_COMM_WORLD));
+					MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	//upcall to persistent_array_manager
-	int array_id = buffer[0];
-	int string_slot = buffer[1];
+
 //	std::cout << "calling spam set_persistent with array " << array_id << " and string " << string_slot << std::endl;
+	//upcall to persistent_array_manager
 	persistent_array_manager_->set_persistent(this, array_id, string_slot);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 				<< " : set persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id
-				<< ", sent from = " << mpi_source << std::endl;);
+				<< ", sent from = " << mpi_source
+				<< ", at line = " << last_seen_line_ << std::endl;);
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 }
 
@@ -312,39 +388,48 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
 	//receive and check the message
-	int buffer[2];  //array_id, string_slot
+	int buffer[3];  //array_id, string_slot
 	MPI_Status status;
 	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, 2, MPI_INT, mpi_source, restore_persistent_tag,
+			MPI_Recv(buffer, 3, MPI_INT, mpi_source, restore_persistent_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, 2);
+	check_int_count(status, 3);
+
+
+	int array_id = buffer[0];
+	int string_slot = buffer[1];
+	last_seen_line_ = buffer[2];
+	last_seen_worker_ = mpi_source;
+
+	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, restore_persistent_tag,
-					MPI_COMM_WORLD));
+					MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//upcall
-	int array_id = buffer[0];
-	int string_slot = buffer[1];
 	persistent_array_manager_->restore_persistent(this, array_id, string_slot);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 				<< " : restored persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id
-				<< ", sent from = " << mpi_source << std::endl;)
+				<< ", sent from = " << mpi_source
+				<< ", at line = " << last_seen_line_ << std::endl;)
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 }
 
 void SIPServer::check_int_count(MPI_Status& status, int expected_count) {
 	int received_count;
-	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_INT, &received_count));
+	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_INT, &received_count), __LINE__, __FILE__);
 	check(received_count == expected_count,
 			"message int count different than expected");
 }
 
 void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
 	int received_count;
-	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count));
+	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count), __LINE__, __FILE__);
 	check(received_count == expected_count,
 			"message double count different than expected");
 }
@@ -363,6 +448,10 @@ std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
 	os << "state_: " << obj.state_ << std::endl;
 	os << "terminated=" << obj.terminated_ << std::endl;
 	return os;
+}
+
+int SIPServer::last_seen_line(){
+	return last_seen_line_;
 }
 
 } /* namespace sip */

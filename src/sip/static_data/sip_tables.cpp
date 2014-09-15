@@ -38,7 +38,7 @@ int SipTables::max_timer_slots() const{
 }
 
 std::vector<std::string> SipTables::line_num_to_name() const{
-	std::vector<std::string> lno2name(max_timer_slots()+1, "");
+	std::vector<std::string> lno2name(max_timer_slots()+1, "");	// "" is the sentinel value checked in printing.
 	int size = op_table_.size();
 	for (int i=0; i<size; i++){
 		int line = op_table_.line_number(i);
@@ -98,12 +98,21 @@ bool SipTables::is_served(int array_table_slot) const {
 	return sip::is_sip_consistent_attr(attr);
 }
 
+bool SipTables::is_contiguous_local(int array_table_slot) const {
+    int attr = array_table_.array_type(array_table_slot);
+	return is_contiguous_local_attr(attr);
+}
+
 int SipTables::num_arrays() const{
 	return array_table_.entries_.size();
 }
 
-int SipTables::int_value(int int_table_slot) const {
-	return int_table_.value(int_table_slot);
+//int SipTables::int_value(int int_table_slot) const {
+//	return int_table_.value(int_table_slot);
+//}
+
+std::string SipTables::int_name(int int_table_slot) const {
+	return int_table_.name(int_table_slot);
 }
 
 std::string SipTables::string_literal(int slot) const {
@@ -149,7 +158,7 @@ void SipTables::calculate_seq_sizes(const int array_table_slot,
 		int index_id = selectors[i];
 		if (is_subindex(index_id)) {
 			int parent_value =
-					sip::Interpreter::global_interpreter->data_manager_.index_value(
+					sip::Interpreter::global_interpreter->data_manager().index_value(
 							parent_index(index_id));
 			seg_sizes[i] = index_table_.subsegment_extent(index_id,
 					parent_value, index_vals[i]);
@@ -279,14 +288,16 @@ bool SipTables::increment_indices(int rank, index_value_array_t& upper, index_va
 
 sip::BlockShape SipTables::shape(const sip::BlockId& block_id) const {
 	const int array_table_slot = block_id.array_id();
+	const int rank = array_table_.rank(array_table_slot);
 	const index_value_array_t & index_vals = block_id.index_values_;
 
 	int seg_sizes[MAX_RANK];
 	calculate_seq_sizes(array_table_slot, index_vals, seg_sizes);
-	return sip::BlockShape(seg_sizes);
+	return sip::BlockShape(seg_sizes, rank);
 }
 
-sip::BlockShape SipTables::contiguous_array_shape(int array_id) const{
+
+BlockShape SipTables::contiguous_array_shape(int array_id) const{
 	int rank = array_table_.rank(array_id);
 	const sip::index_selector_t& selector = array_table_.index_selectors(array_id);
 	sip::segment_size_array_t seg_sizes;
@@ -294,11 +305,25 @@ sip::BlockShape SipTables::contiguous_array_shape(int array_id) const{
 		seg_sizes[i] = index_table_.index_extent(selector[i]);
 	}
 	std::fill(seg_sizes+rank, seg_sizes + MAX_RANK, 1);
-	return sip::BlockShape(seg_sizes);
+	return sip::BlockShape(seg_sizes, rank);
+}
+
+BlockShape SipTables::contiguous_region_shape(int rank, int array_id, const index_value_array_t& lower, const index_value_array_t& upper) const{
+	const sip::index_selector_t& selector = array_table_.index_selectors(array_id);
+	segment_size_array_t seg_sizes;
+	for (int i = 0; i < rank; ++i){
+		seg_sizes[i] = index_table_.segment_range_extent(selector[i], lower[i], upper[i]);
+	}
+	std::fill(seg_sizes+rank, seg_sizes + MAX_RANK, 1);
+	return BlockShape(seg_sizes, rank);
 }
 
 int SipTables::offset_into_contiguous(int selector, int value) const{
 	return index_table_.offset_into_contiguous(selector, value);
+}
+
+int SipTables::offset_into_contiguous_region(int selector, int lower, int value) const{
+	return index_table_.offset_into_contiguous_region(selector, lower, value);
 }
 const sip::index_selector_t& SipTables::selectors(int array_id) const{
 	return array_table_.index_selectors(array_id);

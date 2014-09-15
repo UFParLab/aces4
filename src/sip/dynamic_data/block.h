@@ -55,7 +55,7 @@ class Block;
 
 /** A block of data together with its shape. Size is derived from the shape
  * and is stored for convenience.  The shape of a block cannot change once
- * created, although the data may.  In contrast to the other classes, which are
+ * created, although the data may.  In contrast to BlockIds, which are
  * small enough to freely copy, Blocks need to manage their data carefully.  Also,
  * generally, data structures will hold Block pointers, allowing for polymorphism
  * later if we ever want to have some other kind of block later.
@@ -104,6 +104,7 @@ public:
     dataPtr copy_data_(BlockPtr source_block, int offset = 0);
     dataPtr transpose_copy(BlockPtr source, int rank, permute_t&);
     dataPtr accumulate_data(BlockPtr source);
+    dataPtr increment_elements(double delta);
 
     /*!extracts slice from this block and copies to the given destination block, which must exist and have memory for data allocated, Returns dest*/
 	dataPtr extract_slice(int rank, offset_array_t& offsets, BlockPtr destination);
@@ -207,11 +208,9 @@ private:
 //	EmptyMPIState state_;
 #endif
 
-	DISALLOW_COPY_AND_ASSIGN(Block);
-
 	friend class DataManager;	// So that data_ of blocks wrapping
 								// Scalars can be set to NULL before destroying them.
-
+	DISALLOW_COPY_AND_ASSIGN(Block);
 };
 
 

@@ -234,6 +234,8 @@ public:
     int segment_extent (int index_slot, int index_value) const;
     int index_extent(int index_slot) const;
     int offset_into_contiguous(int index_slot, int index_value) const;
+    int segment_range_extent(int index_slot, int lower_index_value, int upper_index_value) const;
+    int offset_into_contiguous_region(int index_slot, int index_base, int index_value) const;
     int lower_seg(int index_slot) const;
     int num_segments(int index_slot) const;
     int index_id(std::string name) const;

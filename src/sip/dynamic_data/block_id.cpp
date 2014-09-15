@@ -50,6 +50,14 @@ BlockId::BlockId(int array_id, int rank, const std::vector<int>& index_values) :
 			unused_index_value); //fill in unused slots
 }
 
+BlockId::BlockId(int array_id, const index_value_array_t& lower, const index_value_array_t& upper):
+	array_id_(array_id){
+	std::copy(lower + 0, lower + MAX_RANK, index_values_ + 0);
+	parent_id_ptr_ = new BlockId(array_id, upper);
+
+	sial_check(this->is_well_formed(), "block is not well formed, invalid ranges", current_line());
+}
+
 BlockId::BlockId(const BlockId& rhs) {
 	array_id_ = rhs.array_id_;
 	std::copy(rhs.index_values_ + 0, rhs.index_values_ + MAX_RANK,
@@ -76,20 +84,23 @@ BlockId BlockId::operator=(BlockId tmp) { //param passed by value, makes a copy.
 }
 
 //TODO subindices may not be implemented properly any more:
-//check delete.  Can there be multiple children of the parent?  Is this correct?
 BlockId::~BlockId() {
 	if (parent_id_ptr_ != NULL)
-		delete parent_id_ptr_;
+		delete parent_id_ptr_;  //this should be a copy
 }
 
 bool BlockId::operator==(const BlockId& rhs) const {
-	bool is_equal = (array_id_ == rhs.array_id_);
-	is_equal &= std::equal(index_values_ + 0, index_values_ + MAX_RANK,
-			rhs.index_values_);
-	is_equal &= (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL)
-			|| (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ != NULL
-					&& *parent_id_ptr_ == *rhs.parent_id_ptr_);
-	return is_equal;
+//	bool is_equal = (array_id_ == rhs.array_id_);
+//	is_equal &= std::equal(index_values_ + 0, index_values_ + MAX_RANK,
+//			rhs.index_values_);
+//	is_equal &= (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL)
+//			|| (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ != NULL
+//					&& *parent_id_ptr_ == *rhs.parent_id_ptr_);
+//	return is_equal;
+	return (array_id_ == rhs.array_id_) && std::equal(index_values_+0, index_values_+MAX_RANK, rhs.index_values_)
+	     && ((parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL)
+	     			|| (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ != NULL
+	    					&& *parent_id_ptr_ == *rhs.parent_id_ptr_));
 }
 
 //Since the blockId is used as a key in the BlockMap, which is currently
@@ -106,12 +117,28 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	if (array_id_ != rhs.array_id_) {  //compare by arrays
 		return (array_id_ < rhs.array_id_);
 	}
-	//same arrays, neither is a subblock
+	//same arrays, neither is a subblock nor contiguous local
 	if (parent_id_ptr_ == NULL && rhs.parent_id_ptr_ == NULL) {
 		return std::lexicographical_compare(index_values_ + 0,
 				index_values_ + MAX_RANK, rhs.index_values_ + 0,
 				rhs.index_values_ + MAX_RANK);
 	}
+	//same arrays, both are contiguous local (compiler ensures that all Ids for arrays declared contig local
+	// are given with a[l0:u0, l1:u1...] so either both have non-null parents with same array in parent or neither do.
+	if (is_contiguous_local()) {
+		//can remove this check after debugging
+		check(rhs.is_contiguous_local(), "comparing contiguous local with non-contiguous local", current_line());
+		if (std::lexicographical_compare(index_values_ + 0,
+				index_values_ + MAX_RANK, rhs.index_values_ + 0,
+				rhs.index_values_ + MAX_RANK))
+		return true;
+		if (std::equal(index_values_ + 0,
+				index_values_ + MAX_RANK, rhs.index_values_ + 0)) //the lower bounds are equal, compare upper
+		{  return (*parent_id_ptr_ < *(rhs.parent_id_ptr_ ));
+	    }
+		return false;
+	}
+
 	//lhs is a subblock, rhs isn't, compare lhs parent with rhs
 	if (parent_id_ptr_ != NULL && rhs.parent_id_ptr_ == NULL) {
 		if (*parent_id_ptr_ < rhs)
@@ -139,19 +166,83 @@ bool BlockId::operator<(const BlockId& rhs) const {
 	return false;
 }
 
-std::string BlockId::str(const SipTables& sip_tables) const{
-	std::stringstream ss;
-//	SipTables& tables = SipTables::instance();
-//	int rank = tables.array_rank(array_id_);
-//	ss << (tables.array_name(array_id_));
-	ss << "\"" <<sip_tables.array_name(array_id_) << "\" : " << array_id_ << " : ";
-	ss << '[';
-	int i;
-	for (i = 0; i < MAX_RANK; ++i) {
-		ss << (i == 0 ? "" : ",") << index_values_[i];
+
+//two blocks overlap if they are from the same array, and they overlap in all dimensions.
+//If they are not contiguous local, then overlap is the same as ==.
+bool BlockId::overlaps(const BlockId& other) const{
+	if (array_id_ != other.array_id_) return false;
+	if (! is_contiguous_local()) return *this == other;
+	//now we're left with two contiguous local blocks of same array.
+	for (int i = 0; i < MAX_RANK; ++i){
+		if( !(index_values_[i] <= other.parent_id_ptr_->index_values_[i] &&
+				other.index_values_[i] <= parent_id_ptr_->index_values_[i])) return false;
 	}
-	ss << ']';
-	return ss.str();
+	return true;
+}
+
+
+
+bool BlockId::encloses(const BlockId& other) const{
+if (is_contiguous_local()){
+	if (array_id_ != other.array_id_) return false;
+	for (int i = 0; i < MAX_RANK; ++i){
+		if(! (index_values_[i] <= other.index_values_[i] &&
+				other.parent_id_ptr_->index_values_[i] <= parent_id_ptr_->index_values_[i])) return false;
+	}
+	return true;
+}
+fail("applying encloses on noncontiguous locals.  We may want to allow this later");
+return false;
+}
+
+
+
+
+
+
+/**
+ * if this is a contiguous array, then checks whether, in each dimension, lower <= upper.
+ * Returns true if not a contiguous array.
+ * @return
+ */
+bool BlockId::is_well_formed(){
+	if (!is_contiguous_local()) return true;
+	for (int i = 0; i < MAX_RANK; ++i ){
+		if (index_values_[i] > parent_id_ptr_->index_values_[i]) return false;
+	}
+	return true;
+}
+
+//std::string BlockId::str(const SipTables& sip_tables) const{
+//	std::stringstream ss;
+////	SipTables& tables = SipTables::instance();
+////	int rank = tables.array_rank(array_id_);
+////	ss << (tables.array_name(array_id_));
+//	int rank = sip_tables.array_rank(array_id_);
+//	ss  <<sip_tables.array_name(array_id_); // << " : " << array_id_ << " : ";
+//	ss << '[';
+//	int i;
+//	for (i = 0; i < rank; ++i) {
+//		ss << (i == 0 ? "" : ",") << index_values_[i];
+//	}
+//	ss << ']';
+//	return ss.str();
+//}
+
+std::string BlockId::str(const SipTables& sip_tables) const{
+std::stringstream ss;
+bool contiguous_local = sip_tables.is_contiguous_local(array_id_);
+if (contiguous_local) ss << "contiguous local ";
+int rank = sip_tables.array_rank(array_id_);
+ss << sip_tables.array_name(array_id_) ;
+ss << '[';
+int i;
+for (i = 0; i < rank; ++i) {
+	ss << (i == 0 ? "" : ",") << index_values(i);
+	if (contiguous_local) ss << ":" << upper_index_values(i);
+}
+ss << ']';
+return ss.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const BlockId& id) {

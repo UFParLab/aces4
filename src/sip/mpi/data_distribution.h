@@ -22,7 +22,7 @@ namespace sip {
  */
 class DataDistribution {
 public:
-	DataDistribution(SipTables&, SIPMPIAttr&);
+	DataDistribution(const SipTables&, SIPMPIAttr&);
 
 	/**
 	 * Calculates and returns MPI rank of server that "owns" a given block.
@@ -46,7 +46,7 @@ public:
 
 private:
 
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 	SIPMPIAttr& sip_mpi_attr_;
 
 	long block_position_in_array(const sip::BlockId& bid) const;

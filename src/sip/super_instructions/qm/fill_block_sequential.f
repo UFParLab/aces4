@@ -1,7 +1,6 @@
       !two arg super instruction.  The first is a block, the second
       ! a scalar.  Fills the block linearly with x, x+1.0, x_2.0,
-      !etc. starting with the scalalr.  Uses Mark's super instruction
-      !interface.
+      !etc. starting with the scalalr.
 
 
 !          (arg_1, nindex_1, type_1, bval_1, eval_1, bdim_1, edim_1,
@@ -20,6 +19,9 @@
 !This is a super instruction for testing.  It simply fills the given
 ! block with double values starting at the given one and incrementing
 ! each time
+
+! Signature in SIAL program:
+!  special fill_block_sequential wr
 
       subroutine fill_block_sequential(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
@@ -49,6 +51,8 @@
 !second argument should be a scalar
       if (rank_1.ne.0) then
       ierr = rank_1
+      print *, 'rank_0=',rank_0,' rank1_1=',rank_1
+      print *, 'slot_0=',array_slot_0,' slot_1=',array_slot_1
       return
       endif
 

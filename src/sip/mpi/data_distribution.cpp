@@ -10,7 +10,7 @@
 
 namespace sip {
 
-DataDistribution::DataDistribution(SipTables& sip_tables, SIPMPIAttr& sip_mpi_attr):
+DataDistribution::DataDistribution(const SipTables& sip_tables, SIPMPIAttr& sip_mpi_attr):
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr) {
 }
 

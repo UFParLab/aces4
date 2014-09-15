@@ -1,0 +1,21 @@
+Running main() from test_simple.cpp
+Note: Google Test filter = BasicSial.helloworld1
+[==========] Running 1 test from 1 test case.
+[----------] Global test environment set-up.
+[----------] 1 test from BasicSial
+[ RUN      ] BasicSial.helloworld1
+../test/test_simple.cpp:83: Failure
+Value of: output.str()
+  Actual: "my rank = 0\nhello world  this should be on the same line as hello world\n3.14159  10044.5\n123\n456\n"
+Expected: expected.str()
+Which is: "my rank = 0\nhello world  this should be on the same line as hello world\n3.1415899999999998826  10044.5\n123\n456\n"
+[  FAILED  ] BasicSial.helloworld1 (3 ms)
+[----------] 1 test from BasicSial (3 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test case ran. (3 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] BasicSial.helloworld1
+
+ 1 FAILED TEST

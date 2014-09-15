@@ -29,7 +29,8 @@ public:
 	 * Checks errors
 	 * @param
 	 */
-	static void check_err(int);
+	static void check_err(int errnum, int line, char* file);
+	static void check_err(int errnum);
 
 private:
 

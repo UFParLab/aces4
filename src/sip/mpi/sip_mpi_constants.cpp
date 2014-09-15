@@ -16,7 +16,7 @@ std::string SIPMPIConstants::messageTypeToName(SIPMPIConstants::MessageType_t m)
 		SIP_MESSAGE_TYPES
 	#undef SIP_MESSAGE
 	}
-	sip::fail("Interal error ! opcode not recognized !");
+	sip::fail("Interal error ! message type not recognized !");
 	return std::string("");
 }
 
