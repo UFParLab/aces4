@@ -83,6 +83,23 @@ public:
 	typedef double * dataPtr;
 	typedef ServerBlock* ServerBlockPtr;
 
+	/**
+	 * Constructs a block, allocating size number
+	 * of double precision numbers; optionally
+	 * initializes all elements to 0 (default true).
+	 * @param size
+	 * @param init
+	 */
+	explicit ServerBlock(int size, bool init=true);
+	/**
+	 * Constructs a block with a given pointer to
+	 * double precision numbers and size. data
+	 * parameter can be NULL.
+	 * @param size
+	 * @param data can be NULL
+	 */
+	explicit ServerBlock(int size, dataPtr data);
+
 	~ServerBlock();
 
 	void set_dirty() { disk_status_[ServerBlock::DIRTY_IN_MEMORY] = true; }
@@ -126,22 +143,6 @@ public:
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
 private:
-    /** Constructs a block, allocating size number 
-     * of double precision numbers; optionally 
-     * initializes all elements to 0 (default true).
-     * @param size
-     * @param init
-     */ 
-	explicit ServerBlock(int size, bool init=true);
-    /**
-     * Constructs a block with a given pointer to 
-     * double precision numbers and size. data 
-     * parameter can be NULL.
-     * @param size
-     * @param data can be NULL
-     */ 
-	explicit ServerBlock(int size, dataPtr data);
-
     const int size_;/**< Number of elements in block */
 	dataPtr data_;	/**< Pointer to block of data */
 

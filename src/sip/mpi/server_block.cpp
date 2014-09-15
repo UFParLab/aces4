@@ -14,6 +14,8 @@
 
 #include "sip.h"
 
+#include "lru_array_policy.h"
+
 namespace sip {
 
 const std::size_t ServerBlock::field_members_size_ = sizeof(int) + sizeof(int) + sizeof(dataPtr);

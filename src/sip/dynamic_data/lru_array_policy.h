@@ -93,6 +93,9 @@ private:
 
 };
 
+// Template Specialization for ServerBlocks. Implementation in disk_backed_block_map.cpp
+template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal();
+
 } /* namespace sip */
 
 
