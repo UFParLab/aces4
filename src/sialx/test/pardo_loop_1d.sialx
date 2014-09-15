@@ -1,0 +1,20 @@
+sial pardo_loop_1d
+
+	predefined int lower0
+	predefined int upper0
+	
+	index i0 = lower0:upper0
+  
+	int counter = 0
+	scalar total = 0.0
+		
+	pardo i0
+		counter += 1	
+	endpardo i0
+	
+	sip_barrier
+    collective total += (scalar)counter
+    sip_barrier
+    
+	
+endsial pardo_loop_1d

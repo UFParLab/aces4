@@ -18,7 +18,7 @@
  * Note that this approach may not have the correct semantics if the same block is
  * handled multiple times in one super instruction, and aliases are created:
  * for example execute si a[i,j] a[i,j].  Thus the compiler does not allow the same
- * superinstruction to appear in multiple arguments unless all are reads.
+ * contigous array to appear in multiple arguments unless all are reads.
  *
  *
  *  Created on: Oct 5, 2013
@@ -67,7 +67,7 @@ typedef  std::vector<WriteBack*> WriteBackList;
 
 /**
  * List of blocks sliced out from a Contiguous array
- * Garbage collected when not needed.
+ * Reclaimed at end of instruction
  */
 typedef std::vector<Block::BlockPtr> ReadBlockList;
 
@@ -84,7 +84,7 @@ public:
 	 *
 	 * @param sipTables
 	 */
-	ContiguousArrayManager(sip::SipTables&, setup::SetupReader&);
+	ContiguousArrayManager(const sip::SipTables&, setup::SetupReader&);
 	~ContiguousArrayManager();
 
 
@@ -204,7 +204,7 @@ private:
 
 	/** map from array slot number to block containing contiguous array */
 	ContiguousArrayMap contiguous_array_map_;
-	sip::SipTables & sip_tables_;
+	const sip::SipTables & sip_tables_;
 	setup::SetupReader & setup_reader_;
 
 

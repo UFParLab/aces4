@@ -13,6 +13,10 @@
 #include "setup_reader.h"
 #include "global_state.h"
 
+
+#include "sip_mpi_attr.h"
+
+
 namespace sip {
 
 WriteBack::WriteBack(int rank, Block::BlockPtr contiguous_block,
@@ -38,17 +42,17 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 	}
 	os << "]" << std::endl;
 	os << "target contiguous_block_ :" << std::endl;
-	os << *obj.contiguous_block_ << std::endl;
+	if (obj.contiguous_block_ == NULL) os << "NULL" << std::endl;
+	else os <<  *obj.contiguous_block_  << std::endl;
 	os << "source block " << std::endl;
-	os << *obj.block_;
-	bool done_;
-	os << "contiguous_array_map_:" << std::endl;
+	if (obj.block_ == NULL) os << "NULL" << std::endl;
+	else os << *obj.block_;
 	return os;
 }
 
 
 
-ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
+ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 		setup::SetupReader& setup_reader) :
 		sip_tables_(sip_tables), setup_reader_(setup_reader) {
 	//create static arrays in sial program.  All static arrays are allocated a startup
@@ -70,14 +74,13 @@ ContiguousArrayManager::ContiguousArrayManager(sip::SipTables& sip_tables,
 				setup::SetupReader::NamePredefinedContiguousArrayMapIterator b =
 						setup_reader_.name_to_predefined_contiguous_array_map_.find(
 								name);
-				if (check_and_warn(
-						b
-								!= setup_reader_.name_to_predefined_contiguous_array_map_.end(),
-						"No data for predefined static array " + name)) {
+                if (b != setup_reader_.name_to_predefined_contiguous_array_map_.end()){        
 					//array is predefined and in setup reader
 					block = b->second.second;
 					insert_contiguous_array(i, block);
 				} else { //is predefined, but not in setreader.  Set to zero, insert into setup_reader map so it "owns" it and deletes it.
+
+				    SIP_MASTER(check_and_warn(false, "No data for predefined static array " + name));
 					block = create_contiguous_array(i);
 					int block_rank = sip_tables_.array_rank(i);
 					std::pair<int, Block::BlockPtr> zeroed_block_pair = std::make_pair(i, block);

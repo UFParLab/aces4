@@ -217,32 +217,36 @@ AX_LAPACK(AC_MSG_RESULT([found LAPACK library $LAPACK_LIBS]),
 #AM_CONDITIONAL([LAPACK_PRESENT], [test x$lapack_present = xtrue])
 
 
+# Pthreads are not used. Here is how one could enable them:
+
 # For pthread library linking
+# Does not work -----------------
 #AC_LANG([C])
 #ACX_PTHREAD
 #AC_SUBST(PTHREAD_LIBS)
 #AC_SUBST(PTHREAD_CFLAGS)
 #AC_SUBST(PTHREAD_CC)
 
+# Works -------------------
 # Configure pthreads.
 # Taken from Google Test 1.7's configure.ac
-AC_ARG_WITH([pthreads],
-	    [AS_HELP_STRING([--with-pthreads],
-	       [use pthreads (default is yes)])],
-	    [with_pthreads=$withval],
-	    [with_pthreads=check])
+#AC_ARG_WITH([pthreads],
+#	    [AS_HELP_STRING([--with-pthreads],
+#	       [use pthreads (default is yes)])],
+#	    [with_pthreads=$withval],
+#	    [with_pthreads=check])
 
-have_pthreads=no
-AS_IF([test "x$with_pthreads" != "xno"],
-      [ACX_PTHREAD(
-	[],
-	[AS_IF([test "x$with_pthreads" != "xcheck"],
-	       [AC_MSG_FAILURE(
-		 [--with-pthreads was specified, but unable to be used])])])
-       have_pthreads="$acx_pthread_ok"])
-AM_CONDITIONAL([HAVE_PTHREADS],[test "x$have_pthreads" = "xyes"])
-AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_LIBS)
+#have_pthreads=no
+#AS_IF([test "x$with_pthreads" != "xno"],
+#      [ACX_PTHREAD(
+#	[],
+#	[AS_IF([test "x$with_pthreads" != "xcheck"],
+#	       [AC_MSG_FAILURE(
+#		 [--with-pthreads was specified, but unable to be used])])])
+#       have_pthreads="$acx_pthread_ok"])
+#AM_CONDITIONAL([HAVE_PTHREADS],[test "x$have_pthreads" = "xyes"])
+#AC_SUBST(PTHREAD_CFLAGS)
+#AC_SUBST(PTHREAD_LIBS)
 
 
 # PAPI
@@ -336,7 +340,7 @@ AM_CONDITIONAL([HAVE_PYTHON],[test "$PYTHON" != ":"])
 AM_CONDITIONAL([WORKING_NVCC], [test "x$cuda_enable" = "xyes"])
 
 
-AM_INIT_AUTOMAKE([foreign -Wall tar-ustar])
+AM_INIT_AUTOMAKE([foreign -Wall tar-ustar parallel-tests])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/sip/super_instructions/Makefile])
 AC_OUTPUT

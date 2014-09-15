@@ -1,0 +1,17 @@
+sial message_number_wraparound_test
+
+	# Each worker sends more than 2^14 messages
+	# to the server. The server should not crash.
+
+	index i = 1: 80000
+	distributed a[i]
+	temp b[i]
+	
+	pardo i
+	    b[i] = 5.0
+		put a[i] = b[i]
+	endpardo i
+	
+	sip_barrier	
+
+endsial message_number_wraparound_test

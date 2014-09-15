@@ -26,14 +26,14 @@ predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT
 
 
 #these are predefined in the index table         
-moaindex aces_defs_pa = baocc, eavirt  
-mobindex aces_defs_pb = bbocc, ebvirt   
-aoindex aces_defs_mu = 1, norb  
+moaindex aces_defs_pa = baocc: eavirt  
+mobindex aces_defs_pb = bbocc: ebvirt   
+aoindex aces_defs_mu = 1: norb  
 
 
 #these s are predefined in the array and scalar tables
-static ca(aces_defs_mu,aces_defs_pa)  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
-static cb(aces_defs_mu,aces_defs_pb)  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
 
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
@@ -42,23 +42,23 @@ predefined scalar totenerg  #Total energy read in from JOBARC.
 #predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 #predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
-predefined static e(aces_defs_mu)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
-predefined static ea(aces_defs_mu)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
-predefined static eb(aces_defs_mu)  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static e[aces_defs_mu]  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
+predefined static ea[aces_defs_mu]  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static eb[aces_defs_mu]  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
-static fock_a(aces_defs_pa, aces_defs_pa)
-predefined static fock_b(aces_defs_pb, aces_defs_pb)
+static fock_a[aces_defs_pa, aces_defs_pa]
+predefined static fock_b[aces_defs_pb, aces_defs_pb]
 
-predefined static oed_nai(aces_defs_mu,aces_defs_mu)
-predefined static oed_kin(aces_defs_mu,aces_defs_mu)
+predefined static oed_nai[aces_defs_mu,aces_defs_mu]
+predefined static oed_kin[aces_defs_mu,aces_defs_mu]
 ###predefined static oed_ovl(aces_defs_mu,aces_defs_mu)
 
 predefined scalar damp #value of DAMPSCF from ZMAT
 predefined scalar cc_conv  # value of CC_CONV from ZMAT.
 predefined scalar scf_conv  # value of SCF_CONV from ZMAT
 
-predefined static fockrohf_a(aces_defs_mu,aces_defs_mu)
-predefined static fockrohf_b(aces_defs_mu,aces_defs_mu)
+predefined static fockrohf_a[aces_defs_mu,aces_defs_mu]
+predefined static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 #predefined scalar stabvalue  #this is used only in guess_scf_uhf_finish.sial.  It is not a 
 

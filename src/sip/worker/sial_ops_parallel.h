@@ -15,7 +15,7 @@
 #include "block_manager.h"
 #include "data_distribution.h"
 #include "data_manager.h"
-#include "persistent_array_manager.h"
+#include "worker_persistent_array_manager.h"
 
 namespace sip {
 
@@ -25,7 +25,8 @@ public:
 	//deleted in the destructor--it has a lifespan
 	//beyond SIAL programs.
 	SialOpsParallel(DataManager &,
-			PersistentArrayManager<Block, Interpreter> *);
+			WorkerPersistentArrayManager*,
+			const SipTables&);
 	~SialOpsParallel();
 
 	/** implements a global SIAL barrier */
@@ -45,12 +46,16 @@ public:
 	void prepare(BlockId&, Block::BlockPtr);
 	void prepare_accumulate(BlockId&, Block::BlockPtr);
 
-	void collective_sum(int source_array_slot, int dest_array_slot);
+	void collective_sum(double rhs_value, int dest_array_slot);
+	bool assert_same(int source_array_slot);
+	void broadcast_static(int source_array_slot, int source_worker);
 
 	void set_persistent(Interpreter*, int array_id, int string_slot);
 	void restore_persistent(Interpreter*, int array_id, int string_slot);
 
 	void end_program();
+
+//	void print_to_ostream(std::ostream& out, const std::string& to_print);
 
 	/**
 	 * Logs type of statement and line number
@@ -76,11 +81,11 @@ public:
 
 private:
 
-	SipTables& sip_tables_;
+	const SipTables& sip_tables_;
 	SIPMPIAttr & sip_mpi_attr_;
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
-	PersistentArrayManager<Block, Interpreter>* persistent_array_manager_;
+	WorkerPersistentArrayManager* persistent_array_manager_;
 
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;
@@ -137,6 +142,8 @@ private:
 	 * in SIP_barriers.
 	 */
 	void reset_mode();
+
+	bool nearlyEqual(double a, double  b, double epsilon);
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

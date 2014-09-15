@@ -37,9 +37,9 @@
 namespace sip {
 
 
-BlockManager::BlockManager() :
-sip_tables_(SipTables::instance()),
-block_map_(SipTables::instance().num_arrays()){
+BlockManager::BlockManager(const SipTables &sip_tables) :
+sip_tables_(sip_tables),
+block_map_(sip_tables.num_arrays()){
 }
 
 
@@ -47,9 +47,8 @@ block_map_(SipTables::instance().num_arrays()){
  * Delete blocks being managed by the block manager.
  */
 BlockManager::~BlockManager() {
-	check(temp_block_list_stack_.size() == 0,
+	check_and_warn(temp_block_list_stack_.size() == 0,
 			"temp_block_list_stack not empty when destroying block manager!");
-
 	// Free up all blocks managed by this block manager.
 	for (int i = 0; i < sip_tables_.num_arrays(); ++i)
 		delete_per_array_map_and_blocks(i);
@@ -82,10 +81,10 @@ void BlockManager::allocate_local(const BlockId& id) {
 		generate_local_block_list(id, list);
 		std::vector<BlockId>::iterator it;
 		for (it = list.begin(); it != list.end(); ++it) {
-			get_block_for_writing(*it, false);
+			Block* blk = get_block_for_writing(*it, false);
 		}
 	} else {
-		get_block_for_writing(id, false);
+		Block* blk = get_block_for_writing(id, false);
 	}
 }
 void BlockManager::deallocate_local(const BlockId& id) {
@@ -140,26 +139,24 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 //TODO TEMPORARY FIX WHILE SEMANTICS BEING WORKED OUT
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-//	if (blk == NULL) {
-//		std::cout << "get_block_for_reading, block " << id << "    array "
-//				<< sip_tables_.array_name(id.array_id()) << " does not exist\n";
-//		fail("", current_line());
-//	}
-	return get_block_for_accumulate(id);  //TODO
-
-
-#ifdef HAVE_CUDA
-	// Lazy copying of data from gpu to host if needed.
-	lazy_gpu_read_on_host(blk);
-#endif //HAVE_CUDA
-	return blk;
+	sial_check(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
+	////
+	//#ifdef HAVE_CUDA
+	//	// Lazy copying of data from gpu to host if needed.
+	//	lazy_gpu_read_on_host(blk);
+	//#endif //HAVE_CUDA
+    return blk;
 }
+
+
+
+
 
 /* gets block for reading and writing.  The block should already exist.*/
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 //	std::cout << "calling get_block_for_updating for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
-	check(blk != NULL, "attempting to update non-existent block",
+	sial_check(blk != NULL, "attempting to update non-existent block",
 			current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
@@ -184,7 +181,17 @@ void BlockManager::leave_scope() {
 	BlockList* temps = temp_block_list_stack_.back();
 	BlockList::iterator it;
 	for (it = temps->begin(); it != temps->end(); ++it) {
-		delete_block(*it);
+		BlockId &block_id = *it;
+		int array_id = block_id.array_id();
+
+		// Cached delete for distributed/served arrays.
+		// Regular delete for temp blocks.
+
+		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id))
+			cached_delete_block(*it);
+		else
+			delete_block(*it);
+//		delete_block(*it);
 	}
 	temp_block_list_stack_.pop_back();
 	delete temps;
@@ -192,7 +199,7 @@ void BlockManager::leave_scope() {
 
 
 
-std::ostream& operator<<(std::ostream& os, const BlockManager& obj) {
+std::ostream& operator<<(std::ostream& os, const BlockManager& obj){
 	os << "block_map_:" << std::endl;
 	os << obj.block_map_ << std::endl;
 
@@ -222,9 +229,16 @@ Block::BlockPtr BlockManager::block(const BlockId& id){
  */
 Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
-	Block::BlockPtr block_ptr = new Block(shape);
-	insert_into_blockmap(block_id, block_ptr);
-	return block_ptr;
+	try {
+		Block::BlockPtr block_ptr = new Block(shape);
+		insert_into_blockmap(block_id, block_ptr);
+		return block_ptr;
+	} catch (const std::out_of_range& oor){
+		std::cerr << " In BlockManager::create_block" << std::endl;
+		std::cerr << *this << std::endl;
+		fail(" Could not create block, out of memory", current_line());
+		return NULL;
+	}
 }
 
 
@@ -330,7 +344,7 @@ void BlockManager::lazy_gpu_read_on_device(const Block::BlockPtr& blk) {
 
 void BlockManager::lazy_gpu_write_on_device(Block::BlockPtr& blk, const BlockId &id, const BlockShape& shape) {
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		remove_block(id); // Get rid of block, create a new one
+		block_map_.cached_delete_block(id); // Get rid of block, create a new one
 		blk = create_gpu_block(id, shape);
 //		if (is_scope_extent) {
 //			temp_block_list_stack_.back()->push_back(id);
@@ -381,7 +395,7 @@ void BlockManager::lazy_gpu_read_on_host(const Block::BlockPtr& blk) {
 
 void BlockManager::lazy_gpu_write_on_host(Block::BlockPtr& blk, const BlockId &id, const BlockShape& shape) {
 	if (!blk->is_on_gpu() && !blk->is_on_host()) {
-		remove_block(id); // Get rid of block, create a new one
+		block_map_.cached_delete_block(id); // Get rid of block, create a new one
 		blk = create_block(id, shape);
 //		if (is_scope_extent) {
 //			temp_block_list_stack_.back()->push_back(id);

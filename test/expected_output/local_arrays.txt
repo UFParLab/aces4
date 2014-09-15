@@ -1,0 +1,77 @@
+11:  i=1
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+
+14:  j=1
+19:  printing 4 of 4 elements of block b[1,1] in the order stored in memory 
+             1              1 
+             1              1 
+14:  j=2
+19:  printing 6 of 6 elements of block b[1,2] in the order stored in memory 
+             2              2 
+             2              2 
+             2              2 
+11:  i=2
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+0:[1,1,1,1,1,1] size=4 [1...1]
+0:[1,2,1,1,1,1] size=6 [2...2]
+
+1:[1,1,1,1,1,1] size=4 [1...1]
+1:[1,2,1,1,1,1] size=6 [2...2]
+
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+
+14:  j=1
+19:  printing 6 of 6 elements of block b[2,1] in the order stored in memory 
+             1              1              1 
+             1              1              1 
+14:  j=2
+19:  printing 9 of 9 elements of block b[2,2] in the order stored in memory 
+             2              2              2 
+             2              2              2 
+             2              2              2 
+block map before deallocates:
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+0:[1,1,1,1,1,1] size=4 [1...1]
+0:[1,2,1,1,1,1] size=6 [2...2]
+0:[2,1,1,1,1,1] size=6 [1...1]
+0:[2,2,1,1,1,1] size=9 [2...2]
+
+1:[1,1,1,1,1,1] size=4 [1...1]
+1:[1,2,1,1,1,1] size=6 [2...2]
+1:[2,1,1,1,1,1] size=6 [1...1]
+1:[2,2,1,1,1,1] size=9 [2...2]
+
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+block map after deallocates:
+LISTING CURRENT BLOCKS
+block_map_:
+Block Map : 
+
+Cache : 
+
+
+temp_block_list_stack_:
+
+end of local_arrays

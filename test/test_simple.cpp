@@ -1,4 +1,9 @@
 #include "gtest/gtest.h"
+#include <fenv.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <cstdlib>
+#include <cassert>
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
@@ -9,6 +14,10 @@
 #include "sip_interface.h"
 #include "data_manager.h"
 #include "global_state.h"
+#include "sial_printer.h"
+
+#include "worker_persistent_array_manager.h"
+#include "server_persistent_array_manager.h"
 
 #include "block.h"
 
@@ -16,739 +25,540 @@
 #include <TAU.h>
 #endif
 
-static const std::string dir_name("src/sialx/test/");
+//#ifdef HAVE_MPI
+//#include "sip_server.h"
+//#include "sip_mpi_attr.h"
+//#include "global_state.h"
+//#include "sip_mpi_utils.h"
+//#else
+//#include "sip_attr.h"
+//#endif
 
-extern "C"{
+
+#include "test_constants.h"
+#include "test_controller.h"
+#include "test_controller_parallel.h"
+
+
+
+extern "C" {
 int test_transpose_op(double*);
 int test_transpose4d_op(double*);
 int test_contraction_small2(double*);
 }
 
-TEST(Sial,empty){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("empty");
-	std::cout << "JOBNAME = " << job << std::endl;
+//static const std::string dir_name("src/sialx/test/");
+//static const std::string qm_dir_name("src/sialx/qm/");
+//static const std::string expected_output_dir_name("../test/expected_output/");
+//sip::SIPMPIAttr *attr;
+//
+//#ifdef HAVE_MPI
+//    void barrier() {sip::SIPMPIUtils::check_err (MPI_Barrier(MPI_COMM_WORLD));}
+//#else
+//	void barrier(){}
+//#endif
 
-	//initialize setup data
-
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+bool VERBOSE_TEST = false;
+//bool VERBOSE_TEST = true;
 
 
-	std::string prog_name = job + ".siox";
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-////	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
 
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
+TEST(BasicSial,empty) {
+	TestController controller("empty", false, VERBOSE_TEST,
+			"this is a an empty program using the test controller", std::cout);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 }
 
-TEST(Sial,scalars){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+//#ifdef HAVE_MPI
+//TEST(BasicSial,empty) {
+//	TestControllerParallel controller("empty", false, VERBOSE_TEST,
+//			"this is a an empty program using the test controller", std::cout);
+//	controller.initSipTables();
+//	if(attr->is_worker()){
+//	controller.runWorker();
+//	controller.worker_->post_sial_program();
+//	}
+//	else {
+//		controller.runServer();
+//	}
+//	if (attr->is_worker()) EXPECT_TRUE(controller.worker_->all_stacks_empty());
+//}
+//
+//
+//
+//#endif
+TEST(BasicSial,helloworld) {
+	TestController controller("helloworld", false, VERBOSE_TEST,
+			"this test should print \"hello world\"", std::cout);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+}
+
+
+
+TEST(BasicSial,scalars) {
 	std::string job("scalars");
-	std::cout << "JOBNAME = " << job << std::endl;
+	std::string comment("this test checks scalar initialization");
 	double x = 3.456;
 	double y = -0.1;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
+//	std::stringstream expected, output;
+//	expected << "my rank = " << attr->global_rank() << "\n";
+//	output << "my rank = " << attr->global_rank() << "\n";
+//	expected << "9:  x=3.456\n" << "10:  y=-0.1\n" << "14:  z=3.456\n\n"
+//			<< "15:  zz=99.99\n\n" << "e should be 6\n" << "22:  e=6\n\n";
+	std::stringstream output;
+	//create .dat file
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-	// setup::SetupReader setup_reader;
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	// setup_reader.read(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-////	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	ASSERT_DOUBLE_EQ(x, scalar_value("x"));
-	ASSERT_DOUBLE_EQ(y, scalar_value("y"));
-	ASSERT_DOUBLE_EQ(x, scalar_value("z"));
-	ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	}
+	TestController controller(job, true, VERBOSE_TEST, comment, output);
+	controller.initSipTables();
+	controller.runWorker();
+//	if (attr->global_rank() == 0) {
+//		EXPECT_EQ(expected.str(), output.str());
+//	}
+	if (attr->global_rank() == 0) EXPECT_EQ(controller.expectedOutput(), output.str());
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 }
 
-
-TEST(Sial,persistent_scalars){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("persistent_scalars");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	double y = -0.1;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		std::string tmp1 = job + "_1.siox";
-		const char* nm1= tmp1.c_str();
-		add_sial_program(nm1);
-		std::string tmp2 = job + "_2.siox";
-		const char* nm2= tmp2.c_str();
-		add_sial_program(nm2);
-		finalize_setup();
-	}
-
-	sip::PersistentArrayManager<sip::Block, sip::Interpreter>* pam;
-	pam = new sip::PersistentArrayManager<sip::Block, sip::Interpreter>();
-
-	//read and print setup_file
-	// setup::SetupReader setup_reader;
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	// setup_reader.read(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-////	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::Interpreter runner(sipTables, sialxTimer, pam);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	ASSERT_DOUBLE_EQ(x, scalar_value("x"));
-	ASSERT_DOUBLE_EQ(y, scalar_value("y"));
-	ASSERT_DOUBLE_EQ(x, scalar_value("z"));
-	ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	pam->save_marked_arrays(&runner);
-	std::cout << "pam:" << std::endl << *pam << std::endl << "%%%%%%%%%%%%"<< std::endl;
-	}
-
-	//Now do the second program
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name1 = setup_reader.sial_prog_list_.at(1);
-	setup::BinaryInputFile siox_file1(siox_dir + prog_name1);
-	sip::SipTables sipTables1(setup_reader, siox_file1);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer1(sipTables1.max_timer_slots());
-	sip::Interpreter runner2(sipTables1, sialxTimer1, pam);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner2.interpret();
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	ASSERT_DOUBLE_EQ(x+1, scalar_value("x"));
-	ASSERT_DOUBLE_EQ(y, scalar_value("y"));
-	ASSERT_DOUBLE_EQ(6, scalar_value("e"));
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	}
-	delete pam;
+TEST(BasicSial,no_arg_user_sub) {
+	std::string job("no_arg_user_sub");
+	TestController controller(job, false, VERBOSE_TEST, "", std::cout);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 }
 
-
-
-TEST(Sial,helloworld){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("helloworld");
-	std::cout << "JOBNAME = " << job << std::endl;
-
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + job + ".siox");
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-
-	}
-}
-
-
-TEST(Sial,no_arg_user_sub) {
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-
-	std::string name("no_arg_user_sub.siox");
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + name);
-
-	sip::SipTables sipTables(setup_reader, siox_file);
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-
-	std::cout << "SIP TABLES" << std::endl;
-	std::cout << sipTables;
-
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "\nINSTANTIATED INTERPRETER" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nCOMPLETED PROGRAM"<< std::endl;
-	std::cout << "\nafter Interpreter destructor"<< std::endl;
-}
-
-
-
-TEST(Sial,index_decs) {
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-
-	//create setup_file
+TEST(BasicSial,index_decs) {
 	std::string job("index_decs");
 
-	{
+	//set up index_decs.dat file
+	if (attr->global_rank() == 0) {
 		init_setup(job.c_str());
 		//now add data
-		set_constant("norb",15);
-		int segs[] = {5,6,7,8};
-		set_aoindex_info(4,segs);
-
-		//add the first program for this job ad finalize--no need to change this if only one sial program
+		set_constant("norb", 15);
+		int segs[] = { 5, 6, 7, 8 };
+		set_aoindex_info(4, segs);
+		//add the first program for this job and finalize
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
 		finalize_setup();
 	}
 
-	//read and print setup_file;
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	// setup_reader.read(setup_file);
-	setup_reader.dump_data();
 
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	sip::SipTables sipTables(setup_reader, siox_file);
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	std::cout << "SIP TABLES" << '\n' << sipTables;
+	TestController controller(job, true, VERBOSE_TEST,
+			"sial program is only declarations, does not execute anything",
+			std::cout);
+
+	controller.initSipTables();
+	//check some properties of the sip tables.
+	int i_index_slot = controller.sip_tables_->index_id("i");
+	int j_index_slot = controller.sip_tables_->index_id("j");
+	int aio_index_slot = controller.sip_tables_->index_id("aoi");
+	EXPECT_EQ(1, controller.sip_tables_->lower_seg(i_index_slot));
+	EXPECT_EQ(4, controller.sip_tables_->num_segments(i_index_slot));
+
+	EXPECT_EQ(4, controller.sip_tables_->lower_seg(j_index_slot));
+	EXPECT_EQ(2, controller.sip_tables_->num_segments(j_index_slot));
+
+	EXPECT_EQ(1, controller.sip_tables_->lower_seg(aio_index_slot));
+	EXPECT_EQ(15, controller.sip_tables_->num_segments(aio_index_slot));
 
 	//interpret the program
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "\nSIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nCOMPLETED PROGRAM"<< std::endl;
+	controller.runWorker();
 }
 
-
-TEST(Sial,where_clause){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,where_clause) {
 	std::string job("where_clause");
-	std::cout << "JOBNAME = " << job << std::endl;
-
-	//initialize setup data
-
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	// setup::SetupReader setup_reader;
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	std::string prog_name = job + ".siox";
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
+	std::stringstream out;
+	TestController controller(job, false, VERBOSE_TEST, "", out);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	int counter = controller.int_value("counter");
+	EXPECT_DOUBLE_EQ(10, counter);
 }
 
-TEST(Sial,ifelse){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,ifelse) {
 	std::string job("ifelse");
-	std::cout << "JOBNAME = " << job << std::endl;
-
-	//initialize setup data
-
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	std::string prog_name = job + ".siox";
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
+	std::stringstream output;
+	TestController controller(job, false, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	int eq_counter = controller.int_value("eq_counter");
+	int neq_counter = controller.int_value("neq_counter");
+	EXPECT_EQ(4, eq_counter);
+	EXPECT_EQ(20, neq_counter);
 }
 
-TEST(Sial,loop_over_simple_indices){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,loop_over_simple_indices) {
 	std::string job("loop_over_simple_indices");
-	std::cout << "JOBNAME = " << job << std::endl;
-
-	//initialize setup data
-
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	std::string prog_name = job + ".siox";
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+	std::stringstream expected, output;
+	TestController controller(job, false, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0) {
+		EXPECT_EQ(controller.expectedOutput(), output.str());
 	}
-	}
-	TEST(Sial,pardo_loop){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("pardo_loop");
-	std::cout << "JOBNAME = " << job << std::endl;
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+}
 
-	//initialize setup data
+/** This function takes lower and upper ranges of indices
+ * and runs test programs with all dimensions of these indices.
+ * These programs test that the proper number of iterations has
+ * been executed.  Jobs are pardo_loop_1d, ..., pardo_loop_6d.
+ *
+ * A variety of tests can be generated by changing the input params.
+ */
+//void basic_pardo_test(int max_dims, int lower[], int upper[],
+//		bool expect_success = true) {
+//	assert(max_dims <= 6);
+//	for (int num_dims = 1; num_dims <= 6; ++num_dims) {
+//		std::stringstream job_ss;
+//		job_ss << "pardo_loop_" << num_dims << "d";
+//		std::string job = job_ss.str();
+//
+//		//total number of iters for this sial program
+//		int num_iters = 1;
+//		for (int j = 0; j < num_dims; ++j) {
+//			num_iters *= ((upper[j] - lower[j]) + 1);
+//		}
+//
+//		//create .dat file
+//		if (attr->global_rank() == 0) {
+//			init_setup(job.c_str());
+//			//add values for upper and lower bounds
+//			for (int i = 0; i < num_dims; ++i) {
+//				std::stringstream lower_ss, upper_ss;
+//				lower_ss << "lower" << i;
+//				upper_ss << "upper" << i;
+//				set_constant(lower_ss.str().c_str(), lower[i]);
+//				set_constant(upper_ss.str().c_str(), upper[i]);
+//			}
+//			std::string tmp = job + ".siox";
+//			const char* nm = tmp.c_str();
+//			add_sial_program(nm);
+//			finalize_setup();
+//		}
+//
+//		TestController controller(job, true, VERBOSE_TEST,
+//				"This is a test of " + job, std::cout, expect_success);
+//		controller.initSipTables();
+//		controller.runWorker();
+//		double total = controller.worker_->scalar_value("total");
+//		if (VERBOSE_TEST) {
+//			std::cout << "num_iters=" << num_iters << ", total=" << total
+//					<< std::endl;
+//		}
+//		EXPECT_EQ(num_iters, int(total));
+//	}
+//}
 
-	//no setup file, but the siox readers expects a SetupReader, so create an empty one.
-	setup::SetupReader &setup_reader = *setup::SetupReader::get_empty_reader();
+void basic_pardo_test(int max_dims, int lower[], int upper[],
+		bool expect_success = true) {
+	assert(max_dims <= 6);
+	for (int num_dims = 1; num_dims <= 6; ++num_dims) {
+		std::stringstream job_ss;
+		job_ss << "pardo_loop_" << num_dims << "d";
+		std::string job = job_ss.str();
 
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+		//total number of iters for this sial program
+		int num_iters = 1;
+		for (int j = 0; j < num_dims; ++j) {
+			num_iters *= ((upper[j] - lower[j]) + 1);
+		}
 
+		//create .dat file
+		if (attr->global_rank() == 0) {
+			init_setup(job.c_str());
+			//add values for upper and lower bounds
+			for (int i = 0; i < num_dims; ++i) {
+				std::stringstream lower_ss, upper_ss;
+				lower_ss << "lower" << i;
+				upper_ss << "upper" << i;
+				set_constant(lower_ss.str().c_str(), lower[i]);
+				set_constant(upper_ss.str().c_str(), upper[i]);
+			}
+			std::string tmp = job + ".siox";
+			const char* nm = tmp.c_str();
+			add_sial_program(nm);
+			finalize_setup();
+		}
 
-	std::string prog_name = job + ".siox";
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	ASSERT_DOUBLE_EQ(80, sip::Interpreter::global_interpreter->data_manager_.scalar_value("counter"));
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
+		TestControllerParallel controller(job, true, VERBOSE_TEST,
+				"This is a test of " + job, std::cout, expect_success);
+		controller.initSipTables();
+		controller.run();
+		if(attr->global_rank()==0) {
+			double total = controller.worker_->scalar_value("total");
+		if (VERBOSE_TEST) {
+			std::cout << "num_iters=" << num_iters << ", total=" << total
+					<< std::endl;
+		}
+		EXPECT_EQ(num_iters, int(total));
 	}
 }
-TEST(Sial,tmp_arrays){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+}
+
+TEST(Sial,pardo_loop) {
+	int MAX_DIMS = 6;
+	int lower[] = { 3, 2, 4, 1, 99, -1 };
+	int upper[] = { 7, 6, 5, 1, 101, 2 };
+	basic_pardo_test(6, lower, upper);
+}
+
+TEST(Sial,pardo_loop_corner_case) {
+	int MAX_DIMS = 6;
+	int lower[] = { 1, 1, 1, 1, 1, 1 };
+	int upper[] = { 1, 1, 1, 1, 1, 1 };
+	basic_pardo_test(6, lower, upper);
+}
+
+/*This case should fail with a message "FATAL ERROR: Pardo loop index i5 has empty range at :26"
+ * IN addition to the assert throw, the controller constructor, which is in basic_pardo_test needs
+ * to be passed false it final parameter, This param has default true, so is omitted in  most tests.
+ */
+TEST(Sial,DISABLED_pardo_loop_illegal_range) {
+	int MAX_DIMS = 6;
+	int lower[] = { 1, 1, 1, 1, 1, 2 };
+	int upper[] = { 1, 1, 1, 1, 1, 1 };
+	ASSERT_THROW(basic_pardo_test(6, lower, upper, false), std::logic_error);
+
+}
+
+TEST(BasicSial,scalar_ops) {
+	std::string job("scalar_ops");
+	std::stringstream out;
+	TestController controller(job, false, VERBOSE_TEST, "", out);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_DOUBLE_EQ(42.0, controller.scalar_value("l"));
+	EXPECT_DOUBLE_EQ(-42.0, controller.scalar_value("nl"));
+	EXPECT_DOUBLE_EQ(0.0, controller.scalar_value("s0"));
+	EXPECT_DOUBLE_EQ(0.0, controller.scalar_value("si0"));
+	EXPECT_DOUBLE_EQ(21.0, controller.scalar_value("sd"));
+	EXPECT_DOUBLE_EQ(16, controller.scalar_value("sr0"));
+	EXPECT_DOUBLE_EQ(4, controller.scalar_value("sr1"));
+	EXPECT_DOUBLE_EQ(16, controller.scalar_value("e0"));
+	EXPECT_EQ(4, controller.int_value("ci0"));
+	EXPECT_EQ(16, controller.int_value("ci1"));
+	EXPECT_EQ(-28, controller.int_value("ci2"));
+	EXPECT_DOUBLE_EQ(1, controller.scalar_value("re1"));
+	EXPECT_DOUBLE_EQ(-1, controller.scalar_value("re2"));
+	EXPECT_DOUBLE_EQ(2, controller.scalar_value("rgt2"));
+	EXPECT_DOUBLE_EQ(15, controller.scalar_value("rgt3"));
+	EXPECT_DOUBLE_EQ(15, controller.scalar_value("rgt4"));
+	EXPECT_DOUBLE_EQ(10, controller.scalar_value("rgt5"));
+	EXPECT_DOUBLE_EQ(10, controller.scalar_value("rgt6"));
+	EXPECT_DOUBLE_EQ(10, controller.scalar_value("rgt7"));
+	EXPECT_DOUBLE_EQ(10, controller.scalar_value("rgt8"));
+	EXPECT_DOUBLE_EQ(10, controller.scalar_value("rgt9"));
+
+}
+
+TEST(BasicSial,int_ops) {
+	std::string job("int_ops");
+	std::stringstream out;
+	TestController controller(job, false, VERBOSE_TEST, "", out);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(42.0, controller.int_value("l"));
+	EXPECT_EQ(-42, controller.int_value("nl"));
+	EXPECT_EQ(0.0, controller.int_value("s0"));
+	EXPECT_EQ(0.0, controller.int_value("si0"));
+	EXPECT_EQ(21.0, controller.int_value("sd"));
+	EXPECT_EQ(10, controller.int_value("sr0"));
+	EXPECT_EQ(-2, controller.int_value("sr1"));
+	EXPECT_EQ(77, controller.int_value("e0"));
+	EXPECT_EQ(4, controller.int_value("ci0"));
+	EXPECT_EQ(12, controller.int_value("ci1"));
+	EXPECT_EQ(3, controller.int_value("ci2"));
+	EXPECT_EQ(1, controller.int_value("re1"));
+	EXPECT_EQ(-1, controller.int_value("re2"));
+	EXPECT_EQ(2, controller.int_value("rgt2"));
+	EXPECT_EQ(15, controller.int_value("rgt3"));
+	EXPECT_EQ(15, controller.int_value("rgt4"));
+	EXPECT_EQ(10, controller.int_value("rgt5"));
+	EXPECT_EQ(10, controller.int_value("rgt6"));
+	EXPECT_EQ(10, controller.int_value("rgt7"));
+	EXPECT_EQ(15, controller.int_value("rgt8"));
+	EXPECT_EQ(10, controller.int_value("rgt9"));
+
+}
+
+TEST(BasicSial,tmp_arrays) {
 	std::string job("tmp_arrays");
-	std::cout << "JOBNAME = " << job << std::endl;
+	std::stringstream output;
 	double x = 3.456;
 	double y = -0.1;
 	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3,4};
-		set_aoindex_info(3,segs);
+		int segs[] = { 2, 3, 4 };
+		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0) {
+		EXPECT_EQ(controller.expectedOutput(), output.str());
 	}
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(0, controller.worker_->num_blocks_in_blockmap());
 }
 
-TEST(Sial,tmp_arrays_2){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,scalar_valued_blocks) {
+	std::string job("scalar_valued_blocks");
+	std::stringstream output;
+	TestController controller(job, false, true, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0) {
+		EXPECT_EQ(controller.expectedOutput(), output.str());
+	}
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(0, controller.worker_->num_blocks_in_blockmap());
+}
+
+TEST(BasicSial,tmp_arrays_2) {
 	std::string job("tmp_arrays_2");
-	std::cout << "JOBNAME = " << job << std::endl;
+	std::stringstream output;
 	double x = 3.456;
 	double y = -0.1;
 	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3,4};
-		set_aoindex_info(3,segs);
+		int segs[] = { 2, 3, 4 };
+		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0) {
+		EXPECT_EQ(controller.expectedOutput(), output.str());
 	}
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(0, controller.worker_->num_blocks_in_blockmap());
 }
 
-
-TEST(Sial,exit_statement_test){
-
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,exit_statement_test) {
 	std::string job("exit_statement_test");
-	std::cout << "JOBNAME = " << job << std::endl;
+	sip::DataManager::scope_count = 0;
 	double x = 3.456;
 	double y = -0.1;
 	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3,4,2,3,4,2,3,4,2,3,4,2,3,4};
-		set_aoindex_info(15,segs);
+		int segs[] = { 2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 3, 4 };
+		set_aoindex_info(15, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
-	;
-	}
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	EXPECT_DOUBLE_EQ(12, controller.int_value("counter_j"));
+	EXPECT_DOUBLE_EQ(4, controller.int_value("counter_i"));
+	EXPECT_EQ(0, sip::DataManager::scope_count);
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(0, controller.worker_->num_blocks_in_blockmap());
 }
 
-TEST(Sial,transpose_tmp){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,transpose_tmp) {
 	std::string job("transpose_tmp");
-	std::cout << "JOBNAME = " << job << std::endl;
+	sip::DataManager::scope_count = 0;
+
 	double x = 3.456;
 	double y = -0.1;
 	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {8,12,10};
-		set_aoindex_info(3,segs);
+		int segs[] = { 8, 12, 10 };
+		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
 	// Get the data for local array block "b"
-	int b_slot = sip::Interpreter::global_interpreter->array_slot(std::string("b"));
+	int b_slot = controller.worker_->array_slot(std::string("b"));
 	sip::index_selector_t b_indices;
-	b_indices[0] = 1; b_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) b_indices[i] = sip::unused_index_value;
+	b_indices[0] = 1;
+	b_indices[1] = 1;
+	for (int i = 2; i < MAX_RANK; i++)
+		b_indices[i] = sip::unused_index_value;
 	sip::BlockId b_bid(b_slot, b_indices);
-	std::cout << b_bid << std::endl;
-	sip::Block::BlockPtr b_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(b_bid);
+	sip::Block::BlockPtr b_bptr = controller.worker_->get_block_for_reading(
+			b_bid);
 	sip::Block::dataPtr b_data = b_bptr->get_data();
-
 	int passed = test_transpose_op(b_data);
-	ASSERT_TRUE(passed);
-
-	}
-
+	EXPECT_TRUE(passed);
+	EXPECT_EQ(0, sip::DataManager::scope_count);
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+//	EXPECT_GT(0, controller.worker_->num_blocks_in_blockmap());
 }
 
-TEST(Sial,fill_sequential){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("fill_sequential_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {4,5};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	//	runner.print_block()
-	;
-	}
-}
-
-
-TEST(Sial,contraction_small_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,contraction_small_test) {
 	std::string job("contraction_small_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	int aoindex_array[] = {15,15,15,15,15,15,15,15,14,14,14,14,12,12};
 
-	{	init_setup(job.c_str());
+	int aoindex_array[] = { 15, 15, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 12,
+			12 };
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
 		set_aoindex_info(14, aoindex_array);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
 		finalize_setup();
 	}
 
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
 
 	// Get the data for local array block "c"
-	int c_slot = sip::Interpreter::global_interpreter->array_slot(
-			std::string("c"));
+	int c_slot = controller.worker_->array_slot(std::string("c"));
 	sip::index_selector_t c_indices;
 	c_indices[0] = 1;
 	c_indices[1] = 1;
@@ -756,9 +566,8 @@ TEST(Sial,contraction_small_test){
 		c_indices[i] = sip::unused_index_value;
 	sip::BlockId c_bid(c_slot, c_indices);
 	std::cout << c_bid << std::endl;
-	sip::Block::BlockPtr c_bptr =
-			sip::Interpreter::global_interpreter->get_block_for_reading(
-					c_bid);
+	sip::Block::BlockPtr c_bptr = controller.worker_->get_block_for_reading(
+			c_bid);
 	sip::Block::dataPtr c_data = c_bptr->get_data();
 
 	// Compare it with the reference
@@ -772,15 +581,15 @@ TEST(Sial,contraction_small_test){
 	double c[I][L];
 
 	int cntr = 0.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++)
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
+			for (int k = 0; k < K; k++)
+				for (int l = 0; l < L; l++)
 					// behavior of super instruction fill_block_cyclic a(i,j,k,l) 1.0
 					a[i][j][k][l] = (cntr++ % 20) + 1;
 
-	for (int i=0; i<I; i++)
-		for (int l=0; l<L; l++)
+	for (int i = 0; i < I; i++)
+		for (int l = 0; l < L; l++)
 			c[i][l] = 0;
 
 	cntr = 0.0;
@@ -789,79 +598,49 @@ TEST(Sial,contraction_small_test){
 			// behavior of super instruction fill_block_cyclic b(j, k) 1.0
 			b[j][k] = (cntr++ % 20) + 1;
 
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++)
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
+			for (int k = 0; k < K; k++)
+				for (int l = 0; l < L; l++)
 					// c[i][l] needs to be in column major order
 					c[l][i] += a[i][j][k][l] * b[j][k];
 
 	for (int i = 0; i < I; i++) {
 		for (int l = 0; l < L; l++) {
-			ASSERT_DOUBLE_EQ(c[l][i], c_data[i * L + l]);
+			EXPECT_DOUBLE_EQ(c[l][i], c_data[i * L + l]);
 		}
 		std::cout << std::endl;
 	}
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
 }
 
-
-
-TEST(Sial,contraction_small_test2){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+/* This test does contraction on GPU is available and implemented */
+TEST(BasicSial,contraction_small_test2) {
 	std::string job("contraction_small_test2");
 	std::cout << "JOBNAME = " << job << std::endl;
-
-	{	init_setup(job.c_str());
-
-		//int aosegs[]  = {2};
-		int aosegs[]  = {9};
-		set_aoindex_info(1,aosegs);
-		int virtoccsegs[] ={5, 4};
-		//int virtoccsegs[] = {2, 2};
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		int aosegs[] = { 9 };
+		set_aoindex_info(1, aosegs);
+		int virtoccsegs[] = { 5, 4 };
 		set_moaindex_info(2, virtoccsegs);
 		set_constant("baocc", 1);
 		set_constant("eaocc", 1);
 		set_constant("bavirt", 2);
 		set_constant("eavirt", 2);
-
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	//reference calculation
 	// Get the data for local array block "c"
-	int c_slot = sip::Interpreter::global_interpreter->array_slot(
-			std::string("c"));
+	int c_slot = controller.worker_->array_slot(std::string("c"));
 	sip::index_selector_t c_indices;
 	c_indices[0] = 1;
 	c_indices[1] = 1;
@@ -871,155 +650,34 @@ TEST(Sial,contraction_small_test2){
 		c_indices[i] = sip::unused_index_value;
 	sip::BlockId c_bid(c_slot, c_indices);
 	std::cout << c_bid << std::endl;
-	sip::Block::BlockPtr c_bptr =
-			sip::Interpreter::global_interpreter->get_block_for_reading(
-					c_bid);
+	sip::Block::BlockPtr c_bptr = controller.worker_->get_block_for_reading(
+			c_bid);
 	sip::Block::dataPtr c_data = c_bptr->get_data();
-
-	// Compare it with the reference
-	//    const int MU = 9;
-	//    const int LA = 9;
-	//    const int I = 5;
-	//    const int I1 = 5;
-	//    const int A1 = 4;
-
-	/*
-	const int MU = 2;
-	const int LA = 2;
-	const int I = 1;
-	const int I1 = 1;
-	const int A1 = 1;
-
-	double a[MU][I1][I][LA];
-	double b[LA][A1];
-	double c[MU][I1][A1][I];
-
-	int line = 0;
-	int cntr = 0.0;
-
-	std::cout<<"Ref a"<<std::endl;
-	for (int mu=0; mu<MU; mu++)
-		for (int i1=0; i1<I1; i1++)
-			for(int i=0; i<I; i++)
-				for (int la=0; la<LA; la++){
-					a[mu][i1][i][la] = (cntr++ % 20) + 1;
-					//a[mu][i1][la][i] = 2.0;
-					std::cout<<a[mu][i1][i][la]<<"\t";
-					if (++line % 9 == 0)
-						std::cout<<std::endl;
-				}
-	std::cout<<std::endl;
-
-	for (int mu=0; mu<MU; mu++)
-		for (int i1=0; i1<I1; i1++)
-			for (int a1=0; a1<A1; a1++)
-				for(int i=0; i<I; i++)
-					c[mu][i1][a1][i] = 0;
-
-	line = 0;
-	cntr = 0.0;
-	std::cout<<"Ref b"<<std::endl;
-	for (int la=0; la<LA; la++)
-		for (int a1=0; a1<A1; a1++){
-			b[la][a1] = (cntr++ % 20) + 1;
-			//b[la][a1] = 2.0;
-			std::cout<<b[la][a1]<<"\t";
-			if (++line % 9 == 0)
-				std::cout<<std::endl;
-		}
-	std::cout<<std::endl;
-
-	int flag = 0;
-	 for (int mu=0; mu<MU; mu++){
-		for (int i1=0; i1<I1; i1++){
-			for(int i=0; i<I; i++){
-				for (int a1=0; a1<A1; a1++){
-					for (int la=0; la<LA; la++){
-						if (!flag){
-							std::cout<<a[mu][i1][i][la]<<"*"<<b[la][a1]<<std::endl;
-						}
-						c[mu][i1][a1][i] += a[mu][i1][i][la] * b[la][a1] ;
-					}
-					flag = 1;
-				}
-			}
-		}
-	}
-
-
-	 line = 0;
-	 std::cout<<"Ref c"<<std::endl;
-	 for (int mu=0; mu<MU; mu++)
-		for (int i1=0; i1<I1; i1++)
-			for (int a1=0; a1<A1; a1++)
-				for(int i=0; i<I; i++){
-					std::cout<<c[mu][i1][a1][i]<<"\t";
-					if (++line % 9 == 0)
-						std::cout<<std::endl;
-				}
-	 std::cout<<std::endl;
-
-
-	 for (int mu=0; mu<MU; mu++)
-		for (int i1=0; i1<I1; i1++)
-			for (int a1=0; a1<A1; a1++)
-				for(int i=0; i<I; i++)
-					//ASSERT_DOUBLE_EQ(c[mu][i1][a1][i], c_data[mu + i1*MU + a1*I1*MU + i*A1*I1*MU]);
-					ASSERT_DOUBLE_EQ(c[mu][i1][a1][i], c_data[mu*I1*A1*I + i1*A1*I + a1*I + i]);
-	*/
 	int matched = test_contraction_small2(c_data);
-	ASSERT_TRUE(matched);
+	EXPECT_TRUE(matched);
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
 }
 
-
-TEST(Sial,sum_op){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,sum_op) { //block addition
 	std::string job("sum_op_test");
-	std::cout << "JOBNAME = " << job << std::endl;
 	double x = 3.456;
 	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {20,5};
-		set_aoindex_info(2,segs);
+		int segs[] = { 20, 5 };
+		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	//	runner.print_block();
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
 
 	// Reference Calculation
 	const int I = 20;
@@ -1031,2100 +689,796 @@ TEST(Sial,sum_op){
 	double e[I][J];
 
 	int cntr = 100.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		// behavior of super instruction fill_block_sequential a(i,j) 100.0
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
+			// behavior of super instruction fill_block_sequential a(i,j) 100.0
 			a[i][j] = cntr++;
 	cntr = 50.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		// behavior of super instruction fill_block_sequential c(i,j) 50.0
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
+			// behavior of super instruction fill_block_sequential c(i,j) 50.0
 			c[i][j] = cntr++;
 
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
 			d[i][j] = a[i][j] + c[i][j];
 
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
 			e[i][j] = d[i][j] - c[i][j];
 
-	std::cout<<"Reference d"<<std::endl;
-	for (int i=0; i<I; i++){
-			for (int j=0; j<J; j++){
-				std::cout<<d[i][j]<<" ";
-			}
-		std::cout<<std::endl;
-	}
-
-	std::cout<<"Reference e"<<std::endl;
-		for (int i=0; i<I; i++){
-				for (int j=0; j<J; j++){
-					std::cout<<e[i][j]<<" ";
-				}
-			std::cout<<std::endl;
-		}
+//		std::cout<<"Reference d"<<std::endl;
+//		for (int i=0; i<I; i++){
+//				for (int j=0; j<J; j++){
+//					std::cout<<d[i][j]<<" ";
+//				}
+//			std::cout<<std::endl;
+//		}
+//
+//		std::cout<<"Reference e"<<std::endl;
+//			for (int i=0; i<I; i++){
+//					for (int j=0; j<J; j++){
+//						std::cout<<e[i][j]<<" ";
+//					}
+//				std::cout<<std::endl;
+//			}
 
 	// Get the data for local array block "c"
-	int d_slot = sip::Interpreter::global_interpreter->array_slot(std::string("d"));
+	int d_slot = controller.worker_->array_slot(std::string("d"));
 	sip::index_selector_t d_indices;
-	d_indices[0] = 1; d_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) d_indices[i] = sip::unused_index_value;
+	d_indices[0] = 1;
+	d_indices[1] = 1;
+	for (int i = 2; i < MAX_RANK; i++)
+		d_indices[i] = sip::unused_index_value;
 	sip::BlockId d_bid(d_slot, d_indices);
 	std::cout << d_bid << std::endl;
-	sip::Block::BlockPtr d_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(d_bid);
+	sip::Block::BlockPtr d_bptr = controller.worker_->get_block_for_reading(
+			d_bid);
 	sip::Block::dataPtr d_data = d_bptr->get_data();
 
-	int e_slot = sip::Interpreter::global_interpreter->array_slot(std::string("e"));
+	int e_slot = controller.worker_->array_slot(std::string("e"));
 	sip::index_selector_t e_indices;
-	e_indices[0] = 1; e_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) e_indices[i] = sip::unused_index_value;
+	e_indices[0] = 1;
+	e_indices[1] = 1;
+	for (int i = 2; i < MAX_RANK; i++)
+		e_indices[i] = sip::unused_index_value;
 	sip::BlockId e_bid(e_slot, e_indices);
 	std::cout << e_bid << std::endl;
-	sip::Block::BlockPtr e_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(e_bid);
+	sip::Block::BlockPtr e_bptr = controller.worker_->get_block_for_reading(
+			e_bid);
 	sip::Block::dataPtr e_data = e_bptr->get_data();
 
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ASSERT_DOUBLE_EQ(d_data[i*J+j], d[i][j]);	// d_data is in column major
+	// Compare against reference calculation
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
+			EXPECT_DOUBLE_EQ(d_data[i * J + j], d[i][j]);// d_data is in column major
 
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ASSERT_DOUBLE_EQ(e_data[i*J+j], e[i][j]);	// e_data is in column major
+	for (int i = 0; i < I; i++)
+		for (int j = 0; j < J; j++)
+			EXPECT_DOUBLE_EQ(e_data[i * J + j], e[i][j]);// e_data is in column major
 
-	}
 }
 
-TEST(Sial,print_block_test){
-
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("print_block_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {2,3};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	//	runner.print_block()
-	;
-	}
-}
-
-TEST(Sial,subindex_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("subindex_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,16};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-		setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-	//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	//	runner.print_block()
-	;
-	}
-}
-
-
-
-TEST(Sial,insert_slice_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("insert_slice_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,16};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
-}
-
-TEST(Sial,static_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,static_array_test) { //tests extracting blocks from contiguous array
 	std::string job("static_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
 	double x = 3.456;
 	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
+	int segs[] = { 3, 4 };
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {8,16};
-		set_aoindex_info(2,segs);
+		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0) EXPECT_EQ(controller.expectedOutput(), output.str());
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 }
 
-
-
-
-TEST(Sial,local_arrays){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,local_arrays) {
 	std::string job("local_arrays");
-	std::cout << "JOBNAME = " << job << std::endl;
 	double x = 3.456;
 	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3};
-		set_aoindex_info(2,segs);
+		int segs[] = { 2, 3 };
+		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0)
+		EXPECT_EQ(controller.expectedOutput(), output.str());
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 }
 
-TEST(Sial,local_arrays_wild){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+TEST(BasicSial,local_arrays_wild) {
+
 	std::string job("local_arrays_wild");
-	std::cout << "JOBNAME = " << job << std::endl;
 	double x = 3.456;
 	int norb = 2;
 
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_constant("norb", norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3};
-		set_aoindex_info(2,segs);
+		int segs[] = { 2, 3 };
+		set_aoindex_info(2, segs);
 		finalize_setup();
 	}
 
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	if (attr->global_rank() == 0)
+		EXPECT_EQ(controller.expectedOutput(), output.str());
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
 
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
 }
 
-TEST(Sial,put_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+
+
+#ifndef HAVE_MPI
+//testing framework cannot gracefully handle errors from MPI processes
+TEST(Sial,local_arrays_wild_fail) {
+
+	std::string job("local_arrays_wild_fail");
+	double x = 3.456;
+	int norb = 2;
+
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_constant("norb", norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		int segs[] = { 2, 3 };
+		set_aoindex_info(2, segs);
+		finalize_setup();
+	}
+
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output, false);
+	controller.initSipTables();
+	if (attr->global_rank() == 0)
+	    EXPECT_THROW(controller.runWorker();, std::logic_error);
+}
+#endif
+
+
+
+#ifdef HAVE_MPI
+TEST(Sial,put_test) {
+
 	std::string job("put_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
+	int norb = 3;
+	int segs[] = {2,3,2};
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("norb_squared", norb*norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
-		int segs[]  = {2,3};
-		set_aoindex_info(2,segs);
+		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
 
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
+	std::stringstream output;
+		TestControllerParallel controller(job, true, VERBOSE_TEST, " ", output);
+		controller.initSipTables();
+		controller.run();
+		if (attr->is_worker()) {
+			EXPECT_TRUE(controller.worker_->all_stacks_empty());
+			std::vector<int> index_vec;
+			for (int i = 0; i < norb; ++i){
+				for (int j = 0; j < norb; ++j){
+					int k = (i*norb + j)+1;
+					index_vec.push_back(k);
+					double * local_block = controller.local_block("result",index_vec);
+					double value = local_block[0];
+					double expected = k*k*segs[i]*segs[j];
+					std::cout << "k,value= " << k << " " << value << std::endl;
+					ASSERT_DOUBLE_EQ(expected, value);
+					index_vec.clear();
+				}
+			}
+		}
 }
 
-
-TEST(Sial,gpu_contraction_small){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_contraction_small_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	int aoindex_array[] = {15,15,15,15,15,15,15,15,14,14,14,14,12,12};
-
-	{	init_setup(job.c_str());
-		set_aoindex_info(14, aoindex_array);
+#else
+TEST(Sial,put_test) {
+	std::string job("put_test");
+	int norb = 3;
+	int segs[] = {2,3,2};
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("norb_squared", norb*norb);
 		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
+		const char* nm = tmp.c_str();
 		add_sial_program(nm);
+		set_aoindex_info(3, segs);
 		finalize_setup();
 	}
+	std::stringstream output;
+	if(attr->is_worker()){
+		TestController controller(job, true, true, "", output);
+		controller.initSipTables();
+		controller.runWorker();
+		EXPECT_TRUE(controller.worker_->all_stacks_empty());
+		std::vector<int> index_vec;
+		for (int i = 0; i < norb; ++i){
+			for (int j = 0; j < norb; ++j){
+				int k = (i*norb + j)+1;
+				index_vec.push_back(k);
+				double * local_block = controller.local_block("result",index_vec);
+				double value = local_block[0];
+				double expected = k*k*segs[i]*segs[j];
+				std::cout << "k,value= " << k << " " << value << std::endl;
+				ASSERT_DOUBLE_EQ(expected, value);
+				index_vec.clear();
+			}
+		}
+	}
+	else {
+		TestController controller(job, true, true, "", output);
+		controller.initSipTables();
+		controller.runServer();
+	}
 
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
+}
+#endif
 
 
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+TEST(BasicSial,contract_to_scalar) {
+std::string job("contract_to_scalar");
+int norb = 2;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 8, 8 };
+	set_aoindex_info(2, segs);
+	finalize_setup();
+}
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+double actual_x = controller.worker_->data_manager_.scalar_value("x");
 
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
+// Compare it with the reference
+const int I = 8;
+const int J = 8;
 
-	// Get the data for local array block "c"
-	int c_slot = sip::Interpreter::global_interpreter->array_slot(
-			std::string("c"));
-	sip::index_selector_t c_indices;
-	c_indices[0] = 1;
-	c_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++)
-		c_indices[i] = sip::unused_index_value;
-	sip::BlockId c_bid(c_slot, c_indices);
-	std::cout << c_bid << std::endl;
-	sip::Block::BlockPtr c_bptr =
-			sip::Interpreter::global_interpreter->get_block_for_reading(
-					c_bid);
-	sip::Block::dataPtr c_data = c_bptr->get_data();
+double a[I][J];
+double b[I][J];
+double ref_x;
 
-	// Compare it with the reference
-	const int I = 15;
-	const int J = 15;
-	const int K = 15;
-	const int L = 15;
+int cntr = 0.0;
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		// behavior of super instruction fill_block_cyclic a(i,j) 1.0
+		a[i][j] = (cntr++ % 20) + 1;
 
-	double a[I][J][K][L];
-	double b[J][K];
-	double c[I][L];
+cntr = 4.0;
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		// behavior of super instruction fill_block_cyclic b(i, j) 5.0
+		b[i][j] = (cntr++ % 20) + 1;
+ref_x = 0;
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		ref_x += a[i][j] * b[i][j];
 
-	int cntr = 0.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++)
-					// behavior of super instruction fill_block_cyclic a(i,j,k,l) 1.0
-					a[i][j][k][l] = (cntr++ % 20) + 1;
+EXPECT_DOUBLE_EQ(ref_x, actual_x);
+std::cout << std::endl;
 
-	for (int i=0; i<I; i++)
-		for (int l=0; l<L; l++)
-			c[i][l] = 0;
+}
 
-	cntr = 0.0;
+TEST(BasicSial,simple_indices_assignments) {
+std::string job("simple_indices_assignments");
+double x = 3.456;
+int norb = 2;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_scalar("x", x);
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 8, 8 };
+	set_aoindex_info(2, segs);
+	finalize_setup();
+}
+
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+EXPECT_DOUBLE_EQ(50, controller.scalar_value("x"));
+EXPECT_DOUBLE_EQ(50, controller.scalar_value("y"));
+
+}
+
+TEST(BasicSial,self_multiply_test) {
+std::string job("self_multiply_test");
+double x = 3.456;
+int norb = 2;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_scalar("x", x);
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 20, 5 };
+	set_aoindex_info(2, segs);
+	finalize_setup();
+}
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+// Reference Calculation
+const int I = 20;
+const int J = 20;
+double a[I][J];
+int cntr = 100.0;
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		// behavior of super instruction fill_block_sequential a(i,j) 100.0
+		a[i][j] = cntr++ * 3.0;
+// Get the data for local array block "c"
+int a_slot = controller.worker_->array_slot(std::string("a"));
+sip::index_selector_t a_indices;
+a_indices[0] = 1;
+a_indices[1] = 1;
+for (int i = 2; i < MAX_RANK; i++)
+	a_indices[i] = sip::unused_index_value;
+sip::BlockId a_bid(a_slot, a_indices);
+std::cout << a_bid << std::endl;
+sip::Block::BlockPtr a_bptr = controller.worker_->get_block_for_reading(a_bid);
+sip::Block::dataPtr a_data = a_bptr->get_data();
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		EXPECT_DOUBLE_EQ(a_data[i * J + j], a[i][j]);
+
+}
+
+TEST(SipInterface,get_int_array_test) {
+std::string job("get_int_array_test");
+double x = 3.456;
+int norb = 2;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_scalar("x", x);
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 8, 8 };
+	int int_array_data[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+	int length[] = { 8 };
+	set_aoindex_info(2, segs);
+	set_predefined_integer_array("int_array_data", 1, length, int_array_data);
+	finalize_setup();
+}
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+// Get the data for local array block "c"
+int c_slot = controller.worker_->array_slot(std::string("c"));
+sip::index_selector_t c_indices;
+c_indices[0] = 1;
+c_indices[1] = 1;
+for (int i = 2; i < MAX_RANK; i++)
+	c_indices[i] = sip::unused_index_value;
+sip::BlockId c_bid(c_slot, c_indices);
+std::cout << c_bid << std::endl;
+sip::Block::BlockPtr c_bptr = controller.worker_->get_block_for_reading(c_bid);
+sip::Block::dataPtr c_data = c_bptr->get_data();
+
+// Compare
+for (int i = 1; i <= 8; i++) {
+	EXPECT_DOUBLE_EQ(i, c_data[i - 1]);
+}
+
+}
+
+TEST(SipInterface,get_scalar_array_test) {
+std::string job("get_scalar_array_test");
+std::cout << "JOBNAME = " << job << std::endl;
+double x = 3.456;
+int norb = 2;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_scalar("x", x);
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 8, 8 };
+	double scalar_array_data[] = { 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
+	int length[] = { 8 };
+	set_aoindex_info(2, segs);
+	set_predefined_scalar_array("scalar_array_data", 1, length,
+			scalar_array_data);
+	finalize_setup();
+}
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+// Get the data for local array block "c"
+int c_slot = controller.worker_->array_slot(std::string("c"));
+sip::index_selector_t c_indices;
+c_indices[0] = 1;
+c_indices[1] = 1;
+for (int i = 2; i < MAX_RANK; i++)
+	c_indices[i] = sip::unused_index_value;
+sip::BlockId c_bid(c_slot, c_indices);
+std::cout << c_bid << std::endl;
+sip::Block::BlockPtr c_bptr = controller.worker_->get_block_for_reading(c_bid);
+sip::Block::dataPtr c_data = c_bptr->get_data();
+
+for (int i = 2; i <= 9; i++) {
+	EXPECT_DOUBLE_EQ(i, c_data[i - 2]);
+}
+
+}
+
+TEST(SipInterface,get_scratch_array_test) {
+std::string job("get_scratch_array_test");
+double x = 3.456;
+int norb = 2;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 32, 8 };
+	int length[] = { 8 };
+	set_aoindex_info(2, segs);
+	finalize_setup();
+}
+
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+// Get the data for local array block "c"
+int c_slot = controller.worker_->array_slot(std::string("c"));
+sip::index_selector_t c_indices;
+c_indices[0] = 1;
+c_indices[1] = 1;
+for (int i = 2; i < MAX_RANK; i++)
+	c_indices[i] = sip::unused_index_value;
+sip::BlockId c_bid(c_slot, c_indices);
+std::cout << c_bid << std::endl;
+sip::Block::BlockPtr c_bptr = controller.worker_->get_block_for_reading(c_bid);
+sip::Block::dataPtr c_data = c_bptr->get_data();
+
+for (int i = 1; i <= 32; i++) {
+	EXPECT_DOUBLE_EQ(i, c_data[i - 1]);
+}
+
+}
+
+TEST(BasicSial,transpose4d_tmp) {
+std::string job("transpose4d_tmp");
+double x = 3.456;
+double y = -0.1;
+int norb = 3;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_scalar("x", x);
+	set_scalar("y", y);
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int virtoccsegs[] = { 1, 5, 4 };
+	set_moaindex_info(3, virtoccsegs);
+	set_constant("baocc", 1);
+	set_constant("eaocc", 1);
+	set_constant("bavirt", 2);
+	set_constant("eavirt", 2);
+	finalize_setup();
+}
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+// Get the data for local array block "b"
+int b_slot = controller.worker_->array_slot(std::string("b"));
+sip::index_selector_t b_indices;
+b_indices[0] = 2;
+b_indices[1] = 1;
+b_indices[2] = 2;
+b_indices[3] = 1;
+for (int i = 4; i < MAX_RANK; i++)
+	b_indices[i] = sip::unused_index_value;
+sip::BlockId b_bid(b_slot, b_indices);
+sip::Block::BlockPtr b_bptr = controller.worker_->get_block_for_reading(b_bid);
+sip::Block::dataPtr b_data = b_bptr->get_data();
+int passed = test_transpose4d_op(b_data);
+EXPECT_TRUE(passed);
+
+}
+
+TEST(BasicSial,transpose4d_square_tmp) {
+std::string job("transpose4d_square_tmp");
+double x = 3.456;
+double y = -0.1;
+int norb = 3;
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_scalar("x", x);
+	set_scalar("y", y);
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 8, 8, 8 };
+	set_aoindex_info(3, segs);
+	finalize_setup();
+}
+std::stringstream output;
+TestController controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.runWorker();
+// Get the data for local array block "b"
+int b_slot = controller.worker_->array_slot(std::string("b"));
+sip::index_selector_t b_indices;
+b_indices[0] = 1;
+b_indices[1] = 1;
+for (int i = 2; i < MAX_RANK; i++)
+	b_indices[i] = sip::unused_index_value;
+sip::BlockId b_bid(b_slot, b_indices);
+sip::Block::BlockPtr b_bptr = controller.worker_->get_block_for_reading(b_bid);
+sip::Block::dataPtr b_data = b_bptr->get_data();
+const int I = 8;
+const int J = 8;
+const int K = 8;
+const int L = 8;
+double a[I][J][K][L];
+double b[K][J][I][L];
+double esum1 = 0.0;
+double esum2 = 0.0;
+double esum3 = 0.0;
+
+// Fill A
+int counter = 0.0;
+for (int i = 0; i < I; i++)
 	for (int j = 0; j < J; j++)
 		for (int k = 0; k < K; k++)
-			// behavior of super instruction fill_block_cyclic b(j, k) 1.0
-			b[j][k] = (cntr++ % 20) + 1;
+			for (int l = 0; l < L; l++)
+				a[i][j][k][l] = (counter++ % 20) + 1;
 
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++)
-					// c[i][l] needs to be in column major order
-					c[l][i] += a[i][j][k][l] * b[j][k];
+// Fill B
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		for (int k = 0; k < K; k++)
+			for (int l = 0; l < L; l++)
+				b[k][j][i][l] = a[i][j][k][l];
 
-	for (int i = 0; i < I; i++) {
-		for (int l = 0; l < L; l++) {
-			ASSERT_DOUBLE_EQ(c[l][i], c_data[i * L + l]);
-		}
-		std::cout << std::endl;
-	}
-
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
-}
-
-TEST(Sial,gpu_sum_op){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_sum_op_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {20,5};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block();
-
-	// Reference Calculation
-	const int I = 20;
-	const int J = 20;
-
-	double a[I][J];
-	double c[I][J];
-	double d[I][J];
-	double e[I][J];
-
-	int cntr = 100.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		// behavior of super instruction fill_block_sequential a(i,j) 100.0
-			a[i][j] = cntr++;
-	cntr = 50.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		// behavior of super instruction fill_block_sequential c(i,j) 50.0
-			c[i][j] = cntr++;
-
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			d[i][j] = a[i][j] + c[i][j];
-
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			e[i][j] = d[i][j] - c[i][j];
-
-	std::cout<<"Reference d"<<std::endl;
-	for (int i=0; i<I; i++){
-			for (int j=0; j<J; j++){
-				std::cout<<d[i][j]<<" ";
+// Calculate esum1 & esum2;
+for (int i = 0; i < I; i++)
+	for (int j = 0; j < J; j++)
+		for (int k = 0; k < K; k++)
+			for (int l = 0; l < L; l++) {
+				esum1 += a[i][j][k][l] * a[i][j][k][l];
+				esum2 += b[k][j][i][l] * b[k][j][i][l];
+				esum3 += a[i][j][k][l] * b[k][j][i][l];
 			}
-		std::cout<<std::endl;
-	}
 
-	std::cout<<"Reference e"<<std::endl;
-		for (int i=0; i<I; i++){
-				for (int j=0; j<J; j++){
-					std::cout<<e[i][j]<<" ";
-				}
-			std::cout<<std::endl;
-		}
+double actual_esum1 = controller.scalar_value("esum1");
+double actual_esum2 = controller.scalar_value("esum2");
+double actual_esum3 = controller.scalar_value("esum3");
 
-	// Get the data for local array block "c"
-	int d_slot = sip::Interpreter::global_interpreter->array_slot(std::string("d"));
-	sip::index_selector_t d_indices;
-	d_indices[0] = 1; d_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) d_indices[i] = sip::unused_index_value;
-	sip::BlockId d_bid(d_slot, d_indices);
-	std::cout << d_bid << std::endl;
-	sip::Block::BlockPtr d_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(d_bid);
-	sip::Block::dataPtr d_data = d_bptr->get_data();
-
-	int e_slot = sip::Interpreter::global_interpreter->array_slot(std::string("e"));
-	sip::index_selector_t e_indices;
-	e_indices[0] = 1; e_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) e_indices[i] = sip::unused_index_value;
-	sip::BlockId e_bid(e_slot, e_indices);
-	std::cout << e_bid << std::endl;
-	sip::Block::BlockPtr e_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(e_bid);
-	sip::Block::dataPtr e_data = e_bptr->get_data();
-
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ASSERT_DOUBLE_EQ(d_data[i*J+j], d[i][j]);	// d_data is in column major
-
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ASSERT_DOUBLE_EQ(e_data[i*J+j], e[i][j]);	// e_data is in column major
-
-	}
-}
-
-
-TEST(Sial,gpu_ops){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_ops");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-//			set_scalar("x",x);
-//			set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {4,4,4,4,4,4,4,4	};
-		set_aoindex_info(8,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_DOUBLE_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
-}
-
-
-TEST(Sial,contract_to_scalar){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("contract_to_scalar");
-	std::cout << "JOBNAME = " << job << std::endl;
-	//double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		//set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,8};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	double actual_x = runner.data_manager_.scalar_value("x");
-//	runner.print_block();
-
-	// Compare it with the reference
-	const int I = 8;
-	const int J = 8;
-
-	double a[I][J];
-	double b[I][J];
-	double ref_x;
-
-	int cntr = 0.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		 // behavior of super instruction fill_block_cyclic a(i,j) 1.0
-			a[i][j] = (cntr++ % 20) + 1;
-
-	cntr = 4.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			// behavior of super instruction fill_block_cyclic b(i, j) 5.0
-			b[i][j] = (cntr++ % 20) + 1;
-	ref_x = 0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ref_x += a[i][j] * b[i][j];
-
-	ASSERT_DOUBLE_EQ(ref_x, actual_x);
-	std::cout << std::endl;
-	}
-}
-
-TEST(Sial,gpu_contract_to_scalar){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_contract_to_scalar");
-	std::cout << "JOBNAME = " << job << std::endl;
-	//double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		//set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,8};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	double actual_c = runner.data_manager_.scalar_value("x");
-//	runner.print_block();
-
-	// Compare it with the reference
-	const int I = 8;
-	const int J = 8;
-
-	double a[I][J];
-	double b[I][J];
-	double ref_c;
-
-	int cntr = 0.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		 // behavior of super instruction fill_block_cyclic a(i,j) 1.0
-			a[i][j] = (cntr++ % 20) + 1;
-
-	cntr = 4.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			// behavior of super instruction fill_block_cyclic b(i, j) 5.0
-			b[i][j] = (cntr++ % 20) + 1;
-	ref_c = 0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ref_c += a[i][j] * b[i][j];
-
-	ASSERT_DOUBLE_EQ(ref_c, actual_c);
-	std::cout << std::endl;
-	}
-}
-
-TEST(Sial,gpu_transpose_tmp){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_transpose_tmp");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	double y = -0.1;
-	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,12,10};
-		set_aoindex_info(3,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
-	// Get the data for local array block "b"
-	int b_slot = sip::Interpreter::global_interpreter->array_slot(std::string("b"));
-	sip::index_selector_t b_indices;
-	b_indices[0] = 1; b_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) b_indices[i] = sip::unused_index_value;
-	sip::BlockId b_bid(b_slot, b_indices);
-	std::cout << b_bid << std::endl;
-	sip::Block::BlockPtr b_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(b_bid);
-	sip::Block::dataPtr b_data = b_bptr->get_data();
-
-
-//		const int I = 8;
-//		const int J = 8;
-//		const int K = 8;
-//		double b_ref[J][K][I];
-//		double a[I][J][K];
-//
-//		int cntr = 53;
-//		for (int i=0; i<I; i++){
-//			for (int j=0; j<J; j++){
-//				for (int k=0; k<K; k++){
-//					a[i][j][k] = cntr++;
-//				}
-//			}
-//		}
-//
-//		for (int i = 0; i < I; i++) {
-//			for (int j = 0; j < J; j++) {
-//				for (int k = 0; k < K; k++) {
-//					b_ref[j][k][i] = a[i][j][k];
-//				}
-//			}
-//		}
-//
-//        // Printing out reference
-//        std::cout<<"Reference b"<<std::endl;
-//		for (int i = 0; i < I; i++) {
-//			for (int j = 0; j < J; j++) {
-//				for (int k = 0; k < K; k++) {
-//					std::cout<<b_ref[i][j][k]<<" ";
-//				}
-//			}
-//            std::cout<<std::endl;
-//		}
-//
-//        // Printing out calculated
-//        std::cout<<"Caclulated b"<<std::endl;
-//		for (int i = 0; i < I; i++) {
-//			for (int j = 0; j < J; j++) {
-//				for (int k = 0; k < K; k++) {
-//					std::cout<< b_data[i + j*I + k*J*I]<<" ";
-//				}
-//			}
-//            std::cout<<std::endl;
-//		}
-//
-//		for (int i = 0; i < I; i++) {
-//			for (int j = 0; j < J; j++) {
-//				for (int k = 0; k < K; k++) {
-//				    ASSERT_EQ(b_ref[i][j][k], b_data[i + j*I + k*J*I]);
-//				}
-//			}
-//		}
-
-	int passed = test_transpose_op(b_data);
-	ASSERT_TRUE(passed);
-
-	}
+EXPECT_DOUBLE_EQ(esum1, actual_esum1);
+EXPECT_DOUBLE_EQ(esum2, actual_esum2);
+EXPECT_DOUBLE_EQ(esum3, actual_esum3);
 
 }
-
-TEST(Sial,simple_indices_assignments){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("simple_indices_assignments");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,8};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
-
-}
-
-
-
-TEST(Sial,self_multiply_op){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("self_multiply_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {20,5};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block();
-
-	// Reference Calculation
-	const int I = 20;
-	const int J = 20;
-
-	double a[I][J];
-
-	int cntr = 100.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		// behavior of super instruction fill_block_sequential a(i,j) 100.0
-			a[i][j] = cntr++ * 3.0;
-
-	// Get the data for local array block "c"
-	int a_slot = sip::Interpreter::global_interpreter->array_slot(std::string("a"));
-	sip::index_selector_t a_indices;
-	a_indices[0] = 1; a_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) a_indices[i] = sip::unused_index_value;
-	sip::BlockId a_bid(a_slot, a_indices);
-	std::cout << a_bid << std::endl;
-	sip::Block::BlockPtr a_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(a_bid);
-	sip::Block::dataPtr a_data = a_bptr->get_data();
-
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ASSERT_DOUBLE_EQ(a_data[i*J+j], a[i][j]);
-	}
-}
-
-TEST(Sial,gpu_self_multiply_op){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_self_multiply_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {20,5};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block();
-
-	// Reference Calculation
-	const int I = 20;
-	const int J = 20;
-
-	double a[I][J];
-
-	int cntr = 100.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-		// behavior of super instruction fill_block_sequential a(i,j) 100.0
-			a[i][j] = cntr++ * 3.0;
-
-	// Get the data for local array block "c"
-	int a_slot = sip::Interpreter::global_interpreter->array_slot(std::string("a"));
-	sip::index_selector_t a_indices;
-	a_indices[0] = 1; a_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) a_indices[i] = sip::unused_index_value;
-	sip::BlockId a_bid(a_slot, a_indices);
-	std::cout << a_bid << std::endl;
-	sip::Block::BlockPtr a_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(a_bid);
-	sip::Block::dataPtr a_data = a_bptr->get_data();
-
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			ASSERT_DOUBLE_EQ(a_data[i*J+j], a[i][j]);
-	}
-}
-
-
-
-TEST(Sial,get_int_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("get_int_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,8};
-		int int_array_data[] = {1,2,3,4,5,6,7,8};
-		int length[] = {8};
-		set_aoindex_info(2,segs);
-		set_predefined_integer_array("int_array_data", 1,length, int_array_data);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-
-	// Get the data for local array block "c"
-	int c_slot = sip::Interpreter::global_interpreter->array_slot(
-		std::string("c"));
-	sip::index_selector_t c_indices;
-	c_indices[0] = 1;
-	c_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++)
-		c_indices[i] = sip::unused_index_value;
-	sip::BlockId c_bid(c_slot, c_indices);
-	std::cout << c_bid << std::endl;
-	sip::Block::BlockPtr c_bptr =
-		sip::Interpreter::global_interpreter->get_block_for_reading(
-				c_bid);
-	sip::Block::dataPtr c_data = c_bptr->get_data();
-
-	for (int i=1; i<=8; i++){
-		ASSERT_DOUBLE_EQ(i, c_data[i-1]);
-	}
-
-	}
-}
-
-TEST(Sial,get_scalar_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("get_scalar_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,8};
-		double scalar_array_data[] = {2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0};
-		int length[] = {8};
-		set_aoindex_info(2,segs);
-		set_predefined_scalar_array("scalar_array_data", 1,length, scalar_array_data);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	// Get the data for local array block "c"
-	int c_slot = sip::Interpreter::global_interpreter->array_slot(
-		std::string("c"));
-	sip::index_selector_t c_indices;
-	c_indices[0] = 1;
-	c_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++)
-		c_indices[i] = sip::unused_index_value;
-	sip::BlockId c_bid(c_slot, c_indices);
-	std::cout << c_bid << std::endl;
-	sip::Block::BlockPtr c_bptr =
-		sip::Interpreter::global_interpreter->get_block_for_reading(
-				c_bid);
-	sip::Block::dataPtr c_data = c_bptr->get_data();
-
-	for (int i=2; i<=9; i++){
-		ASSERT_DOUBLE_EQ(i, c_data[i-2]);
-	}
-	}
-}
-
-
-TEST(Sial,get_scratch_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("get_scratch_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{
-		init_setup(job.c_str());
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {32,8};
-		int length[] = {8};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	// Get the data for local array block "c"
-	int c_slot = sip::Interpreter::global_interpreter->array_slot(
-		std::string("c"));
-	sip::index_selector_t c_indices;
-	c_indices[0] = 1;
-	c_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++)
-		c_indices[i] = sip::unused_index_value;
-	sip::BlockId c_bid(c_slot, c_indices);
-	std::cout << c_bid << std::endl;
-	sip::Block::BlockPtr c_bptr =
-		sip::Interpreter::global_interpreter->get_block_for_reading(
-				c_bid);
-	sip::Block::dataPtr c_data = c_bptr->get_data();
-
-	for (int i=1; i<=32; i++){
-		ASSERT_DOUBLE_EQ(i, c_data[i-1]);
-	}
-	}
-
-}
-
-
-TEST(Sial,gpu_contraction_predefined){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("gpu_contraction_predefined_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	int aoindex_array[] = {15,15,15,15,15,15,15,15,14,14,14,14,12,12};
-
-	const int A = 15;
-	const int B = 15;
-	double ca[A][B];
-
-	const char * arrName = "ca";
-	int dims[2] = {15, 15};
-	for (int i=0; i<A; i++)
-		for (int j=0; j<B; j++)
-			ca[i][j] = 1;
-
-	{	init_setup(job.c_str());
-		set_aoindex_info(14, aoindex_array);
-		set_predefined_scalar_array(arrName, 2, dims, &ca[0][0]);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-
-	// Get value of scalar "v1"
-	double actual_v1 = runner.data_manager_.scalar_value("v1");
-
-	// Compare it with the reference
-	int cntr = 0;
-	double v2[A][B];
-	for (int i=0; i<A; i++)
-		for (int j=0; j<B; j++)
-			v2[i][j] = cntr++ % 20 + 1;
-
-	double ref_v1 = 0;
-	for (int i=0; i<A; i++)
-		for (int j=0; j<B; j++)
-			ref_v1 += v2[i][j] * ca[i][j];
-
-	ASSERT_DOUBLE_EQ(ref_v1, actual_v1);
-
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-	}
-}
-
-TEST(Sial,transpose4d_tmp){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("transpose4d_tmp");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	double y = -0.1;
-	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		//int aosegs[]  = {8};
-		//set_aoindex_info(1,aosegs);
-		int virtoccsegs[] = {1, 5, 4};
-		set_moaindex_info(3, virtoccsegs);
-		set_constant("baocc", 1);
-		set_constant("eaocc", 1);
-		set_constant("bavirt", 2);
-		set_constant("eavirt", 3);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
-	std::cout << "PRINTING BLOCK MAP" << std::endl;
-	std::cout << sip::Interpreter::global_interpreter->data_manager_.block_manager_ << std::endl;
-
-	// Get the data for local array block "b"
-	int b_slot = sip::Interpreter::global_interpreter->array_slot(std::string("b"));
-	sip::index_selector_t b_indices;
-	b_indices[0] = 1; b_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) b_indices[i] = sip::unused_index_value;
-	sip::BlockId b_bid(b_slot, b_indices);
-	std::cout << "b_bid = " << b_bid << std::endl;
-//		array::Block::BlockPtr b_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(b_bid);
-//		array::Block::dataPtr b_data = b_bptr->get_data();
-//
-//
-//		int passed = test_transpose4d_op(b_data);
-//		ASSERT_TRUE(passed);
-
-	}
-
-}
-
-TEST(Sial,transpose4d_square_tmp){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("transpose4d_square_tmp");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	double y = -0.1;
-	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,8,8};
-		set_aoindex_info(3,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
-	// Get the data for local array block "b"
-	int b_slot = sip::Interpreter::global_interpreter->array_slot(std::string("b"));
-	sip::index_selector_t b_indices;
-	b_indices[0] = 1; b_indices[1] = 1;
-	for (int i = 2; i < MAX_RANK; i++) b_indices[i] = sip::unused_index_value;
-	sip::BlockId b_bid(b_slot, b_indices);
-	std::cout << b_bid << std::endl;
-	sip::Block::BlockPtr b_bptr = sip::Interpreter::global_interpreter->get_block_for_reading(b_bid);
-	sip::Block::dataPtr b_data = b_bptr->get_data();
-
-
-	const int I = 8;
-	const int J = 8;
-	const int K = 8;
-	const int L = 8;
-	double a[I][J][K][L];
-	double b[K][J][I][L];
-	double esum1 = 0.0;
-	double esum2 = 0.0;
-	double esum3 = 0.0;
-
-	// Fill A
-	int counter = 0.0;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++)
-					a[i][j][k][l] = (counter++ %20) + 1;
-
-	// Fill B
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++)
-					b[k][j][i][l] = a[i][j][k][l];
-
-	// Calculate esum1 & esum2;
-	for (int i=0; i<I; i++)
-		for (int j=0; j<J; j++)
-			for (int k=0; k<K; k++)
-				for (int l=0; l<L; l++){
-					esum1 += a[i][j][k][l] * a[i][j][k][l];
-					esum2 += b[k][j][i][l] * b[k][j][i][l];
-					esum3 += a[i][j][k][l] * b[k][j][i][l];
-				}
-
-	double actual_esum1 = runner.data_manager_.scalar_value("esum1");
-	double actual_esum2 = runner.data_manager_.scalar_value("esum2");
-	double actual_esum3 = runner.data_manager_.scalar_value("esum3");
-
-	ASSERT_DOUBLE_EQ(esum1, actual_esum1);
-	ASSERT_DOUBLE_EQ(esum2, actual_esum2);
-	ASSERT_DOUBLE_EQ(esum3, actual_esum3);
-
-	}
-}
-
-TEST(Sial,reproduce_transpose_problem){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("reproduce_transpose_problem");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	double y = -0.1;
-	int norb = 3;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_scalar("y",y);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		//int aosegs[]  = {8};
-		//set_aoindex_info(1,aosegs);
-		int virtoccsegs[] = {1, 5, 4};
-		set_moaindex_info(3, virtoccsegs);
-		set_constant("baocc", 1);
-		set_constant("eaocc", 1);
-		set_constant("bavirt", 2);
-		set_constant("eavirt", 3);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-
-	std::cout << "PRINTING BLOCK MAP" << std::endl;
-	std::cout << sip::Interpreter::global_interpreter->data_manager_.block_manager_ << std::endl;
-
-
-
-
-	}
-
-}
-
-TEST(Sial,assign_to_static_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
+//TODO  Add result check
+TEST(BasicSial,assign_to_static_array_test){
 	std::string job("assign_to_static_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 4;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {8,16,5,6};
-		set_aoindex_info(4,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	sip::Interpreter runner(sipTables, sialxTimer);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
-}
-
-TEST(Sial,set_persistent_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("set_persistent_test");
-	std::string job2("restore_persistent_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
+	int norb = 3;
 	{
 		init_setup(job.c_str());
-		set_scalar("x",x);
-		double ca_array[6] = {7, 8, 9, 10, 11, 12};
-		int dims[] = {2, 2};
-		set_predefined_scalar_array("ca", 2, dims, ca_array);
-		int segs[]  = {2,3};
-		set_aoindex_info(2,segs);
 		set_constant("norb",norb);
 		std::string tmp = job + ".siox";
-		std::string tmp2 = job2 + ".siox";
-		const char* nm= tmp.c_str();
-		const char* nm2 = tmp2.c_str();
-		add_sial_program(nm);
-		add_sial_program(nm2);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	setup::BinaryInputFile setup_file(job + ".dat");
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
-
-	{
-
-			//get siox name from setup, load and print the sip tables
-			std::string prog_name = setup_reader.sial_prog_list_.at(0);
-			sip::GlobalState::set_program_name(prog_name);
-			std::string siox_dir(dir_name);
-			setup::BinaryInputFile siox_file(siox_dir + prog_name);
-		//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-		//	siox_reader.read();
-			sip::SipTables sipTables(setup_reader, siox_file);
-			std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-		//interpret the program
-		{
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm);
-			std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-			runner.interpret();
-			std::cout<<"PBM:"<<std::endl << *pbm << std::endl;
-			pbm->save_marked_arrays(&runner);
-			std::cout <<"PBM after saving:"<<std::endl << *pbm << std::endl;
-			ASSERT_EQ(0, sip::DataManager::scope_count);
-			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-		}
-	}
-	std::cout<<"PBM1:"<<std::endl << *pbm << std::endl;
-
-	{
-
-			//get siox name from setup, load and print the sip tables
-			std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
-			std::string siox_dir(dir_name);
-			setup::BinaryInputFile siox_file(siox_dir + prog_name2);
-			sip::GlobalState::set_program_name(prog_name2);
-		//	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-		//	siox_reader.read();
-			sip::SipTables sipTables(setup_reader, siox_file);
-			std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-		//interpret the program
-		{
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::Interpreter runner(sipTables, sialxTimer, pbm);
-			std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-			runner.interpret();
-			ASSERT_EQ(0, sip::DataManager::scope_count);
-			std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-		}
-	}
-	std::cout<<"PBM3:"<<std::endl;
-	std::cout<<*pbm<<std::endl;
-
-}
-
-TEST(Sial,persistent_static_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("persistent_static_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + "1.siox";
 		const char* nm= tmp.c_str();
 		add_sial_program(nm);
-		std::string tmp1 = job + "2.siox";
-		const char* nm1= tmp1.c_str();
-		add_sial_program(nm1);
-		int segs[]  = {8,16};
-		set_aoindex_info(2,segs);
+		int segs[]  = {2,2,1};
+		set_aoindex_info(3,segs);
 		finalize_setup();
 	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
-
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
-	sip::Interpreter runner(sipTables, sialxTimer, pbm);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	pbm->save_marked_arrays(&runner);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
-	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables2(setup_reader, siox_file2);
-	std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables2 << std::endl;
-
-
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables2.max_timer_slots());
-
-	sip::Interpreter runner(sipTables2, sialxTimer, pbm);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-	}
-	delete pbm;
+	std::stringstream output;
+	TestController controller(job, true, true, "", output);
+	controller.initSipTables();
+	controller.runWorker();
 }
 
+////TODO  FIXTHIS
+//TEST(BasicSial,basic_assign_to_static_array_test){
+//	std::string job("basic_assign_to_static_array_test");
+//	int norb = 3;
+//	{
+//		init_setup(job.c_str());
+//		set_constant("norb",norb);
+//		std::string tmp = job + ".siox";
+//		const char* nm= tmp.c_str();
+//		add_sial_program(nm);
+//		int segs[]  = {1,1,1}; //total size of dimension is 3.  Used below
+//		set_aoindex_info(3,segs);
+//		finalize_setup();
+//	}
+//	std::stringstream output;
+//	TestController controller(job, true, true, "", output);
+//	controller.initSipTables();
+//	controller.runWorker();
+//	int a_slot = controller.worker_->array_slot("a");
+//	int ap_slot = controller.worker_->array_slot("ap");
+//	sip::Block::BlockPtr ablock = controller.worker_->data_manager_.contiguous_array_manager_.get_array(a_slot);
+//	sip::Block::BlockPtr apblock = controller.worker_->data_manager_.contiguous_array_manager_.get_array(ap_slot);
+//	double *a = ablock->get_data();
+//	double *ap = apblock->get_data();
+//	std::cout << "a[0],a*= " << a[0] << ", " << *a << "," << *(a+1) << std::endl;
+//	std::cout << "ap[0],ap*= " << ap[0] << ", " << *ap << "," << *(ap+1) << std::endl;
 
-TEST(Sial,persistent_distributed_array_test){
-	std::cout << "****************************************\n";
-	sip::DataManager::scope_count=0;
-	//create setup_file
-	std::string job("persistent_distributed_array_test");
-	std::cout << "JOBNAME = " << job << std::endl;
-	double x = 3.456;
-	int norb = 2;
-
-	{	init_setup(job.c_str());
-		set_scalar("x",x);
-		set_constant("norb",norb);
-		std::string tmp = job + "1.siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		std::string tmp1 = job + "2.siox";
-		const char* nm1= tmp1.c_str();
-		add_sial_program(nm1);
-		int segs[]  = {8,16};
-		set_aoindex_info(2,segs);
-		finalize_setup();
-	}
-
-	//read and print setup_file
-	//// setup::SetupReader setup_reader;
-
-	setup::BinaryInputFile setup_file(job + ".dat");
-	// setup_reader.read(setup_file);
-	setup::SetupReader setup_reader(setup_file);
-
-	std::cout << "SETUP READER DATA:\n" << setup_reader<< std::endl;
-	sip::PersistentArrayManager<sip::Block,sip::Interpreter>* pbm;
-	pbm = new sip::PersistentArrayManager<sip::Block,sip::Interpreter>();
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-	std::string siox_dir(dir_name);
-	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables(setup_reader, siox_file);
-	std::cout << "SIP TABLES" << '\n' << sipTables << std::endl;
+//	int l = 3; //sum of segment sizes
+//	for (int i = 0; i < l; ++i)
+//		for (int j = 0; j < l; ++j)
+//			for (int k=0; k < l; ++k)
+//				for (int n=0; k < l; ++n){
+//					double aval = *(a + i + j*l + k*l*l + n*l*l*l);
+//					double apval = *(ap + j + k*l + n*l*l + i*l*l*l);
+//					EXPECT_DOUBLE_EQ(aval,apval);
+//				}
+//}
 
 
-	//interpret the program
-	{
-	sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 
-	sip::Interpreter runner(sipTables, sialxTimer, pbm);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-	pbm->save_marked_arrays(&runner);
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-;
-	}
-	//get siox name from setup, load and print the sip tables
-	std::string prog_name2 = setup_reader.sial_prog_list_.at(1);
-	setup::BinaryInputFile siox_file2(siox_dir + prog_name2);
-	// sip::SioxReader siox_reader(&sipTables, &siox_file, &setup_reader);
-//	siox_reader.read();
-	sip::SipTables sipTables2(setup_reader, siox_file2);
-	std::cout << "SIP TABLES FOR PROGRAM 2" << '\n' << sipTables2 << std::endl;
+//TODO  restore functionality for single node version.  Was lost when PersistentArrayManager.h was refactored into
+//worker and server versions.
+
+//TEST(Sial,DISABLED_DISABLED_DISABLED_persistent_scalars){
+//	std::string job("persistent_scalars");
+//	std::cout << "JOBNAME = " << job << std::endl;
+//	double x = 3.456;
+//	double y = -0.1;
+//
+//	{
+//		init_setup(job.c_str());
+//		set_scalar("x",x);
+//		set_scalar("y",y);
+//		std::string tmp1 = job + "_1.siox";
+//		const char* nm1= tmp1.c_str();
+//		add_sial_program(nm1);
+//		std::string tmp2 = job + "_2.siox";
+//		const char* nm2= tmp2.c_str();
+//		add_sial_program(nm2);
+//		finalize_setup();
+//	}
+//
+//	std::stringstream output;
+//	TestControllerMultiple controller(job, true, VERBOSE_TEST, "", output);
+//	controller.initSipTables();
+//	controller.runWorker();
+//
+//		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
+//		ASSERT_DOUBLE_EQ(x, scalar_value("z"));
+//		ASSERT_DOUBLE_EQ(99.99, scalar_value("zz"));
+//
+//		std::cout << "wpam:" << std::endl << *controller.wpam_ << std::endl << "%%%%%%%%%%%%"<< std::endl;
+//
+//
+//	//Now do the second program
+//	//get siox name from setup, load and print the sip tables
+//	controller.initSipTables();
+//	controller.runWorker();
+//		ASSERT_DOUBLE_EQ(x+1, scalar_value("x"));
+//		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
+//		ASSERT_DOUBLE_EQ(6, scalar_value("e"));
+//		ASSERT_EQ(0, sip::DataManager::scope_count);
+//	}
+//
 
 
-	//interpret the program
-	{
+//****************************************************************************************************************
 
-	sip::SialxTimer sialxTimer2(sipTables2.max_timer_slots());
-
-	sip::Interpreter runner2(sipTables2, sialxTimer2, pbm);
-	std::cout << "SIAL PROGRAM OUTPUT" << std::endl;
-	runner2.interpret();
-	ASSERT_EQ(0, sip::DataManager::scope_count);
-
-	std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//	runner.print_block()
-	}
-	//delete pbm;
+void bt_sighandler(int signum) {
+std::cerr << "Interrupt signal (" << signum << ") received." << std::endl;
+FAIL();
+abort();
 }
+
 int main(int argc, char **argv) {
 
+//    feenableexcept(FE_DIVBYZERO);
+//    feenableexcept(FE_OVERFLOW);
+//    feenableexcept(FE_INVALID);
+//
+//    signal(SIGSEGV, bt_sighandler);
+//    signal(SIGFPE, bt_sighandler);
+//    signal(SIGTERM, bt_sighandler);
+//    signal(SIGINT, bt_sighandler);
+//    signal(SIGABRT, bt_sighandler);
+
+#ifdef HAVE_MPI
+MPI_Init(&argc, &argv);
+int num_procs;
+sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
+
+if (num_procs < 2) {
+	std::cerr << "Please run this test with at least 2 mpi ranks" << std::endl;
+	return -1;
+}
+sip::SIPMPIUtils::set_error_handler();
+sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+attr = &sip_mpi_attr;
+#endif
+barrier();
 #ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
+TAU_PROFILE_SET_NODE(0);
+TAU_STATIC_PHASE_START("SIP Main");
 #endif
 
-	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+//
+//	int num_procs;
+//	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
+//
+//	if (num_procs < 2){
+//		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
+//		return -1;
+//	}
+//
+//	sip::SIPMPIUtils::set_error_handler();
+//	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
+//
 
-	printf("Running main() from test_simple.cpp\n");
-	testing::InitGoogleTest(&argc, argv);
-	int result =  RUN_ALL_TESTS();
-
+printf("Running main() from test_simple.cpp\n");
+testing::InitGoogleTest(&argc, argv);
+barrier();
+int result = RUN_ALL_TESTS();
 
 #ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
+TAU_STATIC_PHASE_STOP("SIP Main");
 #endif
-
-	return result;
+barrier();
+#ifdef HAVE_MPI
+MPI_Finalize();
+#endif
+return result;
 
 }
-

@@ -27,9 +27,9 @@ namespace sip {
  */
 class BlockSelector {
 public:
-	BlockSelector(int array_id, int rank, const index_selector_t&);
-	int array_id_;
+	BlockSelector(int rank, int array_id, const index_selector_t&);
 	int rank_;
+	int array_id_;
 	index_selector_t index_ids_;
 	bool operator==(const BlockSelector& rhs) const;
 	friend std::ostream& operator<<(std::ostream&, const BlockSelector &);

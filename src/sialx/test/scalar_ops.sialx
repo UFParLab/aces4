@@ -1,0 +1,128 @@
+sial scalar_ops
+
+	scalar l
+	scalar nl
+	int i
+	int ni
+	
+	scalar s0
+	scalar si0
+	scalar sd
+	scalar sr0
+	scalar sr1
+	scalar e0
+	scalar e1
+	scalar e2
+	
+	int ci0
+	int ci1
+	scalar c0
+	int ci2
+	
+	scalar re0
+	scalar re1
+	scalar re2
+	
+	scalar rgt0
+	scalar rgt1
+	scalar rgt2
+	scalar rgt3
+	scalar rgt4
+	scalar rgt5
+	scalar rgt6
+	scalar rgt7
+	scalar rgt8
+	scalar rgt9
+	
+	scalar rlt0
+	scalar rlt1
+	scalar rlt2
+	scalar rlt3
+	
+	l = 42.0
+	nl = -42.0
+	s0 = l + 2.0*nl + l  # should be 0
+	
+	i = 42
+	ni = -42 
+	si0 = (scalar)(i + 2*ni + i)
+	
+	sd = l/2.0
+	sr0 = sqrt 256.0
+	sr1 = sqrt sr0
+	
+	
+	e0 = 2.0 ** 2.0 ** 2.0	
+	e1 = (2.0 ** 2.0) ** 2.0
+	
+	ci0 = (int) 3.75
+	ci1 = (int) e1
+	c0 = -28.444
+	ci2 = (int) c0
+	
+	re0 = 33.0
+	if re0 == 33.0
+		re1 = 1.0
+	else
+		re1 = -1.0
+	endif
+	
+	if re0 != 33.0
+		re2 = 1.0
+	else
+		re2 = -1.0
+	endif
+	
+	rgt0 = -24.0
+	rgt1 = -23.6
+	if rgt0 >= rgt1
+		rgt2 = 1.0
+	else
+		rgt2 = 2.0
+	endif
+	
+	if rgt0 > -24.0
+		rgt3 = 10.0
+	else
+		rgt3 = 15.0
+	endif 
+	
+	if rgt0 >= -24.0+2.0
+		rgt4 = 10.0
+	else
+		rgt4 = 15.0
+	endif
+	
+	
+	if rgt0 > -24.0-2.0
+	rgt5 = 10.0
+	else
+	rgt5 = 15.0
+	endif
+	
+	if rgt0 <= -24.0
+		rgt6 = 10.0
+	else
+		rgt6 = 15.0
+	endif
+	
+	if rgt0 <= -24.0 +1.0
+		rgt7 = 10.0
+	else
+		rgt7 = 15.0
+	endif
+	
+	if 3.0 < 3.1
+		rgt8 = 10.0
+	else
+		rgt8 = 15.0
+	endif
+	
+	if 3.1 < 3.11
+		rgt9 = 10.0
+	else
+		rgt9 = 15.0
+	endif
+
+
+endsial scalar_ops

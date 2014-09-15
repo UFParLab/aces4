@@ -1,28 +1,43 @@
 sial local_arrays_wild
-special list_block_map
-special print_block r
-predefined int norb
-aoindex i = 1,norb
-aoindex j = 1,norb
-local a(i,j)
-local b(i,j)
-do i
-print_index i
-allocate a(i,*)
-execute list_block_map
-do j
-print_index j
-allocate b(i,j)
-a(i,j) = 42.0
-b(i,j) = a(i,j)
-execute print_block b(i,j)
-enddo j
-enddo i
-println "block map before deallocates:"
-execute list_block_map
-deallocate a(*,*)
-deallocate b(*,*)
-println "block map after deallocates:"
-execute list_block_map
-println "end of local_arrays"
+	special list_block_map
+	special print_block r
+	predefined int norb
+	
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	local b[i,j]
+	
+	do i
+		print i
+		allocate a[i,*]
+		execute list_block_map
+		
+		do j
+		  if i==j
+			print j
+			allocate b[i,j]
+			a[i,j] = (scalar)j
+			b[i,j] = a[i,j]
+			print b[i,j]		
+		  endif
+		enddo j
+	enddo i
+	
+	println "block map before deallocates:"
+	execute list_block_map
+	
+	do i
+	do j
+	print a[i,j]
+	enddo j
+	enddo i
+	
+	deallocate a[*,*]
+	
+	println "block map after deallocates:"
+	
+	execute list_block_map
+	println "end of local_arrays"
+	
 endsial local_arrays_wild

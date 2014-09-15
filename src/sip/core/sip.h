@@ -35,18 +35,36 @@
 	#ifdef HAVE_MPI
 		#define SIP_MASTER_LOG(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
 		#define SIP_MASTER(x) SIP_MASTER_LOG(x)
-	#else
+	#else // HAVE_MPI
 		#define SIP_MASTER_LOG(x) x
 		#define SIP_MASTER(x) x
-	#endif
-#else
+	#endif // HAVE_MPI
+
+#else // SIP_DEVEL
+
+	#ifdef HAVE_MPI
+		#define SIP_MASTER(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
+	#else
+		#define SIP_MASTER(x) x
+	#endif // HAVE_MPI
+
 	#define SIP_LOG(x) ;
 	#define SIP_MASTER_LOG(x) ;
-	#define SIP_MASTER(x) x
+
 #endif
 
 
+// Fortran Callable sip_abort
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void sip_abort();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 namespace sip {
 
@@ -59,8 +77,15 @@ extern const int SIOX_MAGIC;
 extern const int SIOX_VERSION;
 extern const int SIOX_RELEASE;
 
-/*! Debug printintg control */
+/*! Debug printintg control, default:true */
 extern bool _sip_debug_print;
+
+/*! Whether to print from all workers or just master, default:false
+ * This does not affect user defined super instructions; which are
+ * responsible for their own printing */
+extern bool _all_rank_print;
+
+bool should_all_ranks_print();
 
 typedef std::vector<double> ScalarTable;
 typedef std::vector<std::string> StringLiteralTable;
@@ -77,6 +102,43 @@ bool check_and_warn(bool, std::string, int line = 0);
 
 /*! fails with message */
 void fail(std::string, int line = 0);
+
+/** This test is intended for checking for fatal errors that are caused by the input data.
+ * This is in contrast to checks that find bugs in the sip.
+ * This feature was recently added, so is not used consistently.
+ *
+ * @param condition
+ * @param m
+ * @param line
+ */
+void input_check(bool condition, std::string m, int line = 0);
+
+/** This test is intended warn of potential problems caused by the input data.
+ *
+ * @param condition
+ * @param m
+ * @param line
+ */
+bool input_warn(bool condition, std::string m, int line = 0);
+
+/** This test is intended for checking for fatal errors that are probably
+ * caused by an erroneous sial program.  (Example:  trying to read
+ * an unitialized block, data race detected at server, etc.)
+ * This is in contrast to checks that find bugs in the sip.
+ *
+ * @param condition
+ * @param m
+ * @param line
+ */
+void sial_check(bool condition, std::string m, int line = 0);
+
+/** This test is intended warn of potential problems caused by questionable sial program.
+ *
+ * @param condition
+ * @param m
+ * @param line
+ */
+bool sial_warn(bool condition, std::string m, int line = 0);
 
 }//namespace sip
 

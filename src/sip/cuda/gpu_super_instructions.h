@@ -32,7 +32,7 @@ void _init_gpu(int* devid, int* myRank);
  * @param alpha 	alpha
  * @param numElems  number of elements
  */
-void _gpu_axpy(double* y, double* x, const double alpha, int numElems);
+void _gpu_axpy(double* y, double* x, const double alpha, const int numElems);
 
 
 /**
@@ -41,7 +41,7 @@ void _gpu_axpy(double* y, double* x, const double alpha, int numElems);
  * @param value
  * @param numElems
  */
-void _gpu_double_memset(double * g_addr, double value, int numElems);
+void _gpu_double_memset(double * g_addr, double value, const int numElems);
 
 
 /**
@@ -50,7 +50,7 @@ void _gpu_double_memset(double * g_addr, double value, int numElems);
  * @param alpha     scalar value
  * @param numElems  number of elements
  */
-void _gpu_selfmultiply(double* x, const double alpha, int numElems);
+void _gpu_selfmultiply(double* x, const double alpha, const int numElems);
 
 /**
  * implements y = x1 * x2 (contraction)
@@ -67,9 +67,9 @@ void _gpu_selfmultiply(double* x, const double alpha, int numElems);
  * @param x2Dims    ranges of indices of x2
  * @param x2Inds    labels of x2
  */
-void _gpu_contract(double* y, int ny, int* yDims, int* yInds, double* x1,
-		int n1, int* x1Dims, int* x1Inds, double* x2, int n2, int* x2Dims,
-		int *x2Inds);
+void _gpu_contract(double* y, const int ny, const int* yDims, const int* yInds,
+		double* x1, const int n1, const int* x1Dims, const int* x1Inds,
+		double* x2, const int n2, const int* x2Dims, const int *x2Inds);
 
 /**
  * implements y = x1 (permutation / assignment / transpose)
@@ -83,8 +83,8 @@ void _gpu_contract(double* y, int ny, int* yDims, int* yInds, double* x1,
  * @param xDims    ranges of indices of x1
  * @param xInds    labels of x1
  */
-void _gpu_permute(double* y, int ny, int* yDims, int* yInds,
-		double* x, int nx, int* xDims, int* xInds);
+void _gpu_permute(double* y, const int ny, const int* yDims, const int* yInds,
+		double* x, const int nx, const int* xDims, const int* xInds);
 
 /**
  * Copies a block of size numElems * sizeof(double)
@@ -93,14 +93,14 @@ void _gpu_permute(double* y, int ny, int* yDims, int* yInds,
  * @param [in]  g_adr address of block on gpu
  * @param [in]  numElems number of elements
  */
-void _gpu_host_to_device(double* c_addr, double* g_addr, int numElems);
+void _gpu_host_to_device(double* c_addr, double* g_addr, const int numElems);
 
 /**
  * Mallocs a block of size numElems bytes on GPU
  * @param [in] numElems number of elements
  * @return pointer to allocation
  */
-double* _gpu_allocate(int numElems);
+double* _gpu_allocate(const int numElems);
 
 /**
  * Copies block on GPU back to CPU
@@ -108,7 +108,7 @@ double* _gpu_allocate(int numElems);
  * @param [in]  g_adr address of block on gpu
  * @param [in]  numElems number of elements
  */
-void _gpu_device_to_host(double* c_addr, double* g_addr, int numElems);
+void _gpu_device_to_host(double* c_addr, double* g_addr, const int numElems);
 
 /**
  * Copies a block of size numElems * sizeof(double)
@@ -117,7 +117,7 @@ void _gpu_device_to_host(double* c_addr, double* g_addr, int numElems);
  * @param [in]  src address of source on device
  * @param [in]  numElems number of elements
  */
-void _gpu_device_to_device(double* dst, double *src, int numElems);
+void _gpu_device_to_device(double* dst, double *src, const int numElems);
 
 /**
  * Frees block on the GPU

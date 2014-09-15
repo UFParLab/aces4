@@ -2,23 +2,23 @@ sial transpose_tmp
 	predefined int norb
 	special fill_block_sequential wr
 	special print_block r
-	aoindex i = 1,1
-	aoindex j = 1,1
-	aoindex k = 1,1
-	temp a(i,j,k)
-	local b(j,k,i)
+	aoindex i = 1:1
+	aoindex j = 1:1
+	aoindex k = 1:1
+	temp a[i,j,k]
+	local b[j,k,i]
 	
 	do i
-		print_index i
+		print i
 		do j
-		   print_index j
+		   print j
 			do k
-				allocate b(j,k,i)
-				execute fill_block_sequential a(i,j,k) 53.0
-				print_index k
-				execute print_block a(i, j, k)
-				b(j,k,i) = a(i,j,k)
-				execute print_block b(j,k,i)				
+				allocate b[j,k,i]
+				execute fill_block_sequential a[i,j,k] 53.0
+				print k
+				print a[i, j, k]
+				b[j,k,i] = a[i,j,k]
+				print  b[j,k,i]				
 			enddo k
 		enddo j
 	enddo i

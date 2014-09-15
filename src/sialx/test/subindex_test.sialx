@@ -1,30 +1,34 @@
 sial subindex_test
-predefined int norb
-special fill_block_sequential wr
-special print_block r
-aoindex i = 1,norb
-aoindex j = 1,norb
-subindex ii of i
-subindex jj of j
-local a(i,j)
-local b(j,i)
-local asub1(ii,j)
-#local asub2(i,jj)
-#local asub3(ii,jj)
-do i
-do j
-execute fill_block_sequential a(i,j) 0.0
-execute print_block a(i,j)
-do ii in i
-asub1(ii,j) = a(ii,j)
-println "asub1(ii,j) = a(ii,j)"
-print_index i
-print_index j
-print_index ii
-execute print_block asub1(ii,j)
-enddo ii in i
-enddo j
-enddo i
-
-println "end of subindex_test"
+	predefined int norb
+	special fill_block_sequential wr
+	special print_block r
+	
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+#	subindex ii of i
+#	subindex jj of j
+	
+	local a[i,j]
+	local b[j,i]
+#	local asub1[ii,j]
+	
+	#local asub2(i,jj)
+	#local asub3(ii,jj)
+	
+#	do i
+#		do j
+#			execute fill_block_sequential a[i,j] 0.0
+#			print a[i,j]
+#			do ii in i
+#				asub1[ii,j] = a[ii,j]
+#				println "asub1(ii,j) = a(ii,j)"
+#				print i
+#				print j
+#				print ii
+#				print asub1[ii,j]
+#			enddo ii in i
+#		enddo j
+#	enddo i
+	
+#	println "end of subindex_test"
 endsial subindex_test

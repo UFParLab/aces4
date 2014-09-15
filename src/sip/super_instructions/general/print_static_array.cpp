@@ -30,13 +30,19 @@ void print_static_array(int& array_slot, int& rank, int* index_values, int& size
 //    }
 //
 //    std::cout << std::endl;
+	if (size == 1) {
+	std::cout << "static array " << sip::array_name_value(array_slot) << " size=" << size ;
+	} else {
 	std::cout << "static array " << sip::array_name_value(array_slot) << " size=" << size << std::endl;
+	}
 	int row_size = extents[0];
 	int i;
 	for (i = 0; i < size; ++i){
-		if (i%row_size == 0) std::cout << std::endl;
-		std::cout.precision(4);
-		std::cout << *(data+i);
-		std::cout << " ";
-	}
+		//if (i%row_size == 0) std::cout << std::endl;
+                std::cout.precision(8);
+                std::cout.setf(std::ios_base::fixed);
+                std::cout << *(data+i);
+                std::cout << " ";
+        }
+        std::cout << std::endl;
 }

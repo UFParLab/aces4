@@ -69,20 +69,29 @@ Block::Block(dataPtr data):
 
 
 Block::~Block() {
-	sip::check_and_warn((data_), std::string("in ~Block with NULL data_"));
+	SIP_LOG(sip::check_and_warn((data_), std::string("in ~Block with NULL data_")));
 #ifdef HAVE_MPI
 //	//check to see if block is in transit.  If this is the case, there was a get
 //	//on a block that was never used.  Print a warning.  We probably want to be able
-//	//disable this check.  The logic is a bit convoluted--check_and_warn=true, means no pending.
-	//we wait if this is not the case
-	if (!check_and_warn( !state_.pending() ,"deleting block with pending request, probably get with no use")){
+//	//disable this check.  The logic is a bit convoluted--sial_warn=true, means not pending.
+	//we wait if this is not the case, i.e. if this block has pending request.
+	if (!sial_warn( !state_.pending() ,"deleting block with pending request, probably due to a get for a block that is not used")){
 		state_.wait(size());
 	}
 #endif //HAVE_MPI
-	if (data_ != NULL && size_ >1) { //Assumption: if size==1, data_ points into the scalar table.
+
+	// Original Assumption was that all blocks of size 1 are scalar blocks.
+	// This didn't turn out to be true (sliced contiguous array blocks could also be size 1).
+	// Memory leaks were being caused by this. Now this is fixed by setting data_ to NULL
+	// for blocks that wrap scalars.
+	//Assumption: if size==1, data_ points into the scalar table.
+	//if (data_ != NULL && size_ >1) {
+
+	if (data_ != NULL) {
 		delete[] data_;
 		data_ = NULL;
 	}
+
 #ifdef HAVE_CUDA
 	if (gpu_data_){
 		std::cout<<"Now freeing gpu_data"<<std::endl;
@@ -100,11 +109,13 @@ int Block::size() {
 	return size_;
 }
 
-BlockShape Block::shape() {
+const BlockShape& Block::shape() {
 	return shape_;
 }
 
-
+//const BlockShape Block::shape() {
+//	return shape_;
+//}
 
 Block::dataPtr Block::copy_data_(BlockPtr source_block, int offset) {
 	dataPtr target = get_data();
@@ -158,6 +169,15 @@ Block::dataPtr Block::scale(double value) {
 	int n = size();
 	for (int i = 0; i < n; ++i) {
 		ptr[i] *= value;
+	}
+	return ptr;
+}
+
+Block::dataPtr Block::increment_elements(double delta){
+	dataPtr ptr = get_data();
+	int n = size();
+	for (int i = 0; i < n; ++i) {
+		ptr[i] += delta;
 	}
 	return ptr;
 }
@@ -273,7 +293,7 @@ void Block::insert_slice(int rank, offset_array_t& offsets, BlockPtr source){
 }
 
 std::ostream& operator<<(std::ostream& os, const Block& block) {
-	os << "SHAPE=" << block.shape_ << std::endl;
+	os << "SHAPE="<< block.shape_ << std::endl;
 	os << "SIZE=" << block.size_ << std::endl;
 	int i = 0;
 	int MAX_TO_PRINT = 800;

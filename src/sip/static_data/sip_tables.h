@@ -32,10 +32,13 @@
 //#include "segment_table.h"
 
 //forward references
+class TestController;
+class TestControllerParallel;
 namespace sip {
 class SegmentTable;
 class ContiguousArrayManager;
 class DiskBackedArraysIO;
+class Tracer;
 }
 
 namespace master {
@@ -52,8 +55,6 @@ public:
 	SipTables(setup::SetupReader&, setup::InputStream&);
 	~SipTables();
 
-	static SipTables& instance() ;
-
 // Convenience method
 	/**
 	 * @return Maximum number of slots to initialize in the timer
@@ -67,7 +68,7 @@ public:
 	std::vector<std::string> line_num_to_name() const;
 
 //scalars and arrays
-	//int array_id(std::string name);
+	int array_slot(const std::string& name){return array_table_.array_slot(name);}
 	std::string array_name(int array_table_slot) const;
 	std::string scalar_name(int array_table_slot) const;
 	int array_rank(int array_table_slot) const;
@@ -79,19 +80,22 @@ public:
 	bool is_predefined(int array_table_slot) const;
 	bool is_distributed(int array_table_slot) const;
 	bool is_served(int array_table_slot) const;
+	bool is_contiguous_local(int array_table_slot) const;
 	int num_arrays() const;
 
 //int (symbolic constants)
-	int int_value(int int_table_slot) const;
+	//int int_value(int int_table_slot) const;
+	std::string int_name(int int_table_slot) const;
 
 // strint literals
 	std::string string_literal(int slot) const;
 
 //indices and blocks
-	//int index_id(std::string name);
+	int index_id(std::string name) const;
 	std::string index_name(int index_table_slot) const;
 	IndexType_t index_type(int index_table_slot) const;
 	BlockShape shape(const BlockId&) const;
+
 
 	/**
 	 * Calculates segment sizes.
@@ -102,7 +106,10 @@ public:
 	void calculate_seq_sizes(const int array_table_slot,
 			const index_value_array_t& index_vals, int seg_sizes[MAX_RANK]) const;
 	BlockShape contiguous_array_shape(int array_id) const;
+	BlockShape contiguous_region_shape(int rank, int array_id,
+			const index_value_array_t& lower, const index_value_array_t& upper) const;
 	int offset_into_contiguous(int selector, int value) const;
+	int offset_into_contiguous_region(int selector, int lower, int value) const;
 	const index_selector_t& selectors(int array_id) const;
 
 	/**
@@ -143,10 +150,11 @@ public:
 	int parent_index(int subindex_slot) const;
 
 //special instructions
+	const SpecialInstructionManager& special_instruction_manager() const { return special_instruction_manager_ ;}
 	std::string special_instruction_name(int func_slot);
-	SpecialInstructionManager::fp0 zero_arg_special_instruction(int func_slot) const;
-	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
-	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot) const;
+//	SpecialInstructionManager::fp0 zero_arg_special_instruction(int func_slot) const;
+//	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
+//	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot) const;
 
     void print() const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
@@ -157,7 +165,8 @@ public:
 private:
 
 
-	static SipTables* instance_;
+    bool increment_indices(int rank, index_value_array_t& upper, index_value_array_t& lower, index_value_array_t& current) const;
+     
 
 	/**
 	 * Helper method to returns the offset of a block in its array
@@ -173,7 +182,7 @@ private:
 	ArrayTable array_table_;
 	IndexTable index_table_;
 	ScalarTable scalar_table_;  //only used for initialization, dynamic value held in data manager
-	IntTable int_table_;  //currently these are all predefined
+	IntTable int_table_;  		//currently these are all predefined
 	StringLiteralTable string_literal_table_;
 	SpecialInstructionManager special_instruction_manager_;
 	SioxReader siox_reader_;
@@ -187,6 +196,9 @@ private:
 	friend class DataManager;
 	friend class ContiguousArrayManager;
 	friend class DiskBackedArraysIO;
+	friend class ::TestController;
+	friend class Tracer;
+	friend class ::TestControllerParallel;
 
 	DISALLOW_COPY_AND_ASSIGN(SipTables);
 };

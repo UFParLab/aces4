@@ -1,0 +1,55 @@
+print_block a(i,j)
+22:  printing 9 of 9 elements of block a[1,1] in the order stored in memory 
+             1              2              3 
+             8              9             10 
+            15             16             17 
+print_block b[i,j]
+25:  printing 9 of 9 elements of block b[1,1] in the order stored in memory 
+             1              2              3 
+             8              9             10 
+            15             16             17 
+print_block a(i,j)
+22:  printing 12 of 12 elements of block a[1,2] in the order stored in memory 
+            22             23             24 
+            29             30             31 
+            36             37             38 
+            43             44             45 
+print_block b[i,j]
+25:  printing 12 of 12 elements of block b[1,2] in the order stored in memory 
+            22             23             24 
+            29             30             31 
+            36             37             38 
+            43             44             45 
+print_block a(i,j)
+22:  printing 12 of 12 elements of block a[2,1] in the order stored in memory 
+             4              5              6              7 
+            11             12             13             14 
+            18             19             20             21 
+print_block b[i,j]
+25:  printing 12 of 12 elements of block b[2,1] in the order stored in memory 
+             4              5              6              7 
+            11             12             13             14 
+            18             19             20             21 
+print_block a(i,j)
+22:  printing 16 of 16 elements of block a[2,2] in the order stored in memory 
+            25             26             27             28 
+            32             33             34             35 
+            39             40             41             42 
+            46             47             48             49 
+print_block b[i,j]
+25:  printing 16 of 16 elements of block b[2,2] in the order stored in memory 
+            25             26             27             28 
+            32             33             34             35 
+            39             40             41             42 
+            46             47             48             49 
+print a
+31:  printing 49 of 49 elements of contiguous array a in the order stored in memory 
+             1              2              3              4              5              6              7 
+             8              9             10             11             12             13             14 
+            15             16             17             18             19             20             21 
+            22             23             24             25             26             27             28 
+            29             30             31             32             33             34             35 
+            36             37             38             39             40             41             42 
+            43             44             45             46             47             48             49 
+ finished static_array_test
+

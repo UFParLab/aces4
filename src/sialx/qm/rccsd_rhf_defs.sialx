@@ -26,9 +26,14 @@ predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT
 
 
 #these are predefined in the index table         
-moaindex aces_defs_pa = baocc, eavirt  
-mobindex aces_defs_pb = bbocc, ebvirt   
-aoindex aces_defs_mu = 1, norb  
+moaindex aces_defs_pa = baocc: eavirt  
+mobindex aces_defs_pb = bbocc: ebvirt   
+aoindex aces_defs_mu = 1: norb  
+
+#predefined scalar eom_tol
+#predefined int eom_roots
+#predefined int eom_roots2
+#predefined int eom_subspc
 
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
@@ -40,7 +45,8 @@ special energy_denominator_rhf ur
 special return_sval rw
 special compute_diis u
 special print_block r
-special aoladder_contraction rru 
+special print_static_array r
+special aoladder_contraction rru
 #     NOT PORTED 
 special get_my_rank w
 

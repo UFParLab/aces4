@@ -33,7 +33,7 @@ void printArray(std::string prefix, std::string name, int rank, int *dims, doubl
 }
 
 
-SetupWriter::SetupWriter(std::string jobname, OutputFile* file):
+SetupWriter::SetupWriter(std::string jobname, OutputStream* file):
 		jobname_(jobname),
 		file(file) {
 }
@@ -266,7 +266,6 @@ void SetupWriter::write_data_file() {
 
 	}
 	// Write configuration per sial file
-	std::cout<<"Writing config info to file...";
 	int num_sialfile_configs = configs_.size();
 	file->write_int(num_sialfile_configs);
 	for (FileConfigMap::iterator it = configs_.begin(); it != configs_.end(); ++it){

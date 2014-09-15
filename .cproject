@@ -25,7 +25,9 @@
 							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1477415650" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/aces4nj}/MPI" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.1726199187" keepEnvironmentInBuildfile="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="CUDA"/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="MPI"/>
 								</outputEntries>
 							</builder>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.618096942" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
@@ -35,11 +37,12 @@
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.216318066" name="GCC C Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc">
 								<option id="gnu.c.compiler.option.include.paths.1867345611" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
-									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.2.0/include/"/>
-									<listOptionValue builtIn="false" value="/home/jindal/papi-5.2.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -48,19 +51,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1018706944" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.393052691" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -70,8 +70,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.2.0/include/"/>
-									<listOptionValue builtIn="false" value="/home/jindal/papi-5.2.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -80,19 +81,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/super_instructions}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/tensor_algebra}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1921683653" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -100,6 +98,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="test"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -129,7 +128,9 @@
 							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1327525936" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
 							<builder autoBuildTarget="" buildPath="${workspace_loc:/aces4nj}/BUILD" cleanBuildTarget="" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.2093687" incrementalBuildTarget="" keepEnvironmentInBuildfile="false" managedBuildOn="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="BUILD"/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="CUDA"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="MPI"/>
 								</outputEntries>
 							</builder>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.2046759658" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
@@ -139,24 +140,25 @@
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1140591414" name="GCC C Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc">
 								<option id="gnu.c.compiler.option.include.paths.1812310550" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
-									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/cuda}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/dynamic_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
 								</option>
@@ -164,27 +166,26 @@
 							</tool>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1059494594" name="GCC C++ Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp">
 								<option id="gnu.cpp.compiler.option.include.paths.1167774787" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/cuda}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/dynamic_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
 								</option>
@@ -194,13 +195,14 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="test"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
 		<cconfiguration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" moduleId="org.eclipse.cdt.core.settings" name="CUDA">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" moduleId="org.eclipse.cdt.core.settings" name="Build (CUDA)">
 				<externalSettings>
 					<externalSetting/>
 				</externalSettings>
@@ -217,13 +219,15 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.linuxtools.cdt.autotools.core.buildArtefactType.autotools" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.linuxtools.cdt.autotools.core.buildArtefactType.autotools" cleanCommand="rm -rf" description="Single Node CUDA" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" name="CUDA" parent="org.eclipse.linuxtools.cdt.autotools.core.configuration.build">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.linuxtools.cdt.autotools.core.buildArtefactType.autotools" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.linuxtools.cdt.autotools.core.buildArtefactType.autotools" cleanCommand="rm -rf" description="Single Node CUDA" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971" name="Build (CUDA)" parent="org.eclipse.linuxtools.cdt.autotools.core.configuration.build">
 					<folderInfo id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971." name="/" resourcePath="">
 						<toolChain id="org.eclipse.linuxtools.cdt.autotools.core.toolChain.1478225367" name="GNU Autotools Toolchain" resourceTypeBasedDiscovery="true" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolChain">
 							<targetPlatform id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform.1782543334" isAbstract="false" name="GNU Autotools Target Platform" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/aces4nj}/CUDA" id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder.1540544695" keepEnvironmentInBuildfile="false" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.builder">
 								<outputEntries>
-									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="BUILD"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="MPI"/>
+									<entry excluding="*.h" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="BUILD"/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="CUDA"/>
 								</outputEntries>
 							</builder>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure.620063565" name="configure" superClass="org.eclipse.linuxtools.cdt.autotools.core.gnu.toolchain.tool.configure">
@@ -233,14 +237,12 @@
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1627214728" name="GCC C Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc">
 								<option id="gnu.c.compiler.option.include.paths.680652976" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
-									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.2.0/include/"/>
-									<listOptionValue builtIn="false" value="/home/jindal/papi-5.2.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -249,17 +251,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.2051225921" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_CUDA=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.135808611" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -269,11 +270,9 @@
 									<listOptionValue builtIn="false" value="/usr/lib/openmpi/include/"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
 									<listOptionValue builtIn="false" value="/usr/include/"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.2.0/include/"/>
-									<listOptionValue builtIn="false" value="/home/jindal/papi-5.2.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
+									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/core}&quot;"/>
@@ -282,17 +281,16 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/mpi}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/static_data}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/setup}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/super_instructions}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/tensor_algebra}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/super_instructions}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/tensor_algebra}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/src/sip/worker}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/MPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/CUDA}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
-									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/BUILD}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.241509187" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HAVE_CUDA=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -300,6 +298,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="test"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -308,9 +307,12 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="aces4nj.org.eclipse.linuxtools.cdt.autotools.core.projectType.162926165" name="GNU Autotools" projectType="org.eclipse.linuxtools.cdt.autotools.core.projectType"/>
+		<project id="scratch_aces4_V2_fixed.null.1952783753" name="scratch_aces4_V2_fixed"/>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Build (CUDA)">
+			<resource resourceType="PROJECT" workspacePath="/aces4nj"/>
+		</configuration>
 		<configuration configurationName="CUDA">
 			<resource resourceType="PROJECT" workspacePath="/aces4nj"/>
 		</configuration>
@@ -322,42 +324,6 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1627214728;cdt.managedbuild.tool.gnu.c.compiler.input.135808611">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1475934365;cdt.managedbuild.tool.gnu.c.compiler.input.193571014">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1059494594;cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1626266652;cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855">
-			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile"/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1157370729;cdt.managedbuild.tool.gnu.cpp.compiler.input.1970198297">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.588821536;cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.216318066;cdt.managedbuild.tool.gnu.c.compiler.input.393052691">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.227217647;cdt.managedbuild.tool.gnu.cpp.compiler.input.1286748977">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.312534423;cdt.managedbuild.tool.gnu.c.compiler.input.926606536">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1140591414;cdt.managedbuild.tool.gnu.c.compiler.input.2107047516">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
 			<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
@@ -520,6 +486,22 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="cached_block_map.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>cached_block_map.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="cached_block_map.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>cached_block_map.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="check" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -600,6 +582,22 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="contiguous_local_array_manager.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>contiguous_local_array_manager.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="contiguous_local_array_manager.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>contiguous_local_array_manager.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="copy-data-files.stamp" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -668,6 +666,38 @@
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
 				<buildTarget>data_manager.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="disk_backed_arrays_io.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>disk_backed_arrays_io.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="disk_backed_arrays_io.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>disk_backed_arrays_io.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="disk_backed_block_map.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>disk_backed_block_map.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="disk_backed_block_map.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>disk_backed_block_map.obj</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
@@ -1152,10 +1182,42 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="opcode.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>opcode.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="opcode.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>opcode.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="pdf" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
 				<buildTarget>pdf</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="print_siptables.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>print_siptables.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="print_siptables.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>print_siptables.obj</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
@@ -1208,6 +1270,22 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="server_persistent_array_manager.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>server_persistent_array_manager.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="server_persistent_array_manager.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>server_persistent_array_manager.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="setup_interface.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1256,6 +1334,22 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="sial_math.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sial_math.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="sial_math.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sial_math.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="sial_ops_parallel.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1284,6 +1378,22 @@
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
 				<buildTarget>sial_ops_sequential.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="sial_printer.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sial_printer.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="sial_printer.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sial_printer.obj</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
@@ -1432,6 +1542,22 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="sip_timer.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sip_timer.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="sip_timer.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>sip_timer.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="stamp-h1" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1480,6 +1606,46 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="test_basic_sial.log" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_basic_sial.log</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_basic_sial.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_basic_sial.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_basic_sial.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_basic_sial.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_constants.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_constants.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_constants.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_constants.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="test_contraction_small2.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1496,6 +1662,38 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="test_controller.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_controller.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_controller.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_controller.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_controller_parallel.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_controller_parallel.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_controller_parallel.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_controller_parallel.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="test_libgtest_la-gtest-all.lo" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1508,30 +1706,6 @@
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
 				<buildTarget>test_libgtest_main_la-gtest_main.lo</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>false</runAllBuilders>
-			</target>
-			<target name="test_mpi_qm.log" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildArguments/>
-				<buildTarget>test_mpi_qm.log</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>false</runAllBuilders>
-			</target>
-			<target name="test_mpi_qm.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildArguments/>
-				<buildTarget>test_mpi_qm.o</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>false</runAllBuilders>
-			</target>
-			<target name="test_mpi_qm.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildArguments/>
-				<buildTarget>test_mpi_qm.obj</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
@@ -1560,26 +1734,26 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
-			<target name="test_simple.log" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="test_sial.log" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
-				<buildTarget>test_simple.log</buildTarget>
+				<buildTarget>test_sial.log</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
-			<target name="test_simple.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="test_sial.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
-				<buildTarget>test_simple.o</buildTarget>
+				<buildTarget>test_sial.o</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
-			<target name="test_simple.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="test_sial.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
-				<buildTarget>test_simple.obj</buildTarget>
+				<buildTarget>test_sial.obj</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
@@ -1616,6 +1790,30 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="test_unit.log" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_unit.log</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_unit.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_unit.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="test_unit.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test_unit.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 			<target name="uninstall" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
@@ -1624,6 +1822,58 @@
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>false</runAllBuilders>
 			</target>
+			<target name="worker_persistent_array_manager.o" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>worker_persistent_array_manager.o</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
+			<target name="worker_persistent_array_manager.obj" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>worker_persistent_array_manager.obj</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>false</runAllBuilders>
+			</target>
 		</buildTargets>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1475934365;cdt.managedbuild.tool.gnu.c.compiler.input.193571014">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1627214728;cdt.managedbuild.tool.gnu.c.compiler.input.135808611">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1059494594;cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1626266652;cdt.managedbuild.tool.gnu.cpp.compiler.input.501170855">
+			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.17656499.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.1157370729;cdt.managedbuild.tool.gnu.cpp.compiler.input.1970198297">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.216318066;cdt.managedbuild.tool.gnu.c.compiler.input.393052691">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.768580971.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.588821536;cdt.managedbuild.tool.gnu.cpp.compiler.input.655752866">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.227217647;cdt.managedbuild.tool.gnu.cpp.compiler.input.1286748977">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.550255678.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.312534423;cdt.managedbuild.tool.gnu.c.compiler.input.926606536">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858;org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038.1026229858.;org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gcc.1140591414;cdt.managedbuild.tool.gnu.c.compiler.input.2107047516">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

@@ -1,6 +1,6 @@
 sial predef_scalars
 predefined scalar x
 predefined scalar y
-print_scalar x
-print_scalar y
+print x
+print y
 endsial predef_scalars

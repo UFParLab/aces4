@@ -55,7 +55,7 @@ class Block;
 
 /** A block of data together with its shape. Size is derived from the shape
  * and is stored for convenience.  The shape of a block cannot change once
- * created, although the data may.  In contrast to the other classes, which are
+ * created, although the data may.  In contrast to BlockIds, which are
  * small enough to freely copy, Blocks need to manage their data carefully.  Also,
  * generally, data structures will hold Block pointers, allowing for polymorphism
  * later if we ever want to have some other kind of block later.
@@ -90,13 +90,6 @@ public:
 	 */
 	Block(dataPtr);
 
-//	/**
-//	 * Returns a copy of the block
-//	 * @param
-//	 * @return
-//	 */
-//	BlockPtr clone();
-
 	/**
 	 * Deletes data in block if any.  If an MPI request associated with this
 	 * block is pending, it waits until it has been satisfied and issues a warning.
@@ -104,13 +97,14 @@ public:
 	~Block();
 
     int size();
-    BlockShape shape();
+    const BlockShape& shape();
     dataPtr get_data();
     dataPtr fill(double value);
     dataPtr scale(double value);
     dataPtr copy_data_(BlockPtr source_block, int offset = 0);
     dataPtr transpose_copy(BlockPtr source, int rank, permute_t&);
     dataPtr accumulate_data(BlockPtr source);
+    dataPtr increment_elements(double delta);
 
     /*!extracts slice from this block and copies to the given destination block, which must exist and have memory for data allocated, Returns dest*/
 	dataPtr extract_slice(int rank, offset_array_t& offsets, BlockPtr destination);
@@ -174,12 +168,11 @@ public:
 
 #endif
 
-
+#ifdef HAVE_MPI
+	MPIState& state() { return state_; }
+#endif
 
 private:
-
-    //Block();
-
 
 	BlockShape shape_;
     int size_;
@@ -187,8 +180,6 @@ private:
 
 	//TODO encapsulate this
 	dataPtr gpu_data_;
-
-
 
 
 	// Why bitset is a good idea
@@ -201,19 +192,9 @@ private:
 	};
 	std::bitset<4> status_;
 
-//TODO  is all this necessary??
-	friend class BlockManager;
-	friend class Interpreter;
-	friend class ContiguousArrayManager;
-	friend class SIPMPIUtils;
-	friend class SIPServer;
-	friend class SialOpsParallel;
-	friend class SialOpsSequential;
-
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
 	bool operator==(const Block& rhs) const;
-
 
 
 	/** encapsulates MPI related state info.
@@ -227,8 +208,9 @@ private:
 //	EmptyMPIState state_;
 #endif
 
+	friend class DataManager;	// So that data_ of blocks wrapping
+								// Scalars can be set to NULL before destroying them.
 	DISALLOW_COPY_AND_ASSIGN(Block);
-
 };
 
 

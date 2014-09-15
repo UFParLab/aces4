@@ -1,26 +1,26 @@
 sial gpu_ops
-aoindex i = 1,2
-aoindex j = 1,2
-aoindex k = 1,2
-aoindex l = 1,2
-
-temp a(i,j)
-distributed b(i,j,k,l)
-
-gpu_on
-
-	pardo i, j, k, l
-		gpu_allocate a(i, j)
+	aoindex i = 1:2
+	aoindex j = 1:2
+	aoindex k = 1:2
+	aoindex l = 1:2
 	
-		gpu_allocate b(i,j,k, l)
-		gpu_put b(i,j,k, l)
-		gpu_get b(i,j,k, l)
-		gpu_free b(i,j,k, l)
+	temp a[i,j]
+	distributed b[i,j,k,l]
+	
+	gpu_on
+	
+		pardo i, j, k, l
+			gpu_allocate a[i, j]
 		
-		gpu_free a(i, j)
-		
-	endpardo i, j, k, l
-
-gpu_off
+			gpu_allocate b[i,j,k, l]
+			gpu_put b[i,j,k, l]
+			gpu_get b[i,j,k, l]
+			gpu_free b[i,j,k, l]
+			
+			gpu_free a[i, j]
+			
+		endpardo i, j, k, l
+	
+	gpu_off
 
 endsial gpu_ops

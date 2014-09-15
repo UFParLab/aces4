@@ -27,7 +27,7 @@ std::string LoopManager::to_string() const {
 	return std::string("LoopManager");
 }
 
-DoLoop::DoLoop(int index_id, DataManager & data_manager, SipTables & sip_tables) :
+DoLoop::DoLoop(int index_id, DataManager & data_manager, const SipTables & sip_tables) :
 		data_manager_(data_manager), sip_tables_(sip_tables),
 		index_id_(index_id), first_time_(true) {
 	lower_seg_ = sip_tables_.lower_seg(index_id);
@@ -81,7 +81,7 @@ std::ostream& operator<<(std::ostream& os, const DoLoop &obj) {
 	os << obj.to_string();
 	return os;
 }
-SubindexDoLoop::SubindexDoLoop(int subindex_id, DataManager & data_manager, SipTables & sip_tables) :
+SubindexDoLoop::SubindexDoLoop(int subindex_id, DataManager & data_manager, const SipTables & sip_tables) :
 		DoLoop(subindex_id, data_manager, sip_tables) {
 	sip::check(sip_tables_.is_subindex(subindex_id), "Attempting subindex do loop with non-subindex loop variable");
 	parent_id_ = sip_tables_.parent_index(subindex_id);
@@ -111,7 +111,7 @@ SubindexDoLoop::~SubindexDoLoop() {
 //note that the max number of indices allowed by the implementation is MAX_RANK.  This limitation is
 // due to the structure of the pardo instruction inherited from aces3
 SequentialPardoLoop::SequentialPardoLoop(int num_indices,
-		const int (&index_id)[MAX_RANK], DataManager & data_manager, SipTables & sip_tables) :
+		const int (&index_id)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables) :
 		data_manager_(data_manager), sip_tables_(sip_tables),
 		num_indices_(num_indices), first_time_(true) {
 	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
@@ -212,7 +212,7 @@ std::string SequentialPardoLoop::to_string() const {
 
 #ifdef HAVE_MPI
 StaticTaskAllocParallelPardoLoop::StaticTaskAllocParallelPardoLoop(int num_indices,
-		const int (&index_id)[MAX_RANK], DataManager & data_manager, SipTables & sip_tables,
+		const int (&index_id)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
 		SIPMPIAttr & sip_mpi_attr) :
 		data_manager_(data_manager), sip_tables_(sip_tables),
 		num_indices_(num_indices), first_time_(true), iteration_(0),

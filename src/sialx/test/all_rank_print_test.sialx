@@ -1,0 +1,42 @@
+sial all_rank_print
+	special enable_all_rank_print
+	special disable_all_rank_print
+	special print_block r
+	special fill_block_cyclic wr
+	predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	temp b[i,j]
+	
+	println "Printing from master"	
+	pardo i, j
+		print i
+		print j
+		execute fill_block_cyclic b[i, j] 1.0
+		print b[i, j] 
+	endpardo i, j
+	
+	execute enable_all_rank_print
+	
+	println "Printing from all ranks"	
+	pardo i, j
+		print i
+		print j
+		execute fill_block_cyclic b[i, j] 1.0
+		print b [i, j]
+	endpardo i, j
+	
+	execute disable_all_rank_print
+	
+	println "Again printing from master"	
+	pardo i, j
+		print i
+		print j
+		execute fill_block_cyclic b[i, j] 1.0
+		print b [i, j]
+	endpardo i, j
+	
+	sip_barrier
+	
+
+endsial all_rank_print

@@ -2,29 +2,28 @@ sial put_test_mpi
 	special list_block_map
 	special print_block r
 	predefined int norb
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	local a(i,j)
-	local aa(i,j)
-	distributed b(i,j)
-	distributed c(i,j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	local aa[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
 	
 	create b
 	create c
-	allocate a(*,*)
+	allocate a[*,*]
 	
 	println "Sending blocks"	
-	do i
-		print_index i
-		execute list_block_map
-		do j
-			print_index j
-			a(i,j) = 42.0
-			aa(i,j) = 55.0
-			put b(i,j) = a(i,j)
-			put c(i,j) = aa(i,j)
-		enddo j
-	enddo i
+	pardo i, j
+		print i
+		print j
+		#execute list_block_map
+		a[i,j] = 42.0
+		aa[i,j] = 55.0
+		put b[i,j] = a[i,j]
+		put c[i,j] = aa[i,j]
+		
+	endpardo i, j
 	sip_barrier
 	
 endsial put_test_mpi

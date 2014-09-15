@@ -3,50 +3,52 @@ sial unmatched_get
 	special print_block r
 	special get_my_rank w
 	predefined int norb
-	aoindex i = 1,norb
-	aoindex j = 1,norb
-	local a(i,j)
-	local aa(i,j)
-	distributed b(i,j)
-	distributed c(i,j)
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	local aa[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
 	scalar rank
 	
 	create b
 	create c
-	allocate a(*,*)
+	allocate a[*,*]
 	
 	println "Sending blocks"	
-	do i
+	pardo i
 		do j
-			a(i,j) = 42.0
-			put b(i,j) = a(i,j)
-			put c(i,j) += a(i,j)
-			put c(i,j) += a(i,j)
+			a[i,j] = 42.0
+			put b[i,j] = a[i,j]
+			put c[i,j] += a[i,j]
+			put c[i,j] += a[i,j]
 		enddo j
-	enddo i
+	endpardo i
 	sip_barrier
 	
+		
 	do i
 	   do j
-	      get b(i,j)
-	      get c(i,j)
-	      a(i,j) = b(i,j) + c(i,j)
-	      execute print_block a(i,j)
+	      get b[i,j]
+	      get c[i,j]
+	      a[i,j] = b[i,j] + c[i,j]
+#	      print a[i,j]
 	   enddo j
 	enddo i
 	
 	sip_barrier
 		do i
 	   do j
-	      get b(i,j)
-	      get c(i,j)
+	      get b[i,j]
+	      get c[i,j]
+#comment out the next two statements so the gets are unmatched.
 #	      a(i,j) = b(i,j) + c(i,j)
-#	      execute print_block a(i,j)
+#	      print a(i,j)
 	   enddo j
 	enddo i
 	sip_barrier
 	execute get_my_rank rank
-	print_scalar rank
+	print rank
 	execute list_block_map
 	delete b
 	delete c
