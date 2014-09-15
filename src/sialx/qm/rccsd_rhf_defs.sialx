@@ -30,10 +30,10 @@ moaindex aces_defs_pa = baocc: eavirt
 mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
 
-predefined scalar eom_tol
-predefined int eom_roots
-predefined int eom_roots2
-predefined int eom_subspc
+#predefined scalar eom_tol
+#predefined int eom_roots
+#predefined int eom_roots2
+#predefined int eom_subspc
 
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
