@@ -432,7 +432,6 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
 
-//<<<<<<< HEAD
 	//run second program
 	controller.initSipTables();
 	controller.run();
@@ -544,12 +543,10 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	sip::SIPMPIUtils::set_error_handler();
-#endif
-
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
+#endif
 	barrier();
-
 #ifdef HAVE_TAU
 	TAU_PROFILE_SET_NODE(0);
 	TAU_STATIC_PHASE_START("SIP Main");

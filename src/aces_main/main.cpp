@@ -195,7 +195,7 @@ int main(int argc, char* argv[]) {
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 
-			sip::Interpreter runner(sipTables, sialxTimer, &persistent_worker);
+			sip::Interpreter runner(sipTables, &sialxTimer, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();

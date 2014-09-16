@@ -129,6 +129,7 @@ TEST(BasicSial,contiguous_local){
 }
 
 
+//testing framework cannot gracefully handle expected errors from MPI processes
 #ifndef HAVE_MPI
 TEST(SipUnit,BlockIdInvalidRange){
 	std::cout << "\n\n\nTHIS TEST IS EXPECTED TO HAVE A FATAL ERROR!!!\n\n\n" << std::endl << std::flush;
@@ -500,6 +501,32 @@ TEST(BasicSial,tmp_arrays) {
 	EXPECT_EQ(0, controller.worker_->num_blocks_in_blockmap());
 }
 
+TEST(BasicSial,block_scale_assign) {
+	std::string job("block_scale_assign");
+	std::stringstream output;
+	double x = 3.456;
+	double y = -0.1;
+	int norb = 3;
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_scalar("x", x);
+		set_scalar("y", y);
+		set_constant("norb", norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		int segs[] = { 2, 3, 4 };
+		set_aoindex_info(3, segs);
+		finalize_setup();
+	}
+	barrier();
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+
+	EXPECT_TRUE(controller.worker_->all_stacks_empty());
+	EXPECT_EQ(0, controller.worker_->num_blocks_in_blockmap());
+}
 TEST(BasicSial,scalar_valued_blocks) {
 	std::string job("scalar_valued_blocks");
 	std::stringstream output;

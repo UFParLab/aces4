@@ -100,8 +100,9 @@ public:
     const BlockShape& shape();
     dataPtr get_data();
     dataPtr fill(double value);
-    dataPtr scale(double value);
+    dataPtr scale(double factor);
     dataPtr copy_data_(BlockPtr source_block, int offset = 0);
+    dataPtr scale_and_copy(BlockPtr source_block, double factor);
     dataPtr transpose_copy(BlockPtr source, int rank, permute_t&);
     dataPtr accumulate_data(BlockPtr source);
     dataPtr increment_elements(double delta);

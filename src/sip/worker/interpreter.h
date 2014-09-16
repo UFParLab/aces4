@@ -49,10 +49,11 @@ class Interpreter {
 public:
 
 
-	Interpreter(const SipTables&, SialxTimer&, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	Interpreter(const SipTables&, SialxTimer&, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(const SipTables&, SialxTimer&, SialPrinter* printer);
+	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(const SipTables&, SialxTimer* timers, WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
 	~Interpreter();
+
 
 	/** Static pointer to the current Interpreter.  This is
 	 * initialized in the Interpreter constructor and reset to NULL
@@ -262,7 +263,7 @@ private:
 	/**
 	 * Timer manager
 	 */
-	SialxTimer& sialx_timers_;
+	SialxTimer* sialx_timers_;
 
 	/**
 	 * Owned by main program

@@ -202,8 +202,8 @@ check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_basic_sial test_qm
-check_PROGRAMS = test_basic_sial test_qm
+TESTS = test_basic_sial test_sial test_qm
+check_PROGRAMS = test_basic_sial test_sial test_qm
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
@@ -416,6 +416,7 @@ SIOX_FILES=\
 ./src/sialx/test/int_self_ops.siox\
 ./src/sialx/test/scalar_valued_blocks.siox\
 ./src/sialx/test/contiguous_local.siox\
+./src/sialx/test/block_scale_assign.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -522,6 +523,7 @@ EXTRA_DIST += \
 ./src/sialx/test/int_self_ops.sialx\
 ./src/sialx/test/scalar_valued_blocks.sialx\
 ./src/sialx/test/contiguous_local.sialx\
+./src/sialx/test/block_scale_assign.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\

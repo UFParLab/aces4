@@ -1,17 +1,13 @@
 /*
  * test_controller_parallel.cpp
  *
- *  Created on: Aug 14, 2014
- *      Author: njindal
+
  */
 
 
 
 #include "test_controller_parallel.h"
 #include "config.h"
-
-#ifdef HAVE_MPI // Only compile if MPI version compiled.
-
 
 #include "gtest/gtest.h"
 #include <fenv.h>
@@ -264,7 +260,8 @@ bool TestControllerParallel::runWorker() {
 			delete worker_;
 
 		sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
-		worker_ = new sip::Interpreter(*sip_tables_, sialx_timers, printer_, wpam_);
+		worker_ = new sip::Interpreter(*sip_tables_, &sialx_timers, printer_, wpam_);
+//		worker_ = new sip::Interpreter(*sip_tables_, NULL, printer_, wpam_);
 		barrier();
 
 		if (verbose_)
@@ -297,4 +294,4 @@ bool TestControllerParallel::runWorker() {
 	return this_test_enabled_;
 }
 
-#endif // HAVE_MPI
+

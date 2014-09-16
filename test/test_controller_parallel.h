@@ -77,7 +77,6 @@ public:
 	sip::SialPrinterForTests* printer_;
 	bool this_test_enabled_;
 	bool expect_success_;
-
 	int prog_number_;
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;

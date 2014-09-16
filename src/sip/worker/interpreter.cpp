@@ -35,7 +35,7 @@ namespace sip {
 Interpreter* Interpreter::global_interpreter = NULL;
 
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 		SialPrinter* printer) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
@@ -43,7 +43,7 @@ Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
 				NULL, sipTables){
 	_init(sipTables);
 }
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
@@ -53,30 +53,14 @@ Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer& sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
-				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
+				sipTables), op_table_(sip_tables_.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
 				persistent_array_manager, sipTables) {
 	_init(sipTables);
 }
-
-//Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer) :
-//		sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
-//				op_table_.max_line_number()), printer_(printer), data_manager_(
-//				sipTables), persistent_array_manager_(NULL), sial_ops_(
-//				data_manager_, persistent_array_manager_, sipTables) {
-//	_init(sipTables);
-//}
-
-//Interpreter::Interpreter(SipTables& sipTables, SialPrinter* printer, WorkerPersistentArrayManager* wpm):
-//				sip_tables_(sipTables), op_table_(sipTables.op_table_), sialx_timers_(
-//						op_table_.max_line_number()), printer_(printer), data_manager_(
-//						sipTables), persistent_array_manager_(wpm), sial_ops_(
-//						data_manager_, persistent_array_manager_, sipTables) {
-//			_init(sipTables);
-//}
 
 Interpreter::~Interpreter() {
 	delete tracer_;
@@ -680,6 +664,17 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
+		case block_scale_assign_op: {
+			Block::BlockPtr lhs_block = get_block_from_instruction('w',
+					true);
+			Block::BlockPtr rhs_block = get_block_from_selector_stack('r',true);
+			double factor = expression_stack_.top();
+			std::cout << current_line() << ":  factor = " << factor << std::endl;
+            lhs_block->scale_and_copy(rhs_block, factor);
+			expression_stack_.pop();
+			++pc;
+		}
+			break;
 		case block_accumulate_scalar_op: {
 			sip::Block::BlockPtr lhs_block = get_block_from_instruction('u',
 					true);
@@ -871,6 +866,7 @@ void Interpreter::post_sial_program() {
 }
 
 void Interpreter::timer_trace(int pc, opcode_t opcode){
+	if (sialx_timers_ == NULL ) return;
         const int pc_end = op_table_.size();
         int line_number = 0;
         if (pc < pc_end)
@@ -881,11 +877,11 @@ void Interpreter::timer_trace(int pc, opcode_t opcode){
         if (last_seen_line_number_ == line_number) {
                 return;
         } else if (last_seen_line_number_ >= 0){
-                sialx_timers_.pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
+                sialx_timers_->pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
                 last_seen_line_number_ = -99; // Switches timer off.
                 return;
         } else { // Turn on a new timer
-                // Colect data for sialx lines with only these opcodes.
+                // Collect data for sialx lines with only these opcodes.
                 switch(opcode){
                 case execute_op:
                 case sip_barrier_op:
@@ -910,7 +906,7 @@ void Interpreter::timer_trace(int pc, opcode_t opcode){
                 case block_contract_to_scalar_op:
                 case set_persistent_op:
                 case restore_persistent_op:
-                        sialx_timers_.start_timer(line_number, SialxTimer::TOTALTIME);
+                        sialx_timers_->start_timer(line_number, SialxTimer::TOTALTIME);
                         last_seen_line_number_ = line_number;
                         break;
                 }
@@ -1560,7 +1556,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 
 	//TODO move to sialops
     int line = current_line();
-    sialx_timers_.start_timer(line, SialxTimer::BLOCKWAITTIME);
+    sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
 
 
 
@@ -1600,7 +1596,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 				"SIP bug:  illegal or unsupported intent given to get_block");
 	}
 
-    sialx_timers_.pause_timer(line, SialxTimer::BLOCKWAITTIME);
+    sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
 	return block;
 
 }

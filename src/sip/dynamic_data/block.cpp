@@ -164,14 +164,32 @@ Block::dataPtr Block::fill(double value) {
 }
 
 // TODO use Dmitry's??
-Block::dataPtr Block::scale(double value) {
+Block::dataPtr Block::scale(double factor) {
 	dataPtr ptr = get_data();
 	int n = size();
 	for (int i = 0; i < n; ++i) {
-		ptr[i] *= value;
+		ptr[i] *= factor;
 	}
 	return ptr;
 }
+
+
+Block::dataPtr Block::scale_and_copy(BlockPtr source_block, double factor){
+	dataPtr target = get_data();
+	dataPtr source = source_block->get_data();
+	int n = size(); //copy the number of elements needed by this block, which may be
+					//less than in source_block.  This requires, and should be checked
+					//by compiler that for, say, a[i,j] = a[i,j,k] that k is a simple index.
+					//the caller needs to calculate and pass in the offset.
+	sip::check(target != NULL, "Cannot copy data, target is NULL", current_line());
+	sip::check(source != NULL, "Cannot copy data, source is NULL", current_line());
+	for (int i = 0; i < n; ++i){
+		target[i] = source[i]*factor;
+	}
+	return target;
+}
+
+
 
 Block::dataPtr Block::increment_elements(double delta){
 	dataPtr ptr = get_data();
