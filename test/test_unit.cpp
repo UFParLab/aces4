@@ -5,6 +5,7 @@
  *      Author: njindal
  */
 
+#include <cstdio>
 #include <algorithm>
 
 #include "mpi.h"
@@ -13,6 +14,7 @@
 #include "id_block_map.h"
 #include "server_block.h"
 #include "block_id.h"
+#include "block.h"
 #include "lru_array_policy.h"
 #include "sip_mpi_utils.h"
 #include "sip_mpi_attr.h"
@@ -21,7 +23,7 @@
 #include <TAU.h>
 #endif
 
-TEST(Sial_Unit,LRUArrayPolicy){
+TEST(Sial_Unit,BlockLRUArrayPolicy){
 
 	sip::index_value_array_t index_values;
 	std::fill(index_values, index_values+MAX_RANK, sip::unused_index_value);
@@ -33,7 +35,55 @@ TEST(Sial_Unit,LRUArrayPolicy){
 	sip::BlockId bid4(4, index_values);
 	sip::BlockId bid5(5, index_values);
 
-	sip::ServerBlock *sb = NULL;
+	sip::Block *blk = NULL;
+
+	sip::IdBlockMap<sip::Block> block_map(6);
+	block_map.insert_block(bid0, blk);
+	block_map.insert_block(bid1, blk);
+	block_map.insert_block(bid2, blk);
+	block_map.insert_block(bid3, blk);
+	block_map.insert_block(bid4, blk);
+	block_map.insert_block(bid5, blk);
+
+	sip::LRUArrayPolicy<sip::Block> policy(block_map);
+	policy.touch(bid0);
+	policy.touch(bid1);
+	policy.touch(bid2);
+	policy.touch(bid3);
+	policy.touch(bid4);
+	policy.touch(bid5);
+
+	sip::check(policy.get_next_block_for_removal().array_id() == 0, "Block to remove should be from array 0");
+	block_map.get_and_remove_block(bid0);
+	sip::check(policy.get_next_block_for_removal().array_id() == 1, "Block to remove should be from array 1");
+	block_map.get_and_remove_block(bid1);
+	sip::check(policy.get_next_block_for_removal().array_id() == 2, "Block to remove should be from array 2");
+	block_map.get_and_remove_block(bid2);
+	sip::check(policy.get_next_block_for_removal().array_id() == 3, "Block to remove should be from array 3");
+	block_map.get_and_remove_block(bid3);
+	sip::check(policy.get_next_block_for_removal().array_id() == 4, "Block to remove should be from array 4");
+	block_map.get_and_remove_block(bid4);
+	sip::check(policy.get_next_block_for_removal().array_id() == 5, "Block to remove should be from array 5");
+	block_map.get_and_remove_block(bid5);
+
+}
+
+
+TEST(Sial_Unit,ServerBlockLRUArrayPolicy){
+
+	sip::index_value_array_t index_values;
+	std::fill(index_values, index_values+MAX_RANK, sip::unused_index_value);
+
+	sip::BlockId bid0(0, index_values);
+	sip::BlockId bid1(1, index_values);
+	sip::BlockId bid2(2, index_values);
+	sip::BlockId bid3(3, index_values);
+	sip::BlockId bid4(4, index_values);
+	sip::BlockId bid5(5, index_values);
+
+	// Allocate dummy data for ServerBlock so that ServerBlock
+	// Specific LRUArrayPolicy processes it correctly.
+	sip::ServerBlock *sb = new sip::ServerBlock(1);
 
 	sip::IdBlockMap<sip::ServerBlock> server_block_map(6);
 	server_block_map.insert_block(bid0, sb);

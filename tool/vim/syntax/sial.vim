@@ -16,13 +16,13 @@ syn keyword sialTodo contained TODO FIXME XXX NOTE VFL
 syn match sialComment "#.*$" contains=sialTodo
 
 " Declarations
-syn match sialRangeDef contained '[a-zA-Z_0-9]\+\s*,\s*[a-zA-Z_0-9]\+'
+syn match sialRangeDef contained '[a-zA-Z_0-9]\+\s*:\s*[a-zA-Z_0-9]\+'
 
 syn keyword sialModifier sip_consistent predefined persistent scoped_extent contiguous auto_allocate
 
 syn keyword sialDec temp local distributed served aoindex moindex moaindex mobindex index laindex special  scalar static import proc endproc
 
-syn region sialRangeAssign start='\s*=\s*[a-zA-Z_0-9]\+\s*,\s*[a-zA-Z_0-9]\+' end="$" contains=sialRangeDef
+syn region sialRangeAssign start='\s*=\s*[a-zA-Z_0-9]\+\s*:\s*[a-zA-Z_0-9]\+' end="$" contains=sialRangeDef
 
 " Statements & Super Instructions
 syn keyword sialStatement return call in where exit cycle sial endsial do enddo pardo endpardo if endif else
@@ -32,8 +32,8 @@ syn keyword sialBarrier sip_barrier server_barrier
 syn keyword sialSuperInstruction allocate deallocate create delete put get prepare request collective destroy create delete println print print_index print_scalar execute gpu_on gpu_allocate gpu_free gpu_put gpu_get gpu_off set_persistent restore_persistent
 
 " Blocks in Sial
-syn match sialSuperBlock '[a-zA-Z_0-9]\+\s*(\(\s*[a-zA-Z_0-9]\+\s*,\)\+[a-zA-Z_0-9]\+)'
-
+syn match sialSuperBlock '[a-zA-Z_0-9]\+\s*\[\(\s*[a-zA-Z_0-9]\+\s*,\)\+\s*[a-zA-Z_0-9]\+\s*\]'
+syn match sialContigBlock '[a-zA-Z_0-9]\+\s*\[\(\s*[a-zA-Z_0-9]\+\s*:\s*[a-zA-Z_0-9]\+\s*,\)\+\s*[a-zA-Z_0-9]\+\s*:\s*[a-zA-Z_0-9]\+\s*\]' contains=sialRangeDef
 
 
 " Floating point (From http://golang.org/misc/vim/syntax/go.vim?m=text)
@@ -71,6 +71,7 @@ hi def link sialFloat               Float
 hi def link sialString              String
 hi def link sialRangeDef            Constant
 hi def link sialSuperBlock          Identifier
+hi def link sialContigBlock         Identifier
 hi def link sialBarrier             Underlined
 
 
@@ -79,6 +80,4 @@ hi def link sialBarrier             Underlined
 syn sync minlines=500
 
 let b:current_syntax = "sial"
-
-
 

@@ -15,6 +15,38 @@
 
 namespace sip {
 
+/** Template specialization for ServerBlock.
+ *
+ * Regular LRU Array policy is to evict the
+ * "first" block from the least recently used array.
+ * For ServerBlocks however, since they are not
+ * removed from the BlockMap, but are "emptied out",
+ * the regular array policy won't work.
+ *
+ * This methods first chooses an array whose block
+ * is to be evicted. It then finds one, skipping
+ * over those blocks which have been "emptied" out.
+ */
+template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(){
+	/** Return an arbitrary block from the least recently used array
+	 */
+	if(lru_list_.empty())
+		throw std::out_of_range("No blocks have been touched, yet block requested for flushing");
+	while (!lru_list_.empty()) {
+		int to_remove_array = lru_list_.back();
+		IdBlockMap<ServerBlock>::PerArrayMap* array_map = block_map_.per_array_map(to_remove_array);
+		IdBlockMap<ServerBlock>::PerArrayMap::iterator it = array_map->begin();
+		for (; it != array_map->end(); it ++) {
+			ServerBlock *blk = it->second;
+			if (blk !=NULL && blk->get_data() != NULL) {
+				return it->first;
+			}
+		}
+		lru_list_.pop_back();
+	}
+	throw std::out_of_range("No server blocks to remove - all empty or none present !");
+}
+
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution,
 		ServerTimer& server_timer) :
@@ -59,25 +91,25 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 
     while (block_size > remaining_mem){
         try{
-            while (1) {
-                BlockId bid = policy_.get_next_block_for_removal();
-                ServerBlock* blk = block_map_.block(bid);
-                SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
-                        << " : Freeing block " << bid
-                        << " and writing to disk to make space for new block"
-                        << std::endl);
-                if(blk->is_dirty()){
-                    write_block_to_disk(bid, blk);
-                }
-                blk->free_in_memory_data();
-                if (remaining_mem < max_allocatable_bytes_ - ServerBlock::allocated_bytes()) {
-                    break;
-                } else {
-                    throw std::out_of_range("Break now.");
-                }
-            }
+			BlockId bid = policy_.get_next_block_for_removal();
+			ServerBlock* blk = block_map_.block(bid);
+			SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
+					<< " : Freeing block " << bid
+					<< " and writing to disk to make space for new block"
+					<< std::endl);
+			if(blk->is_dirty()){
+				write_block_to_disk(bid, blk);
+			}
+			blk->free_in_memory_data();
+
+			// Junmin's fix :
+			// As a result of freeing up block memory, the remaining memory should
+			// have increased. Otherwise it will go into an infinite loop.
+			if (!(remaining_mem < max_allocatable_bytes_ - ServerBlock::allocated_bytes())) {
+				throw std::out_of_range("Break now.");
+			}
             remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
-            std::cout << "Freeing memory ... " << remaining_mem << std::endl;
+
         } catch (const std::out_of_range& oor){
             std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
             std::cerr << oor.what() << std::endl;

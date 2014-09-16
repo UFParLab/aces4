@@ -156,11 +156,15 @@
     </context>
 
     <context id="block" style-ref="identifier">
-      <match>[a-zA-Z_0-9]+\s*\((s*[a-zA-Z_0-9]+\s*,)+[a-zA-Z_0-9]+\)</match>
+      <match>[a-zA-Z_0-9]+\s*\[(\s*[a-zA-Z_0-9]+\s*,)+\s*[a-zA-Z_0-9]+\s*\]</match>
+  </context>
+
+    <context id="contig-block" style-ref="identifier">
+      <match>[a-zA-Z_0-9]+\s*\[(\s*[a-zA-Z_0-9]+\s*:\s*[a-zA-Z_0-9]+\s*,)+\s*[a-zA-Z_0-9]+\s*:\s*[a-zA-Z_0-9]+\s*\]</match>
     </context>
 
     <context id="range-definition" style-ref="constant">
-      <match>\s*=\s*[a-zA-Z_0-9]+\s*,\s*[a-zA-Z_0-9]+</match>
+      <match>\s*=\s*[a-zA-Z_0-9]+\s*:\s*[a-zA-Z_0-9]+</match>
     </context>
 
 
@@ -178,6 +182,7 @@
         <context ref="special"/>
         <context ref="range-definition"/>
         <context ref="block"/>
+        <context ref="contig-block"/>
       </include>
     </context>
 
