@@ -400,22 +400,28 @@ else() # Single Node Version Tests
                                      test/test_transpose_op.F 
                                      test/test_transpose4d_op.F
                                      test/test_contraction_small2.F)
+    add_executable(test_sial  	     test/test_sial.cpp)
     add_executable(test_qm           test/test_qm.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_basic_sial PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_sial       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
+    add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
 
     add_dependencies(test_basic_sial gtest gtest_main test_contollers)
+    add_dependencies(test_sial       gtest gtest_main test_contollers)
     add_dependencies(test_qm         gtest gtest_main test_contollers)
 
 endif()
@@ -453,6 +459,8 @@ set(SIAL_FILES
     src/sialx/test/local_arrays_wild_fail.sialx;
     src/sialx/test/basic_assign_to_static_array_test.sialx;
     src/sialx/test/contiguous_local.sialx;
+    src/sialx/test/block_scale_assign.sialx;
+    src/sialx/test/return_sval_test.sialx;
     src/sialx/test/sum_op_test.sialx;
     src/sialx/test/transpose_tmp.sialx;
     src/sialx/test/transpose4d_tmp.sialx;

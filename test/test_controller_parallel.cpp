@@ -27,20 +27,23 @@
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
-#include "server_persistent_array_manager.h"
 
 #include "block.h"
+#include "sip_mpi_attr.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
 #endif
 
-#include "sip_server.h"
-#include "sip_mpi_attr.h"
-#include "global_state.h"
-#include "sip_mpi_utils.h"
 
 #include "test_constants.h"
+
+#ifdef HAVE_MPI
+#include "sip_server.h"
+#include "global_state.h"
+#include "sip_mpi_utils.h"
+#include "server_persistent_array_manager.h"
+#endif
 
 /** This class controls tests with at least one worker and at least one server.  The configuration is
  * determined by the sip built-in sip_mpi_attr.
@@ -70,8 +73,12 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	}
 	if (attr->is_worker())
 		wpam_ = new sip::WorkerPersistentArrayManager();
-	else
+
+#ifdef HAVE_MPI
+	if (attr->is_server())
 		spam_ = new sip::ServerPersistentArrayManager();
+#endif
+
 	if (verbose) {
 		std::cout << "****** Creating controller for test " << job_
 				<< " *********!!!\n" << std::flush;
@@ -158,11 +165,14 @@ double TestControllerParallel::scalar_value(const std::string& name) {
 
 void TestControllerParallel::run() {
 	barrier();
-	if (attr->is_worker()) {
+	if (attr->is_worker())
 		runWorker();
-	} else {
+
+#ifdef HAVE_MPI
+	if (attr->is_server())
 		runServer();
-	}
+#endif
+
 	barrier();
 }
 
