@@ -246,7 +246,7 @@ public:
 					// Set disk write time string
 					std::stringstream writed_sstr;
 					writed_sstr << sip::GlobalState::get_program_num() << ":" << line_num <<":" << " WriteDisk " << line_str ;
-					const char *tau_string = blkw_sstr.str().c_str();
+					const char *tau_string = writed_sstr.str().c_str();
 					TAU_PROFILE_TIMER_SET_NAME(tau_timers[write_timer_offset], tau_string);
 				}
 
