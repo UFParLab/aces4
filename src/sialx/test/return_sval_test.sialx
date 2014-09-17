@@ -1,0 +1,30 @@
+sial return_sval_test
+
+index i = 1:4
+index j = 1:3
+special return_sval rw
+scalar x
+scalar y
+scalar z
+
+local a[i,j]
+
+allocate a[*,*]
+
+do i
+do j
+a[i,j] = (scalar) (i*4 + j)
+enddo j
+enddo i
+
+do i
+do j
+x = a[i,j]
+execute return_sval a[i,j] y
+println x
+println y
+println (a[i,j] * 2.0)
+enddo j
+enddo i
+
+endsial return_sval_test

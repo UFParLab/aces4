@@ -1,0 +1,38 @@
+sial block_scale_assign
+	predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	index k = 1:norb
+	special test_print_block r
+	special fill_block_sequential wr
+	temp a[i,j]
+	temp b[i,j]
+	temp c[i,j]
+	temp d[i,j, k]
+
+	local v[k]
+	scalar x
+	scalar y
+	
+	allocate v[*]
+	do k
+	   v[k] = (scalar)k
+	enddo k
+
+	do k
+	print v[k]
+	do i
+	do j
+	x = (scalar) j
+    execute fill_block_sequential a[i,j] x
+	print a[i,j]
+	d[i,j, k] = a[i,j] * v[k]
+    print d[i,j,k]
+	enddo j
+	enddo i
+	enddo k
+
+    deallocate v[*]
+    
+endsial block_scale_assign
+

@@ -1362,6 +1362,13 @@ TEST(BasicSial,assign_to_static_array_test) {
 	controller.runWorker();
 }
 
+TEST(BasicSial,return_sval_test){
+	std::string job("return_sval_test");
+	std::stringstream output;
+	TestController controller(job, false, true, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+}
 //****************************************************************************************************************
 
 void bt_sighandler(int signum) {

@@ -417,6 +417,7 @@ SIOX_FILES=\
 ./src/sialx/test/scalar_valued_blocks.siox\
 ./src/sialx/test/contiguous_local.siox\
 ./src/sialx/test/block_scale_assign.siox\
+./src/sialx/test/return_sval_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_mp2_rhf.siox\
@@ -524,6 +525,7 @@ EXTRA_DIST += \
 ./src/sialx/test/scalar_valued_blocks.sialx\
 ./src/sialx/test/contiguous_local.sialx\
 ./src/sialx/test/block_scale_assign.sialx\
+./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\
