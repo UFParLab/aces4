@@ -32,13 +32,14 @@ namespace sip{
 template<typename TIMER>
 class SingleNodePrint : public PrintTimers<TIMER> {
 public:
-	SingleNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines)
-		: line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
+//	SingleNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines)
+	SingleNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out)
+		: line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~SingleNodePrint(){}
 	virtual void execute(TIMER& timer){
 
-		std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
-
+//		std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+		out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
 		const int LW = 10;	// Line num
@@ -46,7 +47,8 @@ public:
 		const int SW = 20;	// String
 
 		assert(timer.check_timers_off());
-		std::cout<<"Timers"<<std::endl
+//		std::cout<<"Timers"<<std::endl
+		out_ <<"Timers"<<std::endl
 			<<std::setw(LW)<<std::left<<"Line"
 			<<std::setw(SW)<<std::left<<"Type"
 			<<std::setw(CW)<<std::left<<"Avg"
@@ -58,7 +60,8 @@ public:
 		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
 		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
 
-		std::cout.precision(6); // Reset precision to 6 places.
+//		std::cout.precision(6); // Reset precision to 6 places.
+		out_.precision(6); // Reset precision to 6 places.
 		for (int i=1; i<timer.max_slots - sialx_lines_; i++){
 			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
 				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
@@ -71,7 +74,8 @@ public:
 					avg_blk_wait = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
 				}
 
-				std::cout<<std::setw(LW)<<std::left << i
+//				std::cout<<std::setw(LW)<<std::left << i
+				out_<<std::setw(LW)<<std::left << i
 						<< std::setw(SW)<< std::left << line_to_str_.at(i)
 						<< std::setw(CW)<< std::left << avg_time
 						<< std::setw(CW)<< std::left << avg_blk_wait
@@ -80,11 +84,13 @@ public:
 						<< std::endl;
 			}
 		}
-		std::cout<<std::endl;
+//		std::cout<<std::endl;
+		out_ << std::endl;
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+	std::ostream& out_;
 };
 
 //*********************************************************************
@@ -124,8 +130,8 @@ void sialx_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Dat
 template<typename TIMER>
 class MultiNodePrint : public PrintTimers<TIMER> {
 public:
-	MultiNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines) :
-		line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
+	MultiNodePrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out) :
+		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~MultiNodePrint(){}
 	virtual void execute(TIMER& timer){
 
@@ -135,8 +141,8 @@ public:
 
 		if (SIPMPIAttr::get_instance().is_company_master()){
 
-			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
-
+//			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 			long long * timers = timer.get_timers();
 			long long * timer_counts = timer.get_timer_count();
 			const int LW = 10;	// Line num
@@ -144,7 +150,8 @@ public:
 			const int SW = 20;	// String
 
 			assert(timer.check_timers_off());
-			std::cout<<"Timers"<<std::endl
+//			std::cout<<"Timers"<<std::endl
+			out_<<"Timers"<<std::endl
 				<<std::setw(LW)<<std::left<<"Line"
 				<<std::setw(SW)<<std::left<<"Type"
 				<<std::setw(CW)<<std::left<<"Avg"
@@ -156,7 +163,8 @@ public:
 			int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
 			int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
 
-			std::cout.precision(6); // Reset precision to 6 places.
+//			std::cout.precision(6); // Reset precision to 6 places.
+			out_.precision(6); // Reset precision to 6 places.
 			for (int i=1; i<timer.max_slots - sialx_lines_; i++){
 
 				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
@@ -169,7 +177,8 @@ public:
 						tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
 						avg_blk_wait = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
 					}
-					std::cout<<std::setw(LW)<<std::left << i
+//					std::cout<<std::setw(LW)<<std::left << i
+					out_<<std::setw(LW)<<std::left << i
 							<< std::setw(SW)<< std::left << line_to_str_.at(i)
 							<< std::setw(CW)<< std::left << avg_time
 							<< std::setw(CW)<< std::left << avg_blk_wait
@@ -178,12 +187,14 @@ public:
 							<< std::endl;
 				}
 			}
-			std::cout<<std::endl;
+//			std::cout<<std::endl;
+			out_<<std::endl;
 		}
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+	std::ostream& out_;
 	void mpi_reduce_timers(TIMER& timer){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
@@ -235,7 +246,7 @@ private:
 template<typename TIMER>
 class TAUTimersPrint : public PrintTimers<TIMER> {
 public:
-	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines)
+	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& ignore)
 		:line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
 	virtual ~TAUTimersPrint() {/* Do Nothing */}
 	virtual void execute(TIMER& timer) {
@@ -271,6 +282,7 @@ public:
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+
 };
 #endif // HAVE_TAU
 
@@ -288,19 +300,19 @@ SialxTimer::SialxTimer(int sialx_lines) :
 }
 
 void SialxTimer::start_timer(int line_number, TimerKind_t kind){
-	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-	check(line_number <= sialx_lines_, "Invalid line number", line_number);
+//	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
+//	check(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.start_timer(line_number + ((int)kind) * sialx_lines_);
 }
 
 void SialxTimer::pause_timer(int line_number, TimerKind_t kind){
-	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-	check(line_number <= sialx_lines_, "Invalid line number", line_number);
+//	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
+//	check(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.pause_timer(line_number + ((int)kind) * sialx_lines_);
 }
 
 
-void SialxTimer::print_timers(std::vector<std::string> line_to_str) {
+void SialxTimer::print_timers(std::vector<std::string> line_to_str, std::ostream& out) {
 #ifdef HAVE_TAU
 	typedef TAUTimersPrint<TimerType_t> PrintTimersType_t;
 #elif defined HAVE_MPI
@@ -308,7 +320,7 @@ void SialxTimer::print_timers(std::vector<std::string> line_to_str) {
 #else
 	typedef SingleNodePrint<TimerType_t> PrintTimersType_t;
 #endif
-	PrintTimersType_t p(line_to_str, sialx_lines_);
+	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
 }
 

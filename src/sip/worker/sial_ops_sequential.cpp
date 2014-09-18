@@ -13,7 +13,7 @@ namespace sip {
 //#ifndef HAVE_MPI
 
 SialOpsSequential::SialOpsSequential(DataManager & data_manager,
-		WorkerPersistentArrayManager* persistent_array_manager,
+		WorkerPersistentArrayManager* persistent_array_manager, SialxTimer* unused,
 		const SipTables &sip_tables):
 		sip_tables_(sip_tables),
 		data_manager_(data_manager),
@@ -50,7 +50,7 @@ void SialOpsSequential::delete_distributed(int array_id) {
 }
 
 void SialOpsSequential::get(BlockId& block_id) {
-	get_block_for_reading(block_id);
+	get_block_for_reading(block_id, 0);  //second argument is only used in parallel version.
 }
 
 /** A put appears in a SIAL program as
@@ -128,7 +128,7 @@ void SialOpsSequential::end_program() {
  * @param id
  * @return
  */
-Block::BlockPtr SialOpsSequential::get_block_for_reading(const BlockId& id) {
+Block::BlockPtr SialOpsSequential::get_block_for_reading(const BlockId& id, int unused_sial_line_number) {
 	return block_manager_.get_block_for_reading(id);
 }
 
