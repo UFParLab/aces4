@@ -429,7 +429,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 	//run first program
 	controller.initSipTables();
 	controller.run();
-
+	if (attr->global_rank() == 0){controller.print_timers();}
 	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
 
 	//run second program
@@ -451,6 +451,12 @@ TEST(Sial,persistent_distributed_array_mpi){
 			    }
 			}
 		}
+	}
+}
+
+
+
+
 //||||||| merged common ancestors
 //	//get siox name from setup, load and print the sip tables
 //	std::string prog_name = setup_reader.sial_prog_list_.at(0);
@@ -506,8 +512,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 //		runner.interpret();
 //		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
 //>>>>>>> origin/refactor_opcodes
-	}
-}
+//	}
+//}
 
 
 

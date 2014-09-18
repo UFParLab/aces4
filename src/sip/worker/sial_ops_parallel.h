@@ -8,16 +8,21 @@
 
 #include <mpi.h>
 #include "sip.h"
-#include "sip_tables.h"
+//#include "sip_tables.h"
 #include "barrier_support.h"
 #include "async_acks.h"
 #include "sip_mpi_attr.h"
 #include "block_manager.h"
 #include "data_distribution.h"
-#include "data_manager.h"
-#include "worker_persistent_array_manager.h"
+//#include "data_manager.h"
+//#include "worker_persistent_array_manager.h"
 
 namespace sip {
+
+class SialxTimer;
+class WorkerPersistentArrayManager;
+class DataManager;
+class SipTables;
 
 class SialOpsParallel {
 public:
@@ -26,6 +31,7 @@ public:
 	//beyond SIAL programs.
 	SialOpsParallel(DataManager &,
 			WorkerPersistentArrayManager*,
+			SialxTimer*,
 			const SipTables&);
 	~SialOpsParallel();
 
@@ -69,10 +75,12 @@ public:
 	 * races due to missing barrier and implements the wait for blocks of
 	 * distributed and served arrays.
 	 *
+	 * Get block for reading may block, the current line is passed in for the block wait timer.
+	 *
 	 * @param id
 	 * @return
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId& id);
+	Block::BlockPtr get_block_for_reading(const BlockId& id, int line);
 
 	Block::BlockPtr get_block_for_writing(const BlockId& id,
 			bool is_scope_extent = false);
@@ -86,6 +94,7 @@ private:
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;
+	SialxTimer* sialx_timers_;
 
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;
@@ -114,9 +123,10 @@ private:
 	 *
 	 * Requires b != NULL
 	 * @param b
+	 * @param line the current line number in sial code. Used to reference timer for block wait time.
 	 * @return  the input parameter--for convenience
 	 */
-	Block::BlockPtr wait_and_check(Block::BlockPtr b);
+	Block::BlockPtr wait_and_check(Block::BlockPtr b, int line);
 
 	/**
 	 * returns true if the mode associated with an array is compatible with

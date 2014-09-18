@@ -10,6 +10,9 @@
 #include "sip_mpi_utils.h"
 #include "interpreter.h"
 
+#include "sip_tables.h"
+#include "data_manager.h"
+#include "worker_persistent_array_manager.h"
 
 namespace sip {
 
@@ -17,12 +20,15 @@ namespace sip {
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 		WorkerPersistentArrayManager* persistent_array_manager,
+		SialxTimer* sialx_timers,
 		const SipTables& sip_tables) :
 		sip_tables_(sip_tables), sip_mpi_attr_(
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,
 				sip_mpi_attr_), persistent_array_manager_(
-				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE) {
+				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE),
+				sialx_timers_(sialx_timers)
+{
 }
 
 SialOpsParallel::~SialOpsParallel() {
@@ -313,7 +319,6 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 			MPI_Send(to_send, to_send_size, MPI_INT,
 					server_rank, put_accumulate_tag, MPI_COMM_WORLD));
 	//immediately follow with the data
-	//like put--maybe we should wait for ack from server
 	SIPMPIUtils::check_err(
 			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
@@ -489,7 +494,7 @@ void SialOpsParallel::end_program() {
 	sip_barrier();
 	int my_server = sip_mpi_attr_.my_server();
 //	std::cout << "in end_program, attr =\n" << sip_mpi_attr_ << std::endl << std::flush;
-	SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
+std::cout << "end_program.  I'm a worker and my server is " << my_server << std::endl << std::flush;
 	//send end_program message to server, if designated worker and wait for ack.
 	if (my_server > 0) {
 		int end_program_tag;
@@ -543,12 +548,12 @@ void SialOpsParallel::log_statement(opcode_t type, int line){
 					 << " : Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id) {
+Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int line) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
 		check_and_set_mode(array_id, READ);
-		return wait_and_check(block_manager_.get_block_for_reading(id));
+		return wait_and_check(block_manager_.get_block_for_reading(id), line);
 	}
 	return block_manager_.get_block_for_reading(id);
 }
@@ -575,9 +580,14 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 	return block_manager_.get_block_for_updating(id);
 }
 
-Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b) {
+Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
 	if (b->state().pending()) {
-		b->state().wait(b->size());
+		if (sialx_timers_){
+			sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
+		    b->state().wait(b->size());
+	        sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
+		}
+		else b->state().wait(b->size());
 	}
 	return b;
 }

@@ -16,10 +16,13 @@
 
 namespace sip {
 
+class SialxTimer;
+
 class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
 			WorkerPersistentArrayManager*,
+			SialxTimer*,
 			const SipTables&);
 	~SialOpsSequential();
 
@@ -65,7 +68,7 @@ public:
 	 * @param id
 	 * @return
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId& id);
+	Block::BlockPtr get_block_for_reading(const BlockId& id, int unused_sial_line_number);
 
 	Block::BlockPtr get_block_for_writing(const BlockId& id,
 			bool is_scope_extent);
