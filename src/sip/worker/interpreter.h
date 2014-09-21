@@ -43,7 +43,6 @@ namespace sip {
 
 class LoopManager;
 class SialPrinter;
-class Tracer;
 
 class Interpreter {
 public:
@@ -448,9 +447,6 @@ private:
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
 			sip::BlockId& id, bool contiguous_allowed = true);
 
-
-
-	Tracer* tracer_;
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;

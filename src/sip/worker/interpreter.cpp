@@ -20,7 +20,6 @@
 #include "tensor_ops_c_prototypes.h"
 #include "worker_persistent_array_manager.h"
 #include "sial_printer.h"
-#include "tracer.h"
 #include "sial_math.h"
 #include "config.h"
 #include "sial_math.h"
@@ -62,9 +61,7 @@ Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 	_init(sipTables);
 }
 
-Interpreter::~Interpreter() {
-	delete tracer_;
-}
+Interpreter::~Interpreter() {}
 
 void Interpreter::_init(const SipTables& sip_tables) {
 	int num_indices = sip_tables.index_table_.entries_.size();
@@ -72,7 +69,6 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	tracer_ = new Tracer(this, sip_tables, std::cout);
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 #ifdef HAVE_CUDA
 	int devid;
@@ -92,8 +88,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		opcode_t opcode = op_table_.opcode(pc);
 		sip::check(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
-
-		tracer_->trace(pc, opcode);
 
 		SIP_LOG(std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank()
 		                 << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
