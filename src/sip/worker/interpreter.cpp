@@ -82,6 +82,754 @@ void Interpreter::interpret() {
 	interpret(0, nops);
 }
 
+void Interpreter::handle_goto_op() {
+	pc = arg0();
+}
+
+void Interpreter::handle_jump_if_zero_op() {
+	int i = control_stack_.top();
+	control_stack_.pop();
+	if (i == 0)
+		pc = arg0();
+	else
+		++pc;
+}
+
+void Interpreter::handle_stop_op() {
+	fail("sial stop command caused program abort");
+}
+
+void Interpreter::handle_return_op() {
+	pc = control_stack_.top();
+	control_stack_.pop();
+}
+
+void Interpreter::handle_execute_op() {
+	handle_user_sub_op(pc);
+	contiguous_blocks_post_op();
+	++pc;
+}
+
+void Interpreter::handle_do_op() {
+	int index_slot = index_selectors()[0];
+	LoopManager* loop = new DoLoop(index_slot, data_manager_, sip_tables_);
+	loop_start(loop);
+}
+
+void Interpreter::handle_loop_end() {
+	loop_end();
+}
+
+void Interpreter::handle_exit_op() {
+	loop_manager_stack_.top()->set_to_exit();
+	pc = control_stack_.top();
+}
+
+void Interpreter::handle_where_op() {
+	int where_clause_value = control_stack_.top();
+	control_stack_.pop();
+	if (where_clause_value) {
+		++pc;
+	} else
+		pc = control_stack_.top(); //note that this clause must be in a loop and the enddo (or other endloop instruction will pop the value
+}
+
+void Interpreter::handle_pardo_op() {
+	//TODO refactor to get rid of the ifdefs
+	int num_indices = arg1();
+#ifdef HAVE_MPI
+			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
+					index_selectors(), data_manager_, sip_tables_,
+					SIPMPIAttr::get_instance());
+#else
+			LoopManager* loop = new SequentialPardoLoop(num_indices,
+					index_selectors(), data_manager_, sip_tables_);
+#endif
+			loop_start(loop);
+}
+
+void Interpreter::handle_endpardo_op() {
+	loop_end();
+}
+
+void Interpreter::handle_sip_barrier_op() {
+	sial_ops_.sip_barrier();
+	++pc;
+}
+
+void Interpreter::handle_broadcast_static_op() {
+	sial_ops_.broadcast_static(arg0(), control_stack_.top());
+	control_stack_.pop();
+	++pc;
+}
+
+void Interpreter::handle_push_block_selector_op() {
+	block_selector_stack_.push(
+			sip::BlockSelector(arg0(), arg1(), index_selectors()));
+	++pc;
+}
+
+void Interpreter::handle_allocate_op() {
+	sip::BlockId id = block_id(
+			BlockSelector(arg0(), arg1(), index_selectors()));
+	data_manager_.block_manager_.allocate_local(id);
+	++pc;
+}
+
+void Interpreter::handle_deallocate_op() {
+	sip::BlockId id = block_id(
+			sip::BlockSelector(arg0(), arg1(), index_selectors()));
+	data_manager_.block_manager_.deallocate_local(id);
+	++pc;
+}
+
+void Interpreter::handle_allocate_contiguous_op() {
+	check(sip_tables_.is_contiguous_local(arg1()),
+			"attempting to allocate_contiguous with array that is not contiguous_local",
+			line_number());
+	BlockId id = get_block_id_from_instruction();
+	data_manager_.contiguous_local_array_manager_.allocate_contiguous_local(id);
+	++pc;
+}
+
+void Interpreter::handle_deallocate_contiguous_op() {
+	check(sip_tables_.is_contiguous_local(arg1()),
+			"attempting to allocate_contiguous with array that is not contiguous_local",
+			line_number());
+	BlockId id = get_block_id_from_instruction();
+	data_manager_.contiguous_local_array_manager_.deallocate_contiguous_local(
+			id);
+	++pc;
+}
+
+void Interpreter::handle_get_op() {
+	//TODO  check this.  Have compiler put block info in instruction?
+	sip::BlockId id = get_block_id_from_selector_stack();
+	sial_ops_.get(id);
+	++pc;
+}
+
+void Interpreter::handle_put_accumulate_op() {
+	//put a[..] += b[..]  TODO check documentation
+	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
+	sip::BlockId lhs_id = get_block_id_from_selector_stack();
+	sial_ops_.put_accumulate(lhs_id, rhs_block);
+	++pc;
+}
+
+void Interpreter::handle_put_replace_op() {
+	//put a[...] = b[...]
+	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
+	sip::BlockId lhs_id = get_block_id_from_selector_stack();
+	sial_ops_.put_replace(lhs_id, rhs_block);
+	++pc;
+}
+
+void Interpreter::handle_create_op() {
+	sial_ops_.create_distributed(arg0());
+	++pc;
+}
+
+void Interpreter::handle_delete_op() {
+	sial_ops_.delete_distributed(arg0());
+	++pc;
+}
+
+void Interpreter::handle_string_load_literal_op() {
+	control_stack_.push(arg0());
+	++pc;
+}
+
+void Interpreter::handle_int_load_value_op() {
+	control_stack_.push(int_value(arg0()));
+	++pc;
+}
+
+void Interpreter::handle_int_load_literal_op() {
+	control_stack_.push(arg0());
+	++pc;
+}
+
+void Interpreter::handle_int_store_op() {
+	int op = arg1();
+	if (op == int_store_op) {
+		int value = control_stack_.top();
+		set_int_value(arg0(), value);
+		control_stack_.pop();
+	} else if (op == int_add_op) {
+		int val = int_value(arg0());
+		set_int_value(arg0(), val + control_stack_.top());
+		control_stack_.pop();
+	} else if (op == int_subtract_op) {
+		int val = int_value(arg0());
+		set_int_value(arg0(), val - control_stack_.top());
+		control_stack_.pop();
+	} else if (op == int_multiply_op) {
+		int val = int_value(arg0());
+		set_int_value(arg0(), val * control_stack_.top());
+		control_stack_.pop();
+	} else
+		fail("unexpected operator", line_number());
+
+	++pc;
+}
+
+void Interpreter::handle_index_load_value_op() {
+	control_stack_.push(index_value(arg0()));
+	++pc;
+}
+
+void Interpreter::handle_int_add_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 + i1);
+	++pc;
+}
+
+void Interpreter::handle_int_subtract_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 - i1);
+	++pc;
+}
+
+void Interpreter::handle_int_multiply_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 * i1);
+	++pc;
+}
+
+void Interpreter::handle_int_divide_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 / i1);
+	++pc;
+}
+
+void Interpreter::handle_int_equal_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 == i1);
+	++pc;
+}
+
+void Interpreter::handle_int_nequal_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 != i1);
+	++pc;
+}
+
+void Interpreter::handle_int_ge_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 >= i1);
+	++pc;
+}
+
+void Interpreter::handle_int_le_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 <= i1);
+	++pc;
+}
+
+void Interpreter::handle_int_gt_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 > i1);
+	++pc;
+}
+
+void Interpreter::handle_int_lt_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i0 < i1);
+	++pc;
+}
+
+void Interpreter::handle_int_neg_op() {
+	int i = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(-i);
+	++pc;
+}
+
+void Interpreter::handle_cast_to_int_op() {
+	double e = expression_stack_.top();
+	expression_stack_.pop();
+	int int_val = sial_math::cast_double_to_int(e);
+	control_stack_.push(int_val);
+	++pc;
+}
+
+void Interpreter::handle_scalar_load_value_op() {
+	expression_stack_.push(scalar_value(arg0()));
+	++pc;
+}
+
+void Interpreter::handle_scalar_store_op() {
+	int op = arg1();
+	if (op == scalar_store_op) {
+		set_scalar_value(arg0(), expression_stack_.top());
+		expression_stack_.pop();
+	} else if (op == scalar_add_op) {
+		double val = scalar_value(arg0());
+		set_scalar_value(arg0(), val + expression_stack_.top());
+		expression_stack_.pop();
+	} else if (op == scalar_subtract_op) {
+		double val = scalar_value(arg0());
+		set_scalar_value(arg0(), val - expression_stack_.top());
+		expression_stack_.pop();
+	} else if (op == scalar_multiply_op) {
+		double val = scalar_value(arg0());
+		set_scalar_value(arg0(), val * expression_stack_.top());
+		expression_stack_.pop();
+	} else
+		fail("unexpected operator");
+
+	++pc;
+}
+
+void Interpreter::handle_scalar_add_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	expression_stack_.push(e0 + e1);
+	++pc;
+}
+
+void Interpreter::handle_scalar_subtract_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	expression_stack_.push(e0 - e1);
+	++pc;
+}
+
+void Interpreter::handle_scalar_multiply_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	expression_stack_.push(e0 * e1);
+	++pc;
+}
+
+void Interpreter::handle_scalar_divide_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	expression_stack_.push(e0 / e1);
+	++pc;
+}
+
+void Interpreter::handle_scalar_exp_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	double value = sial_math::pow(e0, e1);
+	expression_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_eq_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	int value = (e0 == e1);
+	control_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_ne_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	int value = (e0 != e1);
+	control_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_ge_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	int value = (e0 >= e1);
+	control_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_le_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	int value = (e0 <= e1);
+	control_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_gt_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	int value = (e0 > e1);
+	control_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_lt_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	int value = (e0 < e1);
+	control_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_scalar_neg_op() {
+	double e = expression_stack_.top();
+	expression_stack_.pop();
+	expression_stack_.push(-e);
+	++pc;
+}
+
+void Interpreter::handle_scalar_sqrt_op() {
+	double e = expression_stack_.top();
+	expression_stack_.pop();
+	double value = sial_math::sqrt(e);
+	expression_stack_.push(value);
+	++pc;
+}
+
+void Interpreter::handle_cast_to_scalar_op() {
+	int i = control_stack_.top();
+	control_stack_.pop();
+	expression_stack_.push(double(i));
+	++pc;
+}
+
+void Interpreter::handle_collective_sum_op() {
+	double rhs_value = expression_stack_.top();
+	expression_stack_.pop();
+	sial_ops_.collective_sum(rhs_value, arg0());
+	++pc;
+}
+
+void Interpreter::handle_assert_same_op() {
+	sial_ops_.assert_same(arg0());
+	++pc;
+}
+
+void Interpreter::handle_block_copy_op() {
+	//get rhs selector from selector stack
+	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
+	sip::Block::BlockPtr lhs_block = get_block_from_instruction('w', true);
+	//#ifdef HAVE_CUDA
+	//		if (gpu_enabled_) {
+	//			rhs_block = get_gpu_block('r', rhs_selector, rhs_blockid);
+	//			lhs_block = get_gpu_block('w', lhs_selector, lhs_blockid);
+	//		} else
+	//#endif
+	//check for self assignment
+	//			if (lhs_block->get_data() == rhs_block->get_data()) {
+	//				continue;
+	//			}
+	//			lhs_block->copy_data_(rhs_block);
+	// Check for self assignment
+	if (lhs_block->get_data() != rhs_block->get_data()) {
+		lhs_block->copy_data_(rhs_block);
+	}
+	//#ifdef HAVE_CUDA
+	//				if (gpu_enabled_) {
+	//					lhs_block->gpu_copy_data(rhs_block);
+	//					return;
+	//				}
+	//#endif
+	++pc;
+}
+
+void Interpreter::handle_block_permute_op() {
+	//get lhs block from selector stack.  This order is correct--rhs has been pushed first for good reason in the compiler
+	BlockSelector lhs_selector = block_selector_stack_.top();
+	sip::Block::BlockPtr lhs_block = get_block_from_selector_stack('w', true);
+	//get rhs blcok from selector stack
+	BlockSelector rhs_selector = block_selector_stack_.top();
+	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true); //TODO, check contiguous allowed.
+	//permutation vector is in the instructions' index_selector array.
+	//Calculate permutation and compare with compiler's.
+	//when confident about the compiler, can remove this code.
+	int lhs_rank = lhs_selector.rank_;
+	int permutation[MAX_RANK];
+	std::fill(permutation + 0, permutation + MAX_RANK, 0);
+	for (int i = 0; i < lhs_rank; ++i) {
+		int lhs_index = lhs_selector.index_ids_[i];
+		int j;
+		for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index;
+				++j) {
+			/* keep looking until matching index found */
+		}
+		sip::check(j < lhs_rank, "illegal transpose");
+		permutation[j] = i;
+	}
+	for (int i = lhs_rank; i < MAX_RANK; ++i) {
+		//fill in unused dims with -1 to cause failure if accessed
+		permutation[i] = -1;
+	}
+	//compare caluculated here and compiler generated
+	bool OK = true;
+	for (int i = 0; i < MAX_RANK && OK; ++i) {
+		OK &= (permutation[i] == index_selectors()[i]);
+	}
+	check(OK, "permutation vector from compiler differs from sip's",
+			line_number());
+	//do the transpose
+	lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
+	//#ifdef HAVE_CUDA
+	//				if (gpu_enabled_) {
+	//					_gpu_permute(lhs_block->get_gpu_data(), lhs_rank, lhs_block->shape().segment_sizes_, lhs_selector.index_ids_,
+	//							rhs_block->get_gpu_data(), lhs_rank, rhs_block->shape().segment_sizes_ , rhs_selector.index_ids_);
+	//					return;
+	//				}
+	//#endif
+	++pc;
+}
+
+void Interpreter::handle_block_fill_op() {
+	sip::Block::BlockPtr lhs_block = get_block_from_instruction('w', true);
+	double rhs = expression_stack_.top();
+	lhs_block->fill(rhs);
+	expression_stack_.pop();
+	//#ifdef HAVE_CUDA
+	//			if (gpu_enabled_) {   //FIXME.  This looks OK, but need to double check
+	//				sip::Block::BlockPtr g_lhs_block = get_gpu_block('w');
+	//				g_lhs_block->gpu_fill(scalar_value(rhs));
+	//				return;
+	//			}
+	//#endif
+	++pc;
+}
+
+void Interpreter::handle_block_scale_op() {
+	sip::Block::BlockPtr lhs_block = get_block_from_instruction('u', true);
+	lhs_block->scale(expression_stack_.top());
+	expression_stack_.pop();
+	++pc;
+}
+
+void Interpreter::handle_block_scale_assign_op() {
+	Block::BlockPtr lhs_block = get_block_from_instruction('w', true);
+	Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
+	double factor = expression_stack_.top();
+	std::cout << current_line() << ":  factor = " << factor << std::endl;
+	lhs_block->scale_and_copy(rhs_block, factor);
+	expression_stack_.pop();
+	++pc;
+}
+
+void Interpreter::handle_block_accumulate_scalar_op() {
+	sip::Block::BlockPtr lhs_block = get_block_from_instruction('u', true);
+	lhs_block->increment_elements(expression_stack_.top());
+	expression_stack_.pop();
+	++pc;
+}
+
+void Interpreter::handle_block_add_op() {
+	handle_block_add(pc);
+	++pc;
+}
+
+void Interpreter::handle_block_subtract_op() {
+	handle_block_subtract(pc);
+	++pc;
+}
+
+void Interpreter::handle_block_contract_op() {
+	int drank = arg0();
+	const index_selector_t& selectors = index_selectors();
+	Block::BlockPtr dblock = get_block_from_instruction('w', true);
+	handle_contraction(drank, selectors, dblock->get_data(),
+			const_cast<segment_size_array_t&>(dblock->shape().segment_sizes_));
+	++pc;
+}
+
+void Interpreter::handle_block_contract_to_scalar_op() {
+	Block::BlockPtr dblock = data_manager_.scalar_blocks_[arg1()];
+	double result;
+	segment_size_array_t dummy_dsegment_sizes;
+	const index_selector_t& selectors = index_selectors();
+	handle_contraction(0, selectors, &result, dummy_dsegment_sizes);
+	expression_stack_.push(result);
+	++pc;
+}
+
+void Interpreter::handle_block_load_scalar_op() {
+	//This instruction pushes the value of a block with all simple indices onto the instruction stack.
+	//If this is a frequent occurrance, we should introduce a new block type for this
+	sip::Block::BlockPtr block = get_block_from_selector_stack('r', true);
+	expression_stack_.push(block->get_data()[0]);
+	++pc;
+}
+
+void Interpreter::handle_print_string_op() {
+	printer_->print_string(string_literal(control_stack_.top()));
+	control_stack_.pop();
+	if (arg0())
+		printer_->endl();
+
+	++pc;
+}
+
+void Interpreter::handle_print_scalar_op() {
+	int slot = arg1();
+	if (slot >= 0)
+		printer_->print_scalar(array_name(slot), expression_stack_.top(),
+				line_number());
+	else
+		printer_->print_scalar_value(expression_stack_.top());
+
+	expression_stack_.pop();
+	if (arg0())
+		printer_->endl();
+
+	++pc;
+}
+
+void Interpreter::handle_print_int_op() {
+	int slot = arg1();
+	if (slot >= 0)
+		printer_->print_int(int_name(slot), control_stack_.top(),
+				line_number());
+	else
+		printer_->print_int_value(control_stack_.top());
+
+	control_stack_.pop();
+	if (arg0())
+		printer_->endl();
+
+	++pc;
+}
+
+void Interpreter::handle_print_index_op() {
+	int slot = arg1();
+	if (slot >= 0)
+		printer_->print_index(index_name(slot), control_stack_.top(),
+				line_number());
+	else
+		printer_->print_int_value(control_stack_.top());
+
+	control_stack_.pop();
+	if (arg0())
+		printer_->endl();
+
+	++pc;
+}
+
+void Interpreter::handle_print_block_op() {
+	BlockId id;
+	int rank = block_selector_stack_.top().rank_;
+	int array_slot = block_selector_stack_.top().array_id_;
+	Block::BlockPtr block = get_block_from_selector_stack('r', id, true);
+	if (rank == 0) {
+		printer_->print_contiguous(array_slot, block, line_number());
+	} else {
+		printer_->print_block(id, block, line_number());
+	}
+	if (arg0())
+		printer_->endl();
+
+	++pc;
+}
+
+void Interpreter::handle_println_op() {
+	printer_->print_string("\n");
+	++pc;
+}
+
+void Interpreter::handle_gpu_on_op() {
+	++pc;
+}
+
+void Interpreter::handle_gpu_off_op() {
+	++pc;
+}
+
+void Interpreter::handle_set_persistent_op() {
+	int array_slot = arg1();
+	int string_slot = arg0();
+	;
+	sial_ops_.set_persistent(this, array_slot, string_slot);
+	++pc;
+}
+
+void Interpreter::handle_restore_persistent_op() {
+	int array_slot = arg1();
+	int string_slot = arg0();
+	sial_ops_.restore_persistent(this, array_slot, string_slot);
+	++pc;
+}
+
+void Interpreter::handle_idup_op() {
+	control_stack_.push(control_stack_.top());
+	++pc;
+}
+
+void Interpreter::handle_iswap_op() {
+	int i1 = control_stack_.top();
+	control_stack_.pop();
+	int i0 = control_stack_.top();
+	control_stack_.pop();
+	control_stack_.push(i1);
+	control_stack_.push(i0);
+	++pc;
+}
+
+void Interpreter::handle_sswap_op() {
+	double e1 = expression_stack_.top();
+	expression_stack_.pop();
+	double e0 = expression_stack_.top();
+	expression_stack_.pop();
+	expression_stack_.push(e1);
+	expression_stack_.push(e0);
+	++pc;
+}
+
+void Interpreter::handle_call_op() {
+	control_stack_.push(pc + 1);
+	pc = arg0();
+}
+
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
 	while (pc < pc_end) {
@@ -93,760 +841,100 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		                 << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
 
 		switch (opcode) {
-		case goto_op: {
-			pc = arg0();
-		}
-			break;
-
-		case jump_if_zero_op: {
-			int i = control_stack_.top();
-			control_stack_.pop();
-			if (i == 0)
-				pc = arg0();
-			else
-				++pc;
-		}
-			break;
-		case stop_op: {
-			fail("sial stop command caused program abort");
-		}
-			break;
-		case call_op: {
-			control_stack_.push(pc + 1);
-			pc = arg0();
-		}
-			break;
-		case return_op: {
-			pc = control_stack_.top();
-			control_stack_.pop();
-		}
-			break;
-		case execute_op: {
-			handle_user_sub_op(pc);
-			contiguous_blocks_post_op();
-			++pc;
-		}
-			break;
-		case do_op: {
-			int index_slot = index_selectors()[0];
-			LoopManager* loop = new DoLoop(index_slot, data_manager_,
-					sip_tables_);
-			loop_start(loop);
-		}
-			break;
-		case enddo_op: {
-			loop_end();
-		}
-			break;
-		case exit_op: {
-			loop_manager_stack_.top()->set_to_exit();
-			pc = control_stack_.top();
-		}
-			break;
-		case where_op: {
-			int where_clause_value = control_stack_.top();
-			control_stack_.pop();
-			if (where_clause_value) {
-				++pc;
-			} else
-				pc = control_stack_.top(); //note that this clause must be in a loop and the enddo (or other endloop instruction will pop the value
-		}
-			break;
-		case pardo_op: { //TODO refactor to get rid of the ifdefs
-			int num_indices = arg1();
-#ifdef HAVE_MPI
-			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
-					index_selectors(), data_manager_, sip_tables_,
-					SIPMPIAttr::get_instance());
-#else
-			LoopManager* loop = new SequentialPardoLoop(num_indices,
-					index_selectors(), data_manager_, sip_tables_);
-#endif
-			loop_start(loop);
-		}
-			break;
-		case endpardo_op: {
-			loop_end();
-		}
-			break;
-		case sip_barrier_op: {
-			sial_ops_.sip_barrier();
-			++pc;
-		}
-			break;
-		case broadcast_static_op: {
-			sial_ops_.broadcast_static(arg0(), control_stack_.top());
-			control_stack_.pop();
-			++pc;
-		}
-			break;
-		case push_block_selector_op: {
-			block_selector_stack_.push(
-					sip::BlockSelector(arg0(), arg1(), index_selectors()));
-			++pc;
-		}
-			break;
-		case allocate_op: {
-			sip::BlockId id = block_id(
-					BlockSelector(arg0(), arg1(), index_selectors()));
-			data_manager_.block_manager_.allocate_local(id);
-			++pc;
-		}
-			break;
-		case deallocate_op: {
-			sip::BlockId id = block_id(
-					sip::BlockSelector(arg0(), arg1(), index_selectors()));
-			data_manager_.block_manager_.deallocate_local(id);
-			++pc;
-		}
-			break;
-		case allocate_contiguous_op: {
-			check(sip_tables_.is_contiguous_local(arg1()), "attempting to allocate_contiguous with array that is not contiguous_local", line_number());
-			BlockId id = get_block_id_from_instruction();
-			data_manager_.contiguous_local_array_manager_.allocate_contiguous_local(id);
-			++pc;
-		}
-		break;
-		case deallocate_contiguous_op: {
-				check(sip_tables_.is_contiguous_local(arg1()), "attempting to allocate_contiguous with array that is not contiguous_local", line_number());
-				BlockId id = get_block_id_from_instruction();
-				data_manager_.contiguous_local_array_manager_.deallocate_contiguous_local(id);
-				++pc;
-			}
-			break;
-		case get_op: { //TODO  check this.  Have compiler put block info in instruction?
-			sip::BlockId id = get_block_id_from_selector_stack();
-			sial_ops_.get(id);
-			++pc;
-		}
-			break;
-		case put_accumulate_op: { //put a[..] += b[..]  TODO check documentation
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
-					true);
-			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_accumulate(lhs_id, rhs_block);
-			++pc;
-		}
-			break;
-		case put_replace_op: { //put a[...] = b[...]
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
-					true);
-			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_replace(lhs_id, rhs_block);
-			++pc;
-		}
-			break;
-		case create_op: {
-			sial_ops_.create_distributed(arg0());
-			++pc;
-		}
-			break;
-		case delete_op: {
-			sial_ops_.delete_distributed(arg0());
-			++pc;
-		}
-			break;
-		case string_load_literal_op: {
-			control_stack_.push(arg0());
-			++pc;
-		}
-			break;
-		case int_load_value_op: {
-			control_stack_.push(int_value(arg0()));
-			++pc;
-		}
-			break;
-		case int_load_literal_op: {
-			control_stack_.push(arg0());
-			++pc;
-		}
-			break;
-		case int_store_op: {
-			int op = arg1();
-			if (op == int_store_op) {
-				int value = control_stack_.top();
-				set_int_value(arg0(), value);
-				control_stack_.pop();
-			} else if (op == int_add_op) {
-				int val = int_value(arg0());
-				set_int_value(arg0(), val + control_stack_.top());
-				control_stack_.pop();
-			} else if (op == int_subtract_op) {
-				int val = int_value(arg0());
-				set_int_value(arg0(), val - control_stack_.top());
-				control_stack_.pop();
-			} else if (op == int_multiply_op) {
-				int val = int_value(arg0());
-				set_int_value(arg0(), val * control_stack_.top());
-				control_stack_.pop();
-			} else
-				fail("unexpected operator", line_number());
-			++pc;
-		}
-			break;
-		case index_load_value_op: {
-			control_stack_.push(index_value(arg0()));
-			++pc;
-		}
-			break;
-		case int_add_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 + i1);
-			++pc;
-		}
-			break;
-		case int_subtract_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 - i1);
-			++pc;
-		}
-			break;
-		case int_multiply_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 * i1);
-			++pc;
-		}
-			break;
-		case int_divide_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 / i1);
-			++pc;
-		}
-			break;
-		case int_equal_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 == i1);
-			++pc;
-		}
-			break;
-		case int_nequal_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 != i1);
-			++pc;
-		}
-			break;
-		case int_ge_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 >= i1);
-			++pc;
-		}
-			break;
-		case int_le_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 <= i1);
-			++pc;
-		}
-			break;
-		case int_gt_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 > i1);
-			++pc;
-		}
-			break;
-		case int_lt_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i0 < i1);
-			++pc;
-		}
-			break;
-		case int_neg_op: {
-			int i = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(-i);
-			++pc;
-		}
-			break;
-		case cast_to_int_op: {
-			double e = expression_stack_.top();
-			expression_stack_.pop();
-			int int_val = sial_math::cast_double_to_int(e);
-			control_stack_.push(int_val);
-			++pc;
-		}
-			break;
-		case scalar_load_value_op: {
-			expression_stack_.push(scalar_value(arg0()));
-			++pc;
-		}
-			break;
-		case scalar_store_op: {
-			int op = arg1();
-			if (op == scalar_store_op) {
-				set_scalar_value(arg0(), expression_stack_.top());
-				expression_stack_.pop();
-			} else if (op == scalar_add_op) {
-				double val = scalar_value(arg0());
-				set_scalar_value(arg0(), val + expression_stack_.top());
-				expression_stack_.pop();
-			} else if (op == scalar_subtract_op) {
-				double val = scalar_value(arg0());
-				set_scalar_value(arg0(), val - expression_stack_.top());
-				expression_stack_.pop();
-			} else if (op == scalar_multiply_op) {
-				double val = scalar_value(arg0());
-				set_scalar_value(arg0(), val * expression_stack_.top());
-				expression_stack_.pop();
-			} else
-				fail("unexpected operator");
-			++pc;
-		}
-			break;
-		case scalar_add_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			expression_stack_.push(e0 + e1);
-			++pc;
-		}
-			break;
-		case scalar_subtract_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			expression_stack_.push(e0 - e1);
-			++pc;
-		}
-			break;
-		case scalar_multiply_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			expression_stack_.push(e0 * e1);
-			++pc;
-		}
-			break;
-		case scalar_divide_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			expression_stack_.push(e0 / e1);
-			++pc;
-		}
-			break;
-		case scalar_exp_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			double value = sial_math::pow(e0,e1);
-			expression_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_eq_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			int value = (e0 == e1);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_ne_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			int value = (e0 != e1);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_ge_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			int value = (e0 >= e1);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_le_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			int value = (e0 <= e1);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_gt_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			int value = (e0 > e1);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_lt_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			int value = (e0 < e1);
-			control_stack_.push(value);
-			++pc;
-		}
-			break;
-		case scalar_neg_op: {
-			double e = expression_stack_.top();
-			expression_stack_.pop();
-			expression_stack_.push(-e);
-			++pc;
-		}
-			break;
-		case scalar_sqrt_op: {
-			double e = expression_stack_.top();
-			expression_stack_.pop();
-			double value = sial_math::sqrt(e);
-			expression_stack_.push(value);
-			++pc;
-		}
-			break;
-		case cast_to_scalar_op: {
-			int i = control_stack_.top();
-			control_stack_.pop();
-			expression_stack_.push(double(i));
-			++pc;
-		}
-			break;
-		case collective_sum_op: {
-			double rhs_value = expression_stack_.top();
-			expression_stack_.pop();
-			sial_ops_.collective_sum(rhs_value, arg0());
-			++pc;
-		}
-			break;
-		case assert_same_op: {
-			sial_ops_.assert_same(arg0());
-			++pc;
-		}
-			break;
-		case block_copy_op: {
-			//get rhs selector from selector stack
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
-			sip::Block::BlockPtr lhs_block = get_block_from_instruction('w', true);
-			//#ifdef HAVE_CUDA
-			//		if (gpu_enabled_) {
-			//			rhs_block = get_gpu_block('r', rhs_selector, rhs_blockid);
-			//			lhs_block = get_gpu_block('w', lhs_selector, lhs_blockid);
-			//		} else
-			//#endif
-			//check for self assignment
-			if (lhs_block->get_data() == rhs_block->get_data()) {
-						return;
-			}
-			lhs_block->copy_data_(rhs_block);
-			//#ifdef HAVE_CUDA
-			//				if (gpu_enabled_) {
-			//					lhs_block->gpu_copy_data(rhs_block);
-			//					return;
-			//				}
-			//#endif
-			++pc;
-		}
-		break;
-
-		case block_permute_op: {
-			//get lhs block from selector stack.  This order is correct--rhs has been pushed first for good reason in the compiler
-			BlockSelector lhs_selector = block_selector_stack_.top();
-			sip::Block::BlockPtr lhs_block = get_block_from_selector_stack('w', true);
-			//get rhs blcok from selector stack
-			BlockSelector rhs_selector = block_selector_stack_.top();
-			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);  //TODO, check contiguous allowed.
-			//permutation vector is in the instructions' index_selector array.
-
-			//Calculate permutation and compare with compiler's.
-			//when confident about the compiler, can remove this code.
-				int lhs_rank = lhs_selector.rank_;
-				int permutation[MAX_RANK];
-				std::fill(permutation + 0, permutation + MAX_RANK, 0);
-
-				for (int i = 0; i < lhs_rank; ++i) {
-					int lhs_index = lhs_selector.index_ids_[i];
-					int j;
-					for (j = 0;
-							j < MAX_RANK
-									&& rhs_selector.index_ids_[j] != lhs_index;
-							++j) {/* keep looking until matching index found */
-					}
-					sip::check(j < lhs_rank, "illegal transpose");
-					permutation[j] = i;
-				}
-				for (int i = lhs_rank; i < MAX_RANK; ++i) {
-					//fill in unused dims with -1 to cause failure if accessed
-					permutation[i] = -1;
-				}
-			//compare caluculated here and compiler generated
-				bool OK = true;
-			for(int i = 0; i < MAX_RANK && OK; ++i){OK &= (permutation[i] == index_selectors()[i]);}
-				check(OK, "permutation vector from compiler differs from sip's", line_number());
-
-				//do the transpose
-				lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
-
-			//#ifdef HAVE_CUDA
-			//				if (gpu_enabled_) {
-			//					_gpu_permute(lhs_block->get_gpu_data(), lhs_rank, lhs_block->shape().segment_sizes_, lhs_selector.index_ids_,
-			//							rhs_block->get_gpu_data(), lhs_rank, rhs_block->shape().segment_sizes_ , rhs_selector.index_ids_);
-			//					return;
-			//				}
-			//#endif
-			++pc;
-		}
-			break;
-		case block_fill_op: {
-			sip::Block::BlockPtr lhs_block = get_block_from_instruction('w',
-					true);
-			double rhs = expression_stack_.top();
-			lhs_block->fill(rhs);
-			expression_stack_.pop();
-					//#ifdef HAVE_CUDA
-					//			if (gpu_enabled_) {   //FIXME.  This looks OK, but need to double check
-					//				sip::Block::BlockPtr g_lhs_block = get_gpu_block('w');
-					//				g_lhs_block->gpu_fill(scalar_value(rhs));
-					//				return;
-					//			}
-                   //#endif
-			++pc;
-		}
-			break;
-		case block_scale_op: {
-			sip::Block::BlockPtr lhs_block = get_block_from_instruction('u',
-					true);
-			lhs_block->scale(expression_stack_.top());
-			expression_stack_.pop();
-			++pc;
-		}
-			break;
-		case block_scale_assign_op: {
-			Block::BlockPtr lhs_block = get_block_from_instruction('w',
-					true);
-			Block::BlockPtr rhs_block = get_block_from_selector_stack('r',true);
-			double factor = expression_stack_.top();
-			std::cout << current_line() << ":  factor = " << factor << std::endl;
-            lhs_block->scale_and_copy(rhs_block, factor);
-			expression_stack_.pop();
-			++pc;
-		}
-			break;
-		case block_accumulate_scalar_op: {
-			sip::Block::BlockPtr lhs_block = get_block_from_instruction('u',
-					true);
-			lhs_block->increment_elements(expression_stack_.top());
-			expression_stack_.pop();
-			++pc;
-		}
-			break;
-		case block_add_op: {
-			handle_block_add(pc);
-			++pc;
-		}
-			break;
-		case block_subtract_op: {
-			handle_block_subtract(pc);
-			++pc;
-		}
-			break;
-		case block_contract_op: {
-			int drank = arg0();
-			const index_selector_t& selectors = index_selectors();
-			Block::BlockPtr dblock = get_block_from_instruction('w',true);
-			handle_contraction(drank, selectors, dblock->get_data(),const_cast<segment_size_array_t&>(dblock->shape().segment_sizes_) );
-			++pc;
-		}
-			break;
-//		case block_contract_accumulate_op: {
-//			//TODO
-//			++pc;
-//		}
-//			break;
-		case block_contract_to_scalar_op: {
-			Block::BlockPtr dblock = data_manager_.scalar_blocks_[arg1()];
-			double result;
-			segment_size_array_t dummy_dsegment_sizes;
-			const index_selector_t& selectors = index_selectors();
-			handle_contraction(0, selectors, &result, dummy_dsegment_sizes);
-			expression_stack_.push(result);
-			++pc;
-		}
-			break;
-		case block_load_scalar_op: {
-			//This instruction pushes the value of a block with all simple indices onto the instruction stack.
-			//If this is a frequent occurrance, we should introduce a new block type for this
-			sip::Block::BlockPtr block = get_block_from_selector_stack('r',true);
-			expression_stack_.push(block->get_data()[0]);
-			++pc;
-		}
-			break;
-//		case slice_op: {
-//			//TODO
-//			++pc;
-//		}
-//			break;
-//		case insert_op: {
-//			//TODO
-//			++pc;
-//		}
-//			break;
-
-		case print_string_op: {
-			printer_->print_string(string_literal(control_stack_.top()));
-			control_stack_.pop();
-			if (arg0())
-				printer_->endl();
-			++pc;
-		}
-			break;
-		case print_scalar_op: {
-			int slot = arg1();
-			if (slot >= 0)
-				printer_->print_scalar(array_name(slot),
-						expression_stack_.top(), line_number());
-			else
-				printer_->print_scalar_value(expression_stack_.top());
-			expression_stack_.pop();
-			if (arg0())
-				printer_->endl();
-			++pc;
-		}
-			break;
-		case print_int_op: {
-			int slot = arg1();
-			if (slot >= 0)
-				printer_->print_int(int_name(slot), control_stack_.top(),
-						line_number());
-			else
-				printer_->print_int_value(control_stack_.top());
-			control_stack_.pop();
-			if (arg0())
-				printer_->endl();
-			++pc;
-		}
-			break;
-		case print_index_op: {
-			int slot = arg1();
-			if (slot >= 0)
-				printer_->print_index(index_name(slot), control_stack_.top(),
-						line_number());
-			else
-				printer_->print_int_value(control_stack_.top());
-			control_stack_.pop();
-			if (arg0())
-				printer_->endl();
-			++pc;
-		}
-			break;
-		case print_block_op: {
-			BlockId id;
-			int rank = block_selector_stack_.top().rank_;
-			int array_slot = block_selector_stack_.top().array_id_;
-			Block::BlockPtr block = get_block_from_selector_stack('r',id, true);
-			if (rank == 0){
-				printer_->print_contiguous(array_slot, block, line_number());
-			} else {
-			printer_->print_block( id,  block, line_number());
-			}
-			if (arg0())
-				printer_->endl();
-			++pc;
-		}
-		break;
-		case println_op: {
-			printer_->print_string("\n");
-			++pc;
-		}
-		break;
-		case gpu_on_op:{
-			++pc;
-		}
-		break;
-		case gpu_off_op:{
-			++pc;
-		}
-		break;
-		/* FIX ME:  other gpu instruction omitted for now */
-		case set_persistent_op: {
-			int array_slot = arg1();
-			int string_slot = arg0();;
-			sial_ops_.set_persistent(this, array_slot, string_slot);
-			++pc;
-		}
-			break;
-		case restore_persistent_op: {
-			int array_slot = arg1();
-			int string_slot = arg0();
-			sial_ops_.restore_persistent(this, array_slot, string_slot);
-			++pc;
-		}
-			break;
-		case idup_op: {
-			control_stack_.push(control_stack_.top());
-			++pc;
-		}
-			break;
-		case iswap_op: {
-			int i1 = control_stack_.top();
-			control_stack_.pop();
-			int i0 = control_stack_.top();
-			control_stack_.pop();
-			control_stack_.push(i1);
-			control_stack_.push(i0);
-			++pc;
-		}
-			break;
-		case sswap_op: {
-			double e1 = expression_stack_.top();
-			expression_stack_.pop();
-			double e0 = expression_stack_.top();
-			expression_stack_.pop();
-			expression_stack_.push(e1);
-			expression_stack_.push(e0);
-			++pc;
-		}
-			break;
-		default: {
-			check(false, opcodeToName(opcode) + " not yet implemented ", line_number());
-		}
+		case goto_op: 					handle_goto_op(); 					break;
+		case jump_if_zero_op: 			handle_jump_if_zero_op(); 			break;
+		case stop_op: 					handle_stop_op();					break;
+		case call_op: 					handle_call_op();					break;
+		case return_op: 				handle_return_op();					break;
+		case execute_op: 				handle_execute_op();				break;
+		case do_op: 					handle_do_op();						break;
+		case enddo_op: 					handle_loop_end();					break;
+		case exit_op: 					handle_exit_op();					break;
+		case where_op: 					handle_where_op();					break;
+		case pardo_op: 					handle_pardo_op();					break;
+		case endpardo_op: 				handle_endpardo_op();				break;
+		case sip_barrier_op: 			handle_sip_barrier_op();			break;
+		case broadcast_static_op: 		handle_broadcast_static_op();		break;
+		case push_block_selector_op: 	handle_push_block_selector_op();	break;
+		case allocate_op: 				handle_allocate_op();				break;
+		case deallocate_op: 			handle_deallocate_op();				break;
+		case allocate_contiguous_op: 	handle_allocate_contiguous_op();	break;
+		case deallocate_contiguous_op: 	handle_deallocate_contiguous_op();	break;
+		case get_op: 					handle_get_op();					break;
+		case put_accumulate_op: 		handle_put_accumulate_op();			break;
+		case put_replace_op: 			handle_put_replace_op();			break;
+		case create_op: 				handle_create_op();					break;
+		case delete_op: 				handle_delete_op();					break;
+		case string_load_literal_op: 	handle_string_load_literal_op();	break;
+		case int_load_value_op: 		handle_int_load_value_op();			break;
+		case int_load_literal_op: 		handle_int_load_literal_op();		break;
+		case int_store_op: 				handle_int_store_op();				break;
+		case index_load_value_op: 		handle_index_load_value_op();		break;
+		case int_add_op: 				handle_int_add_op();				break;
+		case int_subtract_op: 			handle_int_subtract_op();			break;
+		case int_multiply_op: 			handle_int_multiply_op();			break;
+		case int_divide_op: 			handle_int_divide_op();				break;
+		case int_equal_op: 				handle_int_equal_op();				break;
+		case int_nequal_op: 			handle_int_nequal_op();				break;
+		case int_ge_op: 				handle_int_ge_op();					break;
+		case int_le_op: 				handle_int_le_op();					break;
+		case int_gt_op: 				handle_int_gt_op();					break;
+		case int_lt_op: 				handle_int_lt_op();					break;
+		case int_neg_op: 				handle_int_neg_op();				break;
+		case cast_to_int_op: 			handle_cast_to_int_op();			break;
+		case scalar_load_value_op: 		handle_scalar_load_value_op();		break;
+		case scalar_store_op: 			handle_scalar_store_op();			break;
+		case scalar_add_op: 			handle_scalar_add_op();				break;
+		case scalar_subtract_op: 		handle_scalar_subtract_op();		break;
+		case scalar_multiply_op: 		handle_scalar_multiply_op();		break;
+		case scalar_divide_op: 			handle_scalar_divide_op();			break;
+		case scalar_exp_op: 			handle_scalar_exp_op();				break;
+		case scalar_eq_op: 				handle_scalar_eq_op();				break;
+		case scalar_ne_op: 				handle_scalar_ne_op();				break;
+		case scalar_ge_op: 				handle_scalar_ge_op();				break;
+		case scalar_le_op: 				handle_scalar_le_op();				break;
+		case scalar_gt_op: 				handle_scalar_gt_op();				break;
+		case scalar_lt_op: 				handle_scalar_lt_op();				break;
+		case scalar_neg_op: 			handle_scalar_neg_op();				break;
+		case scalar_sqrt_op: 			handle_scalar_sqrt_op();			break;
+		case cast_to_scalar_op: 		handle_cast_to_scalar_op();			break;
+		case collective_sum_op: 		handle_collective_sum_op();			break;
+		case assert_same_op: 			handle_assert_same_op();			break;
+		case block_copy_op: 			handle_block_copy_op();				break;
+		case block_permute_op: 			handle_block_permute_op();			break;
+		case block_fill_op: 			handle_block_fill_op();				break;
+		case block_scale_op: 			handle_block_scale_op();			break;
+		case block_scale_assign_op: 	handle_block_scale_assign_op();		break;
+		case block_accumulate_scalar_op:handle_block_accumulate_scalar_op();break;
+		case block_add_op: 				handle_block_add_op();				break;
+		case block_subtract_op: 		handle_block_subtract_op();			break;
+		case block_contract_op: 		handle_block_contract_op();			break;
+//		case block_contract_accumulate_op://TODO							break;
+		case block_contract_to_scalar_op:handle_block_contract_to_scalar_op();break;
+		case block_load_scalar_op: 		handle_block_load_scalar_op();		break;
+//		case slice_op: 					//TODO								break;
+//		case insert_op: 				//TODO								break;
+		case print_string_op: 			handle_print_string_op();			break;
+		case print_scalar_op: 			handle_print_scalar_op();			break;
+		case print_int_op: 				handle_print_int_op();				break;
+		case print_index_op: 			handle_print_index_op();			break;
+		case print_block_op: 			handle_print_block_op();			break;
+		case println_op: 				handle_println_op();				break;
+		case gpu_on_op:					handle_gpu_on_op();					break;
+		case gpu_off_op:				handle_gpu_off_op();				break;
+//		case gpu_allocate_op:			//TODO								break;
+//		case gpu_free_op:				//TODO								break;
+//		case gpu_put_op:				//TODO								break;
+//		case gpu_get_op:				//TODO								break;
+//		case gpu_get_int_op:			//TODO								break;
+//		case gpu_put_int_op:			//TODO								break;
+		case set_persistent_op: 		handle_set_persistent_op();			break;
+		case restore_persistent_op: 	handle_restore_persistent_op();		break;
+		case idup_op: 					handle_idup_op();					break;
+		case iswap_op: 					handle_iswap_op();					break;
+		case sswap_op: 					handle_sswap_op();					break;
+		default:
+			fail(opcodeToName(opcode) + " not yet implemented ", line_number());
 		}// switch
 
 		//TODO  only call where necessary
