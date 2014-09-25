@@ -173,10 +173,10 @@ public:
 
 
 
-	int arg0(){ return op_table_.arg0(pc); }
-	int arg1(){ return op_table_.arg1(pc); }
-	int arg2(){ return op_table_.arg2(pc); }
-    const sip::index_selector_t& index_selectors(){return op_table_.index_selectors(pc);}
+	int arg0(int pc){ return op_table_.arg0(pc); }
+	int arg1(int pc){ return op_table_.arg1(pc); }
+	int arg2(int pc){ return op_table_.arg2(pc); }
+    const sip::index_selector_t& index_selectors(int pc){return op_table_.index_selectors(pc);}
 
 	/**
 	 * Returns the line number in the SIAL program corresponding to the
@@ -188,8 +188,8 @@ public:
 	 *
 	 */
 	int line_number() {
-		if (pc < op_table_.size())
-			return op_table_.line_number(pc);
+		if (pc_ < op_table_.size())
+			return op_table_.line_number(pc_);
 		else
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
@@ -275,11 +275,9 @@ protected:
 #else
 	SialOpsSequential sial_ops_;
 #endif
-//	SIAL_OPS_TYPE sial_ops_;
 
-	/** the "program counter". Actually, the current location in the op_table_.
-	 */
-	int pc; //technically, this should be pc_, but I'm going to leave it this way for convenience
+	/** the "program counter". Actually, the current location in the op_table_.	 */
+	int pc_;
 
 	/** contains a stack of pointers to LoopManager objects.
 	 * A LoopManager is created and pushed onto the stack when a loop is entered,
@@ -340,11 +338,11 @@ protected:
 
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
-	void handle_user_sub_op(int pc);
 //	void handle_assignment_op(int pc);
+	void handle_user_sub_op(int pc);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
-	void handle_contraction_op(int pc);
+//	void handle_contraction_op(int pc);
 //	void handle_where_op(int pc);
 //	bool evaluate_where_clause(int pc);
 //	bool evaluate_double_relational_expr(int pc);
@@ -354,18 +352,14 @@ protected:
 	void handle_block_add(int pc);
 	void handle_block_subtract(int pc);
 //	void handle_self_multiply_op(int pc);
-	void handle_slice_op(int pc);
-	void handle_insert_op(int pc);
-
-	void loop_start(LoopManager * loop);
-	void loop_end();
-
+//	void handle_slice_op(int pc);
+//	void handle_insert_op(int pc);
 
 	/** Gets the rank and array Id index_selector array from the instruction.
-	 *
+	 * @param
 	 * @return
 	 */
-	BlockId get_block_id_from_instruction();
+	BlockId get_block_id_from_instruction(int pc);
 
 	/** Pops the selector off the top of the block_selector_stack, reads the bound off the control_stack
 	 * and returns the ContiguousLocalBlockId.
@@ -399,8 +393,7 @@ protected:
 	 * @param[in]  contiguous_allowed indicates whether or not contiguous blocks are allowed.  Subblocks of contiguous arrays will be automatically extracted and/or written back depending on the intent.
 	 * @return  pointer to selected Block
 	 */
-	sip::Block::BlockPtr get_block_from_selector_stack(char intent,
-			sip::BlockId&, bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_block_from_selector_stack(char intent, sip::BlockId&, bool contiguous_allowed = true);
 	/**
 	 * Returns a pointer to the block on top of the selector stack and removes the selector from the stack.
 	 * This just invokes the get_block_from_selector_stack version with a BlockId parameter and throws it away.
@@ -409,8 +402,7 @@ protected:
 	 * @param contiguous_allowed
 	 * @return pointer to selected Block
 	 */
-	sip::Block::BlockPtr get_block_from_selector_stack(char intent,
-			bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_block_from_selector_stack(char intent, bool contiguous_allowed = true);
 
 
 	/**
@@ -422,7 +414,7 @@ protected:
 	 * @param contiguous_allowed
 	 * @return
 	 */
-	Block::BlockPtr get_block_from_instruction(char intent, bool contiguous_allowed = true);
+	Block::BlockPtr get_block_from_instruction(int pc, char intent, bool contiguous_allowed = true);
 
 
 	/**
@@ -434,107 +426,110 @@ protected:
 	 * @param[in] contiguous_allowed indicates whether or not contiguous blocks are allowed.  Subblocks of contiguous arrays will be automatically extracted and/or written back depending on the intent.
 	 * @return pointer to selected Block
 	 */
-	sip::Block::BlockPtr get_block(char intent, sip::BlockSelector&,
-			sip::BlockId&, bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_block(char intent, sip::BlockSelector&, sip::BlockId&, bool contiguous_allowed = true);
 
 	// GPU
-	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockId&,
-			bool contiguous_allowed = true);
-	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockSelector&,
-			sip::BlockId&, bool contiguous_allowed = true);
-	sip::Block::BlockPtr get_gpu_block(char intent, bool contiguous_allowed =
-			true);
-	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
-			sip::BlockId& id, bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockId&, bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockSelector&, sip::BlockId&, bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_gpu_block(char intent, bool contiguous_allowed = true);
+	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent, sip::BlockId& id, bool contiguous_allowed = true);
 
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
-	void handle_goto_op();
-	void handle_jump_if_zero_op();
-	void handle_stop_op();
-	void handle_return_op();
-	void handle_execute_op();
-	void handle_do_op();
-	void handle_loop_end();
-	void handle_exit_op();
-	void handle_where_op();
-	void handle_pardo_op();
-	void handle_endpardo_op();
-	void handle_sip_barrier_op();
-	void handle_broadcast_static_op();
-	void handle_push_block_selector_op();
-	void handle_allocate_op();
-	void handle_deallocate_op();
-	void handle_allocate_contiguous_op();
-	void handle_deallocate_contiguous_op();
-	void handle_get_op();
-	void handle_put_accumulate_op();
-	void handle_put_replace_op();
-	void handle_create_op();
-	void handle_delete_op();
-	void handle_string_load_literal_op();
-	void handle_int_load_value_op();
-	void handle_int_load_literal_op();
-	void handle_int_store_op();
-	void handle_index_load_value_op();
-	void handle_int_add_op();
-	void handle_int_subtract_op();
-	void handle_int_multiply_op();
-	void handle_int_divide_op();
-	void handle_int_equal_op();
-	void handle_int_nequal_op();
-	void handle_int_ge_op();
-	void handle_int_le_op();
-	void handle_int_gt_op();
-	void handle_int_lt_op();
-	void handle_int_neg_op();
-	void handle_cast_to_int_op();
-	void handle_scalar_load_value_op();
-	void handle_scalar_store_op();
-	void handle_scalar_add_op();
-	void handle_scalar_subtract_op();
-	void handle_scalar_multiply_op();
-	void handle_scalar_divide_op();
-	void handle_scalar_exp_op();
-	void handle_scalar_eq_op();
-	void handle_scalar_ne_op();
-	void handle_scalar_ge_op();
-	void handle_scalar_le_op();
-	void handle_scalar_gt_op();
-	void handle_scalar_lt_op();
-	void handle_scalar_neg_op();
-	void handle_scalar_sqrt_op();
-	void handle_cast_to_scalar_op();
-	void handle_collective_sum_op();
-	void handle_assert_same_op();
-	void handle_block_copy_op();
-	void handle_block_permute_op();
-	void handle_block_fill_op();
-	void handle_block_scale_op();
-	void handle_block_scale_assign_op();
-	void handle_block_accumulate_scalar_op();
-	void handle_block_add_op();
-	void handle_block_subtract_op();
-	void handle_block_contract_op();
-	void handle_block_contract_to_scalar_op();
-	void handle_block_load_scalar_op();
-	void handle_print_string_op();
-	void handle_print_scalar_op();
-	void handle_print_int_op();
-	void handle_print_index_op();
-	void handle_print_block_op();
-	void handle_println_op();
-	void handle_gpu_on_op();
-	void handle_gpu_off_op();
-	void handle_set_persistent_op();
-	void handle_restore_persistent_op();
-	void handle_idup_op();
-	void handle_iswap_op();
-	void handle_sswap_op();
-	void handle_call_op();
+
+	// Functions that modify the program counter
+	// are passed in a reference to it.
+	void handle_goto_op(int &pc);
+	void handle_jump_if_zero_op(int &pc);
+	void handle_stop_op(int &pc);
+	void handle_return_op(int &pc);
+	void handle_do_op(int &pc);
+	void handle_loop_end(int &pc);
+	void handle_exit_op(int &pc);
+	void handle_where_op(int &pc);
+	void handle_pardo_op(int &pc);
+	void handle_endpardo_op(int &pc);
+	void handle_call_op(int &pc);
+
+	void loop_start(int &pc, LoopManager * loop);
+	void loop_end(int &pc);
+
+	// Functions that don't modify the program counter.
+	void handle_execute_op(int pc);
+	void handle_sip_barrier_op(int pc);
+	void handle_broadcast_static_op(int pc);
+	void handle_push_block_selector_op(int pc);
+	void handle_allocate_op(int pc);
+	void handle_deallocate_op(int pc);
+	void handle_allocate_contiguous_op(int pc);
+	void handle_deallocate_contiguous_op(int pc);
+	void handle_get_op(int pc);
+	void handle_put_accumulate_op(int pc);
+	void handle_put_replace_op(int pc);
+	void handle_create_op(int pc);
+	void handle_delete_op(int pc);
+	void handle_string_load_literal_op(int pc);
+	void handle_int_load_value_op(int pc);
+	void handle_int_load_literal_op(int pc);
+	void handle_int_store_op(int pc);
+	void handle_index_load_value_op(int pc);
+	void handle_int_add_op(int pc);
+	void handle_int_subtract_op(int pc);
+	void handle_int_multiply_op(int pc);
+	void handle_int_divide_op(int pc);
+	void handle_int_equal_op(int pc);
+	void handle_int_nequal_op(int pc);
+	void handle_int_ge_op(int pc);
+	void handle_int_le_op(int pc);
+	void handle_int_gt_op(int pc);
+	void handle_int_lt_op(int pc);
+	void handle_int_neg_op(int pc);
+	void handle_cast_to_int_op(int pc);
+	void handle_scalar_load_value_op(int pc);
+	void handle_scalar_store_op(int pc);
+	void handle_scalar_add_op(int pc);
+	void handle_scalar_subtract_op(int pc);
+	void handle_scalar_multiply_op(int pc);
+	void handle_scalar_divide_op(int pc);
+	void handle_scalar_exp_op(int pc);
+	void handle_scalar_eq_op(int pc);
+	void handle_scalar_ne_op(int pc);
+	void handle_scalar_ge_op(int pc);
+	void handle_scalar_le_op(int pc);
+	void handle_scalar_gt_op(int pc);
+	void handle_scalar_lt_op(int pc);
+	void handle_scalar_neg_op(int pc);
+	void handle_scalar_sqrt_op(int pc);
+	void handle_cast_to_scalar_op(int pc);
+	void handle_collective_sum_op(int pc);
+	void handle_assert_same_op(int pc);
+	void handle_block_copy_op(int pc);
+	void handle_block_permute_op(int pc);
+	void handle_block_fill_op(int pc);
+	void handle_block_scale_op(int pc);
+	void handle_block_scale_assign_op(int pc);
+	void handle_block_accumulate_scalar_op(int pc);
+	void handle_block_add_op(int pc);
+	void handle_block_subtract_op(int pc);
+	void handle_block_contract_op(int pc);
+	void handle_block_contract_to_scalar_op(int pc);
+	void handle_block_load_scalar_op(int pc);
+	void handle_print_string_op(int pc);
+	void handle_print_scalar_op(int pc);
+	void handle_print_int_op(int pc);
+	void handle_print_index_op(int pc);
+	void handle_print_block_op(int pc);
+	void handle_println_op(int pc);
+	void handle_gpu_on_op(int pc);
+	void handle_gpu_off_op(int pc);
+	void handle_set_persistent_op(int pc);
+	void handle_restore_persistent_op(int pc);
+	void handle_idup_op(int pc);
+	void handle_iswap_op(int pc);
+	void handle_sswap_op(int pc);
 };
 /* class Interpreter */
 
