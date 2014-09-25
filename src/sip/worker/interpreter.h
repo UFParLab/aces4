@@ -255,7 +255,7 @@ protected:
 	int last_seen_line_number_;
 
 	/** collects performance information per SIALX line **/
-	void timer_trace(int pc, opcode_t opcode);
+	void timer_trace(int pc);
 
 	const OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 	/**

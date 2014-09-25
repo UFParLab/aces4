@@ -61,6 +61,7 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc_ = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
+	last_seen_line_number_ = -99;
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 #ifdef HAVE_CUDA
 	int devid;
@@ -756,7 +757,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		SIP_LOG(std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank()
 		                 << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
-
+		timer_trace(pc_);
 		switch (opcode) {
 		// Opcodes that modify the program counter (pc_)
 		case goto_op: 					handle_goto_op(pc_); 					break;
@@ -864,54 +865,57 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 } //interpret
 
 void Interpreter::post_sial_program() {
+	timer_trace(pc_);
 	sial_ops_.end_program();
 }
 
-void Interpreter::timer_trace(int pc, opcode_t opcode){
+void Interpreter::timer_trace(int pc){
 	if (sialx_timers_ == NULL ) return;
-        const int pc_end = op_table_.size();
-        int line_number = 0;
-        if (pc < pc_end)
-                line_number = current_line();
+	const int pc_end = op_table_.size();
+	int line_number = 0;
+	opcode_t opcode = invalid_op;
+	if (pc < pc_end){
+		opcode = op_table_.opcode(pc_);
+		line_number = current_line();
+	}
+	check (line_number >= 0, "Invalid line number at timer_trace!");
 
-        check (line_number >= 0, "Invalid line number at timer_trace!");
-
-        if (last_seen_line_number_ == line_number) {
-                return;
-        } else if (last_seen_line_number_ >= 0){
-                sialx_timers_->pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
-                last_seen_line_number_ = -99; // Switches timer off.
-                return;
-        } else { // Turn on a new timer
-                // Collect data for sialx lines with only these opcodes.
-                switch(opcode){
-                case execute_op:
-                case sip_barrier_op:
-                case broadcast_static_op:
-                case allocate_op:
-                case deallocate_op:
-                case get_op:
-                case put_accumulate_op:
-                case put_replace_op:
-                case create_op:
-                case delete_op:
-                case collective_sum_op:
-                case assert_same_op:
-                case block_copy_op:
-                case block_permute_op:
-                case block_fill_op:
-                case block_scale_op:
-                case block_accumulate_scalar_op:
-                case block_add_op:
-                case block_subtract_op:
-                case block_contract_op:
-                case block_contract_to_scalar_op:
-                case set_persistent_op:
-                case restore_persistent_op:
-                        sialx_timers_->start_timer(line_number, SialxTimer::TOTALTIME);
-                        last_seen_line_number_ = line_number;
-                        break;
-                }
+	if (last_seen_line_number_ == line_number) {
+			return;
+	} else if (last_seen_line_number_ >= 0){
+			sialx_timers_->pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
+			last_seen_line_number_ = -99; // Switches timer off.
+			return;
+	} else { // Turn on a new timer
+			// Collect data for sialx lines with only these opcodes.
+			switch(opcode){
+			case execute_op:
+			case sip_barrier_op:
+			case broadcast_static_op:
+			case allocate_op:
+			case deallocate_op:
+			case get_op:
+			case put_accumulate_op:
+			case put_replace_op:
+			case create_op:
+			case delete_op:
+			case collective_sum_op:
+			case assert_same_op:
+			case block_copy_op:
+			case block_permute_op:
+			case block_fill_op:
+			case block_scale_op:
+			case block_accumulate_scalar_op:
+			case block_add_op:
+			case block_subtract_op:
+			case block_contract_op:
+			case block_contract_to_scalar_op:
+			case set_persistent_op:
+			case restore_persistent_op:
+					sialx_timers_->start_timer(line_number, SialxTimer::TOTALTIME);
+					last_seen_line_number_ = line_number;
+					break;
+			}
         }
 
 }
