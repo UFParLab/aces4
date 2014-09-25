@@ -429,7 +429,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 	//run first program
 	controller.initSipTables();
 	controller.run();
-	if (attr->global_rank() == 0){controller.print_timers();}
+	controller.print_timers(std::cout);
 	//run second program
 	controller.initSipTables();
 	controller.run();
@@ -450,7 +450,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 			}
 		}
 	}
-	if (attr->global_rank() == 0){controller.print_timers();}
+	controller.print_timers(std::cout);
 
 }
 

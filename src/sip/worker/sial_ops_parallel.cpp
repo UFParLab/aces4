@@ -225,7 +225,6 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 					server_rank, put_tag, MPI_COMM_WORLD));
 
 	//immediately follow with the data
-	//TODO  should we wait for ack before sending data???
 	SIPMPIUtils::check_err(
 			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 					server_rank, put_data_tag, MPI_COMM_WORLD));
@@ -411,9 +410,10 @@ bool SialOpsParallel::nearlyEqual(double a, double  b, double epsilon) {
 }
 
 
-void SialOpsParallel::broadcast_static(int source_array_slot, int source_worker){
-	if (sip_mpi_attr_.num_servers() )
-		std::cout<< "placeholder for broadcast_static";
+void SialOpsParallel::broadcast_static(Block::BlockPtr source_or_dest, int source_worker){
+	if (sip_mpi_attr_.num_workers()>0 ){
+	   SIPMPIUtils::check_err(MPI_Bcast(source_or_dest->get_data() , source_or_dest->size(), MPI_DOUBLE, source_worker, worker_comm));
+    }
 }
 
 
@@ -493,8 +493,6 @@ void SialOpsParallel::end_program() {
 	//at the server when the end_program message arrives.
 	sip_barrier();
 	int my_server = sip_mpi_attr_.my_server();
-//	std::cout << "in end_program, attr =\n" << sip_mpi_attr_ << std::endl << std::flush;
-std::cout << "end_program.  I'm a worker and my server is " << my_server << std::endl << std::flush;
 	//send end_program message to server, if designated worker and wait for ack.
 	if (my_server > 0) {
 		int end_program_tag;

@@ -172,16 +172,18 @@ double TestControllerParallel::scalar_value(const std::string& name) {
 	}
 }
 
-void TestControllerParallel::print_timers(){
+//TODO change std::cout to parameter
+void TestControllerParallel::print_timers(std::ostream& out){
+	if (! attr->is_worker()) return;
 	std::cout << "in print_timers() " << std::endl;
 	if (sip_tables_ == NULL || sialx_timers_ == NULL){
-		std::cout << "sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
-				<< "sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
+		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
+				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
 		return;
 	}
 	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
-	sialx_timers_->print_timers(lno2name, sial_output_);
-	sial_output_<< std::flush;
+	sialx_timers_->print_timers(lno2name, out);
+	out<< std::flush;
 }
 
 void TestControllerParallel::run() {

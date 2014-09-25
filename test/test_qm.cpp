@@ -50,7 +50,9 @@ TEST(Sial_QM,ccsdpt_test){
 		ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
 		double esaab =controller.scalar_value("esaab");
 		ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
+		controller.print_timers(std::cout);
 	}
+
 }
 
 

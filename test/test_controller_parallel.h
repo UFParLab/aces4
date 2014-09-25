@@ -61,7 +61,7 @@ public:
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
 	double* local_block(const std::string& name, const std::vector<int>indices);
-	void print_timers();
+	void print_timers(std::ostream& out);
 
 	int num_workers();
 	int num_servers();
