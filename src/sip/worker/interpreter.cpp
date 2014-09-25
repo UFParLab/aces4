@@ -52,14 +52,6 @@ Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
-		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
-				sipTables), op_table_(sip_tables_.op_table_), persistent_array_manager_(
-				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sipTables) {
-	_init(sipTables);
-}
 
 Interpreter::~Interpreter() {}
 

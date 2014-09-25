@@ -49,7 +49,6 @@ public:
 
 
 	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	Interpreter(const SipTables&, SialxTimer* timers, WorkerPersistentArrayManager* wpm = NULL);
 	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
 	~Interpreter();
 
