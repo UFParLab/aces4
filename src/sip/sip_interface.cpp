@@ -31,7 +31,7 @@ extern "C" {
  * @return
  */
 double scalar_value(const char * name) {
-	return sip::SialxInterpreter::global_interpreter->scalar_value(std::string(name));
+	return sip::Interpreter::global_interpreter->scalar_value(std::string(name));
 }
 
 /**
@@ -40,7 +40,7 @@ double scalar_value(const char * name) {
  * @param value
  */
 void set_scalar_value(const char * name, double value) {
-	sip::SialxInterpreter::global_interpreter->set_scalar_value(std::string(name),
+	sip::Interpreter::global_interpreter->set_scalar_value(std::string(name),
 			value);
 }
 
@@ -50,8 +50,7 @@ void set_scalar_value(const char * name, double value) {
  * @return Value of the constant
  */
 double scalar_constant(const char*cname) {
-	return sip::SialxInterpreter::global_interpreter->sip_tables().setup_reader().predefined_scalar(
-			std::string(cname));
+	return sip::Interpreter::global_interpreter->predefined_scalar(std::string(cname));
 }
 
 /**
@@ -60,8 +59,7 @@ double scalar_constant(const char*cname) {
  * @return Value of the constant
  */
 int int_constant(const char*cname) {
-	return sip::SialxInterpreter::global_interpreter->sip_tables().setup_reader().predefined_int(
-			std::string(cname));
+	return sip::Interpreter::global_interpreter->predefined_int(std::string(cname));
 }
 
 /**
@@ -73,8 +71,7 @@ int int_constant(const char*cname) {
  */
 
 
-void predefined_scalar_array(const char*aname, int& num_dims, int **dims,
-		double **values) {
+void predefined_scalar_array(const char*aname, int& num_dims, int **dims, double **values) {
 	try {
 //		std::pair<int, std::pair<int *, double *> > a =
 //				sip::Interpreter::global_interpreter->sip_tables().setup_reader().predef_arr_.at(
@@ -82,7 +79,7 @@ void predefined_scalar_array(const char*aname, int& num_dims, int **dims,
 //		num_dims = a.first;
 //		*dims = a.second.first;
 //		*values = a.second.second;
-		setup::PredefContigArray rankblock = sip::SialxInterpreter::global_interpreter->sip_tables().setup_reader().predefined_contiguous_array(std::string(aname));
+		setup::PredefContigArray rankblock = sip::Interpreter::global_interpreter->predefined_contiguous_array(std::string(aname));
 		num_dims = rankblock.first;
 		sip::Block::BlockPtr block = rankblock.second;
 		*dims = const_cast<sip::segment_size_array_t&>(block->shape().segment_sizes_);
@@ -131,7 +128,7 @@ void predefined_int_array(const char*aname, int& num_dims, int **dims,
 		int **values) {
 	try {
 		setup::PredefIntArray a =
-				sip::SialxInterpreter::global_interpreter->sip_tables().setup_reader().predefined_integer_array(std::string(aname));
+				sip::Interpreter::global_interpreter->predefined_integer_array(std::string(aname));
 		//std::cout << "aname= " << aname << ", a=" << a.first << std::endl;
 		num_dims = a.rank;
 		*dims = a.dims;
@@ -173,14 +170,14 @@ int current_line() {
 
 namespace sip {
 std::string index_name_value(int slot) {
-	return sip::SialxInterpreter::global_interpreter->index_value_to_string(slot);
+	return sip::Interpreter::global_interpreter->index_value_to_string(slot);
 }
 std::string array_name_value(int array_table_slot) {
-	return sip::SialxInterpreter::global_interpreter->array_name(array_table_slot);
+	return sip::Interpreter::global_interpreter->array_name(array_table_slot);
 }
 int get_line_number() {
 #ifdef HAVE_MPI
-	sip::SialxInterpreter *interpreter = sip::SialxInterpreter::global_interpreter;
+	sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
 	sip::SIPServer * server = sip::SIPServer::global_sipserver;
 	sip::SIPMPIAttr &mpiattr = sip::SIPMPIAttr::get_instance();
 	if (mpiattr.is_worker()){
@@ -196,8 +193,8 @@ int get_line_number() {
 	}
 
 #else	// HAVE_MPI
-	if (sip::SialxInterpreter::global_interpreter != NULL) {
-		return sip::SialxInterpreter::global_interpreter->line_number();
+	if (sip::Interpreter::global_interpreter != NULL) {
+		return sip::Interpreter::global_interpreter->line_number();
 	} else
 		return 0;
 #endif	// HAVE_MPI

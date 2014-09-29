@@ -13,7 +13,7 @@
 
 namespace sip {
 
-class SialxInterpreter;
+class Interpreter;
 
 /**
  * Data structure used for persistent Scalars and arrays.
@@ -84,7 +84,7 @@ public:
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void set_persistent(SialxInterpreter* runner, int array_id, int string_slot);
+	void set_persistent(Interpreter* runner, int array_id, int string_slot);
 
 	/**
 	 * Called during post processing.
@@ -96,7 +96,7 @@ public:
 	 *  should only be marked at servers. Scalars and contiguous arrays are
 	 *  only at workers. We won't bother trying to avoid a few unnecessary tests.
 	 */
-	void save_marked_arrays(SialxInterpreter* runner) ;
+	void save_marked_arrays(Interpreter* runner) ;
 
 	/**
 	 * Invoked by worker or server to implement restore_persistent command
@@ -112,7 +112,7 @@ public:
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void restore_persistent(SialxInterpreter* runner, int array_id, int string_slot);
+	void restore_persistent(Interpreter* runner, int array_id, int string_slot);
 
 
 	friend std::ostream& operator<< (std::ostream&, const WorkerPersistentArrayManager&);
@@ -139,7 +139,7 @@ private:
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void restore_persistent_scalar(SialxInterpreter* worker, int array_id, int string_slot) ;
+	void restore_persistent_scalar(Interpreter* worker, int array_id, int string_slot) ;
 
 	/** Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a contiguous array.  The array associated
@@ -153,7 +153,7 @@ private:
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void restore_persistent_contiguous(SialxInterpreter* worker, int array_id, int string_slot);
+	void restore_persistent_contiguous(Interpreter* worker, int array_id, int string_slot);
 
 
     /**	/** Invoked by restore_persistent to implement restore_persistent command in
@@ -169,7 +169,7 @@ private:
      * @param array_id
      * @param string_slot
      */
-	void restore_persistent_distributed(SialxInterpreter* runner, int array_id, int string_slot);
+	void restore_persistent_distributed(Interpreter* runner, int array_id, int string_slot);
 
 
 	/** inserts label value pair into map of saved values.

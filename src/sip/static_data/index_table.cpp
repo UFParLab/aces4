@@ -86,7 +86,7 @@ int SubindexSegmentDescriptor::get_subsegment_offset(int parent_segment,
 
 int SubindexSegmentDescriptor::get_subsegment_extent(int parent_segment,
 		int segment) {
-	int parent_extent = sip::SialxInterpreter::global_interpreter->segment_extent(
+	int parent_extent = sip::Interpreter::global_interpreter->segment_extent(
 			parent_index_slot_, parent_segment);
 	int nominal_size = (parent_extent / num_subsegments_);
 	int rem = parent_extent % num_subsegments_;

@@ -12,7 +12,7 @@
 
 #include "aces_defs.h"
 #include "sip_tables.h"
-#include "interpreter.h"
+#include "sialx_interpreter.h"
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
@@ -145,7 +145,7 @@ void TestController::run() {
 
 int TestController::int_value(const std::string& name) {
 	try {
-		return worker_->data_manager_.int_value(name);
+		return worker_->int_value(name);
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: " << name
 				<< " not found in int map.  This is probably a bug in the test."
@@ -157,7 +157,7 @@ int TestController::int_value(const std::string& name) {
 
 double TestController::scalar_value(const std::string& name) {
 	try {
-		return worker_->data_manager_.scalar_value(name);
+		return worker_->scalar_value(name);
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: " << name
 				<< " not found in scalar map.  This is probably a bug in the test."
@@ -184,7 +184,7 @@ double* TestController::local_block(const std::string& name,
 		std::cout << "this is the block id " << id.str(*sip_tables_)
 				<< std::endl;
 		sip::Block::BlockPtr block =
-				worker_->data_manager_.block_manager_.get_block_for_reading(id);
+				worker_->get_block_for_reading(id);
 		return block->get_data();
 //		    delete [] indices_to_pass;
 	} catch (const std::exception& e) {

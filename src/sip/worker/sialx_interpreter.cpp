@@ -31,9 +31,6 @@
 
 namespace sip {
 
-SialxInterpreter* SialxInterpreter::global_interpreter = NULL;
-
-
 SialxInterpreter::SialxInterpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 		SialPrinter* printer) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
@@ -70,9 +67,9 @@ void SialxInterpreter::_init(const SipTables& sip_tables) {
 #endif
 }
 
-void SialxInterpreter::interpret() {
+void SialxInterpreter::do_interpret() {
 	int nops = op_table_.size();
-	interpret(0, nops);
+	do_interpret(0, nops);
 }
 
 void SialxInterpreter::handle_goto_op(int &pc) {
@@ -748,7 +745,7 @@ void SialxInterpreter::handle_sswap_op(int pc) {
 	expression_stack_.push(e0);
 }
 
-void SialxInterpreter::interpret(int pc_start, int pc_end) {
+void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 	pc_ = pc_start;
 	while (pc_ < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc_);
@@ -864,7 +861,7 @@ void SialxInterpreter::interpret(int pc_start, int pc_end) {
 
 } //interpret
 
-void SialxInterpreter::post_sial_program() {
+void SialxInterpreter::do_post_sial_program() {
 	timer_trace(pc_);
 	sial_ops_.end_program();
 }

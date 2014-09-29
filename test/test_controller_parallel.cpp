@@ -19,7 +19,7 @@
 #include "setup_reader.h"
 
 #include "sip_tables.h"
-#include "interpreter.h"
+#include "sialx_interpreter.h"
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
@@ -141,7 +141,7 @@ sip::IntTable* TestControllerParallel::int_table() {
 
 int TestControllerParallel::int_value(const std::string& name) {
 	try {
-		return worker_->data_manager().int_value(name);
+		return worker_->int_value(name);
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: " << name
 				<< " not found in int map.  This is probably a bug in the test."
@@ -153,7 +153,7 @@ int TestControllerParallel::int_value(const std::string& name) {
 
 double TestControllerParallel::scalar_value(const std::string& name) {
 	try {
-		return worker_->data_manager().scalar_value(name);
+		return worker_->scalar_value(name);
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: " << name
 				<< " not found in scalar map.  This is probably a bug in the test."
@@ -204,7 +204,7 @@ double* TestControllerParallel::local_block(const std::string& name,
 		int rank = sip_tables_->array_rank(array_slot);
 		sip::BlockId id(array_slot, rank, indices);
 		sip::Block::BlockPtr block =
-				worker_->data_manager_.block_manager_.get_block_for_reading(id);
+				worker_->get_block_for_reading(id);
 		return block->get_data();
 	} catch (const std::exception& e) {
 		std::cerr << "FAILURE: block of array " << name

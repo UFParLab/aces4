@@ -12,7 +12,7 @@
 
 void disable_all_rank_print(){
 //	sip::_all_rank_print = false;
-	sip::SialxInterpreter::global_interpreter->printer()->disable_all_rank_print();
+	sip::Interpreter::global_interpreter->printer()->disable_all_rank_print();
 }
 
 

@@ -18,6 +18,10 @@
 #include <TAU.h>
 #endif
 
+#ifdef HAVE_MPI
+#include "sip_mpi_utils.h"
+#endif
+
 
 //bool VERBOSE_TEST = false;
 bool VERBOSE_TEST = true;

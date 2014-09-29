@@ -39,7 +39,7 @@
 #endif //HAVE_MPI
 
 namespace sip {
-	class SialxInterpreter;
+	//class SialxInterpreter;
 	class SIPServer;
 	class SIPMPIUtils;
 	class SialOpsParallel;

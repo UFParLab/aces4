@@ -5,9 +5,11 @@
  *      Author: jindal
  */
 
-#include "Interpreter.h"
+#include "interpreter.h"
+#include <cstddef>
 
 namespace sip {
 
+Interpreter* Interpreter::global_interpreter = NULL;
 
 } /* namespace sip */

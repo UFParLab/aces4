@@ -8,6 +8,10 @@
 #ifndef INTERPRETER_H_
 #define INTERPRETER_H_
 
+#include "block.h"
+#include "id_block_map.h"
+#include "setup_reader.h"
+
 namespace sip {
 
 class SialPrinter;
@@ -44,6 +48,71 @@ public:
 	 */
 	static Interpreter* global_interpreter;
 
+
+	std::string string_literal(int slot) { return string_literal_impl(slot); }
+
+	double scalar_value(int array_table_slot) { return scalar_value_impl(array_table_slot); }
+	double scalar_value(const std::string& name) { return scalar_value_impl(name); }
+	void set_scalar_value(int array_table_slot, double value) { set_scalar_value_impl(array_table_slot, value); }
+	void set_scalar_value(const std::string& name, double value) { 	set_scalar_value_impl(name, value); }
+	bool is_scalar(int array_table_slot) { return is_scalar_impl(array_table_slot); }
+
+	int int_value(int int_table_slot) { return int_value_impl(int_table_slot);}
+	void set_int_value(int int_table_slot, int value){ set_int_value_impl(int_table_slot, value);	}
+	int int_value(std::string name) { return int_value_impl(name);}
+	void set_int_value(std::string name, int value){ set_int_value_impl(name, value);	}
+
+	double predefined_scalar(std::string name) { return predefined_scalar_impl(name); }
+	int predefined_int(std::string name) { return predefined_int_impl(name); }
+	setup::PredefContigArray predefined_contiguous_array(std::string name) { return predefined_contiguous_array_impl(name); }
+	setup::PredefIntArray predefined_integer_array(std::string name) { return predefined_integer_array_impl(name); }
+
+	int index_value(int index_table_slot) { return index_value_impl(index_table_slot); }
+	std::string index_value_to_string(int index_table_slot) { return index_value_to_string_impl(index_table_slot); }
+
+	int num_subsegments(int subindex_slot, int super_index_value) { return num_subsegments_impl(subindex_slot, super_index_value);}
+	int segment_extent(int index_slot, int segment) { return segment_extent_impl(index_slot, segment); }
+
+	Block* get_and_remove_contiguous_array(int array_id) { return get_and_remove_contiguous_array_impl(array_id); }
+	void set_contiguous_array(int array_id, Block* contig) { set_contiguous_array_impl(array_id, contig); }
+	IdBlockMap<Block>::PerArrayMap* get_and_remove_per_array_map(int array_id) {return get_and_remove_per_array_map_impl(array_id);}
+	void set_per_array_map(int array_id, IdBlockMap<Block>::PerArrayMap* map_ptr) { set_per_array_map_impl(array_id, map_ptr);	}
+	std::string array_name(int array_table_slot) { return array_name_impl(array_table_slot); }
+
+	bool is_contiguous(int array_table_slot) { return is_contiguous_impl(array_table_slot); }
+	bool is_distributed_or_served(int array_slot) { return is_distributed_or_served_impl(array_slot); }
+
+
+	/** For testing.
+	 * Determine whether any data is left in the interpreter's data structures.
+	 * This method should return true immediately after completion of a sial program.
+	 * @return
+	 */
+	virtual bool all_stacks_empty() = 0;
+
+	/** For testing12
+	 * Determines the total number of blocks in the block map, including both the
+	 * cache and the active map.  This means that the value may be non-deterministic,
+	 * or at least difficult to predict, except at certain points where it is know to
+	 * be zero.
+	 * @return
+	 */
+	virtual std::size_t num_blocks_in_blockmap() = 0;
+
+	/**
+	 * For testing
+	 * @param block_id
+	 * @return
+	 */
+	virtual Block::BlockPtr get_block_for_reading(const BlockId& block_id) = 0;
+
+	/**
+	 * For testing
+	 * @param array_name
+	 * @return
+	 */
+	virtual int array_slot(std::string array_name) = 0;
+
 protected:
 	Interpreter() : pc_(0){ global_interpreter = this; }
 	int pc_; 		/*! the "program counter". Actually, the current location in the op_table_.	 */
@@ -52,6 +121,42 @@ protected:
 	virtual int get_line_number() = 0;
 	virtual void do_post_sial_program() = 0;
 	virtual void do_interpret() = 0;
+
+
+	// Data access methods
+	virtual std::string string_literal_impl(int slot) = 0;
+
+	virtual double scalar_value_impl(const std::string& name) = 0;
+	virtual double scalar_value_impl(int array_table_slot) = 0;
+	virtual void set_scalar_value_impl(const std::string& name, double value) = 0;
+	virtual void set_scalar_value_impl(int array_table_slot, double value) = 0;
+	virtual bool is_scalar_impl(int array_table_slot) = 0;
+
+	virtual int int_value_impl(int int_table_slot) = 0;
+	virtual void set_int_value_impl(int int_table_slot, int value) = 0;
+	virtual int int_value_impl(std::string name) = 0;
+	virtual void set_int_value_impl(std::string name, int value) = 0;
+
+	virtual double predefined_scalar_impl(std::string name) = 0;
+	virtual int predefined_int_impl (std::string name) = 0;
+	virtual setup::PredefContigArray predefined_contiguous_array_impl(std::string name) = 0;
+	virtual setup::PredefIntArray predefined_integer_array_impl(std::string name) = 0;
+
+	virtual int index_value_impl(int index_table_slot) = 0;
+	virtual std::string index_value_to_string_impl(int index_table_slot) = 0;
+
+	virtual int num_subsegments_impl(int subindex_slot, int super_index_value) = 0;
+	virtual int segment_extent_impl(int index_slot, int segment) = 0;
+
+	virtual Block* get_and_remove_contiguous_array_impl(int array_id) = 0;
+	virtual void set_contiguous_array_impl(int array_id, Block* contig) = 0;
+	virtual IdBlockMap<Block>::PerArrayMap* get_and_remove_per_array_map_impl(int array_id) = 0;
+	virtual void set_per_array_map_impl(int array_id, IdBlockMap<Block>::PerArrayMap* map_ptr) = 0;
+	virtual std::string array_name_impl(int array_table_slot) = 0;
+
+	virtual bool is_contiguous_impl(int array_table_slot) = 0;
+	virtual bool is_distributed_or_served_impl(int array_slot) = 0;
+
 
 };
 

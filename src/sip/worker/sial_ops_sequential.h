@@ -44,8 +44,8 @@ public:
 	bool assert_same(int source_array_slot){return true;}
 	void broadcast_static(int source_array_slot, int source_worker){}
 
-	void set_persistent(SialxInterpreter*, int array_id, int string_slot);
-	void restore_persistent(SialxInterpreter*, int array_id, int string_slot);
+	void set_persistent(Interpreter*, int array_id, int string_slot);
+	void restore_persistent(Interpreter*, int array_id, int string_slot);
 
 	void end_program();
 

@@ -422,7 +422,7 @@ void SialOpsParallel::broadcast_static(int source_array_slot, int source_worker)
  * @param array_slot
  * @param string_slot
  */
-void SialOpsParallel::set_persistent(SialxInterpreter * worker, int array_slot,
+void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 		int string_slot) {
 	if (sip_tables_.is_distributed(array_slot)
 			|| sip_tables_.is_served(array_slot)) {
@@ -455,7 +455,7 @@ void SialOpsParallel::set_persistent(SialxInterpreter * worker, int array_slot,
  * @param string_slot
  */
 
-void SialOpsParallel::restore_persistent(SialxInterpreter* worker, int array_slot,
+void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 		int string_slot) {
 	SIP_LOG(std::cout << "restore_persistent with array " << sip_tables_.array_name(array_slot) << " in slot " << array_slot << " and string \"" << sip_tables_.string_literal(string_slot) << "\"" << std::endl);
 

@@ -13,7 +13,7 @@
 namespace sip{
 class SipTables;
 class WorkerPersistentArrayManager;
-class SialxInterpreter;
+class Interpreter;
 class SialPrinterForTests;
 class IntTable;
 class ServerPersistentArrayManager;
@@ -72,7 +72,7 @@ public:
 	sip::WorkerPersistentArrayManager* wpam_;
 	sip::ServerPersistentArrayManager* spam_;
 	sip::SIPServer* server_;
-	sip::SialxInterpreter* worker_;
+	sip::Interpreter* worker_;
 	std::ostream& sial_output_;
 	sip::SialPrinterForTests* printer_;
 	bool this_test_enabled_;

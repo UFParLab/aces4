@@ -306,7 +306,7 @@ add_library(aces4_sip
             ${ACES_DATA_FILES}
             ${ACES_MPI_FILES})
 
-set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
+set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES} aces4_sip)
 
 # All Super instructions are in this directory
 add_subdirectory(src/sip/super_instructions)

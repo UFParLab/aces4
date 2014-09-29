@@ -158,8 +158,7 @@ void SipTables::calculate_seq_sizes(const int array_table_slot,
 		int index_id = selectors[i];
 		if (is_subindex(index_id)) {
 			int parent_value =
-					sip::SialxInterpreter::global_interpreter->data_manager().index_value(
-							parent_index(index_id));
+					sip::Interpreter::global_interpreter->index_value(parent_index(index_id));
 			seg_sizes[i] = index_table_.subsegment_extent(index_id,
 					parent_value, index_vals[i]);
 		} else {

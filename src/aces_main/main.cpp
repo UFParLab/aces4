@@ -6,6 +6,7 @@
 #include "sialx_timer.h"
 #include "sip_tables.h"
 #include "interpreter.h"
+#include "sialx_interpreter.h"
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
