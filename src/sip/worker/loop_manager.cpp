@@ -49,7 +49,7 @@ bool DoLoop::do_update() {
 		first_time_ = false;
 		sip::check(data_manager_.index_value(index_id_) == DataManager::undefined_index_value,
 				"SIAL or SIP error, index " + sip_tables_.index_name(index_id_) + " already has value before loop",
-				Interpreter::global_interpreter->line_number());
+				SialxInterpreter::global_interpreter->line_number());
 		current_value = lower_seg_;
 	} else { //not the first time through loop.  Get the current value and try to increment it
 		current_value = data_manager_.index_value(index_id_);
@@ -90,7 +90,7 @@ SubindexDoLoop::SubindexDoLoop(int subindex_id, DataManager & data_manager, cons
 	upper_bound_ = lower_seg_ + sip_tables_.num_subsegments(subindex_id, parent_value_);
 	sip::check_and_warn(lower_seg_ < upper_bound_,
 			std::string("SubindexDoLoop has empty range"),
-			Interpreter::global_interpreter->line_number());
+			SialxInterpreter::global_interpreter->line_number());
 }
 
 std::string SubindexDoLoop::to_string() const {
@@ -124,7 +124,7 @@ SequentialPardoLoop::SequentialPardoLoop(int num_indices,
 		sip::check(lower_seg_[i] < upper_bound_[i],
 				"Pardo loop index "
 						+ sip_tables_.index_name(index_id_[i]) + " has empty range",
-				Interpreter::global_interpreter->line_number());
+				SialxInterpreter::global_interpreter->line_number());
 	}
 //	std::cout << "SequentialPardoLoop::SequentialPardoLoop at line " << Interpreter::global_interpreter->line_number()  << std::endl;
 //
@@ -154,7 +154,7 @@ bool SequentialPardoLoop::do_update() {
 							+ sip_tables_.index_name(
 									index_id_[i])
 							+ " already has value before loop",
-					Interpreter::global_interpreter->line_number());
+					SialxInterpreter::global_interpreter->line_number());
 					data_manager_.set_index_value(index_id_[i],	lower_seg_[i]);
 		}
 		return true;
@@ -222,7 +222,7 @@ StaticTaskAllocParallelPardoLoop::StaticTaskAllocParallelPardoLoop(int num_indic
 	for (int i = 0; i < num_indices; ++i) {
 		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
 		upper_bound_[i] = lower_seg_[i] + sip_tables_.num_segments(index_id_[i]);
-		sip::check(lower_seg_[i] < upper_bound_[i],	"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range", Interpreter::global_interpreter->line_number());
+		sip::check(lower_seg_[i] < upper_bound_[i],	"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range", SialxInterpreter::global_interpreter->line_number());
 	}
 }
 
@@ -262,7 +262,7 @@ inline bool StaticTaskAllocParallelPardoLoop::initialize_indices() {
 				"SIAL or SIP error, index "
 						+ sip_tables_.index_name(index_id_[i])
 						+ " already has value before loop",
-				Interpreter::global_interpreter->line_number());
+				SialxInterpreter::global_interpreter->line_number());
 		data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
 	}
 	more_iterations = true;

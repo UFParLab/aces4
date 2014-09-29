@@ -157,7 +157,7 @@ public:
 	friend std::ostream& operator<<(std::ostream&, const BlockManager&);
 
 	friend class DataManager;
-	friend class Interpreter;
+	friend class SialxInterpreter;
 
 private:
 	/** Obtains block from BlockMap.

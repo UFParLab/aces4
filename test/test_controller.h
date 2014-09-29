@@ -12,7 +12,7 @@
 namespace sip{
 class SipTables;
 class WorkerPersistentArrayManager;
-class Interpreter;
+class SialxInterpreter;
 class SialPrinterForTests;
 class IntTable;
 }
@@ -44,7 +44,7 @@ public:
 	setup::SetupReader* setup_reader_;
 	sip::SipTables* sip_tables_;
 	sip::WorkerPersistentArrayManager* wpam_;
-	sip::Interpreter* worker_;
+	sip::SialxInterpreter* worker_;
 	std::ostream& sial_output_;
 	sip::SialPrinterForTests* printer_;
 	bool expect_success_;

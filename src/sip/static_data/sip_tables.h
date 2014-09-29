@@ -48,7 +48,7 @@ class SioxReader;
 namespace sip {
 
 class DataManager;
-class Interpreter;
+class SialxInterpreter;
 
 class SipTables {
 public:
@@ -192,7 +192,7 @@ private:
 	mutable int sialx_lines_;
 
 	friend class SioxReader;  //initializes the SipTable
-	friend class Interpreter;
+	friend class SialxInterpreter;
 	friend class DataManager;
 	friend class ContiguousArrayManager;
 	friend class DiskBackedArraysIO;

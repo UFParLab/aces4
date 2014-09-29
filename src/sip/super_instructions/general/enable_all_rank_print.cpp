@@ -11,7 +11,7 @@
 #include "sial_printer.h"
 
 void enable_all_rank_print(){
-	sip::Interpreter::global_interpreter->printer()->enable_all_rank_print();
+	sip::SialxInterpreter::global_interpreter->printer()->enable_all_rank_print();
 }
 
 

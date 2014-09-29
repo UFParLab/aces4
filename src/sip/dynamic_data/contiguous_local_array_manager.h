@@ -49,7 +49,7 @@ public:
 	friend std::ostream& operator<<(std::ostream&, const ContiguousLocalArrayManager&);
 
 	friend class DataManager;
-	friend class Interpreter;
+	friend class SialxInterpreter;
 
 private:
 	const  SipTables& sip_tables_;

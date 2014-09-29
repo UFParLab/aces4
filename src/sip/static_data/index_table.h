@@ -27,7 +27,7 @@
 
 namespace sip {
 class IntTable;
-class Interpreter;
+class SialxInterpreter;
 }
 namespace setup {
 class SetupReader;
@@ -210,7 +210,7 @@ private:
 	 * which is responsible for deleting the descriptors
 	 */
 	SegmentDescriptor * segment_descriptor_ptr_;
-	friend class Interpreter;
+	friend class SialxInterpreter;
 	friend class IndexTable;
 //	DISALLOW_COPY_AND_ASSIGN(IndexTableEntry);
 };
@@ -263,7 +263,7 @@ private:
 	std::map<std::string, int> name_entry_map_;
 	SegmentDescriptorMap segment_descriptors_; //initialized using info from setup
 	friend class IndexTableEntry;
-	friend class sip::Interpreter;
+	friend class sip::SialxInterpreter;
 
 	DISALLOW_COPY_AND_ASSIGN(IndexTable);
 };

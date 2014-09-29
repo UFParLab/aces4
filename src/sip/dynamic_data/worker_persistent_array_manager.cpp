@@ -30,7 +30,7 @@ namespace sip {
 	}
 
 
-	void WorkerPersistentArrayManager::set_persistent(Interpreter* runner, int array_id, int string_slot) {
+	void WorkerPersistentArrayManager::set_persistent(SialxInterpreter* runner, int array_id, int string_slot) {
 		SIP_LOG(std::cout << "set_persistent: array= " << runner->sip_tables().array_name(array_id) << ", label=" << runner->sip_tables().string_literal(string_slot) << std::endl);
 		std::pair<ArrayIdLabelMap::iterator, bool> ret = persistent_array_map_.insert(std::pair<int, int>(array_id, string_slot));
 		check(ret.second, "duplicate save of array in same sial program ");
@@ -41,7 +41,7 @@ namespace sip {
 	}
 
 
-	void WorkerPersistentArrayManager::save_marked_arrays(Interpreter* runner) {
+	void WorkerPersistentArrayManager::save_marked_arrays(SialxInterpreter* runner) {
 		ArrayIdLabelMap::iterator it;
 		for (it = persistent_array_map_.begin();
 				it != persistent_array_map_.end(); ++it) {
@@ -69,7 +69,7 @@ namespace sip {
 	}
 
 
-	void WorkerPersistentArrayManager::restore_persistent(Interpreter* runner, int array_id, int string_slot){
+	void WorkerPersistentArrayManager::restore_persistent(SialxInterpreter* runner, int array_id, int string_slot){
 		SIP_LOG(std::cout << "restore_persistent: array= " <<
 				runner->array_name(array_id) << ", label=" <<
 				runner->string_literal(string_slot) << std::endl;)
@@ -83,7 +83,7 @@ namespace sip {
 	}
 
 
-	void WorkerPersistentArrayManager::restore_persistent_scalar(Interpreter* worker, int array_id,
+	void WorkerPersistentArrayManager::restore_persistent_scalar(SialxInterpreter* worker, int array_id,
 			int string_slot) {
 		std::string label = worker->sip_tables().string_literal(string_slot);
 		LabelScalarValueMap::iterator it = scalar_value_map_.find(label);
@@ -95,7 +95,7 @@ namespace sip {
 	}
 
 
-	void WorkerPersistentArrayManager::restore_persistent_contiguous(Interpreter* worker, int array_id, int string_slot) {
+	void WorkerPersistentArrayManager::restore_persistent_contiguous(SialxInterpreter* worker, int array_id, int string_slot) {
 		std::string label = worker->sip_tables().string_literal(string_slot);
 		LabelContiguousArrayMap::iterator it = contiguous_array_map_.find(
 				label);
@@ -106,7 +106,7 @@ namespace sip {
 		contiguous_array_map_.erase(it);
 	}
 
-	void WorkerPersistentArrayManager::restore_persistent_distributed(Interpreter* runner,
+	void WorkerPersistentArrayManager::restore_persistent_distributed(SialxInterpreter* runner,
 			int array_id, int string_slot) {
 		std::string label = runner->sip_tables().string_literal(string_slot);
 		LabelDistributedArrayMap::iterator it = distributed_array_map_.find(label);

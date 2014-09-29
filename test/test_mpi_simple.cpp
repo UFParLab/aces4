@@ -240,7 +240,7 @@ TEST(SimpleMPI,persistent_distributed_array_mpi){
 		std::cout << "Server state after termination" << server << std::endl;
 	} else {
 		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-		sip::Interpreter runner(sipTables, sialxTimer,  &wpam);
+		sip::SialxInterpreter runner(sipTables, sialxTimer,  &wpam);
 		std::cout << "at first barrier in prog 1 at worker" << std::endl << std::flush;
 		MPI_Barrier(MPI_COMM_WORLD);
 		std::cout << "after first barrier; starting worker for "<< job  << std::endl;
@@ -280,7 +280,7 @@ TEST(SimpleMPI,persistent_distributed_array_mpi){
 		std::cout<< "rank " << my_rank  << "Server state after termination of prog2" << server << std::endl;
 	} else {
 		sip::SialxTimer sialxTimer2(sipTables2.max_timer_slots());
-		sip::Interpreter runner(sipTables2, sialxTimer2,  &wpam);
+		sip::SialxInterpreter runner(sipTables2, sialxTimer2,  &wpam);
 		std::cout << "rank " << my_rank << "barrier in prog 2 at worker" << std::endl << std::flush;
 		MPI_Barrier(MPI_COMM_WORLD);
 		std::cout << "rank " << my_rank << "starting worker for prog2"<< job  << std::endl;

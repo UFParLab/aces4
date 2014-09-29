@@ -20,7 +20,7 @@
 
 namespace sip {
 
-class Interpreter;
+class SialxInterpreter;
 
 
 /*! Base class for loop managers. */

@@ -65,9 +65,9 @@ c
 c--------------------------------------------------------------------------
 
       implicit none
-      include 'interpreter.h'
+c      include 'interpreter.h'
       include 'trace.h'
-      include 'parallel_info.h'
+c      include 'parallel_info.h'
 #ifdef ALTIX
       include 'sheap.h'
 #endif

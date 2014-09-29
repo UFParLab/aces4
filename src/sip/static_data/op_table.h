@@ -111,7 +111,7 @@ public:
 	friend std::ostream& operator<<(std::ostream&, const OpTable&);
 
 	friend class SipTables;
-	friend class Interpreter;
+	friend class SialxInterpreter;
 	friend class Tracer;
 
 private:

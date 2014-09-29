@@ -227,7 +227,7 @@ private:
 	index_value_array_t  index_values_;  //these are visible in sial.  Unused slots have value unused_index_value
 	BlockId * parent_id_ptr_;
 
-	friend class Interpreter;
+	friend class SialxInterpreter;
 	friend class BlockManager;
 	friend class SIPServer;
 	friend class SIPMPIUtils;

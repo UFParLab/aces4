@@ -69,7 +69,7 @@ TEST(Sial_QM,ccsdpt_test){
 
 			} else {
 				sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-				sip::Interpreter runner(sipTables, sialxTimer,  &persistent_worker);
+				sip::SialxInterpreter runner(sipTables, sialxTimer,  &persistent_worker);
 				std::cout << "SIAL PROGRAM OUTPUT for "<<*it  << std::endl;
 				runner.interpret();
 				runner.post_sial_program();

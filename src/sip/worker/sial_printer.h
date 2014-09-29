@@ -14,7 +14,7 @@
 
 namespace sip {
 
-class Interpreter;
+class SialxInterpreter;
 
 /** Manages formatting and destination of SIAL print statements
  *
@@ -79,7 +79,7 @@ private:
 	void do_print_index(std::string name, int value, int line_number);
 	void do_print_block(const BlockId& id, Block::BlockPtr block, int line_number);
 	void do_print_contiguous(int array_slot, Block::BlockPtr block, int line_number);
-	friend class Interpreter;
+	friend class SialxInterpreter;
 
 };
 

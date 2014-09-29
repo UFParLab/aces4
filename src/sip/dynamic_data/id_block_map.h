@@ -308,7 +308,7 @@ public:
 	PerArrayMap* operator[](unsigned i){ return block_map_.at(i); }
     const PerArrayMap* operator[](unsigned i) const { return block_map_.at(i); }
 
-    friend class Interpreter;
+    friend class SialxInterpreter;
 	friend std::ostream& operator<< <> (std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
 
 private:

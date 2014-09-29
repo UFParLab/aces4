@@ -27,7 +27,7 @@ class TestController;
 namespace sip {
 class SialOpsParallel;
 class SialOpsSequential;
-class Interpreter;
+class SialxInterpreter;
 
 class DataManager {
 public:
@@ -109,7 +109,7 @@ private:
 	//immutable data for convenience
 	const SipTables& sip_tables_;
 
-	friend class Interpreter;
+	friend class SialxInterpreter;
 	friend class SialOpsParallel;
 	friend class SialOpsSequential;
 	friend class ::TestControllerParallel;

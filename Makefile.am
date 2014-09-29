@@ -82,6 +82,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
+./src/sip/worker/sialx_interpreter.cpp\
+./src/sip/worker/sialx_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/global_state.h\
