@@ -138,6 +138,10 @@ public:
 		return sip_tables_.is_distributed(array_slot)
 				|| sip_tables_.is_served(array_slot);
 	}
+
+	Block* get_static(int array_id){
+		return data_manager_.contiguous_array_manager_.get_array(array_id);
+	}
 	Block* get_and_remove_contiguous_array(int array_id) {
 		return data_manager_.contiguous_array_manager_.get_and_remove_array(
 				array_id);

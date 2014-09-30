@@ -152,6 +152,45 @@ TEST(Sial,pardo_loop_corner_case) {
 //
 //}
 
+TEST(Sial,broadcast_static){
+	std::string job("broadcast_static");
+	int norb = 3;
+	int segs[] = {2,3,2};
+	int root = 0;
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("root", root);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(3, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+	double * a = controller.static_array("a");
+	int expected[] = {1, 2, 1, 2, 3, 1, 2,
+			3, 4, 4, 5, 6, 3, 4,
+			1, 2, 1, 2, 3, 1, 2,
+			3, 4, 4, 5, 6, 3, 4,
+			5, 6, 7, 8, 9, 5, 6,
+			1, 2, 1, 2, 3, 1, 2,
+			3, 4, 4, 5, 6, 3, 4};
+	int side = 2+3+2; //size of one side, from seg sizes in segs array above
+	int size = side*side;
+	int i = 0;
+	for (i; i < size; ++i){
+		ASSERT_DOUBLE_EQ(expected[i], a[i]);
+	}
+}
+
+}
+
 
 TEST(Sial,put_test) {
 	std::string job("put_test");

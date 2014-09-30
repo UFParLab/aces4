@@ -412,7 +412,8 @@ bool SialOpsParallel::nearlyEqual(double a, double  b, double epsilon) {
 
 void SialOpsParallel::broadcast_static(Block::BlockPtr source_or_dest, int source_worker){
 	if (sip_mpi_attr_.num_workers()>0 ){
-	   SIPMPIUtils::check_err(MPI_Bcast(source_or_dest->get_data() , source_or_dest->size(), MPI_DOUBLE, source_worker, worker_comm));
+	   SIPMPIUtils::check_err(MPI_Bcast(source_or_dest->get_data() , source_or_dest->size(), MPI_DOUBLE, source_worker,
+			   sip_mpi_attr_.company_communicator()));
     }
 }
 

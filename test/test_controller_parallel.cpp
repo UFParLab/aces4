@@ -172,6 +172,20 @@ double TestControllerParallel::scalar_value(const std::string& name) {
 	}
 }
 
+double* TestControllerParallel::static_array(const std::string& name){
+	try {
+		int array_slot = worker_->array_slot(name);
+		sip::Block::BlockPtr array =  worker_->data_manager_.contiguous_array_manager_.get_array(array_slot);
+		return array->get_data();
+	} catch (const std::exception& e) {
+	std::cerr << "FAILURE: static array" << name
+			<< " not found.  This is probably a bug in the test."
+			<< std::endl << std::flush;
+	ADD_FAILURE();
+	return NULL;
+}
+}
+
 //TODO change std::cout to parameter
 void TestControllerParallel::print_timers(std::ostream& out){
 	if (! attr->is_worker()) return;
@@ -298,8 +312,9 @@ bool TestControllerParallel::runWorker() {
 		}
 
 		if (verbose_) {
-			if (std::cout != sial_output_)
+			if (std::cout != sial_output_){
 				std::cout << sial_output_.rdbuf();
+			}
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< prog_name_ << " TERMINATED WORKER " << std::endl
 					<< std::flush;

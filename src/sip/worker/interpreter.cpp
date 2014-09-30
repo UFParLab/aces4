@@ -183,7 +183,9 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case broadcast_static_op: {
-			sial_ops_.broadcast_static(arg0(), control_stack_.top());
+			std::cout << "calling broadcast_static with args " << arg0() << ", " << control_stack_.top() << std::endl;
+			Block::BlockPtr block = get_static(arg0());
+			sial_ops_.broadcast_static(block, control_stack_.top());
 			control_stack_.pop();
 			++pc;
 		}
