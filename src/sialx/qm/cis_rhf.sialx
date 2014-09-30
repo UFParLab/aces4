@@ -24,8 +24,9 @@ import "cis_rhf_defs.sialx"
       index kstate   = 1: eom_roots
       index kstate1  = 1: eom_roots
       index pstate   = eom_roots2: eom_subspc
-      index ksub  = 1: eom_subspc
-      index ksub1 = 1: eom_subspc
+      index ksub     = 1: eom_subspc
+      index ksub1    = 1: eom_subspc
+      index cart     = 1: 3
 #
       aoindex mu     = 1: norb 
       aoindex nu     = 1: norb
@@ -64,13 +65,16 @@ import "cis_rhf_defs.sialx"
 #
 ##########################################
 #
+      int Mrank
       scalar stemp
       scalar zero
       scalar rank
       scalar icount1
       scalar icount2
-      scalar econv
+      scalar rmseconv
       scalar etemp
+      scalar esum
+      scalar emom
 #
       static unit[p]
       static eig_o[i]
@@ -86,6 +90,7 @@ import "cis_rhf_defs.sialx"
       static SAlpha[ksub,ksub1]
       static DeltaE[kstate]
       static Ek[kstate]
+      static EkeV[kstate]
       static SHDiag[a,i]
       static knorm[kstate]
 #
@@ -252,147 +257,21 @@ import "cis_rhf_defs.sialx"
       local Lixbj[i,mu,b,j] 
       local Lxabj[mu,a,b,j] 
       local L1xbbj[mu,b,b1,j] 
+# density crap
+      static tmom[cart,kstate]
+      static Scart[cart]
+      served Ck_hb[mu,i]
+      served Ck_ao[mu,nu]
+      temp Tkxx[mu,nu]
+      temp Tkxx1[mu,nu]
+      temp Tkxi[mu,i]
+      temp Tkxi1[mu,i]
+      temp Tkxi3[mu,i]
+      temp DAOINT[mu,nu]
+      temp Txx[mu,nu]
+      temp Txx1[mu,nu]
 #
 ##########################################
-#
-#
-     PROC TRAN_TRAN2 
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, lambda
-#
-          allocate Txxxi[mu,nu,lambda,*]
-#
-          DO sigma
-#
-            #execute compute_ubatch6 aoint(mu,nu,lambda,sigma) zz zz zz zz  
-             execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
-#
-             DO i   
-#
-                 T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
-                 Txxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]  
-#
-             ENDDO i   
-#
-          ENDDO sigma
-
-          DO i
-             T1xxxi[mu,nu,lambda,i]         = Txxxi[mu,nu,lambda,i] 
-             PREPARE Vxxxi[mu,nu,lambda,i]  = T1xxxi[mu,nu,lambda,i]
-
-           DO i1
-#
-              Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*ca[lambda,i1]
-              PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-              Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*ca[mu,i1]
-              PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
-#
-           ENDDO i1
-           ENDDO i
-#
-          deallocate Txxxi[mu,nu,lambda,*]
-#
-     ENDPARDO mu, nu, lambda 
-     server_barrier
-     server_barrier
-     destroy Vxxxi
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN2 
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#    Perform the third N5 stage of the transformation.  
-#
-     PROC TRAN_TRAN3 
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, i, i1
-
-           REQUEST Vxxii[mu,nu,i,i1]  
-#
-           DO a
-              Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*ca[nu,a]
-              PREPARE Vxaii[mu,a,i,i1] += Txaii[mu,a,i,i1]
-           ENDDO a
-#
-     ENDPARDO mu, nu, i, i1
-     println "done tran3 b " 
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vixxi[i,mu,nu,i1]  
-#
-           DO a
-              Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*ca[nu,a]
-              PREPARE Vixai[i,mu,a,i1] += Tixai[i,mu,a,i1]
-           ENDDO a
-#
-     ENDPARDO mu, nu, i, i1
-     println "done tran3 c " 
-#
-#    ------------------------------------------------------------------------
-#
-     server_barrier
-#
-     ENDPROC TRAN_TRAN3 
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_TRAN4 
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, a, i, i1
-#
-           REQUEST Vxaii[mu,a,i,i1]  
-           REQUEST Vixai[i,mu,a,i1]  
-#
-           DO a1 
-#
-              Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*ca[mu,a1]
-              PREPARE Vaaii[a1,a,i,i1] += Taaii[a1,a,i,i1]
-#
-           ENDDO a1 
-#
-           DO a1 
-#
-              Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*ca[mu,a1]
-              PREPARE Viaai[i,a1,a,i1] += Tiaai[i,a1,a,i1]
-#
-           ENDDO a1 
-#
-     ENDPARDO mu, a, i, i1
-# 
-     ENDPROC TRAN_TRAN4 
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------ 
-#
-     PROC TRAN_UHF 
-# 
-         CALL TRAN_TRAN2     # --> performs the first two stages of the 
-     println "done tran2" 
-                             #     two-electron integral transformation.  
-         CALL TRAN_TRAN3     # --> performs the third stage   
-     println "done tran3" 
-                             #     two-electron integral transformation.  
-         CALL TRAN_TRAN4     # --> performs the fourth stage of the  
-     println "done tran4" 
-                             #     two-electron integral transformation.  
-#
-     ENDPROC TRAN_UHF 
-#
-#    ------------------------------------------------------------------------ 
 #
       proc form_H
 #
@@ -405,7 +284,7 @@ import "cis_rhf_defs.sialx"
           request Viaai[i,a,b,j] 
           request Vaaii[b,a,i,j] 
 
-          Tiaai[i,a,b,j]  = Viaai[i,a,b,j]
+         Tiaai[i,a,b,j]  = Viaai[i,a,b,j]
           T1iaai[i,a,b,j] = Vaaii[b,a,i,j]
 
           Tiaai[i,a,b,j] *= 2.0
@@ -554,7 +433,9 @@ import "cis_rhf_defs.sialx"
       enddo ksub
       endif #rank == 0.0
 ##
-      econv = 0.0
+      rmseconv = 0.0
+      etemp = 0.0
+      icount2 = 0.0
       do kstate
           do kstate1
               if kstate == kstate1
@@ -566,9 +447,12 @@ import "cis_rhf_defs.sialx"
               DeltaE[kstate] -= Tk[kstate]
               endif #kstate == kstate1
           enddo kstate1
-          execute return_sval DeltaE[kstate] stemp
-          econv += stemp
+          #execute return_sval DeltaE[kstate] stemp
+	  stemp = DeltaE[kstate]*DeltaE[kstate]
+          etemp += stemp
+	  icount2 += 1.0
       enddo kstate
+      rmseconv = (etemp/icount2)**0.5
 #
       do ksub
           do ksub1
@@ -578,11 +462,10 @@ import "cis_rhf_defs.sialx"
 #
       execute get_my_rank rank
       if rank == 0.0
-          execute print_static_array Ek
-          execute print_static_array DeltaE
+          print Ek
+          print DeltaE
+          print rmseconv
       endif #rank == 0.0
-      print econv
-      println " "
 #
       server_barrier
       endproc form_G
@@ -697,14 +580,95 @@ import "cis_rhf_defs.sialx"
       endif #rank==0.0
 #
       server_barrier
-#
+
       endproc update_vecs
+#
+#
+      proc transition_moments
+#
+      icount2 = 1.0
+      do cart
+	  Scart[cart] = icount2
+	  icount2 += 1.0
+      enddo cart
+      do kstate
+#
+	  pardo mu,i
+	      Tkxi[mu,i] = 0.0
+	      prepare Ck_hb[mu,i] = Tkxi[mu,i]
+	  endpardo mu,i
+	  pardo mu,nu
+	      Tkxx[mu,nu] = 0.0
+	      prepare Ck_ao[mu,nu] = tkxx[mu,nu]
+	  endpardo mu,nu
+	  server_barrier
+# back transform Cai to ao basis
+# first half, V
+	  pardo mu,i
+	      Tkxi[mu,i] = 0.0
+	      do a
+	          request ck0[kstate,a,i]
+		  Tk[kstate] = 1.0
+		  Tai[a,i] = ck0[kstate,a,i]*Tk[kstate]
+		  Tkxi1[mu,i] = Tai[a,i]*ca[mu,a]
+		  Tkxi[mu,i] += Tkxi1[mu,i]
+	      enddo a
+   	      prepare Ck_hb[mu,i] = Tkxi[mu,i]
+	  endpardo mu,i
+	  server_barrier
+# second half, O
+	  pardo mu,nu
+	      Tkxx[mu,nu] = 0.0
+	      do i
+		  request Ck_hb[mu,i]
+		  Tkxx1[mu,nu] = Ck_hb[mu,i]*ca[nu,i]
+		  Tkxx[mu,nu] += Tkxx1[mu,nu]
+	      enddo i
+	      prepare Ck_ao[mu,nu] = Tkxx[mu,nu]
+	  endpardo mu,nu
+	  server_barrier
+#
+	  pardo mu,nu
+	  request Ck_ao[mu,nu]
+	  execute print_block Ck_ao[mu,nu]
+	  endpardo mu,nu
+	  do cart
+	      icount2 = Scart[cart]
+	      esum = 0.0
+	      emom = 0.0
+	      print icount2
+	      pardo mu,nu
+		  request Ck_ao[mu,nu]
+		  request Ck_ao[nu,mu]
+		  #DAOINT[mu,nu] = 0.0
+		  execute compute_dipole_integrals DAOINT[mu,nu] icount2
+		  Txx[mu,nu]  = Ck_ao[mu,nu]
+		  Txx1[mu,nu] = Ck_ao[nu,mu]
+		  Txx[mu,nu] += Txx1[mu,nu]
+		  etemp = Ck_ao[mu,nu]*DAOINT[mu,nu]
+		  esum += etemp
+	      endpardo mu,nu
+	      server_barrier
+	      collective emom += esum
+	      server_barrier
+	      tmom[cart,kstate] = emom
+	  enddo cart
+	  server_barrier
+#	  pardo mu,nu
+#	  request Ck_ao[mu,nu]
+#	  print ck_ao[mu,nu]
+#	  endpardo mu,nu
+      enddo kstate
+      print tmom
+#
+      endproc transition_moments
 #
 ##########################################
 # MAIN
 ##########################################
       sip_barrier
 #
+      Mrank = 0
       execute get_my_rank rank
       if rank == 0.0
       println "starting CIS"
@@ -723,12 +687,10 @@ import "cis_rhf_defs.sialx"
       call form_H
       call form_guess
 
-
-
       icount1 = 1.0
       do kiter
           execute get_my_rank rank
-          if rank == 1.0
+          if rank == 0.0
           print icount1
           endif
           icount1 += 1.0
@@ -736,27 +698,32 @@ import "cis_rhf_defs.sialx"
           call form_G
           call update_vecs
 
-          if econv > 0.0
-              if econv < eom_tol
+          if rmseconv > 0.0
+              if rmseconv < eom_tol
                   exit
               endif
           endif
-          if econv < 0.0
-              econv *= -1.0
-              if econv < eom_tol
+          if rmseconv < 0.0
+              rmseconv *= -1.0
+              if rmseconv < eom_tol
                   exit
               endif
           endif
       enddo kiter
 #
-      println " "
-      println "Converged CIS spectrum"
       execute get_my_rank rank
       if rank == 0.0
-      execute print_static_array Ek
-      execute print_static_array DeltaE
+      println "Converged CIS spectrum"
+      print Ek
+      print DeltaE
+      do kstate
+	  etemp = Ek[kstate]*27.2113961
+	  EkeV[kstate] = etemp
+      enddo kstate
+      print EkeV
       endif
-      println " "
+
+      call transition_moments
 #
       set_persistent     ca    "ca" 
       set_persistent     Fock_a "fock_a"

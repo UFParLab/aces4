@@ -55,5 +55,6 @@ special update_cis_bvec urrr
 special energy_denominator_rhf ur
 special energy_ty_denominator_rhf urr
 special aoladder_contraction rru
+special compute_dipole_integrals wu
 
 endsial cis_rhf_defs
