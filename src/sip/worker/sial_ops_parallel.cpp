@@ -479,7 +479,7 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 							restore_persistent_tag, MPI_COMM_WORLD));
 			//expect ack
 			ack_handler_.expect_ack_from(my_server, restore_persistent_tag);
-		}
+        	}
 	} else {
 		persistent_array_manager_->restore_persistent(worker, array_slot,
 				string_slot);
@@ -494,6 +494,7 @@ void SialOpsParallel::end_program() {
 	//at the server when the end_program message arrives.
 	sip_barrier();
 	int my_server = sip_mpi_attr_.my_server();
+	SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
 	//send end_program message to server, if designated worker and wait for ack.
 	if (my_server > 0) {
 		int end_program_tag;

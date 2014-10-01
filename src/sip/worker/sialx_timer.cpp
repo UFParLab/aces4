@@ -140,8 +140,6 @@ public:
 		// Print from the worker master.
 
 		if (SIPMPIAttr::get_instance().is_company_master()){
-			std::cout << "in MultinodePrint execute is company_master"<< std::endl << std::flush;
-//			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 			long long * timers = timer.get_timers();
 			long long * timer_counts = timer.get_timer_count();
@@ -150,7 +148,6 @@ public:
 			const int SW = 20;	// String
 
 			assert(timer.check_timers_off());
-//			std::cout<<"Timers"<<std::endl
 			out_<<"Timers"<<std::endl
 				<<std::setw(LW)<<std::left<<"Line"
 				<<std::setw(SW)<<std::left<<"Type"

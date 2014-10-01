@@ -125,7 +125,6 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
 	//remove objects left from previous sial programs to avoid memory leaks
-
 	if (worker_) delete worker_;
 	if (sialx_timers_)
 		delete sialx_timers_;
@@ -192,10 +191,8 @@ double* TestControllerParallel::static_array(const std::string& name){
 }
 }
 
-//TODO change std::cout to parameter
 void TestControllerParallel::print_timers(std::ostream& out){
 	if (! attr->is_worker()) return;
-	std::cout << "in print_timers() " << std::endl;
 	if (sip_tables_ == NULL || sialx_timers_ == NULL){
 		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
 				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
@@ -262,9 +259,12 @@ double* TestControllerParallel::local_block(const std::string& name,
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
+std::cout << "before creating server timer " << std::endl << std::flush;
 		sip::ServerTimer server_timer(sip_tables_->max_timer_slots());
+		std::cout << "after creating server timer" << std::endl << std::flush;
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
 				spam_, server_timer);
+		std::cout << "after creating server" << std::endl << std::flush;
 		barrier();
 		if (verbose_)
 			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
@@ -272,7 +272,9 @@ bool TestControllerParallel::runServer() {
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
+				std::cout << "before server run" << std::endl << std::flush;
 				server_->run();
+				std::cout << "after server run" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in server: " << e.what();
 				ADD_FAILURE();
@@ -311,7 +313,9 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
+				std::cout << "before worker interpret" << std::endl << std::flush;
 				worker_->interpret();
+				std::cout << "after worker interpret" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in worker: " << e.what();
 				ADD_FAILURE();
@@ -329,6 +333,7 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		}
 		worker_->post_sial_program();
+		std::cout << "after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
 	}
 	sial_output_ << std::flush;
