@@ -469,6 +469,8 @@ TEST(Sial,persistent_distributed_array_mpi){
 	controller.initSipTables();
 	controller.run();
 	controller.print_timers(std::cout);
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
+
 	//run second program
 	controller.initSipTables();
 	controller.run();
@@ -495,64 +497,6 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 
 
-
-//||||||| merged common ancestors
-//	//get siox name from setup, load and print the sip tables
-//	std::string prog_name = setup_reader.sial_prog_list_.at(0);
-//	std::string siox_dir(dir_name);
-//	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-//	sip::SipTables sipTables(setup_reader, siox_file);
-//
-//	//create worker and server
-//	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
-//
-//
-//	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-//	sip::GlobalState::set_program_name(prog_name);
-//	sip::GlobalState::increment_program();
-//	if (sip_mpi_attr.is_server()){
-//		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
-//		MPI_Barrier(MPI_COMM_WORLD);
-//		std::cout<<"starting server" << std::endl;
-//		server.run();
-//		std::cout << "Server state after termination" << server << std::endl;
-//	} else {
-//		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-//		sip::Interpreter runner(sipTables, sialxTimer,  NULL);
-//		MPI_Barrier(MPI_COMM_WORLD);
-//		std::cout << "starting worker for "<< job  << std::endl;
-//		runner.interpret();
-//		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//=======
-//	//get siox name from setup, load and print the sip tables
-//	std::string prog_name = setup_reader.sial_prog_list().at(0);
-//	std::string siox_dir(dir_name);
-//	setup::BinaryInputFile siox_file(siox_dir + prog_name);
-//	sip::SipTables sipTables(setup_reader, siox_file);
-//
-//	//create worker and server
-//	if (sip_mpi_attr.global_rank()==0){   std::cout << "\n\n\n\nstarting SIAL PROGRAM  "<< job << std::endl;}
-//
-//
-//	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-//	sip::GlobalState::set_program_name(prog_name);
-//	sip::GlobalState::increment_program();
-//	if (sip_mpi_attr.is_server()){
-//		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, NULL);
-//		MPI_Barrier(MPI_COMM_WORLD);
-//		std::cout<<"starting server" << std::endl;
-//		server.run();
-//		std::cout << "Server state after termination" << server << std::endl;
-//	} else {
-//		sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-//		sip::Interpreter runner(sipTables, sialxTimer,  NULL);
-//		MPI_Barrier(MPI_COMM_WORLD);
-//		std::cout << "starting worker for "<< job  << std::endl;
-//		runner.interpret();
-//		std::cout << "\nSIAL PROGRAM TERMINATED"<< std::endl;
-//>>>>>>> origin/refactor_opcodes
-//	}
-//}
 
 
 
