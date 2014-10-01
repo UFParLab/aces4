@@ -1,0 +1,37 @@
+sial static_array_test
+	predefined int norb
+	int myrank
+	scalar myranktemp
+	predefined int root #source of broadcast--must be < number of workers
+	special fill_block_sequential wr
+    special get_my_rank w
+    special enable_all_rank_print
+	
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	static a[i,j]
+	
+	local b[i, j]
+	execute get_my_rank myranktemp
+	myrank = (int)myranktemp
+	
+	do i
+		do j		
+			execute fill_block_sequential b[i,j] 1.0
+			if myrank == root
+			a[i,j] = b[i,j]
+			else 
+			a[i,j]  = 0.0
+			endif
+		enddo j
+	enddo i
+	
+	execute enable_all_rank_print
+	print a
+
+	
+	broadcast_from root a
+
+	print a
+#	deallocate  b[*,*]
+endsial static_array_test
