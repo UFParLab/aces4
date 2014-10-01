@@ -139,28 +139,29 @@ SIPOP(invalid_op,198,"invalid",false)\
 
 enum opcode_t {
 #define SIPOP(e,n,t,p) e = n,
-				SIP_OPCODES
+	SIP_OPCODES
 #undef SIPOP
-				last_op
-			};
+	last_op
+};
 
-			/**
-			 * Converts an opcode to it's string equivalent
-			 * @param
-			 * @return
-			 */
-			std::string opcodeToName(opcode_t);
-			/**
-			 * Converts an integer to an opcode
-			 * @param
-			 * @return
-			 */
-			opcode_t intToOpcode(int);
-			/**
-			 * Whether a certain opcode is printable
-			 * @param
-			 * @return
-			 */
-			bool printableOpcode(opcode_t);
-			} /* namespace sip */
+/**
+ * Converts an opcode to it's string equivalent
+ * @param
+ * @return
+ */
+std::string opcodeToName(opcode_t);
+/**
+ * Converts an integer to an opcode
+ * @param
+ * @return
+ */
+opcode_t intToOpcode(int);
+/**
+ * Whether a certain opcode is printable
+ * @param
+ * @return
+ */
+bool printableOpcode(opcode_t);
+
+} /* namespace sip */
 #endif /* OPCODE_H_ */
