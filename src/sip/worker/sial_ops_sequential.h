@@ -16,10 +16,13 @@
 
 namespace sip {
 
+class SialxTimer;
+
 class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
 			WorkerPersistentArrayManager*,
+			SialxTimer*,
 			const SipTables&);
 	~SialOpsSequential();
 
@@ -42,7 +45,7 @@ public:
 
 	void collective_sum(double rhs_value, int dest_array_slot);
 	bool assert_same(int source_array_slot){return true;}
-	void broadcast_static(int source_array_slot, int source_worker){}
+	void broadcast_static(Block::BlockPtr, int source_worker){}  //nop for single process version
 
 	void set_persistent(Interpreter*, int array_id, int string_slot);
 	void restore_persistent(Interpreter*, int array_id, int string_slot);
@@ -65,7 +68,7 @@ public:
 	 * @param id
 	 * @return
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId& id);
+	Block::BlockPtr get_block_for_reading(const BlockId& id, int unused_sial_line_number);
 
 	Block::BlockPtr get_block_for_writing(const BlockId& id,
 			bool is_scope_extent);

@@ -59,7 +59,7 @@ TestControllerParallel::TestControllerParallel(std::string job,
 		job_(job), verbose_(verbose), comment_(comment), sial_output_(
 				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
-				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
+				NULL), server_(NULL), worker_(NULL), printer_(NULL), server_timer_(NULL), sialx_timers_(NULL) {
 	barrier();
 	sip::GlobalState::reinitialize();
 	if (has_dot_dat_file) {
@@ -108,6 +108,12 @@ TestControllerParallel::~TestControllerParallel() {
 		delete setup_reader_;
 	if (sip_tables_)
 		delete sip_tables_;
+	if (sialx_timers_)
+		delete sialx_timers_;
+#ifdef HAVE_MPI
+	if (server_timer_)
+		delete server_timer_;
+#endif
 }
 
 
@@ -118,7 +124,16 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	sip::GlobalState::increment_program();
 	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
-	if (!sip_tables_) delete sip_tables_;
+	//remove objects left from previous sial programs to avoid memory leaks
+
+	if (worker_) delete worker_;
+	if (sialx_timers_)
+		delete sialx_timers_;
+#ifdef HAVE_MPI
+	if (server_) delete server_;
+	if (server_timer_) delete server_timer_;
+#endif
+	if (sip_tables_) delete sip_tables_;
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
 	if (verbose_) {
 		//rank 0 prints and .siox files contents
@@ -135,9 +150,9 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	barrier();
 }
 
-sip::IntTable* TestControllerParallel::int_table() {
-	return &(sip_tables_->int_table_);
-}
+//sip::IntTable* TestControllerParallel::int_table() {
+//	return &(sip_tables_->int_table_);
+//}
 
 int TestControllerParallel::int_value(const std::string& name) {
 	try {
@@ -161,6 +176,34 @@ double TestControllerParallel::scalar_value(const std::string& name) {
 		ADD_FAILURE();
 		return -1;
 	}
+}
+
+double* TestControllerParallel::static_array(const std::string& name){
+	try {
+		int array_slot = worker_->array_slot(name);
+		sip::Block::BlockPtr array =  worker_->data_manager_.contiguous_array_manager_.get_array(array_slot);
+		return array->get_data();
+	} catch (const std::exception& e) {
+	std::cerr << "FAILURE: static array" << name
+			<< " not found.  This is probably a bug in the test."
+			<< std::endl << std::flush;
+	ADD_FAILURE();
+	return NULL;
+}
+}
+
+//TODO change std::cout to parameter
+void TestControllerParallel::print_timers(std::ostream& out){
+	if (! attr->is_worker()) return;
+	std::cout << "in print_timers() " << std::endl;
+	if (sip_tables_ == NULL || sialx_timers_ == NULL){
+		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
+				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
+		return;
+	}
+	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
+	sialx_timers_->print_timers(lno2name, out);
+	out<< std::flush;
 }
 
 void TestControllerParallel::run() {
@@ -218,12 +261,6 @@ double* TestControllerParallel::local_block(const std::string& name,
 #ifdef HAVE_MPI
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
-
-		// Clear out server.
-
-		if (server_ != NULL)
-			delete server_;
-
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
 		sip::ServerTimer server_timer(sip_tables_->max_timer_slots());
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
@@ -250,13 +287,9 @@ bool TestControllerParallel::runServer() {
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< job_ << "SERVER TERMINATED " << std::endl << std::flush;
 		}
-
-		std::cout << "before save_marked_arrays_ " << spam_ << std::endl
-				<< std::flush;
 		spam_->save_marked_arrays(server_);
-		std::cout << "after save_marked_arrays_ " << spam_ << std::endl
-				<< std::flush;
 	}
+	sial_output_ << std::flush;
 	return this_test_enabled_;
 
 }
@@ -265,13 +298,11 @@ bool TestControllerParallel::runServer() {
 bool TestControllerParallel::runWorker() {
 	if (this_test_enabled_) {
 
-		// Clear previous worker_ to avoid leak
-		if (worker_ != NULL)
-			delete worker_;
 
-		sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
-		worker_ = new sip::Interpreter(*sip_tables_, &sialx_timers, printer_, wpam_);
-//		worker_ = new sip::Interpreter(*sip_tables_, NULL, printer_, wpam_);
+
+		int slot = sip_tables_->max_timer_slots();
+		sialx_timers_ = new sip::SialxTimer(sip_tables_->max_timer_slots());
+		worker_ = new sip::Interpreter(*sip_tables_, sialx_timers_, printer_, wpam_);
 		barrier();
 
 		if (verbose_)
@@ -290,17 +321,17 @@ bool TestControllerParallel::runWorker() {
 		}
 
 		if (verbose_) {
-			if (std::cout != sial_output_)
+			if (std::cout != sial_output_){
 				std::cout << sial_output_.rdbuf();
+			}
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< prog_name_ << " TERMINATED WORKER " << std::endl
 					<< std::flush;
 		}
-
 		worker_->post_sial_program();
 		wpam_->save_marked_arrays(worker_);
 	}
-
+	sial_output_ << std::flush;
 	return this_test_enabled_;
 }
 

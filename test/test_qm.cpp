@@ -27,11 +27,8 @@ TEST(Sial_QM,ccsdpt_test){
 	std::string job("ccsdpt_test");
 
 	std::stringstream output;
-#ifdef HAVE_MPI
+
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-#else
-	TestController controller (job, true, VERBOSE_TEST, "", output);
-#endif
 
 	controller.initSipTables(qm_dir_name);
 	controller.run();
@@ -53,7 +50,9 @@ TEST(Sial_QM,ccsdpt_test){
 		ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
 		double esaab =controller.scalar_value("esaab");
 		ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
+		controller.print_timers(std::cout);
 	}
+
 }
 
 
@@ -90,22 +89,6 @@ int main(int argc, char **argv) {
 	TAU_PROFILE_SET_NODE(0);
 	TAU_STATIC_PHASE_START("SIP Main");
 #endif
-
-//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
-//
-//	int num_procs;
-//	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
-//
-//	if (num_procs < 2){
-//		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
-//		return -1;
-//	}
-//
-//	sip::SIPMPIUtils::set_error_handler();
-//	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
-//
 
 	printf("Running main() from %s\n",__FILE__);
 	testing::InitGoogleTest(&argc, argv);

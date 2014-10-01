@@ -461,6 +461,7 @@ set(SIAL_FILES
     src/sialx/test/contiguous_local.sialx;
     src/sialx/test/block_scale_assign.sialx;
     src/sialx/test/return_sval_test.sialx;
+    src/sialx/test/broadcast_static.sialx;
     src/sialx/test/sum_op_test.sialx;
     src/sialx/test/transpose_tmp.sialx;
     src/sialx/test/transpose4d_tmp.sialx;

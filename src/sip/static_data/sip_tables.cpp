@@ -16,25 +16,29 @@
 namespace sip {
 
 SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input_file):
-	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader),	sialx_lines_(-1){
+	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader){
 }
 
 SipTables::~SipTables() {
 }
 
 int SipTables::max_timer_slots() const{
-	if (sialx_lines_ > 0)
-		return sialx_lines_;
-
-	int max_line = 0;
-	int size = op_table_.size();
-	for (int i=0; i<size; i++){
-		int line = op_table_.line_number(i);
-		if (line > max_line)
-			max_line = line;
-	}
-	sialx_lines_ = max_line;
-	return max_line;
+	return op_table_.line_number(op_table_.size()-1);
+//	std::cout << "calling max_timer_slots()" << std::endl;
+//	op_table_.line_number(op_table_.size()-1);
+//	if (sialx_lines_ > 0)
+//		return sialx_lines_;
+//
+//	int max_line = 0;
+//	int size = op_table_.size();
+//	for (int i=0; i<size; i++){
+//		int line = op_table_.line_number(i);
+//		if (line > max_line)
+//			max_line = line;
+//	}
+//	sialx_lines_ = max_line;
+//	check(max_line == op_table_.line_number(op_table_.size()-1), "unexpected max_timer_slot value");
+//	return max_line;
 }
 
 std::vector<std::string> SipTables::line_num_to_name() const{

@@ -17,7 +17,7 @@ public:
 	}
 	~MPIState(){
 		if (!check_and_warn(!pending(), "deleting block with pending request")){
-			//the block id pending, and we have raised a warning
+			//the block is pending, and we have raised a warning
 			wait();
 		}
 	}

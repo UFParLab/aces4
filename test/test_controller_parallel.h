@@ -7,6 +7,8 @@
 #include <iostream>
 #include "setup_reader.h"
 #include "test_constants.h"
+#include "sialx_timer.h"
+#include "server_timer.h"
 
 
 
@@ -18,6 +20,7 @@ class SialPrinterForTests;
 class IntTable;
 class ServerPersistentArrayManager;
 class SIPServer;
+
 }
 
 
@@ -58,6 +61,8 @@ public:
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
 	double* local_block(const std::string& name, const std::vector<int>indices);
+	double* static_array(const std::string& name);
+	void print_timers(std::ostream& out);
 
 	int num_workers();
 	int num_servers();
@@ -75,6 +80,8 @@ public:
 	sip::Interpreter* worker_;
 	std::ostream& sial_output_;
 	sip::SialPrinterForTests* printer_;
+	sip::SialxTimer* sialx_timers_;
+	sip::ServerTimer* server_timer_;
 	bool this_test_enabled_;
 	bool expect_success_;
 	int prog_number_;

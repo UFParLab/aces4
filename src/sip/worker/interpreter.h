@@ -138,6 +138,10 @@ public:
 		return sip_tables_.is_distributed(array_slot)
 				|| sip_tables_.is_served(array_slot);
 	}
+
+	Block* get_static(int array_id){
+		return data_manager_.contiguous_array_manager_.get_array(array_id);
+	}
 	Block* get_and_remove_contiguous_array(int array_id) {
 		return data_manager_.contiguous_array_manager_.get_and_remove_array(
 				array_id);
@@ -253,16 +257,23 @@ private:
 	/** main interpreter procedure */
 	void interpret(int pc_start, int pc_end);
 
-	/** auxillary field needed by sialx timers. Must be initialized to a negative number. **/
-	int last_seen_line_number_;
+	/** auxillary field needed by sialx timers.
+	 * If value is positive, then the timer corresponding to the line is on.
+	 * Should be initialized to value <= 0 **/
+	int timer_line_;
 
-	/** collects performance information per SIALX line **/
-	void timer_trace(int pc, opcode_t opcode);
+	/** Manages per-line timers.
+	 *
+	 * It should be invoked before execution of each opcode.
+	 * It should also be invoked with opcode = invalid_opcode and a negative value for line
+	 * the interpreter loop has completed to ensure all timers are turned off.
+	 * **/
+	void timer_trace(int pc, opcode_t opcode, int line);
 
 	const OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
-	/**
-	 * Timer manager
-	 */
+
+	/** Data structure to hold timers.  Owned by
+	 * calling program.  May be NULL */
 	SialxTimer* sialx_timers_;
 
 	/**
