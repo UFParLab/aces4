@@ -380,10 +380,10 @@ c     mapping of atoms to shells
 
 c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
-      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
+      integer ccbeg_pack(4*npcoeffs), ccend_pack(4*npcoeffs)
       integer nalpha_pack, ncoeff_pack
-      double precision alpha_pack(npcoeffs),
-     *                 pcoeff_pack(npcoeffs)
+      double precision alpha_pack(4*npcoeffs),
+     *                 pcoeff_pack(4*npcoeffs)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
       integer do_atom(ncenters)
@@ -628,7 +628,7 @@ c-------------------------------------------------------------------------
      *                       ncoeff_pack, pccbeg, pccend, 
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeffs)
+     *                       npcoeffs*2)
 
 c ------------------------------------------------------------------------ 
 c Compute the xyz integrals. 
