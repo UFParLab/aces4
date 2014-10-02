@@ -184,31 +184,14 @@ public:
 	}
 
 
-
-
-
-
-	void set_index_value(int index_table_slot, int value) {
-		data_manager_.set_index_value(index_table_slot, value);
+	/**
+	 * For testing.
+	 * @param array_id
+	 * @return
+	 */
+	virtual Block* get_static(int array_id){
+		return data_manager_.contiguous_array_manager_.get_array(array_id);
 	}
-	bool is_subindex(int index_table_slot) {
-		return sip_tables_.is_subindex(index_table_slot);
-	}
-	//TODO fix inconsistent name.  parent_index or super_index??
-	int super_index(int subindex_slot) {
-		return sip_tables_.parent_index(subindex_slot);
-	}
-
-	sip::BlockId block_id(const sip::BlockSelector& selector) {
-		return data_manager_.block_id(selector);
-	}
-	std::string int_name(int int_table_slot){
-		return sip_tables_.int_name(int_table_slot);
-	}
-	std::string index_name(int index_table_slot){
-		return sip_tables_.index_name(index_table_slot);
-	}
-
 
 	/**
 	 * For testing
@@ -255,14 +238,41 @@ public:
     }
 
 
+
+	// Methods for convenience
+
+	void set_index_value(int index_table_slot, int value) {
+		data_manager_.set_index_value(index_table_slot, value);
+	}
+	bool is_subindex(int index_table_slot) {
+		return sip_tables_.is_subindex(index_table_slot);
+	}
+	//TODO fix inconsistent name.  parent_index or super_index??
+	int super_index(int subindex_slot) {
+		return sip_tables_.parent_index(subindex_slot);
+	}
+
+	sip::BlockId block_id(const sip::BlockSelector& selector) {
+		return data_manager_.block_id(selector);
+	}
+	std::string int_name(int int_table_slot){
+		return sip_tables_.int_name(int_table_slot);
+	}
+	std::string index_name(int index_table_slot){
+		return sip_tables_.index_name(index_table_slot);
+	}
+
+
+
+
 	// Convenience methods to access data members.
 	const DataManager& data_manager() const { return data_manager_; }
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
 
 private:
-	int pc_; 	/*! the "program counter". Actually, the current location in the op_table_.	 */
-	int last_seen_line_number_; /** Needed by timers. initialize to a -ve num. **/
+	int pc_; 					/*! the "program counter". Actually, the current location in the op_table_.	 */
+	int timer_line_; /** Auxillary field needed by timers. initialize to value < 0 **/
 
 protected:
 	const SipTables& sip_tables_; /*! static data */
@@ -277,7 +287,7 @@ protected:
 
 
 	const OpTable & op_table_;  /*! owned by sipTables_, pointer copied for convenience */
-	SialxTimer* sialx_timers_; /*! Timer manager */
+	SialxTimer* sialx_timers_; /*! Data structure to hold timers. Owned by calling program. Maybe NULL */
 
 	/**
 	 * The reference is needed for upcalls to handle set_persistent and restore_persistent instructions
@@ -363,8 +373,13 @@ protected:
 	/** main interpreter procedure */
 	void do_interpret(int pc_start, int pc_end);
 
-	/** collects performance information per SIALX line **/
-	void timer_trace(int pc);
+	/** Manages per-line timers.
+	 *
+	 * It should be invoked before execution of each opcode.
+	 * It should also be invoked with opcode = invalid_opcode and a negative value for line
+	 * the interpreter loop has completed to ensure all timers are turned off.
+	 * **/
+	void timer_trace(int pc, opcode_t opcode, int line);
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);

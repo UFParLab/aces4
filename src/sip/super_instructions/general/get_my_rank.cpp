@@ -7,10 +7,11 @@
 
 
 /**
- * Special super instruction
+ * get_my_rank
+ *
+ * special get_my_rank w
  *
  * Gets MPI rank.  If not using MPI, returns 0.
- * TODO add conditional compilation
  *
  *  Created on: Oc 19, 2013
  *      Author: Beverly Sanders

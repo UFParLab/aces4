@@ -182,14 +182,14 @@ private:
 	ArrayTable array_table_;
 	IndexTable index_table_;
 	ScalarTable scalar_table_;  //only used for initialization, dynamic value held in data manager
-	IntTable int_table_;  		//currently these are all predefined
+	IntTable int_table_;  		//only used for initialization, dynamic values are held in data manager
 	StringLiteralTable string_literal_table_;
 	SpecialInstructionManager special_instruction_manager_;
 	SioxReader siox_reader_;
 
 	setup::SetupReader& setup_reader_;
 
-	mutable int sialx_lines_;
+//	mutable int sialx_lines_;
 
 	friend class SioxReader;  //initializes the SipTable
 	friend class SialxInterpreter;

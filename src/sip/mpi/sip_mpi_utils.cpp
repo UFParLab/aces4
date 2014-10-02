@@ -34,7 +34,7 @@ void SIPMPIUtils::check_err(int err){
 	    char estring[MPI_MAX_ERROR_STRING];
 	    MPI_Error_class(err, &eclass);
 	    MPI_Error_string(err, estring, &len);
-	    printf("Error %d:%s\n", eclass, estring);
+	    fprintf(stderr, "Error %d:%s\n", eclass, estring);
 	    fflush(stdout);
         fail("MPI Error !\n");
 	}
@@ -48,7 +48,7 @@ void SIPMPIUtils::check_err(int err, int line, char * file){
 	    char estring[MPI_MAX_ERROR_STRING];
 	    MPI_Error_class(err, &eclass);
 	    MPI_Error_string(err, estring, &len);
-	    printf("Error %d: %s at line %d in file %s\n", eclass, estring, line, file);
+	    fprintf(stderr, "Error %d: %s at line %d in file %s\n", eclass, estring, line, file);
 	    fflush(stdout);
         fail("MPI Error !\n");
 	}

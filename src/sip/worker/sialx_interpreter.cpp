@@ -35,8 +35,7 @@ SialxInterpreter::SialxInterpreter(const SipTables& sipTables, SialxTimer* sialx
 		SialPrinter* printer) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
-				NULL), sial_ops_(data_manager_,
-				NULL, sipTables){
+				NULL), sial_ops_(data_manager_, NULL, sialx_timer, sipTables){
 	_init(sipTables);
 }
 SialxInterpreter::SialxInterpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
@@ -45,7 +44,7 @@ SialxInterpreter::SialxInterpreter(const SipTables& sipTables, SialxTimer* sialx
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sipTables){
+				persistent_array_manager, sialx_timer, sipTables){
 	_init(sipTables);
 }
 
@@ -58,7 +57,7 @@ void SialxInterpreter::_init(const SipTables& sip_tables) {
 	pc_ = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	last_seen_line_number_ = -99;
+	timer_line_ = -1;
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 #ifdef HAVE_CUDA
 	int devid;
@@ -154,7 +153,10 @@ void SialxInterpreter::handle_sip_barrier_op(int pc) {
 }
 
 void SialxInterpreter::handle_broadcast_static_op(int pc) {
-	sial_ops_.broadcast_static(arg0(pc), control_stack_.top());
+	std::cout << "calling broadcast_static with args " << arg0(pc) << ", " << control_stack_.top() << std::endl;
+	Block::BlockPtr block = get_static(arg0(pc));
+	sial_ops_.broadcast_static(block, control_stack_.top());
+
 	control_stack_.pop();
 }
 
@@ -748,6 +750,8 @@ void SialxInterpreter::handle_sswap_op(int pc) {
 void SialxInterpreter::post_interpret(int oldpc, int newpc) {
 	//TODO  only call where necessary
 	contiguous_blocks_post_op();
+	//interpreter loop finished.  Ensure all timers turned off.
+	timer_trace(newpc, invalid_op, -99);
 }
 
 void SialxInterpreter::pre_interpret(int pc) {
@@ -755,7 +759,8 @@ void SialxInterpreter::pre_interpret(int pc) {
 			"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 	SIP_LOG(opcode_t opcode = op_table_.opcode(pc_);
 			std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
-	timer_trace(pc_);
+	opcode_t opcode = op_table_.opcode(pc_);
+	timer_trace(pc, opcode, current_line());
 }
 
 void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
@@ -873,59 +878,50 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 } //interpret
 
 void SialxInterpreter::do_post_sial_program() {
-	timer_trace(pc_);
 	sial_ops_.end_program();
 }
 
-void SialxInterpreter::timer_trace(int pc){
-	if (sialx_timers_ == NULL ) return;
-	const int pc_end = op_table_.size();
-	int line_number = 0;
-	opcode_t opcode = invalid_op;
-	if (pc < pc_end){
-		opcode = op_table_.opcode(pc_);
-		line_number = current_line();
+void SialxInterpreter::timer_trace(int pc, opcode_t opcode, int line) {
+	if (sialx_timers_ == NULL)
+		return;
+	if (timer_line_ > 0) { //a timer is on
+		if (timer_line_ == line) { //still on same line, no change to timer
+			return;
+		}
+		sialx_timers_->pause_timer(timer_line_, SialxTimer::TOTALTIME); //have moved to different line, so pause the current timer
 	}
-	check (line_number >= 0, "Invalid line number at timer_trace!");
-
-	if (last_seen_line_number_ == line_number) {
-			return;
-	} else if (last_seen_line_number_ >= 0){
-			sialx_timers_->pause_timer(last_seen_line_number_, SialxTimer::TOTALTIME);
-			last_seen_line_number_ = -99; // Switches timer off.
-			return;
-	} else { // Turn on a new timer
-			// Collect data for sialx lines with only these opcodes.
-			switch(opcode){
-			case execute_op:
-			case sip_barrier_op:
-			case broadcast_static_op:
-			case allocate_op:
-			case deallocate_op:
-			case get_op:
-			case put_accumulate_op:
-			case put_replace_op:
-			case create_op:
-			case delete_op:
-			case collective_sum_op:
-			case assert_same_op:
-			case block_copy_op:
-			case block_permute_op:
-			case block_fill_op:
-			case block_scale_op:
-			case block_accumulate_scalar_op:
-			case block_add_op:
-			case block_subtract_op:
-			case block_contract_op:
-			case block_contract_to_scalar_op:
-			case set_persistent_op:
-			case restore_persistent_op:
-					sialx_timers_->start_timer(line_number, SialxTimer::TOTALTIME);
-					last_seen_line_number_ = line_number;
-					break;
-			}
-        }
-
+	//only start a timer for the interesting op_codes.
+	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
+	switch (opcode) {  //everything falls through
+	case execute_op:
+	case sip_barrier_op:
+	case broadcast_static_op:
+	case allocate_op:
+	case deallocate_op:
+	case get_op:
+	case put_accumulate_op:
+	case put_replace_op:
+	case create_op:
+	case delete_op:
+	case collective_sum_op:
+	case assert_same_op:
+	case block_copy_op:
+	case block_permute_op:
+	case block_fill_op:
+	case block_scale_op:
+	case block_accumulate_scalar_op:
+	case block_add_op:
+	case block_subtract_op:
+	case block_contract_op:
+	case block_contract_to_scalar_op:
+	case set_persistent_op:
+	case restore_persistent_op:
+		sialx_timers_->start_timer(line, SialxTimer::TOTALTIME);
+		timer_line_ = line;
+		break;
+	default:
+		timer_line_ = 0;
+	}
 }
 
 
@@ -1574,8 +1570,8 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 
 
 	//TODO move to sialops
-    int line = current_line();
-    sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
+//    int line = current_line();
+//    sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
 
 
 
@@ -1591,7 +1587,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_reading(
 						id, read_block_list_) :
-				sial_ops_.get_block_for_reading(id);
+				sial_ops_.get_block_for_reading(id, current_line());
 	}
 		break;
 	case 'w': {
@@ -1615,7 +1611,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 				"SIP bug:  illegal or unsupported intent given to get_block");
 	}
 
-    sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
+//    sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
 	return block;
 
 }

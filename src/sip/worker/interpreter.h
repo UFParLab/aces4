@@ -113,6 +113,13 @@ public:
 	 */
 	virtual int array_slot(std::string array_name) = 0;
 
+	/**
+	 * For testing
+	 * @param array_id
+	 * @return
+	 */
+	virtual Block* get_static(int array_id) = 0;
+
 protected:
 	Interpreter() { global_interpreter = this; }
 
