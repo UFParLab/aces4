@@ -334,7 +334,7 @@ MPI_File DiskBackedArraysIO::create_uninitialized_file_for_array(int array_id) {
 
 	// Get file name for array into "filename"
 	array_file_name(array_id, filename);
-	std::cout << "creating uninitialized file for array " << array_id << " with filename " << std::string(filename) << std::endl << std::flush;
+    SIP_LOG(std::cout << "creating uninitialized file for array " << array_id << " with filename " << std::string(filename) << std::endl << std::flush);
 	SIPMPIUtils::check_err(MPI_File_open(server_comm, filename,
 			MPI_MODE_EXCL | MPI_MODE_CREATE |
 			MPI_MODE_RDWR | MPI_MODE_DELETE_ON_CLOSE,

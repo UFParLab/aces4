@@ -136,7 +136,7 @@ public:
 	virtual void execute(TIMER& timer){
 
 		mpi_reduce_timers(timer);
-		std::cout << "in MultinodePrint execute" << std::endl << std::flush;
+		//std::cout << "in MultinodePrint execute" << std::endl << std::flush;
 		// Print from the worker master.
 
 		if (SIPMPIAttr::get_instance().is_company_master()){
