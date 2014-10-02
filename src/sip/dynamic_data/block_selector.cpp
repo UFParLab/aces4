@@ -7,17 +7,23 @@
 
 #include <block_selector.h>
 #include <iostream>
+#include <utility>
 
 namespace sip {
+
+BlockSelector::BlockSelector() :array_id_(-1), rank_(0) {
+	std::fill(index_ids_ + 0, index_ids_ + MAX_RANK, -1);
+}
 
 BlockSelector::BlockSelector(int rank, int array_id,
 		const index_selector_t& index_ids) :
 		array_id_(array_id),
 		rank_(rank){
-	for (int i = 0; i != rank; ++i) {
+	int i;
+	for (i = 0; i < rank; ++i) {
 		index_ids_[i] = index_ids[i];
 	}
-	for (int i = rank; i != MAX_RANK; ++i) {
+	for (; i < MAX_RANK; ++i) {
 		index_ids_[i] = unused_index_slot;
 	}
 }

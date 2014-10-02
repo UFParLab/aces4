@@ -61,6 +61,18 @@ ProfileTimer::BlockInfo::BlockInfo(int rank, const index_selector_t& index_ids, 
 	std::fill(segment_sizes_ + rank, segment_sizes_ + MAX_RANK, 1);
 }
 
+ProfileTimer::BlockInfo::BlockInfo(const BlockInfo& rhs):
+	rank_(rhs.rank_){
+	std::copy(rhs.index_ids_ + 0, 		rhs.index_ids_ + MAX_RANK, 		this->index_ids_);
+	std::copy(rhs.segment_sizes_ + 0, 	rhs.segment_sizes_ + MAX_RANK, 	this->segment_sizes_);
+}
+ProfileTimer::BlockInfo& ProfileTimer::BlockInfo::operator=(const BlockInfo& rhs){
+	this->rank_ = rhs.rank_;
+	std::copy(rhs.index_ids_ + 0, 		rhs.index_ids_ + MAX_RANK, 		this->index_ids_);
+	std::copy(rhs.segment_sizes_ + 0, 	rhs.segment_sizes_ + MAX_RANK, 	this->segment_sizes_);
+	return *this;
+}
+
 ProfileTimer::Key::Key(opcode_t opcode, const std::vector<BlockInfo>& blocks):
 	opcode_(opcode), blocks_(blocks){
 
@@ -150,6 +162,16 @@ bool ProfileTimer::BlockInfo::operator<(const ProfileTimer::BlockInfo& rhs) cons
 		is_eq = is_eq && (index_ids_[i] == rhs.index_ids_[i]);
 	}
 	return (is_leq && !is_eq);
+}
+
+ProfileTimer::Key::Key(const ProfileTimer::Key& rhs):
+		opcode_(rhs.opcode_), blocks_(rhs.blocks_){
+}
+
+ProfileTimer::Key& ProfileTimer::Key::operator=(const ProfileTimer::Key& rhs){
+	this->opcode_ = rhs.opcode_;
+	this->blocks_ = rhs.blocks_;	// Vector::operator=
+	return *this;
 }
 
 bool ProfileTimer::Key::operator<(const ProfileTimer::Key& rhs) const{

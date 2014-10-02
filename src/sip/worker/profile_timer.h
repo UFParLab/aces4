@@ -26,10 +26,12 @@ public:
 
 	/** Info about each block involved in the operation */
 	struct BlockInfo {
-		const int rank_;
+		int rank_;
 		index_selector_t index_ids_;			//! For block selector or operation shape
 		segment_size_array_t segment_sizes_; 	//! For block segment sizes
 		BlockInfo(int, const index_selector_t&, const segment_size_array_t&);
+		BlockInfo(const BlockInfo& rhs);
+		BlockInfo& operator=(const BlockInfo& rhs);
 		bool operator==(const BlockInfo& rhs) const;
 		bool operator<(const BlockInfo& rhs) const;
 		friend std::ostream& operator<<(std::ostream&, const ProfileTimer::BlockInfo&);
@@ -45,9 +47,12 @@ public:
 	 * The shape of the operation is [1,2], [3,4], [2,1]
 	 */
 	struct Key {
-		const opcode_t opcode_;
+		opcode_t opcode_;
 		std::vector<BlockInfo> blocks_;
+		Key() : opcode_(invalid_op) {}
 		Key(opcode_t, const std::vector<BlockInfo>&);
+		Key(const Key& rhs);
+		Key& operator=(const Key& rhs);
 		bool operator<(const Key& rhs) const;
 		friend std::ostream& operator<<(std::ostream&, const ProfileTimer::Key&);
 	};

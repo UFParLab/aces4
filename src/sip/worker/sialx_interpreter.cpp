@@ -745,16 +745,27 @@ void SialxInterpreter::handle_sswap_op(int pc) {
 	expression_stack_.push(e0);
 }
 
+void SialxInterpreter::post_interpret(int oldpc, int newpc) {
+	//TODO  only call where necessary
+	contiguous_blocks_post_op();
+}
+
+void SialxInterpreter::pre_interpret(int pc) {
+	sip::check(write_back_list_.empty() && read_block_list_.empty(),
+			"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
+	SIP_LOG(opcode_t opcode = op_table_.opcode(pc_);
+			std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
+	timer_trace(pc_);
+}
+
 void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 	pc_ = pc_start;
 	while (pc_ < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc_);
-		sip::check(write_back_list_.empty() && read_block_list_.empty(),
-				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
-		SIP_LOG(std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank()
-		                 << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
-		timer_trace(pc_);
+		pre_interpret(pc_);
+		int old_pc = pc_;
+
 		switch (opcode) {
 		// Opcodes that modify the program counter (pc_)
 		case goto_op: 					handle_goto_op(pc_); 					break;
@@ -855,8 +866,8 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 			fail(opcodeToName(opcode) + " not yet implemented ", line_number());
 		}// switch
 
-		//TODO  only call where necessary
-		contiguous_blocks_post_op();
+		post_interpret(old_pc, pc_);
+
 	}// while
 
 } //interpret
@@ -1463,8 +1474,13 @@ BlockId SialxInterpreter::get_block_id_from_instruction(int pc){
 
 
 sip::BlockId SialxInterpreter::get_block_id_from_selector_stack() {
-	sip::BlockSelector selector = block_selector_stack_.top();
+	BlockSelector selector = block_selector_stack_.top();
 	block_selector_stack_.pop();
+	return get_block_id_from_selector(selector);
+}
+
+sip::BlockId SialxInterpreter::get_block_id_from_selector(const BlockSelector &selector) {
+
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_rank(array_id);
 	if (sip_tables_.is_contiguous_local(array_id)){

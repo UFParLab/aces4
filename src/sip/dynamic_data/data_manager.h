@@ -28,6 +28,7 @@ namespace sip {
 class SialOpsParallel;
 class SialOpsSequential;
 class SialxInterpreter;
+class ProfileInterpreter;
 
 class DataManager {
 public:
@@ -110,6 +111,7 @@ private:
 	const SipTables& sip_tables_;
 
 	friend class SialxInterpreter;
+	friend class ProfileInterpreter;
 	friend class SialOpsParallel;
 	friend class SialOpsSequential;
 	friend class ::TestControllerParallel;

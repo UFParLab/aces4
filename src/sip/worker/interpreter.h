@@ -114,8 +114,7 @@ public:
 	virtual int array_slot(std::string array_name) = 0;
 
 protected:
-	Interpreter() : pc_(0){ global_interpreter = this; }
-	int pc_; 		/*! the "program counter". Actually, the current location in the op_table_.	 */
+	Interpreter() { global_interpreter = this; }
 
 	virtual SialPrinter* get_printer() = 0;
 	virtual int get_line_number() = 0;

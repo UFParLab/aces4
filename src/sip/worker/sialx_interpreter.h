@@ -51,7 +51,7 @@ public:
 
 	SialxInterpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
 	SialxInterpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
-	~SialxInterpreter();
+	virtual ~SialxInterpreter();
 
 
 	/** main interpret function */
@@ -260,8 +260,11 @@ public:
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
 
-protected:
+private:
+	int pc_; 	/*! the "program counter". Actually, the current location in the op_table_.	 */
+	int last_seen_line_number_; /** Needed by timers. initialize to a -ve num. **/
 
+protected:
 	const SipTables& sip_tables_; /*! static data */
 	DataManager data_manager_;    /*! dynamic data */
 
@@ -273,7 +276,6 @@ protected:
 	SialPrinter* printer_;
 
 
-	int last_seen_line_number_; /** Needed by timers. initialize to a -ve num. **/
 	const OpTable & op_table_;  /*! owned by sipTables_, pointer copied for convenience */
 	SialxTimer* sialx_timers_; /*! Timer manager */
 
@@ -402,6 +404,14 @@ protected:
 	 */
 	sip::BlockId get_block_id_from_selector_stack();
 
+	/**
+	 * Constructs a block id from a given block selector.
+	 * Reads values from control_stack_, modifying it.
+	 * @param selector [in]
+	 * @return
+	 */
+	sip::BlockId get_block_id_from_selector(const BlockSelector& selector);
+
 	/** get_block
 	 *
 	 * Returns a pointer to the block on top of the selector stack, and removes the selector from the stack.
@@ -463,6 +473,7 @@ protected:
 	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockSelector&, sip::BlockId&, bool contiguous_allowed = true);
 	sip::Block::BlockPtr get_gpu_block(char intent, bool contiguous_allowed = true);
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent, sip::BlockId& id, bool contiguous_allowed = true);
+
 
 
 	// The following functions handle each operation in the
@@ -561,6 +572,32 @@ protected:
 	void handle_iswap_op(int pc);
 	void handle_sswap_op(int pc);
 
+
+	// ================================================================
+	//		Methods to be overriden by abstract interpreters
+	//		READ THE IMPLEMENTATION BEFORE OVERRIDING
+	// ================================================================
+
+
+	/**
+	 * Steps to be performed after interpreting opcode at old_pc.
+	 * @param old_pc
+	 * @param new_pc program counter changed to new pc as a result of interpreting old_pc
+	 */
+	virtual void post_interpret(int old_pc, int new_pc);
+
+	/**
+	 * Steps to be peformed before interpreting opcode at pc.
+	 * The timer trace happens here.
+	 * Override this method with a blank implementation to do nothing.
+	 * @param pc
+	 */
+	virtual void pre_interpret(int pc);
+
+
+	// ================================================================
+	//		End of Methods to be overriden by abstract interpreters
+	// ================================================================
 
 	friend class DoLoop;
 	friend class SequentialPardoLoop;

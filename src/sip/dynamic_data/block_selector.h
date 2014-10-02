@@ -27,6 +27,7 @@ namespace sip {
  */
 class BlockSelector {
 public:
+	BlockSelector();
 	BlockSelector(int rank, int array_id, const index_selector_t&);
 	int rank_;
 	int array_id_;

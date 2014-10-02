@@ -4,9 +4,11 @@
 #include "setup_reader.h"
 #include "assert.h"
 #include "sialx_timer.h"
+#include "profile_timer.h"
 #include "sip_tables.h"
 #include "interpreter.h"
 #include "sialx_interpreter.h"
+#include "profile_interpreter.h"
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
@@ -194,9 +196,11 @@ int main(int argc, char* argv[]) {
 		//interpret current program on worker
 		{
 
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			//sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			//sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
 
-			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
+			sip::ProfileTimer profile_timer(sipTables.max_timer_slots());
+			sip::ProfileInterpreter runner(sipTables, profile_timer, NULL, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
@@ -205,7 +209,8 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-			sialxTimer.print_timers(lno2name);
+			//sialxTimer.print_timers(lno2name);
+			profile_timer.print_timers();
 
 
 		}// end of worker or server
