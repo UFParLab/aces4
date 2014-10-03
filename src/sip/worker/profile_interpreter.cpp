@@ -57,7 +57,7 @@ void ProfileInterpreter::pre_interpret(int pc){
 
 		// 1 block - in selector stack
 		// 1 block - in instruction
-		case block_permute_op:
+		case block_copy_op:
 		case block_scale_assign_op:
 		{
 			std::list<BlockSelector> bs_list;
@@ -73,7 +73,7 @@ void ProfileInterpreter::pre_interpret(int pc){
 		break;
 
 		// 2 blocks - in selector stack
-		case block_copy_op:
+		case block_permute_op:
 		case block_contract_to_scalar_op:
 		{
 			std::list<BlockSelector> bs_list;

@@ -196,13 +196,13 @@ bool ProfileTimer::Key::operator<(const ProfileTimer::Key& rhs) const{
 }
 
 template <typename TIMER>
-class SingleNodePrint : public PrintTimers<TIMER> {
+class SingleNodeProfilePrint : public PrintTimers<TIMER> {
 private:
 	const ProfileTimer::TimerMap_t& profile_timer_map_;
 public:
-	SingleNodePrint(const ProfileTimer::TimerMap_t &profile_timer_map)
+	SingleNodeProfilePrint(const ProfileTimer::TimerMap_t &profile_timer_map)
 		: profile_timer_map_(profile_timer_map) {}
-	virtual ~SingleNodePrint(){}
+	virtual ~SingleNodeProfilePrint(){}
 	virtual void execute(TIMER& timer){
 
 		//std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
@@ -238,7 +238,7 @@ public:
 };
 
 void ProfileTimer::print_timers(){
-	SingleNodePrint<TimerType_t> p(profile_timer_map_);
+	SingleNodeProfilePrint<TimerType_t> p(profile_timer_map_);
 	delegate_.print_timers(p);
 }
 
