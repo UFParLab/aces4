@@ -123,6 +123,7 @@ c arrays defining fragment to orbital mapping
       integer (C_INT) nbeta_virtual   
       integer(C_INT) ncenters 
       integer(C_INT) npcoeffs  
+      integer(C_INT) nalpha_frag
       real(C_DOUBLE) r_thresh
       integer ix2, ifrag, iatom(250), diff, crit, ixyz
 
@@ -144,6 +145,8 @@ c ----------------------------------------------------------------------
       nfrags          = int_constant("nfrags"//C_NULL_CHAR)
       npcoeffs        = int_constant("npcoeffs"//C_NULL_CHAR)
       r_thresh        = int_constant("r_thresh"//C_NULL_CHAR) 
+C      
+      nalpha_frag = nalpha_occupied + nalpha_virtual
 
 c array defining which atoms are in which fragments 
 c ----------------------------------------------------------------------
@@ -252,7 +255,7 @@ c---------------------------------------------------------------------------
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
      *                        ncenters, npcoeffs, pcoords, ptcoords,
-     *                        scr, iscr) 
+     *                        nalpha_frag, scr, iscr) 
 
       data_2(1) = dnuc 
 
@@ -265,7 +268,7 @@ c  Remove scratch space
 
       subroutine comp_return_xyz(z, ixyz, ifrag, natoms, iatom, dnuc,
      *        da1, da2, db1, db2, ncenters, npcoeffs, coords, tcoords, 
-     *        zz, iscr) 
+     *        nalpha_frag, zz, iscr) 
     
 c---------------------------------------------------------------------------
 c Interface added but should be included instead 
@@ -278,6 +281,7 @@ c Nuclear coordinates
 c --------------------------------------------------------------------------- 
       integer ncenters 
       integer npcoeffs  
+      integer nalpha_frag
       double precision coords(3,ncenters) 
       double precision tcoords(3,*) 
 c Nuclear dipole moment  
@@ -382,7 +386,7 @@ c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
       integer ccbeg_pack(4*npcoeffs), ccend_pack(4*npcoeffs)
       integer nalpha_pack, ncoeff_pack
-      double precision alpha_pack(4*npcoeffs),
+      double precision alpha_pack(4*nalpha_frag),
      *                 pcoeff_pack(4*npcoeffs)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y

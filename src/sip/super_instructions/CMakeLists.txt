@@ -39,6 +39,8 @@ set(QM_SOURCE_FILES
     qm/get_and_print_int_array_dummy.F;
     qm/get_and_print_scalar_array_dummy.F;
     qm/get_scratch_array_dummy.F;
+    qm/compute_xyz_batch.F;
+    qm/compute_dipole_integrals.F;
     qm/compute_ubatch1.F;
     qm/compute_ubatch2.F;
     qm/compute_ubatch3.F;

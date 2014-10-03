@@ -61,6 +61,7 @@ c Interface added BUT should be include NOT added in the future
 ! predefined number of centers
       integer(C_INT) ncenters 
       integer(C_INT) npcoeffs  
+      integer(C_INT) nalphas
 
       real(C_DOUBLE), pointer :: scr(:)
       integer(C_INT), pointer :: iscr(:)
@@ -93,6 +94,7 @@ c Get the ao segment ranges
 
       ncenters = int_constant("ncenters"//C_NULL_CHAR) 
       npcoeffs = int_constant("npcoeffs"//C_NULL_CHAR)
+      nalphas  = int_constant("nalphas"//C_NULL_CHAR) 
 
 c---------------------------------------------------------------------------
 c   Compute data block of integrals.
@@ -132,7 +134,8 @@ c---------------------------------------------------------------------------
       call scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr, [niscr])
 
-      call comp_dipole_int(data_0, ix2, ncenters, dnuc, npcoeffs,
+      call comp_dipole_int(data_0, ix2, ncenters, dnuc, npcoeffs, 
+     *                        nalphas,
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
      *                        scr, iscr) 
@@ -149,7 +152,7 @@ c  Remove scratch space
       end
 
       subroutine comp_dipole_int(z, ixyz, natoms, dnuc, npcoeffs,
-     *        da1, da2, db1, db2, zz, iscr) 
+     *        nalpha_pack, da1, da2, db1, db2, zz, iscr) 
     
 c---------------------------------------------------------------------------
 c Interface added but should be included instead 
@@ -257,7 +260,7 @@ c     mapping of atoms to shells
       double precision zz(*)
 
       integer i,j,m,n,nfirst, nints, ncoeff, jatom, fatom, 
-     *        natoms, ncsum, npcoeffs
+     *        natoms, ncsum, npcoeffs, nalpha_pack
       integer component
       integer a, b, a1,a2,b1,b2,lastao, igrad 
       integer m1, m2, n1, n2
@@ -276,8 +279,8 @@ c     mapping of atoms to shells
 c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
       integer ccbeg_pack(4*npcoeffs), ccend_pack(4*npcoeffs)
-      integer nalpha_pack, ncoeff_pack
-      double precision alpha_pack(4*npcoeffs),
+      integer ncoeff_pack
+      double precision alpha_pack(4*nalpha_pack),
      *                 pcoeff_pack(4*npcoeffs)
       double precision xn(natoms), yn(natoms), zn(natoms)
       double precision x1,y1,z1,x2,y2,z2, y
@@ -477,8 +480,6 @@ c-------------------------------------------------------------------------
 c-------------------------------------------------------------------------
 c   Set the xyz flags.  
 c-------------------------------------------------------------------------
-
-      print *, ixyz
 
       if (ixyz .eq. 1 .or. ixyz .eq. 10) then ! x NN moment 
          dnuc = 0.0 
