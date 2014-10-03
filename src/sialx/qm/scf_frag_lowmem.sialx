@@ -30,6 +30,10 @@ import "scf_frag_defs.sialx"
       index   kfrag  = 1: nfrags # Nfragments   
       index  kkfrag  = 1: nfrags # Nfragments 
 
+      index   ao_scratch    = 1: max_aoseg    # maximum ao segment size 
+      index   alpha_scratch = 1: max_alphaseg # maximum alpha segment size 
+      index   beta_scratch  = 1: max_betaseg  # maximum beta segment size 
+
       aoindex mu = 1: norb 
       aoindex nu = 1: norb 
       aoindex lambda = 1: norb 
@@ -68,11 +72,11 @@ import "scf_frag_defs.sialx"
       distributed Dfock_a[p,p1] 
       distributed Dfock_b[q,q1] 
 
-      static Ca[mu,p] 
-      static Cb[mu,q] 
-      static Fock_a[p, p1] 
-      static Fock_b[q, q1] 
-      static oed_ovl[mu,nu] 
+     #static Ca(mu,p) 
+     #static Cb(mu,q) 
+     #static Fock_a(p, p1) 
+     #static Fock_b(q, q1) 
+     #static oed_ovl(mu,nu) 
       distributed Doed_ovl[mu,nu] 
 
       local wAO_frag[mu]
@@ -80,6 +84,15 @@ import "scf_frag_defs.sialx"
       local wOccB_frag[j]
       local wVirtA_frag[a]
       local wVirtB_frag[b]
+      local wMoA_frag[p] 
+
+      distributed DwAO_frag[mu]
+      distributed DwOccA_frag[i]
+      distributed DwOccB_frag[j]
+      distributed DwVirtA_frag[a]
+      distributed DwVirtB_frag[b]
+      distributed DwMoA_frag[p] 
+
       temp x1[mu]
       temp x2[nu]
       temp x3[lambda]
@@ -94,7 +107,15 @@ import "scf_frag_defs.sialx"
       temp xa2[a]
       temp xb[b]
       temp xb1[b]
+      temp xp[p] 
 
+# Static Scratch arrays 
+# --------------------- 
+      static scratch1[ao_scratch,ao_scratch] 
+      static scratch2[ao_scratch,ao_scratch] 
+      static scratch3[ao_scratch,ao_scratch] 
+      static scratch4[ao_scratch,ao_scratch] 
+      static scratch5[ao_scratch,ao_scratch] 
 #
 # Declare scalars 
 # --------------- 
@@ -131,6 +152,8 @@ import "scf_frag_defs.sialx"
       scalar l  
       scalar s  
 
+      scalar stype 
+
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -147,11 +170,14 @@ import "scf_frag_defs.sialx"
       allocate wVirtA_frag[*] 
       allocate wVirtB_frag[*] 
 
-      icount = 0.0  
-
-      DO jfrag 
-
-         icount   += 1.0  
+      PARDO jfrag 
+         icount = 0.0 
+         DO jjfrag 
+            icount += 1.0
+            if jjfrag == jfrag
+               exit
+            endif 
+         ENDDO jjfrag 
 
          i_aostart = icount 
          i_aoend   = 1.0  
@@ -164,18 +190,23 @@ import "scf_frag_defs.sialx"
             m += 1.0  
             if m >= i_aostart 
             if m <= i_aoend 
-               wAO_frag[mu] = icount 
+               x1[mu] = icount 
+               PUT DwAO_frag[mu] = x1[mu]  
             endif 
             endif 
          ENDDO mu   
 #
-      ENDDO jfrag 
+      ENDPARDO jfrag 
 
-      icount = 0.0
+      PARDO jfrag
 
-      DO jfrag
-
-         icount   += 1.0
+         icount = 0.0 
+         DO jjfrag 
+            icount += 1.0
+            if jjfrag == jfrag
+               exit
+            endif 
+         ENDDO jjfrag 
 
          i_vstart  = icount
          i_vend    = 6.0
@@ -183,6 +214,7 @@ import "scf_frag_defs.sialx"
          a_vstart  = icount
          a_vend    = 7.0
          execute frag_index_range a_vstart a_vend
+
 #
          DO i
             m = 0.0
@@ -194,7 +226,8 @@ import "scf_frag_defs.sialx"
             enddo i1
             if m >= i_vstart
             if m <= i_vend
-               wOccA_frag[i] = icount
+               xi[i] = icount 
+               PUT DwOccA_frag[i] = xi[i]  
             endif
             endif
          ENDDO i
@@ -209,14 +242,15 @@ import "scf_frag_defs.sialx"
             enddo a1
             if m >= a_vstart
             if m <= a_vend
-               wVirtA_frag[a] = icount
+               xa[a] = icount 
+               PUT DwVirtA_frag[a] = xa[a]  
             endif
             endif
          ENDDO a
 
         #ENDIF # icount <= nfrags 
 
-      ENDDO jfrag
+      ENDPARDO jfrag
 
      #DO mu
      #   execute return_sval wAO_frag(mu) m
@@ -233,16 +267,15 @@ import "scf_frag_defs.sialx"
      #   print_scalar m
      #ENDDO i
 
-      icount = 0.0
+      PARDO jfrag
 
-      DO jfrag
-
-         icount   += 1.0
-        #IF icount > nfrags 
-        #   exit 
-        #ENDIF 
-
-        #IF icount <= nfrags 
+         icount = 0.0 
+         DO jjfrag 
+            icount += 1.0
+            if jjfrag == jfrag
+               exit
+            endif 
+         ENDDO jjfrag 
 
          i_vstart  = icount
          i_vend    = 9.0
@@ -261,7 +294,8 @@ import "scf_frag_defs.sialx"
             enddo j1
             if m >= i_vstart
             if m <= i_vend
-               wOccB_frag[j] = icount
+               xj[j] = icount 
+               PUT DwOccB_frag[j] = xj[j]  
             endif
             endif
          ENDDO j
@@ -276,13 +310,35 @@ import "scf_frag_defs.sialx"
             enddo b1
             if m >= a_vstart
             if m <= a_vend
-               wVirtB_frag[b] = icount
+               xb[b] = icount 
+               PUT DwVirtB_frag[b] = xb[b]  
             endif
             endif
          ENDDO b
         #ENDIF # icount <= nfrags 
 
-      ENDDO jfrag
+      ENDPARDO jfrag
+      sip_barrier
+      DO mu 
+         GET            DwAO_frag[mu] 
+         wAO_frag[mu] = DwAO_frag[mu] 
+      ENDDO mu 
+      DO a 
+         GET              DwVirta_frag[a] 
+         wVirtA_frag[a] = DwVirta_frag[a] 
+      ENDDO a 
+      DO b 
+         GET              DwVirtb_frag[b] 
+         wVirtB_frag[b] = DwVirtb_frag[b] 
+      ENDDO b 
+      DO i 
+         GET             DwOcca_frag[i] 
+         wOccA_frag[i] = DwOcca_frag[i] 
+      ENDDO i 
+      DO j 
+         GET             DwOccb_frag[j] 
+         wOccB_frag[j] = DwOccb_frag[j] 
+      ENDDO j 
 
      #DO b
      #   execute return_sval wVirtB_frag(b) m
@@ -307,194 +363,133 @@ import "scf_frag_defs.sialx"
       PROC IGUESS   
 #     ----------- 
 #
-#     Determine the number of fragments  
-#     --------------------------------- 
-####      execute set_frag nfrags
-
-      #etemp = 0.0 
-      #DO katom 
-      #DO jatom 
-      #  IF katom == jatom 
-      #   etemp             = etemp + 1.0  
-      #   atom(katom,jatom) = etemp 
-      #  endif 
-      #ENDDO jatom 
-      #ENDDO katom 
-     #print_scalar etemp  
-
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
       println "Starting scratch memory calculation" 
       imax = 0.0  
       zmax = 0.0  
-     #DO mu 
-     #DO nu 
-     #   txx(mu,nu) = 0.0
-     #   execute compute_int_scratchmem txx(mu,nu) zmax imax 
-         execute compute_int_scratchmem oed_ovl zmax imax 
-     #ENDDO nu 
-     #ENDDO mu 
+      execute compute_int_scratchmem_lowmem zmax imax 
       sip_barrier 
       println "Done computing scratch memory" 
-
-# Compute the overlap matrix 
-       PARDO mu, nu 
-             x1[mu] = wAO_frag[mu] 
-             execute return_sval x1[mu]  m 
-             x2[nu] = wAO_frag[nu] 
-             execute return_sval x2[nu]  n 
-             if m == n 
-                execute return_ovl txx[mu,nu] 
-                PUT Doed_ovl[mu,nu] = txx[mu,nu]  
-             endif 
-       ENDPARDO mu, nu 
-      sip_barrier 
-
-       DO mu 
-       DO nu 
-             x1[mu] = wAO_frag[mu] 
-             execute return_sval x1[mu]  m 
-             x2[nu] = wAO_frag[nu] 
-             execute return_sval x2[nu]  n 
-             if m == n 
-                GET              Doed_ovl[mu,nu] 
-                oed_ovl[mu,nu] = Doed_ovl[mu,nu]  
-             endif 
-       ENDDO nu 
-       ENDDO mu
-      println "Done computing overlap integrals" 
-
-#      do p 
-#      do mu 
-#         ca(mu,p) = 0.0
-#      enddo mu
-#      enddo p 
-#      do p 
-#      do p1  
-#         Fock_a(p,p1) = 0.0 
-#      enddo p1  
-#      enddo p
-#      do q 
-#      do mu 
-#         cb(mu,q) = 0.0
-#      enddo mu
-#      enddo q 
-#      do q 
-#      do q1  
-#         Fock_b(q,q1) = 0.0 
-#      enddo q1  
-#      enddo q
-
+#
+#     Initialize ENTIRE Fock and coefficient arrays to 0 
+     #PARDO p, p1
+     #   tpp(p,p1)         = 0.0 
+     #   PUT Dfock_a(p,p1) = tpp(p,p1)
+     #ENDPARDO p, p1 
+       
+     #PARDO mu, p    
+     #   txp(mu,p)     = 0.0  
+     #   PUT DCa(mu,p) = txp(mu,p)
+     #ENDPARDO mu, p    
 #
       sip_barrier 
 
       PARDO katom  
             icount = 0.0 
             DO jatom 
-               icount += 1.0
+               icount += 1.0 
                IF katom == jatom  
                   exit 
                ENDIF
             ENDDO jatom 
 
-                 #tatom(katom,jatom) = atom(katom,jatom) 
-                 #execute return_sval tatom(katom,jatom) etemp   
                   print icount # etemp 
-                 #do p 
-                 #do mu 
-                 #   ca(mu,p) = 0.0
-                 #enddo mu
-                 #enddo p 
-                 #do p 
-                 #do p1  
-                 #   Fock_a(p,p1) = 0.0 
-                 #enddo p1  
-                 #enddo p
-                 #do q 
-                 #do mu 
-                 #   cb(mu,q) = 0.0
-                 #enddo mu
-                 #enddo q 
-                 #do q 
-                 #do q1  
-                 #   Fock_b(q,q1) = 0.0 
-                 #enddo q1  
-                 #enddo q
 
                   println "Starting computing fragment scf" 
-                  execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
+                 #execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
+                  execute scf_atom_lowmem icount scratch1 scratch2 scratch3 scratch4 
                   println "Done computing fragment scf" 
+#
+# Nowput the coefficients and fock matrices into the full distributed arrays 
 
-                  DO a  
+                  stype = 1.0 # HF coefficients  
+                  DO mu
+                     x1[mu] = wAO_frag[mu]
+                     execute return_sval x1[mu]  m
+                     if m == icount
+                  DO a
                      xa[a]      = wVirtA_frag[a]
-                     execute return_sval xa[a]  l 
+                     execute return_sval xa[a]  l
+                     if l == icount
+                        txp[mu,a]      = 0.0  
+                        execute place_scratch txp[mu,a]  scratch1 stype icount 
+                        PUT DCa[mu,a] += txp[mu,a]
+                     endif
+                  ENDDO a
+                  DO i
+                     xi[i]      = wOccA_frag[i]
+                     execute return_sval xi[i]  s
+                     if s == icount
+                        txp[mu,i]      = 0.0  
+                        execute place_scratch txp[mu,i]  scratch1 stype icount  
+                        PUT DCa[mu,i] += txp[mu,i]
+                     endif
+                  ENDDO i
+                     endif
+                  ENDDO mu
+                  println "Done placing coefficients"
+
+                  stype = 2.0 # Fock matrix  
+                  DO a   
+                     xa[a]      = wVirtA_frag[a]
+                     execute return_sval xa[a]  l   
                      if l == icount 
                   DO a1
                      xa1[a1]      = wVirtA_frag[a1]
-                     execute return_sval xa1[a1]  m 
+                     execute return_sval xa1[a1]  m   
                      if m == icount 
-                        tpp[a,a1]          = fock_a[a,a1] 
+                        tpp[a,a1]          = 0.0  
+                        execute place_scratch tpp[a,a1]  scratch3 stype icount 
                         PUT Dfock_a[a,a1] += tpp[a,a1] 
                      endif 
                   ENDDO a1
                   DO i1
                      xi1[i1]      = wOccA_frag[i1]
-                     execute return_sval xi1[i1]  m 
+                     execute return_sval xi1[i1]  m   
                      if m == icount 
-                        tpp[a,i1]          = fock_a[a,i1] 
+                        tpp[a,i1]          = 0.0  
+                        execute place_scratch tpp[a,i1]  scratch3 stype icount 
                         PUT Dfock_a[a,i1] += tpp[a,i1] 
                      endif 
                   ENDDO i1
                      endif 
-                  ENDDO a  
+                  ENDDO a   
 
-                  DO i  
+                  DO i   
                      xi[i]      = wOccA_frag[i]
-                     execute return_sval xi[i]  l 
+                     execute return_sval xi[i]  l   
                      if l == icount 
                   DO i1
                      xi1[i1]      = wOccA_frag[i1]
-                     execute return_sval xi1[i1]  m 
-                     if m == icount 
-                        tpp[i,i1]          = fock_a[i,i1] 
-                        PUT Dfock_a[i,i1] += tpp[i,i1] 
-                     endif 
+                     execute return_sval xi1[i1]  m
+                     if m == icount
+                        tpp[i,i1]          = 0.0  
+                        execute place_scratch tpp[i,i1]  scratch3 stype icount 
+                        PUT Dfock_a[i,i1] += tpp[i,i1]
+                     endif
                   ENDDO i1
                   DO a1
                      xa1[a1]      = wVirtA_frag[a1]
-                     execute return_sval xa1[a1]  m 
-                     if m == icount 
-                        tpp[i,a1]          = fock_a[i,a1] 
-                        PUT Dfock_a[i,a1] += tpp[i,a1] 
-                     endif 
+                     execute return_sval xa1[a1]  m
+                     if m == icount
+                        tpp[i,a1]          = 0.0  
+                        execute place_scratch tpp[i,a1]  scratch3 stype icount 
+                        PUT Dfock_a[i,a1] += tpp[i,a1]
+                     endif
                   ENDDO a1
-                     endif 
-                  ENDDO i  
-                  println "Done placing fock_matrix" 
+                     endif
+                  ENDDO i
 
-                  DO mu  
-                     x1[mu] = wAO_frag[mu] 
-                     execute return_sval x1[mu]  m 
-                     if m == icount 
-                  DO a 
-                     xa[a]      = wVirtA_frag[a]
-                     execute return_sval xa[a]  l 
-                     if l == icount 
-                        txp[mu,a]      = ca[mu,a] 
-                        PUT DCa[mu,a] += txp[mu,a] 
-                     endif 
-                  ENDDO a 
-                  DO i 
-                     xi[i]      = wOccA_frag[i] 
-                     execute return_sval xi[i]  s    
-                     if s == icount  
-                        txp[mu,i]      = ca[mu,i] 
-                        PUT DCa[mu,i] += txp[mu,i] 
-                     endif 
-                  ENDDO i 
-                     endif 
-                  ENDDO mu  
-                  println "Done placing coefficients" 
+#                 DO p 
+#                 DO p1 
+#                    tpp(p,p1) = 0.0 
+#                    execute place_scratch tpp(p,p1)  scratch3 stype  
+#                    PUT Dfock_a(p,p1) += tpp(p,p1)
+#                 ENDDO p1 
+#                 ENDDO p 
+                  println "Done placing fock_matrix"
+
 
       ENDPARDO katom   
 #
