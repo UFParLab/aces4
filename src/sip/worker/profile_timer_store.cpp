@@ -37,7 +37,7 @@ const std::string ProfileTimerStore::block_prefix("block");
 const std::string ProfileTimerStore::indices_prefix("index");
 const std::string ProfileTimerStore::segment_prefix("segment");
 
-// DOUBLE PRECISION COLUMN
+// BIGINT COLUMN
 const std::string ProfileTimerStore::tottime_column("totaltime");
 
 // BIGINT COLUMN
@@ -73,7 +73,7 @@ void ProfileTimerStore::create_table(int num_blocks) {
 		}
 	}
 
-	create_table_ss << tottime_column << " DOUBLE PRECISION,"
+	create_table_ss << tottime_column << " BIGINT,"	// in micro-seconds
 			 	    << count_column << " BIGINT,";
 
 	// Create the uniqueness constraint over all columns except the totaltime & count columns
@@ -132,7 +132,7 @@ ProfileTimerStore::~ProfileTimerStore() {
 		sip_sqlite3_error(rc);
 }
 
-void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<double, int>& time_count_pair){
+void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<long, long>& time_count_pair){
 
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 
@@ -201,7 +201,7 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 
 }
 
-std::pair<double, int> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands){
+std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands){
 
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 	// Specially needed in this routine, since it will be called by the modeling interpreter.
@@ -240,7 +240,7 @@ std::pair<double, int> ProfileTimerStore::get_from_store(const ProfileTimer::Key
 	if (rc != SQLITE_OK)
 		sip_sqlite3_error(rc);
 
-	double totaltime = -1.0;
+	long totaltime = -1;
 	long count = -1;
 	int row_count = 0;
 	while (sqlite3_step(get_from_store_stmt) == SQLITE_ROW){

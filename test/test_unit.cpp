@@ -142,7 +142,7 @@ TEST(SialUnitProfileTimerStore, insert_zero_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
@@ -151,7 +151,7 @@ TEST(SialUnitProfileTimerStore, retrieve_zero_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
@@ -164,7 +164,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_zero_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	sip::ProfileTimer::Key key2("test2", blocks);
@@ -185,7 +185,7 @@ TEST(SialUnitProfileTimerStore, insert_one_block){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	blocks.push_back(b1);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
@@ -203,7 +203,7 @@ TEST(SialUnitProfileTimerStore, retrieve_one_block){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	blocks.push_back(b1);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
@@ -226,7 +226,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	blocks.push_back(b1);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	sip::ProfileTimer::BlockInfo b2(3, indices, segments);
@@ -252,7 +252,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block_2){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	blocks.push_back(b1);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	segments[0] = 20;
@@ -279,7 +279,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block_3){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
 	blocks.push_back(b1);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	indices[0] += 1;
@@ -306,7 +306,7 @@ TEST(SialUnitProfileTimerStore, insert_two_block){
 	blocks.push_back(b1);
 	blocks.push_back(b2);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
@@ -326,7 +326,7 @@ TEST(SialUnitProfileTimerStore, retrieve_two_block){
 	blocks.push_back(b1);
 	blocks.push_back(b2);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
@@ -351,7 +351,7 @@ TEST(SialUnitProfileTimerStore, insert_three_block){
 	blocks.push_back(b2);
 	blocks.push_back(b3);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
@@ -373,7 +373,7 @@ TEST(SialUnitProfileTimerStore, retrieve_three_block){
 	blocks.push_back(b2);
 	blocks.push_back(b3);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
@@ -400,7 +400,7 @@ TEST(SialUnitProfileTimerStore, insert_four_block){
 	blocks.push_back(b3);
 	blocks.push_back(b4);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
@@ -424,7 +424,7 @@ TEST(SialUnitProfileTimerStore, retrieve_four_block){
 	blocks.push_back(b3);
 	blocks.push_back(b4);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
@@ -453,7 +453,7 @@ TEST(SialUnitProfileTimerStore, insert_five_block){
 	blocks.push_back(b4);
 	blocks.push_back(b5);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
@@ -479,7 +479,7 @@ TEST(SialUnitProfileTimerStore, retrieve_five_block){
 	blocks.push_back(b4);
 	blocks.push_back(b5);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
@@ -510,7 +510,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_five_block){
 	blocks.push_back(b4);
 	blocks.push_back(b5);
 	sip::ProfileTimer::Key key1("test1", blocks);
-	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
 	profile_timer_store.save_to_store(key1, time_count);
 
 	// Remove 1 block & try

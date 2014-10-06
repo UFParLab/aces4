@@ -28,7 +28,7 @@ public:
 	 * @param opcode_operands opcode and its operand blocks' shapes & sizes
 	 * @param time_count_pair pair of total time & number of times opcode was called
 	 */
-	void save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<double, int>& time_count_pair);
+	void save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<long, long>& time_count_pair);
 
 	/**
 	 * Retrieves from a persistent database, the profiled total time & count
@@ -36,7 +36,7 @@ public:
 	 * @param opcode_operands
 	 * @return
 	 */
-	std::pair<double, int> get_from_store(const ProfileTimer::Key& opcode_operands);
+	std::pair<long, long> get_from_store(const ProfileTimer::Key& opcode_operands);
 
 	const static int MAX_BLOCK_OPERANDS;
 
