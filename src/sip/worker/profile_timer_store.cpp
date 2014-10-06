@@ -249,11 +249,13 @@ std::pair<double, int> ProfileTimerStore::get_from_store(const ProfileTimer::Key
 		row_count++;
 	}
 
-
 	// If no rows were returned, throw an exception.
 	if (row_count < 1){
 		std::stringstream err_ss;
 		err_ss << "There were no rows for key : " << opcode_operands;
+		rc = sqlite3_finalize(get_from_store_stmt);
+		if (rc != SQLITE_OK)
+			sip_sqlite3_error(rc);
 		throw std::out_of_range(err_ss.str());
 	}
 
@@ -261,7 +263,11 @@ std::pair<double, int> ProfileTimerStore::get_from_store(const ProfileTimer::Key
 	if (row_count > 1){
 		std::stringstream err_ss;
 		err_ss << "There are " << row_count << " rows for Key " << opcode_operands;
-		fail(ss.str());
+		rc = sqlite3_finalize(get_from_store_stmt);
+		if (rc != SQLITE_OK)
+			sip_sqlite3_error(rc);
+		//fail(ss.str());
+		throw std::out_of_range(err_ss.str());
 	}
 
 	rc = sqlite3_finalize(get_from_store_stmt);

@@ -113,10 +113,9 @@ std::ostream& operator<<(std::ostream& os, const ProfileTimer::BlockInfo& obj) {
 	// Operation Shape
 	os << "(";
 	os << "[" << obj.index_ids_[0];
-	for (int i = 1; i < obj.rank_ ; ++i) {
+	for (int i = 0; i < obj.rank_ ; ++i) {
 		int id = obj.index_ids_[i];
-		if (id != unused_index_slot)
-			os << "," << id;
+		os << (i==0? "" : ",") << id;
 	}
 	os << ']';
 
@@ -133,10 +132,10 @@ std::ostream& operator<<(std::ostream& os, const ProfileTimer::BlockInfo& obj) {
 std::ostream& operator<<(std::ostream& os, const ProfileTimer::Key& obj) {
 	os << obj.opcode_ << " ";
 	std::vector<ProfileTimer::BlockInfo>::const_iterator it = obj.blocks_.begin();
-	os << *it; ++it;
 	for (; it != obj.blocks_.end(); ++it){
-		os << ", " << *it;
+		os << (it == obj.blocks_.begin() ? "" : ", ") << *it;
 	}
+
 	return os;
 }
 

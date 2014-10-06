@@ -128,13 +128,16 @@ TEST(SialUnitLRU,ServerBlockLRUArrayPolicy){
 }
 #endif // HAVE_MPI
 
+
+// Tests for sip::ProfileInterpreterStore
+
 // Basic sanity check.
 // Makes sure creation of tables doesnt cause problems
 TEST(SialUnitProfileTimerStore, test_creation){
 	sip::ProfileTimerStore profile_timer_store(":memory:");
 }
 
-
+// Just inserts a zero block operation.
 TEST(SialUnitProfileTimerStore, insert_zero_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
@@ -143,6 +146,7 @@ TEST(SialUnitProfileTimerStore, insert_zero_block){
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
+// Inserts & retrieve a zero block operation
 TEST(SialUnitProfileTimerStore, retrieve_zero_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	std::vector<sip::ProfileTimer::BlockInfo> blocks;
@@ -154,6 +158,20 @@ TEST(SialUnitProfileTimerStore, retrieve_zero_block){
 	ASSERT_EQ(time_count, result);
 }
 
+// Inserts a 0-block operation. Tries to get a different block with a different opcode
+// expects an exception
+TEST(SialUnitProfileTimerStore, invalid_retrieve_zero_block){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+
+	sip::ProfileTimer::Key key2("test2", blocks);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+}
+
+// Just inserts a one block operation.
 TEST(SialUnitProfileTimerStore, insert_one_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -171,6 +189,7 @@ TEST(SialUnitProfileTimerStore, insert_one_block){
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
+// Inserts & retrieve a one block operation
 TEST(SialUnitProfileTimerStore, retrieve_one_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -191,6 +210,87 @@ TEST(SialUnitProfileTimerStore, retrieve_one_block){
 	ASSERT_EQ(time_count, result);
 }
 
+// Inserts a 1 block operation.
+// Tries to get a different 1 block operation with different rank.
+// Expects exception
+TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::BlockInfo b1(2, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	blocks.push_back(b1);
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+
+	sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks2;
+	blocks2.push_back(b2);
+	sip::ProfileTimer::Key key2("test1", blocks2);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+}
+
+// Inserts a 1 block operation.
+// Tries to get a different 1 block operation with different segment size.
+// Expects exception
+TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block_2){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::BlockInfo b1(2, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	blocks.push_back(b1);
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+
+	segments[0] = 20;
+	sip::ProfileTimer::BlockInfo b2(2, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks2;
+	blocks2.push_back(b2);
+	sip::ProfileTimer::Key key2("test1", blocks2);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+}
+
+// Inserts a 1 block operation.
+// Tries to get a different 1 block operation with different indices (shape).
+// Expects exception
+TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block_3){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::BlockInfo b1(2, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	blocks.push_back(b1);
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+
+	indices[0] += 1;
+	sip::ProfileTimer::BlockInfo b2(2, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks2;
+	blocks2.push_back(b2);
+	sip::ProfileTimer::Key key2("test1", blocks2);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+}
+
+// Just inserts a 2 block operation
 TEST(SialUnitProfileTimerStore, insert_two_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -210,6 +310,7 @@ TEST(SialUnitProfileTimerStore, insert_two_block){
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
+// Inserts & retrieves a 2 block operation
 TEST(SialUnitProfileTimerStore, retrieve_two_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -232,6 +333,7 @@ TEST(SialUnitProfileTimerStore, retrieve_two_block){
 	ASSERT_EQ(time_count, result);
 }
 
+// Just inserts a 3 block operation
 TEST(SialUnitProfileTimerStore, insert_three_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -253,6 +355,7 @@ TEST(SialUnitProfileTimerStore, insert_three_block){
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
+// Inserts & retrieves a 3 block operation
 TEST(SialUnitProfileTimerStore, retrieve_three_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -277,6 +380,7 @@ TEST(SialUnitProfileTimerStore, retrieve_three_block){
 	ASSERT_EQ(time_count, result);
 }
 
+// Just inserts a four block operation
 TEST(SialUnitProfileTimerStore, insert_four_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -300,6 +404,7 @@ TEST(SialUnitProfileTimerStore, insert_four_block){
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
+// Inserts & retrieve a 4 block operation
 TEST(SialUnitProfileTimerStore, retrieve_four_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -326,6 +431,7 @@ TEST(SialUnitProfileTimerStore, retrieve_four_block){
 	ASSERT_EQ(time_count, result);
 }
 
+// Just inserts a 5 block operation
 TEST(SialUnitProfileTimerStore, insert_five_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -351,6 +457,7 @@ TEST(SialUnitProfileTimerStore, insert_five_block){
 	profile_timer_store.save_to_store(key1, time_count);
 }
 
+// Inserts & retrieve a 5 block operation
 TEST(SialUnitProfileTimerStore, retrieve_five_block){
 	sip::ProfileTimerStore profile_timer_store (":memory:");
 	sip::index_selector_t indices;
@@ -378,6 +485,42 @@ TEST(SialUnitProfileTimerStore, retrieve_five_block){
 	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
 	ASSERT_EQ(time_count, result);
 }
+
+// Inserts a 5 block operation
+// Tries to retrieve an operation with different number of blocks (1 less)
+// Expects an exception.
+TEST(SialUnitProfileTimerStore, invalid_retrieve_five_block){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+	sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+	sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+	sip::ProfileTimer::BlockInfo b4(6, indices, segments);
+	sip::ProfileTimer::BlockInfo b5(1, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	blocks.push_back(b1);
+	blocks.push_back(b2);
+	blocks.push_back(b3);
+	blocks.push_back(b4);
+	blocks.push_back(b5);
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100.0, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+
+	// Remove 1 block & try
+	blocks.pop_back();
+	sip::ProfileTimer::Key key2("test1", blocks);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+	//std::pair<double, int> result = profile_timer_store.get_from_store(key2);
+}
+
+
 
 int main(int argc, char **argv) {
 

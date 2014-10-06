@@ -219,8 +219,8 @@ check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_basic_sial test_sial test_qm
-check_PROGRAMS = test_basic_sial test_sial test_qm
+TESTS = test_qm test_sial test_unit test_basic_sial 
+check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
