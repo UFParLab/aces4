@@ -13,6 +13,12 @@ noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
 
+# External project sqlite3
+noinst_LIBRARIES = libsqlite3.a
+libsqlite3_a_SOURCES = ./sqlite3/sqlite3.c  ./sqlite3/sqlite3.h
+# Disables use of pthread and dlopen in sqlite.
+libsqlite3_a_CPPFLAGS = -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
+
 EXTRA_DIST+=\
 README.md\
 README.devel\
@@ -90,6 +96,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/profile_timer.h\
 ./src/sip/worker/profile_timer.cpp\
+./src/sip/worker/profile_timer_store.h\
+./src/sip/worker/profile_timer_store.cpp\
 ./src/sip/worker/global_state.h\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
@@ -160,11 +168,13 @@ print_siptables_SOURCES=\
 
 aces4_LDADD = \
 	libtensordil.a \
+	libsqlite3.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
 print_siptables_LDADD=\
 	libtensordil.a \
+	libsqlite3.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 	
@@ -186,6 +196,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\
 -I${top_srcdir}/src/sip/cuda\
+-I${top_srcdir}/sqlite3\
 -I${top_srcdir}/test\
 -I${top_srcdir}/test/gtest-1.7.0/include
 
@@ -265,6 +276,7 @@ TEST_LDADD_VARS = \
 	test/libgtest.la \
 	test/libgtest_main.la \
 	libtensordil.a \
+	libsqlite3.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS) 
 #	$(PTHREAD_LIBS) 

@@ -35,7 +35,7 @@ inline ProfileTimer::Key ProfileInterpreter::make_profile_timer_key(opcode_t opc
 		ProfileTimer::BlockInfo bi (bsel.rank_, bsel.index_ids_, bs.segment_sizes_);
 		block_infos.push_back(bi);
 	}
-	ProfileTimer::Key key(opcode, block_infos);
+	ProfileTimer::Key key(opcodeToName(opcode), block_infos);
 	return key;
 
 }

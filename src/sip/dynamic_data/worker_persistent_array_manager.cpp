@@ -31,7 +31,7 @@ namespace sip {
 
 
 	void WorkerPersistentArrayManager::set_persistent(Interpreter* runner, int array_id, int string_slot) {
-		SIP_LOG(std::cout << "set_persistent: array= " << runner->sip_tables().array_name(array_id) << ", label=" << runner->sip_tables().string_literal(string_slot) << std::endl);
+		SIP_LOG(std::cout << "set_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl);
 		std::pair<ArrayIdLabelMap::iterator, bool> ret = persistent_array_map_.insert(std::pair<int, int>(array_id, string_slot));
 		check(ret.second, "duplicate save of array in same sial program ");
 		//check(ret.second, "duplicate save of array in same sial program " + SipTables::instance().array_name(array_id));

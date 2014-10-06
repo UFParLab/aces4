@@ -47,10 +47,10 @@ public:
 	 * The shape of the operation is [1,2], [3,4], [2,1]
 	 */
 	struct Key {
-		opcode_t opcode_;
+		std::string opcode_;
 		std::vector<BlockInfo> blocks_;
-		Key() : opcode_(invalid_op) {}
-		Key(opcode_t, const std::vector<BlockInfo>&);
+		Key() : opcode_("invalid_op") {}
+		Key(const std::string&, const std::vector<BlockInfo>&);
 		Key(const Key& rhs);
 		Key& operator=(const Key& rhs);
 		bool operator<(const Key& rhs) const;

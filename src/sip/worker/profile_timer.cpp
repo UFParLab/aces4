@@ -73,7 +73,7 @@ ProfileTimer::BlockInfo& ProfileTimer::BlockInfo::operator=(const BlockInfo& rhs
 	return *this;
 }
 
-ProfileTimer::Key::Key(opcode_t opcode, const std::vector<BlockInfo>& blocks):
+ProfileTimer::Key::Key(const std::string& opcode, const std::vector<BlockInfo>& blocks):
 	opcode_(opcode), blocks_(blocks){
 
 	// Reduce index_ids to a common comparable format
@@ -131,7 +131,7 @@ std::ostream& operator<<(std::ostream& os, const ProfileTimer::BlockInfo& obj) {
 }
 
 std::ostream& operator<<(std::ostream& os, const ProfileTimer::Key& obj) {
-	os << opcodeToName(obj.opcode_) << " ";
+	os << obj.opcode_ << " ";
 	std::vector<ProfileTimer::BlockInfo>::const_iterator it = obj.blocks_.begin();
 	os << *it; ++it;
 	for (; it != obj.blocks_.end(); ++it){
@@ -176,7 +176,7 @@ ProfileTimer::Key& ProfileTimer::Key::operator=(const ProfileTimer::Key& rhs){
 
 bool ProfileTimer::Key::operator<(const ProfileTimer::Key& rhs) const{
 	if (opcode_ != rhs.opcode_)
-		return opcode_ - rhs.opcode_ < 0 ? true : false;
+		return opcode_ < rhs.opcode_ ;
 
 	int my_size = blocks_.size();
 	int other_size = rhs.blocks_.size();

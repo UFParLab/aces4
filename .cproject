@@ -42,6 +42,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/sqlite3}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/sip/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/sip}&quot;"/>
@@ -88,6 +89,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/sqlite3}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1921683653" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
@@ -145,6 +147,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/sqlite3}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/sip/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/sip}&quot;"/>
@@ -188,6 +191,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/sqlite3}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -242,6 +246,7 @@
 									<listOptionValue builtIn="false" value="/usr/include/"/>
 									<listOptionValue builtIn="false" value="/home/njindal/papi-5.3.0/include"/>
 									<listOptionValue builtIn="false" value="/home/njindal/tau-2.23.1b/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/sqlite3}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/aces_main}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/sip/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/src/sip}&quot;"/>
@@ -288,6 +293,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4nj/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/sqlite3}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.241509187" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_CUDA=1"/>

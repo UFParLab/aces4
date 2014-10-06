@@ -186,6 +186,8 @@ set(ACES_WORKER_FILES
     src/sip/worker/sialx_timer.h;
     src/sip/worker/profile_timer.cpp;
     src/sip/worker/profile_timer.h;
+    src/sip/worker/profile_timer_store.cpp;
+    src/sip/worker/profile_timer_store.h;
     src/sip/worker/global_state.h;
     src/sip/worker/global_state.cpp;
     src/sip/worker/siox_reader.h;
@@ -226,13 +228,16 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
+    ${CMAKE_SOURCE_DIR}/sqlite3;
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
+    sqlite3;
+    #${CMAKE_DL_LIBS};		# Needed by SQLITE3 but disabled by use of -DSQLITE_OMIT_LOAD_EXTENSION
     ${MPI_LIBRARIES};
-    superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
+    superinstructions 		# Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
 
 # Append TAU include & library paths
@@ -315,6 +320,14 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES} aces4_sip)
 # All Super instructions are in this directory
 add_subdirectory(src/sip/super_instructions)
 
+# Add sqlite3 library
+add_library(sqlite3;
+    sqlite3/sqlite3.c;
+    sqlite3/sqlite3.h)
+# Disables use of pthread and dlopen in sqlite.
+set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
+    
+
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DEFINITIONS})
@@ -366,38 +379,32 @@ if (HAVE_MPI) # Multi Node Version Tests
                                         test/test_transpose4d_op.F;
                                         test/test_contraction_small2.F)
     add_executable(test_sial  	        test/test_sial.cpp)
-    #add_executable(test_mpi_qm          test/test_mpi_qm.cpp)
     add_executable(test_qm              test/test_qm.cpp)
     add_executable(test_unit            test/test_unit.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_basic_sial   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
-    #set_target_properties(test_mpi_qm       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
-    #target_link_libraries(test_mpi_qm       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
-    #set_target_properties(test_mpi_qm       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND mpirun -np 2 test_basic_sial)
     add_test(NAME test_sial         COMMAND mpirun -np 2 test_sial)
-    #add_test(NAME test_mpi_qm       COMMAND mpirun -np 2 test_mpi_qm)
     add_test(NAME test_qm           COMMAND mpirun -np 2 test_qm)
     add_test(NAME test_unit         COMMAND mpirun -np 2 test_unit)
 
     add_dependencies(test_basic_sial   gtest gtest_main test_contollers)
     add_dependencies(test_sial         gtest gtest_main test_contollers)
-    #add_dependencies(test_mpi_qm       gtest gtest_main test_contollers)
     add_dependencies(test_qm           gtest gtest_main test_contollers)
     add_dependencies(test_unit         gtest gtest_main test_contollers)
 
@@ -408,27 +415,33 @@ else() # Single Node Version Tests
                                      test/test_contraction_small2.F)
     add_executable(test_sial  	     test/test_sial.cpp)
     add_executable(test_qm           test/test_qm.cpp)
+    add_executable(test_unit         test/test_unit.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_basic_sial PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_sial       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
     add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
+    add_test(NAME test_unit         COMMAND test_unit)
 
     add_dependencies(test_basic_sial gtest gtest_main test_contollers)
     add_dependencies(test_sial       gtest gtest_main test_contollers)
     add_dependencies(test_qm         gtest gtest_main test_contollers)
+    add_dependencies(test_unit       gtest gtest_main test_contollers)
 
 endif()
 
