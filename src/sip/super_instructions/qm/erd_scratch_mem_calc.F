@@ -146,6 +146,8 @@ c    *   shtype(s)
 
       if (nfrags .gt. 1) go to 999 
 
+      go to 999 ! SKIP DERIVATIVE FOR NOW 
+
       do m = m1, m2
       do n = m, nshells
       do r = 1, nshells

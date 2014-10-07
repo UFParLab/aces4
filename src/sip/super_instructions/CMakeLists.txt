@@ -23,9 +23,12 @@ set(QM_SOURCE_FILES
     qm/compute_diis.F;
     qm/return_ovl.F;
     qm/scf_atom.F;
+    qm/scf_atom_lowmem.F;
     qm/return_pairs.F;
+    qm/place_scratch.F;
     qm/return_h1frag.F;
     qm/compute_int_scratchmem.F;
+    qm/compute_int_scratchmem_lowmem.F;
     qm/imemory.h;
     qm/energy_denominator_rhf.F;
     qm/energy_numerator_rhf.F;
@@ -39,8 +42,6 @@ set(QM_SOURCE_FILES
     qm/get_and_print_int_array_dummy.F;
     qm/get_and_print_scalar_array_dummy.F;
     qm/get_scratch_array_dummy.F;
-    qm/compute_xyz_batch.F;
-    qm/compute_dipole_integrals.F;
     qm/compute_ubatch1.F;
     qm/compute_ubatch2.F;
     qm/compute_ubatch3.F;
@@ -60,6 +61,8 @@ set(QM_SOURCE_FILES
     qm/set_frag.F;
     qm/frag_index_range.F;
     qm/compute_integral_batch.F;
+    qm/compute_xyz_batch.F;
+    qm/compute_dipole_integrals.F;
     qm/instructions_for_testing.f;
     qm/direct_integral/pack_coeffs.f;
     qm/direct_integral/lookup_shell.f;

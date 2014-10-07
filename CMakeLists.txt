@@ -518,9 +518,11 @@ set(SIAL_FILES
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_mp2_defs.sialx;
     src/sialx/qm/scf_frag.sialx;
+    src/sialx/qm/scf_frag_lowmem.sialx;
     src/sialx/qm/scf_frag_defs.sialx;
     src/sialx/qm/trans_frag_fpardo.sialx;
     src/sialx/qm/frag_2order_corr.sialx;
+    src/sialx/qm/frag_2order_corr_lowmem.sialx;
     src/sialx/qm/trans_frag_defs.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;

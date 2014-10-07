@@ -80,7 +80,7 @@ c     real(C_DOUBLE) scr(5000000)
       TYPE(C_PTR) :: ciscr
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4
-      integer(C_INT) i, one, two
+      integer(C_INT) i, j, one, two
 
 c aosegments 
 c     integer(C_INT) n_ao_segs(1), aosegs(6)    
@@ -114,6 +114,10 @@ c arrays defining fragment to orbital mapping
       integer (C_INT) nbeta_virtual   
       integer(C_INT) ncenters 
       integer(C_INT) npcoeffs  
+      real(C_DOUBLE) r_thresh
+      integer include_atom(10000) ! MAX OF 10,000 atoms  
+      integer ifrag, jfrag
+      double precision pair_flag  
 
       integer m, ix2, n_apf, iatom(250) ! Assumes < 20 atoms in a fragment TO CHANGE  
       integer nscr, niscr  
@@ -129,6 +133,7 @@ c ----------------------------------------------------------------------
       nbeta_virtual   = int_constant("nbeta_virtual"//C_NULL_CHAR)
       nfrags          = int_constant("nfrags"//C_NULL_CHAR)
       npcoeffs        = int_constant("npcoeffs"//C_NULL_CHAR)
+      r_thresh        = int_constant("r_thresh"//C_NULL_CHAR) 
 
 c array defining which atoms are in which fragments 
 c ----------------------------------------------------------------------
@@ -209,12 +214,32 @@ c---------------------------------------------------------------------------
       enddo
 c     iatom = wfrag
       write(6,*) ' Entering H1 on frag:', ix2, ':',
-     *            n_apf, (iatom(m), m=1, n_apf)
+     *            n_apf, (iatom(m), m=1, n_apf), 'with cuttoff',
+     *            r_thresh
 
       offset_1 = 0 
       offset_2 = 0 
       if (index_values_0(1).gt.1) offset_1=paosegs(index_values_0(1)-1) 
       if (index_values_0(2).gt.1) offset_2=paosegs(index_values_0(2)-1) 
+
+c-------------------------------------------------------------------------
+c    Determine which atoms in fragments are inside zone 
+c-------------------------------------------------------------------------
+
+      ifrag = ix2 
+      do jfrag = 1, nfrags 
+         call return_dmin(ifrag,jfrag,nfrags,natoms_frag,watom_frag,
+     *                    pcoords, r_thresh, pair_flag)
+         if (pair_flag .gt. 0.0) then 
+            do j = 1, natoms_frag(jfrag) 
+               include_atom(watom_frag(jfrag,j)) = 1 
+            enddo 
+         else 
+            do j = 1, natoms_frag(jfrag) 
+               include_atom(watom_frag(jfrag,j)) = 0 
+            enddo 
+         endif 
+      enddo 
 
       nscr  = zmax  
       niscr = imax 
@@ -223,7 +248,8 @@ c     iatom = wfrag
       call scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr, [niscr])
 
-      call comp_return_fragh1(data_0, n_apf, iatom, 
+      call comp_return_fragh1(data_0, ix2, n_apf, iatom, 
+     *                        include_atom, 
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
      *                        ncenters, npcoeffs, pcoords, ptcoords,
@@ -236,8 +262,10 @@ c  Remove scratch space
       return
       end
 
-      subroutine comp_return_fragh1(z,n_apf, watom, da1, da2, db1, db2, 
-     *                   ncenters, npcoeffs, coords, tcoords, zz, iscr) 
+      subroutine comp_return_fragh1(z, ifrag, n_apf, watom,
+     *        include_atom, 
+     *        da1, da2, db1, db2, ncenters, npcoeffs, coords, tcoords, 
+     *        zz, iscr) 
     
 c---------------------------------------------------------------------------
 c Interface added but should be included instead 
@@ -330,7 +358,7 @@ c     mapping of atoms to shells
       double precision z(*)
       double precision zz(*)
 
-      integer i, ix, m, n, nfirst, nints, ncoeff, iatom, jatom, fatom, 
+      integer i,j,ix,m,n,nfirst, nints, ncoeff, iatom, jatom, fatom, 
      *        ncsum
       integer component
       integer a, b, a1,a2,b1,b2,lastao, igrad 
@@ -355,6 +383,7 @@ c     parameter (max_dim_coeff = 5000)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
       integer do_atom(ncenters)
+      integer ifrag, jfrag, nfrags, pair_flag, include_atom(ncenters)  
 
 c Get data needed to compute integrals 
 c --------------------------------------------------------------------------- 
@@ -491,8 +520,6 @@ c ----------------------------------------------------------------------
       if (intSpherical .ne. 1) spherical = .false.
 c     write(6,*) ' Spherical = ', spherical 
 
-
-
 c----------------------------------------------------------------------------
 c   Clear the output array.
 c----------------------------------------------------------------------------
@@ -533,29 +560,23 @@ c-------------------------------------------------------------------------
          acharge(m) = 0 ! charge(m) 
          do_atom(m) = 0
       enddo
-
-c     do m = 1, nshells
-c        iatom = atom(m)
-c        do_atom(iatom) = .true.
-c     do n = 1, n_apf
-c        if (iatom .eq. watom(n)) do_atom(iatom) = .false.
-c     enddo
-c     enddo
-
-c      write(6,*) ' WATOM = ', watom 
+       
       newcenters = 0 
       do m = 1, ncenters  
          iatom = m 
-      do n = 1, n_apf 
-         jatom = watom(n)  
-         if (iatom .eq. jatom) go to 33  
-      enddo
+         do n = 1, n_apf 
+            jatom = watom(n)  
+            if (iatom .eq. jatom) go to 33  
+            if (include_atom(iatom) .ne. 1) go to 33 
+         enddo
+
             newcenters          = newcenters + 1 
             xn(newcenters)      = coords(1,m)  
             yn(newcenters)      = coords(2,m)  
             zn(newcenters)      = coords(3,m)  
             acharge(newcenters) = pcharge(iatom) 
             do_atom(iatom)      = 1 
+
 33    continue 
       enddo
 
@@ -666,4 +687,5 @@ c        write(6,*) a, b, zsum(a,b)
 
       return
       end
+
 

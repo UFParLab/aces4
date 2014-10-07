@@ -84,6 +84,7 @@ c Get predefined data
 c ----------------------------------------------------------------------
 
       nfrags   = int_constant("nfrags"//C_NULL_CHAR) 
+c     r_thresh = int_constant("r_thresh"//C_NULL_CHAR)
 
 c array defining which atoms are in which fragments 
 c ----------------------------------------------------------------------
@@ -118,7 +119,7 @@ c  ATOMIC COORDINATES
       implicit none 
 
       integer ifrag, jfrag, nfrags, iatom, jatom, i, j   
-      integer natoms_frag(*), watom_frag(nfrags,*) 
+      integer natoms_frag(*), watom_frag(1100,100) 
       double precision coords(3,*) 
       double precision dist, dmin, dcrit, pair_flag   
 
@@ -142,6 +143,8 @@ c  ATOMIC COORDINATES
          dist = dsqrt(dist) 
          if (dist .lt. dmin) dmin = dist 
 
+c     write(6,*) ' iatom jatom  i j dist:', iatom, jatom, i,j,dist 
+
       enddo 
       enddo 
 
@@ -150,7 +153,7 @@ c     dcrit = 7.0
       if (dmin .le. dcrit) pair_flag = 2.0 
       if (dmin .gt. dcrit) pair_flag = 0.0 
 
-c     write(6,*) ' IFRAG JFRAG ', ifrag, jfrag, dcrit, pair_flag  
+c     write(6,*) ' IFRAG JFRAG ', ifrag, jfrag, dcrit, dmin, pair_flag  
 
       return
       end 

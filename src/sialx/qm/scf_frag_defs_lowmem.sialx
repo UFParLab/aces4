@@ -25,9 +25,9 @@ predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
 predefined  int nfrags  # Number of fragments from ZMAT
 
-#predefined  int max_aoseg # maximum ao segment size 
-#predefined  int max_alphaseg # maximum alpha segment size 
-#predefined  int max_betaseg # maximum beta segment size 
+predefined  int max_aoseg # maximum ao segment size 
+predefined  int max_alphaseg # maximum alpha segment size 
+predefined  int max_betaseg # maximum beta segment size 
 
 
 #these are predefined in the index table         
@@ -55,9 +55,9 @@ special return_ovl w
 special return_sval rw
 special get_my_rank w
 special scf_atom rwwwwr 
-#special scf_atom_lowmem rwwww 
+special scf_atom_lowmem rwwww 
 special compute_int_scratchmem uuu
-#special compute_int_scratchmem_lowmem uu
+special compute_int_scratchmem_lowmem uu
 special place_scratch urrr
 special print_block r  
 special frag_index_range uu

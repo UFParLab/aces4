@@ -84,13 +84,26 @@ c Find the offset index ranges
           enddo 
       endif 
 
-      call do_rhf_den4(1, extents_0(1),offset_1, 
-     *                 1, extents_0(2),offset_2, 
-     *                 1, extents_0(3),offset_3, 
-     *                 1, extents_0(4),offset_4, 
-     *                 data_0, 
-     *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1) 
+      if (rank_1 .eq. 2) then 
+         call do_rhf_den4(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    1, extents_0(3),offset_3, 
+     *                    1, extents_0(4),offset_4, 
+     *                    data_0, 
+     *                    1, extents_1(1), 1, extents_1(2),
+     *                    data_1) 
+      endif 
+
+      if (rank_1 .eq. 1) then 
+         call do_rhf_den4_1D(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    1, extents_0(3),offset_3, 
+     *                    1, extents_0(4),offset_4, 
+     *                    data_0, 
+     *                    1, extents_1(1),
+     *                    data_1) 
+      endif 
+
 
       end if  ! rank0 .eq. 4 
 
@@ -110,11 +123,21 @@ c Find the offset index ranges
           enddo 
       endif 
 
-      call do_rhf_den2(1, extents_0(1),offset_1, 
-     *                 1, extents_0(2),offset_2, 
-     *                 data_0, 
-     *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1) 
+      if (rank_1 .eq. 2) then 
+         call do_rhf_den2(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    data_0, 
+     *                    1, extents_1(1), 1, extents_1(2),
+     *                    data_1) 
+      endif 
+
+      if (rank_1 .eq. 1) then 
+         call do_rhf_den2_1d(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    data_0, 
+     *                    1, extents_1(1), 
+     *                    data_1) 
+      endif 
 
       end if  ! rank0 .eq. 2 
 
@@ -194,15 +217,17 @@ c Find the offset index ranges
 c Check for simple ineces 
 
 
-      call do_rhf_den6(start_1, extents_0(1),offset_1, 
-     *                 start_2, extents_0(2),offset_2, 
-     *                 start_3, extents_0(3),offset_3, 
-     *                 start_4, extents_0(4),offset_4, 
-     *                 start_5, extents_0(5),offset_5, 
-     *                 start_6, extents_0(6),offset_6, 
-     *                 data_0, 
-     *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1) 
+      if (rank_1 .eq. 2) then 
+         call do_rhf_den6(start_1, extents_0(1),offset_1, 
+     *                    start_2, extents_0(2),offset_2, 
+     *                    start_3, extents_0(3),offset_3, 
+     *                    start_4, extents_0(4),offset_4, 
+     *                    start_5, extents_0(5),offset_5, 
+     *                    start_6, extents_0(6),offset_6, 
+     *                    data_0, 
+     *                    1, extents_1(1), 1, extents_1(2),
+     *                    data_1) 
+      endif 
 
       end if  ! rank0 .eq. 6 
 
