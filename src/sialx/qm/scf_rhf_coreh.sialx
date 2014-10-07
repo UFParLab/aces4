@@ -60,6 +60,8 @@ import "scf_defs.sialx"
       index   iiter1 = 1: 1
       index   jjter1 = 1: 1
       index   jjter2 = 2: 2
+      index   g51    = 1: 5000 
+      index   g52    = 1: 5000 
 #
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -115,6 +117,7 @@ import "scf_defs.sialx"
       static dflags11[iiter1,jjter1]
       static dflags12[iiter1,jjter2]
       static oed_ovl[mu,nu] 
+      static screen_array[g51,g52] 
 #
 # Declare temporary arrays 
 # ------------------------ 
@@ -1149,7 +1152,7 @@ import "scf_defs.sialx"
 #
       CREATE DHFa   
       CREATE DHFb   
-
+      sip_barrier 
       PARDO mu, nu 
             txx[mu,nu]      = 0.0  
             PUT Dhfa[mu,nu] = txx[mu,nu]
@@ -1168,6 +1171,7 @@ import "scf_defs.sialx"
          execute compute_int_scratchmem oed_ovl zmax imax 
      #ENDDO nu 
      #ENDDO mu 
+     server_barrier 
 
 #
 #     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
@@ -1179,13 +1183,20 @@ import "scf_defs.sialx"
       DO sigma
             IF mu == lambda
             IF nu == sigma
-               execute compute_aabb_batch aoint[mu,nu,lambda,sigma]
+               aoint[mu,nu,lambda,sigma] = 0.0 
+               execute compute_aabb_batch aoint[mu,nu,lambda,sigma] screen_array 
             ENDIF
             ENDIF
       ENDDO sigma
       ENDDO lambda
       ENDDO nu
       ENDDO mu
+
+#     do g51 
+#     do g52 
+#        execute print_block  screen_array(g51,g52) 
+#     enddo g52 
+#     enddo g51 
 
       zero = 0.0 
       mone = -1.0 
