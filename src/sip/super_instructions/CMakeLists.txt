@@ -58,6 +58,8 @@ set(QM_SOURCE_FILES
     qm/set_frag.F;
     qm/frag_index_range.F;
     qm/compute_integral_batch.F;
+    qm/compute_xyz_batch.F;
+    qm/compute_dipole_integrals.F;
     qm/instructions_for_testing.f;
     qm/direct_integral/pack_coeffs.f;
     qm/direct_integral/lookup_shell.f;
