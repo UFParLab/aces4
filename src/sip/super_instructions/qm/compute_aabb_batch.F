@@ -443,6 +443,12 @@ c        call lookup_shell(end_nfps, nshells, c2, r2)
 c        call lookup_shell(end_nfps, nshells, d1, s1)
 c        call lookup_shell(end_nfps, nshells, d2, s2)
 
+         do m = 1,sa2
+         do n = 1,da2
+         temp(m,n) = 0.d0
+         enddo 
+         enddo
+
          do m = m1, m2
             if (m .eq. 1) then
                aa1 = 1

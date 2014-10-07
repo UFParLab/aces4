@@ -74,7 +74,6 @@ set(QM_SOURCE_FILES
     qm/set_ijk_aaa.F;
     qm/set_ijk_aab.F;
     qm/direct_integral/move_integrals.f;
-    qm/compute_aabb_integrals.F;
     qm/erd/erd__ctr_tu_expand.f;
     qm/erd/erd__ctr_4index_reorder.f;
     qm/erd/erd__spherical_transform.f;
