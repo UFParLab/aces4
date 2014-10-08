@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 print_siptables
+bin_PROGRAMS=aces4 aces4_profile print_siptables sqlite3
 
 noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
@@ -17,7 +17,12 @@ libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
 noinst_LIBRARIES = libsqlite3.a
 libsqlite3_a_SOURCES = ./sqlite3/sqlite3.c  ./sqlite3/sqlite3.h
 # Disables use of pthread and dlopen in sqlite.
-libsqlite3_a_CPPFLAGS = -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
+libsqlite3_a_CPPFLAGS = -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_RTREE
+
+# Build SQLITE3 Shell
+sqlite3_SOURCES = ./sqlite3/shell.c ./sqlite3/sqlite3.h
+sqlite3_CPPFLAGS = -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_RTREE
+sqlite3_LDADD = libsqlite3.a
 
 EXTRA_DIST+=\
 README.md\
@@ -162,11 +167,21 @@ aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
     ./src/aces_main/main.cpp
 
+aces4_profile_SOURCES= \
+    $(ACES_SOURCEFILES) \
+    ./src/aces_main/profile_main.cpp
+
 print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
 
 aces4_LDADD = \
+	libtensordil.a \
+	libsqlite3.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+	
+aces4_profile_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
 	src/sip/super_instructions/libinstr.la\
@@ -179,6 +194,12 @@ print_siptables_LDADD=\
 	$(AM_LDADD_LIBS)
 	
 aces4_LDFLAGS = \
+	$(OPENMP_FFLAGS)\
+	$(OPENMP_FCFLAGS)\
+	$(OPENMP_CFLAGS)\
+	$(OPENMP_CXXFLAGS)
+	
+aces4_profile_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
 	$(OPENMP_CFLAGS)\

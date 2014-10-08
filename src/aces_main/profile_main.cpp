@@ -1,3 +1,11 @@
+/*
+ * profile_interpreter_main.cpp
+ *
+ *  Created on: Oct 8, 2014
+ *      Author: njindal
+ */
+
+
 #include "config.h"
 #include "siox_reader.h"
 #include "io_utils.h"
@@ -50,7 +58,7 @@ void bt_sighandler(int signum) {
 }
 
 int main(int argc, char* argv[]) {
-    
+
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);
@@ -79,15 +87,6 @@ int main(int argc, char* argv[]) {
 	#endif
 	TAU_STATIC_PHASE_START("SIP Main");
 #endif
-
-//TODO  move this to  a test suite.
-//	// Check sizes of data types.
-//	// In the MPI version, the TAG is used to communicate information
-//	// The various bits needed to send information to other nodes
-//	// sums up to 32.
-//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 
 	// Default initialization file is data.dat
 	char *init_file = "data.dat";
@@ -196,8 +195,13 @@ int main(int argc, char* argv[]) {
 
 		//interpret current program on worker
 		{
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
+
+			//sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			//sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
+
+			sip::ProfileTimerStore profile_timer_store("ar1_sm362");
+			sip::ProfileTimer profile_timer(sipTables.max_timer_slots(), &profile_timer_store);
+			sip::ProfileInterpreter runner(sipTables, profile_timer, NULL, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
@@ -206,7 +210,9 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-			sialxTimer.print_timers(lno2name);
+			//sialxTimer.print_timers(lno2name);
+			profile_timer.print_timers();	// Saves to database store.
+
 
 		}// end of worker or server
 
@@ -234,3 +240,5 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+
+

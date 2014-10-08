@@ -324,8 +324,9 @@ add_subdirectory(src/sip/super_instructions)
 add_library(sqlite3l;
     sqlite3/sqlite3.c;
     sqlite3/sqlite3.h)
-# Disables use of pthread and dlopen in sqlite.
-set_target_properties(sqlite3l PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
+# Disables use of pthread and dlopen in sqlite. (Other options copied from sqlite3 automake file)
+set_target_properties(sqlite3l PROPERTIES COMPILE_DEFINITIONS 
+			"SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0; SQLITE_ENABLE_FTS3; SQLITE_ENABLE_RTREE")
     
 
 # The tensor library is added separately
@@ -334,6 +335,9 @@ set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DE
 
 # aces4 executable
 add_executable(aces4 src/aces_main/main.cpp)
+
+# profile timer executable
+add_executable(aces4_profile src/aces_main/profile_main.cpp)
 
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
@@ -345,6 +349,9 @@ add_executable(sqlite3 sqlite3/shell.c sqlite3/sqlite3.h)
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(aces4_profile PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(aces4_profile PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
@@ -352,15 +359,18 @@ set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_E
 
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
+target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
 target_link_libraries(sqlite3 sqlite3l)
 
 # Dependencies
 if(HAVE_CUDA)
 	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
+	add_dependencies(aces4_profile tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
+	add_dependencies(aces4_profile tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 endif()
 
