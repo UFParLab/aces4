@@ -29,10 +29,12 @@ class BlockSelector {
 public:
 	BlockSelector();
 	BlockSelector(int rank, int array_id, const index_selector_t&);
+	BlockSelector(const BlockSelector& rhs);
 	int rank_;
 	int array_id_;
 	index_selector_t index_ids_;
 	bool operator==(const BlockSelector& rhs) const;
+	BlockSelector& operator=(const BlockSelector& rhs);
 	friend std::ostream& operator<<(std::ostream&, const BlockSelector &);
 };
 

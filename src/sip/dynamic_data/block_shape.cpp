@@ -18,6 +18,11 @@ BlockShape::BlockShape() {
 	std::fill(segment_sizes_ + 0, segment_sizes_ + MAX_RANK, 1);
 }
 
+
+BlockShape::BlockShape(const BlockShape& rhs){
+	std::copy(rhs.segment_sizes_ + 0, rhs.segment_sizes_ + MAX_RANK, segment_sizes_+0);
+}
+
 //BlockShape::BlockShape(const segment_size_array_t& segment_sizes) {
 //	std::copy(segment_sizes + 0, segment_sizes + MAX_RANK, segment_sizes_ + 0);
 //}
@@ -48,6 +53,10 @@ int BlockShape::num_elems() const{
 	return num_elems;
 }
 
+BlockShape& BlockShape::operator=(const BlockShape& rhs) {
+	std::copy(rhs.segment_sizes_ + 0, rhs.segment_sizes_ + MAX_RANK, segment_sizes_+0);
+	return *this;
+}
 
 bool BlockShape::operator==(const BlockShape& rhs) const {
 	bool is_equal = true;

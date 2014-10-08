@@ -53,7 +53,7 @@ private:
 	/**
 	 * Utility method to create a table for a given number of blocks
 	 * as operands. Called by the constructor
-	 * Tables are created for zero block operands, 1 block operand ... upto 5 block operands.
+	 * Tables are created for zero block operands, 1 block operand ... upto 6 block operands.
 	 * @param num_blocks
 	 */
 	void create_table(int num_blocks);

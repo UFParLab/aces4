@@ -521,6 +521,66 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_five_block){
 }
 
 
+// Just inserts a 5 block operation
+TEST(SialUnitProfileTimerStore, insert_six_block){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+	sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+	sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+	sip::ProfileTimer::BlockInfo b4(6, indices, segments);
+	sip::ProfileTimer::BlockInfo b5(1, indices, segments);
+	sip::ProfileTimer::BlockInfo b6(4, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	blocks.push_back(b1);
+	blocks.push_back(b2);
+	blocks.push_back(b3);
+	blocks.push_back(b4);
+	blocks.push_back(b5);
+	blocks.push_back(b6);
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+}
+
+// Inserts & retrieve a 5 block operation
+TEST(SialUnitProfileTimerStore, retrieve_sixls_block){
+	sip::ProfileTimerStore profile_timer_store (":memory:");
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+	sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+	sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+	sip::ProfileTimer::BlockInfo b4(6, indices, segments);
+	sip::ProfileTimer::BlockInfo b5(1, indices, segments);
+	sip::ProfileTimer::BlockInfo b6(4, indices, segments);
+	std::vector<sip::ProfileTimer::BlockInfo> blocks;
+	blocks.push_back(b1);
+	blocks.push_back(b2);
+	blocks.push_back(b3);
+	blocks.push_back(b4);
+	blocks.push_back(b5);
+	blocks.push_back(b6);
+	sip::ProfileTimer::Key key1("test1", blocks);
+	std::pair<double, int> time_count = std::make_pair(100, 10);
+	profile_timer_store.save_to_store(key1, time_count);
+
+	std::pair<double, int> result = profile_timer_store.get_from_store(key1);
+	ASSERT_EQ(time_count, result);
+}
+
+
 
 int main(int argc, char **argv) {
 

@@ -16,7 +16,7 @@
 
 namespace sip {
 
-const int ProfileTimerStore::MAX_BLOCK_OPERANDS = 5;
+const int ProfileTimerStore::MAX_BLOCK_OPERANDS = 6;
 
 // Names of SQLITE3 TABLES
 const std::string ProfileTimerStore::block_table[] = {
@@ -25,7 +25,8 @@ const std::string ProfileTimerStore::block_table[] = {
 	"two_block_table",
 	"three_block_table",
 	"four_block_table",
-	"five_block_table"
+	"five_block_table",
+	"six_block_table"
 };
 
 // CHARACTER Columns
@@ -52,7 +53,7 @@ void ProfileTimerStore::sip_sqlite3_error(int rc) {
 }
 
 /**
- * This methods creates a table for zero blocks parameters, 1 block, 2 blocks...5 blocks.
+ * This methods creates a table for zero blocks parameters, 1 block, 2 blocks...6 blocks.
  * The table columns for 1 block are named like so:
  * opcode | block1index1 | block1index2 | ... | block1segment1 | block1segment2 | ... | totaltime | count
  * @param num_blocks
@@ -119,8 +120,8 @@ ProfileTimerStore::ProfileTimerStore(const std::string &db_location):
 	if (rc != SQLITE_OK)
 		sip_sqlite3_error(rc);
 
-	// create the tables for 0 block operands, 1 block operands, .... 5 block operands
-	for (int num_blocks = 0; num_blocks <=5; num_blocks++)
+	// create the tables for 0 block operands, 1 block operands, .... 6 block operands
+	for (int num_blocks = 0; num_blocks <=6; num_blocks++)
 		create_table(num_blocks);
 
 }

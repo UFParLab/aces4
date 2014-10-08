@@ -17,10 +17,12 @@
 
 namespace sip {
 
+class ProfileTimerStore;
+
 class ProfileTimer {
 public:
 
-	ProfileTimer(int sialx_lines);
+	ProfileTimer(int sialx_lines, ProfileTimerStore* profile_timer_store);
 	~ProfileTimer();
 
 
@@ -66,6 +68,7 @@ public:
 
 private:
 
+	ProfileTimerStore* profile_timer_store_;	//! Non-volatile store for profile timers
 	TimerMap_t profile_timer_map_; 	//! Key -> index slot in underlying timer
 	int slot_to_assign_;			//! Next slot to assign in the delegate_
 
@@ -80,7 +83,7 @@ private:
 #endif
 
 	TimerType_t delegate_;
-	const int sialx_lines_;
+	const int max_slots_;
 
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);
 };

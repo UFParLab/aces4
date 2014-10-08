@@ -9,6 +9,7 @@
 #include "sip_interface.h"
 #include "global_state.h"
 #include "print_timers.h"
+#include "profile_timer_store.h"
 #include <utility>
 #include <iostream>
 #include <iomanip>
@@ -16,8 +17,11 @@
 
 namespace sip {
 
-ProfileTimer::ProfileTimer(int sialx_lines) :
-		sialx_lines_(sialx_lines), delegate_(sialx_lines),
+ProfileTimer::ProfileTimer(int sialx_lines, ProfileTimerStore* profile_timer_store) :
+		// An approximate maximum of the number of slots needed = sialx_lines_ * 3.
+		// Increase this if needed.
+		max_slots_(sialx_lines * 3), delegate_(sialx_lines * 3),
+		profile_timer_store_(profile_timer_store),	// Can be NULL
 		slot_to_assign_(0){
 }
 
@@ -34,7 +38,7 @@ void ProfileTimer::start_timer(const ProfileTimer::Key& key){
 		std::pair<TimerMap_t::iterator, bool> returned =
 				profile_timer_map_.insert (std::make_pair(key, slot_to_assign_));
 		slot_to_assign_ ++;
-		check(slot_to_assign_ < sialx_lines_, "Out of space in the Profile timer !");
+		check(slot_to_assign_ < max_slots_, "Out of space in the Profile timer !");
 		it = returned.first;
 	}
 	int slot = it->second;
@@ -112,7 +116,7 @@ ProfileTimer::Key::Key(const std::string& opcode, const std::vector<BlockInfo>& 
 std::ostream& operator<<(std::ostream& os, const ProfileTimer::BlockInfo& obj) {
 	// Operation Shape
 	os << "(";
-	os << "[" << obj.index_ids_[0];
+	os << "[";
 	for (int i = 0; i < obj.rank_ ; ++i) {
 		int id = obj.index_ids_[i];
 		os << (i==0? "" : ",") << id;
@@ -219,7 +223,6 @@ public:
 			<<std::endl;
 
 		std::cout.precision(6); // Reset precision to 6 places.
-		//for (int i=1; i<timer.max_slots - sialx_lines_; i++){
 		ProfileTimer::TimerMap_t::const_iterator it = profile_timer_map_.begin();
 		for (; it != profile_timer_map_.end(); ++it){
 			int i = it->second;
@@ -236,8 +239,45 @@ public:
 	}
 };
 
+
+template <typename TIMER>
+class SingleNodeProfileStore : public PrintTimers<TIMER> {
+private:
+	const ProfileTimer::TimerMap_t& profile_timer_map_;
+	ProfileTimerStore* profile_timer_store_;
+public:
+	SingleNodeProfileStore(const ProfileTimer::TimerMap_t &profile_timer_map, ProfileTimerStore* profile_timer_store)
+		: profile_timer_map_(profile_timer_map), profile_timer_store_(profile_timer_store) {}
+	virtual ~SingleNodeProfileStore(){}
+	virtual void execute(TIMER& timer){
+
+		// Do nothing if profile_timer_store is null
+		if (profile_timer_store_ == NULL)
+			return;
+
+		long long * timers = timer.get_timers();
+		long long * timer_counts = timer.get_timer_count();
+
+		assert(timer.check_timers_off());
+
+		ProfileTimer::TimerMap_t::const_iterator it = profile_timer_map_.begin();
+		for (; it != profile_timer_map_.end(); ++it){
+			const ProfileTimer::Key& key = it->first;
+			int i = it->second;
+			long tot_time = 	timers[i];
+			long count 	= 	timer_counts[i];
+			std::pair<long, long> time_count_pair = std::make_pair(tot_time, count);
+			profile_timer_store_->save_to_store(key, time_count_pair);
+
+		}
+		std::cout<<std::endl;
+	}
+};
+
+
 void ProfileTimer::print_timers(){
-	SingleNodeProfilePrint<TimerType_t> p(profile_timer_map_);
+	//SingleNodeProfilePrint<TimerType_t> p(profile_timer_map_);
+	SingleNodeProfileStore<TimerType_t> p(profile_timer_map_, profile_timer_store_);
 	delegate_.print_timers(p);
 }
 

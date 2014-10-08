@@ -32,7 +32,9 @@ private:
 	ProfileTimer& profile_timer_;
 	ProfileTimer::Key last_seen_key_;
 	int last_seen_pc_;
-	ProfileTimer::Key make_profile_timer_key(opcode_t opcode, std::list<BlockSelector> selector_list);
+	ProfileTimer::Key make_profile_timer_key(opcode_t opcode, const std::list<BlockSelector>& selector_list);
+	ProfileTimer::Key make_profile_timer_key(const std::string& opcode_name, const std::list<BlockSelector>& selector_list);
+
 };
 
 } /* namespace sip */

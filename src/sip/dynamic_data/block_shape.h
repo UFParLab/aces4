@@ -23,10 +23,12 @@ namespace sip {
 class BlockShape {
 public:
 	BlockShape();
+	BlockShape(const BlockShape& rhs);
 //	explicit BlockShape(const segment_size_array_t&);
 	BlockShape(const segment_size_array_t&, int rank);
 	~BlockShape();
 
+	BlockShape& operator=(const BlockShape& rhs);
 	bool operator==(const BlockShape& rhs) const;
 	bool operator<(const BlockShape& rhs) const;
 	int num_elems() const;

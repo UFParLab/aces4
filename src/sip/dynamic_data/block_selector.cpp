@@ -28,6 +28,18 @@ BlockSelector::BlockSelector(int rank, int array_id,
 	}
 }
 
+BlockSelector::BlockSelector(const BlockSelector& rhs):
+	array_id_(rhs.array_id_), rank_(rhs.rank_){
+	std::copy(rhs.index_ids_ + 0, rhs.index_ids_ + MAX_RANK, index_ids_);
+}
+
+BlockSelector& BlockSelector::operator=(const BlockSelector& rhs){
+	this->array_id_ = rhs.array_id_;
+	this->rank_ = rhs.rank_;
+	std::copy (rhs.index_ids_ + 0, rhs.index_ids_ + MAX_RANK, this->index_ids_);
+	return *this;
+}
+
 bool BlockSelector::operator==(const BlockSelector& rhs) const {
 	if (rank_ != rhs.rank_) return false;
 	for (int i = 0; i < MAX_RANK; ++i) {

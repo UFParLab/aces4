@@ -3,6 +3,7 @@
 #include "io_utils.h"
 #include "setup_reader.h"
 #include "assert.h"
+#include "profile_timer_store.h"
 #include "sialx_timer.h"
 #include "profile_timer.h"
 #include "sip_tables.h"
@@ -199,7 +200,8 @@ int main(int argc, char* argv[]) {
 			//sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			//sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
 
-			sip::ProfileTimer profile_timer(sipTables.max_timer_slots());
+			sip::ProfileTimerStore profile_timer_store("ar1_sm362");
+			sip::ProfileTimer profile_timer(sipTables.max_timer_slots(), &profile_timer_store);
 			sip::ProfileInterpreter runner(sipTables, profile_timer, NULL, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
@@ -210,7 +212,7 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
 			//sialxTimer.print_timers(lno2name);
-			profile_timer.print_timers();
+			profile_timer.print_timers();	// Saves to database store.
 
 
 		}// end of worker or server

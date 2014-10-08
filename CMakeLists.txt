@@ -234,7 +234,7 @@ set(INCLUDE_DIRS
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
-    sqlite3;
+    sqlite3l;
     #${CMAKE_DL_LIBS};		# Needed by SQLITE3 but disabled by use of -DSQLITE_OMIT_LOAD_EXTENSION
     ${MPI_LIBRARIES};
     superinstructions 		# Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
@@ -321,11 +321,11 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES} aces4_sip)
 add_subdirectory(src/sip/super_instructions)
 
 # Add sqlite3 library
-add_library(sqlite3;
+add_library(sqlite3l;
     sqlite3/sqlite3.c;
     sqlite3/sqlite3.h)
 # Disables use of pthread and dlopen in sqlite.
-set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
+set_target_properties(sqlite3l PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
     
 
 # The tensor library is added separately
@@ -338,6 +338,9 @@ add_executable(aces4 src/aces_main/main.cpp)
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
+#SQLITE3 Shell
+add_executable(sqlite3 sqlite3/shell.c sqlite3/sqlite3.h)
+
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
@@ -345,9 +348,12 @@ set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
+
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
+target_link_libraries(sqlite3 sqlite3l)
 
 # Dependencies
 if(HAVE_CUDA)
