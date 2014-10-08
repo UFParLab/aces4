@@ -204,6 +204,21 @@ SIPMPIAttr::SIPMPIAttr() {
 }
 SIPMPIAttr::~SIPMPIAttr() {
 }
+
+std::ostream& operator<<(std::ostream& os, const SIPMPIAttr& obj){
+	os << "SIP MPI Attributes [";
+	os << "rank : " << obj.global_rank();
+	os << ", size : " << obj.global_size();
+	os << ", is server? : " << obj.is_server();
+	os << ", company rank : " << obj.company_rank();
+	os << ", company size : " << obj.company_size();
+	os << ", is master? : " << obj.is_company_master();
+    os << ", server_master : " << obj.server_master();
+    os << ", worker master : " << obj.worker_master() << "]";
+    os << std::endl;
+	return os;
+}
+
 }//namespace sip
 
 #endif  //HAVE_MPI

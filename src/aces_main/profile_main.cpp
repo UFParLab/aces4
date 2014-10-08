@@ -24,6 +24,7 @@
 #include "worker_persistent_array_manager.h"
 #include "block.h"
 #include "global_state.h"
+#include "sip_mpi_attr.h"
 
 #include <vector>
 #include <sstream>
@@ -38,7 +39,6 @@
 
 #ifdef HAVE_MPI
 #include "mpi.h"
-#include "sip_mpi_attr.h"
 #include "sip_server.h"
 #include "sip_mpi_utils.h"
 #include "server_persistent_array_manager.h"
@@ -74,9 +74,9 @@ int main(int argc, char* argv[]) {
 	MPI_Init(&argc, &argv);
 
 	sip::SIPMPIUtils::set_error_handler();
+#endif
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
-#endif
 
 #ifdef HAVE_TAU
 	TAU_INIT(&argc, &argv);
@@ -196,10 +196,14 @@ int main(int argc, char* argv[]) {
 		//interpret current program on worker
 		{
 
-			//sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			//sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
+			// Sets the database name
+			// For a job from ar1.dat, the profile database will be
+			// profile.ar1.dat.0 for rank 0
+			// profile.ar1.dat.1 for rank 1 and so on.
+			std::stringstream db_name;
+			db_name << "profile." << job << "." << sip_mpi_attr.global_rank();
+			sip::ProfileTimerStore profile_timer_store(db_name.str());
 
-			sip::ProfileTimerStore profile_timer_store("ar1_sm362");
 			sip::ProfileTimer profile_timer(sipTables.max_timer_slots(), &profile_timer_store);
 			sip::ProfileInterpreter runner(sipTables, profile_timer, NULL, &persistent_worker);
 
@@ -210,7 +214,6 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-			//sialxTimer.print_timers(lno2name);
 			profile_timer.print_timers();	// Saves to database store.
 
 
