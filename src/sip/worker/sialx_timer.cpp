@@ -309,7 +309,7 @@ void SialxTimer::pause_timer(int line_number, TimerKind_t kind){
 }
 
 
-void SialxTimer::print_timers(std::vector<std::string> line_to_str, std::ostream& out) {
+void SialxTimer::print_timers(const std::vector<std::string>& line_to_str, std::ostream& out) {
 #ifdef HAVE_TAU
 	typedef TAUTimersPrint<TimerType_t> PrintTimersType_t;
 #elif defined HAVE_MPI

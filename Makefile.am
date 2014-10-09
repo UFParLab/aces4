@@ -7,8 +7,9 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 aces4_profile print_siptables sqlite3
+bin_PROGRAMS=aces4 aces4_profile aces4_sipmap print_siptables sqlite3
 
+# Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
@@ -97,10 +98,14 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/sialx_interpreter.h\
 ./src/sip/worker/profile_interpreter.cpp\
 ./src/sip/worker/profile_interpreter.h\
+./src/sip/worker/sipmap_interpreter.cpp\
+./src/sip/worker/sipmap_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/profile_timer.h\
 ./src/sip/worker/profile_timer.cpp\
+./src/sip/worker/sipmap_timer.h\
+./src/sip/worker/sipmap_timer.cpp\
 ./src/sip/worker/profile_timer_store.h\
 ./src/sip/worker/profile_timer_store.cpp\
 ./src/sip/worker/global_state.h\
@@ -171,6 +176,10 @@ aces4_profile_SOURCES= \
     $(ACES_SOURCEFILES) \
     ./src/aces_main/profile_main.cpp
 
+aces4_sipmap_SOURCES= \
+    $(ACES_SOURCEFILES) \
+    ./src/aces_main/sipmap_main.cpp
+
 print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
@@ -187,23 +196,36 @@ aces4_profile_LDADD = \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
+aces4_sipmap_LDADD = \
+	libtensordil.a \
+	libsqlite3.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+
 print_siptables_LDADD=\
 	libtensordil.a \
 	libsqlite3.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
-	
+
 aces4_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
 	$(OPENMP_CFLAGS)\
 	$(OPENMP_CXXFLAGS)
-	
+
 aces4_profile_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
 	$(OPENMP_CFLAGS)\
 	$(OPENMP_CXXFLAGS)
+
+aces4_sipmap_LDFLAGS = \
+	$(OPENMP_FFLAGS)\
+	$(OPENMP_FCFLAGS)\
+	$(OPENMP_CFLAGS)\
+	$(OPENMP_CXXFLAGS)
+	
 
 ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip\

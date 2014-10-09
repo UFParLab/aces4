@@ -36,7 +36,7 @@ public:
 	 * @param opcode_operands
 	 * @return
 	 */
-	std::pair<long, long> get_from_store(const ProfileTimer::Key& opcode_operands);
+	std::pair<long, long> get_from_store(const ProfileTimer::Key& opcode_operands) const;
 
 	const static int MAX_BLOCK_OPERANDS;
 
@@ -48,7 +48,7 @@ private:
 	 * Utility function to print the sqlite3 error and throw an exception.
 	 * @param rc
 	 */
-	void sip_sqlite3_error(int rc);
+	void sip_sqlite3_error(int rc) const;
 
 	/**
 	 * Utility method to create a table for a given number of blocks
