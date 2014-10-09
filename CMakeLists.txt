@@ -182,10 +182,14 @@ set(ACES_WORKER_FILES
    	src/sip/worker/sialx_interpreter.h;
    	src/sip/worker/profile_interpreter.cpp;
    	src/sip/worker/profile_interpreter.h;
+   	src/sip/worker/sipmap_interpreter.cpp;
+   	src/sip/worker/sipmap_interpreter.h;
     src/sip/worker/sialx_timer.cpp;
     src/sip/worker/sialx_timer.h;
     src/sip/worker/profile_timer.cpp;
     src/sip/worker/profile_timer.h;
+    src/sip/worker/sipmap_timer.cpp;
+    src/sip/worker/sipmap_timer.h;
     src/sip/worker/profile_timer_store.cpp;
     src/sip/worker/profile_timer_store.h;
     src/sip/worker/global_state.h;
@@ -339,6 +343,9 @@ add_executable(aces4 src/aces_main/main.cpp)
 # profile timer executable
 add_executable(aces4_profile src/aces_main/profile_main.cpp)
 
+# sipmap executable
+add_executable(aces4_sipmap src/aces_main/sipmap_main.cpp)
+
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
@@ -352,6 +359,9 @@ set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(aces4_profile PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4_profile PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(aces4_sipmap PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(aces4_sipmap PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
@@ -360,6 +370,7 @@ set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_E
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
+target_link_libraries(aces4_sipmap ${TOLINK_LIBRARIES})
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
 target_link_libraries(sqlite3 sqlite3l)
 
@@ -367,10 +378,12 @@ target_link_libraries(sqlite3 sqlite3l)
 if(HAVE_CUDA)
 	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
 	add_dependencies(aces4_profile tensordil superinstructions cudasuperinstructions)
+	add_dependencies(aces4_sipmap tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(aces4_profile tensordil superinstructions)
+	add_dependencies(aces4_sipmap tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 endif()
 

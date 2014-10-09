@@ -44,7 +44,7 @@ const std::string ProfileTimerStore::tottime_column("totaltime");
 // BIGINT COLUMN
 const std::string ProfileTimerStore::count_column("count");
 
-void ProfileTimerStore::sip_sqlite3_error(int rc) {
+void ProfileTimerStore::sip_sqlite3_error(int rc) const {
 	// Print error message and exit if invalid
 	std::stringstream ss;
 	ss << "Error in ProfileTimerStore : ";
@@ -202,7 +202,7 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 
 }
 
-std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands){
+std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands) const {
 
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 	// Specially needed in this routine, since it will be called by the modeling interpreter.
