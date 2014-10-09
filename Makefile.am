@@ -14,7 +14,7 @@ libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
 
 # External project sqlite3
-noinst_LIBRARIES = libsqlite3.a
+noinst_LIBRARIES += libsqlite3.a
 libsqlite3_a_SOURCES = ./sqlite3/sqlite3.c  ./sqlite3/sqlite3.h
 # Disables use of pthread and dlopen in sqlite.
 libsqlite3_a_CPPFLAGS = -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_RTREE
