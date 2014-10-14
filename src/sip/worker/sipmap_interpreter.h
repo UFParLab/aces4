@@ -9,9 +9,13 @@
 #define SIPMAP_INTERPRETER_H_
 
 #include "sialx_interpreter.h"
+#include "profile_timer.h"
+#include "profile_timer_store.h"
+#include "sipmap_timer.h"
+
+#include <utility>
 
 namespace sip {
-class SIPMaPTimer;
 class ProfileTimerStore;
 class SipTables;
 
@@ -29,34 +33,26 @@ public:
 	virtual ~SIPMaPInterpreter();
 
 
-	// Functions that don't modify the program counter.
-	// These functions have been disabled (overriden with empty implementations
-	// so that this interpreter does not do any actual work.
-	// It should only construct ProfileTimer::Key s for all operations.
 
-	// Functions that modify the program counter
-	// are passed in a reference to it.
-//	virtual void handle_goto_op(int &pc);
-//	virtual void handle_jump_if_zero_op(int &pc);
-//	virtual void handle_stop_op(int &pc);
-//	virtual void handle_return_op(int &pc);
-//	virtual void handle_do_op(int &pc);
-//	virtual void handle_loop_end(int &pc);
-//	virtual void handle_exit_op(int &pc);
-//	virtual void handle_where_op(int &pc);
-//	virtual void handle_pardo_op(int &pc);
-//	virtual void handle_endpardo_op(int &pc);
-//	virtual void handle_call_op(int &pc);
+//	virtual void handle_jump_if_zero_op(int &pc);	// TODO - To visit if & else parts of the code.
 
-	// Functions that don't modify the program counter.
+
 	virtual void handle_execute_op(int pc) {
 		int num_args = arg1(pc) ;
-		for (int i=0; i<num_args; i++)
+		int func_slot = arg0(pc);
+		std::string opcode_name = sip_tables_.special_instruction_manager().name(func_slot);
+		std::list<BlockSelector> bs_list;
+		for (int i=0; i<num_args; i++){
+			bs_list.push_back(block_selector_stack_.top());
 			block_selector_stack_.pop();
+		}
+		ProfileTimer::Key key = make_profile_timer_key(opcode_name, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
 	virtual void handle_sip_barrier_op(int pc) {}
 	virtual void handle_broadcast_static_op(int pc) {}
-//	virtual void handle_push_block_selector_op(int pc);
 	virtual void handle_allocate_op(int pc) {}
 	virtual void handle_deallocate_op(int pc) {}
 	virtual void handle_allocate_contiguous_op(int pc) {}
@@ -67,73 +63,114 @@ public:
 	virtual void handle_create_op(int pc) {}
 	virtual void handle_delete_op(int pc) {}
 
-//	virtual void handle_string_load_literal_op(int pc);
-//	virtual void handle_int_load_value_op(int pc);
-//	virtual void handle_int_load_literal_op(int pc);
-//	virtual void handle_int_store_op(int pc);
-//	virtual void handle_index_load_value_op(int pc);
-//	virtual void handle_int_add_op(int pc);
-//	virtual void handle_int_subtract_op(int pc);
-//	virtual void handle_int_multiply_op(int pc);
-//	virtual void handle_int_divide_op(int pc);
-//	virtual void handle_int_equal_op(int pc);
-//	virtual void handle_int_nequal_op(int pc);
-//	virtual void handle_int_ge_op(int pc);
-//	virtual void handle_int_le_op(int pc);
-//	virtual void handle_int_gt_op(int pc);
-//	virtual void handle_int_lt_op(int pc);
-//	virtual void handle_int_neg_op(int pc);
-//	virtual void handle_cast_to_int_op(int pc);
-//	virtual void handle_scalar_load_value_op(int pc);
-//	virtual void handle_scalar_store_op(int pc);
-//	virtual void handle_scalar_add_op(int pc);
-//	virtual void handle_scalar_subtract_op(int pc);
-//	virtual void handle_scalar_multiply_op(int pc);
-//	virtual void handle_scalar_divide_op(int pc);
-//	virtual void handle_scalar_exp_op(int pc);
-//	virtual void handle_scalar_eq_op(int pc);
-//	virtual void handle_scalar_ne_op(int pc);
-//	virtual void handle_scalar_ge_op(int pc);
-//	virtual void handle_scalar_le_op(int pc);
-//	virtual void handle_scalar_gt_op(int pc);
-//	virtual void handle_scalar_lt_op(int pc);
-//	virtual void handle_scalar_neg_op(int pc);
-//	virtual void handle_scalar_sqrt_op(int pc);
-//	virtual void handle_cast_to_scalar_op(int pc);
-
 	virtual void handle_collective_sum_op(int pc) {  expression_stack_.pop();}
 	virtual void handle_assert_same_op(int pc) {}
 	virtual void handle_block_copy_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
-		block_selector_stack_.pop();
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		ProfileTimer::Key key = make_profile_timer_key(block_copy_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
 	virtual void handle_block_permute_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		ProfileTimer::Key key = make_profile_timer_key(block_permute_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
-	virtual void handle_block_fill_op(int pc) {  expression_stack_.pop();}
-	virtual void handle_block_scale_op(int pc) {  expression_stack_.pop();}
-	virtual void handle_block_scale_assign_op(int pc) {
-		block_selector_stack_.pop();
+	virtual void handle_block_fill_op(int pc) {
+		std::list<BlockSelector> bs_list;
 		expression_stack_.pop();
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		ProfileTimer::Key key = make_profile_timer_key(block_fill_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
-	virtual void handle_block_accumulate_scalar_op(int pc) {  expression_stack_.pop();}
+	virtual void handle_block_scale_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		expression_stack_.pop();
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		ProfileTimer::Key key = make_profile_timer_key(block_scale_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
+	}
+	virtual void handle_block_scale_assign_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(block_selector_stack_.top());
+		block_selector_stack_.pop();
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		expression_stack_.pop();
+		ProfileTimer::Key key = make_profile_timer_key(block_scale_assign_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
+	}
+	virtual void handle_block_accumulate_scalar_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		expression_stack_.pop();
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		ProfileTimer::Key key = make_profile_timer_key(block_accumulate_scalar_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
+	}
 	virtual void handle_block_add_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		ProfileTimer::Key key = make_profile_timer_key(block_add_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
 	virtual void handle_block_subtract_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		ProfileTimer::Key key = make_profile_timer_key(block_subtract_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
 	virtual void handle_block_contract_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		ProfileTimer::Key key = make_profile_timer_key(block_contract_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
 	virtual void handle_block_contract_to_scalar_op(int pc) {
+		std::list<BlockSelector> bs_list;
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
+		bs_list.push_back(block_selector_stack_.top());
 		block_selector_stack_.pop();
 		expression_stack_.push(0.0);
+		ProfileTimer::Key key = make_profile_timer_key(block_contract_to_scalar_op, bs_list);
+		std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+		double time = timer_count_pair.first / (double)timer_count_pair.second;
+		sipmap_timer_.record_time(line_number(), time);
 	}
 	virtual void handle_block_load_scalar_op(int pc){
 		block_selector_stack_.pop();
@@ -149,15 +186,32 @@ public:
 	virtual void handle_gpu_off_op(int pc) {}
 	virtual void handle_set_persistent_op(int pc) {}
 	virtual void handle_restore_persistent_op(int pc){}
-//	virtual void handle_idup_op(int pc);
-//	virtual void handle_iswap_op(int pc);
-//	virtual void handle_sswap_op(int pc);
-
 
 
 private:
 	const ProfileTimerStore& profile_timer_store_;
 	SIPMaPTimer& sipmap_timer_;
+
+	/**
+	 * Helper method to construct a profile timer key
+	 * to get data from the profile timer store
+	 * @param opcode_name
+	 * @param selector_list
+	 * @return
+	 */
+	ProfileTimer::Key make_profile_timer_key(const std::string& opcode_name,
+			const std::list<BlockSelector>& selector_list);
+
+	/**
+	 * Converts an opcode to a string and
+	 * delegates to SIPMaPInterpreter#make_profile_timer_key(const std::string&, const std::list<BlockSelector>&)
+	 * @param opcode
+	 * @param selector_list
+	 * @return
+	 */
+	ProfileTimer::Key make_profile_timer_key(opcode_t opcode,
+			const std::list<BlockSelector>& selector_list);
+
 
 };
 

@@ -65,14 +65,15 @@ bool BlockShape::operator==(const BlockShape& rhs) const {
 	}
 	return is_equal;
 }
-bool BlockShape::operator<(const BlockShape& rhs) const {
-	bool is_eq = true;
-	bool is_leq = true;
-	for (int i = 0; is_leq && i < MAX_RANK; ++i) {
-		is_leq = (segment_sizes_[i] <= rhs.segment_sizes_[i]);
-		is_eq = is_eq && (segment_sizes_[i] == rhs.segment_sizes_[i]);
-	}
-	return (is_leq && !is_eq);
-}
+
+//bool BlockShape::operator<(const BlockShape& rhs) const {
+//	bool is_eq = true;
+//	bool is_leq = true;
+//	for (int i = 0; is_leq && i < MAX_RANK; ++i) {
+//		is_leq = (segment_sizes_[i] <= rhs.segment_sizes_[i]);
+//		is_eq = is_eq && (segment_sizes_[i] == rhs.segment_sizes_[i]);
+//	}
+//	return (is_leq && !is_eq);
+//}
 
 } /* namespace sip */

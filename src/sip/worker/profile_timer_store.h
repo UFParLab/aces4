@@ -58,8 +58,13 @@ private:
 	 */
 	void create_table(int num_blocks);
 
-
-
+	/**
+	 * Utility method to create a WHERE clause from a key
+	 * and append it to the stringstream instance
+	 * @param ss
+	 * @param opcode_operands
+	 */
+	void append_where_clause(std::stringstream& ss, const ProfileTimer::Key& opcode_operands) const;
 
 	// SQLITE3 database table, columns names & prefixes.
 

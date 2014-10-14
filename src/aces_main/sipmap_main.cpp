@@ -153,6 +153,14 @@ int main(int argc, char* argv[]) {
 	sip::WorkerPersistentArrayManager persistent_worker;
 #endif //HAVE_MPI
 
+	// Sets the database name
+	// For a job from ar1.dat, the profile database will be
+	// profile.ar1.dat.0 for rank 0
+	// profile.ar1.dat.1 for rank 1 and so on.
+	std::stringstream db_name;
+	db_name << "profile." << job << "." << sip_mpi_attr.global_rank();
+	sip::ProfileTimerStore profile_timer_store(db_name.str());
+
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::string sialfpath;
@@ -194,14 +202,6 @@ int main(int argc, char* argv[]) {
 
 		//interpret current program on worker
 		{
-
-			// Sets the database name
-			// For a job from ar1.dat, the profile database will be
-			// profile.ar1.dat.0 for rank 0
-			// profile.ar1.dat.1 for rank 1 and so on.
-			std::stringstream db_name;
-			db_name << "profile." << job << "." << sip_mpi_attr.global_rank();
-			sip::ProfileTimerStore profile_timer_store(db_name.str());
 
 			sip::SIPMaPTimer sipmap_timer(sipTables.max_timer_slots());
 			sip::SIPMaPInterpreter runner(sipTables, profile_timer_store, sipmap_timer);

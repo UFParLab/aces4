@@ -37,6 +37,27 @@ public:
 		bool operator==(const BlockInfo& rhs) const;
 		bool operator<(const BlockInfo& rhs) const;
 		friend std::ostream& operator<<(std::ostream&, const ProfileTimer::BlockInfo&);
+
+	private:
+		/**
+		 * Is array1 less than array2
+		 * @param rank
+		 * @param array1
+		 * @param array2
+		 * @return
+		 */
+		bool array1_lt_array2(int rank, const int (&array1)[MAX_RANK],
+				const int (&array2)[MAX_RANK]) const;
+
+		/**
+		 * Is array1 equal to array2
+		 * @param rank
+		 * @param array1
+		 * @param array2
+		 * @return
+		 */
+		bool array1_eq_array2(int rank, const int (&array1)[MAX_RANK],
+						const int (&array2)[MAX_RANK]) const;
 	};
 
 	/** Each operation will be profiled based on opcode & list of arguments
@@ -45,7 +66,7 @@ public:
 	 * 2. the shape of the operation - encoded as indices 1, 2, 3, 4...
 	 * For a contraction C[a,b] = A [a,i] * B[b,j],
 	 * The shape of the operation is [1,2], [1,3], [2,4]
-	 * For a super instruction "execute usersuperinst A[i,j] B[q,f] C[j,i]
+	 * For a super instruction "execute usersuperinst A[i,j] B[q,f] C[j,i]"
 	 * The shape of the operation is [1,2], [3,4], [2,1]
 	 */
 	struct Key {

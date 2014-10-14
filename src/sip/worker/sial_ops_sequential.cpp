@@ -104,11 +104,13 @@ void SialOpsSequential::collective_sum(double rhs_value, int dest_array_slot) {
 
 void SialOpsSequential::set_persistent(Interpreter* interpreter,
 		int array_id, int string_slot) {
-	persistent_array_manager_->set_persistent(interpreter, array_id, string_slot);
+	if (persistent_array_manager_)
+		persistent_array_manager_->set_persistent(interpreter, array_id, string_slot);
 }
 
 void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_id, int string_slot) {
-	persistent_array_manager_->restore_persistent(interpreter, array_id, string_slot);
+	if (persistent_array_manager_)
+		persistent_array_manager_->restore_persistent(interpreter, array_id, string_slot);
 }
 
 void SialOpsSequential::end_program() {

@@ -31,9 +31,7 @@ inline ProfileTimer::Key ProfileInterpreter::make_profile_timer_key(const std::s
 		const BlockSelector &bsel = *it;
 		BlockShape bs;
 		int rank = bsel.rank_;
-		if (sip_tables_.array_rank(bsel.array_id_) == 0) { //this "array" was declared to be a scalar.  Nothing to remove from selector stack.)
-			//Block::BlockPtr block = data_manager_.get_scalar_block(bsel.array_id_);
-			//bs = block->shape();
+		if (sip_tables_.array_rank(bsel.array_id_) == 0) { //this "array" was declared to be a scalar.  Nothing to remove from selector stack.
 			continue;
 		}
 		else if (sip_tables_.is_contiguous(bsel.array_id_) && bsel.rank_ == 0) { //this is a static array provided without a selector, block is entire array
@@ -101,7 +99,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 			BlockSelector rhs_bs = block_selector_stack_.top();
 			bs_list.push_back(lhs_bs);
 			bs_list.push_back(rhs_bs);
-			bs_list.push_back(block_selector_stack_.top());
 			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
 			block_selector_stack_.push(lhs_bs);
 
@@ -141,7 +138,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 			bs_list.push_back(rhs_bs);
 			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
 			block_selector_stack_.push(lhs_bs);
-
 			profile_timer_.start_timer(key);
 			last_seen_key_ = key;
 			last_seen_pc_ = pc;
@@ -150,17 +146,17 @@ void ProfileInterpreter::pre_interpret(int pc){
 
 
 		// 1 block - in selector stack
-		case block_load_scalar_op:
-		{
-			std::list<BlockSelector> bs_list;
-			bs_list.push_back(BlockSelector(block_selector_stack_.top()));
-			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
-
-			profile_timer_.start_timer(key);
-			last_seen_key_ = key;
-			last_seen_pc_ = pc;
-		}
-		break;
+//		case block_load_scalar_op:
+//		{
+//			std::list<BlockSelector> bs_list;
+//			bs_list.push_back(BlockSelector(block_selector_stack_.top()));
+//			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
+//
+//			profile_timer_.start_timer(key);
+//			last_seen_key_ = key;
+//			last_seen_pc_ = pc;
+//		}
+//		break;
 
 		// 0 - 6 blocks - in selector stack
 		case execute_op:
@@ -188,6 +184,8 @@ void ProfileInterpreter::pre_interpret(int pc){
 
 	}
 	}
+
+
 
 }
 

@@ -168,7 +168,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_zero_block){
 	profile_timer_store.save_to_store(key1, time_count);
 
 	sip::ProfileTimer::Key key2("test2", blocks);
-	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::invalid_argument);
 }
 
 // Just inserts a one block operation.
@@ -233,7 +233,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks2;
 	blocks2.push_back(b2);
 	sip::ProfileTimer::Key key2("test1", blocks2);
-	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::invalid_argument);
 }
 
 // Inserts a 1 block operation.
@@ -260,7 +260,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block_2){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks2;
 	blocks2.push_back(b2);
 	sip::ProfileTimer::Key key2("test1", blocks2);
-	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::invalid_argument);
 }
 
 // Inserts a 1 block operation.
@@ -287,7 +287,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_one_block_3){
 	std::vector<sip::ProfileTimer::BlockInfo> blocks2;
 	blocks2.push_back(b2);
 	sip::ProfileTimer::Key key2("test1", blocks2);
-	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::invalid_argument);
 }
 
 // Just inserts a 2 block operation
@@ -516,7 +516,7 @@ TEST(SialUnitProfileTimerStore, invalid_retrieve_five_block){
 	// Remove 1 block & try
 	blocks.pop_back();
 	sip::ProfileTimer::Key key2("test1", blocks);
-	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::out_of_range);
+	ASSERT_THROW(profile_timer_store.get_from_store(key2),std::invalid_argument);
 	//std::pair<double, int> result = profile_timer_store.get_from_store(key2);
 }
 

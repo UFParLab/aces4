@@ -109,7 +109,6 @@ ProfileTimer::Key::Key(const std::string& opcode, const std::vector<BlockInfo>& 
 			indices[i] = replace_index;
 		}
 	}
-
 }
 
 
@@ -143,6 +142,7 @@ std::ostream& operator<<(std::ostream& os, const ProfileTimer::Key& obj) {
 	return os;
 }
 
+
 bool ProfileTimer::BlockInfo::operator==(const ProfileTimer::BlockInfo& rhs) const {
 	if (this->rank_ != rhs.rank_)
 		return false;
@@ -155,16 +155,51 @@ bool ProfileTimer::BlockInfo::operator==(const ProfileTimer::BlockInfo& rhs) con
 	return is_eq;
 }
 
-bool ProfileTimer::BlockInfo::operator<(const ProfileTimer::BlockInfo& rhs) const {
-	bool is_eq = true;
-	bool is_leq = true;
-	for (int i = 0; is_leq && i < MAX_RANK; ++i) {
-		is_leq = (segment_sizes_[i] <= rhs.segment_sizes_[i]);
-		is_eq = is_eq && (segment_sizes_[i] == rhs.segment_sizes_[i]);
-		is_leq = (index_ids_[i] <= rhs.index_ids_[i]);
-		is_eq = is_eq && (index_ids_[i] == rhs.index_ids_[i]);
+
+bool ProfileTimer::BlockInfo::array1_lt_array2(int rank,
+		const int (&array1)[MAX_RANK], const int (&array2)[MAX_RANK]) const {
+	for (int i=0; i<rank; i++){
+		if (array1[i] == array2[i]){
+			continue;
+		} else {
+			return array1[i] < array2[i];
+		}
 	}
-	return (is_leq && !is_eq);
+	return false;
+}
+
+bool ProfileTimer::BlockInfo::array1_eq_array2(int rank,
+		const int (&array1)[MAX_RANK], const int (&array2)[MAX_RANK]) const {
+	for (int i=0; i<rank; i++){
+		if (array1[i] != array2[i]){
+			return false;
+		}
+	}
+	return true;
+}
+
+bool ProfileTimer::BlockInfo::operator<(const ProfileTimer::BlockInfo& rhs) const {
+	if (rank_ != rhs.rank_){
+		return rank_ - rhs.rank_ < 0 ? true : false;
+	}
+
+	// If segment sizes are equal, compare indices.
+	// If indices are equal, return false (since this block is not smaller than rhs block).
+
+
+	bool segment_sizes_equal = array1_eq_array2(rank_, segment_sizes_, rhs.segment_sizes_);
+	if (!segment_sizes_equal){
+		bool this_segment_smaller = array1_lt_array2(rank_, segment_sizes_, rhs.segment_sizes_);
+		return this_segment_smaller;
+	} else {
+		bool indices_equal = array1_eq_array2(rank_, index_ids_, rhs.index_ids_);
+		if (!indices_equal){
+			bool this_indices_smaller = array1_lt_array2(rank_, index_ids_, rhs.index_ids_);
+			return this_indices_smaller;
+		} else {
+			return false;
+		}
+	}
 }
 
 ProfileTimer::Key::Key(const ProfileTimer::Key& rhs):
@@ -177,6 +212,7 @@ ProfileTimer::Key& ProfileTimer::Key::operator=(const ProfileTimer::Key& rhs){
 	return *this;
 }
 
+
 bool ProfileTimer::Key::operator<(const ProfileTimer::Key& rhs) const{
 	if (opcode_ != rhs.opcode_)
 		return opcode_ < rhs.opcode_ ;
@@ -186,16 +222,16 @@ bool ProfileTimer::Key::operator<(const ProfileTimer::Key& rhs) const{
 	if (my_size != other_size)
 		return my_size - other_size < 0 ? true : false;
 
-	std::vector<BlockInfo>::const_iterator it = blocks_.begin();
-	bool is_eq = true;
-	bool is_leq = true;
-	for (int i=0; is_leq && i<blocks_.size(); i++){
+
+	for (int i=0; i<blocks_.size(); ++i){
 		const BlockInfo & this_block = blocks_.at(i);
 		const BlockInfo & other_block = rhs.blocks_.at(i);
-		is_eq = is_eq &&  this_block == other_block;
-		is_leq = this_block < other_block;
+		if (this_block == other_block)
+			continue;
+		else return this_block < other_block;
 	}
-	return (is_leq && !is_leq);
+	return false;
+
 }
 
 template <typename TIMER>
@@ -267,8 +303,6 @@ public:
 			long tot_time = 	timers[i];
 			long count 	= 	timer_counts[i];
 			std::pair<long, long> time_count_pair = std::make_pair(tot_time, count);
-			profile_timer_store_->save_to_store(key, time_count_pair);
-
 		}
 		std::cout<<std::endl;
 	}
@@ -276,9 +310,10 @@ public:
 
 
 void ProfileTimer::print_timers(){
-	//SingleNodeProfilePrint<TimerType_t> p(profile_timer_map_);
-	SingleNodeProfileStore<TimerType_t> p(profile_timer_map_, profile_timer_store_);
-	delegate_.print_timers(p);
+	SingleNodeProfilePrint<TimerType_t> print_to_stdout(profile_timer_map_);
+	SingleNodeProfileStore<TimerType_t> save_to_store(profile_timer_map_, profile_timer_store_);
+	delegate_.print_timers(print_to_stdout);
+	delegate_.print_timers(save_to_store);
 }
 
 

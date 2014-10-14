@@ -29,6 +29,7 @@ class SialOpsParallel;
 class SialOpsSequential;
 class SialxInterpreter;
 class ProfileInterpreter;
+class SIPMaPInterpreter;
 
 class DataManager {
 public:
@@ -112,6 +113,7 @@ private:
 
 	friend class SialxInterpreter;
 	friend class ProfileInterpreter;
+	friend class SIPMaPInterpreter;
 	friend class SialOpsParallel;
 	friend class SialOpsSequential;
 	friend class ::TestControllerParallel;

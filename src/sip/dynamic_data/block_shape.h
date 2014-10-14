@@ -30,13 +30,11 @@ public:
 
 	BlockShape& operator=(const BlockShape& rhs);
 	bool operator==(const BlockShape& rhs) const;
-	bool operator<(const BlockShape& rhs) const;
+//	bool operator<(const BlockShape& rhs) const;
 	int num_elems() const;
 
 	friend std::ostream& operator<<(std::ostream&, const BlockShape &);
 	friend class Block;
-//	friend class Interpreter;
-//	friend class SialPrinter;
 
 
 //todo  this should be private

@@ -61,21 +61,21 @@ void ProfileTimerStore::sip_sqlite3_error(int rc) const {
 void ProfileTimerStore::create_table(int num_blocks) {
 	std::stringstream create_table_ss;
 	create_table_ss << "CREATE TABLE IF NOT EXISTS "<< block_table[num_blocks] << "("
-			        << opcode_column << " CHARACTER(" << max_opcode_size << "), ";
+			        << opcode_column << " CHARACTER(" << max_opcode_size << ") NOT NULL, ";
 
 	for (int bnum = 0; bnum < num_blocks; bnum++) {
 		for (int index = 0; index < MAX_RANK; index++) {
-			create_table_ss << block_prefix << bnum << indices_prefix << index << " INTEGER,";
+			create_table_ss << block_prefix << bnum << indices_prefix << index << " INTEGER  NOT NULL,";
 		}
 	}
 	for (int bnum = 0; bnum < num_blocks; bnum++) {
 		for (int segment = 0; segment < MAX_RANK; segment++) {
-			create_table_ss << block_prefix << bnum << segment_prefix << segment << " INTEGER,";
+			create_table_ss << block_prefix << bnum << segment_prefix << segment << " INTEGER  NOT NULL,";
 		}
 	}
 
-	create_table_ss << tottime_column << " BIGINT,"	// in micro-seconds
-			 	    << count_column << " BIGINT,";
+	create_table_ss << tottime_column << " BIGINT  NOT NULL,"	// in micro-seconds
+			 	    << count_column << " BIGINT  NOT NULL,";
 
 	// Create the uniqueness constraint over all columns except the totaltime & count columns
 	create_table_ss << "CONSTRAINT opcode_operands_unique UNIQUE (";
@@ -90,7 +90,7 @@ void ProfileTimerStore::create_table(int num_blocks) {
 			create_table_ss <<", " << block_prefix << bnum << segment_prefix << segment;
 		}
 	}
-	create_table_ss << ")";  // End of Constraint
+	create_table_ss << ")";  // End of Primary Key
 	create_table_ss << ");"; // End of create table
 
 	SIP_LOG(std::cout << "In create_table, Executing create table query " << create_table_ss.str() << std::endl);
@@ -113,6 +113,27 @@ void ProfileTimerStore::create_table(int num_blocks) {
 
 }
 
+void ProfileTimerStore::append_where_clause(std::stringstream& ss, const ProfileTimer::Key& opcode_operands) const {
+	int num_blocks = opcode_operands.blocks_.size();
+	ss << " WHERE " << opcode_column << "='" << opcode_operands.opcode_ << "'";
+	for (int bnum = 0; bnum < num_blocks; bnum++) {
+		for (int index = 0; index < MAX_RANK; index++) {
+			int index_to_search =
+					opcode_operands.blocks_[bnum].index_ids_[index];
+			ss << " and " << block_prefix << bnum << indices_prefix << index
+					<< " = " << index_to_search;
+		}
+	}
+	for (int bnum = 0; bnum < num_blocks; bnum++) {
+		for (int segment = 0; segment < MAX_RANK; segment++) {
+			int segment_to_search =
+					opcode_operands.blocks_[bnum].segment_sizes_[segment];
+			ss << " and " << block_prefix << bnum << segment_prefix << segment
+					<< " = " << segment_to_search;
+		}
+	}
+}
+
 ProfileTimerStore::ProfileTimerStore(const std::string &db_location):
 	db_location_(db_location), db_(NULL){
 
@@ -133,54 +154,71 @@ ProfileTimerStore::~ProfileTimerStore() {
 		sip_sqlite3_error(rc);
 }
 
-void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<long, long>& time_count_pair){
+void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<long, long>& const_time_count_pair){
 
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 
-	// Construct SQL Query String
+	std::pair<long, long> time_count_pair = const_time_count_pair;
+
+	bool do_insert = false;
+
+	// Get value from store if something exists & merge.
+	try {
+		std::pair<long, long> prev_timer_count_pair = get_from_store(opcode_operands);
+		time_count_pair.first += prev_timer_count_pair.first;
+		time_count_pair.second += prev_timer_count_pair.second;
+	} catch (const std::invalid_argument& e){
+		do_insert = true;
+		// Do nothing
+	}
+
+	std::stringstream ss;	// Will contain the query
 	int num_blocks = opcode_operands.blocks_.size();
-	check (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
-	std::stringstream ss;
-	ss << "INSERT INTO " << block_table[num_blocks] << "(";
-	ss << opcode_column ;
-	for (int bnum = 0; bnum < num_blocks; bnum++) {
-		int rank = opcode_operands.blocks_[bnum].rank_;
-		for (int index = 0; index < rank; index++) {
-			ss << ", " << block_prefix << bnum << indices_prefix << index;
+	if (!do_insert) {
+		ss << "UPDATE " << block_table[num_blocks];
+		ss << " SET " << tottime_column << " = " << time_count_pair.first << ", "
+			          << count_column << " = " << time_count_pair.second << " ";
+		append_where_clause(ss, opcode_operands);
+		ss << ";";
+	} else {
+		// Construct SQL Query String
+		check (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
+		ss << "INSERT INTO " << block_table[num_blocks] << "(";
+		ss << opcode_column ;
+		for (int bnum = 0; bnum < num_blocks; bnum++) {
+			for (int index = 0; index < MAX_RANK; index++) {
+				ss << ", " << block_prefix << bnum << indices_prefix << index;
+			}
 		}
-	}
-	for (int bnum = 0; bnum < num_blocks; bnum++) {
-		int rank = opcode_operands.blocks_[bnum].rank_;
-		for (int segment = 0; segment < rank; segment++) {
-			ss << ", " << block_prefix << bnum << segment_prefix << segment;
+		for (int bnum = 0; bnum < num_blocks; bnum++) {
+			for (int segment = 0; segment < MAX_RANK; segment++) {
+				ss << ", " << block_prefix << bnum << segment_prefix << segment;
+			}
 		}
-	}
-	ss << ", " << tottime_column;
-	ss << ", " << count_column;
-	ss << ")";
+		ss << ", " << tottime_column;
+		ss << ", " << count_column;
+		ss << ")";
 
-	// Values to put into database
-
-	ss << " VALUES (";
-	ss << "'" << opcode_operands.opcode_ << "'";
-	const std::vector<ProfileTimer::BlockInfo> & blocks = opcode_operands.blocks_;
-	for (int bnum = 0; bnum < num_blocks; bnum++) {
-		int rank = opcode_operands.blocks_[bnum].rank_;
-		for (int index = 0; index < rank; index++) {
-			ss << ", " << opcode_operands.blocks_[bnum].index_ids_[index];
+		// Values to put into database
+		ss << " VALUES (";
+		ss << "'" << opcode_operands.opcode_ << "'";
+		const std::vector<ProfileTimer::BlockInfo> & blocks = opcode_operands.blocks_;
+		for (int bnum = 0; bnum < num_blocks; bnum++) {
+			for (int index = 0; index < MAX_RANK; index++) {
+				ss << ", " << opcode_operands.blocks_[bnum].index_ids_[index];
+			}
 		}
-	}
-	for (int bnum = 0; bnum < num_blocks; bnum++) {
-		int rank = opcode_operands.blocks_[bnum].rank_;
-		for (int segment = 0; segment < rank; segment++) {
-			int segment_to_search = opcode_operands.blocks_[bnum].segment_sizes_[segment];
-			ss << ", " << opcode_operands.blocks_[bnum].segment_sizes_[segment];
+		for (int bnum = 0; bnum < num_blocks; bnum++) {
+			for (int segment = 0; segment < MAX_RANK; segment++) {
+				int segment_to_search = opcode_operands.blocks_[bnum].segment_sizes_[segment];
+				ss << ", " << opcode_operands.blocks_[bnum].segment_sizes_[segment];
+			}
 		}
+		ss << ", " << time_count_pair.first;
+		ss << ", " << time_count_pair.second;
+		ss << ");";
+		// ss now contains the complete query.
 	}
-	ss << ", " << time_count_pair.first;
-	ss << ", " << time_count_pair.second;
-	ss << ");";
-	// ss now contains the complete query.
 
 	SIP_LOG(std::cout << "In save_to_store, Executing Insert query " << ss.str() << std::endl);
 
@@ -212,22 +250,10 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 	check (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
 	std::stringstream ss;
 	ss << "SELECT "<< tottime_column << ", " << count_column  <<" FROM "
-	   << block_table[num_blocks]
-	   << " WHERE "<< opcode_column << "='" << opcode_operands.opcode_ << "'";
-	for (int bnum = 0; bnum < num_blocks; bnum++) {
-		int rank = opcode_operands.blocks_[bnum].rank_;
-		for (int index = 0; index < rank; index++) {
-			int index_to_search = opcode_operands.blocks_[bnum].index_ids_[index];
-			ss << " and " << block_prefix << bnum << indices_prefix << index << " = " << index_to_search;
-		}
-	}
-	for (int bnum = 0; bnum < num_blocks; bnum++) {
-		int rank = opcode_operands.blocks_[bnum].rank_;
-		for (int segment = 0; segment < rank; segment++) {
-			int segment_to_search = opcode_operands.blocks_[bnum].segment_sizes_[segment];
-			ss << " and "<< block_prefix << bnum << segment_prefix << segment << " = " << segment_to_search;
-		}
-	}
+	   << block_table[num_blocks];
+
+	append_where_clause(ss, opcode_operands);
+
 	ss << ";";
 	// ss now contains the complete query.
 
@@ -257,7 +283,7 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 		rc = sqlite3_finalize(get_from_store_stmt);
 		if (rc != SQLITE_OK)
 			sip_sqlite3_error(rc);
-		throw std::out_of_range(err_ss.str());
+		throw std::invalid_argument(err_ss.str());
 	}
 
 	// Make sure there is just one row in the result.

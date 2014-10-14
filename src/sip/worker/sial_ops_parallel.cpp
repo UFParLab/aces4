@@ -448,7 +448,8 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 			ack_handler_.expect_ack_from(my_server, set_persistent_tag);
 		}
 	} else {
-		persistent_array_manager_->set_persistent(worker, array_slot,
+		if (persistent_array_manager_)
+			persistent_array_manager_->set_persistent(worker, array_slot,
 				string_slot);
 	}
 }
@@ -482,8 +483,8 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 			ack_handler_.expect_ack_from(my_server, restore_persistent_tag);
         	}
 	} else {
-		persistent_array_manager_->restore_persistent(worker, array_slot,
-				string_slot);
+		if (persistent_array_manager_)
+			persistent_array_manager_->restore_persistent(worker, array_slot, string_slot);
 		SIP_LOG(std::cout << "returned from restore_persistent" << std::endl << std::flush);
 	}
 
