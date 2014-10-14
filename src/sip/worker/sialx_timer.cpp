@@ -44,7 +44,7 @@ public:
 		long long * timer_counts = timer.get_timer_count();
 		const int LW = 10;	// Line num
 		const int CW = 15;	// Time
-		const int SW = 20;	// String
+		const int SW = 30;	// String
 
 		assert(timer.check_timers_off());
 //		std::cout<<"Timers"<<std::endl
@@ -55,6 +55,7 @@ public:
 			<<std::setw(CW)<<std::left<<"AvgBlkWait"
 			<<std::setw(CW)<<std::left<<"Tot"
 			<<std::setw(CW)<<std::left<<"TotBlkWait"
+			<<std::setw(CW)<<std::left<<"Count"
 			<<std::endl;
 
 		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
@@ -65,7 +66,8 @@ public:
 		for (int i=1; i<timer.max_slots - sialx_lines_; i++){
 			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
 				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
-				double avg_time = tot_time / timer_counts[i + total_time_timer_offset * sialx_lines_];
+				long count = timer_counts[i + total_time_timer_offset * sialx_lines_];
+				double avg_time = tot_time / count;
 				double tot_blk_wait = 0;
 				double avg_blk_wait = 0;
 
@@ -81,6 +83,7 @@ public:
 						<< std::setw(CW)<< std::left << avg_blk_wait
 						<< std::setw(CW)<< std::left << tot_time
 						<< std::setw(CW)<< std::left << tot_blk_wait
+						<< std::setw(CW)<< std::left << count
 						<< std::endl;
 			}
 		}
@@ -145,7 +148,7 @@ public:
 			long long * timer_counts = timer.get_timer_count();
 			const int LW = 10;	// Line num
 			const int CW = 15;	// Time
-			const int SW = 20;	// String
+			const int SW = 30;	// String
 
 			assert(timer.check_timers_off());
 			out_<<"Timers"<<std::endl
@@ -155,6 +158,7 @@ public:
 				<<std::setw(CW)<<std::left<<"AvgBlkWait"
 				<<std::setw(CW)<<std::left<<"Tot"
 				<<std::setw(CW)<<std::left<<"TotBlkWait"
+				<<std::setw(CW)<<std::left<<"Count"
 				<<std::endl;
 
 			int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
@@ -166,7 +170,8 @@ public:
 
 				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
 					double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
-					double avg_time = tot_time / timer_counts[i + total_time_timer_offset * sialx_lines_];
+					long count = timer_counts[i + total_time_timer_offset * sialx_lines_];
+					double avg_time = tot_time / count;
 					double tot_blk_wait = 0;
 					double avg_blk_wait = 0;
 
@@ -181,6 +186,7 @@ public:
 							<< std::setw(CW)<< std::left << avg_blk_wait
 							<< std::setw(CW)<< std::left << tot_time
 							<< std::setw(CW)<< std::left << tot_blk_wait
+							<< std::setw(CW)<< std::left << count
 							<< std::endl;
 				}
 			}

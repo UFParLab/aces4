@@ -14,6 +14,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include <sstream>
 
 namespace sip {
 
@@ -138,7 +139,6 @@ std::ostream& operator<<(std::ostream& os, const ProfileTimer::Key& obj) {
 	for (; it != obj.blocks_.end(); ++it){
 		os << (it == obj.blocks_.begin() ? "" : ", ") << *it;
 	}
-
 	return os;
 }
 
@@ -249,13 +249,14 @@ public:
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
 		const int CW = 15;	// Time
-		const int SW = 40;	// String
+		const int SW = 110;	// String
 
 		assert(timer.check_timers_off());
 		std::cout<<"Timers"<<std::endl
 			<<std::setw(SW)<<std::left<<"Type"
 			<<std::setw(CW)<<std::left<<"Avg"
 			<<std::setw(CW)<<std::left<<"Tot"
+			<<std::setw(CW)<<std::left<<"Count"
 			<<std::endl;
 
 		std::cout.precision(6); // Reset precision to 6 places.
@@ -265,10 +266,15 @@ public:
 
 			double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
 			double avg_time = tot_time / timer_counts[i];
+			long count = timer_counts[i];
 
-			std::cout<<std::setw(SW)<< std::left << it->first
+			std::stringstream ss;
+			ss << it->first;
+
+			std::cout<<std::setw(SW)<< std::left << ss.str()
 					<< std::setw(CW)<< std::left << avg_time
 					<< std::setw(CW)<< std::left << tot_time
+					<< std::setw(CW)<< std::left << count
 					<< std::endl;
 		}
 		std::cout<<std::endl;

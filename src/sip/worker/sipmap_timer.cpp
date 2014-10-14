@@ -34,24 +34,29 @@ void SIPMaPTimer::print_timers(const std::vector<std::string>& line_to_str, std:
 	long long * timer_counts = timer_switched_;
 	const int LW = 10;	// Line num
 	const int CW = 15;	// Time
-	const int SW = 20;	// String
+	const int SW = 30;	// String
 
 	out << "Timers" << std::endl
 			<< std::setw(LW) << std::left << "Line"
 			<< std::setw(SW) << std::left << "Type"
 			<< std::setw(CW) << std::left << "Avg"
-			<< std::setw(CW) << std::left << "Tot" << std::endl;
+			<< std::setw(CW) << std::left << "Tot"
+			<< std::setw(CW) << std::left << "Count"
+			<< std::endl;
 
 	out.precision(6); // Reset precision to 6 places.
 	for (int i = 1; i < max_slots_; i++) {
 		if (timer_counts[i] > 0L) {
 			double tot_time = to_seconds(timers[i]);	// Microsecond to second
 			double avg_time = tot_time / timer_counts[i];
+			long count = timer_counts[i];
 
 			out << std::setw(LW) << std::left << i
 					<< std::setw(SW) << std::left << line_to_str.at(i)
 					<< std::setw(CW) << std::left << avg_time
-					<< std::setw(CW) << std::left << tot_time << std::endl;
+					<< std::setw(CW) << std::left << tot_time
+					<< std::setw(CW) << std::left << count
+					<< std::endl;
 		}
 	}
 	out << std::endl;

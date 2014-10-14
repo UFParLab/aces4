@@ -1365,10 +1365,21 @@ TEST(BasicSial,assign_to_static_array_test) {
 
 TEST(BasicSial,return_sval_test){
 	std::string job("return_sval_test");
+	{
+		init_setup(job.c_str());
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		int segs[] = { 2, 2, 1 };
+		set_aoindex_info(3, segs);
+		finalize_setup();
+	}
+	barrier();
 	std::stringstream output;
 	TestController controller(job, false, true, "", output);
 	controller.initSipTables();
 	controller.runWorker();
+	ASSERT_EQ(controller.scalar_value("x"), controller.scalar_value("y"));
 }
 //****************************************************************************************************************
 
