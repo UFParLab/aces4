@@ -5938,7 +5938,8 @@
       DO Nt  
       DO i7  
         #execute print_block Xijk(Nt,i7) 
-         execute return_sval Xijk[Nt,i7] etemp  
+         #execute return_sval Xijk[Nt,i7] etemp  
+         etemp = Xijk[Nt,i7]
          if etemp < 0.0 
             exit 
          endif  
