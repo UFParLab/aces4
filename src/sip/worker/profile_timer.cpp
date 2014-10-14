@@ -283,7 +283,9 @@ private:
 	ProfileTimerStore* profile_timer_store_;
 public:
 	SingleNodeProfileStore(const ProfileTimer::TimerMap_t &profile_timer_map, ProfileTimerStore* profile_timer_store)
-		: profile_timer_map_(profile_timer_map), profile_timer_store_(profile_timer_store) {}
+		: profile_timer_map_(profile_timer_map), profile_timer_store_(profile_timer_store) {
+		check(profile_timer_store != NULL, "Assigning a NULL profile_timer_store to SingleNodeProfileStore instance");
+	}
 	virtual ~SingleNodeProfileStore(){}
 	virtual void execute(TIMER& timer){
 
@@ -303,6 +305,7 @@ public:
 			long tot_time = 	timers[i];
 			long count 	= 	timer_counts[i];
 			std::pair<long, long> time_count_pair = std::make_pair(tot_time, count);
+			profile_timer_store_->save_to_store(key, time_count_pair);
 		}
 		std::cout<<std::endl;
 	}
