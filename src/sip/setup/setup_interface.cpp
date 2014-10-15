@@ -10,6 +10,7 @@
 #include "io_utils.h"
 #include "setup_writer.h"
 #include "setup_reader.h"
+#include "setup_reader_binary.h"
 #include "sip.h"
 
 setup::SetupWriter *writer;
@@ -104,7 +105,7 @@ void set_config_info(const char* sialfile, const char* key, const char* value){
 void dump_file(const char * name){
 	std::string fname = std::string(name);
 	setup::BinaryInputFile bfile (fname);
-	setup::SetupReader reader(bfile);
+	setup::SetupReaderBinary reader(bfile);
 	reader.dump_data();
 }
 

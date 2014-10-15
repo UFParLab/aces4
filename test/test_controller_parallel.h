@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include "setup_reader.h"
+#include "setup_reader_binary.h"
 #include "test_constants.h"
 #include "sialx_timer.h"
 #include "server_timer.h"
@@ -72,7 +73,7 @@ public:
 	const std::string job_;
 	const std::string comment_;
 	bool verbose_;
-	setup::SetupReader* setup_reader_;
+	setup::SetupReaderBinary* setup_reader_;
 	sip::SipTables* sip_tables_;
 	sip::WorkerPersistentArrayManager* wpam_;
 	sip::ServerPersistentArrayManager* spam_;

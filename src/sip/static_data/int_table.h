@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 #include <exception>
+#include "io_utils.h"
 #include "setup_reader.h"
 #include <stdexcept>
 

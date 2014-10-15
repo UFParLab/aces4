@@ -35,10 +35,12 @@ src/sip/sip_interface.f
 ACES_SETUPFILES=\
 ./src/sip/setup/io_utils.h\
 ./src/sip/setup/setup_reader.h\
-./src/sip/setup/setup_interface.h\
-./src/sip/setup/setup_writer.h\
 ./src/sip/setup/setup_reader.cpp\
+./src/sip/setup/setup_reader_binary.h\
+./src/sip/setup/setup_reader_binary.cpp\
+./src/sip/setup/setup_interface.h\
 ./src/sip/setup/setup_interface.cpp\
+./src/sip/setup/setup_writer.h\
 ./src/sip/setup/setup_writer.cpp\
 ./src/sip/setup/io_utils.cpp
 

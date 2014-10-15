@@ -78,10 +78,12 @@ configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
 set(ACES_SETUP_FILES 
     src/sip/setup/io_utils.h;
     src/sip/setup/setup_reader.h;
-    src/sip/setup/setup_interface.h;
-    src/sip/setup/setup_writer.h;
     src/sip/setup/setup_reader.cpp;
+    src/sip/setup/setup_reader_binary.h;
+    src/sip/setup/setup_reader_binary.cpp;
+    src/sip/setup/setup_interface.h;
     src/sip/setup/setup_interface.cpp;
+    src/sip/setup/setup_writer.h;
     src/sip/setup/setup_writer.cpp;
     src/sip/setup/io_utils.cpp)
 
