@@ -57,16 +57,53 @@ inline ProfileTimer::Key SIPMaPInterpreter::make_profile_timer_key(opcode_t opco
 void SIPMaPInterpreter::handle_execute_op(int pc) {
 	int num_args = arg1(pc) ;
 	int func_slot = arg0(pc);
+
+	// Do the super instruction if the number of args is > 1
+	// and if the parameters are only written to (all 'w')
+	// and if all the arguments are either static or scalar
+	bool all_write = true;
+	if (num_args >= 1){
+		const std::string signature(
+				sip_tables_.special_instruction_manager().get_signature(func_slot));
+		for (int i=0; i<signature.size(); i++){
+			if (signature[i] != 'w'){
+				all_write = false;
+				break;
+			}
+		}
+	} else {
+		all_write = false;
+	}
+	bool all_scalar_or_static = true;
+
 	std::string opcode_name = sip_tables_.special_instruction_manager().name(func_slot);
 	std::list<BlockSelector> bs_list;
 	for (int i=0; i<num_args; i++){
-		bs_list.push_back(block_selector_stack_.top());
+		BlockSelector& bs = block_selector_stack_.top();
+		bs_list.push_back(bs);
+		if (!sip_tables_.is_contiguous(bs.array_id_) && !sip_tables_.is_scalar(bs.array_id_))
+			all_scalar_or_static = false;
+
 		block_selector_stack_.pop();
 	}
 	ProfileTimer::Key key = make_profile_timer_key(opcode_name, bs_list);
 	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 	double time = timer_count_pair.first / (double)timer_count_pair.second;
 	sipmap_timer_.record_time(line_number(), time);
+
+	if (all_write && all_scalar_or_static){
+		std::cout << "Executing Super Instruction "
+				<< sip_tables_.special_instruction_manager().name(func_slot)
+				<< " at line " << line_number() << std::endl;
+		// Push back blocks on stack and execute the super instruction.
+		while (!bs_list.empty()){
+			BlockSelector bs = bs_list.back();
+			block_selector_stack_.push(bs);
+			bs_list.pop_back();
+		}
+		SialxInterpreter::handle_execute_op(pc);
+	}
+
 }
 
 void SIPMaPInterpreter::handle_block_copy_op(int pc) {
@@ -178,8 +215,13 @@ void SIPMaPInterpreter::handle_block_contract_to_scalar_op(int pc) {
 }
 
 void SIPMaPInterpreter::handle_block_load_scalar_op(int pc){
-	block_selector_stack_.pop();
-	expression_stack_.push(0.0);
+	BlockSelector &bs = block_selector_stack_.top();
+	if (sip_tables_.is_contiguous(bs.array_id_)){
+		SialxInterpreter::handle_block_load_scalar_op(pc);
+	} else {
+		block_selector_stack_.pop();
+		expression_stack_.push(0.0);
+	}
 }
 
 
