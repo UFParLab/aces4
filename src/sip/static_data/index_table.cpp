@@ -229,8 +229,8 @@ void IndexTable::init(setup::InputStream &siox_file,
 	//set up the segment info map
 	segment_descriptors_[simple] = new SimpleIndexSegmentDescriptor;
 	setup::SetupReader::SetupSegmentInfoMap::const_iterator it;
-	for (it = setup_info.segment_map().begin();
-			it != setup_info.segment_map().end(); ++it) {
+	for (it = setup_info.segment_map_.begin();
+			it != setup_info.segment_map_.end(); ++it) {
 		IndexType_t index_type = it->first;
 		segment_descriptors_[index_type] = new NonuniformSegmentDescriptor(
 				it->second);

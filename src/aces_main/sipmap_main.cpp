@@ -10,7 +10,6 @@
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
-#include "setup_reader_binary.h"
 #include "assert.h"
 #include "profile_timer_store.h"
 #include "sipmap_timer.h"
@@ -139,12 +138,13 @@ int main(int argc, char* argv[]) {
 
 	//initialize setup data
 	setup::BinaryInputFile setup_file(job);
-	setup::SetupReaderBinary setup_reader(setup_file);
+	setup::SetupReader setup_reader(setup_file);
 	setup_reader.aces_validate();
 
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 
-	const setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
+	setup::SetupReader::SialProgList::iterator it;
 
 #ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
 	db_name << "profile." << job << "." << sip_mpi_attr.global_rank();
 	sip::ProfileTimerStore profile_timer_store(db_name.str());
 
-	setup::SetupReader::SialProgList::const_iterator it;
+
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::string sialfpath;
 		sialfpath.append(sialx_file_dir);

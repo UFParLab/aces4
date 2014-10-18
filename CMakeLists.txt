@@ -79,8 +79,6 @@ set(ACES_SETUP_FILES
     src/sip/setup/io_utils.h;
     src/sip/setup/setup_reader.h;
     src/sip/setup/setup_reader.cpp;
-    src/sip/setup/setup_reader_binary.h;
-    src/sip/setup/setup_reader_binary.cpp;
     src/sip/setup/setup_interface.h;
     src/sip/setup/setup_interface.cpp;
     src/sip/setup/setup_writer.h;
@@ -235,11 +233,13 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
     ${CMAKE_SOURCE_DIR}/sqlite3;
+    ${CMAKE_SOURCE_DIR}/jsoncpp;
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
+    jsoncpp;
     sqlite3l;
     #${CMAKE_DL_LIBS};		# Needed by SQLITE3 but disabled by use of -DSQLITE_OMIT_LOAD_EXTENSION
     ${MPI_LIBRARIES};
@@ -333,7 +333,12 @@ add_library(sqlite3l;
 # Disables use of pthread and dlopen in sqlite. (Other options copied from sqlite3 automake file)
 set_target_properties(sqlite3l PROPERTIES COMPILE_DEFINITIONS 
 			"SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0; SQLITE_ENABLE_FTS3; SQLITE_ENABLE_RTREE")
-    
+
+# Add Jsoncpp library
+add_library(jsoncpp;
+	jsoncpp/jsoncpp.cpp;
+	jsoncpp/json/json.h;
+	jsoncpp/json/json-forwards.h)    
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
@@ -351,6 +356,9 @@ add_executable(aces4_sipmap src/aces_main/sipmap_main.cpp)
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
+# print_init_file executable
+add_executable(print_init_file src/util/print_init_file.cpp)
+
 #SQLITE3 Shell
 add_executable(sqlite3 sqlite3/shell.c sqlite3/sqlite3.h)
 
@@ -367,13 +375,17 @@ set_target_properties(aces4_sipmap PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
 
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_sipmap ${TOLINK_LIBRARIES})
-target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
+target_link_libraries(print_siptables ${TOLINK_LIBRARIES})
+target_link_libraries(print_init_file ${TOLINK_LIBRARIES})  
 target_link_libraries(sqlite3 sqlite3l)
 
 # Dependencies
@@ -382,11 +394,13 @@ if(HAVE_CUDA)
 	add_dependencies(aces4_profile tensordil superinstructions cudasuperinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(aces4_profile tensordil superinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
+	add_dependencies(print_init_file tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_core tensordil)

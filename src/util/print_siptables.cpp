@@ -9,7 +9,6 @@
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
-#include "setup_reader_binary.h"
 #include "assert.h"
 #include "sialx_timer.h"
 #include "sip_tables.h"
@@ -68,12 +67,11 @@ int main(int argc, char* argv[]) {
 
 	//initialize setup data
 	setup::BinaryInputFile setup_file(job);
-	setup::SetupReaderBinary setup_reader(setup_file);
-
+	setup::SetupReader setup_reader(setup_file);
 
 	std::cout << "SetupReader::" <<std::endl << setup_reader << std::endl;
 
-	const setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
+	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::const_iterator it;
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::string sialfpath;

@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 aces4_profile aces4_sipmap print_siptables sqlite3
+bin_PROGRAMS=aces4 aces4_profile aces4_sipmap print_siptables print_init_file sqlite3
 
 # Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
@@ -19,6 +19,11 @@ noinst_LIBRARIES += libsqlite3.a
 libsqlite3_a_SOURCES = ./sqlite3/sqlite3.c  ./sqlite3/sqlite3.h
 # Disables use of pthread and dlopen in sqlite.
 libsqlite3_a_CPPFLAGS = -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_RTREE
+
+# External Project jsoncpp
+noinst_LIBRARIES += libjsoncpp.a
+libjsoncpp_a_SOURCES = ./jsoncpp/jsoncpp.cpp ./jsoncpp/json/json.h ./jsoncpp/json/json-forwards.h
+
 
 # Build SQLITE3 Shell
 sqlite3_SOURCES = ./sqlite3/shell.c ./sqlite3/sqlite3.h
@@ -36,8 +41,6 @@ ACES_SETUPFILES=\
 ./src/sip/setup/io_utils.h\
 ./src/sip/setup/setup_reader.h\
 ./src/sip/setup/setup_reader.cpp\
-./src/sip/setup/setup_reader_binary.h\
-./src/sip/setup/setup_reader_binary.cpp\
 ./src/sip/setup/setup_interface.h\
 ./src/sip/setup/setup_interface.cpp\
 ./src/sip/setup/setup_writer.h\
@@ -186,27 +189,42 @@ print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
 
+print_init_file_SOURCES=\
+	$(ACES_SOURCEFILES)\
+	./src/util/print_init_file.cpp
+
 aces4_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 	
 aces4_profile_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
 aces4_sipmap_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
 print_siptables_LDADD=\
 	libtensordil.a \
 	libsqlite3.a \
+	libjsoncpp.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+	
+print_init_file_LDADD=\
+	libtensordil.a \
+	libsqlite3.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
@@ -242,6 +260,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/mpi\
 -I${top_srcdir}/src/sip/cuda\
 -I${top_srcdir}/sqlite3\
+-I${top_srcdir}/jsoncpp\
 -I${top_srcdir}/test\
 -I${top_srcdir}/test/gtest-1.7.0/include
 
@@ -322,6 +341,7 @@ TEST_LDADD_VARS = \
 	test/libgtest_main.la \
 	libtensordil.a \
 	libsqlite3.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS) 
 #	$(PTHREAD_LIBS) 

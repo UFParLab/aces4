@@ -626,7 +626,7 @@ void SialxInterpreter::handle_block_contract_op(int pc) {
 }
 
 void SialxInterpreter::handle_block_contract_to_scalar_op(int pc) {
-	Block::BlockPtr dblock = data_manager_.scalar_blocks_[arg1(pc)];
+	//Block::BlockPtr dblock = data_manager_.scalar_blocks_.at(arg1(pc));
 	double result;
 	segment_size_array_t dummy_dsegment_sizes;
 	const index_selector_t& selectors = index_selectors(pc);

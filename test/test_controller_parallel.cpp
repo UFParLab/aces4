@@ -17,7 +17,6 @@
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
-#include "setup_reader_binary.h"
 
 #include "sip_tables.h"
 #include "sialx_interpreter.h"
@@ -66,10 +65,10 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	sip::GlobalState::reinitialize();
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
-		setup_reader_ = new setup::SetupReaderBinary(setup_file);
-		progs_ = const_cast<setup::SetupReader::SialProgList*>(&setup_reader_->sial_prog_list());
+		setup_reader_ = new setup::SetupReader(setup_file);
+		progs_ = &setup_reader_->sial_prog_list();
 	} else {
-		setup_reader_ = setup::SetupReaderBinary::get_empty_reader();
+		setup_reader_ = setup::SetupReader::get_empty_reader();
 		progs_ = new std::vector<std::string>();
 		progs_->push_back(job + ".siox");
 	}
@@ -84,7 +83,6 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	if (verbose) {
 		std::cout << "****** Creating controller for test " << job_
 				<< " *********!!!\n" << std::flush;
-		std::cout << "Setup Reader : " << *setup_reader_ << std::endl;
 	}
 	barrier();
 }

@@ -2,7 +2,6 @@
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
-#include "setup_reader_binary.h"
 #include "assert.h"
 #include "sialx_timer.h"
 #include "sip_tables.h"
@@ -45,6 +44,21 @@
 void bt_sighandler(int signum) {
 	std::cerr << "Interrupt signal (" << signum << ") received." << std::endl;
     sip_abort();
+}
+
+void print_usage(const std::string& program_name) {
+	std::cerr << "Usage : " << program_name
+			  << " -d <init_data_file> -j <init_json_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>"
+			  << std::endl;
+	std::cerr << "\t -d : binary initialization data file " << std::endl;
+	std::cerr << "\t -j : json initialization file, use EITHER -d or -j " << std::endl;
+	std::cerr << "\t -s : directory of compiled sialx files  " << std::endl;
+	std::cerr << "\t -m : memory to be used by workers (and servers) specified in GB " << std::endl;
+	std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB"
+			  << std::endl;
+	std::cerr << "\tm is the approximate memory to use. Actual usage will be more."
+			  << std::endl;
+	std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -91,20 +105,32 @@ int main(int argc, char* argv[]) {
 	char *init_file = "data.dat";
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
+	// Json file, no default file
+	char *json_file = NULL;
+
+	bool json_specified = false;
+	bool init_file_specified = false;
 
 	std::size_t memory = 2147483648;	// Default memory usage : 2 GB
 
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
 	// d: name of .dat file.
+	// j: name of json file (must specify either of d or j, not both.
 	// s: directory to look for siox files
 	// m: approximate memory to be used. Actual usage will be more than this.
 	// h & ? are for help. They require no arguments
-	const char *optString = "d:s:m:h?";
+	const char *optString = "d:j:s:m:h?";
 	int c;
 	while ((c = getopt(argc, argv, optString)) != -1){
 		switch (c) {
 		case 'd':{
 			init_file = optarg;
+			init_file_specified = true;
+		}
+			break;
+		case 'j' :{
+			json_file = optarg;
+			json_specified = true;
 		}
 			break;
 		case 's':{
@@ -121,29 +147,41 @@ int main(int argc, char* argv[]) {
 			break;
 		case 'h':case '?':
 		default:
-			std::cerr << "Usage : "<< argv[0] <<" -d <init_data_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>" << std::endl;
-			std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
-			std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
-			std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
+			std::string program_name = argv[0];
+			print_usage(program_name);
 			return 1;
 		}
+	}
+
+	if (init_file_specified && json_specified){
+		std::cerr << "Cannot specify both init binary data file and json init file !" << std::endl;
+		std::string program_name = argv[0];
+		print_usage(program_name);
+		return 1;
 	}
 
 	// Set Approx Max memory usage
 	sip::GlobalState::set_max_data_memory_usage(memory);
 
-	//create setup_file
-	std::string job(init_file);
-	SIP_MASTER_LOG(std::cout << "Initializing data from " << job << std::endl);
 
-	//initialize setup data
-	setup::BinaryInputFile setup_file(job);
-	setup::SetupReaderBinary setup_reader(setup_file);
-	setup_reader.aces_validate();
+	setup::SetupReader *setup_reader = NULL;
+
+	if (json_specified){
+		std::ifstream json_ifstream(json_file, std::ifstream::in);
+		setup_reader = new setup::SetupReader(json_ifstream);
+	} else {
+		//create setup_file
+		std::string job(init_file);
+		SIP_MASTER_LOG(std::cout << "Initializing data from " << job << std::endl);
+		setup::BinaryInputFile setup_file(job); //initialize setup data
+		setup_reader = new setup::SetupReader(setup_file);
+	}
+	setup_reader->aces_validate();
 
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 
-	const setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
+	setup::SetupReader::SialProgList &progs = setup_reader->sial_prog_list();
+	setup::SetupReader::SialProgList::const_iterator it;
 
 #ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
@@ -152,8 +190,9 @@ int main(int argc, char* argv[]) {
 	sip::WorkerPersistentArrayManager persistent_worker;
 #endif //HAVE_MPI
 
-	setup::SetupReader::SialProgList::const_iterator it;
+
 	for (it = progs.begin(); it != progs.end(); ++it) {
+		std::cout << it->c_str() << std::endl;
 		std::string sialfpath;
 		sialfpath.append(sialx_file_dir);
 		sialfpath.append("/");
@@ -170,7 +209,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 		setup::BinaryInputFile siox_file(sialfpath);
-		sip::SipTables sipTables(setup_reader, siox_file);
+		sip::SipTables sipTables(*setup_reader, siox_file);
 
 		SIP_MASTER_LOG(std::cout << "SIP TABLES" << '\n' << sipTables << std::endl);
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
@@ -217,6 +256,7 @@ int main(int argc, char* argv[]) {
 #endif
 	} //end of loop over programs
 
+	delete setup_reader;
 
 #ifdef HAVE_TAU
 		TAU_STATIC_PHASE_STOP("SIP Main");

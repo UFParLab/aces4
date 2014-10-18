@@ -71,10 +71,10 @@ ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 
 				Block::BlockPtr block = NULL;
 				std::string name = sip_tables_.array_name(i);
-				setup::SetupReader::NamePredefinedContiguousArrayMapConstIterator b =
-						setup_reader_.name_to_predefined_contiguous_array_map().find(
+				setup::SetupReader::NamePredefinedContiguousArrayMapIterator b =
+						setup_reader_.name_to_predefined_contiguous_array_map_.find(
 								name);
-                if (b != setup_reader_.name_to_predefined_contiguous_array_map().end()){
+                if (b != setup_reader_.name_to_predefined_contiguous_array_map_.end()){        
 					//array is predefined and in setup reader
 					block = b->second.second;
 					insert_contiguous_array(i, block);
@@ -84,7 +84,7 @@ ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 					block = create_contiguous_array(i);
 					int block_rank = sip_tables_.array_rank(i);
 					std::pair<int, Block::BlockPtr> zeroed_block_pair = std::make_pair(i, block);
-					setup_reader_.name_to_predefined_contiguous_array_map().insert(make_pair(name, zeroed_block_pair));
+					setup_reader_.name_to_predefined_contiguous_array_map_.insert(make_pair(name, zeroed_block_pair));
 				}
 			} else { //not predefined, just create it
 				create_contiguous_array(i);

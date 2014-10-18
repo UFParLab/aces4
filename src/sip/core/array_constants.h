@@ -65,6 +65,12 @@ IndexType_t map_index_type(std::string name);
 
 std::string index_type_name(IndexType_t t);
 
+int indexTypeToInt(IndexType_t);
+
+IndexType_t intToIndexType_t(int);
+
+IndexType_t map_index_type(std::string name);
+
 
 /*! bit flags representing constants for new array attributes these can be combined
  * with bitwise or as below
@@ -150,9 +156,6 @@ bool is_sparse_attr(int attr);
 bool is_contiguous_local_attr(int attr);
 
 ArrayType_t intToArrayType_t(int);
-int indexTypeToInt(IndexType_t);
-IndexType_t intToIndexType_t(int);
-IndexType_t map_index_type(std::string name);
 
 }//namespace array
 

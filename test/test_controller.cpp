@@ -62,10 +62,10 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 //	}
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
-		setup_reader_ = new setup::SetupReaderBinary(setup_file);
-		progs_ = const_cast<setup::SetupReader::SialProgList*>(&setup_reader_->sial_prog_list());
+		setup_reader_ = new setup::SetupReader(setup_file);
+		progs_ = &setup_reader_->sial_prog_list();
 	} else {
-		setup_reader_ = setup::SetupReaderBinary::get_empty_reader();
+		setup_reader_ = setup::SetupReader::get_empty_reader();
 		progs_ = new std::vector<std::string>();
 		progs_->push_back(job + ".siox");
 	}
