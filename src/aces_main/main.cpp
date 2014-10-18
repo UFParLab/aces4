@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
 
-	sip::SipTimer_t::init_global_timers(&argc, &argv);
+	INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	char *init_file = "data.dat"; // Default initialization file is data.dat
 	char *sialx_file_dir = ".";   // Default directory for compiled sialx files is "."
@@ -104,13 +104,7 @@ int main(int argc, char* argv[]) {
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
 
-#ifdef HAVE_TAU
-		//TAU_REGISTER_EVENT(tau_event, it->c_str());
-		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
-		//TAU_STATIC_PHASE_START(it->c_str());
-		TAU_PHASE_CREATE_DYNAMIC(tau_dtimer, it->c_str(), "", TAU_USER);
-		TAU_PHASE_START(tau_dtimer);
-#endif
+		START_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(*setup_reader, siox_file);
@@ -126,10 +120,12 @@ int main(int argc, char* argv[]) {
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
+			server_timer.start_program_timer();
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
+			server_timer.stop_program_timer();
 			server_timer.print_timers(lno2name);
 		} else
 #endif
@@ -137,29 +133,26 @@ int main(int argc, char* argv[]) {
 		//interpret current program on worker
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
-
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
 			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
-
+			sialxTimer.start_program_timer();
 			sialxTimer.print_timers(lno2name);
 
 		}// end of worker or server
 
-#ifdef HAVE_TAU
-		//TAU_STATIC_PHASE_STOP(it->c_str());
-  		TAU_PHASE_STOP(tau_dtimer);
-#endif
+		STOP_SIALX_PROGRAM_DYNAMIC_PHASE();
 
   		barrier();
 	} //end of loop over programs
 
 	delete setup_reader;
-	sip::SipTimer_t::finalize_global_timers();
+	FINALIZE_GLOBAL_TIMERS();
 	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
 	mpi_finalize();
 

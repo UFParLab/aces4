@@ -21,14 +21,33 @@
 #include <mpi.h>
 #endif // HAVE_MPI
 
+#ifdef HAVE_TAU
+	#define INIT_GLOBAL_TIMERS(argc, argv) 	\
+		TAU_INIT(argc, argv);\
+		TAU_PROFILE_SET_NODE(sip::SIPMPIAttr::get_instance().global_rank());\
+		TAU_STATIC_PHASE_START("SIP Main");
+
+	#define FINALIZE_GLOBAL_TIMERS()\
+		TAU_STATIC_PHASE_STOP("SIP Main");
+
+#define START_SIALX_PROGRAM_DYNAMIC_PHASE(p) \
+		TAU_PHASE_CREATE_DYNAMIC(tau_dtimer, p, "", TAU_USER);\
+		TAU_PHASE_START(tau_dtimer);
+
+#define STOP_SIALX_PROGRAM_DYNAMIC_PHASE()\
+  		TAU_PHASE_STOP(tau_dtimer);
+
+#else
+	#define	INIT_GLOBAL_TIMERS(argc, argv) ;
+	#define FINALIZE_GLOBAL_TIMERS();
+	#define START_SIALX_PROGRAM_DYNAMIC_PHASE(p);
+	#define STOP_SIALX_PROGRAM_DYNAMIC_PHASE() ;
+#endif
+
 namespace sip {
 
 class LinuxSIPTimers {
 public:
-
-	static void init_global_timers(int *argc, char*** argv);
-	static void finalize_global_timers();
-
 	LinuxSIPTimers(int max_slots);	/*! Constructs Timer with a given max num of slots */
 	~LinuxSIPTimers();
 	void start_timer(int slot);	/*! Starts timer with given slot */
@@ -57,10 +76,6 @@ protected :
 #ifdef HAVE_PAPI
 class PAPISIPTimers : public LinuxSIPTimers{
 public:
-
-	static void init_global_timers(int *argc, char*** argv);
-	static void finalize_global_timers();
-
 	PAPISIPTimers(int max_slots);
 	~PAPISIPTimers();
 	void start_timer(int slot);
@@ -81,10 +96,6 @@ protected:
 #ifdef HAVE_TAU
 class TAUSIPTimers {
 public:
-
-	static void init_global_timers(int *argc, char*** argv);
-	static void finalize_global_timers();
-
 	TAUSIPTimers(int max_slots);
 	~TAUSIPTimers();
 	void start_timer(int slot);

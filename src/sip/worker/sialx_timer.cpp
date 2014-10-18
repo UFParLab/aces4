@@ -299,6 +299,7 @@ SialxTimer::SialxTimer(int sialx_lines) :
 	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
 	 * one for each kind defined in the TimerKind_t enum.
 	 * One extra added since line numbers begin at 1.
+	 * The 0th slot is for the entire program
 	 */
 }
 
@@ -325,6 +326,19 @@ void SialxTimer::print_timers(const std::vector<std::string>& line_to_str, std::
 #endif
 	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
+}
+
+
+void SialxTimer::start_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.start_timer(0);
+#endif
+}
+void SialxTimer::stop_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.pause_timer(0);
+#endif
+
 }
 
 

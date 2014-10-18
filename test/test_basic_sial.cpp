@@ -1428,7 +1428,7 @@ int main(int argc, char **argv) {
 	attr = &sip_mpi_attr;
 	barrier();
 
-	sip::SipTimer_t::init_global_timers(&argc, &argv);
+	INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	check_expected_datasizes();
 
@@ -1437,7 +1437,7 @@ int main(int argc, char **argv) {
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-	sip::SipTimer_t::finalize_global_timers();
+	FINALIZE_GLOBAL_TIMERS();
 
 	barrier();
 

@@ -30,7 +30,13 @@ namespace sip {
 
 ServerTimer::ServerTimer(int sialx_lines):
 		sialx_lines_(sialx_lines),
-		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)){}
+		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)){
+	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
+	 * one for each kind defined in the TimerKind_t enum.
+	 * One extra added since line numbers begin at 1.
+	 * The 0th slot is for the entire program
+	 */
+}
 
 ServerTimer::~ServerTimer() {}
 
@@ -286,6 +292,18 @@ void ServerTimer::print_timers(std::vector<std::string> line_to_str) {
 #endif
 	PrintTimersType_t p(line_to_str, sialx_lines_);
 	delegate_.print_timers(p);
+}
+
+void ServerTimer::start_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.start_timer(0);
+#endif
+}
+void ServerTimer::stop_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.pause_timer(0);
+#endif
+
 }
 
 } /* namespace sip */
