@@ -35,9 +35,6 @@ public:
 	void pause_timer(int line_number, TimerKind_t kind); /*! Pauses timer for a sialx line. */
 	void print_timers(std::vector<std::string> line_to_str); /*! For each slot, the total time and the average time is printed */
 
-	void start_program_timer();
-	void stop_program_timer();
-
 private:
 
 	/** Underlying timer either Linux, PAPI or TAU timers */

@@ -18,7 +18,7 @@ class SialPrinter;
 
 class Interpreter {
 public:
-	virtual ~Interpreter(){}
+	virtual ~Interpreter(){  global_interpreter = NULL; }
 
 	/** main interpret function */
 	void interpret() { do_interpret(); }

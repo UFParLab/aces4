@@ -294,16 +294,5 @@ void ServerTimer::print_timers(std::vector<std::string> line_to_str) {
 	delegate_.print_timers(p);
 }
 
-void ServerTimer::start_program_timer(){
-#ifndef HAVE_TAU
-	delegate_.start_timer(0);
-#endif
-}
-void ServerTimer::stop_program_timer(){
-#ifndef HAVE_TAU
-	delegate_.pause_timer(0);
-#endif
-
-}
 
 } /* namespace sip */
