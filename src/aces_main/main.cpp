@@ -1,113 +1,18 @@
-#include "config.h"
-#include "siox_reader.h"
-#include "io_utils.h"
-#include "setup_reader.h"
-#include "assert.h"
-#include "sialx_timer.h"
-#include "sip_tables.h"
-#include "interpreter.h"
-#include "sialx_interpreter.h"
-#include "setup_interface.h"
-#include "sip_interface.h"
-#include "data_manager.h"
-#include "worker_persistent_array_manager.h"
-#include "block.h"
-#include "global_state.h"
+#include "main_helper_methods.h"
 
-#include <vector>
-#include <sstream>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fenv.h>
-
-#include <execinfo.h>
-#include <signal.h>
-
-#ifdef HAVE_MPI
-#include "mpi.h"
-#include "sip_mpi_attr.h"
-#include "sip_server.h"
-#include "sip_mpi_utils.h"
-#include "server_persistent_array_manager.h"
-#endif
-
-
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
-
-/**
- * http://stackoverflow.com/questions/3151779/how-its-better-to-invoke-gdb-from-program-to-print-its-stacktrace/4611112#4611112
- */
-void bt_sighandler(int signum) {
-	std::cerr << "Interrupt signal (" << signum << ") received." << std::endl;
-    sip_abort();
-}
-
-void print_usage(const std::string& program_name) {
-	std::cerr << "Usage : " << program_name
-			  << " -d <init_data_file> -j <init_json_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>"
-			  << std::endl;
-	std::cerr << "\t -d : binary initialization data file " << std::endl;
-	std::cerr << "\t -j : json initialization file, use EITHER -d or -j " << std::endl;
-	std::cerr << "\t -s : directory of compiled sialx files  " << std::endl;
-	std::cerr << "\t -m : memory to be used by workers (and servers) specified in GB " << std::endl;
-	std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB"
-			  << std::endl;
-	std::cerr << "\tm is the approximate memory to use. Actual usage will be more."
-			  << std::endl;
-	std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
-}
 
 int main(int argc, char* argv[]) {
-    
-    feenableexcept(FE_DIVBYZERO);
-    feenableexcept(FE_OVERFLOW);
-    feenableexcept(FE_INVALID);
-
-    signal(SIGSEGV, bt_sighandler);
-    signal(SIGFPE, bt_sighandler);
-    signal(SIGTERM, bt_sighandler);
-    signal(SIGINT, bt_sighandler);
-    signal(SIGABRT, bt_sighandler);
-
-#ifdef HAVE_MPI
-	/* MPI Initialization */
-	MPI_Init(&argc, &argv);
-
-	sip::SIPMPIUtils::set_error_handler();
+	check_expected_datasizes();
+    setup_signal_and_exception_handlers();
+    mpi_init(&argc, &argv);
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
-#endif
 
-#ifdef HAVE_TAU
-	TAU_INIT(&argc, &argv);
-	#ifdef HAVE_MPI
-	  TAU_PROFILE_SET_NODE(sip_mpi_attr.global_rank());
-	#else
-	  TAU_PROFILE_SET_NODE(0);
-	#endif
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
+	sip::SipTimer_t::init_global_timers(&argc, &argv);
 
-//TODO  move this to  a test suite.
-//	// Check sizes of data types.
-//	// In the MPI version, the TAG is used to communicate information
-//	// The various bits needed to send information to other nodes
-//	// sums up to 32.
-//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
-
-	// Default initialization file is data.dat
-	char *init_file = "data.dat";
-	// Default directory for compiled sialx files is "."
-	char *sialx_file_dir = ".";
-	// Json file, no default file
-	char *json_file = NULL;
-
+	char *init_file = "data.dat"; // Default initialization file is data.dat
+	char *sialx_file_dir = ".";   // Default directory for compiled sialx files is "."
+	char *json_file = NULL;		  // Json file, no default file
 	bool json_specified = false;
 	bool init_file_specified = false;
 
@@ -162,8 +67,6 @@ int main(int argc, char* argv[]) {
 
 	// Set Approx Max memory usage
 	sip::GlobalState::set_max_data_memory_usage(memory);
-
-
 	setup::SetupReader *setup_reader = NULL;
 
 	if (json_specified){
@@ -200,6 +103,7 @@ int main(int argc, char* argv[]) {
 
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
+
 #ifdef HAVE_TAU
 		//TAU_REGISTER_EVENT(tau_event, it->c_str());
 		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
@@ -251,23 +155,13 @@ int main(int argc, char* argv[]) {
   		TAU_PHASE_STOP(tau_dtimer);
 #endif
 
-#ifdef HAVE_MPI
-      sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
-#endif
+  		barrier();
 	} //end of loop over programs
 
 	delete setup_reader;
-
-#ifdef HAVE_TAU
-		TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
-
-
-#ifdef HAVE_MPI
+	sip::SipTimer_t::finalize_global_timers();
 	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
-	MPI_Finalize();
-#endif
-
+	mpi_finalize();
 
 	return 0;
 }

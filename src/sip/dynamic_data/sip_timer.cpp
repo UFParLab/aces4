@@ -15,6 +15,7 @@
 
 #include "global_state.h"
 #include "sip_interface.h"
+#include "sip_mpi_attr.h"
 
 #ifdef HAVE_PAPI
 	#include "papi.h"
@@ -28,11 +29,15 @@
 
 namespace sip {
 
+
 const long long LinuxSIPTimers::_timer_off_value_ = -1;
 
 //*********************************************************************
 //								Linux Timers
 //*********************************************************************
+
+void LinuxSIPTimers::init_global_timers(int *argc, char*** argv){}
+void LinuxSIPTimers::finalize_global_timers(){}
 
 LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots(max_slots) {
 	timer_list_ = new long long[max_slots];
@@ -92,6 +97,9 @@ bool LinuxSIPTimers::check_timers_off() {
 //*********************************************************************
 #ifdef HAVE_PAPI
 
+void PAPISIPTimers::init_global_timers(int *argc, char*** argv){}
+void PAPISIPTimers::finalize_global_timers(){}
+
 PAPISIPTimers::PAPISIPTimers(int max_slots) : LinuxSIPTimers(max_slots) {
 	int EventSet = PAPI_NULL;
 	if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
@@ -130,6 +138,18 @@ void PAPISIPTimers::print_timers(PrintTimers<PAPISIPTimers>& p){
 //								TAU Timers
 //*********************************************************************
 #ifdef HAVE_TAU
+
+
+void TAUSIPTimers::init_global_timers(int *argc, char*** argv){
+	TAU_INIT(argc, argv);
+	TAU_PROFILE_SET_NODE(sip::SIPMPIAttr::get_instance().global_rank());
+	TAU_STATIC_PHASE_START("SIP Main");
+}
+
+void TAUSIPTimers::finalize_global_timers(){
+	TAU_STATIC_PHASE_STOP("SIP Main");
+}
+
 TAUSIPTimers::TAUSIPTimers(int max_slots) : max_slots(max_slots) {
 	tau_timers_ = new void*[max_slots];
 	for (int i=0; i<max_slots; i++)

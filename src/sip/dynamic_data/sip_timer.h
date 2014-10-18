@@ -23,9 +23,12 @@
 
 namespace sip {
 
-
 class LinuxSIPTimers {
 public:
+
+	static void init_global_timers(int *argc, char*** argv);
+	static void finalize_global_timers();
+
 	LinuxSIPTimers(int max_slots);	/*! Constructs Timer with a given max num of slots */
 	~LinuxSIPTimers();
 	void start_timer(int slot);	/*! Starts timer with given slot */
@@ -54,6 +57,10 @@ protected :
 #ifdef HAVE_PAPI
 class PAPISIPTimers : public LinuxSIPTimers{
 public:
+
+	static void init_global_timers(int *argc, char*** argv);
+	static void finalize_global_timers();
+
 	PAPISIPTimers(int max_slots);
 	~PAPISIPTimers();
 	void start_timer(int slot);
@@ -74,6 +81,10 @@ protected:
 #ifdef HAVE_TAU
 class TAUSIPTimers {
 public:
+
+	static void init_global_timers(int *argc, char*** argv);
+	static void finalize_global_timers();
+
 	TAUSIPTimers(int max_slots);
 	~TAUSIPTimers();
 	void start_timer(int slot);
@@ -89,6 +100,14 @@ protected:
 	DISALLOW_COPY_AND_ASSIGN(TAUSIPTimers);
 };
 #endif // HAVE_TAU
+
+#ifdef HAVE_TAU
+	typedef TAUSIPTimers SipTimer_t;
+#elif defined HAVE_PAPI
+	typedef PAPISIPTimers SipTimer_t;
+#else
+	typedef LinuxSIPTimers SipTimer_t;
+#endif
 
 
 } /* namespace sip */

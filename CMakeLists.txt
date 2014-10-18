@@ -232,6 +232,7 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
+    ${CMAKE_SOURCE_DIR}/src/aces_main;
     ${CMAKE_SOURCE_DIR}/sqlite3;
     ${CMAKE_SOURCE_DIR}/jsoncpp;
     ${CMAKE_SOURCE_DIR}/test)
@@ -345,7 +346,7 @@ add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DEFINITIONS})
 
 # aces4 executable
-add_executable(aces4 src/aces_main/main.cpp)
+add_executable(aces4 src/aces_main/main.cpp src/aces_main/main_helper_methods.h)
 
 # profile timer executable
 add_executable(aces4_profile src/aces_main/profile_main.cpp)

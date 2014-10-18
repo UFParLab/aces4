@@ -19,6 +19,7 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
+#include "sip_timer.h"
 
 #include "worker_persistent_array_manager.h"
 
@@ -511,20 +512,11 @@ void bt_sighandler(int signum) {
 
 int main(int argc, char **argv) {
 
-//    feenableexcept(FE_DIVBYZERO);
-//    feenableexcept(FE_OVERFLOW);
-//    feenableexcept(FE_INVALID);
-//
-//    signal(SIGSEGV, bt_sighandler);
-//    signal(SIGFPE, bt_sighandler);
-//    signal(SIGTERM, bt_sighandler);
-//    signal(SIGINT, bt_sighandler);
-//    signal(SIGABRT, bt_sighandler);
 
 #ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
 	int num_procs;
-	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs), __LINE__,__FILE__);
+	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
 
 	if (num_procs < 2) {
 		std::cerr << "Please run this test with at least 2 mpi ranks"
@@ -532,45 +524,28 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	sip::SIPMPIUtils::set_error_handler();
+#endif
+
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
-#endif
 	barrier();
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
 
-//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
-//
-//	int num_procs;
-//	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
-//
-//	if (num_procs < 2){
-//		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
-//		return -1;
-//	}
-//
-//	sip::SIPMPIUtils::set_error_handler();
-//	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
-//
+	sip::SipTimer_t::init_global_timers(&argc, &argv);
 
-	printf("Running main() from test_sial.cpp\n");
+	check_expected_datasizes();
+
+	printf("Running main() from %s\n",__FILE__);
 	testing::InitGoogleTest(&argc, argv);
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-	std::cout << "Rank  " << attr->global_rank() << " Finished RUN_ALL_TEST() " << std::endl << std::flush;
+	sip::SipTimer_t::finalize_global_timers();
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
 	barrier();
+
 #ifdef HAVE_MPI
 	MPI_Finalize();
 #endif
-	return result;
 
+	return result;
 }

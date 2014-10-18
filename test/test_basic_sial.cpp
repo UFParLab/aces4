@@ -23,6 +23,7 @@
 #include "sial_printer.h"
 #include "rank_distribution.h"
 #include "worker_persistent_array_manager.h"
+#include "sip_timer.h"
 
 #include "block.h"
 
@@ -1407,15 +1408,6 @@ public:
 
 int main(int argc, char **argv) {
 
-//    feenableexcept(FE_DIVBYZERO);
-//    feenableexcept(FE_OVERFLOW);
-//    feenableexcept(FE_INVALID);
-//
-//    signal(SIGSEGV, bt_sighandler);
-//    signal(SIGFPE, bt_sighandler);
-//    signal(SIGTERM, bt_sighandler);
-//    signal(SIGINT, bt_sighandler);
-//    signal(SIGABRT, bt_sighandler);
 
 #ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
@@ -1431,30 +1423,28 @@ int main(int argc, char **argv) {
 	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIUtils::set_error_handler();
 #endif
+
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
 	barrier();
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
 
-//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
-//
+	sip::SipTimer_t::init_global_timers(&argc, &argv);
+
+	check_expected_datasizes();
+
 	printf("Running main() from %s\n",__FILE__);
 	testing::InitGoogleTest(&argc, argv);
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
+	sip::SipTimer_t::finalize_global_timers();
+
 	barrier();
+
 #ifdef HAVE_MPI
 	MPI_Finalize();
 #endif
+
 	return result;
 
 }

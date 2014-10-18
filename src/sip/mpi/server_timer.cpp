@@ -278,11 +278,11 @@ void ServerTimer::pause_timer(int line_number, TimerKind_t kind){
 
 void ServerTimer::print_timers(std::vector<std::string> line_to_str) {
 #ifdef HAVE_TAU
-	typedef TAUTimersPrint<TimerType_t> PrintTimersType_t;
+	typedef TAUTimersPrint<SipTimer_t> PrintTimersType_t;
 #elif defined HAVE_MPI
-	typedef ServerPrint<TimerType_t> PrintTimersType_t;
+	typedef ServerPrint<SipTimer_t> PrintTimersType_t;
 #else
-	typedef SingleNodePrint<TimerType_t> PrintTimersType_t;
+	typedef SingleNodePrint<SipTimer_t> PrintTimersType_t;
 #endif
 	PrintTimersType_t p(line_to_str, sialx_lines_);
 	delegate_.print_timers(p);

@@ -175,7 +175,8 @@ AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(PAPI_LIB
 
 aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
-    ./src/aces_main/main.cpp
+    ./src/aces_main/main.cpp\
+    ./src/aces_main/main_helper_methods.h
 
 aces4_profile_SOURCES= \
     $(ACES_SOURCEFILES) \
@@ -259,6 +260,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\
 -I${top_srcdir}/src/sip/cuda\
+-I${top_srcdir}/src/aces_main\
 -I${top_srcdir}/sqlite3\
 -I${top_srcdir}/jsoncpp\
 -I${top_srcdir}/test\

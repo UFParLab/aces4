@@ -22,3 +22,15 @@ sip::SIPMPIAttr *attr = NULL;
 #else
 	void barrier(){}
 #endif
+
+
+void check_expected_datasizes() {
+	// Check sizes of data types.
+	// In the MPI version, the TAG is used to communicate information
+	// The various bits needed to send information to other nodes
+	// sums up to 32.
+	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+	sip::check(sizeof(long long) >= 8,
+			"Size of long long should be 8 bytes or more");
+}

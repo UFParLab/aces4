@@ -95,15 +95,10 @@ private:
 
 	/** Underlying timer either Linux, PAPI or TAU timers */
 #ifdef HAVE_TAU
-	COMPILER ERROR - NOT SUPPORTED  // FIXME TODO
-	typedef TAUSIPTimers TimerType_t;
-#elif defined HAVE_PAPI
-	typedef PAPISIPTimers TimerType_t;
-#else
-	typedef LinuxSIPTimers TimerType_t;
+	//COMPILER ERROR - NOT SUPPORTED  // FIXME TODO
 #endif
 
-	TimerType_t delegate_;
+	SipTimer_t delegate_;
 	const int max_slots_;
 
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);

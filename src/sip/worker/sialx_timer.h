@@ -42,16 +42,8 @@ public:
 
 private:
 
-/** Underlying timer either Linux, PAPI or TAU timers */
-#ifdef HAVE_TAU
-	typedef TAUSIPTimers TimerType_t;
-#elif defined HAVE_PAPI
-	typedef PAPISIPTimers TimerType_t;
-#else
-	typedef LinuxSIPTimers TimerType_t;
-#endif
-
-	TimerType_t delegate_;
+	/** Underlying timer either Linux, PAPI or TAU timers */
+	SipTimer_t delegate_;
 	const int sialx_lines_;
 
 	DISALLOW_COPY_AND_ASSIGN(SialxTimer);

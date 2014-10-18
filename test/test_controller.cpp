@@ -201,9 +201,10 @@ void TestController::runWorker() {
 	// Clear previous worker_ to avoid leak
 	if (worker_ != NULL)
 		delete worker_;
-	sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
-	worker_ = new sip::SialxInterpreter(*sip_tables_, &sialx_timers, printer_, wpam_);
-//	barrier();
+	//sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
+	//worker_ = new sip::SialxInterpreter(*sip_tables_, &sialx_timers, printer_, wpam_);
+	worker_ = new sip::SialxInterpreter(*sip_tables_, NULL, printer_, wpam_);
+	barrier();
 	if (verbose_)
 		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
 				<< " STARTING" << std::endl << std::flush;

@@ -18,6 +18,6 @@ extern sip::SIPMPIAttr *attr;
 
 void barrier();
 
-
+void check_expected_datasizes();
 
 #endif /* TEST_CONSTANTS_H_ */
