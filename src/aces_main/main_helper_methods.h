@@ -241,7 +241,7 @@ setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
 	} else {
 		//create setup_file
 		SIP_MASTER_LOG(
-				std::cout << "Initializing data from " << job << std::endl);
+				std::cout << "Initializing data from " << parameters.job << std::endl);
 		setup::BinaryInputFile setup_file(parameters.job); //initialize setup data
 		setup_reader = new setup::SetupReader(setup_file);
 	}

@@ -5,7 +5,7 @@
  *      Author: njindal
  */
 
-
+#include "sip_mpi_attr.h"
 #include "config.h"
 #include "siox_reader.h"
 #include "io_utils.h"

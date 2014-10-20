@@ -182,7 +182,7 @@ private:
 	 *
 	 * @param BlockId of block to remove
 	 */
-	void cached_delete_block(const BlockId& id){block_map_.delete_block(id);}
+	void cached_delete_block(const BlockId& id){block_map_.cached_delete_block(id);}
 
 
 	/**

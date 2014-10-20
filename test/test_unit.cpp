@@ -12,6 +12,7 @@
 #include "config.h"
 
 #include "gtest/gtest.h"
+#include "sqlite3.h"
 
 #include "array_constants.h"
 #include "id_block_map.h"
@@ -21,10 +22,11 @@
 #include "lru_array_policy.h"
 #include "sip_mpi_utils.h"
 #include "sip_mpi_attr.h"
-
-#include "sqlite3.h"
-#include "profile_timer.h"
+#include "cached_block_map.h"
 #include "profile_timer_store.h"
+#include "profile_timer.h"
+#include "global_state.h"
+
 
 #ifdef HAVE_MPI
 #include "mpi.h"
@@ -581,6 +583,123 @@ TEST(SialUnitProfileTimerStore, retrieve_sixls_block){
 }
 
 
+// Tests for CachedBlockMap
+
+// Sanity test
+TEST(CachedBlockMap, only_insert){
+	const int size_in_mb = 10;
+	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 5;
+	const int rank = 2;
+	const int segment_size = 70;
+
+	// Should not crash
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
+}
+
+// Max mem set to a low number so
+// as to trigger a out_of_range exception
+TEST(CachedBlockMap, exceed_insert){
+	const int size_in_mb = 0.15;
+	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 5;
+	const int rank = 2;
+	const int segment_size = 100;
+
+	// Should throw exception
+	int count = 0;
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			ASSERT_THROW(cached_block_map.insert_block(block_id, block), std::out_of_range);
+			// Even if the exception is thrown at least once, this test passes.
+		}
+	}
+}
+
+// Checking if cached_delete-ed blocks
+// are available again.
+TEST(CachedBlockMap, cached_delete){
+	const int size_in_mb = 10;
+	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 5;
+	const int rank = 2;
+	const int segment_size = 70;
+
+	// Should not crash
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
+
+	// Cached Delete the blocks
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			cached_block_map.cached_delete_block(block_id);
+		}
+	}
+
+	// Check if deleted blocks are available
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			ASSERT_TRUE(cached_block_map.block(block_id) != NULL);
+		}
+	}
+
+}
 
 int main(int argc, char **argv) {
 
