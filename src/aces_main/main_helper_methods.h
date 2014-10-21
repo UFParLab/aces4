@@ -197,7 +197,7 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 			std::stringstream ss(memory_string);
 			double memory_in_gb;
 			ss >> memory_in_gb;
-			parameters.memory = memory_in_gb * 1024 * 1024 * 1024;
+			parameters.memory = memory_in_gb * 1024L * 1024L * 1024L;
 		}
 			break;
 		case 'h':

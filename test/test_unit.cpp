@@ -614,6 +614,42 @@ TEST(CachedBlockMap, only_insert){
 	}
 }
 
+
+// Sanity test
+TEST(CachedBlockMap, insert_more_than_2gb){
+	const int size_in_gb = 3;
+	const std::size_t size_in_bytes = size_in_gb * 1024L * 1024L * 1024L;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 4;
+	const int rank = 4;
+	const int segment_size = 35;
+
+	// Should not crash
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			for (int k=1; k <= num_segments; ++k){
+				for (int l=1; l <= num_segments; ++l){
+					sip::index_value_array_t indices;
+					indices[0] = i;
+					indices[1] = j;
+					indices[2] = k;
+					indices[3] = l;
+					for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+					sip::BlockId block_id(0, indices);
+					sip::segment_size_array_t segment_sizes;
+					for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+					for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+					sip::BlockShape shape(segment_sizes, rank);
+					sip::Block::BlockPtr block = new sip::Block(shape);
+					cached_block_map.insert_block(block_id, block);
+				}
+			}
+		}
+	}
+}
+
 // Max mem set to a low number so
 // as to trigger a out_of_range exception
 TEST(CachedBlockMap, exceed_insert){
@@ -699,6 +735,177 @@ TEST(CachedBlockMap, cached_delete){
 		}
 	}
 
+}
+
+// deleted blocks should not be
+// available again.
+TEST(CachedBlockMap, regular_delete){
+	const int size_in_mb = 10;
+	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 5;
+	const int rank = 2;
+	const int segment_size = 70;
+
+	// Should not crash
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
+
+	// Delete the blocks
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			cached_block_map.delete_block(block_id);
+		}
+	}
+
+	// Check if deleted blocks are available
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			ASSERT_TRUE(cached_block_map.block(block_id) == NULL);
+		}
+	}
+}
+
+
+// Seeing if free space after block inserts & deletes
+TEST(CachedBlockMap, insert_after_freeing_up_space){
+	const int size_in_mb = 8;
+	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 10;
+	const int rank = 2;
+	const int segment_size = 100;
+
+	// Should not crash
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
+
+	// Delete the blocks
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			cached_block_map.delete_block(block_id);
+		}
+	}
+
+	// Insert blocks again
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
+}
+
+// Seeing if free space after block inserts & cached deletes
+TEST(CachedBlockMap, insert_after_cached_delete){
+	const int size_in_mb = 8;
+	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
+	sip::GlobalState::set_max_data_memory_usage(size_in_bytes);
+	sip::CachedBlockMap cached_block_map(1);
+
+	const int num_segments = 10;
+	const int rank = 2;
+	const int segment_size = 100;
+
+	// Should not crash
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
+
+	// Delete the blocks
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			cached_block_map.cached_delete_block(block_id);
+		}
+	}
+
+	// Insert blocks again
+	for (int i=1; i <= num_segments; ++i){
+		for (int j=1; j <= num_segments; ++j){
+			sip::index_value_array_t indices;
+			indices[0] = i;
+			indices[1] = j;
+			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
+			sip::BlockId block_id(0, indices);
+			sip::segment_size_array_t segment_sizes;
+			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
+			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
+			sip::BlockShape shape(segment_sizes, rank);
+			sip::Block::BlockPtr block = new sip::Block(shape);
+			cached_block_map.insert_block(block_id, block);
+		}
+	}
 }
 
 int main(int argc, char **argv) {
