@@ -3724,7 +3724,7 @@ import "trans_frag_defs.sialx"
          execute return_sval xj[j]  n
          if n == jcount
       DO j1
-         xi1[j1]    = wOccA_frag[j1]
+         xj1[j1]    = wOccA_frag[j1]
          execute return_sval xj1[j1] n1
          if n1== jcount
       DO a1
