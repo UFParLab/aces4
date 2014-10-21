@@ -633,7 +633,8 @@ c ------------------------------------------------------------------------
 c NAI (type=1) integrals only.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_nai_batch(imax, zmax, nalpha, ncoeff,
+              call oed__gener_nai_batch(imax, zmax, nalpha_pack, 
+     *                 ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 newcenters, xn,yn,zn, acharge, alpha_pack,

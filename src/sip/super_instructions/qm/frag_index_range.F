@@ -158,7 +158,7 @@ c     enddo
       enddo 
 10    continue 
 15    continue 
-      do i = istart, nfrags  
+      do i = 2, nfrags  
          if ((w_frag_AO(i-1) .eq. ifrag) .and.
      *       (w_frag_AO(i) .ne. ifrag)) then 
              iend = i-1 
