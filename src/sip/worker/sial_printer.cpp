@@ -108,7 +108,7 @@ std::string SialPrinterForTests::BlockId2String(const BlockId& id){
 
 void SialPrinterForTests::do_print_string(std::string s) {
 	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_)
-		out_ << s << std::flush;
+		out_ << s << std::endl << std::flush;
 }
 void SialPrinterForTests::do_print_int(std::string name, int value, int line_number) {
 	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
@@ -125,6 +125,7 @@ void SialPrinterForTests::do_print_scalar(std::string name, double value, int li
 	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
 		out_ << line_number << ":  " << name << "=";
 		out_.precision(20);
+		out_.setf(std::ios_base::fixed);
 		out_<< value << std::endl
 				<< std::flush;
 	}
@@ -145,21 +146,26 @@ void SialPrinterForTests::do_print_block(const BlockId& id, Block::BlockPtr bloc
 		int size = block->size();
 		int OUTPUT_ROW_SIZE = block->shape().segment_sizes_[0];
 		double* data = block->get_data();
+	        out_.precision(14);
+		out_.setf(std::ios_base::fixed);
 		out_ << line_number << ":  ";
-		out_ << "printing " << (size < MAX_TO_PRINT?size:MAX_TO_PRINT);
-		out_ << " of " <<size << " elements of block " <<  id.str(sip_tables_);//BlockId2String(id);
-		out_ << " in the order stored in memory ";
-		int i;
-	    for (i = 0; i < size && i < MAX_TO_PRINT; ++i){
-	    	if (i%OUTPUT_ROW_SIZE == 0) out_ << std::endl;
-	    //	std::cout << std::endl;
-	    	out_.width(14);
-	    	out_ << *(data+i) << " ";
-	    }
-	    if (i == MAX_TO_PRINT){
-	    	out_ << "....";
-	    }
-	    out_ << std::endl;
+		if (size == 1) {
+		    out_ << "printing " << id.str(sip_tables_) << " = ";
+		    out_ << *(data);
+		} else {
+		    out_ << "printing " << (size < MAX_TO_PRINT?size:MAX_TO_PRINT);
+		    out_ << " of " <<size << " elements of block " <<  id.str(sip_tables_);//BlockId2String(id);
+		    out_ << " in the order stored in memory ";
+		    int i;
+		    for (i = 0; i < size && i < MAX_TO_PRINT; ++i){
+			if (i%OUTPUT_ROW_SIZE == 0) out_ << std::endl;
+			out_ << *(data+i) << " ";
+		    }
+		    if (i == MAX_TO_PRINT){
+			out_ << "....";
+		    }
+		}
+		out_ << std::endl;
 	}
 
 void SialPrinterForTests::do_print_contiguous(int array_slot, Block::BlockPtr block, int line_number){
