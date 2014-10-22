@@ -365,12 +365,12 @@ import "scf_frag_defs_lowmem.sialx"
 #
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
-      println "Starting scratch memory calculation" 
+      print "Starting scratch memory calculation" 
       imax = 0.0  
       zmax = 0.0  
       execute compute_int_scratchmem_lowmem zmax imax 
       sip_barrier 
-      println "Done computing scratch memory" 
+      print "Done computing scratch memory" 
 #
 #     Initialize ENTIRE Fock and coefficient arrays to 0 
      #PARDO p, p1
@@ -396,10 +396,10 @@ import "scf_frag_defs_lowmem.sialx"
 
                   print icount # etemp 
 
-                  println "Starting computing fragment scf" 
+                  print "Starting computing fragment scf" 
                  #execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
                   execute scf_atom_lowmem icount scratch1 scratch2 scratch3 scratch4 
-                  println "Done computing fragment scf" 
+                  print "Done computing fragment scf" 
 #
 # Nowput the coefficients and fock matrices into the full distributed arrays 
 
@@ -428,7 +428,7 @@ import "scf_frag_defs_lowmem.sialx"
                   ENDDO i
                      endif
                   ENDDO mu
-                  println "Done placing coefficients"
+                  print "Done placing coefficients"
 
                   stype = 2.0 # Fock matrix  
                   DO a   
@@ -488,7 +488,7 @@ import "scf_frag_defs_lowmem.sialx"
 #                    PUT Dfock_a(p,p1) += tpp(p,p1)
 #                 ENDDO p1 
 #                 ENDDO p 
-                  println "Done placing fock_matrix"
+                  print "Done placing fock_matrix"
 
 
       ENDPARDO katom   
@@ -502,9 +502,9 @@ import "scf_frag_defs_lowmem.sialx"
 #     ------------------------- 
 #
       execute disable_debug_print 
-      println "Setting fragment parameters" 
+      print "Setting fragment parameters" 
       CALL SET_FRAG_PARMS    
-      println "Done Setting fragment parameters" 
+      print "Done Setting fragment parameters" 
       sip_barrier 
       CALL IGUESS  
       sip_barrier
