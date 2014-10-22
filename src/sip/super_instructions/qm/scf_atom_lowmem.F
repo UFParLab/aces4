@@ -101,14 +101,12 @@ c--------------------------------------------------------------------------
 c ----------------------------------------------------------------------
 c  END_NFPS 
       TYPE(C_PTR) :: pnalpha, pend_nfps 
-      integer, pointer :: nalpha_copy(:) 
-      integer nalpha(1)
+      integer, pointer :: nalpha(:) 
       integer, pointer :: end_nfps(:) 
 c ----------------------------------------------------------------------
 c     mapping of atoms to shells 
-      TYPE(C_PTR) :: pnatom, patom  
+      TYPE(C_PTR) :: patom  
       integer, pointer :: atom(:)
-      integer, pointer :: natom(:)
 
 !     Number of atomic centers 
       integer (C_INT) ncenters        
@@ -235,18 +233,17 @@ c     write(6,*) ' TCOORDS',  ptcoords(1,i), ptcoords(2,i),
 c    *                        ptcoords(3,i) 
 c     enddo 
 c ----------------------------------------------------------------------
-c  mapping of atoms to shells  
-      call predefined_int_array("atom"//C_NULL_CHAR, one,
-     *                                   pnatom, patom)
-      call c_f_pointer(pnatom, natom, [1])
-c ----------------------------------------------------------------------
 c  END_NFPS 
       call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
      *                                   pnalpha, pend_nfps)
-      call c_f_pointer(pnalpha, nalpha_copy, [1])
-      call c_f_pointer(pend_nfps, end_nfps, nalpha_copy)
-      call c_f_pointer(patom, atom, nalpha_copy)
-      nalpha(1) = nalpha_copy(1)
+      call c_f_pointer(pnalpha, nalpha, [1])
+      call c_f_pointer(pend_nfps, end_nfps, nalpha)
+c ----------------------------------------------------------------------
+c  mapping of atoms to shells  
+      call predefined_int_array("atom"//C_NULL_CHAR, one,
+     *                                   pnalpha, patom)
+      call c_f_pointer(pnalpha, nalpha, [1])
+      call c_f_pointer(patom, atom, nalpha)
 c ----------------------------------------------------------------------
 
 
@@ -305,7 +302,7 @@ c    *                 scr5, ! x(fbarray),
      *                 data_3, ! x(fa_array), 
      *                 data_4, ! x(fb_array), 
 c  
-     *                 atom, end_nfps, nalpha,
+     *                 atom, end_nfps, 
 c 
      *                 vmax,omax,norbmax,maxhist,diis_start) 
  
@@ -332,7 +329,7 @@ c    *                 nai, kin, ncenters, npcoeffs, nshells, fa, fb,
      *                 ncenters, npcoeffs, nshells,  
      *                 ca_perm, cb_perm, fa_perm, fb_perm, 
 c  
-     *                 atom, end_nfps, nalpha,
+     *                 atom, end_nfps, 
 c
      *                 vmax,omax,norb,maxhist,diis_start)  
 c---------------------------------------------------------------------------
@@ -386,7 +383,7 @@ c     real(C_DOUBLE), pointer :: bavirt_frag(:,:)
 c     real(C_DOUBLE), pointer :: bbvirt_frag(:,:)
 c ----------------------------------------------------------------------
 
-      integer atom(*), end_nfps(*), nalpha(*)
+      integer atom(*), end_nfps(*)  
 
       integer aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2
       integer adim, bdim, cdim, ddim  
@@ -568,8 +565,7 @@ c     call c_f_pointer(ciscr, iscr_i, [niscr])
      *                         npcoeffs, ncenters, 
      *                         coords, tcoords, 
      *                         pcharge, atom,  
-     *                         scr, iscr,
-     *                         end_nfps, nalpha) 
+     *                         scr, iscr) 
 
 c  Remove scratch space  
 c     call delete_integer_scratch_array(ciscr)
@@ -593,10 +589,10 @@ c-----------------------------------------------------------------------
 c   Find the number of basis functions and shells in the atom.  
 c-----------------------------------------------------------------------
 
-c         write(6,*) ' M1 M2', m1, m2 
-c         write(6,*) ' N_APF ', n_apf, (iatom(m), m=1, n_apf) 
+         write(6,*) ' M1 M2', m1, m2 
+         write(6,*) ' N_APF ', n_apf, (iatom(m), m=1, n_apf) 
          do m = m1, m2 
-c            write(6,*) ' ', m, atom(m), end_nfps(m) 
+            write(6,*) ' ', m, atom(m), end_nfps(m) 
          enddo 
 
          n_basis = 0 
@@ -1618,8 +1614,7 @@ c ----------------------------------------------------------------------
 c  END_NFPS 
       TYPE(C_PTR) :: pnalpha, pend_nfps
 
-      integer, pointer :: nalpha_copy(:)
-      integer nalpha(1)
+      integer, pointer :: nalpha(:)
       integer, pointer :: end_nfps(:)
 c ----------------------------------------------------------------------
 c  NCFPS 
@@ -1674,12 +1669,8 @@ c  END_NFPS
 c ----------------------------------------------------------------------
       call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
      *                                   pnalpha, pend_nfps)
-      call c_f_pointer(pnalpha, nalpha_copy, [1])
-      call c_f_pointer(pend_nfps, end_nfps, nalpha_copy)
-
-      nalpha(1) = nalpha_copy(1)
-
-      print *, '-----------elements in end_nfps ---------', nalpha(1)
+      call c_f_pointer(pnalpha, nalpha, [1])
+      call c_f_pointer(pend_nfps, end_nfps, nalpha)
 
 c ----------------------------------------------------------------------
 c  NCFPS 
@@ -2035,8 +2026,7 @@ c                    enddo
  
       subroutine comp_return_frag_ovl_lowmem(z, napf, watom, da1, da2, 
      * db1, db2, 
-     * npcoeffs, ncenters, coords, tcoords, charge, atom, zz, iscr,
-     * end_nfps, nalpha)
+     * npcoeffs, ncenters, coords, tcoords, charge, atom, zz, iscr)
 c---------------------------------------------------------------------------
 c  Computes the set of OED integrals of types  
 c
@@ -2091,8 +2081,6 @@ c     double precision z(da1:da2, db1:db2)
       integer do_atom(ncenters)
       integer napf, watom(ncenters), atom(*)
       double precision charge(ncenters)
-      integer end_nfps(*)
-      integer nalpha(*)
 
       integer (C_INT) one
 c Nuclear coordinates 
@@ -2105,10 +2093,10 @@ c ---------------------------------------------------------------------------
       integer (C_INT) nshells, intSpherical
 c ----------------------------------------------------------------------
 c  END_NFPS 
-c      TYPE(C_PTR) :: pnalpha, pend_nfps
+      TYPE(C_PTR) :: pnalpha, pend_nfps
 
-c      integer, pointer :: nalpha(:)
-c      integer, pointer :: end_nfps(:)
+      integer, pointer :: nalpha(:)
+      integer, pointer :: end_nfps(:)
 c ----------------------------------------------------------------------
 c  NCFPS 
       TYPE(C_PTR) :: pishells, pncfps
@@ -2160,10 +2148,10 @@ c  NSHELLS
 c ----------------------------------------------------------------------
 c  END_NFPS 
 c ----------------------------------------------------------------------
-c      call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
-c     *                                   pnalpha, pend_nfps)
-c      call c_f_pointer(pnalpha, nalpha, [1])
-c      call c_f_pointer(pend_nfps, end_nfps, nalpha)
+      call predefined_int_array("end_nfps"//C_NULL_CHAR, one,
+     *                                   pnalpha, pend_nfps)
+      call c_f_pointer(pnalpha, nalpha, [1])
+      call c_f_pointer(pend_nfps, end_nfps, nalpha)
 
 c ----------------------------------------------------------------------
 c  NCFPS 
@@ -2427,7 +2415,7 @@ c ------------------------------------------------------------------------
      *                 zz(nfirst),a1,a2,b1,b2,0.0d0)
       if (watom(1) .eq. 1) then 
           do i = nfirst, nfirst + nints 
-c          write(6,*) 'III = ', i, zz(i)
+          write(6,*) 'III = ', i, zz(i)
           enddo
       endif 
 
@@ -2446,9 +2434,9 @@ c Print out the integrals
                   do a = da1,da2
                      i = i + 1
                         z(i) = zsum(a,b)
-c      if (watom(1) .eq. 1) then 
-c          write(6,*) 'JJJ = ', a, b, z(i), zsum(a,b)
-c      /ndif 
+      if (watom(1) .eq. 1) then 
+          write(6,*) 'JJJ = ', a, b, z(i), zsum(a,b)
+      endif 
                   enddo
                   enddo
 

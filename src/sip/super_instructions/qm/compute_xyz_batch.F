@@ -567,7 +567,7 @@ c-------------------------------------------------------------------------
 c   Set the xyz flags.  
 c-------------------------------------------------------------------------
 
-      write(6,*) ' IXYZ = NATOMS', ixyz, natoms, (iatom(n),n=1,natoms) 
+C      write(6,*) ' IXYZ = NATOMS', ixyz, natoms, (iatom(n),n=1,natoms) 
       if (ixyz .eq. 10) then ! x NN moment 
          dnuc = 0.0 
          DO n = 1, natoms  
