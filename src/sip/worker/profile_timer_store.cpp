@@ -402,7 +402,23 @@ void ProfileTimerStore::backup_to_other(const ProfileTimerStore& other){
 		sip_sqlite3_error(rc);
 }
 
+void ProfileTimerStore::merge_from_other(const ProfileTimerStore& other){
+	ProfileStoreMap_t other_map = other.read_all_data();
+	for (ProfileStoreMapIterator_t it = other_map.begin(); it != other_map.end(); ++it){
+		ProfileStoreMapIterator_t found_it = other_map.find(it->first);
 
+		// If the record was found, merge it and put it in
+		if (found_it != other_map.end()){
+			long new_total_time = it->second.first + found_it->second.first;
+			long new_count = it->second.second + found_it->second.second;
+			std::pair<long, long> new_timer_count_pair = std::make_pair(new_total_time, new_count);
+			this->save_to_store(it->first, new_timer_count_pair);
+
+		} else { // Otherwise just put it in
+			this->save_to_store(it->first, it->second);
+		}
+	}
+}
 
 
 } /* namespace sip */

@@ -718,6 +718,155 @@ TEST(SialUnitProfileTimerStore, test_read_all_data){
 
 }
 
+
+// Tests ProfileTimerStore::merge_from_other
+TEST(SialUnitProfileTimerStore, test_merge_from_other){
+	// All databases are created in memory
+	sip::ProfileTimerStore store0 (":memory:");
+	sip::ProfileTimerStore store1 (":memory:");
+	sip::ProfileTimerStore store2 (":memory:");
+	sip::ProfileTimerStore store3 (":memory:");
+	sip::ProfileTimerStore store4 (":memory:");
+	sip::ProfileTimerStore store5 (":memory:");
+	sip::ProfileTimerStore store6 (":memory:");
+	sip::ProfileTimerStore combined_store (":memory:");
+
+	sip::index_selector_t indices;
+	sip::segment_size_array_t segments;
+
+	for (int i=0; i<MAX_RANK; i++)
+		indices[i] = (i + 10) % 3;
+	std::fill(segments + 0, segments + MAX_RANK, 35);
+
+	sip::ProfileTimer::Key key6, key5, key4, key3, key2, key1, key0;
+
+	{
+		sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+		sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+		sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+		sip::ProfileTimer::BlockInfo b4(6, indices, segments);
+		sip::ProfileTimer::BlockInfo b5(1, indices, segments);
+		sip::ProfileTimer::BlockInfo b6(4, indices, segments);
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		blocks.push_back(b1);
+		blocks.push_back(b2);
+		blocks.push_back(b3);
+		blocks.push_back(b4);
+		blocks.push_back(b5);
+		blocks.push_back(b6);
+		key6 = sip::ProfileTimer::Key("test6", blocks);
+		std::pair<double, int> time_count = std::make_pair(100, 10);
+		store6.save_to_store(key6, time_count);
+	}
+
+	{
+		sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+		sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+		sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+		sip::ProfileTimer::BlockInfo b4(6, indices, segments);
+		sip::ProfileTimer::BlockInfo b5(1, indices, segments);
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		blocks.push_back(b1);
+		blocks.push_back(b2);
+		blocks.push_back(b3);
+		blocks.push_back(b4);
+		blocks.push_back(b5);
+		key5 = sip::ProfileTimer::Key("test5", blocks);
+		std::pair<double, int> time_count = std::make_pair(100, 10);
+		store5.save_to_store(key5, time_count);
+	}
+
+	{
+		sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+		sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+		sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+		sip::ProfileTimer::BlockInfo b4(6, indices, segments);
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		blocks.push_back(b1);
+		blocks.push_back(b2);
+		blocks.push_back(b3);
+		blocks.push_back(b4);
+		key4 = sip::ProfileTimer::Key("test4", blocks);
+		std::pair<double, int> time_count = std::make_pair(10, 5);
+		store4.save_to_store(key4, time_count);
+	}
+
+	{
+		sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+		sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+		sip::ProfileTimer::BlockInfo b3(2, indices, segments);
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		blocks.push_back(b1);
+		blocks.push_back(b2);
+		blocks.push_back(b3);
+		key3 = sip::ProfileTimer::Key("test3", blocks);
+		std::pair<double, int> time_count = std::make_pair(10, 5);
+		store3.save_to_store(key3, time_count);
+	}
+
+	{
+		sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+		sip::ProfileTimer::BlockInfo b2(3, indices, segments);
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		blocks.push_back(b1);
+		blocks.push_back(b2);
+		key2 = sip::ProfileTimer::Key("test2", blocks);
+		std::pair<double, int> time_count = std::make_pair(10, 5);
+		store2.save_to_store(key2, time_count);
+	}
+
+	{
+		sip::ProfileTimer::BlockInfo b1(5, indices, segments);
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		blocks.push_back(b1);
+		key1 = sip::ProfileTimer::Key("test1", blocks);
+		std::pair<double, int> time_count = std::make_pair(5, 2);
+		store1.save_to_store(key1, time_count);
+	}
+
+	{
+		std::vector<sip::ProfileTimer::BlockInfo> blocks;
+		key0 = sip::ProfileTimer::Key("test0", blocks);
+		std::pair<double, int> time_count = std::make_pair(5, 2);
+		store0.save_to_store(key0, time_count);
+	}
+
+	combined_store.merge_from_other(store0);
+	combined_store.merge_from_other(store1);
+	combined_store.merge_from_other(store2);
+	combined_store.merge_from_other(store3);
+	combined_store.merge_from_other(store4);
+	combined_store.merge_from_other(store5);
+	combined_store.merge_from_other(store6);
+
+	typedef sip::ProfileTimerStore::ProfileStoreMap_t::iterator MapIterator_t;
+	sip::ProfileTimerStore::ProfileStoreMap_t all_data_map = combined_store.read_all_data();
+
+	MapIterator_t it = all_data_map.begin();
+	for (; it!= all_data_map.end(); ++it){
+		std::cout << it->first << " : " << it->second.first << ", " << it->second.second << std::endl;
+	}
+
+	MapIterator_t it0 = all_data_map.find(key0);
+	ASSERT_TRUE(it0 !=all_data_map.end());
+	MapIterator_t it1 = all_data_map.find(key1);
+	ASSERT_TRUE(it1 !=all_data_map.end());
+	MapIterator_t it2 = all_data_map.find(key2);
+	ASSERT_TRUE(it2 !=all_data_map.end());
+	MapIterator_t it3 = all_data_map.find(key3);
+	ASSERT_TRUE(it3 !=all_data_map.end());
+	MapIterator_t it4 = all_data_map.find(key4);
+	ASSERT_TRUE(it4 !=all_data_map.end());
+	MapIterator_t it5 = all_data_map.find(key5);
+	ASSERT_TRUE(it5 !=all_data_map.end());
+	MapIterator_t it6 = all_data_map.find(key6);
+	ASSERT_TRUE(it6 !=all_data_map.end());
+
+	// TODO Add checks for contents
+
+}
+
+
 // Tests for CachedBlockMap
 
 // Sanity test

@@ -85,41 +85,21 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::string output_db_name(output_file);
-	sip::ProfileTimerStore output_profile_timer(":memory:");
+	sip::ProfileTimerStore output_db(":memory:");
 
 	for(int i=1; i<argc; ++i){
 		std::string db_name(argv[i]);
 		std::cout << "Now merging " << db_name << std::endl;
-		sip::ProfileTimerStore db_disk(db_name);
-		sip::ProfileTimerStore db(":memory:");
-		db_disk.backup_to_other(db);
+		sip::ProfileTimerStore db_on_disk(db_name);
+		sip::ProfileTimerStore db_in_memory(":memory:");
+		db_on_disk.backup_to_other(db_in_memory);
 
-		typedef sip::ProfileTimerStore::ProfileStoreMap_t ProfileStoreMap_t;
-		typedef sip::ProfileTimerStore::ProfileStoreMap_t::iterator ProfileStoreMapIterator_t;
-		ProfileStoreMap_t output_profile_map = output_profile_timer.read_all_data();
-		ProfileStoreMap_t profile_map = db.read_all_data();
-
-		// Iterate over all records in the database being merged in.
-		for (ProfileStoreMapIterator_t it = profile_map.begin(); it != profile_map.end(); ++it){
-			ProfileStoreMapIterator_t found_it = output_profile_map.find(it->first);
-
-			// If the record was found, merge it and put it in
-			if (found_it != output_profile_map.end()){
-
-				long new_total_time = it->second.first + found_it->second.first;
-				long new_count = it->second.second + found_it->second.second;
-				std::pair<long, long> new_timer_count_pair = std::make_pair(new_total_time, new_count);
-				output_profile_timer.save_to_store(it->first, new_timer_count_pair);
-
-			} else { // Otherwise just put it in
-				output_profile_timer.save_to_store(it->first, it->second);
-			}
-		}
+		output_db.merge_from_other(db_in_memory);
 	}
 
 	// Save the in memory data base to file
 	sip::ProfileTimerStore output_disk_profile_timer(output_db_name);
-	output_profile_timer.backup_to_other(output_disk_profile_timer);
+	output_db.backup_to_other(output_disk_profile_timer);
 
 
 #ifdef HAVE_MPI

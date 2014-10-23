@@ -42,6 +42,9 @@ public:
 
 
 	typedef std::map<sip::ProfileTimer::Key, std::pair<long, long> > ProfileStoreMap_t;
+	typedef ProfileStoreMap_t::iterator ProfileStoreMapIterator_t;
+
+
 	/**
 	 * Reads all data into an in memory list and returns it.
 	 * CAUTION : Use this function cautiously since it reads the entire database into memory.
@@ -54,6 +57,15 @@ public:
 	 * @param other
 	 */
 	void backup_to_other(const ProfileTimerStore& other);
+
+	/**
+	 * Merges records from the other ProfileTimerStore instace.
+	 * The merge happens in 2 ways:
+	 * 1. Any records not in this instance are copied over
+	 * 2. For any records that are, the total time and counts are summed up and saved.
+	 * @param other
+	 */
+	void merge_from_other(const ProfileTimerStore& other);
 
 	const static int MAX_BLOCK_OPERANDS;
 
