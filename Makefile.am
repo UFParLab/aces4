@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 aces4_profile aces4_sipmap print_siptables print_init_file sqlite3
+bin_PROGRAMS=aces4 aces4_profile aces4_sipmap print_siptables print_init_file profile_merge sqlite3
 
 # Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
@@ -194,6 +194,10 @@ print_init_file_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_init_file.cpp
 
+profile_merge_SOURCES=\
+	$(ACES_SOURCEFILES)\
+	./src/util/profile_merge.cpp
+
 aces4_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
@@ -223,6 +227,13 @@ print_siptables_LDADD=\
 	$(AM_LDADD_LIBS)
 	
 print_init_file_LDADD=\
+	libtensordil.a \
+	libsqlite3.a \
+	libjsoncpp.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+	
+profile_merge_LDADD=\
 	libtensordil.a \
 	libsqlite3.a \
 	libjsoncpp.a \

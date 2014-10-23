@@ -10,6 +10,7 @@
 
 #include <sqlite3.h>
 #include <string>
+#include <map>
 #include <utility>
 
 #include "profile_timer.h"
@@ -18,6 +19,7 @@ namespace sip {
 
 class ProfileTimerStore {
 public:
+
 	ProfileTimerStore(const std::string &db_name);
 	~ProfileTimerStore();
 
@@ -37,6 +39,21 @@ public:
 	 * @return
 	 */
 	std::pair<long, long> get_from_store(const ProfileTimer::Key& opcode_operands) const;
+
+
+	typedef std::map<sip::ProfileTimer::Key, std::pair<long, long> > ProfileStoreMap_t;
+	/**
+	 * Reads all data into an in memory list and returns it.
+	 * CAUTION : Use this function cautiously since it reads the entire database into memory.
+	 * @return
+	 */
+	ProfileStoreMap_t read_all_data() const;
+
+	/**
+	 * Backs up this ProfileTimerStore to other profile timer store instance.
+	 * @param other
+	 */
+	void backup_to_other(const ProfileTimerStore& other);
 
 	const static int MAX_BLOCK_OPERANDS;
 
@@ -76,6 +93,7 @@ private:
 	const static int max_opcode_size;
 
 	// INTEGER Columns
+	const static std::string rank_prefix;
 	const static std::string block_prefix;
 	const static std::string indices_prefix;
 	const static std::string segment_prefix;

@@ -11,6 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
+#include <vector>
 
 #include "sip.h"
 
@@ -34,6 +35,7 @@ const std::string ProfileTimerStore::opcode_column("opcode");
 const int ProfileTimerStore::max_opcode_size = 32;
 
 // INTEGER Columns
+const std::string ProfileTimerStore::rank_prefix("rank");
 const std::string ProfileTimerStore::block_prefix("block");
 const std::string ProfileTimerStore::indices_prefix("index");
 const std::string ProfileTimerStore::segment_prefix("segment");
@@ -62,6 +64,10 @@ void ProfileTimerStore::create_table(int num_blocks) {
 	std::stringstream create_table_ss;
 	create_table_ss << "CREATE TABLE IF NOT EXISTS "<< block_table[num_blocks] << "("
 			        << opcode_column << " CHARACTER(" << max_opcode_size << ") NOT NULL, ";
+
+	for (int bnum = 0; bnum < num_blocks; bnum++){
+		create_table_ss << rank_prefix << bnum << " INTEGER NOT NULL,";
+	}
 
 	for (int bnum = 0; bnum < num_blocks; bnum++) {
 		for (int index = 0; index < MAX_RANK; index++) {
@@ -116,20 +122,22 @@ void ProfileTimerStore::create_table(int num_blocks) {
 void ProfileTimerStore::append_where_clause(std::stringstream& ss, const ProfileTimer::Key& opcode_operands) const {
 	int num_blocks = opcode_operands.blocks_.size();
 	ss << " WHERE " << opcode_column << "='" << opcode_operands.opcode_ << "'";
+
+	for (int bnum = 0; bnum < num_blocks; bnum++) {
+		int rank_to_search = opcode_operands.blocks_[bnum].rank_;
+		ss << " and " << rank_prefix << bnum << " = " << rank_to_search;
+	}
+
 	for (int bnum = 0; bnum < num_blocks; bnum++) {
 		for (int index = 0; index < MAX_RANK; index++) {
-			int index_to_search =
-					opcode_operands.blocks_[bnum].index_ids_[index];
-			ss << " and " << block_prefix << bnum << indices_prefix << index
-					<< " = " << index_to_search;
+			int index_to_search = opcode_operands.blocks_[bnum].index_ids_[index];
+			ss << " and " << block_prefix << bnum << indices_prefix << index << " = " << index_to_search;
 		}
 	}
 	for (int bnum = 0; bnum < num_blocks; bnum++) {
 		for (int segment = 0; segment < MAX_RANK; segment++) {
-			int segment_to_search =
-					opcode_operands.blocks_[bnum].segment_sizes_[segment];
-			ss << " and " << block_prefix << bnum << segment_prefix << segment
-					<< " = " << segment_to_search;
+			int segment_to_search = opcode_operands.blocks_[bnum].segment_sizes_[segment];
+			ss << " and " << block_prefix << bnum << segment_prefix << segment << " = " << segment_to_search;
 		}
 	}
 }
@@ -185,6 +193,10 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 		check (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
 		ss << "INSERT INTO " << block_table[num_blocks] << "(";
 		ss << opcode_column ;
+
+		for (int bnum = 0; bnum < num_blocks; bnum++) {
+			ss << ", " << rank_prefix << bnum ;
+		}
 		for (int bnum = 0; bnum < num_blocks; bnum++) {
 			for (int index = 0; index < MAX_RANK; index++) {
 				ss << ", " << block_prefix << bnum << indices_prefix << index;
@@ -203,6 +215,11 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 		ss << " VALUES (";
 		ss << "'" << opcode_operands.opcode_ << "'";
 		const std::vector<ProfileTimer::BlockInfo> & blocks = opcode_operands.blocks_;
+
+		for (int bnum = 0; bnum < num_blocks; bnum++) {
+			ss << ", " << opcode_operands.blocks_[bnum].rank_;
+		}
+
 		for (int bnum = 0; bnum < num_blocks; bnum++) {
 			for (int index = 0; index < MAX_RANK; index++) {
 				ss << ", " << opcode_operands.blocks_[bnum].index_ids_[index];
@@ -271,7 +288,7 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 	long count = -1;
 	int row_count = 0;
 	while (sqlite3_step(get_from_store_stmt) == SQLITE_ROW){
-		totaltime = sqlite3_column_double(get_from_store_stmt, 0); 	// 1st column is tottime_column
+		totaltime = sqlite3_column_int64(get_from_store_stmt, 0); 	// 1st column is tottime_column
 		count = sqlite3_column_int64(get_from_store_stmt, 1);		// 2nd column is count_column
 		row_count++;
 	}
@@ -303,6 +320,88 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 
 	return std::make_pair(totaltime, count);
 }
+
+
+ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
+	std::map<ProfileTimer::Key, std::pair<long, long> > all_rows_map;
+
+	for (int operands=0; operands<=MAX_BLOCK_OPERANDS; ++operands){
+		std::stringstream query_ss;
+		query_ss << "SELECT * FROM " << block_table[operands];
+		std::string sql_query(query_ss.str());
+
+		sqlite3_stmt* get_all_rows_from_table;
+		// Execute the SQL query string and get total time and count from the results.
+		int rc = sqlite3_prepare_v2(db_, sql_query.c_str(), sql_query.length(), &get_all_rows_from_table, NULL);
+		if (rc != SQLITE_OK)
+			sip_sqlite3_error(rc);
+
+		while (sqlite3_step(get_all_rows_from_table) == SQLITE_ROW){
+			int col_num = 0;
+			// Get opcode
+			std::string opcode(reinterpret_cast<const char*>(sqlite3_column_text(get_all_rows_from_table, col_num++)));
+
+			// Get ranks
+			int ranks[MAX_RANK];
+			for (int bnum=0; bnum<operands; ++bnum){
+				ranks[bnum] = sqlite3_column_int(get_all_rows_from_table, col_num++);
+			}
+
+			// Get indices
+			int indices[MAX_RANK][MAX_RANK];
+			for (int bnum = 0; bnum < operands; bnum++) {
+				for (int index = 0; index < MAX_RANK; index++) {
+					indices[bnum][index] = sqlite3_column_int(get_all_rows_from_table, col_num++);
+				}
+			}
+
+			// Get segment sizes
+			int segments[MAX_RANK][MAX_RANK];
+			for (int bnum = 0; bnum < operands; bnum++) {
+				for (int segment = 0; segment < MAX_RANK; segment++) {
+					segments[bnum][segment] = sqlite3_column_int(get_all_rows_from_table, col_num++);
+				}
+			}
+
+			// Get total time & counts
+			long totaltime = sqlite3_column_int64(get_all_rows_from_table, col_num++);
+			long count = sqlite3_column_int64(get_all_rows_from_table, col_num++);
+
+			std::pair<long, long> time_count_pair = std::make_pair(totaltime, count);
+			std::vector<ProfileTimer::BlockInfo> block_infos;
+			for (int i=0; i<operands; ++i){
+				ProfileTimer::BlockInfo block_info (ranks[i], indices[i], segments[i]);
+				block_infos.push_back(block_info);
+			}
+			ProfileTimer::Key key(opcode, block_infos);
+
+			typedef std::map<ProfileTimer::Key, std::pair<long, long> >::iterator MapIterator_t;
+			std::pair<MapIterator_t, bool> returned = all_rows_map.insert(std::make_pair(key, time_count_pair));
+			sip::check(returned.second, "Trying to insert duplicate element from database into map in ProfileTimerStore");
+		}
+		rc = sqlite3_finalize(get_all_rows_from_table);
+		if (rc != SQLITE_OK)
+			sip_sqlite3_error(rc);
+	}
+	return all_rows_map;
+}
+
+
+void ProfileTimerStore::backup_to_other(const ProfileTimerStore& other){
+	sqlite3_backup *pBackup;  	/* Backup object used to copy data */
+	sqlite3 *pTo = other.db_;	/* Database to copy to (pFile or pInMemory) */
+	sqlite3 *pFrom = this->db_; /* Database to copy from (pFile or pInMemory) */
+
+	pBackup = sqlite3_backup_init(pTo, "main", pFrom, "main");
+	if( pBackup ){
+	  sqlite3_backup_step(pBackup, -1);
+	  sqlite3_backup_finish(pBackup);
+	}
+	int rc = sqlite3_errcode(pTo);
+	if (rc != SQLITE_OK)
+		sip_sqlite3_error(rc);
+}
+
 
 
 

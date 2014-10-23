@@ -41,14 +41,8 @@ int main(int argc, char* argv[]) {
 #endif //HAVE_MPI
 
 
-
-	// Sets the database name
-	// For a job from ar1.dat, the profile database will be
-	// profile.ar1.dat.0 for rank 0
-	// profile.ar1.dat.1 for rank 1 and so on.
-	std::stringstream db_name;
-	db_name << "profile." << parameters.job << "." << sip_mpi_attr.global_rank();
-	sip::ProfileTimerStore profile_timer_store(db_name.str());
+	// Temporary in memory database for faster store
+	sip::ProfileTimerStore profile_timer_store(":memory:");
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::cout << it->c_str() << std::endl;
@@ -105,6 +99,15 @@ int main(int argc, char* argv[]) {
 
   		barrier();
 	} //end of loop over programs
+
+	// Sets the database name
+	// For a job from ar1.dat, the profile database will be
+	// profile.ar1.dat.0 for rank 0
+	// profile.ar1.dat.1 for rank 1 and so on.
+	std::stringstream db_name;
+	db_name << "profile." << parameters.job << "." << sip_mpi_attr.global_rank();
+	sip::ProfileTimerStore disk_profile_timer_store(db_name.str());
+	profile_timer_store.backup_to_other(disk_profile_timer_store);
 
 	delete setup_reader;
 	FINALIZE_GLOBAL_TIMERS();

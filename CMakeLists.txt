@@ -360,6 +360,9 @@ add_executable(print_siptables src/util/print_siptables.cpp)
 # print_init_file executable
 add_executable(print_init_file src/util/print_init_file.cpp)
 
+# profile_merge executable
+add_executable(profile_merge src/util/profile_merge.cpp)
+
 #SQLITE3 Shell
 add_executable(sqlite3 sqlite3/shell.c sqlite3/sqlite3.h)
 
@@ -379,6 +382,9 @@ set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}
 set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(profile_merge PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(profile_merge PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
 
 # Libraries to link
@@ -386,7 +392,8 @@ target_link_libraries(aces4 ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_sipmap ${TOLINK_LIBRARIES})
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES})
-target_link_libraries(print_init_file ${TOLINK_LIBRARIES})  
+target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
+target_link_libraries(profile_merge ${TOLINK_LIBRARIES})    
 target_link_libraries(sqlite3 sqlite3l)
 
 # Dependencies
@@ -396,12 +403,14 @@ if(HAVE_CUDA)
 	add_dependencies(aces4_sipmap tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
+	add_dependencies(profile_merge tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(aces4_profile tensordil superinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
+	add_dependencies(profile_merge tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_core tensordil)

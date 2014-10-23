@@ -30,7 +30,8 @@ SIPMPIAttr& SIPMPIAttr::get_instance() {
 	if (destroyed_)
 		sip::fail("SIPMPIAttr instance has been destroyed !");
 	if (instance_ == NULL){
-		rank_distribution_ = new TwoWorkerOneServerRankDistribution();
+		if (rank_distribution_ == NULL)
+			rank_distribution_ = new TwoWorkerOneServerRankDistribution();
 		instance_ = new SIPMPIAttr(*rank_distribution_);
 	}
 	return *instance_;
