@@ -7,7 +7,15 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 aces4_profile aces4_sipmap print_siptables print_init_file profile_merge sqlite3
+bin_PROGRAMS=\
+aces4 \
+aces4_profile \
+aces4_sipmap \
+aces4_memory_ops \
+print_siptables \
+print_init_file \
+profile_merge \
+sqlite3
 
 # Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
@@ -105,6 +113,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/profile_interpreter.h\
 ./src/sip/worker/sipmap_interpreter.cpp\
 ./src/sip/worker/sipmap_interpreter.h\
+./src/sip/worker/memory_ops_interpreter.cpp\
+./src/sip/worker/memory_ops_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/profile_timer.h\
@@ -186,6 +196,11 @@ aces4_sipmap_SOURCES= \
     $(ACES_SOURCEFILES) \
     ./src/aces_main/sipmap_main.cpp
 
+
+aces4_memory_ops_SOURCES=\
+ 	$(ACES_SOURCEFILES) \
+    ./src/aces_main/memory_ops_main.cpp
+
 print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
@@ -213,6 +228,13 @@ aces4_profile_LDADD = \
 	$(AM_LDADD_LIBS)
 
 aces4_sipmap_LDADD = \
+	libtensordil.a \
+	libsqlite3.a \
+	libjsoncpp.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+
+aces4_memory_ops_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
 	libjsoncpp.a \
@@ -258,6 +280,11 @@ aces4_sipmap_LDFLAGS = \
 	$(OPENMP_CFLAGS)\
 	$(OPENMP_CXXFLAGS)
 	
+aces4_memory_ops_LDFLAGS = \
+	$(OPENMP_FFLAGS)\
+	$(OPENMP_FCFLAGS)\
+	$(OPENMP_CFLAGS)\
+	$(OPENMP_CXXFLAGS)	
 
 ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip\

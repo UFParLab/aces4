@@ -29,6 +29,7 @@ class SialOpsParallel;
 class SialOpsSequential;
 class SialxInterpreter;
 class ProfileInterpreter;
+class MemoryOpsInterpreter;
 class SIPMaPInterpreter;
 
 class DataManager {
@@ -113,6 +114,7 @@ private:
 
 	friend class SialxInterpreter;
 	friend class ProfileInterpreter;
+	friend class MemoryOpsInterpreter;
 	friend class SIPMaPInterpreter;
 	friend class SialOpsParallel;
 	friend class SialOpsSequential;

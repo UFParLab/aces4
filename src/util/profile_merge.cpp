@@ -28,7 +28,8 @@ void print_usage(const std::string& program_name) {
 	std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 }
 
-
+// Since this executable need not be run with servers
+// or with 2 ranks, all ranks are made to be workers.
 class AllWorkerRankDistribution : public sip::RankDistribution{
 public:
 	virtual bool is_server(int rank, int size){

@@ -43,9 +43,9 @@ public:
 	virtual void handle_deallocate_op(int pc) {}
 	virtual void handle_allocate_contiguous_op(int pc) {}
 	virtual void handle_deallocate_contiguous_op(int pc) {}
-	virtual void handle_get_op(int pc) {}
-	virtual void handle_put_accumulate_op(int pc) { block_selector_stack_.pop(); }
-	virtual void handle_put_replace_op(int pc) {block_selector_stack_.pop(); }
+	virtual void handle_get_op(int pc) { block_selector_stack_.pop(); }
+	virtual void handle_put_accumulate_op(int pc) { block_selector_stack_.pop(); block_selector_stack_.pop();}
+	virtual void handle_put_replace_op(int pc) {block_selector_stack_.pop(); block_selector_stack_.pop();}
 	virtual void handle_create_op(int pc) {}
 	virtual void handle_delete_op(int pc) {}
 
