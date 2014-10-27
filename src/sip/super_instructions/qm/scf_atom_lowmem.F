@@ -1887,7 +1887,7 @@ c           write(6,*) 'ncsum', ncsum
 
             call pack_coeffs_oed(palphas, pixalphas, ppcoeffs,
      *                       pixpcoeffs, ncfps, npfps, m, n,
-     *                       alpha_pack, nalpha, pcoeff_pack,
+     *                       alpha_pack, nalpha_pack, pcoeff_pack,
      *                       ncoeff, pccbeg, pccend,
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
@@ -1897,7 +1897,7 @@ c ------------------------------------------------------------------------
 c  KIN (type=2) integrals next.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_kin_batch(imax, zmax, nalpha, ncoeff,
+              call oed__gener_kin_batch(imax, zmax, nalpha_pack, ncoeff,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 alpha_pack,
