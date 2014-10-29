@@ -587,7 +587,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			if (lhs_block->get_data() != rhs_block->get_data()) {
 			    			    lhs_block->copy_data_(rhs_block);
 			}
-			lhs_block->copy_data_(rhs_block);
 			//#ifdef HAVE_CUDA
 			//				if (gpu_enabled_) {
 			//					lhs_block->gpu_copy_data(rhs_block);
