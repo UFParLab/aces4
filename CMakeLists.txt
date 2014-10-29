@@ -553,7 +553,7 @@ foreach(F ${SIAL_FILES})
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SIAL_COMPILE_DIR}
         COMMAND mv -f ${SIALX_FILE_PATH}/${F_WE}.siox ${SIAL_COMPILE_DIR} 
-        DEPENDS ${SIAL_COMPILER_JAR}
+        DEPENDS ${SIAL_COMPILER_JAR} ${CMAKE_SOURCE_DIR}/${F}
         COMMENT "Compiling ${F} to ${SIAL_COMPILE_DIR}/${F_WE}.siox")
     list (APPEND SIAL_COMPILED_FILES "${SIAL_COMPILE_DIR}/${F_WE}.siox")
 endforeach()
