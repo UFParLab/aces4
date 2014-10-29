@@ -582,8 +582,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			//		} else
 			//#endif
 			//check for self assignment
-			if (lhs_block->get_data() == rhs_block->get_data()) {
-						return;
+//			if (lhs_block->get_data() == rhs_block->get_data()) {
+//						return;
+			if (lhs_block->get_data() != rhs_block->get_data()) {
+			    			    lhs_block->copy_data_(rhs_block);
 			}
 			lhs_block->copy_data_(rhs_block);
 			//#ifdef HAVE_CUDA
