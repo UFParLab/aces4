@@ -711,7 +711,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 //		}
 //			break;
 		case block_contract_to_scalar_op: {
-			Block::BlockPtr dblock = data_manager_.scalar_blocks_[arg1()];
+//			Block::BlockPtr dblock = data_manager_.scalar_blocks_[arg1()];
 			double result;
 			segment_size_array_t dummy_dsegment_sizes;
 			const index_selector_t& selectors = index_selectors();
