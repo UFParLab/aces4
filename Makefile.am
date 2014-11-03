@@ -113,10 +113,14 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/profile_interpreter.h\
 ./src/sip/worker/sipmap_interpreter.cpp\
 ./src/sip/worker/sipmap_interpreter.h\
+./src/sip/worker/remote_array_model.h\
+./src/sip/worker/remote_array_model.cpp\
 ./src/sip/worker/memory_ops_interpreter.cpp\
 ./src/sip/worker/memory_ops_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
+./src/sip/worker/sialx_print_timer.cpp\
+./src/sip/worker/sialx_print_timer.h\
 ./src/sip/worker/profile_timer.h\
 ./src/sip/worker/profile_timer.cpp\
 ./src/sip/worker/sipmap_timer.h\
@@ -190,16 +194,19 @@ aces4_SOURCES= \
 
 aces4_profile_SOURCES= \
     $(ACES_SOURCEFILES) \
-    ./src/aces_main/profile_main.cpp
+    ./src/aces_main/profile_main.cpp\
+    ./src/aces_main/main_helper_methods.h
 
 aces4_sipmap_SOURCES= \
     $(ACES_SOURCEFILES) \
-    ./src/aces_main/sipmap_main.cpp
+    ./src/aces_main/sipmap_main.cpp\
+    ./src/aces_main/sipmap_helper_methods.h
 
 
 aces4_memory_ops_SOURCES=\
  	$(ACES_SOURCEFILES) \
-    ./src/aces_main/memory_ops_main.cpp
+    ./src/aces_main/memory_ops_main.cpp\
+    ./src/aces_main/main_helper_methods.h
 
 print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\

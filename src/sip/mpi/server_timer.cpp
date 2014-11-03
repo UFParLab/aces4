@@ -30,7 +30,7 @@ namespace sip {
 
 ServerTimer::ServerTimer(int sialx_lines):
 		sialx_lines_(sialx_lines),
-		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)){
+		delegate_(NUMBER_TIMER_KINDS_*(1 + sialx_lines)){
 	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
 	 * one for each kind defined in the TimerKind_t enum.
 	 * One extra added since line numbers begin at 1.
@@ -166,31 +166,31 @@ private:
 		long long * timer_counts = timer.get_timer_count();
 
 		// Data to send to reduce
-		long long * sendbuf = new long long[2*timer.max_slots + 1];
-		sendbuf[0] = timer.max_slots;
+		long long * sendbuf = new long long[2*timer.max_slots() + 1];
+		sendbuf[0] = timer.max_slots();
 		// The data will be structured as
 		// Length of arrays 1 & 2
 		// Array1 -> timer_switched_ array
 		// Array2 -> timer_list_ array
-		std::copy(timer_counts + 0, timer_counts + timer.max_slots, sendbuf+1);
-		std::copy(timers + 0, timers + timer.max_slots, sendbuf+1+ timer.max_slots);
+		std::copy(timer_counts + 0, timer_counts + timer.max_slots(), sendbuf+1);
+		std::copy(timers + 0, timers + timer.max_slots(), sendbuf+1+ timer.max_slots());
 
-		long long * recvbuf = new long long[2*timer.max_slots + 1]();
+		long long * recvbuf = new long long[2*timer.max_slots() + 1]();
 
 		int server_master = attr.COMPANY_MASTER_RANK;
 		MPI_Comm server_company = attr.company_communicator();
 
 		MPI_Datatype server_timer_reduce_dt; // MPI Type for timer data to be reduced.
 		MPI_Op server_timer_reduce_op;	// MPI OP to reduce timer data.
-		SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots*2+1, MPI_LONG_LONG, &server_timer_reduce_dt));
+		SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots()*2+1, MPI_LONG_LONG, &server_timer_reduce_dt));
 		SIPMPIUtils::check_err(MPI_Type_commit(&server_timer_reduce_dt));
 		SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)server_timer_reduce_op_function, 1, &server_timer_reduce_op));
 
 		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, server_timer_reduce_dt, server_timer_reduce_op, server_master, server_company));
 
 		if (attr.is_company_master()){
-			std::copy(recvbuf+1, recvbuf+1+timer.max_slots, timer_counts);
-			std::copy(recvbuf+1+timer.max_slots, recvbuf+1+2*timer.max_slots, timers);
+			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts);
+			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers);
 		}
 
 		// Cleanup

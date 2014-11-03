@@ -213,10 +213,10 @@ std::string SequentialPardoLoop::to_string() const {
 #ifdef HAVE_MPI
 StaticTaskAllocParallelPardoLoop::StaticTaskAllocParallelPardoLoop(int num_indices,
 		const int (&index_id)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
-		SIPMPIAttr & sip_mpi_attr) :
+		int company_rank, int num_workers) :
 		data_manager_(data_manager), sip_tables_(sip_tables),
 		num_indices_(num_indices), first_time_(true), iteration_(0),
-		sip_mpi_attr_(sip_mpi_attr) {
+		company_rank_(company_rank), num_workers_(num_workers){
 
 	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
 	for (int i = 0; i < num_indices; ++i) {
@@ -274,13 +274,10 @@ bool StaticTaskAllocParallelPardoLoop::do_update() {
 	if (to_exit_)
 		return false;
 
-	int company_rank = sip_mpi_attr_.company_rank();
-	int num_workers = sip_mpi_attr_.num_workers();
-
 	if (first_time_) {
 		first_time_ = false;
 		bool more_iters = initialize_indices();
-		while (more_iters && iteration_ % num_workers != company_rank){
+		while (more_iters && iteration_ % num_workers_ != company_rank_){
 			more_iters = increment_indices();
 			iteration_++;
 		}
@@ -288,7 +285,7 @@ bool StaticTaskAllocParallelPardoLoop::do_update() {
 	} else {
 		iteration_++;
 		bool more_iters = increment_indices();
-		while (more_iters && iteration_ % num_workers != company_rank){
+		while (more_iters && iteration_ % num_workers_ != company_rank_){
 			more_iters = increment_indices();
 			iteration_++;
 		}

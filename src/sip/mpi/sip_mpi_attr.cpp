@@ -53,19 +53,30 @@ void SIPMPIAttr::set_rank_distribution(RankDistribution *rank_dist) {
 
 void SIPMPIAttr::cleanup() {
 	delete instance_;
-	delete rank_distribution_;
+	//delete rank_distribution_; // TODO FIXME - Minor leak
 	destroyed_ = true;
 }
 
-SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution) {
+SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
+		// Initialize all values to throw an error if not properly re-initialized in the constructor.
+		num_servers_(-1), num_workers_ (-1),
+		worker_master_(-1), server_master_(-1),
+		is_server_(false), is_company_master_(false),
+		global_rank_(-1), global_size_(-1),
+		company_size_(-1), my_server_(-1),
+		server_group_(MPI_GROUP_NULL), worker_group_(MPI_GROUP_NULL),
+		server_comm_(MPI_COMM_NULL), worker_comm_(MPI_COMM_NULL), company_comm_(MPI_COMM_NULL){
+
+
 	SIPMPIUtils::check_err(MPI_Comm_rank(MPI_COMM_WORLD, &global_rank_));
 	SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &global_size_));
+
 
 	// Splitting up communicator for servers and worker
 	// From http://static.msi.umn.edu/tutorial/scicomp/general/MPI/communicator.html
 
 	/* Extract the original group handle */
-	SIPMPIUtils::check_err(MPI_Comm_group(MPI_COMM_WORLD, &univ_group));
+	SIPMPIUtils::check_err(MPI_Comm_group(MPI_COMM_WORLD, &univ_group_));
 
 	int *worker_ranks = new int[global_size_];
 	int *server_ranks = new int[global_size_];
@@ -96,11 +107,14 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution) {
 		std::cout<<std::endl;
 	}
 
-	SIPMPIUtils::check_err(MPI_Group_incl(univ_group, s, server_ranks, &server_group));
-	SIPMPIUtils::check_err(MPI_Group_incl(univ_group, w, worker_ranks, &worker_group));
-
-	SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, server_group, &server_comm_));
-	SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, worker_group, &worker_comm_));
+	if (s >= 1){
+		SIPMPIUtils::check_err(MPI_Group_incl(univ_group_, s, server_ranks, &server_group_));
+		SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, server_group_, &server_comm_));
+	}
+	if (w >= 1){
+		SIPMPIUtils::check_err(MPI_Group_incl(univ_group_, w, worker_ranks, &worker_group_));
+		SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, worker_group_, &worker_comm_));
+	}
 
 	is_server_ = rank_distribution.is_server(global_rank_, global_size_);
 
@@ -117,8 +131,10 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution) {
 
 	// Determine company masters
 	int company_master = COMPANY_MASTER_RANK;
-	SIPMPIUtils::check_err(MPI_Group_translate_ranks(server_group, 1, &company_master, univ_group, &server_master_));
-	SIPMPIUtils::check_err(MPI_Group_translate_ranks(worker_group, 1, &company_master, univ_group, &worker_master_));
+	if (s >= 1)
+		SIPMPIUtils::check_err(MPI_Group_translate_ranks(server_group_, 1, &company_master, univ_group_, &server_master_));
+	if (w >= 1)
+		SIPMPIUtils::check_err(MPI_Group_translate_ranks(worker_group_, 1, &company_master, univ_group_, &worker_master_));
 
 	delete [] worker_ranks;
 	delete [] server_ranks;
@@ -157,9 +173,12 @@ std::ostream& operator<<(std::ostream& os, const SIPMPIAttr& obj){
 
 
 SIPMPIAttr::~SIPMPIAttr() {
-	SIPMPIUtils::check_err(MPI_Group_free(&server_group));
-	SIPMPIUtils::check_err(MPI_Group_free(&worker_group));
-	SIPMPIUtils::check_err(MPI_Group_free(&univ_group));
+	if (server_group_ != MPI_GROUP_NULL)
+		SIPMPIUtils::check_err(MPI_Group_free(&server_group_));
+	if (worker_group_ != MPI_GROUP_NULL)
+		SIPMPIUtils::check_err(MPI_Group_free(&worker_group_));
+	if (univ_group_ != MPI_GROUP_NULL)
+		SIPMPIUtils::check_err(MPI_Group_free(&univ_group_));
 	if (server_comm_ != MPI_COMM_NULL)
 		SIPMPIUtils::check_err(MPI_Comm_free(&server_comm_));
 	if (worker_comm_ != MPI_COMM_NULL)

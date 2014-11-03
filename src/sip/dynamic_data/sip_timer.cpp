@@ -36,7 +36,7 @@ const long long LinuxSIPTimers::_timer_off_value_ = -1;
 //								Linux Timers
 //*********************************************************************
 
-LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots(max_slots) {
+LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots_(max_slots) {
 	timer_list_ = new long long[max_slots];
 	timer_on_ = new long long[max_slots];
 	timer_switched_ = new long long[max_slots];
@@ -59,7 +59,7 @@ void LinuxSIPTimers::start_timer(int slot) {
 }
 
 void LinuxSIPTimers::pause_timer(int slot) {
-	assert (slot < max_slots);
+	assert (slot < max_slots_);
 	assert (timer_on_[slot] != _timer_off_value_);
 	timer_list_[slot] += clock() - timer_on_[slot];
 	timer_on_[slot] = _timer_off_value_;
@@ -79,7 +79,7 @@ void LinuxSIPTimers::print_timers (PrintTimers<LinuxSIPTimers>& p){
 }
 
 bool LinuxSIPTimers::check_timers_off() {
-	for (int i = 0; i < max_slots; i++)
+	for (int i = 0; i < max_slots_; i++)
 		if (timer_on_[i] != _timer_off_value_){
 			SIP_LOG(std::cerr<<"Timer left on : "<<i<<std::endl);
 			std::cerr<<"Timer left on : "<<i<<std::endl;
@@ -94,7 +94,7 @@ bool LinuxSIPTimers::check_timers_off() {
 //*********************************************************************
 #ifdef HAVE_PAPI
 
-PAPISIPTimers::PAPISIPTimers(int max_slots) : LinuxSIPTimers(max_slots) {
+PAPISIPTimers::PAPISIPTimers(int max_slots_) : LinuxSIPTimers(max_slots_) {
 	int EventSet = PAPI_NULL;
 	if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
 		fail("PAPI_library_init failed !");
@@ -111,7 +111,7 @@ void PAPISIPTimers::start_timer(int slot) {
 }
 
 void PAPISIPTimers::pause_timer(int slot) {
-	assert (slot < max_slots);
+	assert (slot < max_slots_);
 	assert (timer_on_[slot] != _timer_off_value_);
 	timer_list_[slot] += PAPI_get_real_usec() - timer_on_[slot];
 	timer_on_[slot] = _timer_off_value_;
@@ -133,9 +133,9 @@ void PAPISIPTimers::print_timers(PrintTimers<PAPISIPTimers>& p){
 //*********************************************************************
 #ifdef HAVE_TAU
 
-TAUSIPTimers::TAUSIPTimers(int max_slots) : max_slots(max_slots) {
-	tau_timers_ = new void*[max_slots];
-	for (int i=0; i<max_slots; i++)
+TAUSIPTimers::TAUSIPTimers(int max_slots_) : max_slots_(max_slots_) {
+	tau_timers_ = new void*[max_slots_];
+	for (int i=0; i<max_slots_; i++)
 		tau_timers_[i] = NULL;
 }
 

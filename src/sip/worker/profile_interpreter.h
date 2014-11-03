@@ -21,7 +21,7 @@ class WorkerPersistentArrayManager;
 class ProfileInterpreter: public SialxInterpreter {
 public:
 	ProfileInterpreter(const SipTables& sipTables, ProfileTimer& profile_timer,
-			SialPrinter* printer,
+			SialxTimer* sialx_timer, SialPrinter* printer,
 			WorkerPersistentArrayManager* persistent_array_manager);
 	virtual ~ProfileInterpreter();
 

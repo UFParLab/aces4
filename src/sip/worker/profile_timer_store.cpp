@@ -287,16 +287,22 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 	long totaltime = -1;
 	long count = -1;
 	int row_count = 0;
-	while (sqlite3_step(get_from_store_stmt) == SQLITE_ROW){
+	int sqlite3_step_result = sqlite3_step(get_from_store_stmt);
+	while (sqlite3_step_result == SQLITE_ROW){
 		totaltime = sqlite3_column_int64(get_from_store_stmt, 0); 	// 1st column is tottime_column
 		count = sqlite3_column_int64(get_from_store_stmt, 1);		// 2nd column is count_column
 		row_count++;
+		if (sqlite3_step_result != SQLITE_DONE && sqlite3_step_result != SQLITE_ROW){
+			sip_sqlite3_error(sqlite3_step_result);
+		}
+		sqlite3_step_result = sqlite3_step(get_from_store_stmt);
 	}
 
 	// If no rows were returned, throw an exception.
 	if (row_count < 1){
 		std::stringstream err_ss;
-		err_ss << "There were no rows for key : " << opcode_operands;
+		err_ss << "There were no rows for key : " << opcode_operands << std::endl;
+		err_ss << "Attempted SQL query : " << get_from_store_sql;
 		rc = sqlite3_finalize(get_from_store_stmt);
 		if (rc != SQLITE_OK)
 			sip_sqlite3_error(rc);

@@ -107,7 +107,7 @@ private:
 class StaticTaskAllocParallelPardoLoop: public LoopManager{
 public:
 	StaticTaskAllocParallelPardoLoop(int num_indices, const int (&index_ids)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
-			SIPMPIAttr& sip_mpi_attr);
+			int company_rank, int num_workers);
 	virtual ~StaticTaskAllocParallelPardoLoop();
 	friend std::ostream& operator<<(std::ostream&, const StaticTaskAllocParallelPardoLoop &);
 private:
@@ -123,7 +123,8 @@ private:
 
     DataManager & data_manager_;
     const SipTables & sip_tables_;
-    SIPMPIAttr & sip_mpi_attr_;
+    const int num_workers_;
+    const int company_rank_;
 
 	DISALLOW_COPY_AND_ASSIGN(StaticTaskAllocParallelPardoLoop);
 	bool increment_indices();

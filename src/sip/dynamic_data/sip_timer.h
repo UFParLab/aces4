@@ -59,9 +59,9 @@ public:
 
 	void print_timers(PrintTimers<LinuxSIPTimers>&); /*! Print out the timers */
 
-	const int max_slots;							/*!	Maximum number of timer slots */
-
+	int max_slots() { return max_slots_; }
 protected :
+	const int max_slots_;							/*!	Maximum number of timer slots */
 	const static long long _timer_off_value_;	/*! Sentinel Value */
 
 	long long *timer_list_;		/*! Contains total 'time unit' for every line 		*/
@@ -76,7 +76,7 @@ protected :
 #ifdef HAVE_PAPI
 class PAPISIPTimers : public LinuxSIPTimers{
 public:
-	PAPISIPTimers(int max_slots);
+	PAPISIPTimers(int max_slots_);
 	~PAPISIPTimers();
 	void start_timer(int slot);
 	void pause_timer(int slot);
@@ -96,7 +96,7 @@ protected:
 #ifdef HAVE_TAU
 class TAUSIPTimers {
 public:
-	TAUSIPTimers(int max_slots);
+	TAUSIPTimers(int max_slots_);
 	~TAUSIPTimers();
 	void start_timer(int slot);
 	void pause_timer(int slot);
@@ -106,7 +106,7 @@ public:
 	void ** get_tau_timers();
 
 protected:
-	const int max_slots;	/*!	Maximum number of timer slots */
+	const int max_slots_;	/*!	Maximum number of timer slots */
 	void **tau_timers_;
 	DISALLOW_COPY_AND_ASSIGN(TAUSIPTimers);
 };

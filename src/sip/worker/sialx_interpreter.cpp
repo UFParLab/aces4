@@ -122,14 +122,15 @@ void SialxInterpreter::handle_pardo_op(int &pc) {
 	//TODO refactor to get rid of the ifdefs
 	int num_indices = arg1(pc);
 #ifdef HAVE_MPI
-			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
-					index_selectors(pc), data_manager_, sip_tables_,
-					SIPMPIAttr::get_instance());
+		const SIPMPIAttr& sip_mpi_attr = SIPMPIAttr::get_instance();
+		LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
+				index_selectors(pc), data_manager_, sip_tables_,
+				sip_mpi_attr.company_rank(), sip_mpi_attr.num_workers());
 #else
-			LoopManager* loop = new SequentialPardoLoop(num_indices,
-					index_selectors(pc), data_manager_, sip_tables_);
+		LoopManager* loop = new SequentialPardoLoop(num_indices,
+				index_selectors(pc), data_manager_, sip_tables_);
 #endif
-			loop_start(pc, loop);
+		loop_start(pc, loop);
 }
 
 void SialxInterpreter::handle_endpardo_op(int &pc) {

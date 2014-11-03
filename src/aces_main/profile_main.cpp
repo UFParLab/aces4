@@ -82,7 +82,9 @@ int main(int argc, char* argv[]) {
 		{
 
 			sip::ProfileTimer profile_timer(sipTables.max_timer_slots(), &profile_timer_store);
-			sip::ProfileInterpreter runner(sipTables, profile_timer, NULL, &persistent_worker);
+			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			sialxTimer.start_program_timer();
+			sip::ProfileInterpreter runner(sipTables, profile_timer, &sialxTimer, NULL, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();
@@ -92,6 +94,8 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
 			profile_timer.print_timers();	// Saves to database store.
+			sialxTimer.stop_program_timer();
+			sialxTimer.print_timers(lno2name);
 
 		}// end of worker or server
 

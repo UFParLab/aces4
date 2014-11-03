@@ -39,7 +39,7 @@ public:
 		return -1;
 	}
 	virtual bool is_local_worker_to_communicate(int rank, int size){
-		return -1;
+		return false;
 	}
 };
 

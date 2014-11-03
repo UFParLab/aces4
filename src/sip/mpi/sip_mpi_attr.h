@@ -92,9 +92,9 @@ private:
 	MPI_Comm worker_comm_; // Worker company communicator
 
 	// Temp variables to free up.
-	MPI_Group server_group;
-	MPI_Group worker_group;
-	MPI_Group univ_group;
+	MPI_Group server_group_;
+	MPI_Group worker_group_;
+	MPI_Group univ_group_;
 
 	DISALLOW_COPY_AND_ASSIGN(SIPMPIAttr);
 
