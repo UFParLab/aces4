@@ -90,7 +90,7 @@ special compute_nn_repulsion u
 #special diis_setup w
 special set_flags2 r
 special return_sval rw
-special compute_aabb_batch w
+special compute_aabb_batch ww
 special get_my_rank w
 #special scf_atom u
 #special print_rel_info rr
