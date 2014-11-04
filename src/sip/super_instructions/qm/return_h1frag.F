@@ -585,13 +585,13 @@ c      do m = 1, newcenters
 c         write(6,*) '  ', m, xn(m), yn(m), zn(m), acharge(m)  
 c      enddo 
 
-      if (newcenters .ne. ncenters-n_apf) then
-         write(6,*) ' ********************'
-         write(6,*) ' Charge centers wrong in frag_h1 ',
-     *                ncenters, newcenters, n_apf
-         write(6,*) ' centers :', (watom(m), m=1, n_apf)
-         write(6,*) ' ********************'
-      endif
+C      if (newcenters .ne. ncenters-n_apf) then
+C         write(6,*) ' ********************'
+C         write(6,*) ' Charge centers wrong in frag_h1 ',
+C     *                ncenters, newcenters, n_apf
+C         write(6,*) ' centers :', (watom(m), m=1, n_apf)
+C         write(6,*) ' ********************'
+C      endif
 
 c     write(6,*) ' Through initialization ' 
 

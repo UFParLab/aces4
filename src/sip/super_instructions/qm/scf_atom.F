@@ -1068,7 +1068,7 @@ c-----------------------------------------------------------------------
 c Compute the HF energy   
 c-----------------------------------------------------------------------
 
-       call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis) 
+       call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
 
 c-----------------------------------------------------------------------
 c Copy the HF Density into the old Density. 
@@ -1296,7 +1296,7 @@ c-----------------------------------------------------------------------
 c       Compute the new HF energy  
 c-----------------------------------------------------------------------
 
-        call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis) 
+        call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
 
 c-----------------------------------------------------------------------
 c       Compute the DIIS coefficients  
@@ -1793,7 +1793,7 @@ c-----------------------------------------------------------------------
       return 
       end 
 
-      subroutine hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis) 
+      subroutine hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
       implicit none 
       integer n_basis 
       integer m, n 
@@ -1803,6 +1803,7 @@ c-----------------------------------------------------------------------
       double precision FB(n_basis,n_basis) 
       double precision h0(n_basis,n_basis) 
       double precision ea, eb, etotal 
+      integer current_frag
 
       ea = 0.0 
       eb = 0.0 
@@ -1816,7 +1817,8 @@ c-----------------------------------------------------------------------
       enddo  
 
       etotal = 0.5d0*(ea + eb) 
-      write(6,*) ' Total SCF energy(-NN) = ', etotal 
+      write(6,*) ' Frag:',current_frag,
+     *           ' Total SCF energy(-NN) = ', etotal 
 
       return 
       end 

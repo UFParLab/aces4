@@ -524,9 +524,9 @@ c ----------------------------------------------------------------------
       write(6,*) ' CURRENT_FRAGS = ', icurrent_frag 
 
       write(6,*) 'N_APF = ', natoms_frag(icurrent_frag)
-      do m = 1, natoms_frag(icurrent_frag) 
-         write(6,*) '  ', m, watom_frag(icurrent_frag, m)
-      enddo 
+C      do m = 1, natoms_frag(icurrent_frag) 
+C         write(6,*) '  ', m, watom_frag(icurrent_frag, m)
+C      enddo 
 
       n_apf = natoms_frag(icurrent_frag) 
       do m = 1, n_apf 
@@ -591,9 +591,9 @@ c-----------------------------------------------------------------------
 
          write(6,*) ' M1 M2', m1, m2 
          write(6,*) ' N_APF ', n_apf, (iatom(m), m=1, n_apf) 
-         do m = m1, m2 
-            write(6,*) ' ', m, atom(m), end_nfps(m) 
-         enddo 
+C         do m = m1, m2 
+C            write(6,*) ' ', m, atom(m), end_nfps(m) 
+C         enddo 
 
          n_basis = 0 
          do m = m1, m2 
@@ -656,17 +656,17 @@ c           beg_anfps(m) = end_nfps(m-1) + 1
 c           end_anfps(m) = end_nfps(m)    
 c        enddo 
 
-         if ((n_max .lt. nc1) .or. (n_max .gt. nc2)) then 
-           write(6,*) ' UMapping of atom dens wrong:' 
-           write(6,*) ' Correct range :', nc1, nc2, 'Computed range:', 
-     *                 '1', n_max  
-         endif 
-
-         if ((n_basis .lt. nc1) .or. (n_basis .gt. nc2)) then 
-           write(6,*) ' Mapping of atom dens wrong:' 
-           write(6,*) ' Correct range :', nc1, nc2, 'Computed range:', 
-     *                 '1', n_basis   
-         endif 
+C         if ((n_max .lt. nc1) .or. (n_max .gt. nc2)) then 
+C           write(6,*) ' UMapping of atom dens wrong:' 
+C           write(6,*) ' Correct range :', nc1, nc2, 'Computed range:', 
+C     *                 '1', n_max  
+C         endif 
+C
+C         if ((n_basis .lt. nc1) .or. (n_basis .gt. nc2)) then 
+C           write(6,*) ' Mapping of atom dens wrong:' 
+C           write(6,*) ' Correct range :', nc1, nc2, 'Computed range:', 
+C     *                 '1', n_basis   
+C         endif 
 
          do j = nd1, nd2 
          do i = nc1, nc2 
@@ -944,7 +944,7 @@ c-----------------------------------------------------------------------
       do m = 1, n_basis  
          h0(m,n) = H0T(m,n) ! 0.0  
          aovl(m,n) = ovl(m,n) 
-         write(6,*) m,n, ovl(m,n) 
+C         write(6,*) m,n, ovl(m,n) 
       enddo  
       enddo  
 
@@ -1024,7 +1024,7 @@ c-----------------------------------------------------------------------
 c Compute the HF energy   
 c-----------------------------------------------------------------------
 
-       call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis) 
+       call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
 
 c-----------------------------------------------------------------------
 c Copy the HF Density into the old Density. 
@@ -1252,7 +1252,7 @@ c-----------------------------------------------------------------------
 c       Compute the new HF energy  
 c-----------------------------------------------------------------------
 
-        call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis) 
+        call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
 
 c-----------------------------------------------------------------------
 c       Compute the DIIS coefficients  
@@ -1947,7 +1947,7 @@ c ------------------------------------------------------------------------
      *                 spherical, .true., iscr, nints, nfirst,
      *                 zz)
 
-               write(6,*) ' NINTS = ', nints 
+C               write(6,*) ' NINTS = ', nints 
                if (nints .gt. 0) then
 
                   if (m1 .gt. 1) afirst = end_nfps(m1-1) 
@@ -2401,10 +2401,10 @@ c ------------------------------------------------------------------------
                   b1 = end_nfps(n-1)+1
                endif
 
-      if (watom(1) .eq. 1) then  
-               write(6,*) 'A1 A2 B1 B2:', a1, a2, b1, b2, '::', 
-     *         a1-afirst,a2-afirst,b1-bfirst,b2-bfirst 
-      endif 
+C      if (watom(1) .eq. 1) then  
+C               write(6,*) 'A1 A2 B1 B2:', a1, a2, b1, b2, '::', 
+C     *         a1-afirst,a2-afirst,b1-bfirst,b2-bfirst 
+C      endif 
 
                a1 = a1 - afirst 
                a2 = a2 - afirst 
@@ -2413,11 +2413,11 @@ c ------------------------------------------------------------------------
 
                 call add_integrals2(zsum, da1,da2,db1,db2,
      *                 zz(nfirst),a1,a2,b1,b2,0.0d0)
-      if (watom(1) .eq. 1) then 
-          do i = nfirst, nfirst + nints 
-          write(6,*) 'III = ', i, zz(i)
-          enddo
-      endif 
+C      if (watom(1) .eq. 1) then 
+C          do i = nfirst, nfirst + nints 
+C          write(6,*) 'III = ', i, zz(i)
+C          enddo
+C      endif 
 
              endif ! (nints .gt. 0) then
 
@@ -2434,9 +2434,9 @@ c Print out the integrals
                   do a = da1,da2
                      i = i + 1
                         z(i) = zsum(a,b)
-      if (watom(1) .eq. 1) then 
-          write(6,*) 'JJJ = ', a, b, z(i), zsum(a,b)
-      endif 
+C      if (watom(1) .eq. 1) then 
+C          write(6,*) 'JJJ = ', a, b, z(i), zsum(a,b)
+C      endif 
                   enddo
                   enddo
 
