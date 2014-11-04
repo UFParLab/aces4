@@ -400,6 +400,7 @@ else() # Single Node Version Tests
                                      test/test_transpose_op.F 
                                      test/test_transpose4d_op.F
                                      test/test_contraction_small2.F)
+
     add_executable(test_sial  	     test/test_sial.cpp)
     add_executable(test_qm           test/test_qm.cpp)
 
@@ -513,6 +514,10 @@ set(SIAL_FILES
     src/sialx/test/int_ops.sialx;
     src/sialx/test/int_self_ops.sialx;
     src/sialx/test/scalar_valued_blocks.sialx;
+    src/sialx/test/broadcast_static.sialx;
+    src/sialx/test/block_scale_assign.sialx;
+    src/sialx/test/return_sval_test.sialx;
+    src/sialx/test/index_scalar_cast.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
@@ -544,7 +549,7 @@ set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
 set (SIAL_COMPILED_FILES "")
 foreach(F ${SIAL_FILES})
     get_filename_component(F_WE ${CMAKE_SOURCE_DIR}/${F} NAME_WE)
-        get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
+    get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
     get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 
     set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
