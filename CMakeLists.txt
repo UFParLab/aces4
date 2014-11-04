@@ -400,22 +400,28 @@ else() # Single Node Version Tests
                                      test/test_transpose_op.F 
                                      test/test_transpose4d_op.F
                                      test/test_contraction_small2.F)
+    add_executable(test_sial         test/test_sial.cpp)
     add_executable(test_qm           test/test_qm.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_basic_sial PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_sial       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
+    add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
 
     add_dependencies(test_basic_sial gtest gtest_main test_contollers)
+    add_dependencies(test_sial       gtest gtest_main test_contollers)
     add_dependencies(test_qm         gtest gtest_main test_contollers)
 
 endif()
@@ -504,6 +510,10 @@ set(SIAL_FILES
     src/sialx/test/int_ops.sialx;
     src/sialx/test/int_self_ops.sialx;
     src/sialx/test/scalar_valued_blocks.sialx;
+    src/sialx/test/broadcast_static.sialx;
+    src/sialx/test/block_scale_assign.sialx;
+    src/sialx/test/return_sval_test.sialx;
+    src/sialx/test/index_scalar_cast.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
@@ -535,7 +545,7 @@ set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
 set (SIAL_COMPILED_FILES "")
 foreach(F ${SIAL_FILES})
     get_filename_component(F_WE ${CMAKE_SOURCE_DIR}/${F} NAME_WE)
-        get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
+    get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
     get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 
     set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
@@ -544,7 +554,7 @@ foreach(F ${SIAL_FILES})
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SIAL_COMPILE_DIR}
         COMMAND mv -f ${SIALX_FILE_PATH}/${F_WE}.siox ${SIAL_COMPILE_DIR} 
-        DEPENDS ${SIAL_COMPILER_JAR}
+        DEPENDS ${SIAL_COMPILER_JAR} ${CMAKE_SOURCE_DIR}/${F}
         COMMENT "Compiling ${F} to ${SIAL_COMPILE_DIR}/${F_WE}.siox")
     list (APPEND SIAL_COMPILED_FILES "${SIAL_COMPILE_DIR}/${F_WE}.siox")
 endforeach()

@@ -1369,6 +1369,30 @@ TEST(BasicSial,return_sval_test){
 	controller.initSipTables();
 	controller.runWorker();
 }
+
+TEST(BasicSial,index_scalar_cast){
+	std::string job("index_scalar_cast");
+	int norb = 4;
+	{
+	init_setup(job.c_str());
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 2, 2, 1 , 3};
+	set_aoindex_info(4, segs);
+	finalize_setup();
+	}
+	barrier();
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	int count = controller.int_value("count");
+	int count2 = controller.int_value("count2");
+	EXPECT_EQ(norb, count);
+	EXPECT_EQ(1, count2);
+}
 //****************************************************************************************************************
 
 void bt_sighandler(int signum) {
