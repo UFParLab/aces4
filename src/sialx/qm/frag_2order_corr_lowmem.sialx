@@ -111,13 +111,17 @@ import "trans_frag_defs.sialx"
       scalar solute 
       scalar et1_correction 
       scalar et2_correction 
+      scalar eold 
       scalar esum 
+      scalar ediff
+      scalar escr
       scalar e1x_at 
       scalar e10pol_at 
-      scalar et2_mono  
+      scalar mono_lccd  
+      scalar elccd
       scalar singles 
-      scalar doubles 
-      scalar mono_doubles 
+      scalar dimer_doubles 
+      scalar fragment_doubles 
       scalar eint_tot 
       scalar eps1_pol 
       scalar e2x_at 
@@ -125,7 +129,6 @@ import "trans_frag_defs.sialx"
       scalar e1new  
       scalar e2old 
       scalar e2new  
-      scalar ediff   
       scalar ecrit    
       scalar ao_exit
       scalar occ_exit 
@@ -2156,7 +2159,6 @@ import "trans_frag_defs.sialx"
         ENDDO a 
         tp[ifrag] = esum 
         PUT e10c[ifrag] = tp[ifrag] 
-	print esum
 
       ENDPARDO ifrag 
       sip_barrier 
@@ -2761,6 +2763,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag  
       sip_barrier
 #
+      eold = 0.0
       print "Performing a CCPT2 calc on fragment "
       DO kiter 
          do_iter = 0.0 
@@ -3411,8 +3414,10 @@ import "trans_frag_defs.sialx"
       ENDIF # etemp > ecrit 
 
       ENDPARDO ifrag 
+      fragment_doubles = 0.0
       sip_barrier 
-
+      collective fragment_doubles += esum
+      sip_barrier 
      #if do_iter < one 
      #   exit 
      #endif 
@@ -3430,6 +3435,15 @@ import "trans_frag_defs.sialx"
 #     END OF FRAGMENT ITERATIONS 
 # -----------------------------------------------------------------------------
 #
+      print fragment_doubles
+      ediff = fragment_doubles - eold
+      escr = ediff**2.0
+      ediff = escr**0.5
+      if ediff < cc_conv
+	  exit #kiter
+      endif
+      eold = fragment_doubles
+      sip_barrier
       ENDDO kiter 
       sip_barrier
 #
@@ -3464,6 +3478,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag, jfrag   
       sip_barrier
 #
+      eold = 0.0
 
       DO kiter 
          do_iter = 0.0 
@@ -4160,14 +4175,13 @@ import "trans_frag_defs.sialx"
 
         t20disp[ifrag,jfrag]    = esum 
         PUT d20c[ifrag,jfrag]   = t20disp[ifrag,jfrag] 
-	print esum
 #
       endif 
       endif 
       endif # jfrag != ifrag 
       ENDPARDO ifrag, jfrag   
       esum = 0.0 
-      doubles = 0.0 
+      dimer_doubles = 0.0 
       sip_barrier 
 
       PARDO ifrag, jfrag  
@@ -4205,10 +4219,19 @@ import "trans_frag_defs.sialx"
          endif 
       ENDPARDO ifrag, jfrag  
       sip_barrier 
-      collective doubles += esum 
+      collective dimer_doubles += esum 
      #if do_iter < one 
      #   exit 
      #endif 
+      print dimer_doubles
+      ediff = dimer_doubles - eold
+      escr = ediff**2.0
+      ediff = escr**0.5
+      if ediff < cc_conv
+	  exit #kiter
+      endif
+      eold = dimer_doubles
+      sip_barrier
 #
       ENDDO kiter 
 # 
@@ -5336,6 +5359,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag  
       sip_barrier
 #
+      eold = 0.0
       print "Performing a CCPT2 calc on fragment "
       DO kiter 
          do_iter = 0.0 
@@ -5926,9 +5950,20 @@ import "trans_frag_defs.sialx"
 # -----------------------------------------------------------------------------
 #     END OF FRAGMENT ITERATIONS 
 # -----------------------------------------------------------------------------
+      elccd = 0.0
+      sip_barrier
+      collective elccd += esum
+
+      print elccd
+      ediff = elccd - eold
+      escr = ediff**2.0
+      ediff = escr**0.5
+      if ediff < cc_conv
+	  exit #kiter
+      endif
 #
       ENDDO kiter 
-      et2_mono = 0.0 
+      mono_lccd = 0.0 
       esum = 0.0 
       sip_barrier
 #
@@ -5951,7 +5986,7 @@ import "trans_frag_defs.sialx"
       enddo ifrag
       endif
       sip_barrier
-      collective et2_mono += esum  
+      collective mono_lccd += esum  
 #
 # -----------------------------------------------------------------------------
 #     END OF T2 MONOMER CALCULATIONS  
@@ -6586,7 +6621,7 @@ import "trans_frag_defs.sialx"
       CALL EXCHANGE_ALT
       print "Done forming density based exchange energy" 
 #
-#     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
+#     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
 #
       CALL FORM_T10
@@ -6594,14 +6629,14 @@ import "trans_frag_defs.sialx"
       CALL FORM_T1
       sip_barrier 
       print "Completely Done singles formation" 
-# Do NOT use wC in the doubles calculations 
+# Do NOT use wC in the dimer_doubles calculations 
      #PARDO p, p1 
      #   tpp(p,p1)    = 0.0 
      #   PUT wC(p,p1) = tpp(p,p1)  
      #ENDPARDO p, p1 
       sip_barrier 
 #
-#     Compute the CCPT(2) doubles amplitudes for Fragment 1.  
+#     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
       CALL FORM_T2_0GUESS 
       sip_barrier 
@@ -6620,10 +6655,12 @@ import "trans_frag_defs.sialx"
          CALL FORM_T2_GUESS 
          print "Done forming T2 guess before Dimer calculation" 
          sip_barrier 
+	 print "Entering FORM_T2_FRAGMENT_ITERS"
          CALL FORM_T2_FRAGMENT_ITERS 
          sip_barrier 
+	 print "Entering FORM_T2_DIMER_ITERS"
          CALL FORM_T2_DIMER_ITERS 
-         mono_doubles = 0.0 
+         fragment_doubles = 0.0 
          esum = 0.0 
          sip_barrier 
 # Print out energies after each macroiteration  
@@ -6634,7 +6671,7 @@ import "trans_frag_defs.sialx"
             macro_e20[ifrag:ifrag]  = e20c[ifrag] 
             print macro_e20[ifrag:ifrag] 
             etemp = e20c[ifrag] 
-            mono_doubles += etemp 
+            fragment_doubles += etemp 
          ENDDO ifrag   
          endif
          sip_barrier 
@@ -6681,18 +6718,18 @@ import "trans_frag_defs.sialx"
       eint_tot += e10pol_at  
       eint_tot += eps1_pol   
       eint_tot += singles  
-      eint_tot += doubles  
-      eint_tot += mono_doubles  
-      eint_tot += et2_mono   
+      eint_tot += dimer_doubles  
+      eint_tot += fragment_doubles  
+      eint_tot += mono_lccd   
 
 
       print e1x_at 
       print e10pol_at 
       print eps1_pol  
       print singles  
-      print doubles  
-      print mono_doubles  
-      print et2_mono  
+      print dimer_doubles  
+      print fragment_doubles  
+      print mono_lccd  
 
       print eint_tot 
 # Compute the second-order exchange energy 
