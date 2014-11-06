@@ -56,7 +56,7 @@ void IntTable::set_value(int slot, int value) {
 /** returns the name associated with the given slot */
 std::string IntTable::name(int slot) const {
 	try {
-		return slot_name_map_.at(slot);
+	    return slot_name_map_.at(slot);
 	} catch (const std::out_of_range& oor) {
 		fail("out of range error when looking up name associated with a slot in the int table");
 	}
@@ -65,7 +65,9 @@ std::string IntTable::name(int slot) const {
 /** returns the slot associated with the given name */
 int IntTable::slot(std::string name) const {
 	try {
-		return name_slot_map_.at(name);
+        std::map<std::string, int>::const_iterator it = name_slot_map_.find(name);
+        if (it == name_slot_map_.end())
+            throw std::out_of_range("Could not find " + name + " in int table");
 	} catch (const std::out_of_range& oor) {
 		fail("out of range error when looking up int tables slot  associated with name");
 	}
