@@ -156,7 +156,7 @@ private:
 	void restore_persistent_contiguous(Interpreter* worker, int array_id, int string_slot);
 
 
-    /**	/** Invoked by restore_persistent to implement restore_persistent command in
+    /**    Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a distributed/served array.  The block map associated
 	 * with the string literal is MOVED into the distributed array table and the
 	 * entry removed (which does not delete the map) from the persistent_array_manager.

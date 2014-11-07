@@ -7,6 +7,7 @@
 
 #include "block_id.h"
 #include <sstream>
+#include <algorithm>
 #include "sip_tables.h"
 
 using namespace std::rel_ops;
@@ -78,7 +79,8 @@ BlockId BlockId::operator=(BlockId tmp) { //param passed by value, makes a copy.
 	//C++ note:  this is the recommended way to make an exception safe assign constructor.
 	//if an exception is thrown, it will happen in the (implicit) copy.
 	std::swap(array_id_, tmp.array_id_);
-	std::swap(index_values_, tmp.index_values_);
+	//std::swap(index_values_, tmp.index_values_); <- C++ Feature
+    std::swap_ranges(index_values_, index_values_ + MAX_RANK, tmp.index_values_);
 	std::swap(parent_id_ptr_, tmp.parent_id_ptr_);
 	return *this;
 }

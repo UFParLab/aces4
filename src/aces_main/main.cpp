@@ -46,10 +46,15 @@ void bt_sighandler(int signum) {
 }
 
 int main(int argc, char* argv[]) {
-    
+#ifdef __GLIBC__
+#ifdef __GNU_LIBRARY__
+#ifdef _GNU_SOURCE
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);
+#endif _GNU_SOURCE
+#endif // __GNU_LIBRARY__
+#endif // __GLIBC__
 
     signal(SIGSEGV, bt_sighandler);
     signal(SIGFPE, bt_sighandler);
