@@ -42,11 +42,15 @@ public:
 	void start_program_timer();
 	void stop_program_timer();
 
+	long long get_last_recorded_time(TimerKind_t kind) { return last_recorded_times_[kind]; }
+
 private:
 
 	/** Underlying timer either Linux, PAPI or TAU timers */
 	SipTimer_t delegate_;
 	const int sialx_lines_;
+
+	long long last_recorded_times_[NUMBER_TIMER_KINDS_]; 	//! Array of last seen times by timer type;
 
 	DISALLOW_COPY_AND_ASSIGN(SialxTimer);
 };

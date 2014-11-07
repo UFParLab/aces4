@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 			sip::ProfileTimer profile_timer(sipTables.max_timer_slots(), &profile_timer_store);
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sialxTimer.start_program_timer();
-			sip::ProfileInterpreter runner(sipTables, profile_timer, &sialxTimer, NULL, &persistent_worker);
+			sip::ProfileInterpreter runner(sipTables, profile_timer, sialxTimer, NULL, &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 			runner.interpret();

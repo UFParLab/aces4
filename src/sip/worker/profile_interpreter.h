@@ -21,7 +21,7 @@ class WorkerPersistentArrayManager;
 class ProfileInterpreter: public SialxInterpreter {
 public:
 	ProfileInterpreter(const SipTables& sipTables, ProfileTimer& profile_timer,
-			SialxTimer* sialx_timer, SialPrinter* printer,
+			SialxTimer& sialx_timer, SialPrinter* printer,
 			WorkerPersistentArrayManager* persistent_array_manager);
 	virtual ~ProfileInterpreter();
 
@@ -29,7 +29,8 @@ public:
 
 
 private:
-	ProfileTimer& profile_timer_;
+	SialxTimer& sialx_timer_;			//! Reference to sialx timer. Operated on by SialxInterpreter
+	ProfileTimer& profile_timer_;		//! This interpreter records time into ProfileTimer
 	ProfileTimer::Key last_seen_key_;
 	int last_seen_pc_;
 	ProfileTimer::Key make_profile_timer_key(opcode_t opcode, const std::list<BlockSelector>& selector_list);

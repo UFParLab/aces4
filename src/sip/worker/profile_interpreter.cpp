@@ -14,10 +14,11 @@
 namespace sip {
 
 ProfileInterpreter::ProfileInterpreter(const SipTables& sipTables,
-		ProfileTimer& profile_timer, SialxTimer* sialx_timer, SialPrinter* printer,
+		ProfileTimer& profile_timer, SialxTimer& sialx_timer, SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager):
-		SialxInterpreter(sipTables, sialx_timer, printer, persistent_array_manager),
-		profile_timer_(profile_timer), last_seen_pc_(-1){
+		SialxInterpreter(sipTables, &sialx_timer, printer, persistent_array_manager),
+		profile_timer_(profile_timer), last_seen_pc_(-1),
+		sialx_timer_(sialx_timer){
 }
 
 ProfileInterpreter::~ProfileInterpreter() {}

@@ -319,12 +319,10 @@ public:
 
 
 void ProfileTimer::print_timers(){
-#ifndef HAVE_TAU
 	SingleNodeProfilePrint<SipTimer_t> print_to_stdout(profile_timer_map_);
-	SingleNodeProfileStore<SipTimer_t> save_to_store(profile_timer_map_, profile_timer_store_);
 	delegate_.print_timers(print_to_stdout);
+	SingleNodeProfileStore<SipTimer_t> save_to_store(profile_timer_map_, profile_timer_store_);
 	delegate_.print_timers(save_to_store);
-#endif
 }
 
 
