@@ -45,6 +45,9 @@ namespace sip {
 class LoopManager;
 class SialPrinter;
 
+/**
+ * Interprets Sialx code.
+ */
 class SialxInterpreter:public Interpreter {
 public:
 

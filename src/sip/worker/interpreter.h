@@ -16,6 +16,9 @@ namespace sip {
 
 class SialPrinter;
 
+/**
+ * Base class for all (Abstract) Interpreters.
+ */
 class Interpreter {
 public:
 	virtual ~Interpreter(){  global_interpreter = NULL; }

@@ -83,11 +83,6 @@ int main(int argc, char* argv[]) {
 			sip::SIPMaPTimer merged_timer = sip::SIPMaPInterpreter::merge_sipmap_timers(pardo_sections_info_vector, sipmap_timer_vector);
 			merged_timer.print_timers(lno2name);
 
-//			std::vector<sip::SIPMaPTimer*>::iterator sit = sipmap_timer_vector.begin();
-//			for (; sit != sipmap_timer_vector.end(); ++sit){
-//				delete *sit;
-//				*sit = NULL;
-//			}
 			sipmap_timer_vector.clear();
 			pardo_sections_info_vector.clear();
 

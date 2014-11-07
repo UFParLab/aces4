@@ -364,6 +364,10 @@ void SIPMaPInterpreter::handle_pardo_op(int &pc){
 					worker_rank_, num_workers_);
 	loop_start(pc, loop);
 }
+#endif // HAVE_MPI
+
+
+
 
 SIPMaPTimer SIPMaPInterpreter::merge_sipmap_timers(
 			std::vector<SIPMaPInterpreter::PardoSectionsInfoVector_t>& pardo_sections_info_vector,
@@ -413,7 +417,5 @@ SIPMaPTimer SIPMaPInterpreter::merge_sipmap_timers(
 	return output_timer;
 }
 
-
-#endif // HAVE_MPI
 
 } /* namespace sip */

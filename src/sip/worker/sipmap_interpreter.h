@@ -91,7 +91,7 @@ public:
 	virtual void handle_pardo_op(int &pc);	//! Overriden to simulate 1 worker at a time
 	virtual void do_post_sial_program();	//! Overriden to count the time in the final pardo section
 
-#else
+#else // HAVE_MPI
 	virtual void handle_sip_barrier_op(int pc) {}
 	virtual void handle_get_op(int pc) { block_selector_stack_.pop(); }
 	virtual void handle_put_accumulate_op(int pc) { block_selector_stack_.pop(); block_selector_stack_.pop();}
@@ -99,7 +99,7 @@ public:
 	virtual void handle_create_op(int pc) {}
 	virtual void handle_delete_op(int pc) {}
 
-#endif
+#endif // HAVE_MPI
 
 
 	struct PardoSectionsInfo{
@@ -112,6 +112,13 @@ public:
 	typedef std::vector<PardoSectionsInfo> PardoSectionsInfoVector_t;
 	PardoSectionsInfoVector_t& get_pardo_section_times() { return pardo_section_times_; }
 
+	/**
+	 * After SIPMaP simulates all the workers, this method
+	 * merges all the timers & pardo sections information.
+	 * @param pardo_sections_info_vector
+	 * @param sipmap_timers_vector
+	 * @return
+	 */
 	static SIPMaPTimer merge_sipmap_timers(
 			std::vector<PardoSectionsInfoVector_t>& pardo_sections_info_vector,
 			std::vector<SIPMaPTimer>& sipmap_timers_vector);
