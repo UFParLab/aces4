@@ -10,10 +10,12 @@
 
 #include <map>
 #include <vector>
-
+#include <set>
+#include <iostream>
 #include "sip.h"
 #include "opcode.h"
 #include "sip_timer.h"
+#include "sialx_timer.h"
 
 namespace sip {
 
@@ -22,7 +24,7 @@ class ProfileTimerStore;
 class ProfileTimer {
 public:
 
-	ProfileTimer(int sialx_lines, ProfileTimerStore* profile_timer_store);
+	ProfileTimer(SialxTimer& sialx_timer);
 	~ProfileTimer();
 
 
@@ -80,27 +82,35 @@ public:
 		friend std::ostream& operator<<(std::ostream&, const ProfileTimer::Key&);
 	};
 
-	typedef std::map<ProfileTimer::Key, int> TimerMap_t;
+//	struct ValuePair{
+//		long long total_time;
+//		long long count;
+//		ValuePair(long long tt, long long c) : total_time(tt), count(c) {}
+//	};
+//
+//	typedef std::map<Key, ValuePair> TimerMap_t;
 
-	void start_timer(const ProfileTimer::Key& key);
-	void pause_timer(const ProfileTimer::Key& key);
+	//void record_time(const ProfileTimer::Key& key, long long time, long long count);
 
-	void print_timers();
+
+	typedef std::map<Key, std::set<int> > TimerMap_t;	// Key -> Set of line numbers
+
+	/**
+	 * Records occurrence of operation & operand type at given sialx line
+	 * @param key
+	 * @param sialx_line
+	 */
+	void record_line(const ProfileTimer::Key& key, int sialx_line);
+
+	/** Prints timers to an ostream */
+	void print_timers(std::ostream& out);
+
+	/** Saves timer to underlying ProfileTimerStore */
+	void save_to_store(ProfileTimerStore& profile_timer_store);
 
 private:
-
-	ProfileTimerStore* profile_timer_store_;	//! Non-volatile store for profile timers
-	TimerMap_t profile_timer_map_; 	//! Key -> index slot in underlying timer
-	int slot_to_assign_;			//! Next slot to assign in the delegate_
-
-	/** Underlying timer either Linux, PAPI or TAU timers */
-#ifdef HAVE_TAU
-	//COMPILER ERROR - NOT SUPPORTED  // FIXME TODO
-#endif
-
-	SipTimer_t delegate_;
-	const int max_slots_;
-
+	SialxTimer& sialx_timer_;
+	TimerMap_t profile_timer_map_; 				//! Key -> time
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);
 };
 

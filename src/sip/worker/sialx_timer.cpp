@@ -26,9 +26,6 @@ SialxTimer::SialxTimer(int sialx_lines) :
 	 * One extra added since line numbers begin at 1.
 	 * The 0th slot is for the entire program
 	 */
-
-	for (int i=0; i<NUMBER_TIMER_KINDS_; ++i)
-		last_recorded_times_[i] = 0L;
 }
 
 void SialxTimer::start_timer(int line_number, TimerKind_t kind){
@@ -41,8 +38,17 @@ void SialxTimer::pause_timer(int line_number, TimerKind_t kind){
 //	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
 //	check(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.pause_timer(line_number + ((int)kind) * sialx_lines_);
-	last_recorded_times_[(int)kind] = delegate_.get_last_recorded_time();
+}
 
+
+long long SialxTimer::get_timer_value(int line_number, TimerKind_t kind){
+	long long * timer_values = delegate_.get_timers();
+	return timer_values[line_number + ((int)kind) * sialx_lines_];
+}
+
+long long SialxTimer::get_timer_count(int line_number, TimerKind_t kind){
+	long long * timer_counts = delegate_.get_timer_count();
+	return timer_counts[line_number + ((int)kind) * sialx_lines_];
 }
 
 

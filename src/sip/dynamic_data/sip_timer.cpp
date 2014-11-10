@@ -36,7 +36,7 @@ const long long LinuxSIPTimers::_timer_off_value_ = -1;
 //								Linux Timers
 //*********************************************************************
 
-LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots_(max_slots), last_recorded_time_(0L) {
+LinuxSIPTimers::LinuxSIPTimers(int max_slots) : max_slots_(max_slots) {
 	timer_list_ = new long long[max_slots];
 	timer_on_ = new long long[max_slots];
 	timer_switched_ = new long long[max_slots];
@@ -61,8 +61,7 @@ void LinuxSIPTimers::start_timer(int slot) {
 void LinuxSIPTimers::pause_timer(int slot) {
 	assert (slot < max_slots_);
 	assert (timer_on_[slot] != _timer_off_value_);
-	last_recorded_time_ = clock() - timer_on_[slot];
-	timer_list_[slot] += last_recorded_time_;
+	timer_list_[slot] += clock() - timer_on_[slot];
 	timer_on_[slot] = _timer_off_value_;
 	timer_switched_[slot]++;
 }
@@ -114,8 +113,7 @@ void PAPISIPTimers::start_timer(int slot) {
 void PAPISIPTimers::pause_timer(int slot) {
 	assert (slot < max_slots_);
 	assert (timer_on_[slot] != _timer_off_value_);
-	last_recorded_time_ = PAPI_get_real_usec() - timer_on_[slot];
-	timer_list_[slot] += last_recorded_time_;
+	timer_list_[slot] += PAPI_get_real_usec() - timer_on_[slot];
 	timer_on_[slot] = _timer_off_value_;
 	timer_switched_[slot]++;
 }
@@ -136,7 +134,6 @@ void PAPISIPTimers::print_timers(PrintTimers<PAPISIPTimers>& p){
 #ifdef HAVE_TAU
 
 TAUSIPTimers::TAUSIPTimers(int max_slots_) : max_slots_(max_slots_),
-		last_recorded_time_(0L), last_timer_started_at_(0L),
 		timer_list_(NULL), timer_switched_(NULL){
 	tau_timers_ = new void*[max_slots_];
 	for (int i=0; i<max_slots_; i++)
@@ -161,7 +158,6 @@ void TAUSIPTimers::start_timer(int slot) {
 		TAU_PROFILER_CREATE(timer, name, "", TAU_USER);
 		tau_timers_[slot] = timer;
 	}
-	last_timer_started_at_ = clock();
 	TAU_PROFILER_START(timer);
 
 }
@@ -171,8 +167,6 @@ void TAUSIPTimers::pause_timer(int slot) {
 	sprintf(name, "%d : Line %d", sip::GlobalState::get_program_num(), slot);
 	void *timer = tau_timers_[slot];
 	sip::check(timer != NULL, "Error in Tau Timer management !", current_line());
-	last_recorded_time_ = clock() - last_timer_started_at_;
-	last_timer_started_at_ = 0.0;
 	TAU_PROFILER_STOP(timer);
 }
 

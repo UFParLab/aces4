@@ -55,12 +55,10 @@ public:
 	long long* get_timers();		/*! Returns time recorded at each slot */
 	long long* get_timer_count();	/*! Returns number of times each timer was switched on & off */
 	bool check_timers_off();	/*! Returns true if all timers have been turned off */
-	double to_seconds(long long default_unit) { return (double)default_unit / CLOCKS_PER_SEC; }
+	static double to_seconds(long long default_unit) { return (double)default_unit / CLOCKS_PER_SEC; }
 	void print_timers(PrintTimers<LinuxSIPTimers>&); /*! Print out the timers */
 
 	int max_slots() { return max_slots_; }
-
-	long long get_last_recorded_time() { return last_recorded_time_; }
 
 protected :
 	const int max_slots_;							/*!	Maximum number of timer slots */
@@ -69,8 +67,6 @@ protected :
 	long long *timer_list_;		/*! Contains total 'time unit' for every line 		*/
 	long long *timer_switched_;	/*! Number of times a timer was switched on & off 	*/
 	long long *timer_on_; 		/*! Whether a timer is turned on or off 			*/
-
-	long long last_recorded_time_; /*! Last recorded time */
 
 	DISALLOW_COPY_AND_ASSIGN(LinuxSIPTimers);
 };
@@ -85,7 +81,7 @@ public:
 	void start_timer(int slot);
 	void pause_timer(int slot);
 	bool check_timers_off();	/*! Returns true if all timers have been turned off */
-	double to_seconds(long long default_unit) { return (double)default_unit / 1000000l; }
+	static double to_seconds(long long default_unit) { return (double)default_unit / 1000000l; }
 
 	void print_timers(PrintTimers<PAPISIPTimers>& p); /*! Print out the timers */
 
@@ -111,20 +107,16 @@ public:
 	long long* get_timer_count();	/*! Returns number of times each timer was switched on & off */
 
 	void print_timers(PrintTimers<TAUSIPTimers>& p); /*! Fixes the string associated with each timer. */
-	double to_seconds(long long default_unit) { return (double)default_unit / CLOCKS_PER_SEC; }
+	static double to_seconds(long long default_unit) { return (double)default_unit / CLOCKS_PER_SEC; }
 
 	bool check_timers_off() { ; /* Do Nothing */ }
 
-	long long get_last_recorded_time() { return last_recorded_time_; }
 protected:
 	void **tau_timers_;
 
 	const int max_slots_;		/*!	Maximum number of timer slots */
 	long long *timer_list_;		/*! Contains total 'time unit' for every line 		*/
 	long long *timer_switched_;	/*! Number of times a timer was switched on & off 	*/
-
-	long long last_recorded_time_; /*! Last recorded time (uses clock()) */
-	long long last_timer_started_at_;
 
 	DISALLOW_COPY_AND_ASSIGN(TAUSIPTimers);
 };

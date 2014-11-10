@@ -589,14 +589,11 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 }
 
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
+	if (sialx_timers_) sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
 	if (b->state().pending()) {
-		if (sialx_timers_){
-			sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
 		    b->state().wait(b->size());
-	        sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
-		}
-		else b->state().wait(b->size());
 	}
+	if (sialx_timers_) sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
 	return b;
 }
 

@@ -81,8 +81,8 @@ int main(int argc, char* argv[]) {
 		//interpret current program on worker
 		{
 
-			sip::ProfileTimer profile_timer(sipTables.max_timer_slots(), &profile_timer_store);
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			sip::ProfileTimer profile_timer(sialxTimer);
 			sialxTimer.start_program_timer();
 			sip::ProfileInterpreter runner(sipTables, profile_timer, sialxTimer, NULL, &persistent_worker);
 
@@ -93,7 +93,8 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
-			profile_timer.print_timers();	// Saves to database store.
+			profile_timer.save_to_store(profile_timer_store); // Saves to database store.
+			profile_timer.print_timers(std::cout);
 			sialxTimer.stop_program_timer();
 			sialxTimer.print_timers(lno2name);
 

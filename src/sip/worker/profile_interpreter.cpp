@@ -61,12 +61,14 @@ inline ProfileTimer::Key ProfileInterpreter::make_profile_timer_key(opcode_t opc
 void ProfileInterpreter::pre_interpret(int pc){
 	// Profile timers
 
+	SialxInterpreter::pre_interpret(pc);
+
 	opcode_t opcode = op_table_.opcode(pc);
 
 	if (pc == last_seen_pc_)
 		return;
 	else if (last_seen_pc_ >= 0){
-		profile_timer_.pause_timer(last_seen_key_);
+		profile_timer_.record_line(last_seen_key_, line_number());
 		last_seen_pc_ = -1;
 	} else {
 
@@ -83,7 +85,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 			bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
 
-			profile_timer_.start_timer(key);
 			last_seen_key_ = key;
 			last_seen_pc_ = pc;
 
@@ -103,7 +104,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
 			block_selector_stack_.push(lhs_bs);
 
-			profile_timer_.start_timer(key);
 			last_seen_key_ = key;
 			last_seen_pc_ = pc;
 		}
@@ -118,7 +118,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 			bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
 
-			profile_timer_.start_timer(key);
 			last_seen_key_ = key;
 			last_seen_pc_ = pc;
 		}
@@ -139,7 +138,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 			bs_list.push_back(rhs_bs);
 			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
 			block_selector_stack_.push(lhs_bs);
-			profile_timer_.start_timer(key);
 			last_seen_key_ = key;
 			last_seen_pc_ = pc;
 		}
@@ -171,7 +169,6 @@ void ProfileInterpreter::pre_interpret(int pc){
 				block_selector_stack_.pop();
 			}
 			ProfileTimer::Key key = make_profile_timer_key(user_sub_name, bs_list);
-			profile_timer_.start_timer(key);
 			last_seen_key_ = key;
 			last_seen_pc_ = pc;
 			for (int i=0; i<num_args; ++i){

@@ -53,14 +53,10 @@ public:
 	int max_slots() { return max_slots_; }
 
 private:
+	const static long long _timer_off_value_;	/*! Sentinel Value */
 
 	int max_slots_;
 	int sialx_lines_;
-
-	const static long long _timer_off_value_;	/*! Sentinel Value */
-
-//	long long *timer_list_;		/*! Contains total 'time unit' for every line 		*/
-//	long long *timer_switched_;	/*! Number of times a timer was switched on & off 	*/
 
 	std::vector<long long> timer_list_;
 	std::vector<long long> timer_switched_;

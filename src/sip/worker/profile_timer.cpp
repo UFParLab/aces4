@@ -16,47 +16,41 @@
 #include <cassert>
 #include <sstream>
 
+
 namespace sip {
 
-ProfileTimer::ProfileTimer(int sialx_lines, ProfileTimerStore* profile_timer_store) :
-		// An approximate maximum of the number of slots needed = sialx_lines_ * 3.
-		// Increase this if needed.
-		max_slots_(sialx_lines * 3), delegate_(sialx_lines * 3),
-		profile_timer_store_(profile_timer_store),	// Can be NULL
-		slot_to_assign_(0){
-}
+ProfileTimer::ProfileTimer(SialxTimer& sialx_timer) : sialx_timer_(sialx_timer){}
 
 ProfileTimer::~ProfileTimer() {}
 
-void ProfileTimer::start_timer(const ProfileTimer::Key& key){
-	/** For the given key, find the slot in the profile_timer_map_
-	 * If the key cannot be found, create a new entry in the profile_timer_map_
-	 * and increment the slot_to_assign_.
-	 * Then start the timer in the underlying delegate for the given slot.
-	 */
+
+//void ProfileTimer::record_time(const ProfileTimer::Key& key, long long time, long long count){
+//	TimerMap_t::iterator it = profile_timer_map_.find(key);
+//	if (it == profile_timer_map_.end()){
+//		profile_timer_map_.insert(std::make_pair(key, ProfileTimer::ValuePair(time, count)));
+//	} else {
+//		ValuePair& vpair = it->second;
+//		std::stringstream err_ss;
+//		err_ss << "Trying to overwrite key : " << key
+//				<< ", prev [time, count] : [" << vpair.total_time << ", " << vpair.count << "]"
+//				<< ", this [time, count] : [" << time << ", " << count << "]";
+//		fail(err_ss.str());
+//	}
+//}
+
+void ProfileTimer::record_line(const ProfileTimer::Key& key, int sialx_line){
 	TimerMap_t::iterator it = profile_timer_map_.find(key);
 	if (it == profile_timer_map_.end()){
-		std::pair<TimerMap_t::iterator, bool> returned =
-				profile_timer_map_.insert (std::make_pair(key, slot_to_assign_));
-		slot_to_assign_ ++;
-		check(slot_to_assign_ < max_slots_, "Out of space in the Profile timer !");
-		it = returned.first;
+		std::set<int> line_num_set;
+		line_num_set.insert(sialx_line);
+		profile_timer_map_.insert(std::make_pair(key, line_num_set));
+	} else {
+		std::set<int>& line_num_set = it->second;
+		line_num_set.insert(sialx_line);
 	}
-	int slot = it->second;
-	delegate_.start_timer(slot);
-
 }
 
-void ProfileTimer::pause_timer(const ProfileTimer::Key& key){
-	/** For the given key, find the slot in the profile_timer_map_
-	 * If the key cannot be found, it is an error !!
-	 * Pause the timer in the underlying delegate for the given slot.
-	 */
-	TimerMap_t::iterator it = profile_timer_map_.find(key);
-	check (it != profile_timer_map_.end(), "Timer stopped for a key that hasn't been encountered yet !", current_line());
-	int slot = it->second;
-	delegate_.pause_timer(slot);
-}
+
 
 
 ProfileTimer::BlockInfo::BlockInfo(int rank, const index_selector_t& index_ids, const segment_size_array_t& segment_sizes) :rank_(rank){
@@ -234,96 +228,95 @@ bool ProfileTimer::Key::operator<(const ProfileTimer::Key& rhs) const{
 
 }
 
-template <typename TIMER>
-class SingleNodeProfilePrint : public PrintTimers<TIMER> {
-private:
-	const ProfileTimer::TimerMap_t& profile_timer_map_;
-public:
-	SingleNodeProfilePrint(const ProfileTimer::TimerMap_t &profile_timer_map)
-		: profile_timer_map_(profile_timer_map) {}
-	virtual ~SingleNodeProfilePrint(){}
-	virtual void execute(TIMER& timer){
 
-		//std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+void ProfileTimer::save_to_store(ProfileTimerStore& profile_timer_store){
+	TimerMap_t::const_iterator it = profile_timer_map_.begin();
+	for (; it!= profile_timer_map_.end(); ++it){
+		const Key &key = it->first;
+		const std::set<int>& line_num_set = it->second;
+		std::set<int>::const_iterator it = line_num_set.begin();
+		long long total_computation_time = 0L;
+		long long total_count = 0L;
+		for (; it != line_num_set.end(); ++it){
+			int line_number = *it;
+			long long walltime = sialx_timer_.get_timer_value(line_number, SialxTimer::TOTALTIME);
+			long long walltime_count = sialx_timer_.get_timer_count(line_number, SialxTimer::TOTALTIME);
+			long long blockwait =  sialx_timer_.get_timer_value(line_number, SialxTimer::BLOCKWAITTIME);
 
-		long long * timers = timer.get_timers();
-		long long * timer_counts = timer.get_timer_count();
-		const int CW = 15;	// Time
-		const int SW = 110;	// String
+			total_computation_time +=  walltime - blockwait;
+			total_count += walltime_count;	// Number of times the line was invoked.
+		}
 
-		assert(timer.check_timers_off());
-		std::cout<<"Timers"<<std::endl
-			<<std::setw(SW)<<std::left<<"Type"
-			<<std::setw(CW)<<std::left<<"Avg"
-			<<std::setw(CW)<<std::left<<"Tot"
-			<<std::setw(CW)<<std::left<<"Count"
-			<<std::endl;
+		profile_timer_store.save_to_store(key, std::make_pair(total_computation_time, total_count));
+	}
+}
 
-		std::cout.precision(6); // Reset precision to 6 places.
-		ProfileTimer::TimerMap_t::const_iterator it = profile_timer_map_.begin();
-		for (; it != profile_timer_map_.end(); ++it){
-			int i = it->second;
+void ProfileTimer::print_timers(std::ostream& out) {
+	const int CW = 18;	// Time
+	const int LW = 40; 	// List of line numbers
+	const int SW = 110;	// String
+	const int NUM_LINES_TO_PRINT = 5;
 
-			double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
-			double avg_time = tot_time / timer_counts[i];
-			long count = timer_counts[i];
+	out<<"Timers"<<std::endl
+		<<std::setw(SW)<<std::left<<"Type"
+		<<std::setw(LW)<<std::left<<"Lines"
+		<<std::setw(CW)<<std::left<<"AvgComputation"
+		<<std::setw(CW)<<std::left<<"TotComputation"
+		<<std::setw(CW)<<std::left<<"Count"
+		<<std::endl;
+
+	TimerMap_t::const_iterator it = profile_timer_map_.begin();
+	for (; it!= profile_timer_map_.end(); ++it){
+		const Key &kp = it->first;
+		const std::set<int>& line_num_set = it->second;
+		std::set<int>::const_iterator lineit = line_num_set.begin();
+		long long total_walltime = 0L;
+		long long total_blockwait = 0L;
+		long long total_computation_time = 0L;
+		long long total_count = 0L;
+		std::stringstream line_nums_str;
+		bool lines_printed = false;
+		int lines = 0;
+		int total_lines = line_num_set.size();
+		for (; lineit != line_num_set.end(); ++lineit, ++lines){
+			int line_number = *lineit;
+			long long walltime = sialx_timer_.get_timer_value(line_number, SialxTimer::TOTALTIME);
+			long long walltime_count = sialx_timer_.get_timer_count(line_number, SialxTimer::TOTALTIME);
+			long long blockwait =  sialx_timer_.get_timer_value(line_number, SialxTimer::BLOCKWAITTIME);
+			total_walltime += walltime;
+			total_blockwait += blockwait;
+			total_count += walltime_count; // Number of times the line was invoked.
+
+			if (lines < NUM_LINES_TO_PRINT && !lines_printed){
+				line_nums_str << line_number << ";";
+			} else if (!lines_printed){
+				line_nums_str << "..." << (total_lines - lines) << " more";
+				lines_printed = true;
+			}
+		}
+		total_computation_time =  total_walltime - total_blockwait;
+
+		if (total_count > 0){
+			out.precision(6); // Reset precision to 6 places.
+			double to_print_tot_time = SipTimer_t::to_seconds(total_computation_time);
+			double to_print_avg_time = to_print_tot_time / total_count;
+			long to_print_count = total_count;
 
 			std::stringstream ss;
 			ss << it->first;
 
-			std::cout<<std::setw(SW)<< std::left << ss.str()
-					<< std::setw(CW)<< std::left << avg_time
-					<< std::setw(CW)<< std::left << tot_time
-					<< std::setw(CW)<< std::left << count
-					<< std::endl;
+			out<<std::setw(SW)<< std::left << ss.str()
+				<< std::setw(LW)<< std::left << line_nums_str.str()
+				<< std::setw(CW)<< std::left << to_print_avg_time
+				<< std::setw(CW)<< std::left << to_print_tot_time
+				<< std::setw(CW)<< std::left << to_print_count
+				<< std::endl;
 		}
-		std::cout<<std::endl;
+
 	}
-};
-
-
-template <typename TIMER>
-class SingleNodeProfileStore : public PrintTimers<TIMER> {
-private:
-	const ProfileTimer::TimerMap_t& profile_timer_map_;
-	ProfileTimerStore* profile_timer_store_;
-public:
-	SingleNodeProfileStore(const ProfileTimer::TimerMap_t &profile_timer_map, ProfileTimerStore* profile_timer_store)
-		: profile_timer_map_(profile_timer_map), profile_timer_store_(profile_timer_store) {
-		check(profile_timer_store != NULL, "Assigning a NULL profile_timer_store to SingleNodeProfileStore instance");
-	}
-	virtual ~SingleNodeProfileStore(){}
-	virtual void execute(TIMER& timer){
-
-		// Do nothing if profile_timer_store is null
-		if (profile_timer_store_ == NULL)
-			return;
-
-		long long * timers = timer.get_timers();
-		long long * timer_counts = timer.get_timer_count();
-
-		assert(timer.check_timers_off());
-
-		ProfileTimer::TimerMap_t::const_iterator it = profile_timer_map_.begin();
-		for (; it != profile_timer_map_.end(); ++it){
-			const ProfileTimer::Key& key = it->first;
-			int i = it->second;
-			long tot_time = 	timers[i];
-			long count 	= 	timer_counts[i];
-			std::pair<long, long> time_count_pair = std::make_pair(tot_time, count);
-			profile_timer_store_->save_to_store(key, time_count_pair);
-		}
-		std::cout<<std::endl;
-	}
-};
-
-
-void ProfileTimer::print_timers(){
-	SingleNodeProfilePrint<SipTimer_t> print_to_stdout(profile_timer_map_);
-	delegate_.print_timers(print_to_stdout);
-	SingleNodeProfileStore<SipTimer_t> save_to_store(profile_timer_map_, profile_timer_store_);
-	delegate_.print_timers(save_to_store);
+	out<<std::endl;
 }
+
 
 
 } /* namespace sip */
