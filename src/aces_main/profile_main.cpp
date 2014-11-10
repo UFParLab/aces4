@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 	// profile.ar1.dat.0 for rank 0
 	// profile.ar1.dat.1 for rank 1 and so on.
 	std::stringstream db_name;
-	db_name << "profile." << parameters.job << "." << sip_mpi_attr.global_rank();
+	db_name << "profile.db." << sip_mpi_attr.global_rank();
 	sip::ProfileTimerStore disk_profile_timer_store(db_name.str());
 	profile_timer_store.backup_to_other(disk_profile_timer_store);
 

@@ -24,7 +24,7 @@ void print_usage(const std::string& program_name) {
 	std::cerr << "Usage : " << program_name
 			<< " <space separated list of profile databases> -o <name of output file>"
 			<< std::endl;
-	std::cerr << "\tDefault output file is \"profile.merged\"" << std::endl;
+	std::cerr << "\tDefault output file is \"profile.db\"" << std::endl;
 	std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 }
 
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 
 
 	// Parse command line arguments
-	char * output_file = "profile.merged";
+	char * output_file = "profile.db";
 	/**
 	 * o : output file
 	 */
