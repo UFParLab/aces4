@@ -17,8 +17,9 @@
 #include "sip_timer.h"
 #include "sialx_timer.h"
 
-namespace sip {
+class ProfileInterpreterTestControllerParallel;
 
+namespace sip {
 class ProfileTimerStore;
 
 class ProfileTimer {
@@ -103,15 +104,20 @@ public:
 	void record_line(const ProfileTimer::Key& key, int sialx_line);
 
 	/** Prints timers to an ostream */
-	void print_timers(std::ostream& out);
+	void print_timers(std::ostream& out = std::cout);
 
 	/** Saves timer to underlying ProfileTimerStore */
 	void save_to_store(ProfileTimerStore& profile_timer_store);
 
+	friend class ::ProfileInterpreterTestControllerParallel;
+
 private:
 	SialxTimer& sialx_timer_;
 	TimerMap_t profile_timer_map_; 				//! Key -> time
+
+
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);
+
 };
 
 } /* namespace sip */

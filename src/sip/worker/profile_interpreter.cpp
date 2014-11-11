@@ -68,7 +68,7 @@ void ProfileInterpreter::pre_interpret(int pc){
 	if (pc == last_seen_pc_)
 		return;
 	else if (last_seen_pc_ >= 0){
-		profile_timer_.record_line(last_seen_key_, line_number());
+		profile_timer_.record_line(last_seen_key_, get_line_number(last_seen_pc_));
 		last_seen_pc_ = -1;
 	} else {
 

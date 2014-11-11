@@ -208,7 +208,7 @@ long long *TAUSIPTimers::get_timer_count() {
 			timer_switched_[i] = calls;
 		}
 	}
-	return timer_list_;
+	return timer_switched_;
 }
 
 #endif // HAVE_TAU

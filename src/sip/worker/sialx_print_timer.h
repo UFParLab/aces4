@@ -138,12 +138,34 @@ public:
 	virtual ~MultiNodePrint(){}
 	virtual void execute(TIMER& timer){
 
-		mpi_reduce_timers(timer);
+		std::vector<long long> timers_vector(timer.max_slots(), 0L);
+		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
+
+		mpi_reduce_timers(timer, timers_vector, timer_counts_vector);
+
+		/**
+		 * The printing originally modified the times & the counts array
+		 * on the master worker and printed them. This has been changed.
+		 * Here's why:
+		 *
+		 * At the end of a program, each workers SialxTimer maintains
+		 * timers for only its worker.
+		 * For printing, the timers are aggregated from all workers into
+		 * temporary vectors and printed.
+		 * The ProfileInterpreter queries the SialxTimer, that is holds a
+		 * reference to, for Total & Block wait times at each line and prints
+		 * them to screen and saves them to a backing store (SQLite Database).
+		 * If the SialxTimer arrays for the master were to be modified when
+		 * the timers are printed, the profile timer might give back different
+		 * information depending on whether the SialxTimers were printed before
+		 * or after the ProfileTimers.
+		 */
+
 
 		if (SIPMPIAttr::get_instance().is_company_master()){
 			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
-			long long * timers = timer.get_timers();
-			long long * timer_counts = timer.get_timer_count();
+			long long * timers = &timers_vector[0];
+			long long * timer_counts = &timer_counts_vector[0];
 			const int LW = 10;	// Line num
 			const int CW = 15;	// Time
 			const int SW = 30;	// String
@@ -193,7 +215,15 @@ private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
 	std::ostream& out_;
-	void mpi_reduce_timers(TIMER& timer){
+	/**
+	 * Reduces timers from all workers. Puts the aggregated timers
+	 * and timer counts into passed in vectors
+	 * @param timer [in]
+	 * @param timers_vector [out]
+	 * @param timer_counts_vector [out]
+	 */
+	void mpi_reduce_timers(TIMER& timer, std::vector<long long> timers_vector,
+			std::vector<long long> timer_counts_vector) {
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
 		long long * timers = timer.get_timers();
@@ -223,8 +253,8 @@ private:
 		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, sialx_timer_reduce_dt, sialx_timer_reduce_op, worker_master, worker_company));
 
 		if (attr.is_company_master()){
-			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts);
-			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers);
+			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
+			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
 		}
 
 		// Cleanup

@@ -9,7 +9,7 @@
 #include "test_constants.h"
 #include "sialx_timer.h"
 #include "server_timer.h"
-
+#include "profile_timer.h"
 
 
 namespace sip{
@@ -20,6 +20,7 @@ class SialPrinterForTests;
 class IntTable;
 class ServerPersistentArrayManager;
 class SIPServer;
+class ProfileTimerStore;
 
 }
 
@@ -53,22 +54,29 @@ class TestControllerParallel {
 public:
 	TestControllerParallel(std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
 			bool expect_success=true);
-	~TestControllerParallel() ;
+	virtual  ~TestControllerParallel() ;
 
-	void initSipTables(const std::string& sial_dir_name = dir_name);
-	void run();
+	virtual void initSipTables(const std::string& sial_dir_name = dir_name);
+	virtual void run();
 
-	int int_value(const std::string& name);
-	double scalar_value(const std::string& name);
-	double* local_block(const std::string& name, const std::vector<int>indices);
-	double* static_array(const std::string& name);
-	void print_timers(std::ostream& out);
+	virtual int int_value(const std::string& name);
+	virtual double scalar_value(const std::string& name);
+	virtual double* local_block(const std::string& name, const std::vector<int>indices);
+	virtual double* static_array(const std::string& name);
+	virtual void print_timers(std::ostream& out);
 
-	int num_workers();
-	int num_servers();
-	std::string expectedOutput();
+	virtual int num_workers();
+	virtual int num_servers();
+	virtual std::string expectedOutput();
 
-	sip::IntTable* int_table();
+	virtual bool runWorker();
+
+	//virtual sip::IntTable* int_table();
+
+#ifdef HAVE_MPI
+	virtual bool runServer();
+#endif
+
 	const std::string job_;
 	const std::string comment_;
 	bool verbose_;
@@ -88,9 +96,23 @@ public:
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
 
-	bool runServer();
-	bool runWorker();
+};
 
+/**
+ * Test controller to instantiate profile timer interpreter
+ * instead of a regular SialxInterpreter.
+ */
+class ProfileInterpreterTestControllerParallel : public TestControllerParallel {
+public:
+
+	ProfileInterpreterTestControllerParallel(std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
+			bool expect_success=true);
+	virtual ~ProfileInterpreterTestControllerParallel();
+	virtual bool runWorker();
+
+	sip::ProfileTimer::Key key_for_line(int line); /*! Utility method to search underlying profile timer */
+	sip::ProfileTimer *profile_timer_;
+	sip::ProfileTimerStore *profile_timer_store_;
 };
 
 #endif //__TEST_CONTROLLER_PARALLEL__

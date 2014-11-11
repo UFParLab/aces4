@@ -1,4 +1,6 @@
-sial contraction_small
+# Do not change line numbers ! Test hard codes line number
+
+sial contraction_small 
 	special print_block r
 	special fill_block_cyclic wr
 	aoindex i = 1:1

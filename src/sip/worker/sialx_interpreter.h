@@ -266,6 +266,17 @@ public:
 	}
 
 
+	/**
+	 * Helper method to get line number for a given pc
+	 * @param pc
+	 * @return
+	 */
+	int get_line_number(int pc){
+		if (pc < op_table_.size())
+			return op_table_.line_number(pc);
+		else
+			return -1;// Past the end of the program. Probably being called by a test.
+	}
 
 
 	// Convenience methods to access data members.

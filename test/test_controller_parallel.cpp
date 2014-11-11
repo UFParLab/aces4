@@ -6,18 +6,19 @@
 
 
 
-#include "test_controller_parallel.h"
 #include "config.h"
-
+#include "test_controller_parallel.h"
 #include "gtest/gtest.h"
+
 #include <fenv.h>
 #include <execinfo.h>
 #include <signal.h>
 #include <cstdlib>
+#include <set>
+#include <map>
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
-
 #include "sip_tables.h"
 #include "sialx_interpreter.h"
 #include "interpreter.h"
@@ -26,11 +27,14 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
-
 #include "worker_persistent_array_manager.h"
-
 #include "block.h"
 #include "sip_mpi_attr.h"
+
+#include "profile_interpreter.h"
+#include "profile_timer.h"
+#include "profile_timer_store.h"
+#include "global_state.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -41,7 +45,6 @@
 
 #ifdef HAVE_MPI
 #include "sip_server.h"
-#include "global_state.h"
 #include "sip_mpi_utils.h"
 #include "server_persistent_array_manager.h"
 #endif
@@ -301,8 +304,6 @@ std::cout << "before creating server timer " << std::endl << std::flush;
 bool TestControllerParallel::runWorker() {
 	if (this_test_enabled_) {
 
-
-
 		int slot = sip_tables_->max_timer_slots();
 		sialx_timers_ = new sip::SialxTimer(sip_tables_->max_timer_slots());
 		worker_ = new sip::SialxInterpreter(*sip_tables_, sialx_timers_, printer_, wpam_);
@@ -341,4 +342,88 @@ bool TestControllerParallel::runWorker() {
 	return this_test_enabled_;
 }
 
+
+
+
+
+ProfileInterpreterTestControllerParallel::ProfileInterpreterTestControllerParallel(
+		std::string job, bool has_dot_dat_file, bool verbose,
+		std::string comment, std::ostream& sial_output, bool expect_success) :
+		TestControllerParallel(job, has_dot_dat_file, verbose, comment,
+				sial_output, expect_success), profile_timer_(NULL),
+				profile_timer_store_(NULL){
+	profile_timer_store_ = new sip::ProfileTimerStore(":memory:");
+}
+
+ProfileInterpreterTestControllerParallel::~ProfileInterpreterTestControllerParallel(){
+	if (profile_timer_)
+		delete profile_timer_;
+	if (profile_timer_store_)
+		delete profile_timer_store_;
+}
+
+sip::ProfileTimer::Key ProfileInterpreterTestControllerParallel::key_for_line(int line){
+	sip::check(profile_timer_ != NULL, "Profile timer is NULL, cannot call key_for_line");
+	sip::ProfileTimer::TimerMap_t& timer_map = profile_timer_->profile_timer_map_;
+	sip::ProfileTimer::TimerMap_t::iterator it = timer_map.begin();
+	for (; it != timer_map.end(); ++it){
+		std::set<int>& line_num_set = it->second;
+		std::set<int>::iterator lineit = line_num_set.find(line);
+		if (lineit != line_num_set.end()){
+			return it->first;
+		}
+	}
+	// If the line doesn't exist in any map key-value pair, throw an exception.
+	std::stringstream err_ss;
+	err_ss << "No key for line " << line;
+	throw std::out_of_range(err_ss.str());
+}
+
+
+bool ProfileInterpreterTestControllerParallel::runWorker() {
+	if (this_test_enabled_) {
+
+		int slot = sip_tables_->max_timer_slots();
+		sialx_timers_ = new sip::SialxTimer(sip_tables_->max_timer_slots());
+		profile_timer_ = new sip::ProfileTimer(*sialx_timers_);
+		worker_ = new sip::ProfileInterpreter(*sip_tables_, *profile_timer_, *sialx_timers_, printer_, wpam_);
+		barrier();
+
+		if (verbose_)
+			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
+					<< prog_name_ << " STARTING WORKER " << std::endl
+					<< std::flush;
+		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
+			try {
+				std::cout << "before worker interpret" << std::endl << std::flush;
+				worker_->interpret();
+				std::cout << "after worker interpret" << std::endl << std::flush;
+			} catch (const std::exception& e) {
+				std::cerr << "exception thrown in worker: " << e.what();
+				ADD_FAILURE();
+			}
+		} else {
+			worker_->interpret();
+		}
+
+		if (verbose_) {
+			if (std::cout != sial_output_){
+				std::cout << sial_output_.rdbuf();
+			}
+			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
+					<< prog_name_ << " TERMINATED WORKER " << std::endl
+					<< std::flush;
+		}
+		worker_->post_sial_program();
+		std::cout << "after post_sial_program" << std::endl << std::flush;
+		wpam_->save_marked_arrays(worker_);
+		if (verbose_){
+			profile_timer_->print_timers();
+			sialx_timers_->print_timers(sip_tables_->line_num_to_name());
+		}
+		profile_timer_->save_to_store(*profile_timer_store_);
+	}
+	sial_output_ << std::flush;
+	return this_test_enabled_;
+}
 

@@ -28,7 +28,7 @@
 bool VERBOSE_TEST = true;
 
 
-TEST(Sial_QM,ccsdpt_test){
+TEST(SialxInterpreter,ccsdpt_test){
 	std::string job("ccsdpt_test");
 
 	std::stringstream output;
@@ -57,10 +57,38 @@ TEST(Sial_QM,ccsdpt_test){
 		ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
 		controller.print_timers(std::cout);
 	}
-
 }
 
+TEST(ProfileInterpreter, ccsdpt_test){
+	std::string job("ccsdpt_test");
 
+	std::stringstream output;
+
+	ProfileInterpreterTestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double eaab = controller.scalar_value("eaab");
+		ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
+		double esaab =controller.scalar_value("esaab");
+		ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
+		controller.print_timers(std::cout);
+	}
+}
 
 int main(int argc, char **argv) {
 

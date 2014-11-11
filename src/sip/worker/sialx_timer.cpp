@@ -29,26 +29,22 @@ SialxTimer::SialxTimer(int sialx_lines) :
 }
 
 void SialxTimer::start_timer(int line_number, TimerKind_t kind){
-//	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-//	check(line_number <= sialx_lines_, "Invalid line number", line_number);
-	delegate_.start_timer(line_number + ((int)kind) * sialx_lines_);
+	delegate_.start_timer(line_number + static_cast<int>(kind) * sialx_lines_);
 }
 
 void SialxTimer::pause_timer(int line_number, TimerKind_t kind){
-//	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-//	check(line_number <= sialx_lines_, "Invalid line number", line_number);
-	delegate_.pause_timer(line_number + ((int)kind) * sialx_lines_);
+	delegate_.pause_timer(line_number + static_cast<int>(kind) * sialx_lines_);
 }
 
 
 long long SialxTimer::get_timer_value(int line_number, TimerKind_t kind){
-	long long * timer_values = delegate_.get_timers();
-	return timer_values[line_number + ((int)kind) * sialx_lines_];
+	const long long * timer_values = delegate_.get_timers();
+	return timer_values[line_number + static_cast<int>(kind) * sialx_lines_];
 }
 
 long long SialxTimer::get_timer_count(int line_number, TimerKind_t kind){
-	long long * timer_counts = delegate_.get_timer_count();
-	return timer_counts[line_number + ((int)kind) * sialx_lines_];
+	const long long * timer_counts = delegate_.get_timer_count();
+	return timer_counts[line_number + static_cast<int>(kind) * sialx_lines_];
 }
 
 
@@ -77,26 +73,5 @@ void SialxTimer::stop_program_timer(){
 
 }
 
-
-//#ifndef HAVE_TAU
-//std::ostream& operator<<(std::ostream& os, const SialxTimer& obj) {
-//	os << "SialxTimer [\n";
-//	os << "max slots : " << obj.max_slots_ << std::endl;
-//	os << "timer_switched { " ;
-//	for (int i=0; i<obj.max_slots_; i++)
-//		os << obj.timer_switched_[i] << " ";
-//	os << "}" << std::endl;
-//	os << "timer_on { " ;
-//	for (int i=0; i<obj.max_slots_; i++)
-//		os << obj.timer_on_[i] << " ";
-//	os << "}" << std::endl;
-//	os << "timer_list {" ;
-//	for (int i=0; i<obj.max_slots_; i++)
-//		os << obj.timer_list_[i] << " ";
-//	os << " }" << std::endl;
-//	os << "]" << std::endl;
-//	return os;
-//}
-//#endif
 
 } /* Namespace sip */
