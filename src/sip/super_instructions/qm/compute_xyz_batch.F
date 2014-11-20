@@ -634,14 +634,14 @@ c ------------------------------------------------------------------------
 c Compute the xyz integrals. 
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_xyz_batch(imax, zmax, nalpha, ncoeff,
-     *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
-     *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
-     *                 alpha_pack,
-     *                 pcoeff_pack, ccbeg_pack, ccend_pack,
+              call oed__gener_xyz_batch(imax, zmax, 
+     *                 nalpha_pack, ncoeff_pack, ncsum, 
+     *                 ncfps(m), ncfps(n), npfps(m), npfps(n), 
+     *                 ivangmom(m), ivangmom(n), 
+     *                 x1,y1,z1,x2,y2,z2,
+     *                 alpha_pack, pcoeff_pack, ccbeg_pack, ccend_pack,
      *                 spherical, .false., iscr, ix, iy, iz, nints, 
-     *                 nfirst,
-     *                 zz)
+     *                 nfirst, zz)
 
                if (nints .gt. 0) then
 
