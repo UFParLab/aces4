@@ -1,0 +1,7 @@
+sial contiguous_local_2
+
+index kiter = 1: norb
+contiguous local c_piece[kiter]
+temp other_piece[kiter]
+
+endsial contiguous_local_2
