@@ -1,5 +1,5 @@
 #  Copyright (c) 2003-2010 University of Florida
-  import "rccsd_rhf_defs.sialx" 
+  import "rccpt_rhf_defs.sialx" 
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -407,6 +407,7 @@
       scalar eold 
       scalar ecrit 
       scalar ediff 
+      scalar escr
       scalar mp2_energy
       scalar restart
 #
@@ -1261,21 +1262,12 @@
         endif
         call movet2
         server_barrier
-            ediff = eold - ecorrT
-            print ediff
-         IF ecorrT < eold
-            ediff = eold - ecorrT
-            IF ediff < ecrit
-               exit # kiter 
-            ENDIF
-         ENDIF
-#
-         IF ecorrT > eold
-            ediff = ecorrT - eold
-            IF ediff < ecrit
-               exit # kiter 
-            ENDIF
-         ENDIF
+	ediff = eold - ecorrT
+	escr = ediff**2.0
+	ediff = escr**0.5
+	if ediff < cc_conv
+	    exit
+	endif
 #
 #        Reset eold --> enew 
 #        ------------------- 
@@ -1288,9 +1280,6 @@
     totenerg  = ecorrT
     totenerg += scfeneg
     print totenerg
-      server_barrier
-#
-      server_barrier
       set_persistent     ca    "ca" 
       set_persistent     Fock_a "fock_a"
       set_persistent     T2old_ab "T2old_ab"
@@ -1298,6 +1287,7 @@
       set_persistent     Vaaii  "Vaaii"
       set_persistent     Vpiqj  "Vpiqj"
       set_persistent     VSpipi "VSpipi"
+      server_barrier
 #
 #    ------------------------------------------------------------------------ 
                            ENDSIAL CCSD_RHF_SV1

@@ -286,6 +286,7 @@ import "tran_rhf_no4v_defs.sialx"
 #
      ENDPARDO mu, nu, lambda 
      server_barrier
+     print " Done first"
 #
 #    ------------------------------------------------------------------------
 #
@@ -340,7 +341,7 @@ import "tran_rhf_no4v_defs.sialx"
            ENDDO p 
 #
      ENDPARDO mu, nu, i, i1
-     println "done tran3 a " 
+     print "done tran3 a " 
 #
      PARDO mu, nu, i, i1
 
@@ -352,7 +353,7 @@ import "tran_rhf_no4v_defs.sialx"
            ENDDO a
 #
      ENDPARDO mu, nu, i, i1
-     println "done tran3 b " 
+     print "done tran3 b " 
 #
      PARDO mu, nu, i, i1
 #
@@ -364,7 +365,7 @@ import "tran_rhf_no4v_defs.sialx"
            ENDDO a
 #
      ENDPARDO mu, nu, i, i1
-     println "done tran3 c " 
+     print "done tran3 c " 
 #
 #    ------------------------------------------------------------------------
 #
@@ -389,7 +390,7 @@ import "tran_rhf_no4v_defs.sialx"
 
         DEALLOCATE Lxaai[mu,*,a,i]
      ENDPARDO mu, a, i
-     println "done tran3 d " 
+     print "done tran3 d " 
 #
 #    ------------------------------------------------------------------------
 #
@@ -488,13 +489,13 @@ import "tran_rhf_no4v_defs.sialx"
      PROC TRAN_UHF 
 # 
          CALL TRAN_TRAN2     # --> performs the first two stages of the 
-     println "done tran2" 
+     print "done tran2" 
                              #     two-electron integral transformation.  
          CALL TRAN_TRAN3     # --> performs the third stage   
-     println "done tran3" 
+     print "done tran3" 
                              #     two-electron integral transformation.  
          CALL TRAN_TRAN4     # --> performs the fourth stage of the  
-     println "done tran4" 
+     print "done tran4" 
                              #     two-electron integral transformation.  
 #
      ENDPROC TRAN_UHF 
@@ -512,7 +513,7 @@ import "tran_rhf_no4v_defs.sialx"
      restore_persistent ca "ca"
      set_persistent ca "ca"  
     #restore_persistent FTa "fock_a" 
-     println "done restoring persistent arrays" 
+     print "done restoring persistent arrays" 
 
      server_barrier 
 
@@ -527,7 +528,7 @@ import "tran_rhf_no4v_defs.sialx"
      CALL TRAN_UHF 
      server_barrier 
      destroy Vxaai
-     println "done transformation" 
+     print "done transformation" 
 #
 # Write transformed two-electron integrals to list 
 # ------------------------------------------------ 
@@ -539,7 +540,7 @@ import "tran_rhf_no4v_defs.sialx"
       set_persistent Viaai  "Viaai" 
       set_persistent VSaaai "VSaaai" 
       set_persistent Vpiqj  "Vpiqj" 
-     println "done setting persistent arrays" 
+     print "done setting persistent arrays" 
   
       server_barrier
 # 
