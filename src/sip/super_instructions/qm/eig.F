@@ -59,7 +59,7 @@ c#ifdef _ASSERT
             dtmp = dtmp + dabs(a(j,i)-a(i,j))
          end do
       end do
-      if (dtmp.gt.1.d-10) then
+      if (dtmp.gt.1.d-8) then
          print *, '@EIG: WARNING - the matrix is not symmetric'
          print *, '      sum of differences is ',dtmp
       end if
