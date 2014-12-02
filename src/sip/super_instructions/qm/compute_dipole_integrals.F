@@ -15,6 +15,7 @@ C  in the file COPYRIGHT.
       subroutine compute_dipole_integrals(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
+     c array_slot_2, rank_2, index_values_2, size_2, extents_2, data_2,
      c  ierr) BIND(C)
       use, intrinsic :: ISO_C_BINDING
       implicit none
@@ -48,13 +49,21 @@ c Interface added BUT should be include NOT added in the future
       integer(C_INT), intent(in)::extents_0(1:rank_0)
       real(C_DOUBLE), intent(out)::data_0(1:size_0)
 
-!     Scalar defining which moment   
+!     Return scalor with nuclear term
       integer(C_INT), intent(in)::array_slot_1
       integer(C_INT), intent(in)::rank_1
       integer(C_INT), intent(in)::index_values_1(1:rank_1)
       integer(C_INT), intent(in)::size_1
       integer(C_INT), intent(in)::extents_1(1:rank_1)
       real(C_DOUBLE), intent(inout)::data_1(1:size_1)
+
+!     Scalar defining which moment   
+      integer(C_INT), intent(in)::array_slot_2
+      integer(C_INT), intent(in)::rank_2
+      integer(C_INT), intent(in)::index_values_2(1:rank_2)
+      integer(C_INT), intent(in)::size_2
+      integer(C_INT), intent(in)::extents_2(1:rank_2)
+      real(C_DOUBLE), intent(inout)::data_2(1:size_2)
 
       integer(C_INT)  ierr  
 
@@ -94,32 +103,32 @@ c Get the ao segment ranges
 
       ncenters = int_constant("ncenters"//C_NULL_CHAR) 
       npcoeffs = int_constant("npcoeffs"//C_NULL_CHAR)
-      nalphas  = int_constant("nalphas"//C_NULL_CHAR) 
+C      nalphas  = int_constant("nalphas"//C_NULL_CHAR) 
 
 c---------------------------------------------------------------------------
 c   Compute data block of integrals.
 c---------------------------------------------------------------------------
 
-      ix2   = data_1(1)  
+      ix2   = data_2(1)  
 
       crit = 0.00001 
 
-      diff = dabs((data_1(1)) - 1.0) 
+      diff = dabs((data_2(1)) - 1.0) 
       if (diff .lt. crit) ix2 = 1  
 
-      diff = dabs((data_1(1)) - 2.0) 
+      diff = dabs((data_2(1)) - 2.0) 
       if (diff .lt. crit) ix2 = 2  
 
-      diff = dabs((data_1(1)) - 3.0) 
+      diff = dabs((data_2(1)) - 3.0) 
       if (diff .lt. crit) ix2 = 3  
 
-      diff = dabs((data_1(1)) - 10.0) 
+      diff = dabs((data_2(1)) - 10.0) 
       if (diff .lt. crit) ix2 = 10
 
-      diff = dabs((data_1(1)) - 11.0) 
+      diff = dabs((data_2(1)) - 11.0) 
       if (diff .lt. crit) ix2 = 11
 
-      diff = dabs((data_1(1)) - 12.0) 
+      diff = dabs((data_2(1)) - 12.0) 
       if (diff .lt. crit) ix2 = 12
 
       offset_1 = 0 
@@ -135,7 +144,7 @@ c---------------------------------------------------------------------------
       call c_f_pointer(ciscr, iscr, [niscr])
 
       call comp_dipole_int(data_0, ix2, ncenters, dnuc, npcoeffs, 
-     *                        nalphas,
+C     *                        nalphas,
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
      *                        scr, iscr) 
@@ -152,7 +161,8 @@ c  Remove scratch space
       end
 
       subroutine comp_dipole_int(z, ixyz, natoms, dnuc, npcoeffs,
-     *        nalpha_pack, da1, da2, db1, db2, zz, iscr) 
+     *        da1, da2, db1, db2, zz, iscr) 
+C     *        nalpha, da1, da2, db1, db2, zz, iscr) 
     
 c---------------------------------------------------------------------------
 c Interface added but should be included instead 
@@ -278,10 +288,10 @@ c     mapping of atoms to shells
 
 c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
-      integer ccbeg_pack(4*npcoeffs), ccend_pack(4*npcoeffs)
+      integer ccbeg_pack(8*npcoeffs), ccend_pack(8*npcoeffs)
       integer ncoeff_pack
-      double precision alpha_pack(4*nalpha_pack),
-     *                 pcoeff_pack(4*npcoeffs)
+      double precision alpha_pack(8*npcoeffs),
+     *                 pcoeff_pack(8*npcoeffs)
       double precision xn(natoms), yn(natoms), zn(natoms)
       double precision x1,y1,z1,x2,y2,z2, y
       integer do_atom(natoms)
@@ -291,6 +301,7 @@ c ----------------------------------------------------------------------
 c Get predefined data 
 c ---------------------------------------------------------------------- 
       nshells = int_constant("nshells"//C_NULL_CHAR)
+C      nalpha  = int_constant("nalphas"//C_NULL_CHAR) 
       intSpherical    = int_constant("intspherical"//C_NULL_CHAR)
       nalpha_occupied = int_constant("nalpha_occupied"//C_NULL_CHAR)
       nbeta_occupied  = int_constant("nbeta_occupied"//C_NULL_CHAR)
@@ -538,18 +549,18 @@ c-------------------------------------------------------------------------
 
              call pack_coeffs_oed(palphas, pixalphas, ppcoeffs, 
      *                       pixpcoeffs, ncfps, npfps, m, n,
-     *                       alpha_pack, nalpha_pack, pcoeff_pack,
-     *                       ncoeff_pack, pccbeg, pccend, 
+     *                       alpha_pack, nalpha, pcoeff_pack,
+     *                       ncoeff, pccbeg, pccend, 
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeffs*2)
+     *                       8*npcoeffs)
 
 c ------------------------------------------------------------------------ 
 c Compute the xyz integrals. 
 c ------------------------------------------------------------------------ 
 
               call oed__gener_xyz_batch(imax, zmax, 
-     *                 nalpha_pack, ncoeff_pack, ncsum, 
+     *                 nalpha, ncoeff, ncsum, 
      *                 ncfps(m), ncfps(n), npfps(m), npfps(n), 
      *                 ivangmom(m), ivangmom(n), 
      *                 x1,y1,z1,x2,y2,z2,
