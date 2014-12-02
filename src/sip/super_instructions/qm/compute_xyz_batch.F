@@ -624,18 +624,18 @@ c-------------------------------------------------------------------------
 
              call pack_coeffs_oed(palphas, pixalphas, ppcoeffs, 
      *                       pixpcoeffs, ncfps, npfps, m, n,
-     *                       alpha_pack, nalpha_pack, pcoeff_pack,
-     *                       ncoeff_pack, pccbeg, pccend, 
+     *                       alpha_pack, nalpha, pcoeff_pack,
+     *                       ncoeff, pccbeg, pccend, 
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeffs*2)
+     *                       npcoeffs*4)
 
 c ------------------------------------------------------------------------ 
 c Compute the xyz integrals. 
 c ------------------------------------------------------------------------ 
 
               call oed__gener_xyz_batch(imax, zmax, 
-     *                 nalpha_pack, ncoeff_pack, ncsum, 
+     *                 nalpha, ncoeff, ncsum, 
      *                 ncfps(m), ncfps(n), npfps(m), npfps(n), 
      *                 ivangmom(m), ivangmom(n), 
      *                 x1,y1,z1,x2,y2,z2,
