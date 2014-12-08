@@ -311,7 +311,7 @@ add_subdirectory(src/sip/super_instructions)
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
-set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DEFINITIONS})
+set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_DEFINITIONS}")
 
 # aces4 executable
 add_executable(aces4 src/aces_main/main.cpp)
