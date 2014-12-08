@@ -183,13 +183,13 @@ void IndexTableEntry::init(const std::string& name, IndexTableEntry& entry,
 	if (esegIsSymbolic) {  //this is a symbolic constant, so eseg is actually index in intTable
 		eseg = int_table.value(eseg); //lookup and replace value
 	}
+	entry.index_type_ = intToIndexType_t(siox_file.read_int());
 	entry.name_ = name;
 	entry.lower_seg_ = bseg;
 	entry.num_segments_ = (eseg - bseg) + 1;
     sip::check(entry.index_type_ == simple || entry.lower_seg_ >= 0, "-ve value for lower_seg_");
     sip::check(entry.num_segments_ >= 0, "-ve value for num_segements_");
     
-	entry.index_type_ = intToIndexType_t(siox_file.read_int());
 	if (entry.index_type_ != subindex) { //set subindex_descriptor in IndexTable::init rather than here
 		//entry.segment_descriptor_ptr_ = table.segment_descriptors_.at(entry.index_type_);
 		IndexTable::SegmentDescriptorMap::iterator it = table.segment_descriptors_.find(entry.index_type_);
