@@ -88,17 +88,17 @@ Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
 }
 
 int DataManager::int_value(int int_table_slot) const {
-	return sip_tables_.int_table_.value(int_table_slot);
+	return int_table_.value(int_table_slot);
 }
 
 
 int DataManager::int_value(const std::string& name) const{
-	int int_table_slot = sip_tables_.int_table_.slot(name);
+	int int_table_slot = int_table_.slot(name);
 	return int_table_.value(int_table_slot);
 }
 
 void DataManager::set_int_value(std::string& name, int value){
-	int int_table_slot = sip_tables_.int_table_.slot(name);
+	int int_table_slot = int_table_.slot(name);
 	int_table_.set_value(int_table_slot, value);
 }
 
