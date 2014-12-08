@@ -15,7 +15,13 @@ C  in the file COPYRIGHT.
       subroutine abort_job()
 
       implicit none
-      include 'sip_interface.f'
+!      include 'sip_interface.f' <- This has problems with PGI
+      interface
+      subroutine sip_abort() bind(C)
+        use, intrinsic :: ISO_C_BINDING
+      end subroutine sip_abort
+      end interface
+ 
       integer ierr
     
       print *,'aborting job'
