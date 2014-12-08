@@ -349,7 +349,7 @@ add_library(jsoncpp;
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
-set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS ${LIBTENSORDIL_DEFINITIONS})
+set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_DEFINITIONS}")
 
 # aces4 executable
 add_executable(aces4 src/aces_main/main.cpp src/aces_main/main_helper_methods.h)

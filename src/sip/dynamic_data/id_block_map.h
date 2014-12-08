@@ -73,7 +73,7 @@ public:
 		PerArrayMap* map_ptr = block_map_.at(array_id);
 		if (map_ptr == NULL || map_ptr->empty()) return NULL;
 		typename PerArrayMap::iterator it =  map_ptr->begin();
-		for (it; it != map_ptr->end(); ++it){
+		for (; it != map_ptr->end(); ++it){
 			if (it->first.encloses(block_id)){
 				glb_id = it->first;
 				return it->second;

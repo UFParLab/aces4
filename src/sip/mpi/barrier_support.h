@@ -178,7 +178,7 @@ public:
 	}
 
 
-/** Routines called by workers
+// Routines called by workers
 
 	/**
 	 * Called by worker to construct mpi tag for a GET transaction.

@@ -76,9 +76,15 @@ static void print_usage(const std::string& program_name) {
  * when the program exits due to failure of some kind
  */
 static void setup_signal_and_exception_handlers() {
-	feenableexcept(FE_DIVBYZERO);
-	feenableexcept(FE_OVERFLOW);
-	feenableexcept(FE_INVALID);
+#ifdef __GLIBC__
+#ifdef __GNU_LIBRARY__
+#ifdef _GNU_SOURCE
+    feenableexcept(FE_DIVBYZERO);
+    feenableexcept(FE_OVERFLOW);
+    feenableexcept(FE_INVALID);
+#endif // _GNU_SOURCE
+#endif // __GNU_LIBRARY__
+#endif // __GLIBC__
 	signal(SIGSEGV, bt_sighandler);
 	signal(SIGFPE, bt_sighandler);
 	signal(SIGTERM, bt_sighandler);
