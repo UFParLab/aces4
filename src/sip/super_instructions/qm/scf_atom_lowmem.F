@@ -690,7 +690,8 @@ c     call scratch_array(niscr, ciscr)
 c     call c_f_pointer(ciscr, iscr_i, [niscr])
 
          call do_fragscf_lowmem(icurrent_frag, scr,
-     *            maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
+     *            maxblk, iscr, coords, tcoords,coeffs,alphas, 
+     *            ccbeg, ccend,
      *            nc1,nc2, nd1, nd2, 
 c    *            H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
      *            scr_i, ovl, ncenters, npcoeffs, nshells, 
@@ -717,7 +718,8 @@ c     call delete_scratch_array(ciscr)
       end 
 
       subroutine do_fragscf_lowmem(current_frag, scr,
-     *               maxblk, iscr, tcoords,coeffs,alphas, ccbeg, ccend,
+     *               maxblk, iscr, coords, tcoords,coeffs,alphas, 
+     *               ccbeg, ccend,
      *               nc1,nc2, nd1, nd2, 
 c    *               H0T, nai, kin, ovl, ncenters, npcoeffs, nshells, 
      *               H0T, ovl, ncenters, npcoeffs, nshells, 
@@ -803,7 +805,9 @@ c ----------------------------------------------------------------------
       double precision x3,y3,z3
       double precision x4,y4,z4
 
-      double precision tcoords(3,*), coeffs(*), alphas(*)
+      double precision frag_nre
+
+      double precision coords(3,*), tcoords(3,*), coeffs(*), alphas(*)
 c     double precision nai(nc1:nc2,nd1:nd2)
 c     double precision kin(nc1:nc2,nd1:nd2)
       double precision ovl(nc1:nc2,nd1:nd2)
@@ -1024,7 +1028,14 @@ c-----------------------------------------------------------------------
 c Compute the HF energy   
 c-----------------------------------------------------------------------
 
-       call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
+       call monomer_nn_repulsion(frag_nre,n_apf,ncenters,
+     *                           iatom,coords,charge)
+
+      write(6,*) ' Frag:',current_frag,
+     *           ' Nuclear Repulsion Energy = ', frag_nre
+
+       call hfenergy_l(HFD_A,HFD_B,FA,FB,h0,frag_nre,
+     *                 n_basis,current_frag) 
 
 c-----------------------------------------------------------------------
 c Copy the HF Density into the old Density. 
@@ -1252,7 +1263,9 @@ c-----------------------------------------------------------------------
 c       Compute the new HF energy  
 c-----------------------------------------------------------------------
 
-        call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis,current_frag) 
+
+        call hfenergy_l(HFD_A,HFD_B,FA,FB,h0,frag_nre,
+     *                  n_basis,current_frag) 
 
 c-----------------------------------------------------------------------
 c       Compute the DIIS coefficients  
@@ -2443,3 +2456,67 @@ C      endif
       return
       end
 
+      subroutine hfenergy_l(HFD_A,HFD_B,FA,FB,h0,nnr,
+     *                      n_basis,current_frag)
+      implicit none 
+      integer n_basis 
+      integer m, n 
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision FA(n_basis,n_basis) 
+      double precision FB(n_basis,n_basis) 
+      double precision h0(n_basis,n_basis) 
+      double precision nnr
+      double precision ea, eb, etotal 
+      integer current_frag
+
+      ea = 0.0 
+      eb = 0.0 
+      etotal = 0.0 
+
+      do n = 1, n_basis  
+      do m = 1, n_basis  
+         ea = ea + (h0(m,n)+FA(m,n))*HFD_A(m,n)   
+         eb = eb + (h0(m,n)+FB(m,n))*HFD_B(m,n)   
+      enddo  
+      enddo  
+
+      etotal = 0.5d0*(ea + eb) + nnr
+      write(6,*) ' Frag:',current_frag,
+     *           ' Total SCF energy(-NN) = ', etotal 
+
+      return 
+      end 
+      subroutine monomer_nn_repulsion(energy,n_apf,ncenters,
+     *                                iatom,coords,charge)
+      implicit none 
+      integer i, j, kcoord, im, jm
+      integer ncenters, n_apf
+      integer iatom(n_apf)
+      double precision energy, coords(3,ncenters), charge(ncenters)
+      double precision dist
+
+      energy = 0.d0
+      do i = 1, ncenters
+      do im = 1,n_apf
+      if(i.eq.iatom(im)) then
+          do j = i, ncenters
+          do jm = 1,n_apf
+          if(j.eq.iatom(jm)) then
+             if (i .ne. j) then
+                dist = 0.0
+                do kcoord = 1, 3
+                   dist = dist + (coords(kcoord,i)-coords(kcoord,j))**2
+                enddo
+                dist = dsqrt(dist)
+                energy = energy + charge(i)*charge(j) / dist
+             endif
+          endif
+          enddo
+          enddo
+      endif
+      enddo
+      enddo
+
+      return
+      end

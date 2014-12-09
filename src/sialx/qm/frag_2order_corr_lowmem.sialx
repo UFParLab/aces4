@@ -6588,9 +6588,9 @@ import "trans_frag_defs.sialx"
 
 #     Compute the NN repusion between fragments  
 #     ----------------------------------------- 
-      nn_rep = 0.0 
-      ##execute compute_nn_repulsion nn_rep 
-      print nn_rep 
+      #nn_rep = 0.0 
+      ###execute compute_nn_repulsion nn_rep 
+      #print nn_rep 
 
       mone = -1.0 
       ecrit = cc_conv 
