@@ -1263,6 +1263,8 @@ c-----------------------------------------------------------------------
 c       Compute the new HF energy  
 c-----------------------------------------------------------------------
 
+       call monomer_nn_repulsion(frag_nre,n_apf,ncenters,
+     *                           iatom,coords,charge)
 
         call hfenergy_l(HFD_A,HFD_B,FA,FB,h0,frag_nre,
      *                  n_basis,current_frag) 
@@ -1344,6 +1346,17 @@ c If no convergence set contribution to density to zero???
 c     HFD_a(m,n) = 0.0  
 c     HFD_b(m,n) = 0.0   
 100   continue 
+
+c-----------------------------------------------------------------------
+c       Compute the new HF energy  
+c-----------------------------------------------------------------------
+
+       call monomer_nn_repulsion(frag_nre,n_apf,ncenters,
+     *                           iatom,coords,charge)
+
+        call hfenergy_l(HFD_A,HFD_B,FA,FB,h0,frag_nre,
+     *                  n_basis,current_frag) 
+       write(6,*) ' Frag: ',current_frag," FINAL SCF = ",frag_nre
 
 c     if (current_frag .eq. -1) then 
        write(6,*) ' Alpha Orbital energies ' 
@@ -2459,6 +2472,9 @@ C      endif
       subroutine hfenergy_l(HFD_A,HFD_B,FA,FB,h0,nnr,
      *                      n_basis,current_frag)
       implicit none 
+C
+C returns the SCF energy in the nnr variable.
+C
       integer n_basis 
       integer m, n 
       double precision HFD_A(n_basis,n_basis) 
@@ -2483,7 +2499,9 @@ C      endif
 
       etotal = 0.5d0*(ea + eb) + nnr
       write(6,*) ' Frag:',current_frag,
-     *           ' Total SCF energy(-NN) = ', etotal 
+     *           ' SCF energy = ', etotal 
+
+      nnr = etotal
 
       return 
       end 
