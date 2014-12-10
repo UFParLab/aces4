@@ -68,8 +68,9 @@ int IntTable::slot(std::string name) const {
         std::map<std::string, int>::const_iterator it = name_slot_map_.find(name);
         if (it == name_slot_map_.end())
             throw std::out_of_range("Could not find " + name + " in int table");
+        return it->second;
 	} catch (const std::out_of_range& oor) {
-		fail("out of range error when looking up int tables slot  associated with name");
+		fail(oor.what());
 	}
 	return -1; //should never get here
 }
@@ -78,7 +79,6 @@ void IntTable::clear(){
    values_.clear();
    name_slot_map_.clear();
    slot_name_map_.clear();
-
 }
 
 std::ostream& operator<<(std::ostream& os, const IntTable & table) {
