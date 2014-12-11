@@ -316,7 +316,6 @@ c     write(6,*) ' M1 M2', m1, m2, 'nshells', nshells
      *                         pccbeg, pccend, indx_cc,
      *                         spherical,ncenters,calc_2der,
      *                         my_imax, my_zmax, 
-     * 
      *                         m1, m2)  
 c     call TAU_STOP("erd_scratch_mem_cal") 
 

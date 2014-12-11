@@ -363,7 +363,7 @@ c------------------------------------------------------------------------
      *                       alpha_pack, nalpha, pcoeff_pack,
      *                       ncoeff, ccbeg, ccend, indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeff*2)
+     *                       npcoeff*4)
             call oed__memory_nai_batch(nalpha, ncoeff,
      *                   ncfps(m), ncfps(n), 
      *                   npfps(m), npfps(n), 
@@ -448,6 +448,9 @@ c------------------------------------------------------------------------
  1000    continue
       enddo
       enddo
+
+      imax = 2*imax
+      zmax = 2*zmax
 
 c     write(6,*) ' IMAX = ', imax 
 c     write(6,*) ' ZMAX = ', zmax 
