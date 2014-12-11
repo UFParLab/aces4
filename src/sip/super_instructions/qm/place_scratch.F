@@ -66,7 +66,21 @@ c mosegments
 c aosegments 
       TYPE(C_PTR) :: n_ao_segs, aosegs
       integer, pointer :: pn_ao_segs(:), paosegs(:) 
+c n_aocc
+      TYPE(C_PTR) :: n_aocc, aocc
+      integer, pointer :: pn_aocc(:), paocc(:)
+c n_avirt
+      TYPE(C_PTR) :: n_avirt, avirt
+      integer, pointer :: pn_avirt(:), pavirt(:)
+C map segments to fragments
+      TYPE(C_PTR) :: n_frag_ao, frag_ao
+      integer, pointer :: pn_frag_ao(:),  pfrag_ao(:)
 
+      TYPE(C_PTR) :: n_frag_aocc, frag_aocc
+      integer, pointer :: pn_frag_aocc(:), pfrag_aocc(:)
+
+      TYPE(C_PTR) :: n_frag_avirt, frag_avirt
+      integer, pointer :: pn_frag_avirt(:), pfrag_avirt(:)
 
 c array defining which atoms are in which fragment 
       TYPE(C_PTR) :: sDimfrag
@@ -103,89 +117,76 @@ c Get the ao segment ranges
       call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
       call c_f_pointer(aosegs,paosegs,pn_ao_segs) 
 
+c get number of occupied fragment segments
+      call predefined_int_array("n_aocc"//C_NULL_CHAR,one,
+     *                           n_aocc,aocc)
+      call c_f_pointer(n_aocc,pn_aocc,[1])
+      call c_f_pointer(aocc,paocc,pn_aocc)
 
-c array defining which atoms are in which fragments 
-c ----------------------------------------------------------------------
-      call predefined_int_array("watom_frag"//C_NULL_CHAR,
-     *                                  two, sDimfrag,  pwatom_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[2])
-      call c_f_pointer(pwatom_frag, watom_frag, pdim_frag)
-c array defining the number of atoms in each fragment 
-c ----------------------------------------------------------------------
-      call predefined_int_array("natoms_frag"//C_NULL_CHAR,
-     *                                  one, sDimfrag,  pnatoms_frag)
-      call c_f_pointer(sDimfrag, pdim_frag,[1])
-      call c_f_pointer(pnatoms_frag, natoms_frag, pdim_frag)
-c  NUCLEAR CHARGES    
-c ----------------------------------------------------------------------
-      call predefined_scalar_array("charge"//C_NULL_CHAR,
-     *                               one, atoms ,charge)
-      call c_f_pointer(atoms, patoms,[1])
-      call c_f_pointer(charge, pcharge, patoms)
-c ----------------------------------------------------------------------
-      ncenters        = int_constant("ncenters"//C_NULL_CHAR) 
+c get number of virtual fragment segments
+      call predefined_int_array("n_avirt"//C_NULL_CHAR,one,
+     *                           n_avirt,avirt)
+      call c_f_pointer(n_avirt,pn_avirt,[1])
+      call c_f_pointer(avirt,pavirt,pn_avirt)
+C map segments to fragments
+      call predefined_int_array("w_frag_aocc"//C_NULL_CHAR,one,
+     *                      n_frag_aocc, frag_aocc)
+      call c_f_pointer(n_frag_aocc,pn_frag_aocc,[1])
+      call c_f_pointer(frag_aocc,pfrag_aocc,pn_frag_aocc)
 
-c Define fragment and find the number of occupied orbitals in the
-c fragment 
+      call predefined_int_array("w_frag_avirt"//C_NULL_CHAR,one,
+     *                      n_frag_avirt, frag_avirt)
+      call c_f_pointer(n_frag_avirt,pn_frag_avirt,[1])
+      call c_f_pointer(frag_avirt,pfrag_avirt,pn_frag_avirt)
+
+      call predefined_int_array("w_frag_ao"//C_NULL_CHAR,one,
+     *                      n_frag_ao, frag_ao)
+      call c_f_pointer(n_frag_ao,pn_frag_ao,[1])
+      call c_f_pointer(frag_ao,pfrag_ao,pn_frag_ao)
 
       wfrag = data_3(1) ! Clean up  
-      n_apf = 0 
-      do n = 1, natoms_frag(wfrag)   
-         n_apf = n_apf + 1 
-         iatom(n_apf) = watom_frag(wfrag,n) 
-      enddo 
 
-      nocc_a = 0  
-      nocc_b = 0  
-      tcharge = 0  
-      do m = 1, ncenters 
-       do n = 1, n_apf 
-         if (m .eq. iatom(n)) then 
-            tcharge = tcharge + pcharge(m)  
-         endif 
-       enddo 
-      enddo 
-      nocc_a = tcharge/2 
-      nocc_b = tcharge - nocc_a 
+      print *, "moo index values",index_values_0(1),index_values_0(2)
 
       if (rank_0 .eq. 2) then 
          offset_1 = 0 
          offset_2 = 0 
 
          if (data_2(1) .eq. 1.0) then 
-c Find the ao offset index ranges 
-            if (index_values_0(1).gt.1) then 
-               offset_1 = paosegs(index_values_0(1)-1) 
-            endif 
-c Find the mo offset index ranges 
-            if (index_values_0(2).gt.1) then 
-                do i = 1, index_values_0(2) - 1 
-                   offset_2 = offset_2 + pmoasegs(i) 
-                enddo 
-            endif 
-            offset_1 = 0 
-            offset_2 = 0 
-            if (extents_0(2) .gt. nocc_a) offset_2 = nocc_a  
+             do i = 1, index_values_0(1) - 1
+                 if (pfrag_ao(i) .eq. wfrag) then
+                     offset_1 = offset_1 + paosegs(i)
+                 endif
+             enddo
          endif 
 
          if (data_2(1) .eq. 2.0) then 
-c Find the mo offset index ranges 
-            if (index_values_0(1).gt.1) then 
-                do i = 1, index_values_0(1) - 1 
-                   offset_1 = offset_1 + pmoasegs(i) 
-                enddo 
-            endif 
-c Find the mo offset index ranges 
-            if (index_values_0(2).gt.1) then 
-               do i = 1, index_values_0(2) - 1 
-                  offset_2 = offset_2 + pmoasegs(i) 
-               enddo 
-            endif 
-            offset_1 = 0 
-            offset_2 = 0 
-            if (extents_0(1) .gt. nocc_a) offset_1 = nocc_a  
-            if (extents_0(2) .gt. nocc_a) offset_2 = nocc_a  
+            do i = 1, index_values_0(1) - 1
+                if (i .le. pn_aocc(1)) then
+                    if (pfrag_aocc(i) .eq. wfrag) then
+                        offset_1  = offset_1 + pmoasegs(i)
+                    endif
+                endif
+                if (i .gt. pn_aocc(1)) then
+                    if (pfrag_avirt(i-pn_aocc(1)) .eq. wfrag) then
+                        offset_1  = offset_1 + pmoasegs(i)
+                    endif
+                endif
+            enddo
          endif 
+
+         do i = 1, index_values_0(2) - 1
+             if (i .le. pn_aocc(1)) then
+                 if (pfrag_aocc(i) .eq. wfrag) then
+                     offset_2  = offset_2 + pmoasegs(i)
+                 endif
+             endif
+             if (i .gt. pn_aocc(1)) then
+                 if (pfrag_avirt(i-pn_aocc(1)) .eq. wfrag) then
+                     offset_2  = offset_2 + pmoasegs(i)
+                 endif
+             endif
+         enddo
 
          write(6,*) 'SCRATCH TYPE = ', data_2(1), offset_1, offset_2 
 
