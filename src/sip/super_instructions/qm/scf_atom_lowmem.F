@@ -445,9 +445,9 @@ c     parameter (max_shells = 5000)
 
 c     integer max_dim_coeff
 c     parameter (max_dim_coeff = 5000)
-      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
-      double precision alpha_pack(npcoeffs),
-     *                 pcoeff_pack(npcoeffs)
+      integer ccbeg_pack(npcoeffs*4), ccend_pack(npcoeffs*4)
+      double precision alpha_pack(npcoeffs*4),
+     *                 pcoeff_pack(npcoeffs*4)
       integer n_max, nout  
 c
 c ---------------------------------------------------------------------- 
@@ -1192,6 +1192,7 @@ c---------------------------------------------------------------------------
 
 c              if (doit .eq. 1) then 
 
+
                call ERD__GENER_ERI_BATCH(imax, zmax,
      *                nalpha_pack, npcoeff_pack, ncsum, 
      *                ncfps(m),ncfps(n), ncfps(r), ncfps(s),
@@ -1396,6 +1397,8 @@ c-----------------------------------------------------------------------
           cb_perm(m,n) = cb(m,n) 
           fa_perm(m,n) = FTa(m,n)  
           fb_perm(m,n) = FTb(m,n)  
+C JNB debug
+C          print *, m,n,ca(m,n), fa_perm(m,n)
       enddo 
       enddo 
 
@@ -1615,11 +1618,11 @@ c---------------------------------------------------------------------------
       logical spherical
       logical*8 l8true, l8spherical
 
-      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
+      integer ccbeg_pack(4*npcoeffs), ccend_pack(4*npcoeffs)
       integer nalpha_pack, ncoeff_pack
       integer jatom, newcenters
-      double precision alpha_pack(npcoeffs),
-     *                 pcoeff_pack(npcoeffs)
+      double precision alpha_pack(4*npcoeffs),
+     *                 pcoeff_pack(4*npcoeffs)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
       double precision acharge(ncenters)
@@ -1914,16 +1917,17 @@ c           write(6,*) 'ncsum', ncsum
             call pack_coeffs_oed(palphas, pixalphas, ppcoeffs,
      *                       pixpcoeffs, ncfps, npfps, m, n,
      *                       alpha_pack, nalpha_pack, pcoeff_pack,
-     *                       ncoeff, pccbeg, pccend,
+     *                       ncoeff_pack, pccbeg, pccend,
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeffs)
+     *                       npcoeffs*4)
 
 c ------------------------------------------------------------------------ 
 c  KIN (type=2) integrals next.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_kin_batch(imax, zmax, nalpha_pack, ncoeff,
+              call oed__gener_kin_batch(imax, zmax, nalpha_pack,
+     *                 ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 alpha_pack,
@@ -1965,7 +1969,7 @@ c ------------------------------------------------------------------------
 c NAI (type=1) integrals first.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_nai_batch(imax, zmax, nalpha, ncoeff,
+              call oed__gener_nai_batch(imax, zmax, nalpha,ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 newcenters, xn,yn,zn, acharge, alpha_pack,
@@ -2096,11 +2100,11 @@ c     double precision z(da1:da2, db1:db2)
       logical spherical
       logical*8 l8true, l8spherical
 
-      integer ccbeg_pack(npcoeffs), ccend_pack(npcoeffs)
+      integer ccbeg_pack(4*npcoeffs), ccend_pack(4*npcoeffs)
       integer nalpha_pack, ncoeff_pack
       integer jatom, newcenters
-      double precision alpha_pack(npcoeffs),
-     *                 pcoeff_pack(npcoeffs)
+      double precision alpha_pack(4*npcoeffs),
+     *                 pcoeff_pack(4*npcoeffs)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
       double precision x1,y1,z1,x2,y2,z2, y
       double precision acharge(ncenters)
@@ -2391,7 +2395,7 @@ c           write(6,*) 'ncsum', ncsum
      *                       ncoeff_pack, pccbeg, pccend,
      *                       indx_cc,
      *                       ccbeg_pack, ccend_pack,
-     *                       npcoeffs)
+     *                       npcoeffs*4)
 
 c ------------------------------------------------------------------------ 
 c  KIN (type=2) integrals next.   
