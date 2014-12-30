@@ -144,7 +144,7 @@ c ----------------------------------------------------------------------
       nbeta_virtual   = int_constant("nbeta_virtual"//C_NULL_CHAR)
       nfrags          = int_constant("nfrags"//C_NULL_CHAR)
       npcoeffs        = int_constant("npcoeffs"//C_NULL_CHAR)
-      r_thresh        = int_constant("r_thresh"//C_NULL_CHAR) 
+      r_thresh        = scalar_constant("r_thresh"//C_NULL_CHAR) 
 C      
       nalpha_frag = nalpha_occupied + nalpha_virtual
 

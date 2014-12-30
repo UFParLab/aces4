@@ -146,7 +146,8 @@ C map segments to fragments
 
       wfrag = data_3(1) ! Clean up  
 
-      print *, "moo index values",index_values_0(1),index_values_0(2)
+      print *, "FRAG index values",
+     *         wfrag,index_values_0(1),index_values_0(2)
 
       if (rank_0 .eq. 2) then 
          offset_1 = 0 
