@@ -460,6 +460,8 @@ set(SIAL_FILES
     src/sialx/test/local_arrays_wild_fail.sialx;
     src/sialx/test/basic_assign_to_static_array_test.sialx;
     src/sialx/test/contiguous_local.sialx;
+    src/sialx/test/contiguous_local_2.sialx;
+    src/sialx/test/contiguous_local_allocate_twice_fail.sialx;
     src/sialx/test/block_scale_assign.sialx;
     src/sialx/test/return_sval_test.sialx;
     src/sialx/test/broadcast_static.sialx;

@@ -1,7 +1,79 @@
 sial contiguous_local_2
 
-index kiter = 1: norb
-contiguous local c_piece[kiter]
-temp other_piece[kiter]
+# in test_basic_sial
+#		set_constant("norb", 12);
+#		int segs[] = { 3,4,5,3,4,5,3,4,5,3,4,5 };
+#		set_aoindex_info(12, segs);
 
+special get_first_block_element rw
+special list_block_map
+
+predefined int norb
+
+aoindex i = 1:norb
+aoindex j = 1:norb
+index k = 1:norb
+contiguous local unused0[i,j]
+contiguous local unused1[i,j]
+contiguous local unused2[i,j]
+contiguous local unused3[i,j]
+contiguous local unused4[i,j]
+contiguous local loc1[i,j]
+contiguous local loc2[i,j]
+static res[k]
+
+int ltop 
+int rbot 
+
+execute list_block_map
+println "starting program"
+ltop = norb/2
+rbot = norb/2 + 1
+
+print ltop
+print rbot
+
+allocate contiguous loc1[1:ltop,1:ltop]
+allocate contiguous loc1[1:ltop, rbot:norb]
+allocate contiguous loc1[rbot:norb,1:ltop]
+allocate contiguous loc1[rbot:norb, rbot:norb]
+allocate contiguous loc2[1:norb,1:norb]
+
+do i 
+do j
+  loc1[i:i,j:j] = (scalar)(i+j - 2)
+enddo j
+enddo i
+
+#do k
+#  execute get_first_block_element loc1[i:i,j:j] loc2[i:i,j:j]
+#enddo k
+
+do i
+do j
+  print loc1[i:i,j:j]
+  execute get_first_block_element loc1[i:i,j:j] loc2[i:i,j:j]
+  print loc2[i:i,j:j]
+enddo j
+enddo i
+
+do k
+  execute get_first_block_element loc2[k:k,k:k] res[k]
+enddo k
+
+execute list_block_map
+println "deallocating...."
+
+
+deallocate contiguous loc1[1:ltop,1:ltop]
+deallocate contiguous loc1[1:ltop, rbot:norb]
+deallocate contiguous loc1[rbot:norb,1:ltop]
+deallocate contiguous loc1[rbot:norb, rbot:norb]
+deallocate contiguous loc2[1:norb,1:norb]
+
+
+execute list_block_map
+
+
+print res
 endsial contiguous_local_2

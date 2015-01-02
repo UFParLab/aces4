@@ -82,21 +82,6 @@ public:
 		return NULL;
 	}
 
-//	/** Obtains requested block, creating if it doesn't exist.
-//	 *
-//	 * @param [in] block_id
-//	 * @param [out] size
-//	 * @returns pointer to existing or new block
-//	 */
-//	BLOCK_TYPE* get_or_create_block(const BlockId& block_id, size_type size, bool initialize = true){
-//		BLOCK_TYPE* b = block(block_id);
-//		if (b == NULL) {
-//			b = new BLOCK_TYPE(size, initialize);
-//			insert_block(block_id,b);
-//		}
-//		return b;
-//	}
-
 
 	/** Checks whether given block is disjoint from all other in the map
 	 *
@@ -138,7 +123,8 @@ public:
 		std::pair<BlockId, BLOCK_TYPE*> bid_pair (block_id, block_ptr);
 		std::pair<typename PerArrayMap::iterator, bool> ret;
 		ret = map_ptr->insert(bid_pair);
-		check(ret.second, std::string("attempting to insert block that already exists"));
+		sial_check(ret.second,
+		std::string("attempting to insert block that already exists into the block_map. Probable cause: sial program allocating block that exists"), current_line());
 	}
 
 	/** Obtains requested block and remove it from the map.
