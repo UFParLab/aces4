@@ -102,6 +102,8 @@ c  CHARGES
       integer(C_INT) one, two 
       integer(C_INT) nocc_a, nocc_b, nvirt_a, nvirt_b, tcharge, n_basis
 
+      integer(C_INT) ishift
+
       integer iatom(1000) 
 
 c Get the mo segment ranges  
@@ -153,12 +155,24 @@ C map segments to fragments
          offset_1 = 0 
          offset_2 = 0 
 
+         ishift = 0
+
          if (data_2(1) .eq. 1.0) then 
+             if (index_values_0(1).gt.1) then
              do i = 1, index_values_0(1) - 1
-                 if (pfrag_ao(i) .eq. wfrag) then
-                     offset_1 = offset_1 + paosegs(i)
-                 endif
+                 if (pfrag_ao(i) .eq. wfrag) exit
+                 offset_1 = -paosegs(i)
              enddo
+             offset_1 = offset_1 + paosegs(index_values_0(1)-1)
+             endif
+C             do i = 1, index_values_0(1) - 1
+C                 if (pfrag_ao(i) .eq. wfrag) then
+C                     offset_1 = offset_1 + paosegs(i)
+C                 endif
+C             enddo
+C            if (index_values_0(1).gt.1) then
+C               offset_1 = paosegs(index_values_0(1)-1)
+C            endif
          endif 
 
          if (data_2(1) .eq. 2.0) then 

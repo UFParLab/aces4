@@ -2698,7 +2698,7 @@ c
       enddo 
       enddo 
 
-      thresh = 1.0d-8 
+      thresh = 1.0d-6
       flag = 0 
       if (max .lt. thresh) flag = 1 
 c      write(6,*) '      Max density difference :', max 
