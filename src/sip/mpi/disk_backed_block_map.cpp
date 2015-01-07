@@ -89,7 +89,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
      */
 	std::size_t remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
 
-    while (block_size > remaining_mem){
+    while (block_size * sizeof(double) > remaining_mem){
         try{
 			BlockId bid = policy_.get_next_block_for_removal();
 			ServerBlock* blk = block_map_.block(bid);

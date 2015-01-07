@@ -50,12 +50,12 @@ void SIPServer::run() {
 		int section_number;
 		int transaction_number;
 
-		bool section_number_changed = state_.decode_tag_and_check_invariant(mpi_tag, message_type,
-				section_number, transaction_number);
-		SIP_LOG(
-				std::cout<< "S " << my_rank << " : has message with tag " << mpi_tag << " of type " << SIPMPIConstants::messageTypeToName(message_type) << " section_number=" << section_number << " transaction_number=" << transaction_number << std::endl << std::flush);
+		state_.decode_tag(mpi_tag, message_type, transaction_number);
 
-		handle_section_number_change(section_number_changed);
+		SIP_LOG(
+				std::cout<< "S " << my_rank << " : has message with tag " << mpi_tag << " of type " << SIPMPIConstants::messageTypeToName(message_type) << " transaction_number=" << transaction_number << std::endl << std::flush);
+
+		// TODO bool section_number_changed = handle_section_number_change(section_number_changed);
 
 		//handle the message
 		switch (message_type) {
@@ -67,15 +67,13 @@ void SIPServer::run() {
 			break;
 		case SIPMPIConstants::PUT:
 			int put_data_tag;
-			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA,
-					section_number, transaction_number);
+			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA, transaction_number);
 			handle_PUT(mpi_source, mpi_tag, put_data_tag);
 			break;
 		case SIPMPIConstants::PUT_ACCUMULATE:
 			int put_accumulate_data_tag;
 			put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
-					SIPMPIConstants::PUT_ACCUMULATE_DATA, section_number,
-					transaction_number);
+					SIPMPIConstants::PUT_ACCUMULATE_DATA, transaction_number);
 			handle_PUT_ACCUMULATE(mpi_source, mpi_tag, put_accumulate_data_tag);
 			break;
 		case SIPMPIConstants::DELETE:
@@ -99,8 +97,9 @@ void SIPServer::run() {
 }
 
 void SIPServer::handle_GET(int mpi_source, int get_tag) {
-	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 1;
+	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 2;
 	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	const int section_num_offset = line_num_offset + 1;
 	int recv_buffer[recv_data_count];
 	MPI_Status status;
 
@@ -111,6 +110,10 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	last_seen_line_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
+
+	int section = recv_buffer[section_num_offset];
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -155,8 +158,9 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 }
 
 void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
-	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 1;
+	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 2;
 	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	const int section_num_offset = line_num_offset + 1;
 	int recv_buffer[recv_data_count];
 	MPI_Status status;
 
@@ -169,6 +173,9 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	last_seen_line_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
 
+	int section = recv_buffer[section_num_offset];
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -211,8 +218,9 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 		int put_accumulate_data_tag) {
-	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 1;
+	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 2;
 	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	const int section_num_offset = line_num_offset + 1;
 	int recv_buffer[recv_data_count];
 	MPI_Status status;
 
@@ -224,6 +232,10 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	last_seen_line_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
+
+	int section = recv_buffer[section_num_offset];
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -283,16 +295,20 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : In DELETE at server " << std::endl);
 
 	//receive and check the message
-	int recv_buffer[2];
+	int recv_buffer[3];
 	MPI_Status status;
 	SIPMPIUtils::check_err(
-			MPI_Recv(recv_buffer, 2, MPI_INT, mpi_source, delete_tag,
+			MPI_Recv(recv_buffer, 3, MPI_INT, mpi_source, delete_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, 2);
+	check_int_count(status, 3);
 	int array_id	= recv_buffer[0];
 
 	last_seen_line_ = recv_buffer[1];
 	last_seen_worker_ = mpi_source;
+	int section = recv_buffer[2];
+
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -350,17 +366,23 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 
 	//receive and check the message
 	MPI_Status status;
-	int buffer[3];  //array_id, string_slot
+	int buffer[4];  //array_id, string_slot
 	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, 3, MPI_INT, mpi_source, set_persistent_tag,
+			MPI_Recv(buffer, 4, MPI_INT, mpi_source, set_persistent_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, 3);
+	check_int_count(status, 4);
 
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
 
 	last_seen_line_ = buffer[2];
 	last_seen_worker_ = mpi_source;
+
+	int section = buffer[3];
+
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
+
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -388,18 +410,22 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank()<< " : Got RESTORE_PERSISTENT " << std::endl);
 	//receive and check the message
-	int buffer[3];  //array_id, string_slot
+	int buffer[4];  //array_id, string_slot
 	MPI_Status status;
 	SIPMPIUtils::check_err(
-			MPI_Recv(buffer, 3, MPI_INT, mpi_source, restore_persistent_tag,
+			MPI_Recv(buffer, 4, MPI_INT, mpi_source, restore_persistent_tag,
 					MPI_COMM_WORLD, &status));
-	check_int_count(status, 3);
+	check_int_count(status, 4);
 
 
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
 	last_seen_line_ = buffer[2];
 	last_seen_worker_ = mpi_source;
+
+	int section = buffer[3];
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
