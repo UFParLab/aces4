@@ -6735,473 +6735,473 @@ import "trans_frag_defs.sialx"
 # Compute the second-order exchange energy 
      #CALL EXCHANGE_TEST  
          sip_barrier 
+##
+## Compute the 1-density of the monomers. 
+##
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#         DO a 
+#            xa[a] = wVirtA_frag[a]  
+#            execute return_sval xa[a]  m  
+#            if m == icount 
+#         DO a1 
+#            xa1[a1] = wVirtA_frag[a1]  
+#            execute return_sval xa1[a1]  n  
+#            if n == icount 
+#               tpp[a,a1] = 0.0 
+#         DO a2 
+#            xa2[a2] = wVirtA_frag[a2]  
+#            execute return_sval xa2[a2]  n1  
+#            if n1 == icount 
+#         DO i 
+#            xi[i] = wOccA_frag[i]  
+#            execute return_sval xi[i]  s  
+#            if s == icount 
+#         DO i2 
+#            xi1[i2] = wOccA_frag[i2]  
+#            execute return_sval xi1[i2] l  
+#            if l == icount 
 #
-# Compute the 1-density of the monomers. 
+#               GET T2old[a,i,a2,i2] 
+#               GET T2old[a1,i,a2,i2] 
+#               GET T2old[a1,i2,a2,i] 
 #
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-         DO a 
-            xa[a] = wVirtA_frag[a]  
-            execute return_sval xa[a]  m  
-            if m == icount 
-         DO a1 
-            xa1[a1] = wVirtA_frag[a1]  
-            execute return_sval xa1[a1]  n  
-            if n == icount 
-               tpp[a,a1] = 0.0 
-         DO a2 
-            xa2[a2] = wVirtA_frag[a2]  
-            execute return_sval xa2[a2]  n1  
-            if n1 == icount 
-         DO i 
-            xi[i] = wOccA_frag[i]  
-            execute return_sval xi[i]  s  
-            if s == icount 
-         DO i2 
-            xi1[i2] = wOccA_frag[i2]  
-            execute return_sval xi1[i2] l  
-            if l == icount 
-
-               GET T2old[a,i,a2,i2] 
-               GET T2old[a1,i,a2,i2] 
-               GET T2old[a1,i2,a2,i] 
-
-               taiai[a1,i2,a2,i] = T2old[a1,i,a2,i2] 
-               taiai[a1,i2,a2,i]*= 2.0  
-               taiai[a1,i2,a2,i]-= T2old[a1,i2,a2,i] 
-
-               t1pp[a,a1] = T2old[a,i,a2,i2]*taiai[a1,i2,a2,i] 
-               tpp[a,a1] -= t1pp[a,a1] 
-
-             endif 
-         ENDDO i2 
-             endif 
-         ENDDO i 
-             endif 
-         ENDDO a2 
-               PUT DENSAA[a,a1] += tpp[a,a1] 
-             endif 
-         ENDDO a1 
-             endif 
-         ENDDO a 
-      ENDPARDO kfrag   
+#               taiai[a1,i2,a2,i] = T2old[a1,i,a2,i2] 
+#               taiai[a1,i2,a2,i]*= 2.0  
+#               taiai[a1,i2,a2,i]-= T2old[a1,i2,a2,i] 
 #
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-         DO i 
-            xi[i] = wOccA_frag[i]  
-            execute return_sval xi[i]  m  
-            if m == icount 
-         DO i1 
-            xi1[i1] = wOccA_frag[i1]  
-            execute return_sval xi1[i1]  n  
-            if n == icount 
-               tpp[i,i1] = 0.0 
-         DO i2 
-            xi2[i2] = wOccA_frag[i2]  
-            execute return_sval xi2[i2]  n1  
-            if n1 == icount 
-         DO a 
-            xa[a] = wVirtA_frag[a]  
-            execute return_sval xa[a]  s  
-            if s == icount 
-         DO a2 
-            xa1[a2] = wVirtA_frag[a2]  
-            execute return_sval xa1[a2] l  
-            if l == icount 
-
-               GET T2old[a,i,a2,i2] 
-               GET T2old[a,i1,a2,i2] 
-               GET T2old[a,i2,a2,i1] 
-
-               taiai[a,i2,a2,i1] = T2old[a,i1,a2,i2] 
-               taiai[a,i2,a2,i1]*= 2.0  
-               taiai[a,i2,a2,i1]-= T2old[a,i2,a2,i1] 
-
-               t1pp[i,i1] = T2old[a,i,a2,i2]*taiai[a,i2,a2,i1] 
-               tpp[i,i1] += t1pp[i,i1] 
-
-             endif 
-         ENDDO a2 
-             endif 
-         ENDDO a 
-             endif 
-         ENDDO i2 
-               PUT DENSAA[i,i1] += tpp[i,i1] 
-             endif 
-         ENDDO i1 
-             endif 
-         ENDDO i 
-      ENDPARDO kfrag   
- 
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-
-         DO a 
-            xa[a] = wVirtA_frag[a]  
-            execute return_sval xa[a]  m  
-            if m == icount 
-         DO a1 
-            xa1[a1] = wVirtA_frag[a1]  
-            execute return_sval xa1[a1]  n  
-            if n == icount 
-            tpp[a,a1] = 0.0 
-         DO i 
-            xi[i] = wOccA_frag[i]  
-            execute return_sval xi[i]  s  
-            if s == icount 
-               GET t1old[a,i]  
-               GET t1old[a1,i]  
-               t1pp[a,a1] = t1old[a,i]*t1old[a1,i] 
-               tpp[a,a1] -= t1pp[a,a1] 
-             endif 
-         ENDDO i 
-             PUT DensAA[a,a1] += tpp[a,a1] 
-             endif 
-         ENDDO a1  
-             endif 
-         ENDDO a 
-
-         DO i 
-            xi[i] = wOccA_frag[i]  
-            execute return_sval xi[i]  m  
-            if m == icount 
-         DO i1 
-            xi1[i1] = wOccA_frag[i1]  
-            execute return_sval xi1[i1]  n  
-            if n == icount 
-            tpp[i,i1] = 0.0 
-         DO a 
-            xa[a] = wVirtA_frag[a]  
-            execute return_sval xa[a]  s  
-            if s == icount 
-               GET t1old[a,i]  
-               GET t1old[a,i1]  
-               t1pp[i,i1] = t1old[a,i]*t1old[a,i1] 
-               tpp[i,i1] += t1pp[i,i1] 
-             endif 
-         ENDDO a 
-             PUT DensAA[i,i1] += tpp[i,i1] 
-             endif 
-         ENDDO i1  
-             endif 
-         ENDDO i 
-
-      ENDPARDO kfrag   
-      server_barrier 
+#               t1pp[a,a1] = T2old[a,i,a2,i2]*taiai[a1,i2,a2,i] 
+#               tpp[a,a1] -= t1pp[a,a1] 
 #
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-
-         DO mu 
-            x1[mu]     = wAO_frag[mu]     
-            execute return_sval x1[mu]  m  
-            if m == icount  
-         DO nu 
-            x2[nu]     = wAO_frag[nu] 
-            execute return_sval x2[nu]  n  
-            if n == icount  
-
-               txx[mu,nu] = 0.0 
-
-               DO a 
-                  xa[a] = wVirtA_frag[a]  
-                  execute return_sval xa[a]  s  
-                  if s == icount 
-               DO a1 
-                  xa1[a1] = wVirtA_frag[a1]  
-                  execute return_sval xa1[a1]  l  
-                  if l == icount 
-
-                     GET           DensAA[a1,a]  
-                     txp[mu,a]   = ca[mu,a1]*DensAA[a1,a] 
-                     t1xx[mu,nu] = txp[mu,a]*ca[nu,a] 
-                     txx[mu,nu] += t1xx[mu,nu] 
-
-                  endif 
-               ENDDO a1 
-                  endif 
-               ENDDO a 
-
-               DO i 
-                  xi[i] = wOccA_frag[i]  
-                  execute return_sval xi[i]  m  
-                  if m == icount 
-               DO i1 
-                  xi1[i1] = wOccA_frag[i1]  
-                  execute return_sval xi1[i1]  n  
-                  if n == icount 
-
-                     GET           DensAA[i1,i]  
-                     txp[mu,i]   = ca[mu,i1]*DensAA[i1,i] 
-                     t1xx[mu,nu] = txp[mu,i]*ca[nu,i] 
-                     txx[mu,nu] += t1xx[mu,nu] 
-
-                  endif 
-               ENDDO i1 
-                  endif 
-               ENDDO i 
-
-               txx[mu,nu] *= 2.0 
-               PUT DENS_ao[mu,nu] += txx[mu,nu] 
-
-            endif 
-         ENDDO nu 
-            endif 
-         ENDDO mu 
-
-      ENDPARDO kfrag   
-      server_barrier 
+#             endif 
+#         ENDDO i2 
+#             endif 
+#         ENDDO i 
+#             endif 
+#         ENDDO a2 
+#               PUT DENSAA[a,a1] += tpp[a,a1] 
+#             endif 
+#         ENDDO a1 
+#             endif 
+#         ENDDO a 
+#      ENDPARDO kfrag   
+##
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#         DO i 
+#            xi[i] = wOccA_frag[i]  
+#            execute return_sval xi[i]  m  
+#            if m == icount 
+#         DO i1 
+#            xi1[i1] = wOccA_frag[i1]  
+#            execute return_sval xi1[i1]  n  
+#            if n == icount 
+#               tpp[i,i1] = 0.0 
+#         DO i2 
+#            xi2[i2] = wOccA_frag[i2]  
+#            execute return_sval xi2[i2]  n1  
+#            if n1 == icount 
+#         DO a 
+#            xa[a] = wVirtA_frag[a]  
+#            execute return_sval xa[a]  s  
+#            if s == icount 
+#         DO a2 
+#            xa1[a2] = wVirtA_frag[a2]  
+#            execute return_sval xa1[a2] l  
+#            if l == icount 
 #
+#               GET T2old[a,i,a2,i2] 
+#               GET T2old[a,i1,a2,i2] 
+#               GET T2old[a,i2,a2,i1] 
 #
-# Compute the dipole moment for the momomers 
-
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-         print icount 
-
-         etemp = 10.0 # x_nuc   
-         execute compute_xyz_batch jcount icount  etemp  
-         print etemp 
-         tp[kfrag] = etemp 
-         put dip_xmom[kfrag] = tp[kfrag]  
-
-         etemp = 11.0 # y_nuc   
-         execute compute_xyz_batch jcount icount  etemp  
-         tp[kfrag] = etemp 
-         put dip_ymom[kfrag] = tp[kfrag]  
-         print etemp 
-
-         etemp = 12.0 # z_nuc   
-         execute compute_xyz_batch jcount icount  etemp  
-         tp[kfrag] = etemp 
-         put dip_zmom[kfrag] = tp[kfrag]  
-         print etemp 
-      ENDPARDO kfrag 
-      server_barrier 
-
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-         print icount 
-
-         DO mu 
-            x1[mu]     = wAO_frag[mu]     
-            execute return_sval x1[mu]  m  
-            if m == icount  
-         DO nu 
-            x2[nu]     = wAO_frag[nu] 
-            execute return_sval x2[nu]  n  
-            if n == icount  
-
-               GET          DENS_ao[mu,nu] 
-               txx[mu,nu] = 0.0 
-               do i 
-                  xi[i] = wOccA_frag[i]  
-                  execute return_sval xi[i]  s  
-                  if s == icount 
-                     t1xx[mu,nu] = ca[mu,i]*ca[nu,i] 
-                     txx[mu,nu] -= t1xx[mu,nu] 
-                  endif 
-               enddo i 
-               txx[mu,nu] *= 2.0 
-               PUT HFDENS[mu,nu] += txx[mu,nu] 
-               txx[mu,nu] += DENS_ao[mu,nu] 
-
-               t2xx[mu,nu] = 0.0 
-               etemp = 1.0 # x  
-               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-               etemp = txx[mu,nu] * t2xx[mu,nu] 
-               tp[kfrag] = etemp 
-               put dip_xmom[kfrag] += tp[kfrag]  
-
-               t2xx[mu,nu] = 0.0 
-               etemp = 2.0 # y  
-               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-               etemp = txx[mu,nu] * t2xx[mu,nu] 
-               tp[kfrag] = etemp 
-               put dip_ymom[kfrag] += tp[kfrag]  
-
-               t2xx[mu,nu] = 0.0 
-               etemp = 3.0 # z  
-               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-               etemp = txx[mu,nu] * t2xx[mu,nu] 
-               tp[kfrag] = etemp 
-               put dip_zmom[kfrag] += tp[kfrag]  
-
-            endif # ncount 
-         ENDDO nu 
-            endif # m == icount  
-         ENDDO mu 
-
-      ENDPARDO kfrag   
-      server_barrier 
-
-      PARDO kfrag   
-         icount = 0.0 
-         DO kkfrag 
-            icount   += 1.0 
-            IF kkfrag == kfrag 
-               exit 
-            ENDIF 
-         ENDDO kkfrag 
-
-         GET e10c[kfrag] 
-         etemp1 = e10c[kfrag] 
-
-      jcount = 0.0 
-      DO jfrag 
-         jcount += 1.0 
-
-      if jfrag != kfrag  
-         GET e10c[jfrag] 
-         etemp2 = e10c[jfrag] 
-         etemp3 = etemp2/etemp1 
-         etemp3 = 1.0 
-
-        #execute return_pairs icount jcount r_thresh pair_flag 
-        #if pair_flag > zero  
+#               taiai[a,i2,a2,i1] = T2old[a,i1,a2,i2] 
+#               taiai[a,i2,a2,i1]*= 2.0  
+#               taiai[a,i2,a2,i1]-= T2old[a,i2,a2,i1] 
 #
-
-         DO mu 
-            x1[mu]     = wAO_frag[mu]     
-            execute return_sval x1[mu]  m  
-            if m == icount  
-         DO nu 
-            x2[nu]     = wAO_frag[nu] 
-            execute return_sval x2[nu]  n  
-            if n == jcount  
-
-            t3xx[mu,nu] = 0.0 
-
-         DO mu1 
-            x3[mu1]     = wAO_frag[mu1]     
-            execute return_sval x3[mu1]  m1  
-            if m1 == icount  
-         DO nu1 
-            x4[nu1]     = wAO_frag[nu1] 
-            execute return_sval x4[nu1]  n1  
-            if n1 == jcount  
-
-               GET           oed_ovl[mu1,nu1] 
-               GET           HFDENS[mu,mu1] 
-               GET           HFDENS[nu,nu1] 
-               txx[mu,nu1] = HFDENS[mu,mu1]*oed_ovl[mu1,nu1] 
-               t1xx[mu,nu] = txx[mu,nu1]*HFDENS[nu,nu1] 
-               t1xx[mu,nu]*= 0.5 # To avoid overcounting  
-               t3xx[mu,nu] += t1xx[mu,nu] 
-
-            endif 
-         ENDDO nu1 
-            endif 
-         ENDDO mu1 
-
-               t2xx[mu,nu] = 0.0 
-               etemp = 1.0 # x  
-               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
-               tp[kfrag] = etemp 
-               tp[kfrag]*= etemp3
-               put dip_xmom[kfrag] += tp[kfrag]  
-
-               t2xx[mu,nu] = 0.0 
-               etemp = 2.0 # y  
-               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
-               tp[kfrag] = etemp 
-               tp[kfrag]*= etemp3
-               put dip_ymom[kfrag] += tp[kfrag]  
-
-               t2xx[mu,nu] = 0.0 
-               etemp = 3.0 # z  
-               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
-               tp[kfrag] = etemp 
-               tp[kfrag]*= etemp3
-               put dip_zmom[kfrag] += tp[kfrag]  
-
-            endif 
-         ENDDO nu 
-            endif 
-         ENDDO mu 
-
-        #endif 
-         endif # jcount 
-      ENDDO jfrag 
-      ENDPARDO kfrag 
-
-      xDip_tot = 0.0 
-      yDip_tot = 0.0 
-      zDip_tot = 0.0 
-      server_barrier 
-
-      execute get_my_rank rank
-      if rank == 0.0
-      allocate contiguous x_dipole[1:nfrags]
-      allocate contiguous y_dipole[1:nfrags]
-      allocate contiguous z_dipole[1:nfrags]
-      allocate contiguous abs_dipole[1:nfrags]
-      DO kfrag 
-         GET dip_xmom[kfrag] 
-         GET dip_ymom[kfrag] 
-         GET dip_zmom[kfrag] 
-
-	 x_dipole[kfrag:kfrag] = dip_xmom[kfrag]
-	 y_dipole[kfrag:kfrag] = dip_ymom[kfrag]
-	 z_dipole[kfrag:kfrag] = dip_zmom[kfrag]
-         
-         esum  = 0.0 
-         etemp = dip_xmom[kfrag]*dip_xmom[kfrag]  
-         esum += etemp 
-         etemp = dip_ymom[kfrag]*dip_ymom[kfrag]  
-         esum += etemp 
-         etemp = dip_zmom[kfrag]*dip_zmom[kfrag]  
-         esum += etemp 
-
-	 abs_dipole[kfrag:kfrag] = esum
-	 print x_dipole[kfrag:kfrag]
-	 print y_dipole[kfrag:kfrag]
-	 print z_dipole[kfrag:kfrag]
-	 print abs_dipole[kfrag:kfrag]
-
-      ENDDO kfrag 
-      endif
-      server_barrier 
+#               t1pp[i,i1] = T2old[a,i,a2,i2]*taiai[a,i2,a2,i1] 
+#               tpp[i,i1] += t1pp[i,i1] 
+#
+#             endif 
+#         ENDDO a2 
+#             endif 
+#         ENDDO a 
+#             endif 
+#         ENDDO i2 
+#               PUT DENSAA[i,i1] += tpp[i,i1] 
+#             endif 
+#         ENDDO i1 
+#             endif 
+#         ENDDO i 
+#      ENDPARDO kfrag   
+# 
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#
+#         DO a 
+#            xa[a] = wVirtA_frag[a]  
+#            execute return_sval xa[a]  m  
+#            if m == icount 
+#         DO a1 
+#            xa1[a1] = wVirtA_frag[a1]  
+#            execute return_sval xa1[a1]  n  
+#            if n == icount 
+#            tpp[a,a1] = 0.0 
+#         DO i 
+#            xi[i] = wOccA_frag[i]  
+#            execute return_sval xi[i]  s  
+#            if s == icount 
+#               GET t1old[a,i]  
+#               GET t1old[a1,i]  
+#               t1pp[a,a1] = t1old[a,i]*t1old[a1,i] 
+#               tpp[a,a1] -= t1pp[a,a1] 
+#             endif 
+#         ENDDO i 
+#             PUT DensAA[a,a1] += tpp[a,a1] 
+#             endif 
+#         ENDDO a1  
+#             endif 
+#         ENDDO a 
+#
+#         DO i 
+#            xi[i] = wOccA_frag[i]  
+#            execute return_sval xi[i]  m  
+#            if m == icount 
+#         DO i1 
+#            xi1[i1] = wOccA_frag[i1]  
+#            execute return_sval xi1[i1]  n  
+#            if n == icount 
+#            tpp[i,i1] = 0.0 
+#         DO a 
+#            xa[a] = wVirtA_frag[a]  
+#            execute return_sval xa[a]  s  
+#            if s == icount 
+#               GET t1old[a,i]  
+#               GET t1old[a,i1]  
+#               t1pp[i,i1] = t1old[a,i]*t1old[a,i1] 
+#               tpp[i,i1] += t1pp[i,i1] 
+#             endif 
+#         ENDDO a 
+#             PUT DensAA[i,i1] += tpp[i,i1] 
+#             endif 
+#         ENDDO i1  
+#             endif 
+#         ENDDO i 
+#
+#      ENDPARDO kfrag   
+#      server_barrier 
+##
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#
+#         DO mu 
+#            x1[mu]     = wAO_frag[mu]     
+#            execute return_sval x1[mu]  m  
+#            if m == icount  
+#         DO nu 
+#            x2[nu]     = wAO_frag[nu] 
+#            execute return_sval x2[nu]  n  
+#            if n == icount  
+#
+#               txx[mu,nu] = 0.0 
+#
+#               DO a 
+#                  xa[a] = wVirtA_frag[a]  
+#                  execute return_sval xa[a]  s  
+#                  if s == icount 
+#               DO a1 
+#                  xa1[a1] = wVirtA_frag[a1]  
+#                  execute return_sval xa1[a1]  l  
+#                  if l == icount 
+#
+#                     GET           DensAA[a1,a]  
+#                     txp[mu,a]   = ca[mu,a1]*DensAA[a1,a] 
+#                     t1xx[mu,nu] = txp[mu,a]*ca[nu,a] 
+#                     txx[mu,nu] += t1xx[mu,nu] 
+#
+#                  endif 
+#               ENDDO a1 
+#                  endif 
+#               ENDDO a 
+#
+#               DO i 
+#                  xi[i] = wOccA_frag[i]  
+#                  execute return_sval xi[i]  m  
+#                  if m == icount 
+#               DO i1 
+#                  xi1[i1] = wOccA_frag[i1]  
+#                  execute return_sval xi1[i1]  n  
+#                  if n == icount 
+#
+#                     GET           DensAA[i1,i]  
+#                     txp[mu,i]   = ca[mu,i1]*DensAA[i1,i] 
+#                     t1xx[mu,nu] = txp[mu,i]*ca[nu,i] 
+#                     txx[mu,nu] += t1xx[mu,nu] 
+#
+#                  endif 
+#               ENDDO i1 
+#                  endif 
+#               ENDDO i 
+#
+#               txx[mu,nu] *= 2.0 
+#               PUT DENS_ao[mu,nu] += txx[mu,nu] 
+#
+#            endif 
+#         ENDDO nu 
+#            endif 
+#         ENDDO mu 
+#
+#      ENDPARDO kfrag   
+#      server_barrier 
+##
+##
+## Compute the dipole moment for the momomers 
+#
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#         print icount 
+#
+#         etemp = 10.0 # x_nuc   
+#         execute compute_xyz_batch jcount icount  etemp  
+#         print etemp 
+#         tp[kfrag] = etemp 
+#         put dip_xmom[kfrag] = tp[kfrag]  
+#
+#         etemp = 11.0 # y_nuc   
+#         execute compute_xyz_batch jcount icount  etemp  
+#         tp[kfrag] = etemp 
+#         put dip_ymom[kfrag] = tp[kfrag]  
+#         print etemp 
+#
+#         etemp = 12.0 # z_nuc   
+#         execute compute_xyz_batch jcount icount  etemp  
+#         tp[kfrag] = etemp 
+#         put dip_zmom[kfrag] = tp[kfrag]  
+#         print etemp 
+#      ENDPARDO kfrag 
+#      server_barrier 
+#
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#         print icount 
+#
+#         DO mu 
+#            x1[mu]     = wAO_frag[mu]     
+#            execute return_sval x1[mu]  m  
+#            if m == icount  
+#         DO nu 
+#            x2[nu]     = wAO_frag[nu] 
+#            execute return_sval x2[nu]  n  
+#            if n == icount  
+#
+#               GET          DENS_ao[mu,nu] 
+#               txx[mu,nu] = 0.0 
+#               do i 
+#                  xi[i] = wOccA_frag[i]  
+#                  execute return_sval xi[i]  s  
+#                  if s == icount 
+#                     t1xx[mu,nu] = ca[mu,i]*ca[nu,i] 
+#                     txx[mu,nu] -= t1xx[mu,nu] 
+#                  endif 
+#               enddo i 
+#               txx[mu,nu] *= 2.0 
+#               PUT HFDENS[mu,nu] += txx[mu,nu] 
+#               txx[mu,nu] += DENS_ao[mu,nu] 
+#
+#               t2xx[mu,nu] = 0.0 
+#               etemp = 1.0 # x  
+#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
+#               etemp = txx[mu,nu] * t2xx[mu,nu] 
+#               tp[kfrag] = etemp 
+#               put dip_xmom[kfrag] += tp[kfrag]  
+#
+#               t2xx[mu,nu] = 0.0 
+#               etemp = 2.0 # y  
+#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
+#               etemp = txx[mu,nu] * t2xx[mu,nu] 
+#               tp[kfrag] = etemp 
+#               put dip_ymom[kfrag] += tp[kfrag]  
+#
+#               t2xx[mu,nu] = 0.0 
+#               etemp = 3.0 # z  
+#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
+#               etemp = txx[mu,nu] * t2xx[mu,nu] 
+#               tp[kfrag] = etemp 
+#               put dip_zmom[kfrag] += tp[kfrag]  
+#
+#            endif # ncount 
+#         ENDDO nu 
+#            endif # m == icount  
+#         ENDDO mu 
+#
+#      ENDPARDO kfrag   
+#      server_barrier 
+#
+#      PARDO kfrag   
+#         icount = 0.0 
+#         DO kkfrag 
+#            icount   += 1.0 
+#            IF kkfrag == kfrag 
+#               exit 
+#            ENDIF 
+#         ENDDO kkfrag 
+#
+#         GET e10c[kfrag] 
+#         etemp1 = e10c[kfrag] 
+#
+#      jcount = 0.0 
+#      DO jfrag 
+#         jcount += 1.0 
+#
+#      if jfrag != kfrag  
+#         GET e10c[jfrag] 
+#         etemp2 = e10c[jfrag] 
+#         etemp3 = etemp2/etemp1 
+#         etemp3 = 1.0 
+#
+#        #execute return_pairs icount jcount r_thresh pair_flag 
+#        #if pair_flag > zero  
+##
+#
+#         DO mu 
+#            x1[mu]     = wAO_frag[mu]     
+#            execute return_sval x1[mu]  m  
+#            if m == icount  
+#         DO nu 
+#            x2[nu]     = wAO_frag[nu] 
+#            execute return_sval x2[nu]  n  
+#            if n == jcount  
+#
+#            t3xx[mu,nu] = 0.0 
+#
+#         DO mu1 
+#            x3[mu1]     = wAO_frag[mu1]     
+#            execute return_sval x3[mu1]  m1  
+#            if m1 == icount  
+#         DO nu1 
+#            x4[nu1]     = wAO_frag[nu1] 
+#            execute return_sval x4[nu1]  n1  
+#            if n1 == jcount  
+#
+#               GET           oed_ovl[mu1,nu1] 
+#               GET           HFDENS[mu,mu1] 
+#               GET           HFDENS[nu,nu1] 
+#               txx[mu,nu1] = HFDENS[mu,mu1]*oed_ovl[mu1,nu1] 
+#               t1xx[mu,nu] = txx[mu,nu1]*HFDENS[nu,nu1] 
+#               t1xx[mu,nu]*= 0.5 # To avoid overcounting  
+#               t3xx[mu,nu] += t1xx[mu,nu] 
+#
+#            endif 
+#         ENDDO nu1 
+#            endif 
+#         ENDDO mu1 
+#
+#               t2xx[mu,nu] = 0.0 
+#               etemp = 1.0 # x  
+#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
+#               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
+#               tp[kfrag] = etemp 
+#               tp[kfrag]*= etemp3
+#               put dip_xmom[kfrag] += tp[kfrag]  
+#
+#               t2xx[mu,nu] = 0.0 
+#               etemp = 2.0 # y  
+#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
+#               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
+#               tp[kfrag] = etemp 
+#               tp[kfrag]*= etemp3
+#               put dip_ymom[kfrag] += tp[kfrag]  
+#
+#               t2xx[mu,nu] = 0.0 
+#               etemp = 3.0 # z  
+#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
+#               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
+#               tp[kfrag] = etemp 
+#               tp[kfrag]*= etemp3
+#               put dip_zmom[kfrag] += tp[kfrag]  
+#
+#            endif 
+#         ENDDO nu 
+#            endif 
+#         ENDDO mu 
+#
+#        #endif 
+#         endif # jcount 
+#      ENDDO jfrag 
+#      ENDPARDO kfrag 
+#
+#      xDip_tot = 0.0 
+#      yDip_tot = 0.0 
+#      zDip_tot = 0.0 
+#      server_barrier 
+#
+#      execute get_my_rank rank
+#      if rank == 0.0
+#      allocate contiguous x_dipole[1:nfrags]
+#      allocate contiguous y_dipole[1:nfrags]
+#      allocate contiguous z_dipole[1:nfrags]
+#      allocate contiguous abs_dipole[1:nfrags]
+#      DO kfrag 
+#         GET dip_xmom[kfrag] 
+#         GET dip_ymom[kfrag] 
+#         GET dip_zmom[kfrag] 
+#
+#	 x_dipole[kfrag:kfrag] = dip_xmom[kfrag]
+#	 y_dipole[kfrag:kfrag] = dip_ymom[kfrag]
+#	 z_dipole[kfrag:kfrag] = dip_zmom[kfrag]
+#         
+#         esum  = 0.0 
+#         etemp = dip_xmom[kfrag]*dip_xmom[kfrag]  
+#         esum += etemp 
+#         etemp = dip_ymom[kfrag]*dip_ymom[kfrag]  
+#         esum += etemp 
+#         etemp = dip_zmom[kfrag]*dip_zmom[kfrag]  
+#         esum += etemp 
+#
+#	 abs_dipole[kfrag:kfrag] = esum
+#	 print x_dipole[kfrag:kfrag]
+#	 print y_dipole[kfrag:kfrag]
+#	 print z_dipole[kfrag:kfrag]
+#	 print abs_dipole[kfrag:kfrag]
+#
+#      ENDDO kfrag 
+#      endif
+#      server_barrier 
 
      #print_scalar xDip_tot 
      #print_scalar yDip_tot 

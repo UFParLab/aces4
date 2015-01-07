@@ -45,7 +45,6 @@ special compute_integral_batch w
 special return_sval rw
 special compute_diis u
 special get_my_rank w
-special print_block r
 special print_static_array r
 special eigen_calc uu
 special cis_unit_guess ur

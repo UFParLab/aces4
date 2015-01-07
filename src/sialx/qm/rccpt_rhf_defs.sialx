@@ -1,4 +1,4 @@
-sial rccsd_rhf_defs
+sial rccpt_rhf_defs
 
 #
 predefined  int norb   #total number of atomic orbital segments 
@@ -23,6 +23,7 @@ predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
 predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
 predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+predefined  scalar cc_conv
 
 
 #these are predefined in the index table         
@@ -46,9 +47,10 @@ special return_sval rw
 special compute_diis u
 special print_static_array r
 special aoladder_contraction rru
+special compute_dipole_integrals wur
 #     NOT PORTED 
 special get_my_rank w
 
-endsial rccsd_rhf_defs
+endsial rccpt_rhf_defs
 
 

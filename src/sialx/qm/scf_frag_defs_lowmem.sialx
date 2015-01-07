@@ -54,12 +54,10 @@ special return_h1 w
 special return_ovl w
 special return_sval rw
 special get_my_rank w
-special scf_atom rwwwwr 
 special scf_atom_lowmem rwwww 
 special compute_int_scratchmem uuu
 special compute_int_scratchmem_lowmem uu
 special place_scratch urrr
-special print_block r  
 special frag_index_range uu
 special set_frag u
 special enable_debug_print  

@@ -628,10 +628,10 @@ import "cis_rhf_defs.sialx"
 	  endpardo mu,nu
 	  server_barrier
 #
-	  pardo mu,nu
-	  request Ck_ao[mu,nu]
-	  execute print_block Ck_ao[mu,nu]
-	  endpardo mu,nu
+#	  pardo mu,nu
+#	  request Ck_ao[mu,nu]
+#	  execute print_block Ck_ao[mu,nu]
+#	  endpardo mu,nu
 	  do cart
 	      icount2 = Scart[cart]
 	      esum = 0.0

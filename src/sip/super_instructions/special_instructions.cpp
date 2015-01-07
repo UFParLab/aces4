@@ -52,15 +52,6 @@ void return_h1(int & array_slot, int& rank, int * index_values, int& size, int *
 
 void return_ovl(int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
-void scf_atom(
-int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
-int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
-int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
-int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
-int & array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5, 
-int & array_slot_6, int& rank_6, int * index_values_6, int& size_6, int * extents_6, double * block_data_6, 
-int& ierr);
-
 void scf_atom_lowmem(
 int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
 int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
@@ -401,7 +392,6 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["compute_diis"]=(fp0)&compute_diis;
 	procmap_["return_h1"]=(fp0)&return_h1;
 	procmap_["return_ovl"]=(fp0)&return_ovl;
-	procmap_["scf_atom"]=(fp0)&scf_atom;
 	procmap_["scf_atom_lowmem"]=(fp0)&scf_atom_lowmem;
 	procmap_["place_scratch"]=(fp0)&place_scratch;
 	procmap_["return_pairs"]=(fp0)&return_pairs;
@@ -430,7 +420,6 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["compute_dipole_integrals"]=(fp0)&compute_dipole_integrals;
     procmap_["aoladder_contraction"]=(fp0)&aoladder_contraction;
     procmap_["compute_nn_repulsion"]=(fp0)&compute_nn_repulsion;
-    procmap_["scf_frag"]=(fp0)&scf_frag;
     procmap_["set_frag"]=(fp0)&set_frag;
     procmap_["frag_index_range"]=(fp0)&frag_index_range;
     procmap_["stripi"]=(fp0)&stripi;

@@ -1194,7 +1194,6 @@ import "scf_defs.sialx"
 
 #     do g51 
 #     do g52 
-#        execute print_block  screen_array(g51,g52) 
 #     enddo g52 
 #     enddo g51 
 

@@ -43,7 +43,6 @@ special return_sval rw
 #     NOT PORTED 
 special get_my_rank w
 special scf_atom u
-special print_rel_info rr
 special print_block r
 
 endsial tran_rhf_no4v_defs

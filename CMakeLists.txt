@@ -517,12 +517,8 @@ set(SIAL_FILES
     src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_mp2_defs.sialx;
-    src/sialx/qm/scf_frag.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
-    src/sialx/qm/scf_frag_defs.sialx;
     src/sialx/qm/scf_frag_defs_lowmem.sialx;
-    src/sialx/qm/trans_frag_fpardo.sialx;
-    src/sialx/qm/frag_2order_corr.sialx;
     src/sialx/qm/frag_2order_corr_lowmem.sialx;
     src/sialx/qm/trans_frag_defs.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
@@ -540,6 +536,11 @@ set(SIAL_FILES
     src/sialx/qm/cis_d_rhf.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx)
+
+#    src/sialx/qm/scf_frag.sialx;
+#    src/sialx/qm/scf_frag_defs.sialx;
+#    src/sialx/qm/trans_frag_fpardo.sialx;
+#    src/sialx/qm/frag_2order_corr.sialx;
 
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)

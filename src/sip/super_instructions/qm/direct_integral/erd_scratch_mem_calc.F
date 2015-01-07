@@ -46,7 +46,7 @@ c Interface added BUT should be include NOT added in the future
 
       include 'sip_interface.f'
 
-      integer (C_INT) nfrags 
+C      integer (C_INT) nfrags 
 
       integer nshells, ncenters, npcoeff, nalphas   
       integer shtype(nshells), ncfps(nshells), npfps(nshells)
@@ -87,7 +87,7 @@ c at most 4*n.
 
       logical spherical
 
-      nfrags          = int_constant("nfrags"//C_NULL_CHAR)
+C      nfrags          = int_constant("nfrags"//C_NULL_CHAR)
 
       do m = 1, nshells 
       do i = 1, ncenters 
@@ -144,7 +144,7 @@ c    *   shtype(s)
          zmax = max0(zmax, zblk)
       enddo
 
-      if (nfrags .gt. 1) go to 999 
+C      if (nfrags .gt. 1) go to 999 
 
       go to 999 ! SKIP DERIVATIVE FOR NOW 
 

@@ -94,7 +94,6 @@ special compute_aabb_batch ww
 special get_my_rank w
 #special scf_atom u
 #special print_rel_info rr
-special print_block r
 
 endsial scf_defs
 

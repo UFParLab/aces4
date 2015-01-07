@@ -59,7 +59,6 @@ special energy_numerator_rhf ur
 special compute_int_scratchmem uuu
 special compute_int_scratchmem_lowmem uu
 special return_h1frag wr   
-special print_block r
 special return_diagonal uu 
 special return_vpq uu 
 special compute_nn_repulsion u
