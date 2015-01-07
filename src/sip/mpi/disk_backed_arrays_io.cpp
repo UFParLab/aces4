@@ -180,7 +180,8 @@ void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::st
     // To save the persistent array, write out zero for blocks
     // that have not been formed yet.
     // Write the block if dirty or not on disk.
-	write_persistent_array_blocks(mpif, my_blocks, array_blocks);
+	// write_persistent_array_blocks(mpif, my_blocks, array_blocks);
+    collectively_write_persistent_array_blocks(mpif, my_blocks, array_blocks);
 
 	// Write all dirty blocks to temp persistent file.
 	//write_all_dirty_blocks(mpif, array_blocks);
@@ -277,6 +278,25 @@ void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 					bptr->get_data(), bptr->size(), MPI_DOUBLE, &status),__LINE__,__FILE__);
 }
 
+void DiskBackedArraysIO::collectively_write_block_to_file(MPI_File fh, const BlockId& bid,
+		const ServerBlock::ServerBlockPtr bptr) {
+	sip::check(fh != MPI_FILE_NULL,
+			"Trying to write block to array file after closing it !");
+	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+	MPI_Offset block_offset = -1;
+	MPI_Status status;
+
+	if (bptr != NULL){
+		block_offset = calculate_block_offset(bid);
+		SIPMPIUtils::check_err(
+			MPI_File_write_at_all(fh, header_offset + block_offset,
+					bptr->get_data(), bptr->size(), MPI_DOUBLE, &status),__LINE__,__FILE__);
+	} else {	// Write 0 data
+		SIPMPIUtils::check_err(
+			MPI_File_write_at_all(fh, header_offset,
+					NULL, 0, MPI_DOUBLE, &status),__LINE__,__FILE__);
+	}
+}
 
 
 MPI_Offset DiskBackedArraysIO::calculate_block_offset(const BlockId& bid){
@@ -378,6 +398,7 @@ void DiskBackedArraysIO::write_persistent_array_blocks(
 	 * 1		0		1			Block
 	 * 1		1		1			Block
 	 */
+
 	std::list<BlockId>::iterator blocks_it = my_blocks.begin();
 	for (; blocks_it != my_blocks.end(); ++blocks_it) {
 		BlockId& bid = *blocks_it;
@@ -407,13 +428,11 @@ void DiskBackedArraysIO::write_persistent_array_blocks(
 			else if (!on_disk && in_memory)
 				to_write_dirty_block = true;
 
-
 			if (to_write_dirty_block)
 				write_block_to_file(mpif, bid, sb);
 
 		} else {
 			// Write zero block
-
 			std::size_t block_size = sip_tables_.block_size(bid);
 			ServerBlock::dataPtr zero_data = new double[block_size]();
 			ServerBlock *zero_sb = new ServerBlock(block_size, zero_data);
@@ -421,9 +440,59 @@ void DiskBackedArraysIO::write_persistent_array_blocks(
 			delete zero_sb;
 
 		}
-
 	}
 }
+
+
+void DiskBackedArraysIO::collectively_write_persistent_array_blocks(
+		MPI_File mpif,
+		std::list<BlockId> my_blocks,
+		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
+
+	// Determine what is the maximum number of blocks that any server has.
+	int num_my_blocks = my_blocks.size();
+	int max_blocks = -1;
+	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
+	SIPMPIUtils::check_err(
+			MPI_Allreduce(&num_my_blocks, &max_blocks, 1, MPI_INT, MPI_MAX,
+					server_comm), __LINE__, __FILE__);
+
+	int block_count = 0;
+	std::list<BlockId>::iterator blocks_it = my_blocks.begin();
+	for (; blocks_it != my_blocks.end(); ++blocks_it, ++block_count) {
+		BlockId& bid = *blocks_it;
+		IdBlockMap<ServerBlock>::PerArrayMap::iterator found_it =
+				array_blocks->find(bid);
+		if (array_blocks->end() != found_it) {
+
+			ServerBlock* sb = found_it->second;
+			bool dirty = sb->is_dirty();
+			bool on_disk = sb->is_on_disk();
+			bool in_memory = sb->is_in_memory();
+			// Error cases
+			if (!on_disk && !in_memory)
+				sip::fail("Invalid block state ! - neither on disk or memory");
+			else if (dirty && on_disk && !in_memory)
+				sip::fail("Invalid block state ! - dirty but not in memory ");
+			collectively_write_block_to_file(mpif, bid, sb);
+
+		} else {
+			// Write zero block
+			std::size_t block_size = sip_tables_.block_size(bid);
+			ServerBlock::dataPtr zero_data = new double[block_size]();
+			ServerBlock *zero_sb = new ServerBlock(block_size, zero_data);
+			collectively_write_block_to_file(mpif, bid, zero_sb);
+			delete zero_sb;
+		}
+	}
+
+	// For remaining blocks, just call the MPI_File_write_at_all collectively with 0 data.
+	for (; block_count < max_blocks; ++block_count){
+		BlockId bid;
+		collectively_write_block_to_file(mpif, bid, NULL);
+	}
+}
+
 
 void DiskBackedArraysIO::check_data_types() {
 	// Data type checks

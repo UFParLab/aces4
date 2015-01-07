@@ -138,6 +138,17 @@ private:
 			const ServerBlock::ServerBlockPtr bptr);
 
 	/**
+	 * Writes a block to a file using MPI_File_write_at_all.
+	 * All MPI processes that have opened the file handle must call this.
+	 *
+	 * @param fh
+	 * @param bid If bptr is null, this parameter is ignored
+	 * @param bptr If null, 0 bytes are written.
+	 */
+	void collectively_write_block_to_file(MPI_File fh, const BlockId& bid,
+			const ServerBlock::ServerBlockPtr bptr);
+
+	/**
 	 * Constructs file name for a persistent array
 	 * @param array_label [in]
 	 * @param filename [out]
@@ -188,6 +199,15 @@ private:
 	 */
 	void write_persistent_array_blocks(MPI_File mpif, std::list<BlockId> my_blocks,
 				IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
+
+	/**
+	 * Collective version of DiskBackedArraysIO::write_persistent_array_blocks
+	 * @param mpif
+	 * @param my_blocks
+	 * @param array_blocks
+	 */
+	void collectively_write_persistent_array_blocks(MPI_File mpif, std::list<BlockId> my_blocks,
+					IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
 };
 
