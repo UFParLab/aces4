@@ -66,14 +66,14 @@ c     integer(C_INT) n_ao_segs(1), aosegs(6)
       integer(C_INT) i, nscr, niscr   
 
 c--------------------------------------------------------------------------
-c
-c   return_h1 must be executed with the following syntax:
-c   execute return_h1 h1(mu,nu)
-c
-c   The array h1 is blocked and as of now a temporary array.  
-c
+!>
+!>   return_h1 must be executed with the following syntax:
+!>   execute return_h1 h1(mu,nu)
+!>
+!>   The array h1 is blocked and as of now a temporary array.  
+!>
 c--------------------------------------------------------------------------
-
+      ierr = 0
 c-------------------------------------------------------------------------
 c   Get the data needed to do the computation.  
 c--------------------------------------------------------------------------

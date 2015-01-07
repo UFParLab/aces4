@@ -11,33 +11,24 @@ set(QM_SOURCE_FILES
     qm/aoladder_contraction.F;
     qm/int_gen_parms.hf;
     qm/sip_interface.hf;
-    qm/dadd.f;
-    qm/fill_block_sequential.f;
-    qm/fill_block_cyclic.f;
-    qm/eig_sr_inv.F;
-    qm/return_h1.F;
-    qm/return_sval.F;
     qm/check_dconf.F;
-    qm/compute_diis.F;
-    qm/return_ovl.F;
     qm/imemory.h;
     qm/energy_denominator_rhf.F;
     qm/energy_numerator_rhf.F;
-    qm/return_vpq.F;
     qm/return_diagonal.F;
-    qm/eig.F;
-    qm/diag.F;
-    qm/eigen_calc.F;
-    qm/form_R.F ;
     qm/set_flags2.f;
-    qm/get_and_print_int_array_dummy.F;
-    qm/get_and_print_scalar_array_dummy.F;
-    qm/get_scratch_array_dummy.F;
     qm/uintegrals.F;
     qm/instructions_for_testing.f;
-    qm/stripi.F;
     qm/set_ijk_aaa.F;
     qm/set_ijk_aab.F;
+    qm/utility/eig.F;
+    qm/utility/diag.F;
+    qm/utility/eigen_calc.F;
+    qm/utility/form_R.F ;
+    qm/utility/stripi.F;
+    qm/utility/compute_diis.F;
+    qm/utility/eig_sr_inv.F;
+    qm/utility/return_sval.F;
     qm/mcpt-fragment/set_frag.F;
     qm/mcpt-fragment/scf_atom_lowmem.F;
     qm/mcpt-fragment/compute_int_scratchmem_lowmem.F;
@@ -47,12 +38,15 @@ set(QM_SOURCE_FILES
     qm/mcpt-fragment/place_scratch.F;
     qm/mcpt-fragment/compute_return_h1_frag.F;
     qm/mcpt-fragment/return_pairs.F;
+    qm/mcpt-fragment/return_vpq.F;
     qm/direct_integral/move_integrals.f;
     qm/direct_integral/pack_coeffs.f;
     qm/direct_integral/lookup_shell.f;
     qm/direct_integral/pack_coeffs_oed.f;
     qm/direct_integral/compute_return_h1.F;
     qm/direct_integral/compute_return_ovl.F;
+    qm/direct_integral/return_h1.F;
+    qm/direct_integral/return_ovl.F;
     qm/direct_integral/compute_int_scratchmem.F;
     qm/direct_integral/compute_nn_repulsion.F;
     qm/direct_integral/compute_aabb_batch.F;
@@ -290,7 +284,12 @@ set(QM_SOURCE_FILES
     qm/oed/oed__xyz_set_derv_sequence.f;
     qm/oed/oed__xyz_to_ry_abc.f;
     qm/oed/oed__xyz_to_ry_ab.f;
-    qm/oed/oed__xyz_to_ry_matrix.f)
+    qm/oed/oed__xyz_to_ry_matrix.f;
+    qm/tests/get_and_print_int_array_dummy.F;
+    qm/tests/get_and_print_scalar_array_dummy.F;
+    qm/tests/get_scratch_array_dummy.F;
+    qm/tests/fill_block_sequential.f;
+    qm/tests/fill_block_cyclic.f)
 
 # General Super Instructions
 set(GENERAL_SOURCE_FILES

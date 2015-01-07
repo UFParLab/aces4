@@ -20,8 +20,9 @@ C in the file COPYRIGHT.
       implicit none
 
 c--------------------------------------------------------------------------
-c Usage: execute check_dconf array scalar
-c
+!> special energy_denominator_rhf ur
+!>  computes the RHF (alpha) energy denominator of an array with possible
+!>  dimensions of 2, 4 or 6.
 c--------------------------------------------------------------------------
       include 'sip_interface.f'
 
@@ -49,6 +50,8 @@ c mosegments
       integer(C_INT) offset_5, offset_6 
       integer(C_INT) start_1, start_2, start_3, start_4, start_5,start_6 
       integer(C_INT) i, i1, i2, i3, i4, one  
+
+      ierr = 0
 
 c Get the mo segment ranges  
       call predefined_int_array("moa_seg_ranges"//C_NULL_CHAR, one, 
@@ -265,7 +268,6 @@ c        val = array(a,b,c,d)
 c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
       enddo 
       enddo 
-10    format(4I3,3F10.8) 
 
       return
       end
@@ -301,7 +303,6 @@ c        val = array(a,b,c,d)
 c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
       enddo 
       enddo 
-10    format(4I3,3F10.8) 
 
       return
       end
@@ -346,7 +347,6 @@ c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d)
       enddo 
       enddo 
       enddo 
-10    format(4I3,3F10.8) 
 
       return
       end
@@ -391,7 +391,6 @@ c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d)
       enddo 
       enddo 
       enddo 
-10    format(4I3,3F10.8) 
 
       return
       end
@@ -441,7 +440,6 @@ c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d)
       enddo 
       enddo 
       enddo 
-10    format(4I3,3F10.8) 
 
       return
       end 
