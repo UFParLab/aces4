@@ -17,18 +17,19 @@ C  in the file COPYRIGHT.
 !     *                      x2, nindex2, type2, bval2,
 !     *                              eval2, bdim2, edim2)
 c--------------------------------------------------------------------------
-c   Calculates the eigenvalues and eigenvectors of a 2-d square matrix.
-c   The matrix is also diagonalized on output and inverted. 
-c
-c   The eigenvalues are stored in a common block.  
-c   The instruction is executed as follows:
-c   
-c   execute eig Array1 Array2
-c
-c   where Array1 is the input matrix that is to be diagonalized.
-c         Array2 is the matrix whose columns are the eigenvectors of Array1.
-c
-c   Both Array1 and Array2 must be "static" arrays.
+!> special eigen_calc uu
+!>   Calculates the eigenvalues and eigenvectors of a 2-d square matrix.
+!>   The matrix is also diagonalized on output and inverted. 
+!>
+!>   The eigenvalues are stored in a common block.  
+!>   The instruction is executed as follows:
+!>   
+!>   execute eig Array1 Array2
+!>
+!>   where Array1 is the input matrix that is to be diagonalized.
+!>         Array2 is the matrix whose columns are the eigenvectors of Array1.
+!>
+!>   Both Array1 and Array2 must be "static" arrays.
 c--------------------------------------------------------------------------
 !
 !      implicit none

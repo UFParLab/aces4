@@ -1,6 +1,6 @@
-C special compute_ubatch3 wrruu
-C
-CC not used
+!> special compute_ubatch3 wrruu
+!>
+!> not used
       subroutine compute_ubatch3(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,

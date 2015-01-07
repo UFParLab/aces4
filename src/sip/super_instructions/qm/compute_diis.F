@@ -19,7 +19,8 @@ C  in the file COPYRIGHT.
       implicit none 
 
 c--------------------------------------------------------------------------
-c   Usage: execute compute_diis array 
+!> special compute_diis u
+!>   Usage: execute compute_diis array 
 c--------------------------------------------------------------------------
 
       include 'sip_interface.f' 
@@ -36,7 +37,7 @@ c--------------------------------------------------------------------------
       integer(C_INT)  size, size2  
 
 c--------------------------------------------------------------------------
-c   Establishes the lower triangular array elements for a DIIS calculation.
+!>   Establishes the lower triangular array elements for a DIIS calculation.
 c--------------------------------------------------------------------------
 
       size = extents_0(2)   

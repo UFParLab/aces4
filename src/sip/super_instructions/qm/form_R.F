@@ -30,7 +30,7 @@ c
       integer maxdim
       maxdim = rank 
 c--------------------------------------------------------------------------
-c   Symmetrize the b_array into the R array
+!>   Symmetrize the b_array into the R array
 c--------------------------------------------------------------------------
 
       do i = 1, maxdim

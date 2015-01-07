@@ -77,7 +77,7 @@ special compute_diis u
 special check_dconf rw
 special compute_ubatch1 wrruu
 special compute_ubatch2 wrruu
-special compute_ubatch3 wrruu
+#special compute_ubatch3 wrruu
 special compute_ubatch4 wrruu
 #special compute_ubatch5 wrruu
 special compute_ubatch6 wrruu

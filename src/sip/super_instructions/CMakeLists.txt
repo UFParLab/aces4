@@ -51,8 +51,8 @@ set(QM_SOURCE_FILES
     qm/direct_integral/pack_coeffs.f;
     qm/direct_integral/lookup_shell.f;
     qm/direct_integral/pack_coeffs_oed.f;
-    qm/direct_integral/comp_return_h1.F;
-    qm/direct_integral/comp_return_ovl.F;
+    qm/direct_integral/compute_return_h1.F;
+    qm/direct_integral/compute_return_ovl.F;
     qm/direct_integral/compute_int_scratchmem.F;
     qm/direct_integral/compute_nn_repulsion.F;
     qm/direct_integral/compute_aabb_batch.F;

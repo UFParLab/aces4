@@ -6,6 +6,15 @@
       use, intrinsic :: ISO_C_BINDING
       implicit none
 
+C------------------------------------------------------
+!> special compute_int_scratchmem uuu
+!>     Get memory requirements from integral calculation
+!>     -------------------------------------------------
+!>      imax = 0.0
+!>      zmax = 0.0
+!>      execute compute_int_scratchmem oed_ovl zmax imax
+C------------------------------------------------------
+
 c Interface added BUT should be include NOT added in the future
 
       include 'sip_interface.f'

@@ -19,6 +19,9 @@ C  in the file COPYRIGHT.
       implicit none
       include 'sip_interface.f'  
 c---------------------------------------------------------------------------
+!> special compute_nn_repulsion u
+!>  Compute the nuclear-nuclear repulsion energy
+!>  Returns a scalar
 c----------------------------------------------------------------------------
 
 !     The old Xijk(NT,7) array wich contains the ijk triplet information.  

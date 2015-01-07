@@ -15,10 +15,12 @@ C  in the file COPYRIGHT.
       subroutine comp_return_h1(z, da1, da2, db1, db2, ncenters, 
      *                          coords, tcoords, zz, iscr) 
 c---------------------------------------------------------------------------
-c  Computes the set of OED integrals of types  
-c
-c   type = 1 --> NAI integrals
-c          2 --> KIN integrals
+!>  special return_h1 w
+!>
+!>  Computes the set of OED integrals of types  
+!>
+!>   type = 1 --> NAI integrals
+!>          2 --> KIN integrals
 c---------------------------------------------------------------------------
 
       use, intrinsic :: ISO_C_BINDING 

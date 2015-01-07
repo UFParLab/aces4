@@ -21,6 +21,28 @@ C  in the file COPYRIGHT.
 
       include 'sip_interface.f' 
       include 'imemory.h'
+C-------------------------------------------------------------------
+!> special compute_aabb_batch ww
+!>
+!>     Perform initial (aa|bb) integral computation to set Schwartz paramaters
+!>     -----------------------------------------------------------------------
+!>
+!>      DO mu
+!>      DO nu
+!>      DO lambda
+!>      DO sigma
+!>            IF mu == lambda
+!>            IF nu == sigma
+!>               aoint[mu,nu,lambda,sigma] = 0.0
+!>               execute compute_aabb_batch aoint[mu,nu,lambda,sigma] screen_array
+!>            ENDIF
+!>            ENDIF
+!>      ENDDO sigma
+!>      ENDDO lambda
+!>      ENDDO nu
+!>      ENDDO mu
+!>
+C-------------------------------------------------------------------
 
 c Input array used as scratch space 
       integer(C_INT), intent(in)::array_slot_1

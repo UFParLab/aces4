@@ -13,22 +13,21 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
 
-C Shell to drive LAPACK algorithm.
-
-C A    - REAL SYMMETRIC MATRIX TO BE DIAGONALIZED (E.VALUES IN DIAGS AFTERWARDS)
-C B    - EIGENVECTORS RETURNED IN COLUMNS
-C JUNK - not used
-C N    - SIZE OF MATRIX
-C SORT - EIGENVECTORS AND EIGENVALUES ARE REORDERED, with eigenvalues:
-c      0     - ascending
-c      1     - unordered
-c      other - descending
-C DOSQ - THE SQUARE ROOT OF THE DIAGONALIZED MATRIX IS TAKEN 
-C      0     - no 
-C      1     - yes  
-C DOINV- TAKE THE INVERSE OF THE DIAGONALIZED MATRIX
-C      0     - no 
-C      1     - yes  
+!> Shell to drive LAPACK algorithm.
+!> A    - REAL SYMMETRIC MATRIX TO BE DIAGONALIZED (E.VALUES IN DIAGS AFTERWARDS)
+!> B    - EIGENVECTORS RETURNED IN COLUMNS
+!> JUNK - not used
+!> N    - SIZE OF MATRIX
+!> SORT - EIGENVECTORS AND EIGENVALUES ARE REORDERED, with eigenvalues:
+!>      0     - ascending
+!>      1     - unordered
+!>      other - descending
+!> DOSQ - THE SQUARE ROOT OF THE DIAGONALIZED MATRIX IS TAKEN 
+!>      0     - no 
+!>      1     - yes  
+!> DOINV- TAKE THE INVERSE OF THE DIAGONALIZED MATRIX
+!>      0     - no 
+!>      1     - yes  
 
 
       subroutine diag(a,b,junk,n,sort,dosq,doinv)
@@ -89,10 +88,11 @@ c------------------------------------------------------------------
          enddo 
 c------------------------------------------------------------------
 
-c         write(6,*)'==================================================='
-c         write(6,*) 'Basis of atomic orbitals contains', NLINDEP,
-c     & 'linear dependecies'
-c        write(6,*)'===================================================='
+         write(6,*)'==================================================='
+         write(6,*) 'Linear dependence threshold is: ',tresh
+         write(6,*) 'Basis of atomic orbitals contains', NLINDEP,
+     & 'linear dependecies'
+        write(6,*)'===================================================='
 
       endif 
 c 

@@ -1,17 +1,17 @@
-C special compute_ubatch6 wrruu
-C
-C############ CLASS 1  ############
-C  Do one-center part (mu mu |mu mu)
-C
-C       PARDO mu, nu, lambda, sigma
-C             WHERE nu == mu
-C             WHERE sigma == mu
-C             WHERE lambda == mu
-C
-C                   execute compute_ubatch6 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-C
-C       ENDPARDO mu, nu, lambda, sigma
-C
+!> special compute_ubatch6 wrruu
+!>
+!>############ CLASS 1  ############
+!>  Do one-center part (mu mu |mu mu)
+!>
+!>       PARDO mu, nu, lambda, sigma
+!>             WHERE nu == mu
+!>             WHERE sigma == mu
+!>             WHERE lambda == mu
+!>
+!>                   execute compute_ubatch6 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
+!>
+!>       ENDPARDO mu, nu, lambda, sigma
+!>
 
       subroutine compute_ubatch6(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,

@@ -1,18 +1,18 @@
-C special compute_ubatch2 wrruu
-C
-c############ CLASS 3  ############
-c  Do two-center part (mu mu |mu nu)->(mu nu |mu mu ),(mu mu|nu mu),(nu mu|mu mu)
-c  Do three-center part (mu mu |nu lambda)->(mu mu |lambda nu ),(nu lambda|mu mu),(lambda nu|mu mu)
-c
-c       PARDO mu, nu, lambda, sigma
-c
-c          WHERE mu == nu
-c          WHERE lambda  < sigma
-c
-c                execute compute_ubatch2 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-c
-c       ENDPARDO mu, nu, lambda, sigma
-c
+!> special compute_ubatch2 wrruu
+!>
+!>############ CLASS 3  ############
+!>  Do two-center part (mu mu |mu nu)->(mu nu |mu mu ),(mu mu|nu mu),(nu mu|mu mu)
+!>  Do three-center part (mu mu |nu lambda)->(mu mu |lambda nu ),(nu lambda|mu mu),(lambda nu|mu mu)
+!>
+!>       PARDO mu, nu, lambda, sigma
+!>
+!>          WHERE mu == nu
+!>          WHERE lambda  < sigma
+!>
+!>                execute compute_ubatch2 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
+!>
+!>       ENDPARDO mu, nu, lambda, sigma
+!>
 
       subroutine compute_ubatch2(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,

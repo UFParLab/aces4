@@ -1,21 +1,21 @@
-C special compute_ubatch1 wrruu
-C
-C############# CLASS 6  ############
-C  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
-C                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
-C
-C        PARDO mu, nu, lambda, sigma
-C
-C                 WHERE mu      < nu
-C                 WHERE lambda  < sigma
-C                 WHERE mu     < lambda
-C                 WHERE nu     != sigma
-C                 WHERE nu     != lambda
-C                 WHERE mu     != sigma
-C
-C                    execute compute_ubatch1 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-C
-C        ENDPARDO mu, nu, lambda, sigma
+!> special compute_ubatch1 wrruu
+!>
+!>############# CLASS 6  ############
+!>  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
+!>                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
+!>
+!>        PARDO mu, nu, lambda, sigma
+!>
+!>                 WHERE mu      < nu
+!>                 WHERE lambda  < sigma
+!>                 WHERE mu     < lambda
+!>                 WHERE nu     != sigma
+!>                 WHERE nu     != lambda
+!>                 WHERE mu     != sigma
+!>
+!>                    execute compute_ubatch1 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
+!>
+!>        ENDPARDO mu, nu, lambda, sigma
 
       subroutine compute_ubatch1(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,

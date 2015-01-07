@@ -20,8 +20,8 @@ C  in the file COPYRIGHT.
       implicit none 
 
 c--------------------------------------------------------------------------
-c   Usage: execute check_dconf array scalar
-c   
+!> special check_dconf rw
+!>  takes an incoming two dimensional block and returns the largest element of that block
 c--------------------------------------------------------------------------
       include 'sip_interface.f' 
 

@@ -20,8 +20,10 @@ C  in the file COPYRIGHT.
       implicit none 
 
 c--------------------------------------------------------------------------
-c   Usage: execute return_sval array scalar
-c   The element of the array A(i,j) is set to scalar 
+!> special return_sval rw
+!>   Usage: execute return_sval array scalar
+!>   The scalar is set to the A(i,j) array element. 
+!>   This is depreciated for cases where the array A is a static.
 c--------------------------------------------------------------------------
 
       include 'sip_interface.f' 

@@ -1,18 +1,18 @@
-C special compute_ubatch8 wrruu
-C
-C############ CLASS 4  ############
-C  Do two-center part (mu nu |mu nu)->(mu nu |nu mu ),(nu mu|mu nu),(nu mu|nu mu)
-C
-C       PARDO mu, nu, lambda, sigma
-C                WHERE mu < nu
-C                WHERE lambda < sigma
-C                WHERE nu == sigma
-C                WHERE mu == lambda
-C
-C                   execute compute_ubatch8 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-C
-C       ENDPARDO mu, nu, lambda, sigma
-C
+!> special compute_ubatch8 wrruu
+!>
+!>############ CLASS 4  ############
+!>  Do two-center part (mu nu |mu nu)->(mu nu |nu mu ),(nu mu|mu nu),(nu mu|nu mu)
+!>
+!>       PARDO mu, nu, lambda, sigma
+!>                WHERE mu < nu
+!>                WHERE lambda < sigma
+!>                WHERE nu == sigma
+!>                WHERE mu == lambda
+!>
+!>                   execute compute_ubatch8 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
+!>
+!>       ENDPARDO mu, nu, lambda, sigma
+!>
 
       subroutine compute_ubatch8(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,

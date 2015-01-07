@@ -19,8 +19,8 @@ C  in the file COPYRIGHT.
      *                 ca, cb, nc1,nc2, nd1, nd2,
      *                 fa,fb) 
 c---------------------------------------------------------------------------
-c   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
-c   following 'types' of integrals based on atomic labels.
+!>   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
+!>   following 'types' of integrals based on atomic labels.
 c---------------------------------------------------------------------------
 
       use, intrinsic :: ISO_C_BINDING 
