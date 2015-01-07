@@ -181,13 +181,6 @@ void aoladder_contraction(
 void compute_nn_repulsion(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 
-void scf_frag(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
-        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4,
-        int& array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * data_5, int& ierr);
-
 void set_frag(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 

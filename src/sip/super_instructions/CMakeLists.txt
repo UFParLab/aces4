@@ -57,7 +57,6 @@ set(QM_SOURCE_FILES
     qm/compute_uintegrals7.F;
     qm/compute_uintegrals8.F;
     qm/uintegrals.F;
-    qm/scf_frag.F;
     qm/set_frag.F;
     qm/frag_index_range.F;
     qm/compute_integral_batch.F;
