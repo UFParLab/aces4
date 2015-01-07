@@ -1,3 +1,19 @@
+C special compute_ubatch7 wrruu
+C
+C############ CLASS 2  ############
+C  Do two-center part (mu mu |nu nu)->(nu nu |mu mu )
+C
+C       PARDO mu, nu, lambda, sigma
+C
+C             WHERE mu < lambda
+C             WHERE mu == nu
+C             WHERE lambda == sigma
+C
+C                   execute compute_ubatch7 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
+C
+C       ENDPARDO mu, nu, lambda, sigma
+C
+
       subroutine compute_ubatch7(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
