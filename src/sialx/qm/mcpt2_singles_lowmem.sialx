@@ -129,6 +129,7 @@ import "trans_frag_defs.sialx"
       scalar e1new  
       scalar e2old 
       scalar e2new  
+      scalar ecrit    
       scalar ao_exit
       scalar occ_exit 
       scalar virt_exit 
@@ -1984,7 +1985,7 @@ import "trans_frag_defs.sialx"
             etemp *= -1.0 
          endif 
         #print_scalar etemp 
-      IF etemp > cc_conv 
+      IF etemp > ecrit 
          GET     e10c_old[ifrag] 
          e1old = e10c_old[ifrag] 
          do_iter = 1.0 
@@ -2116,7 +2117,7 @@ import "trans_frag_defs.sialx"
         ENDIF # ifrag != jfrag  
         ENDDO jfrag 
 
-      ENDIF # etemp > cc_conv 
+      ENDIF # etemp > ecrit 
 
       ENDPARDO ifrag 
       sip_barrier 
@@ -2377,7 +2378,6 @@ import "trans_frag_defs.sialx"
       PROC FORM_T2_GUESS 
 #     ------------------ 
 # Zero out the T20aiai array at the beginning of the microiterations 
-# This is the updated doubles V_X + H_0XY*T_XY
 
       PARDO ifrag, jfrag  
          icount = 0.0  
@@ -2764,7 +2764,7 @@ import "trans_frag_defs.sialx"
       sip_barrier
 #
       eold = 0.0
-      print "Performing a MCPT2 calc on fragment "
+      print "Performing a CCPT2 calc on fragment "
       DO kiter 
          do_iter = 0.0 
 #
@@ -2785,7 +2785,7 @@ import "trans_frag_defs.sialx"
             etemp *= -1.0 
          endif 
         #print_scalar etemp 
-      IF etemp > cc_conv 
+      IF etemp > ecrit 
          GET     e20c_old[ifrag] 
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
@@ -3411,20 +3411,19 @@ import "trans_frag_defs.sialx"
         PUT e20c[ifrag]   = t2p[ifrag] 
        #execute print_block t2p(ifrag) 
 
-      ENDIF # etemp > cc_conv 
+      ENDIF # etemp > ecrit 
 
       ENDPARDO ifrag 
-      sip_barrier
+      fragment_doubles = 0.0
+      sip_barrier 
+      collective fragment_doubles += esum
+      sip_barrier 
      #if do_iter < one 
      #   exit 
      #endif 
-      esum = 0.0
-      sip_barrier
       PARDO ifrag 
          GET                  e20c[ifrag] 
          GET                  e20c_old[ifrag] 
-	 execute return_sval e20c[ifrag] etemp
-	 esum += etemp
          tp[ifrag]          = e20c_old[ifrag]  
          tp[ifrag]         -= e20c[ifrag]  
          PUT e2error[ifrag] = tp[ifrag] 
@@ -3436,10 +3435,6 @@ import "trans_frag_defs.sialx"
 #     END OF FRAGMENT ITERATIONS 
 # -----------------------------------------------------------------------------
 #
-      fragment_doubles = 0.0
-      sip_barrier 
-      collective fragment_doubles += esum
-      sip_barrier 
       print fragment_doubles
       ediff = fragment_doubles - eold
       escr = ediff**2.0
@@ -3452,6 +3447,7 @@ import "trans_frag_defs.sialx"
       ENDDO kiter 
       sip_barrier
 #
+      print "Final CCPT2 energy of fragments" 
       PARDO ifrag, jfrag 
        if ifrag == jfrag 
          GET                        e20c[ifrag] 
@@ -3514,7 +3510,7 @@ import "trans_frag_defs.sialx"
             etemp *= -1.0 
          endif 
         #print_scalar etemp 
-      IF etemp > cc_conv 
+      IF etemp > ecrit 
          GET     d20c_old[ifrag,jfrag] 
          e1old = d20c_old[ifrag,jfrag] 
          do_iter = 1.0 
@@ -4165,7 +4161,7 @@ import "trans_frag_defs.sialx"
      #   ediff *= -1.0
      #endif
 
-     #if ediff <= cc_conv
+     #if ediff <= ecrit
      #   exit
      #endif
      #e2old = e2new
@@ -5364,7 +5360,7 @@ import "trans_frag_defs.sialx"
       sip_barrier
 #
       eold = 0.0
-      print "Performing a LCCD calc on fragment "
+      print "Performing a CCPT2 calc on fragment "
       DO kiter 
          do_iter = 0.0 
 #
@@ -5385,7 +5381,7 @@ import "trans_frag_defs.sialx"
             etemp *= -1.0 
          endif 
         #print_scalar etemp 
-      IF etemp > cc_conv 
+      IF etemp > ecrit 
          GET     e20c_old[ifrag] 
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
@@ -5933,7 +5929,7 @@ import "trans_frag_defs.sialx"
         PUT e20c[ifrag]   = t2p[ifrag] 
        #execute print_block t2p(ifrag) 
 
-      ENDIF # etemp > cc_conv 
+      ENDIF # etemp > ecrit 
 
       ENDPARDO ifrag 
       sip_barrier 
@@ -5957,7 +5953,6 @@ import "trans_frag_defs.sialx"
       elccd = 0.0
       sip_barrier
       collective elccd += esum
-      sip_barrier
 
       print elccd
       ediff = elccd - eold
@@ -5966,7 +5961,6 @@ import "trans_frag_defs.sialx"
       if ediff < cc_conv
 	  exit #kiter
       endif
-      eold = elccd
 #
       ENDDO kiter 
       mono_lccd = 0.0 
@@ -6599,8 +6593,8 @@ import "trans_frag_defs.sialx"
       #print nn_rep 
 
       mone = -1.0 
-#      cc_conv = cc_conv 
-      print cc_conv 
+      ecrit = cc_conv 
+      print ecrit 
 #
 #     Perform 2-el integral transformation and calculate second order energies   
 #     ------------------------------------------------------------------------ 
@@ -6644,68 +6638,68 @@ import "trans_frag_defs.sialx"
 #
 #     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
-      CALL FORM_T2_0GUESS 
-      sip_barrier 
-      print "Done forming T2_0guess" 
-
-# Start macro-iterations 
-      DO jiter 
-         sip_barrier 
-
-         PARDO ifrag 
-           GET                   e20c[ifrag] 
-           PUT e2_macro[ifrag] = e20c[ifrag] 
-         ENDPARDO ifrag  
-
-         sip_barrier 
-         CALL FORM_T2_GUESS 
-         sip_barrier 
-	 print "Entering FORM_T2_FRAGMENT_ITERS"
-         CALL FORM_T2_FRAGMENT_ITERS 
-         sip_barrier 
-	 print "Entering FORM_T2_DIMER_ITERS"
-         CALL FORM_T2_DIMER_ITERS 
-         fragment_doubles = 0.0 
-         esum = 0.0 
-         sip_barrier 
-# Print out energies after each macroiteration  
-         print "MCPT(2) monomer macro-iteration energies"
-         execute get_my_rank rank
-         if rank == 0.0
-         DO ifrag
-            GET                 e20c[ifrag] 
-            macro_e20[ifrag:ifrag]  = e20c[ifrag] 
-            print macro_e20[ifrag:ifrag] 
-            etemp = e20c[ifrag] 
-            fragment_doubles += etemp 
-         ENDDO ifrag   
-         endif
-         sip_barrier 
-         print "Done forming T2 Dimer calculation" 
-# Determine if full macro convergence is met 
-         do_iter = 0.0 
-         DO ifrag 
-           GET          e20c[ifrag] 
-           GET          e2_macro[ifrag] 
-           tp[ifrag]  = e20c[ifrag]  
-           tp[ifrag] -= e2_macro[ifrag]  
-           execute return_sval tp[ifrag] etemp  
-           if etemp < zero 
-              etemp *= -1.0 
-           endif 
-           IF etemp > cc_conv 
-              do_iter = 2.0 
-           ENDIF 
-         ENDDO ifrag 
-         print etemp 
-         print do_iter  
-         sip_barrier 
-         if do_iter < 1.0 
-            exit 
-         endif 
+#      CALL FORM_T2_0GUESS 
+#      sip_barrier 
+#      print "Done forming T2_0guess" 
 #
-      ENDDO jiter 
-      sip_barrier
+# Start macro-iterations 
+#      DO jiter 
+#         sip_barrier 
+#
+#         PARDO ifrag 
+#           GET                   e20c[ifrag] 
+#           PUT e2_macro[ifrag] = e20c[ifrag] 
+#         ENDPARDO ifrag  
+#
+#         sip_barrier 
+#         CALL FORM_T2_GUESS 
+#         print "Done forming T2 guess before Dimer calculation" 
+#         sip_barrier 
+#	 print "Entering FORM_T2_FRAGMENT_ITERS"
+#         CALL FORM_T2_FRAGMENT_ITERS 
+#         sip_barrier 
+#	 print "Entering FORM_T2_DIMER_ITERS"
+#         CALL FORM_T2_DIMER_ITERS 
+#         fragment_doubles = 0.0 
+#         esum = 0.0 
+#         sip_barrier 
+## Print out energies after each macroiteration  
+#         execute get_my_rank rank
+#         if rank == 0.0
+#         DO ifrag
+#            GET                 e20c[ifrag] 
+#            macro_e20[ifrag:ifrag]  = e20c[ifrag] 
+#            print macro_e20[ifrag:ifrag] 
+#            etemp = e20c[ifrag] 
+#            fragment_doubles += etemp 
+#         ENDDO ifrag   
+#         endif
+#         sip_barrier 
+#         print "Done forming T2 Dimer calculation" 
+## Determine if full macro convergence is met 
+#         do_iter = 0.0 
+#         DO ifrag 
+#           GET          e20c[ifrag] 
+#           GET          e2_macro[ifrag] 
+#           tp[ifrag]  = e20c[ifrag]  
+#           tp[ifrag] -= e2_macro[ifrag]  
+#           execute return_sval tp[ifrag] etemp  
+#           if etemp < zero 
+#              etemp *= -1.0 
+#           endif 
+#           IF etemp > ecrit 
+#              do_iter = 2.0 
+#           ENDIF 
+#         ENDDO ifrag 
+#         print etemp 
+#         print do_iter  
+#         sip_barrier 
+#         if do_iter < 1.0 
+#            exit 
+#         endif 
+##
+#      ENDDO jiter 
+#      sip_barrier
      #CALL EXCHANGE_TEST 
 #
 # Finally we want to compute, at least approximately, the intramonomer correlation 
@@ -6714,30 +6708,30 @@ import "trans_frag_defs.sialx"
 # 2. Form 3-virt and 3-occ integrals on monomers. !!! DONE EARLIER IN TRANSFORMATION 
 # 3. Compute eps pol 
 #
-      CALL FORM_T2_MONOMER  
-      sip_barrier
+#      CALL FORM_T2_MONOMER  
+#      sip_barrier
 #
 #      CALL POL1_EPS 
 #
-      eint_tot  = 0.0 
-      eint_tot += e1x_at  
-      eint_tot += e10pol_at  
-      eint_tot += eps1_pol   
-      eint_tot += singles  
-      eint_tot += dimer_doubles  
-      eint_tot += fragment_doubles  
-      eint_tot += mono_lccd   
+#      eint_tot  = 0.0 
+#      eint_tot += e1x_at  
+#      eint_tot += e10pol_at  
+#      eint_tot += eps1_pol   
+#      eint_tot += singles  
+#      eint_tot += dimer_doubles  
+#      eint_tot += fragment_doubles  
+#      eint_tot += mono_lccd   
 
 
       print e1x_at 
       print e10pol_at 
       print eps1_pol  
       print singles  
-      print dimer_doubles  
-      print fragment_doubles  
-      print mono_lccd  
-
-      print eint_tot 
+#      print dimer_doubles  
+#      print fragment_doubles  
+#      print mono_lccd  
+#
+#      print eint_tot 
 # Compute the second-order exchange energy 
      #CALL EXCHANGE_TEST  
          sip_barrier 
