@@ -464,8 +464,8 @@ c-------------------------------------------------------------------------
       imax = imax + ihrr
       zmax = zmax + zhrr  
 
-      write(6,*) ' F_IMAX = ', ihrr 
-      write(6,*) ' F_ZMAX = ', zhrr 
+C      write(6,*) ' F_IMAX = ', ihrr 
+C      write(6,*) ' F_ZMAX = ', zhrr 
 
       return
       end

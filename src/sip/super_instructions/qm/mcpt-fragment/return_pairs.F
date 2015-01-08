@@ -125,7 +125,7 @@ c  ATOMIC COORDINATES
 
       if (ifrag .eq. jfrag) then 
          pair_flag = 2 
-         write(6,*) ' IFRAG JFRAG ', ifrag, jfrag, pair_flag  
+C         write(6,*) ' IFRAG JFRAG ', ifrag, jfrag, pair_flag  
          return 
       endif 
 

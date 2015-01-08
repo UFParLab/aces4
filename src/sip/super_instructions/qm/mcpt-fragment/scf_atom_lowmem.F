@@ -138,8 +138,8 @@ c Allocate scratch arrays
 
 c     nscr = (extents_1(1) + 1)**2  
 
-      write(6,*) ' ZMAX IMAX NSCR :', zmax, imax, 
-     *             (extents_1(1) + 1)**2 
+C      write(6,*) ' ZMAX IMAX NSCR :', zmax, imax, 
+C     *             (extents_1(1) + 1)**2 
       nscr = zmax ! 5000000
       call scratch_array(nscr, cscr)
       call c_f_pointer(cscr,   scr, [nscr])
@@ -520,10 +520,9 @@ c retrive beta virtual mapping
 c
 c ---------------------------------------------------------------------- 
 
-      write(6,*) ' NFRAGS = ', nfrags 
-      write(6,*) ' CURRENT_FRAGS = ', icurrent_frag 
-
-      write(6,*) 'N_APF = ', natoms_frag(icurrent_frag)
+C      write(6,*) ' NFRAGS = ', nfrags 
+C      write(6,*) ' current_frag/n_frag=',icurrent_frag, '/',nfrags
+C      write(6,*) 'N_APF = ', natoms_frag(icurrent_frag)
 C      do m = 1, natoms_frag(icurrent_frag) 
 C         write(6,*) '  ', m, watom_frag(icurrent_frag, m)
 C      enddo 
@@ -539,8 +538,8 @@ c     call return_napf(n_apf, icurrent_frag, nfrags, natoms_frag)
 
 123   continue 
 
-      write(6,*) ' Entering H0 on frag:', icurrent_frag, ':', 
-     *            n_apf, (iatom(m), m=1, n_apf)  
+C      write(6,*) ' Entering H0 on frag:', icurrent_frag, ':', 
+C     *            n_apf, (iatom(m), m=1, n_apf)  
 
 
 c   Set scratch space 
@@ -569,7 +568,7 @@ c     call c_f_pointer(ciscr, iscr_i, [niscr])
 
 c  Remove scratch space  
 c     call delete_integer_scratch_array(ciscr)
-      write(6,*) ' Finished H0 on frag:', icurrent_frag
+C      write(6,*) ' Finished H0 on frag:', icurrent_frag
 
 c-----------------------------------------------------------------------
 c   Find the shell blocks for which we shall loop through.
@@ -589,8 +588,8 @@ c-----------------------------------------------------------------------
 c   Find the number of basis functions and shells in the atom.  
 c-----------------------------------------------------------------------
 
-         write(6,*) ' M1 M2', m1, m2 
-         write(6,*) ' N_APF ', n_apf, (iatom(m), m=1, n_apf) 
+C         write(6,*) ' M1 M2', m1, m2 
+C         write(6,*) ' N_APF ', n_apf, (iatom(m), m=1, n_apf) 
 C         do m = m1, m2 
 C            write(6,*) ' ', m, atom(m), end_nfps(m) 
 C         enddo 
@@ -608,8 +607,8 @@ C         enddo
          enddo 
          enddo 
 
-         write(6,*) ' The number of basis functions on frag', 
-     *               icurrent_frag, '=', n_basis  
+C         write(6,*) ' The number of basis functions on frag', 
+C     *               icurrent_frag, '=', n_basis  
 c        do m = 1, n_basis 
 c        do n = 1, n_basis 
 c           write(6,*) ' VFL:', m,n, h0t(m,n) 
@@ -887,9 +886,9 @@ c     integer watom_frag(nfrags, *)
       double precision charge(ncenters) 
       double precision etemp 
 
-      write(6,*) ' N_APF = ', natoms_frag(current_frag) 
-      write(6,*) ' IATOM = ', (iatom(m), 
-     *                         m = 1, natoms_frag(current_frag) )
+C      write(6,*) ' N_APF = ', natoms_frag(current_frag) 
+C      write(6,*) ' IATOM = ', (iatom(m), 
+C     *                         m = 1, natoms_frag(current_frag) )
       n_apf = natoms_frag(current_frag) 
 c     do m = 1, n_apf 
 c        iatom(m) = watom_frag(current_frag, m) 

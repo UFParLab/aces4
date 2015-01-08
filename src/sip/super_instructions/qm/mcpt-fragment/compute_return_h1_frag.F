@@ -213,9 +213,9 @@ c---------------------------------------------------------------------------
          iatom(m) = watom_frag(ix2, m)
       enddo
 c     iatom = wfrag
-      write(6,*) ' Entering H1 on frag:', ix2, ':',
-     *            n_apf, (iatom(m), m=1, n_apf), 'with cuttoff',
-     *            r_thresh
+C      write(6,*) ' Entering H1 on frag:', ix2, ':',
+C     *            n_apf, (iatom(m), m=1, n_apf), 'with cuttoff',
+C     *            r_thresh
 
       offset_1 = 0 
       offset_2 = 0 

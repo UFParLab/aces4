@@ -88,11 +88,11 @@ c------------------------------------------------------------------
          enddo 
 c------------------------------------------------------------------
 
-         write(6,*)'==================================================='
-         write(6,*) 'Linear dependence threshold is: ',tresh
-         write(6,*) 'Basis of atomic orbitals contains', NLINDEP,
-     & 'linear dependecies'
-        write(6,*)'===================================================='
+C         write(6,*)'==================================================='
+C         write(6,*) 'Linear dependence threshold is: ',tresh
+C         write(6,*) 'Basis of atomic orbitals contains', NLINDEP,
+C     & 'linear dependecies'
+C        write(6,*)'===================================================='
 
       endif 
 c 

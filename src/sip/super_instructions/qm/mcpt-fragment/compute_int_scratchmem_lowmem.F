@@ -324,8 +324,8 @@ c     zmax = max0(zmax,my_zmax)
       imax = my_imax 
       zmax = my_zmax 
 
-       write(6,*) 'IMAX = ', imax
-       write(6,*) 'ZMAX = ', Zmax
+c       write(6,*) 'IMAX = ', imax
+c       write(6,*) 'ZMAX = ', Zmax
 c ----------------------------------------------------------------------
 c
       return
