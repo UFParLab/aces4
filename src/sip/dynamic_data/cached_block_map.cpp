@@ -36,19 +36,7 @@ Block* CachedBlockMap::block(const BlockId& block_id){
 
 
 
-/*
- * typename PerArrayMap::iterator it = map_ptr->find(block_id);
-		//trying to erase the end() iterator causes a segmentation fault, so check for this case and give a good error message.
-//		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
-//		map_ptr->erase(it);
-//		return block_ptr;
-		sial_check(it != map_ptr->end(),
-				"attempting to remove a non-existent block ",
-				current_line() );
-		BLOCK_TYPE* block_ptr = it->second;
-		map_ptr->erase(it);
-		return block_ptr;
- */
+
 void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
 	while (max_allocatable_bytes_ - (allocated_bytes_ + pending_delete_bytes_) <= bytes_in_block) {
 		clean_pending();
