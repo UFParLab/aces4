@@ -22,7 +22,7 @@ ContiguousLocalArrayManager::~ContiguousLocalArrayManager(){
 }
 
 void ContiguousLocalArrayManager::allocate_contiguous_local(const BlockId& id){
-	create_block(id); //so initialized to 0.  Perhaps we don't need this.
+	create_block(id); //create_block initializes this to 0.  Check this
 }
 
 void ContiguousLocalArrayManager::deallocate_contiguous_local(const BlockId& id){
@@ -35,12 +35,7 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block_for_writing(const BlockId
 	int rank;
 	offset_array_t offsets;
 	Block::BlockPtr region = get_block(id, rank, containing_region, offsets);
-    if (region == NULL){
-    	region = create_block(id);
-	return region;
-    }
-//	std::cout << "in get block for writing:  printing region " << *region << std::endl << std::flush;  //DEBUG
-//	std::cout << "in get block for writing:  printing containing_region " << *containing_region << std::endl << std::flush;  //DEBUG
+	sial_check(region != NULL, "Contiguous local block " + id.str(sip_tables_) + " must be explicitly allocated", current_line());
 	if (region != containing_region){
 		WriteBack* wb = new WriteBack(rank, containing_region, region, offsets);
 		write_back_list.push_back(wb);
@@ -82,7 +77,7 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block_for_accumulate(const Bloc
 	if (region != NULL && region != containing_region) write_back_list.push_back(new WriteBack(rank, containing_region, region, offsets));
     if (region == NULL){
     	region = create_block(id);
-//    	region->fill(0.0);  currently done when data for block is allocated with new
+//    	region->fill(0.0);  currently done when data for block is allocated with new in create_block(id)
     }
 	return region;
 }

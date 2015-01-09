@@ -218,7 +218,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 		break;
 		case deallocate_contiguous_op: {
-				check(sip_tables_.is_contiguous_local(arg1()), "attempting to allocate_contiguous with array that is not contiguous_local", line_number());
+				check(sip_tables_.is_contiguous_local(arg1()), "attempting to deallocate_contiguous with array that is not contiguous_local", line_number());
 				BlockId id = get_block_id_from_instruction();
 				data_manager_.contiguous_local_array_manager_.deallocate_contiguous_local(id);
 				++pc;
@@ -976,7 +976,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 						func_slot);
 		func(ierr);
 		check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
@@ -1003,7 +1003,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, ierr);
 		sip::check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
@@ -1029,7 +1029,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				data0, array_id1, rank1, block_id1.index_values_, block1_size,
 				seg_sizes1, data1, ierr);
 		sip::check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
@@ -1056,7 +1056,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				seg_sizes1, data1, array_id2, rank2, block_id2.index_values_,
 				block2_size, seg_sizes2, data2, ierr);
 		sip::check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
@@ -1084,7 +1084,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				block2_size, seg_sizes2, data2, array_id3, rank3,
 				block_id3.index_values_, block3_size, seg_sizes3, data3, ierr);
 		sip::check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
@@ -1113,7 +1113,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				array_id4, rank4, block_id4.index_values_, block4_size,
 				seg_sizes4, data4, ierr);
 		sip::check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
@@ -1143,7 +1143,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				seg_sizes4, data4, array_id5, rank5, block_id5.index_values_,
 				block5_size, seg_sizes5, data5, ierr);
 		sip::check(ierr == 0,
-				"error returned from special super instruction"
+				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
 		return;
