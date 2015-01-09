@@ -347,18 +347,16 @@ import "scf_frag_defs_lowmem.sialx"
      #   PUT DCa(mu,p) = txp(mu,p)
      #ENDPARDO mu, p    
 #
-      sip_barrier 
-      allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
-      allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
-      allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
-      allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
-      allocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
-      sip_barrier 
 
     PARDO katom  
 	icount = (scalar)katom
 
 	print icount # etemp 
+
+        allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+        allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+        allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+        allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
 
 	print "Starting computing fragment scf" 
 #execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
@@ -456,6 +454,10 @@ import "scf_frag_defs_lowmem.sialx"
 #                 ENDDO p 
 	print "Done placing fock_matrix"
 
+        deallocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+        deallocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+        deallocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+        deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
 
     ENDPARDO katom   
 #
