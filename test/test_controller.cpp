@@ -167,6 +167,13 @@ double TestController::scalar_value(const std::string& name) {
 	}
 }
 
+double* TestController::static_array(const std::string& name){
+	int array_slot = sip_tables_->array_slot(name);
+	sip::Block::BlockPtr block =
+			worker_->get_static(array_slot);
+	return block->get_data();
+}
+
 double* TestController::local_block(const std::string& name,
 		const std::vector<int> indices) {
 	std::cout << "looking up block " << name << " " << indices[0] << std::endl;

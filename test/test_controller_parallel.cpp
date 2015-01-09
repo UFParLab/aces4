@@ -333,8 +333,9 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		}
 		worker_->post_sial_program();
-		std::cout << "after post_sial_program" << std::endl << std::flush;
+//		std::cout << "\nRank " << attr->global_rank() << " after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
+//		std::cout << "\nRank " << attr->global_rank() << " after sae_marked_arrays" << std::endl << std::flush;
 	}
 	sial_output_ << std::flush;
 	return this_test_enabled_;
