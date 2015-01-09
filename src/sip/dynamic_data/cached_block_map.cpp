@@ -34,12 +34,43 @@ Block* CachedBlockMap::block(const BlockId& block_id){
 	return block_ptr;
 }
 
+
+
+/*
+ * typename PerArrayMap::iterator it = map_ptr->find(block_id);
+		//trying to erase the end() iterator causes a segmentation fault, so check for this case and give a good error message.
+//		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
+//		map_ptr->erase(it);
+//		return block_ptr;
+		sial_check(it != map_ptr->end(),
+				"attempting to remove a non-existent block ",
+				current_line() );
+		BLOCK_TYPE* block_ptr = it->second;
+		map_ptr->erase(it);
+		return block_ptr;
+ */
 void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
-	while (max_allocatable_bytes_ - allocated_bytes_ <= bytes_in_block) {
+	while (max_allocatable_bytes_ - (allocated_bytes_ + pending_delete_bytes_) <= bytes_in_block) {
+		clean_pending();
 		BlockId block_id = policy_.get_next_block_for_removal();
 		Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
 		allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
 	}
+}
+
+void CachedBlockMap::clean_pending(){
+	std::list<Block*>::iterator it;
+	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+		if ((**it).test()){
+			pending_delete_bytes_ -= (**it).size() * sizeof(double);
+			pending_delete_.erase(it++);
+		}
+		else ++it;
+	}
+}
+
+int CachedBlockMap::pending_list_size(){
+	return pending_delete_.size();
 }
 
 void CachedBlockMap::insert_block(const BlockId& block_id, Block* block_ptr){
@@ -68,7 +99,11 @@ void CachedBlockMap::cached_delete_block(const BlockId& block_id){
 void CachedBlockMap::delete_block(const BlockId& block_id){
 	Block* tmp_block_ptr = block_map_.get_and_remove_block(block_id);
 	allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
-	delete tmp_block_ptr;
+	if (tmp_block_ptr->pending()){
+		pending_delete_bytes_ += tmp_block_ptr->size() * sizeof(double);
+		pending_delete_.push_back(tmp_block_ptr);
+	}
+	else delete tmp_block_ptr;
 
 }
 
