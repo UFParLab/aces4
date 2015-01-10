@@ -61,7 +61,8 @@ int main(int argc, char* argv[]) {
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
-			server_timer.print_timers(lno2name);
+			std::ofstream server_file("server.timer", std::ofstream::app);
+			server_timer.print_timers(lno2name, server_file);
 		} else
 #endif
 
@@ -77,7 +78,8 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 			sialxTimer.stop_program_timer();
-			sialxTimer.print_timers(lno2name);
+			std::ofstream worker_file("worker.timer", std::ofstream::app);
+			sialxTimer.print_timers(lno2name, worker_file);
 
 		}// end of worker or server
 

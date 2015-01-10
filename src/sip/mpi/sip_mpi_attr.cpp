@@ -159,14 +159,14 @@ bool SIPMPIAttr::is_worker() const {
 
 std::ostream& operator<<(std::ostream& os, const SIPMPIAttr& obj){
 	os << "SIP MPI Attributes [";
-	os << "rank : " << obj.global_rank_;
-	os << ", size : " << obj.global_size_;
-	os << ", is server? : " << obj.is_server_;
-	os << ", company rank : " << obj.company_rank_ ;
-	os << ", company size : " << obj.company_size_;
-	os << ", is master? : " << obj.is_company_master_ ;
-    os << ", server_master : " << obj.server_master_;
-    os << ", worker master : " << obj.worker_master_ << "]";
+	os << "rank : " << obj.global_rank();
+	os << ", size : " << obj.global_size();
+	os << ", is server? : " << obj.is_server();
+	os << ", company rank : " << obj.company_rank() ;
+	os << ", company size : " << obj.company_size();
+	os << ", is master? : " << obj.is_company_master() ;
+    os << ", server_master : " << obj.server_master();
+    os << ", worker master : " << obj.worker_master() << "]";
     os << std::endl;
 	return os;
 }

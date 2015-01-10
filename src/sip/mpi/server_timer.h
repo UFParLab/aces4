@@ -9,6 +9,7 @@
 #define SERVER_TIMER_H_
 
 #include <vector>
+#include <iostream>
 #include "sip.h"
 #include "config.h"
 #include "sip_timer.h"
@@ -33,7 +34,7 @@ public:
 
 	void start_timer(int line_number, TimerKind_t kind); /*! Starts timer for a sialx line */
 	void pause_timer(int line_number, TimerKind_t kind); /*! Pauses timer for a sialx line. */
-	void print_timers(std::vector<std::string> line_to_str); /*! For each slot, the total time and the average time is printed */
+	void print_timers(std::vector<std::string> line_to_str, std::ostream& out=std::cout); /*! Print timers for each GET, PUT, PUT+, SET & RESTORE PERSISTENT*/
 
 private:
 

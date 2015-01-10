@@ -77,8 +77,8 @@ void server_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Da
 template<typename TIMER>
 class ServerPrint : public PrintTimers<TIMER> {
 public:
-	ServerPrint(const std::vector<std::string> &line_to_str, int sialx_lines) :
-		line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
+	ServerPrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out) :
+		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~ServerPrint(){}
 	virtual void execute(TIMER& timer){
 
@@ -87,7 +87,7 @@ public:
 		// Print from the server master.
 		if (SIPMPIAttr::get_instance().is_company_master()){
 
-			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 
 			long long * timers = timer.get_timers();
 			long long * timer_counts = timer.get_timer_count();
@@ -96,7 +96,7 @@ public:
 			const int SW = 20;	// String
 
 			assert(timer.check_timers_off());
-			std::cout<<"Timers"<<std::endl
+			out_<<"Timers"<<std::endl
 				<<std::setw(LW)<<std::left<<"Line"
 				<<std::setw(SW)<<std::left<<"Type"
 				<<std::setw(CW)<<std::left<<"Avg"
@@ -138,7 +138,7 @@ public:
 						avg_disk_write = tot_disk_write / timer_counts[write_timer_offset];
 					}
 
-					std::cout<<std::setw(LW)<<std::left << i
+					out_<<std::setw(LW)<<std::left << i
 							<< std::setw(SW)<< std::left << line_to_str_.at(i)
 							<< std::setw(CW)<< std::left << avg_time
 							<< std::setw(CW)<< std::left << avg_blk_wait
@@ -148,12 +148,13 @@ public:
 							<< std::endl;
 				}
 			}
-			std::cout<<std::endl;
+			out_<<std::endl;
 		}
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+	std::ostream& out_;
 
 	/**
 	 * Reduce all server timers to server master.
@@ -282,15 +283,15 @@ void ServerTimer::pause_timer(int line_number, TimerKind_t kind){
 }
 
 
-void ServerTimer::print_timers(std::vector<std::string> line_to_str) {
+void ServerTimer::print_timers(std::vector<std::string> line_to_str, std::ostream& out) {
 #ifdef HAVE_TAU
 	typedef TAUTimersPrint<SipTimer_t> PrintTimersType_t;
 #elif defined HAVE_MPI
 	typedef ServerPrint<SipTimer_t> PrintTimersType_t;
-#else
-	typedef SingleNodePrint<SipTimer_t> PrintTimersType_t;
+//#else
+	//typedef SingleNodePrint<SipTimer_t> PrintTimersType_t;
 #endif
-	PrintTimersType_t p(line_to_str, sialx_lines_);
+	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
 }
 

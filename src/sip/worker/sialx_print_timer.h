@@ -60,10 +60,10 @@ public:
 		: line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~SingleNodePrint(){}
 	virtual void execute(TIMER& timer){
-
-		out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
+		out_ << "Total Walltime : " << timer.to_seconds(timers[0] / (double)timer_counts[0]) << " Seconds "<< std::endl;
+
 		const int LW = 10;	// Line num
 		const int CW = 15;	// Time
 		const int SW = 30;	// String
@@ -166,6 +166,8 @@ public:
 			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 			long long * timers = &timers_vector[0];
 			long long * timer_counts = &timer_counts_vector[0];
+			out_ << "Total Walltime : " << timer.to_seconds(timers[0] / (double)timer_counts[0]) << " Seconds "<< std::endl;
+
 			const int LW = 10;	// Line num
 			const int CW = 15;	// Time
 			const int SW = 30;	// String
@@ -222,15 +224,15 @@ private:
 	 * @param timers_vector [out]
 	 * @param timer_counts_vector [out]
 	 */
-	void mpi_reduce_timers(TIMER& timer, std::vector<long long> timers_vector,
-			std::vector<long long> timer_counts_vector) {
+	void mpi_reduce_timers(TIMER& timer, std::vector<long long>& timers_vector,
+			std::vector<long long>& timer_counts_vector) {
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
 
 		// Data to send to reduce
-		long long * sendbuf = new long long[2*timer.max_slots() + 1];
+		long long * sendbuf = new long long[2*timer.max_slots() + 1]();
 		sendbuf[0] = timer.max_slots();
 		std::copy(timer_counts + 0, timer_counts + timer.max_slots(), sendbuf+1);
 		std::copy(timers + 0, timers + timer.max_slots(), sendbuf+1+ timer.max_slots());
@@ -251,7 +253,6 @@ private:
 		SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)sialx_timer_reduce_op_function, 1, &sialx_timer_reduce_op));
 
 		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, sialx_timer_reduce_dt, sialx_timer_reduce_op, worker_master, worker_company));
-
 		if (attr.is_company_master()){
 			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
 			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
