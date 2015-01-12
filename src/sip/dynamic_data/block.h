@@ -171,9 +171,10 @@ public:
 
 #ifdef HAVE_MPI
 	MPI_Request* mpi_request() { return &(state_.mpi_request_); }
-	bool pending(){ return state_.pending();}
+//	bool pending(){ return state_.pending();}
 	bool test(){ return state_.test(); }
-	void wait(int expected_count){ state_.wait(expected_count);}
+//	void wait(int expected_count){ state_.wait(expected_count);}
+	void wait(){ state_.wait();}
 #endif
 
 private:

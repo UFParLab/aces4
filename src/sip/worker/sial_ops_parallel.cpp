@@ -604,16 +604,23 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 	return wait_and_check(block_manager_.get_block_for_updating(id), current_line());  //TODO  get rid of call to current_line
 }
 
+
+//The MPI_State does not store whether or not the request object was created as a result of
+// an Isend (put) or IReceive (get).  Checking the size only make sense for the latter.
+//For the time being, we will just call the version of wait that only checks the size.
+//If asynch puts turn out to be useful, we can revisit this.
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
-	if (b->pending()) {
-		if (sialx_timers_){
+
+		if (sialx_timers_ && !b->test()){
 			sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
-		    b->wait(b->size());
+//		    b->wait(b->size());
+			b->wait();
 	        sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
 		}
 		else
-		b->wait(b->size());
-	}
+//		b->wait(b->size());
+			b->wait();
+
 	return b;
 }
 

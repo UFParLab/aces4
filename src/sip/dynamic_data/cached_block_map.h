@@ -111,11 +111,12 @@ public:
 	 * Deletes no-longer-pending blocks in the pending_delete_ list
 	 */
 	void clean_pending();
+    /**
+     * Waits for pending-delete  blocks and deletes them.
+     * Postcondition of this method is that the pending_delete_ list is empty.
+     */
 
-	/**
-	 * For testing
-	 */
-	int pending_list_size();
+	void wait_and_clean_pending();
 
 private:
 
@@ -132,8 +133,12 @@ private:
 	/** Allocated bytes in blocks */
 	std::size_t allocated_bytes_;
 
-	/** Bytes in blocks that can be deleted when pending mpi request is resolved.  (These are often temp blocks used as thesource for put) */
+	/** Bytes in blocks that can be deleted when a pending mpi request is resolved.  (These are often temp blocks used as the source for put) */
 	std::size_t pending_delete_bytes_;
+
+	friend class TestControllerParallel;
+
+	DISALLOW_COPY_AND_ASSIGN(CachedBlockMap);
 };
 
 } /* namespace sip */

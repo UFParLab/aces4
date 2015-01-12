@@ -18,14 +18,9 @@ public:
 	MPIState():mpi_request_(MPI_REQUEST_NULL){
 	}
 	~MPIState(){
-		if (!check_and_warn(!pending(), "deleting block with pending request")){
-			//the block is pending, and we have raised a warning
-			wait();
-		}
 	}
-	bool pending(){
-		return mpi_request_ != MPI_REQUEST_NULL;
-	}
+
+
 	void wait(){
 		MPI_Wait(&mpi_request_, MPI_STATUS_IGNORE);
 	}
@@ -36,23 +31,19 @@ public:
 		return flag;
 	}
 
-	void wait(int expected_count){
-		MPI_Status status;
-		MPI_Wait(&mpi_request_, &status);
-		int received_count;
-		MPI_Get_count(&status, MPI_DOUBLE, &received_count);
-			check(received_count == expected_count,
-					"message's double count different than expected");
-	}
-	void set_request(MPI_Request mpi_request){
-		check_and_warn(!pending(), "setting mpi_request for pending block"); //this should never happen.  Wait should occur in the get_block_for_* method.
-		mpi_request_= mpi_request;
-	}
+//	void wait(int expected_count){
+//		MPI_Status status;
+//		MPI_Wait(&mpi_request_, &status);
+//		int received_count;
+//		MPI_Get_count(&status, MPI_DOUBLE, &received_count);
+//			check(received_count == expected_count,
+//					"message's double count different than expected");
+//	}
+
 
 private:
 
 
-//	friend class SialOpsParallel;
 	MPI_Request mpi_request_;
 
 	friend class Block;

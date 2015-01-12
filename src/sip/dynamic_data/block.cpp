@@ -68,28 +68,16 @@ Block::Block(dataPtr data):
 }
 
 
+
+/** The MPI_State destructor blocks until the request is no longer pending.
+ * We do not need to check this here. It is important that
+ */
 Block::~Block() {
 	SIP_LOG(sip::check_and_warn((data_), std::string("in ~Block with NULL data_")));
+
 #ifdef HAVE_MPI
-//	//check to see if block is in transit.  If this is the case, there was a get
-//	//on a block that was never used.  Print a warning.  We probably want to be able
-//	//disable this check.  The logic is a bit convoluted--sial_warn=true, means not pending.
-	//we wait if this is not the case, i.e. if this block has pending request.
-//	if (state_.pending()){//DEBUG
-//		std::cout << "trying to delete pending block" << std::endl << std::flush;
-//		{
-//		    int i = 0;
-//		    char hostname[256];
-//		    gethostname(hostname, sizeof(hostname));
-//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-//		    fflush(stdout);
-//		    while (0 == i)
-//		        sleep(5);
-//		}
-//	}
-	if (!sial_warn( !state_.pending() ,"deleting block with pending request, probably due to a get for a block that is not used")){
-		state_.wait(size());
-	}
+	//ensure that pending communications using this block are complete
+	wait();
 #endif //HAVE_MPI
 
 	// Original Assumption was that all blocks of size 1 are scalar blocks.
