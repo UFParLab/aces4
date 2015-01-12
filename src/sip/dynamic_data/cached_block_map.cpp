@@ -118,11 +118,11 @@ void CachedBlockMap::delete_per_array_map_and_blocks(int array_id){
 	allocated_bytes_ -= tot_bytes_deleted;
 }
 
-IdBlockMap<Block>::PerArrayMap* CachedBlockMap::get_and_remove_per_array_map(int array_id){
-	IdBlockMap<Block>::PerArrayMap* map_ptr = block_map_.get_and_remove_per_array_map(array_id);
-	allocated_bytes_ -= IdBlockMap<Block>::total_bytes_per_array_map(map_ptr);
-	return map_ptr;
-}
+//IdBlockMap<Block>::PerArrayMap* CachedBlockMap::get_and_remove_per_array_map(int array_id){
+//	IdBlockMap<Block>::PerArrayMap* map_ptr = block_map_.get_and_remove_per_array_map(array_id);
+//	allocated_bytes_ -= IdBlockMap<Block>::total_bytes_per_array_map(map_ptr);
+//	return map_ptr;
+//}
 
 void CachedBlockMap::set_max_allocatable_bytes(std::size_t size){
     static bool done_once = false;
@@ -142,6 +142,8 @@ std::ostream& operator<<(std::ostream& os, const CachedBlockMap& obj){
 	os << "Cache : " << std::endl;
 	os << obj.cache_;
 	os << std::endl;
+
+	os << "pending_delete_ size: "<< obj.pending_delete_.size() << std::endl;
 
 	return os;
 }

@@ -169,12 +169,12 @@ private:
 	 */
 	Block::BlockPtr block(const BlockId& id);
 
-	/**
-	 * Helper function to insert newly created block into block map.
-	 * @param block_id
-	 * @param block_ptr
-	 */
-     void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr){block_map_.insert_block(block_id, block_ptr);}
+//	/**
+//	 * Helper function to insert newly created block into block map.
+//	 * @param block_id
+//	 * @param block_ptr
+//	 */
+//     void insert_into_blockmap(const BlockId& block_id,	Block::BlockPtr block_ptr){block_map_.insert_block(block_id, block_ptr);}
 
      /**
 	 * Removes the given Block from the map and caches it if possible. It is a fatal error
@@ -190,7 +190,8 @@ private:
 	 * to try to delete a block that doesn't exist.
 	 * @param id
 	 */
-	void delete_block(const BlockId& id){block_map_.delete_block(id);}
+//	void delete_block(const BlockId& id){block_map_.delete_block(id);}
+	void delete_block(const BlockId& id);
 
 	/** Creates and returns a new block with the given shape and records it in the block_map_ with the given BlockId.
 	 * Requires the block with given id does not already exist.
@@ -242,11 +243,16 @@ private:
 	 * @return whether the selector contains a wild card
 	 */
 	bool has_wild_slot(const index_selector_t& selector);
+
+	void test_and_clean_pending();
+	void wait_and_clean_pending();
+
 	/** Pointer to static data */
 	const SipTables& sip_tables_;
-
+//CACHED BLOCK MAP
 	/** Map from block id's to blocks */
-	CachedBlockMap block_map_;
+//	CachedBlockMap block_map_;
+	IdBlockMap<Block> block_map_;
 
 	/** Conceptually, a stack of lists of temp blocks.  Each list corresponds to a scope, and the entries in the
 	 * list are blocks that should be deleted when that scope is exited.  The enter_scope and leave_scope methods
@@ -255,7 +261,7 @@ private:
 	std::vector<BlockList*> temp_block_list_stack_; //this is a vector rather than a stack
 													//to allow more convenient printing of
 													//contents.
-
+    std::list<Block*> pending_delete_;  //list of blocks that can be deleted as soon as pending communication is finished.
 
 	friend class SialOpsSequential;
 	friend class SialOpsParallel;

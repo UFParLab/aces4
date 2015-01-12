@@ -184,20 +184,41 @@ void BlockManager::leave_scope() {
 		BlockId &block_id = *it;
 		int array_id = block_id.array_id();
 
-		// Cached delete for distributed/served arrays.
-		// Regular delete for temp blocks.
-
-		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id))
-			cached_delete_block(*it);
-		else
-			delete_block(*it);
-//		delete_block(*it);
+		//CACHED BLOCK MAP
+//		// Cached delete for distributed/served arrays.
+//		// Regular delete for temp blocks.
+//
+//		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id))
+//			cached_delete_block(*it);
+//		else
+//			delete_block(*it);
+		delete_block(*it);
 	}
 	temp_block_list_stack_.pop_back();
 	delete temps;
+
+	test_and_clean_pending();
 }
 
+void BlockManager::test_and_clean_pending(){
+	std::list<Block*>::iterator it;
+	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+		if ((**it).test()){
+			delete *it;
+			pending_delete_.erase(it++);
+		}
+		else ++it;
+	}
+}
 
+void BlockManager::wait_and_clean_pending(){
+	std::list<Block*>::iterator it;
+	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+		    (**it).wait();
+			delete *it;
+			pending_delete_.erase(it++);
+		}
+}
 
 std::ostream& operator<<(std::ostream& os, const BlockManager& obj){
 	os << "block_map_:" << std::endl;
@@ -231,7 +252,8 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
 	try {
 		Block::BlockPtr block_ptr = new Block(shape);
-		insert_into_blockmap(block_id, block_ptr);
+//		insert_into_blockmap(block_id, block_ptr);
+		block_map_.insert_block(block_id, block_ptr);
 		return block_ptr;
 	} catch (const std::out_of_range& oor){
 		std::cerr << " In BlockManager::create_block" << std::endl;
@@ -241,6 +263,14 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 	}
 }
 
+//ASYNCH  without this, original is in .h file
+void BlockManager::delete_block(const BlockId& id){
+	Block::BlockPtr b = block_map_.get_and_remove_block(id);
+	if (!(b->test())){
+		pending_delete_.push_back(b);
+	}
+	else delete b;
+}
 
 void BlockManager::generate_local_block_list(const BlockId& id,
 		std::vector<BlockId>& list) {
