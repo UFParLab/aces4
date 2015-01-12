@@ -572,7 +572,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
 		check(!is_scope_extent,
-				"sip bug: asking for scope-extend dist or served block");
+				"sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
 	return block_manager_.get_block_for_writing(id, is_scope_extent);

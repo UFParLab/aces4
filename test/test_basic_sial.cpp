@@ -131,6 +131,60 @@ TEST(BasicSial,contiguous_local){
 }
 
 
+TEST(BasicSial,contiguous_local_2){
+	std::string job("contiguous_local_2");
+	std::stringstream output;
+	int norb = 12;
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		//now add data
+		set_constant("norb", norb);
+		int segs[] = { 3,4,5,3,4,5,3,4,5,3,4,5 }; //the must be norb elements
+		set_aoindex_info(norb, segs);
+		//add the first program for this job and finalize
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		finalize_setup();
+	}
+	barrier();
+	TestController controller(job, true, true, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	int i,j;
+	double* res = controller.static_array("res");
+//	for (i = 0; i < norb; i++ ){
+//		for(j = 0; i < norb; j++)
+//		ASSERT_EQ(i, res[i]
+//	}
+	ASSERT_TRUE(controller.worker_->all_stacks_empty());
+	ASSERT_EQ(0,controller.worker_->num_blocks_in_blockmap());
+}
+
+//testing framework cannot gracefully handle expected errors from MPI processes
+#ifndef HAVE_MPI
+TEST(BasicSial,contiguous_local_allocate_twice_fail){
+	std::string job("contiguous_local_allocate_twice_fail");
+	std::stringstream output;
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		//now add data
+		set_constant("norb", 4);
+		int segs[] = { 5, 6, 7, 8 };
+		set_aoindex_info(4, segs);
+		//add the first program for this job and finalize
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		finalize_setup();
+	}
+	barrier();
+	TestController controller(job, true, true, "", output, false);
+	controller.initSipTables();
+	ASSERT_THROW(controller.runWorker(), std::logic_error);
+}
+#endif
+
 //testing framework cannot gracefully handle expected errors from MPI processes
 #ifndef HAVE_MPI
 TEST(SipUnit,BlockIdInvalidRange){
@@ -1381,6 +1435,30 @@ TEST(BasicSial,return_sval_test){
 	controller.initSipTables();
 	controller.runWorker();
 	ASSERT_EQ(controller.scalar_value("x"), controller.scalar_value("y"));
+}
+
+TEST(BasicSial,index_scalar_cast){
+	std::string job("index_scalar_cast");
+	int norb = 4;
+	{
+	init_setup(job.c_str());
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	int segs[] = { 2, 2, 1 , 3};
+	set_aoindex_info(4, segs);
+	finalize_setup();
+	}
+	barrier();
+	std::stringstream output;
+	TestController controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+	int count = controller.int_value("count");
+	int count2 = controller.int_value("count2");
+	EXPECT_EQ(norb, count);
+	EXPECT_EQ(1, count2);
 }
 //****************************************************************************************************************
 

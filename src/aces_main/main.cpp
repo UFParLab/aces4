@@ -72,11 +72,12 @@ int main(int argc, char* argv[]) {
 			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
+			SIP_MASTER(std::cout << "Started at " << sip_timestamp() << std::endl);
 			runner.interpret();
 			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
-			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
+			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
 			sialxTimer.stop_program_timer();
 			std::ofstream worker_file("worker.timer", std::ofstream::app);
 			sialxTimer.print_timers(lno2name, worker_file);

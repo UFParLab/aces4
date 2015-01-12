@@ -1,0 +1,25 @@
+sial index_scalar_cast
+	predefined int norb
+	aoindex a = 1:norb
+	scalar myscalar
+	scalar myotherscalar = 1.0
+	scalar myotherscalar2 = 4.0
+	int count = 0
+	int count2 = 0
+	do a
+	   myscalar = (scalar)a
+	   print myscalar
+	   print myotherscalar
+	   if myscalar == myotherscalar
+	      println "myscalar == myotherscalar"
+	      count += 1
+	   endif	
+	   myotherscalar += 1.0  
+	   if myscalar == myotherscalar2
+	      count2 +=1
+	   endif
+	enddo a
+	print count # test that this is equal to norb
+	print count2 # test that is is equal to 1
+endsial index_scalar_cast
+

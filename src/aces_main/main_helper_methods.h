@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fenv.h>
+#include <ctime>
 
 #include <execinfo.h>
 #include <signal.h>
@@ -253,6 +254,20 @@ setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
 	}
 	setup_reader->aces_validate();
 	return setup_reader;
+}
+
+/**
+ * Returns the system timestamp as a string
+ * @return
+ */
+std::string sip_timestamp(){
+	time_t rawtime;
+	struct tm * timeinfo;
+	time (&rawtime);
+	timeinfo = localtime (&rawtime);
+	std::stringstream ss;
+	std::string timestamp_str(asctime(timeinfo));
+	return timestamp_str;
 }
 
 #endif /* MAIN_HELPER_METHODS_H_ */

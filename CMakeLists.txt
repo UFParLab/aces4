@@ -487,7 +487,7 @@ if (HAVE_MPI) # Multi Node Version Tests
 	add_test(NAME test_interpreters COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_unit)
 	
 else() # Single Node Version Tests
-  
+
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
     add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
@@ -529,6 +529,8 @@ set(SIAL_FILES
     src/sialx/test/local_arrays_wild_fail.sialx;
     src/sialx/test/basic_assign_to_static_array_test.sialx;
     src/sialx/test/contiguous_local.sialx;
+    src/sialx/test/contiguous_local_2.sialx;
+    src/sialx/test/contiguous_local_allocate_twice_fail.sialx;
     src/sialx/test/block_scale_assign.sialx;
     src/sialx/test/return_sval_test.sialx;
     src/sialx/test/broadcast_static.sialx;
@@ -583,6 +585,10 @@ set(SIAL_FILES
     src/sialx/test/int_ops.sialx;
     src/sialx/test/int_self_ops.sialx;
     src/sialx/test/scalar_valued_blocks.sialx;
+    src/sialx/test/broadcast_static.sialx;
+    src/sialx/test/block_scale_assign.sialx;
+    src/sialx/test/return_sval_test.sialx;
+    src/sialx/test/index_scalar_cast.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
@@ -614,7 +620,7 @@ set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
 set (SIAL_COMPILED_FILES "")
 foreach(F ${SIAL_FILES})
     get_filename_component(F_WE ${CMAKE_SOURCE_DIR}/${F} NAME_WE)
-        get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
+    get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
     get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 
     set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")

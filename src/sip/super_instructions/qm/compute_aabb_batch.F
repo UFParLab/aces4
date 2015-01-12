@@ -214,6 +214,8 @@ c     niscr = 5000000
 
       offset_1 = 0
       offset_2 = 0
+      offset_3 = 0
+      offset_4 = 0
       if (index_values_1(1).gt.1) offset_1=paosegs(index_values_1(1)-1)
       if (index_values_1(2).gt.1) offset_2=paosegs(index_values_1(2)-1)
       if (index_values_1(3).gt.1) offset_3=paosegs(index_values_1(3)-1)

@@ -1,4 +1,4 @@
-sial contiguous_local
+sial contiguous_local_alloc_twice_fail
 special fill_block_sequential wr
 # in test_basic_sial
 #		set_constant("norb", 4);
@@ -58,7 +58,7 @@ enddo i
 print loc1[1:2,1:2]
 print loc1[3:4,3:4]
 
-deallocate contiguous loc1[1:2,1:2]
-deallocate contiguous loc1[3:4,3:4]
+allocate contiguous loc1[1:2,1:2]
+allocate contiguous loc1[3:4,3:4]
 
-endsial contiguous_local
+endsial contiguous_local_alloc_twice_fail

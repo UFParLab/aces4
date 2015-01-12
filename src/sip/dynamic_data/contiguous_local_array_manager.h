@@ -21,7 +21,7 @@ class CachedBlockMap;
 
 
 /** This class manages contiguous local arrays.  It shares the same BlockIdMap as the BlockManager
- * and the WriteBack and ReadBlock list as the ContiguousArrayManager.
+ * and the same WriteBack and ReadBlock list as the ContiguousArrayManager.
  * Eventually, we probably want to restructure this code.
  */
 class ContiguousLocalArrayManager {
@@ -36,15 +36,6 @@ public:
 	Block::BlockPtr get_block_for_reading(const BlockId& id, ReadBlockList& read_block_list);
 	Block::BlockPtr get_block_for_updating(const BlockId& id, WriteBackList& write_back_list);
 	Block::BlockPtr get_block_for_accumulate(const BlockId& id, WriteBackList& write_back_list);
-
-//	/** Returns a pointer to the first region for this array in the map or NULL if the array does not exist.
-//	 *
-//	 * @param array_id  the array_table slot of the desired array
-//	 * @return  BlockPtr to a  Block containing the first region (according to the ordering, usually there will be only on) in the map.
-//	 */
-//	Block::BlockPtr get_array(int array_id);
-
-
 
 	friend std::ostream& operator<<(std::ostream&, const ContiguousLocalArrayManager&);
 
