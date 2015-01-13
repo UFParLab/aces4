@@ -123,19 +123,19 @@ public:
 					int blk_wait_offset = i + static_cast<int>(ServerTimer::BLOCKWAITTIME) * sialx_lines_;
 					if (timer_counts[blk_wait_offset] > 0L){
 						tot_blk_wait = timer.to_seconds(timers[blk_wait_offset]);
-						avg_blk_wait = tot_blk_wait / timer_counts[blk_wait_offset];
+						avg_blk_wait = tot_blk_wait / timer_counts[tot_time_offset];
 					}
 
 					int read_timer_offset = i + static_cast<int>(ServerTimer::READTIME) * sialx_lines_;
 					if (timer_counts[read_timer_offset] > 0L){
 						tot_disk_read = timer.to_seconds(timers[read_timer_offset]);
-						avg_disk_read = tot_disk_read / timer_counts[read_timer_offset];
+						avg_disk_read = tot_disk_read / timer_counts[tot_time_offset];
 					}
 
 					int write_timer_offset = i + static_cast<int>(ServerTimer::WRITETIME) * sialx_lines_;
 					if (timer_counts[write_timer_offset] > 0L){
 						tot_disk_write = timer.to_seconds(timers[write_timer_offset]);
-						avg_disk_write = tot_disk_write / timer_counts[write_timer_offset];
+						avg_disk_write = tot_disk_write / timer_counts[tot_time_offset];
 					}
 
 					out_<<std::setw(LW)<<std::left << i
