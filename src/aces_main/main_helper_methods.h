@@ -255,7 +255,11 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 	int num_processes = sip::SIPMPIAttr::comm_world_size();
 	if (parameters.num_workers == -1 || parameters.num_servers == -1){
 		// Option not specified. Use default
-		parameters.num_servers = num_processes / (sip::GlobalState::get_default_worker_server_ratio() + 1);
+		if (num_processes < sip::GlobalState::get_default_worker_server_ratio() + 1){
+			parameters.num_servers = 1;
+		} else {
+			parameters.num_servers = num_processes / (sip::GlobalState::get_default_worker_server_ratio() + 1);
+		}
 		parameters.num_workers = num_processes - parameters.num_servers;
 	} else if (parameters.num_workers + parameters.num_servers != num_processes){
 		std::stringstream err_ss;
