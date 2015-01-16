@@ -15,12 +15,13 @@ int main(int argc, char* argv[]) {
 	check_expected_datasizes();
     setup_signal_and_exception_handlers();
     mpi_init(&argc, &argv);
+
+	Aces4Parameters parameters = parse_command_line_parameters(argc, argv);
+	set_rank_distribution(parameters);
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
 
 	INIT_GLOBAL_TIMERS(&argc, &argv);
-
-	Aces4Parameters parameters = parse_command_line_parameters(argc, argv);
 
 	// Set Approx Max memory usage
 	sip::GlobalState::set_max_data_memory_usage(parameters.memory);

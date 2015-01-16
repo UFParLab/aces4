@@ -13,8 +13,6 @@
 #include "block_id.h"
 #include "sip_tables.h"
 #include "sip_mpi_attr.h"
-#include "sip_tables.h"
-
 namespace sip {
 
 /**

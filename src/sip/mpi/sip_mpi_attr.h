@@ -32,6 +32,7 @@ public:
 
 	// Singleton factory
 	static SIPMPIAttr& get_instance() ;
+	static int comm_world_size();
 	static void set_rank_distribution(RankDistribution *rank_dist);
 
 	/** Delete singleton instance */
@@ -61,7 +62,7 @@ public:
 
 	const MPI_Comm& company_communicator() const { return company_comm_; }
 
-	int my_server(){return my_server_;}
+	const std::vector<int>& my_servers(){return my_servers_;}
 
 	friend std::ostream& operator<<(std::ostream&, const SIPMPIAttr&);
 
@@ -85,7 +86,7 @@ private:
 	int global_size_; // Number of ranks in MPI_COMM_WORLD
 	// Rank w.r.t. company
 	int company_size_; // Size of company
-	int my_server_; //server to communicate with, or none if not responsible for a server.
+	std::vector<int> my_servers_; //server to communicate with, or none if not responsible for a server.
 
 	MPI_Comm company_comm_; // This company's communicator
 	MPI_Comm server_comm_; // Server company communicator
@@ -110,6 +111,7 @@ private:
 
 
 #include "sip.h"
+#include "rank_distribution.h"
 
 
 //TODO  come up with a less military naming scheme
@@ -128,6 +130,8 @@ public:
 
 	// Singleton factory
 	static SIPMPIAttr& get_instance() ;
+	static int comm_world_size();
+	static void set_rank_distribution(RankDistribution *rank_dist);
 
 	/** Delete singleton instance */
 	static void cleanup() ;
@@ -153,7 +157,7 @@ public:
 	int worker_master() const { return 0; }
 	int server_master() const { return 0; }
 
-	int my_server(){return -1;}
+	//int my_server(){return -1;}
 
 	friend std::ostream& operator<<(std::ostream&, const SIPMPIAttr&);
 

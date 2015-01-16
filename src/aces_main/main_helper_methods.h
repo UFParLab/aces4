@@ -24,6 +24,7 @@
 #include "block.h"
 #include "global_state.h"
 #include "sip_mpi_attr.h"
+#include "rank_distribution.h"
 
 #include <vector>
 #include <sstream>
@@ -66,8 +67,11 @@ static void print_usage(const std::string& program_name) {
 	std::cerr << "\t -j : json initialization file, use EITHER -d or -j " << std::endl;
 	std::cerr << "\t -s : directory of compiled sialx files  " << std::endl;
 	std::cerr << "\t -m : memory to be used by workers (and servers) specified in GB " << std::endl;
+	std::cerr << "\t -w : number of workers  " << std::endl;
+	std::cerr << "\t -r : number of servers  " << std::endl;
 	std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
 	std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
+	std::cerr << "\tworkers & servers are distributed in a 2:1 ratio for an MPI build" << std::endl;
 	std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 }
 
@@ -106,7 +110,6 @@ static void mpi_init(int *argc, char ***argv){
 #ifdef HAVE_MPI
 	/* MPI Initialization */
 	MPI_Init(argc, argv);
-	sip::SIPMPIUtils::set_error_handler();
 #endif //HAVE_MPI
 }
 
@@ -154,6 +157,8 @@ struct Aces4Parameters{
 	bool init_binary_specified;
 	std::size_t memory;
 	std::string job;
+	int num_workers;
+	int num_servers;
 	Aces4Parameters(){
 		init_binary_file = "data.dat";	// Default initialization file is data.dat
 		sialx_file_dir = ".";			// Default directory for compiled sialx files is "."
@@ -162,8 +167,19 @@ struct Aces4Parameters{
 		init_json_specified = false;
 		init_binary_specified = false;
 		job = "";
+		num_workers = -1;
+		num_servers = -1;
 	}
 };
+
+template<typename T>
+static T read_from_optarg() {
+	std::string str(optarg);
+	std::stringstream ss(str);
+	T d;
+	ss >> d;
+	return d;
+}
 
 /**
  * Parses the command line arguments
@@ -180,8 +196,10 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 	// j: name of json file (must specify either of d or j, not both.
 	// s: directory to look for siox files
 	// m: approximate memory to be used. Actual usage will be more than this.
+	// w : number of workers
+	// r : number of servers
 	// h & ? are for help. They require no arguments
-	const char* optString = "d:j:s:m:h?";
+	const char* optString = "d:j:s:m:w:r:h?";
 	int c;
 	while ((c = getopt(argc, argv, optString)) != -1) {
 		switch (c) {
@@ -200,11 +218,16 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 		}
 			break;
 		case 'm': {
-			std::string memory_string(optarg);
-			std::stringstream ss(memory_string);
-			double memory_in_gb;
-			ss >> memory_in_gb;
+			double memory_in_gb = read_from_optarg<double>();
 			parameters.memory = memory_in_gb * 1024L * 1024L * 1024L;
+		}
+			break;
+		case 'w' : {
+			parameters.num_workers = read_from_optarg<int>();
+		}
+			break;
+		case 'r' : {
+			parameters.num_servers = read_from_optarg<int>();
 		}
 			break;
 		case 'h':
@@ -228,6 +251,20 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 		parameters.job = parameters.init_json_file;
 	else
 		parameters.job = parameters.init_binary_file;
+
+	int num_processes = sip::SIPMPIAttr::comm_world_size();
+	if (parameters.num_workers == -1 || parameters.num_servers == -1){
+		// Option not specified. Use default
+		parameters.num_servers = num_processes / (sip::GlobalState::get_default_worker_server_ratio() + 1);
+		parameters.num_workers = num_processes - parameters.num_servers;
+	} else if (parameters.num_workers + parameters.num_servers != num_processes){
+		std::stringstream err_ss;
+		err_ss << "Number of workers (" << parameters.num_workers << ")"
+				<< "and number of servers (" << parameters.num_servers << ")"
+				<< "must add up to the number of MPI processes (" << num_processes << ")";
+		sip::fail (err_ss.str());
+	}
+
 
 	return parameters;
 }
@@ -255,6 +292,15 @@ setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
 	setup_reader->aces_validate();
 	return setup_reader;
 }
+
+void set_rank_distribution(const Aces4Parameters& parameters) {
+#ifdef HAVE_MPI
+	sip::ConfigurableRankDistribution *rank_distribution =
+			new sip::ConfigurableRankDistribution(parameters.num_workers, parameters.num_servers);
+	sip::SIPMPIAttr::set_rank_distribution(rank_distribution);
+#endif
+}
+
 
 /**
  * Returns the system timestamp as a string

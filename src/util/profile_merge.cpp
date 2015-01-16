@@ -28,20 +28,6 @@ void print_usage(const std::string& program_name) {
 	std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 }
 
-// Since this executable need not be run with servers
-// or with 2 ranks, all ranks are made to be workers.
-class AllWorkerRankDistribution : public sip::RankDistribution{
-public:
-	virtual bool is_server(int rank, int size){
-		return false;
-	}
-	virtual int local_server_to_communicate(int rank, int size){
-		return -1;
-	}
-	virtual bool is_local_worker_to_communicate(int rank, int size){
-		return false;
-	}
-};
 
 // Merges the profiles in the current directory.
 // The arguments to the program are
@@ -54,7 +40,9 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_MPI
 	/* MPI Initialization */
 	MPI_Init(&argc, &argv);
-	AllWorkerRankDistribution all_workers_rank_dist;
+	// Since this executable need not be run with servers
+	// or with 2 ranks, all ranks are made to be workers.
+	sip::AllWorkerRankDistribution all_workers_rank_dist;
 	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 #endif
 

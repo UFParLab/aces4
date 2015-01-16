@@ -27,6 +27,7 @@
 #include "profile_timer_store.h"
 #include "profile_timer.h"
 #include "global_state.h"
+#include "rank_distribution.h"
 
 
 #ifdef HAVE_MPI
@@ -1192,6 +1193,566 @@ TEST(CachedBlockMap, insert_after_cached_delete){
 	}
 }
 
+
+TEST(ConfigurableRankDistribution, test1){
+	const int num_processes = 10;
+	const int num_workers = 9;
+	const int num_servers = 1;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			false,	// 4
+			false,	// 5
+			false,	// 6
+			false,	// 7
+			false,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			false,	// 4
+			false,	// 5
+			false,	// 6
+			false,	// 7
+			false,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_EQ(servers.size(), 1);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test2){
+	const int num_processes = 10;
+	const int num_workers = 8;
+	const int num_servers = 2;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			true,	// 4
+			false,	// 5
+			false,	// 6
+			false,	// 7
+			false,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			false,	// 4
+			true,	// 5
+			false,	// 6
+			false,	// 7
+			false,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 4;
+	local_servers_to_communicate[5][0] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_EQ(servers.size(), 1);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test3){
+	const int num_processes = 10;
+	const int num_workers = 7;
+	const int num_servers = 3;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			false,	// 1
+			false,	// 2
+			true,	// 3
+			false,	// 4
+			false,	// 5
+			true,	// 6
+			false,	// 7
+			false,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			true,	// 4
+			false,	// 5
+			false,	// 6
+			true,	// 7
+			false,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 3;
+	local_servers_to_communicate[4][0] = 6;
+	local_servers_to_communicate[7][0] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_EQ(servers.size(), 1);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test4){
+	const int num_processes = 10;
+	const int num_workers = 6;
+	const int num_servers = 4;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			false,	// 1
+			true,	// 2
+			false,	// 3
+			false,	// 4
+			true,	// 5
+			false,	// 6
+			true,	// 7
+			false,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			true,	// 3
+			false,	// 4
+			false,	// 5
+			true,	// 6
+			false,	// 7
+			true,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 2;
+	local_servers_to_communicate[3][0] = 5;
+	local_servers_to_communicate[6][0] = 7;
+	local_servers_to_communicate[8][0] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_EQ(servers.size(), 1);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test5){
+	const int num_processes = 10;
+	const int num_workers = 5;
+	const int num_servers = 5;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			true,	// 1
+			false,	// 2
+			true,	// 3
+			false,	// 4
+			true,	// 5
+			false,	// 6
+			true,	// 7
+			false,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			true,	// 2
+			false,	// 3
+			true,	// 4
+			false,	// 5
+			true,	// 6
+			false,	// 7
+			true,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 1;
+	local_servers_to_communicate[2][0] = 3;
+	local_servers_to_communicate[4][0] = 5;
+	local_servers_to_communicate[6][0] = 7;
+	local_servers_to_communicate[8][0] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_EQ(servers.size(), 1);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test6){
+	const int num_processes = 10;
+	const int num_workers = 4;
+	const int num_servers = 6;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			true,	// 1
+			true,	// 2
+			false,	// 3
+			true,	// 4
+			true,	// 5
+			false,	// 6
+			true,	// 7
+			false,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			true,	// 3
+			false,	// 4
+			false,	// 5
+			true,	// 6
+			false,	// 7
+			true,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
+		std::cout << *it << "\t" ;
+	}
+	std::cout << std::endl;
+	for (int i=0; i<num_processes; ++i){
+		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
+	}
+	std::cout << std::endl;
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 1;
+	local_servers_to_communicate[0][1] = 2;
+	local_servers_to_communicate[3][0] = 4;
+	local_servers_to_communicate[3][1] = 5;
+	local_servers_to_communicate[6][0] = 7;
+	local_servers_to_communicate[8][0] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_GT(servers.size(), 0);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test7){
+	const int num_processes = 10;
+	const int num_workers = 3;
+	const int num_servers = 7;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			true,	// 1
+			true,	// 2
+			true,	// 3
+			false,	// 4
+			true,	// 5
+			true,	// 6
+			false,	// 7
+			true,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			true,	// 4
+			false,	// 5
+			false,	// 6
+			true,	// 7
+			false,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
+		std::cout << *it << "\t" ;
+	}
+	std::cout << std::endl;
+	for (int i=0; i<num_processes; ++i){
+		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
+	}
+	std::cout << std::endl;
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 1;
+	local_servers_to_communicate[0][1] = 2;
+	local_servers_to_communicate[0][2] = 3;
+	local_servers_to_communicate[4][0] = 5;
+	local_servers_to_communicate[4][1] = 6;
+	local_servers_to_communicate[7][0] = 8;
+	local_servers_to_communicate[7][1] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_GT(servers.size(), 0);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+
+TEST(ConfigurableRankDistribution, test8){
+	const int num_processes = 10;
+	const int num_workers = 2;
+	const int num_servers = 8;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			true,	// 1
+			true,	// 2
+			true,	// 3
+			true,	// 4
+			false,	// 5
+			true,	// 6
+			true,	// 7
+			true,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			false,	// 4
+			true,	// 5
+			false,	// 6
+			false,	// 7
+			false,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
+		std::cout << *it << "\t" ;
+	}
+	std::cout << std::endl;
+	for (int i=0; i<num_processes; ++i){
+		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
+	}
+	std::cout << std::endl;
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 1;
+	local_servers_to_communicate[0][1] = 2;
+	local_servers_to_communicate[0][2] = 3;
+	local_servers_to_communicate[0][3] = 4;
+	local_servers_to_communicate[5][0] = 6;
+	local_servers_to_communicate[5][1] = 7;
+	local_servers_to_communicate[5][2] = 8;
+	local_servers_to_communicate[5][3] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_GT(servers.size(), 0);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+TEST(ConfigurableRankDistribution, test9){
+	const int num_processes = 10;
+	const int num_workers = 1;
+	const int num_servers = 9;
+	bool reference_is_server_array[num_processes] = {
+			false,	// 0
+			true,	// 1
+			true,	// 2
+			true,	// 3
+			true,	// 4
+			true,	// 5
+			true,	// 6
+			true,	// 7
+			true,	// 8
+			true	// 9
+	};
+	bool local_worker_to_communicate[num_processes] = {
+			true,	// 0
+			false,	// 1
+			false,	// 2
+			false,	// 3
+			false,	// 4
+			false,	// 5
+			false,	// 6
+			false,	// 7
+			false,	// 8
+			false	// 9
+	};
+
+	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
+	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+
+	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
+		std::cout << *it << "\t" ;
+	}
+	std::cout << std::endl;
+	for (int i=0; i<num_processes; ++i){
+		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
+	}
+	std::cout << std::endl;
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	}
+
+	for (int i=0; i<num_processes; ++i){
+		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	}
+
+	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+	local_servers_to_communicate[0][0] = 1;
+	local_servers_to_communicate[0][1] = 2;
+	local_servers_to_communicate[0][2] = 3;
+	local_servers_to_communicate[0][3] = 4;
+	local_servers_to_communicate[0][4] = 5;
+	local_servers_to_communicate[0][5] = 6;
+	local_servers_to_communicate[0][6] = 7;
+	local_servers_to_communicate[0][7] = 8;
+	local_servers_to_communicate[0][8] = 9;
+
+	for (int i=0; i<num_processes; ++i){
+		if (rd.is_local_worker_to_communicate(i)){
+			std::vector<int> servers = rd.local_servers_to_communicate(i);
+			ASSERT_GT(servers.size(), 0);
+			for (int j=0; j<servers.size(); ++j){
+				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+			}
+		}
+	}
+}
+
+
 int main(int argc, char **argv) {
 
 #ifdef HAVE_MPI
@@ -1199,10 +1760,12 @@ int main(int argc, char **argv) {
 	int num_procs;
 	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
 
-	if (num_procs < 2){
-		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
-		return -1;
-	}
+//	if (num_procs < 2){
+//		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
+//		return -1;
+//	}
+	sip::AllWorkerRankDistribution all_workers_rank_dist;
+	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 
 	sip::SIPMPIUtils::set_error_handler();
 #endif // HAVE_MPI

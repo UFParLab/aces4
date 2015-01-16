@@ -143,6 +143,8 @@ ACES_SOURCEFILES=\
 ./src/sip/cuda/gpu_super_instructions.h\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\
+./src/sip/mpi/rank_distribution.h \
+./src/sip/mpi/rank_distribution.cpp \
 $(ACES_SETUPFILES)\
 $(ACES_CORE_FILES)\
 $(ACES_DATA_FILES)
@@ -150,10 +152,6 @@ $(ACES_DATA_FILES)
 # MPI
 if WORKING_MPI
 ACES_SOURCEFILES +=\
-./src/sip/mpi/rank_distribution.h \
-./src/sip/mpi/rank_distribution.cpp \
-./src/sip/mpi/data_distribution.cpp \
-./src/sip/mpi/data_distribution.h\
 ./src/sip/mpi/sip_mpi_utils.h\
 ./src/sip/mpi/sip_mpi_utils.cpp\
 ./src/sip/mpi/sip_mpi_constants.h\
@@ -175,6 +173,8 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
 ./src/sip/mpi/server_timer.h\
 ./src/sip/mpi/server_timer.cpp\
+./src/sip/mpi/data_distribution.cpp \
+./src/sip/mpi/data_distribution.h\
 ./src/sip/dynamic_data/mpi_state.h
 
 

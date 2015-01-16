@@ -95,10 +95,6 @@ set(ACES_CORE_FILES
 # MPI - Conditional compile for MPI files
 if (HAVE_MPI AND MPI_CXX_FOUND)
     set(ACES_MPI_FILES
-        src/sip/mpi/rank_distribution.h ;
-        src/sip/mpi/rank_distribution.cpp ;
-        src/sip/mpi/data_distribution.cpp ;
-        src/sip/mpi/data_distribution.h;
         src/sip/mpi/sip_mpi_utils.h;
         src/sip/mpi/sip_mpi_utils.cpp;
         src/sip/mpi/sip_mpi_constants.h;
@@ -119,7 +115,9 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/server_persistent_array_manager.h;
         src/sip/mpi/server_persistent_array_manager.cpp;
         src/sip/mpi/server_timer.h;
-        src/sip/mpi/server_timer.cpp;        
+        src/sip/mpi/server_timer.cpp;
+        src/sip/mpi/data_distribution.cpp ;
+    	src/sip/mpi/data_distribution.h;        
         src/sip/dynamic_data/mpi_state.h)
 else ()
     set(ACES_MPI_FILES "")
@@ -213,7 +211,9 @@ set(ACES_WORKER_FILES
     src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
     src/sip/cuda/gpu_super_instructions.h;
     src/sip/mpi/sip_mpi_attr.h;
-    src/sip/mpi/sip_mpi_attr.cpp)
+    src/sip/mpi/sip_mpi_attr.cpp;
+    src/sip/mpi/rank_distribution.h ;
+    src/sip/mpi/rank_distribution.cpp ;)
     
 #set(aces4_SRCS
 #    ${ACES_SETUP_FILES};

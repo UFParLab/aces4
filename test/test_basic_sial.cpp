@@ -1468,21 +1468,6 @@ void bt_sighandler(int signum) {
 	abort();
 }
 
-/**
- * All workers in rank distribution
- */
-class AllWorkerRankDistribution : public sip::RankDistribution{
-public:
-	virtual bool is_server(int rank, int size){
-		return false;
-	}
-	virtual int local_server_to_communicate(int rank, int size){
-		return -1;
-	}
-	virtual bool is_local_worker_to_communicate(int rank, int size){
-		return false;
-	}
-};
 
 int main(int argc, char **argv) {
 
@@ -1497,7 +1482,7 @@ int main(int argc, char **argv) {
 				<< std::endl;
 		return -1;
 	}
-	AllWorkerRankDistribution all_workers_rank_dist;
+	sip::AllWorkerRankDistribution all_workers_rank_dist;
 	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIUtils::set_error_handler();
 #endif

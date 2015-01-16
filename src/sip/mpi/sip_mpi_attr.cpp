@@ -30,9 +30,12 @@ SIPMPIAttr& SIPMPIAttr::get_instance() {
 	if (destroyed_)
 		sip::fail("SIPMPIAttr instance has been destroyed !");
 	if (instance_ == NULL){
-		if (rank_distribution_ == NULL)
-			rank_distribution_ = new TwoWorkerOneServerRankDistribution();
+		if (rank_distribution_ == NULL){
+			int num_proccesses = comm_world_size();
+			rank_distribution_ = new TwoWorkerOneServerRankDistribution(num_proccesses);
+		}
 		instance_ = new SIPMPIAttr(*rank_distribution_);
+		sip::SIPMPIUtils::set_error_handler();
 	}
 	return *instance_;
 }
@@ -50,6 +53,11 @@ void SIPMPIAttr::set_rank_distribution(RankDistribution *rank_dist) {
 	rank_distribution_ = rank_dist;
 }
 
+int SIPMPIAttr::comm_world_size(){
+	int num_proccesses;
+	SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_proccesses));
+	return num_proccesses;
+}
 
 void SIPMPIAttr::cleanup() {
 	delete instance_;
@@ -63,7 +71,7 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 		worker_master_(-1), server_master_(-1),
 		is_server_(false), is_company_master_(false),
 		global_rank_(-1), global_size_(-1),
-		company_size_(-1), my_server_(-1),
+		company_size_(-1),
 		server_group_(MPI_GROUP_NULL), worker_group_(MPI_GROUP_NULL),
 		server_comm_(MPI_COMM_NULL), worker_comm_(MPI_COMM_NULL), company_comm_(MPI_COMM_NULL){
 
@@ -84,7 +92,7 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 	int w=0, s=0;
 
 	for (int i=0; i<global_size_; i++){
-		if (rank_distribution.is_server(i, global_size_)){
+		if (rank_distribution.is_server(i)){
 			server_ranks[s++] = i;
 			servers_.push_back(i);
 		} else {
@@ -116,7 +124,7 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 		SIPMPIUtils::check_err(MPI_Comm_create(MPI_COMM_WORLD, worker_group_, &worker_comm_));
 	}
 
-	is_server_ = rank_distribution.is_server(global_rank_, global_size_);
+	is_server_ = rank_distribution.is_server(global_rank_);
 
 	if (is_server_){
 		company_comm_ = server_comm_;
@@ -139,9 +147,7 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 	delete [] worker_ranks;
 	delete [] server_ranks;
 
-	if (rank_distribution.is_local_worker_to_communicate(global_rank_, global_size_))
-		my_server_ = rank_distribution.local_server_to_communicate(global_rank_, global_size_);
-	else my_server_ =  -1;
+	my_servers_ = rank_distribution.local_servers_to_communicate(global_rank_);
 
 }
 
@@ -212,6 +218,10 @@ SIPMPIAttr& SIPMPIAttr::get_instance() {
 	}
 	return *instance_;
 }
+
+void SIPMPIAttr::set_rank_distribution(RankDistribution* rank_distribution){ /* Do Nothing */ }
+
+int SIPMPIAttr::comm_world_size() { return 1; }
 
 void SIPMPIAttr::cleanup() {
 	delete instance_;

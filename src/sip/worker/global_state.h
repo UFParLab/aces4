@@ -34,6 +34,8 @@ public:
 
 	static std::size_t get_max_data_memory_usage() { return max_data_memory_usage; }
 
+	static int get_default_worker_server_ratio() { return default_worker_server_ratio; }
+
 	static void reinitialize(){
 		prog_num = -1;
 		prog_name = "";
@@ -44,6 +46,7 @@ private:
 	static int prog_num;
 	static std::string prog_name;
 	static std::size_t max_data_memory_usage;
+	static int default_worker_server_ratio;
 };
 
 } /* namespace sip */

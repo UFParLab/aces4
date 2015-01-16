@@ -78,16 +78,19 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	block_manager_.block_map_.delete_per_array_map_and_blocks(array_id);
 
 	//send delete message to server if responsible worker
-	int server_rank = sip_mpi_attr_.my_server();
-	if (server_rank > 0) {
-		int line_number = current_line();
-		int to_send[3] = { array_id, line_number, barrier_support_.section_number() };
-		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
-		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
-		SIPMPIUtils::check_err(
-				MPI_Send(to_send, 3, MPI_INT, server_rank, delete_tag,
-						MPI_COMM_WORLD));
-		ack_handler_.expect_ack_from(server_rank, delete_tag);
+	const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();
+	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
+		int server_rank = *it;
+		if (server_rank >= 0) {
+			int line_number = current_line();
+			int to_send[3] = { array_id, line_number, barrier_support_.section_number() };
+			SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
+			int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
+			SIPMPIUtils::check_err(
+					MPI_Send(to_send, 3, MPI_INT, server_rank, delete_tag,
+							MPI_COMM_WORLD));
+			ack_handler_.expect_ack_from(server_rank, delete_tag);
+		}
 	}
 }
 
@@ -439,19 +442,22 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 		int string_slot) {
 	if (sip_tables_.is_distributed(array_slot)
 			|| sip_tables_.is_served(array_slot)) {
-		int my_server = sip_mpi_attr_.my_server();
-		if (my_server > 0) {
-			int set_persistent_tag;
-			set_persistent_tag =
-					barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
-			int line_number = current_line();
-			int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
-			SIPMPIUtils::check_err(
-					MPI_Send(buffer, 4, MPI_INT, my_server, set_persistent_tag,
-							MPI_COMM_WORLD));
+		const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();
+		for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
+			int my_server = *it;
+			if (my_server >= 0) {
+				int set_persistent_tag;
+				set_persistent_tag =
+						barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
+				int line_number = current_line();
+				int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+				SIPMPIUtils::check_err(
+						MPI_Send(buffer, 4, MPI_INT, my_server, set_persistent_tag,
+								MPI_COMM_WORLD));
 
-			//ack
-			ack_handler_.expect_ack_from(my_server, set_persistent_tag);
+				//ack
+				ack_handler_.expect_ack_from(my_server, set_persistent_tag);
+			}
 		}
 	} else {
 		if (persistent_array_manager_)
@@ -475,19 +481,22 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 
 	if (sip_tables_.is_distributed(array_slot)
 			|| sip_tables_.is_served(array_slot)) {
-		int my_server = sip_mpi_attr_.my_server();
-		if (my_server > 0) {
-			int restore_persistent_tag;
-			restore_persistent_tag =
-					barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
-			int line_number = current_line();
-			int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
-			SIPMPIUtils::check_err(
-					MPI_Send(buffer, 4, MPI_INT, my_server,
-							restore_persistent_tag, MPI_COMM_WORLD));
-			//expect ack
-			ack_handler_.expect_ack_from(my_server, restore_persistent_tag);
+		const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();
+		for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
+			int my_server = *it;
+			if (my_server >= 0) {
+				int restore_persistent_tag;
+				restore_persistent_tag =
+						barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
+				int line_number = current_line();
+				int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+				SIPMPIUtils::check_err(
+						MPI_Send(buffer, 4, MPI_INT, my_server,
+								restore_persistent_tag, MPI_COMM_WORLD));
+				//expect ack
+				ack_handler_.expect_ack_from(my_server, restore_persistent_tag);
         	}
+		}
 	} else {
 		if (persistent_array_manager_)
 			persistent_array_manager_->restore_persistent(worker, array_slot, string_slot);
@@ -501,16 +510,19 @@ void SialOpsParallel::end_program() {
 	//this is required to ensure that there are no pending messages
 	//at the server when the end_program message arrives.
 	sip_barrier();
-	int my_server = sip_mpi_attr_.my_server();
-	SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
-	//send end_program message to server, if designated worker and wait for ack.
-	if (my_server > 0) {
-		int end_program_tag;
-		end_program_tag = barrier_support_.make_mpi_tag_for_END_PROGRAM();
-		SIPMPIUtils::check_err(
-				MPI_Send(0, 0, MPI_INT, my_server, end_program_tag,
-						MPI_COMM_WORLD));
-		ack_handler_.expect_sync_ack_from(my_server, end_program_tag);
+	const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();
+	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
+		int my_server = *it;
+		SIP_LOG(std::cout << "I'm a worker and my server is " << my_servers << std::endl << std::flush);
+		//send end_program message to server, if designated worker and wait for ack.
+		if (my_server >= 0) {
+			int end_program_tag;
+			end_program_tag = barrier_support_.make_mpi_tag_for_END_PROGRAM();
+			SIPMPIUtils::check_err(
+					MPI_Send(0, 0, MPI_INT, my_server, end_program_tag,
+							MPI_COMM_WORLD));
+			ack_handler_.expect_sync_ack_from(my_server, end_program_tag);
+		}
 	}
 	//the program is done and the servers know it.
 	SIP_LOG(std::cout << "leaving end_program" << std::endl << std::flush);
