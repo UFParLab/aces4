@@ -37,6 +37,7 @@ aoindex aces_defs_mu = 1: norb
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
 predefined scalar r_thresh  #Threshold for pair calculation 
+predefined scalar elst_thresh  #Threshold for wC calculation 
           
 #predefined static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
 #predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 

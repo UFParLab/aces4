@@ -114,7 +114,7 @@ c arrays defining fragment to orbital mapping
       integer (C_INT) nbeta_virtual   
       integer(C_INT) ncenters 
       integer(C_INT) npcoeffs  
-      real(C_DOUBLE) r_thresh
+      real(C_DOUBLE) elst_thresh
       integer include_atom(10000) ! MAX OF 10,000 atoms  
       integer ifrag, jfrag
       double precision pair_flag  
@@ -133,7 +133,7 @@ c ----------------------------------------------------------------------
       nbeta_virtual   = int_constant("nbeta_virtual"//C_NULL_CHAR)
       nfrags          = int_constant("nfrags"//C_NULL_CHAR)
       npcoeffs        = int_constant("npcoeffs"//C_NULL_CHAR)
-      r_thresh        = scalar_constant("r_thresh"//C_NULL_CHAR) 
+      elst_thresh        = scalar_constant("elst_thresh"//C_NULL_CHAR) 
 
 c array defining which atoms are in which fragments 
 c ----------------------------------------------------------------------
@@ -229,7 +229,7 @@ c-------------------------------------------------------------------------
       ifrag = ix2 
       do jfrag = 1, nfrags 
          call return_dmin(ifrag,jfrag,nfrags,natoms_frag,watom_frag,
-     *                    pcoords, r_thresh, pair_flag)
+     *                    pcoords, elst_thresh, pair_flag)
          if (pair_flag .gt. 0.0) then 
             do j = 1, natoms_frag(jfrag) 
                include_atom(watom_frag(jfrag,j)) = 1 

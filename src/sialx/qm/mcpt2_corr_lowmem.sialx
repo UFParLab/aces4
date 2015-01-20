@@ -510,7 +510,7 @@ import "trans_frag_defs.sialx"
             ENDIF
          ENDDO jjfrag
 
-         execute return_pairs icount jcount r_thresh pair_flag 
+         execute return_pairs icount jcount elst_thresh pair_flag 
          if pair_flag > zero
 
         #print_scalar icount
@@ -6457,6 +6457,7 @@ import "trans_frag_defs.sialx"
       one  = 1.0 
 ###   r_thresh = 12.0 # SHOULD BE READ ???? 
       print r_thresh 
+      print elst_thresh 
       sip_barrier
       print "Done restoring persistent arrays" 
 
