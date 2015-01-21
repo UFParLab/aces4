@@ -51,6 +51,22 @@ int test_contraction_small2(double*);
 //bool VERBOSE_TEST = false;
 bool VERBOSE_TEST = true;
 
+TEST(Temp,gather){
+	int nprocs;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	int myrank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	int sendbuf[] = {myrank, myrank + 100, myrank + 200};
+	int allranks[nprocs*3];
+	MPI_Gather(sendbuf, 3, MPI_INT, allranks, 3,  MPI_INT, 0, MPI_COMM_WORLD);
+	if (myrank == 0){
+		for(int i = 0; i < nprocs*3; ++i){
+			std::cout << allranks[i] << " ";
+		}
+	}
+	std::cout << "bye from rank " << myrank << std::endl << std::flush;
+
+}
 
 TEST(Sial,empty){
 	std::string job("empty");
@@ -65,11 +81,9 @@ TEST(Sial,empty){
 		finalize_setup();
 	}
 	std::stringstream output;
-
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
 	controller.run();
-
 }
 
 /** This function takes lower and upper ranges of indices
@@ -111,7 +125,7 @@ void basic_pardo_test(int max_dims, int lower[], int upper[],
 			finalize_setup();
 		}
 
-		TestControllerParallel controller(job, true, VERBOSE_TEST,
+		TestControllerParallel controller(job, true, true,
 				"This is a test of " + job, std::cout, expect_success);
 		controller.initSipTables();
 		controller.run();
@@ -194,6 +208,16 @@ TEST(Sial,broadcast_static){
 
 TEST(Sial,put_test) {
 	std::string job("put_test");
+
+	std::ofstream instrumentation_output;
+	if(attr->is_worker() && attr->is_company_master()){ //only open the file at master worker
+		std::stringstream ss1;
+		ss1 << "inst_"<< job << ".csv";
+		std::string filename1 = ss1.str();
+		instrumentation_output.open(filename1.c_str(),std::ofstream::out);
+	}
+
+
 	int norb = 3;
 	int segs[] = { 2, 3, 2 };
 	if (attr->global_rank() == 0) {
@@ -228,6 +252,9 @@ TEST(Sial,put_test) {
 			}
 		}
 	}
+	controller.gather_pc_histogram(instrumentation_output);
+	controller.gather_opcode_histogram(instrumentation_output);
+	controller.gather_timing(instrumentation_output);
 
 }
 
@@ -252,8 +279,8 @@ TEST(Sial,persistent_scalars) {
 		finalize_setup();
 	}
 
-	std::stringstream output;
-	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//	std::stringstream output;
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", std::cout);
 	controller.initSipTables();
 	controller.run();
 	if (attr->is_worker()) {

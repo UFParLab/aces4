@@ -63,6 +63,9 @@ public:
 	double* local_block(const std::string& name, const std::vector<int>indices);
 	double* static_array(const std::string& name);
 	void print_timers(std::ostream& out);
+	void gather_pc_histogram(std::ostream& out);
+	void gather_opcode_histogram(std::ostream& out);
+	void gather_timing(std::ostream& out);
 
 	int num_workers();
 	int num_servers();

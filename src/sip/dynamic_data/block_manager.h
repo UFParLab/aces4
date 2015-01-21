@@ -18,6 +18,7 @@
 #include <stack>
 #include "block.h"
 #include "cached_block_map.h"
+#include "counter.h"
 
 
 namespace sip {
@@ -263,9 +264,16 @@ private:
 													//contents.
     std::list<Block*> pending_delete_;  //list of blocks that can be deleted as soon as pending communication is finished.
 
+    Counter blocks_added_to_pending_delete_list_;
+    Counter blocks_created_;
+    MaxCounter max_blocks_;
+    SimpleTimer wait_pending_delete_;
+
 	friend class SialOpsSequential;
 	friend class SialOpsParallel;
 	friend class ContiguousLocalArrayManager;
+	friend class TestController;
+	friend class TestControllerParallel;
 
 
 

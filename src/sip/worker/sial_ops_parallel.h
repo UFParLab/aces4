@@ -14,6 +14,7 @@
 #include "sip_mpi_attr.h"
 #include "block_manager.h"
 #include "data_distribution.h"
+#include "counter.h"
 //#include "data_manager.h"
 //#include "worker_persistent_array_manager.h"
 
@@ -95,6 +96,7 @@ private:
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;
 	SialxTimer* sialx_timers_;
+	SimpleTimer sial_ops_block_wait_;
 
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;

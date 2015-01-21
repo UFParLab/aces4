@@ -45,7 +45,7 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 		job_(job), verbose_(verbose), comment_(comment), sial_output_(
 				sial_output), sip_tables_(NULL), wpam_(NULL), expect_success_(
 				expect_success), worker_(NULL), printer_(NULL),
-				prog_number_(0){
+				prog_number_(0), sialx_timers_(NULL){
 // 	barrier();
 //	if (has_dot_dat_file) {
 //		barrier();
@@ -252,6 +252,17 @@ std::string TestController::expectedOutput() {
 	buffer << t.rdbuf();
 	return buffer.str();
 }
+
+void TestController::print_timers(std::ostream& out){
+	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
+	sialx_timers_->print_timers(lno2name, out);
+	out<< std::flush;
+}
+
+void TestController::print_trace_data(std::ostream& out){
+    out << "Rank " << attr->global_rank() << " Trace data " <<  worker_->tracer_ << std::endl << std::flush;
+}
+
 
 
 

@@ -6,7 +6,7 @@
 #include <iostream>
 #include "setup_reader.h"
 #include "test_constants.h"
-
+#include "sialx_timer.h"
 
 
 namespace sip{
@@ -30,7 +30,7 @@ public:
 	void initSipTables(const std::string& sial_dir_name = dir_name);
 	void run();
 
-/** These methods can be called to retrieve values computed during the sial program. */
+/** These methods can be called to retrieve or output values computed during the sial program. */
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
 	double* local_block(const std::string& name, const std::vector<int>indices);
@@ -38,7 +38,8 @@ public:
 	void runWorker();
 	int num_workers();
 	std::string expectedOutput();
-
+	void print_timers(std::ostream& out);
+	void print_trace_data(std::ostream& out);
 
 
 	const std::string job_;
@@ -55,6 +56,7 @@ public:
 	int prog_number_;
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
+	sip::SialxTimer* sialx_timers_;
 
 };
 

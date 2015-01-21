@@ -30,6 +30,7 @@
 
 #include "block.h"
 #include "sip_mpi_attr.h"
+#include "tracer.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -53,11 +54,13 @@
  *
  */
 
+
+//TODO  for now, sial_output_ param is ignored
 TestControllerParallel::TestControllerParallel(std::string job,
 		bool has_dot_dat_file, bool verbose, std::string comment,
 		std::ostream& sial_output, bool expect_success) :
 		job_(job), verbose_(verbose), comment_(comment), sial_output_(
-				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
+				std::cout), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
 				NULL), server_(NULL), worker_(NULL), printer_(NULL), server_timer_(NULL), sialx_timers_(NULL) {
 	barrier();
@@ -145,6 +148,7 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 			std::cout << comment_ << std::endl << std::flush;
 		}
 	}
+//	if (printer_)delete printer_;
 	printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(), *sip_tables_);
 	barrier();
 }
@@ -201,6 +205,45 @@ void TestControllerParallel::print_timers(std::ostream& out){
 	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
 	sialx_timers_->print_timers(lno2name, out);
 	out<< std::flush;
+}
+
+void TestControllerParallel::gather_pc_histogram(std::ostream& out) {
+	if (attr->is_worker()) {
+		sip::Tracer *tr = worker_->tracer_;
+//		std::cout << "RANK " << attr->global_rank() << ": "
+//				<< tr->histogram_to_string() << std::endl << std::flush;
+		std::stringstream ss;
+		tr-> gather_pc_histogram_to_csv(ss);
+		if (attr->is_company_master()){
+			out << ss.str() << std::endl << std::flush;
+		}
+	}
+}
+
+void TestControllerParallel::gather_opcode_histogram(std::ostream& out){
+	if (attr->is_worker()) {
+		sip::Tracer *tr = worker_->tracer_;
+//		std::cout << "RANK " << attr->global_rank() << ": "
+//				<< tr->histogram_to_string() << std::endl << std::flush;
+		std::stringstream ss;
+		tr-> gather_opcode_histogram_to_csv(ss);
+		if (attr->is_company_master()){
+			out << ss.str() << std::endl << std::flush;
+		}
+	}
+}
+
+void TestControllerParallel::gather_timing(std::ostream& out){
+	if (attr->is_worker()) {
+		sip::Tracer *tr = worker_->tracer_;
+//		std::cout << "RANK " << attr->global_rank() << ": "
+//				<< tr->histogram_to_string() << std::endl << std::flush;
+		std::stringstream ss;
+		tr-> gather_timing_to_csv(ss);
+		if (attr->is_company_master()){
+			out << ss.str() << std::endl << std::flush;
+		}
+	}
 }
 
 void TestControllerParallel::run() {
@@ -283,12 +326,15 @@ std::cout << "before creating server timer " << std::endl << std::flush;
 			server_->run();
 		}
 
-		if (verbose_) {
-			if (std::cout != sial_output_)
-				std::cout << sial_output_.rdbuf();
-			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
-					<< job_ << "SERVER TERMINATED " << std::endl << std::flush;
-		}
+//		if (verbose_) {
+//			if (std::cout != sial_output_){
+//				std::stringbuf buff;
+//				sial_output_.rdbuf(&buff);
+//				std::cout << buff.str();
+//			}
+//			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
+//					<< job_ << "SERVER TERMINATED " << std::endl << std::flush;
+//		}
 		spam_->save_marked_arrays(server_);
 	}
 	sial_output_ << std::flush;
@@ -313,9 +359,7 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
-				std::cout << "before worker interpret" << std::endl << std::flush;
 				worker_->interpret();
-				std::cout << "after worker interpret" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in worker: " << e.what();
 				ADD_FAILURE();
@@ -323,21 +367,21 @@ bool TestControllerParallel::runWorker() {
 		} else {
 			worker_->interpret();
 		}
+		if(verbose_){
+//			if(std::cout != sial_output_){
+//				std::streambuf *backup = std::cout.rdbuf(sial_output_.rdbuf());
+//				std::string output_string = sial_output_.rdbuf()->
+//				std::cout << output_string << std::endl << std::flush;
+//			}
 
-		if (verbose_) {
-			if (std::cout != sial_output_){
-				std::cout << sial_output_.rdbuf();
-			}
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< prog_name_ << " TERMINATED WORKER " << std::endl
 					<< std::flush;
 		}
 		worker_->post_sial_program();
-//		std::cout << "\nRank " << attr->global_rank() << " after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
-//		std::cout << "\nRank " << attr->global_rank() << " after sae_marked_arrays" << std::endl << std::flush;
 	}
-	sial_output_ << std::flush;
+//	sial_output_ << std::flush;
 	return this_test_enabled_;
 }
 

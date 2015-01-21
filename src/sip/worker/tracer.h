@@ -10,74 +10,52 @@
 
 #include "sip.h"
 #include "opcode.h"
+#include "sip_tables.h"
+
+#ifdef HAVE_MPI
+#include "sip_mpi_attr.h"
+#endif
 
 namespace sip {
 
 class Tracer {
 public:
-	Tracer(Interpreter* worker, const SipTables& sip_table, std::ostream& out):
-		worker_(worker),
-		sip_tables_(sip_table),
-		out_(out),
-		show_int_table_(true),
-		show_control_stack_(true),
-		opcode_histogram_(last_op),
-		pc_histogram_(sip_tables_.op_table_.entries_.size())
-    {}
+	Tracer(const SipTables&);
 	~Tracer(){}
 
-	void setShowIntTable(bool show){show_int_table_ = show;}
+	//call this before starting optable loop
+void init_trace(){
+	last_time_ = MPI_Wtime();
 
-	void trace(int pc, opcode_t opcode){
-//		out_ << "%%%%%%%%%%%%%%%%%%%\n" << sip_tables_.op_table_.entries_[pc];
-//		out_ << std::endl;
-//		if(show_int_table_){
-//		out_ << "________IntTable\n" << sip_tables_.int_table_ ;
-//		}
-//		if(show_control_stack_){
-//			int size = worker_->control_stack_.size();
-//			if (size > 0)
-//				out_ << "control stack top: " <<  worker_->control_stack_.top() << std::endl;
-//		}
-		opcode_histogram_[opcode]++;
-		pc_histogram_[pc]++;
+}
+//put at bottom of loop (to handle initialization properly)
+void trace_op(int pc, opcode_t opcode){
+	    opcode_histogram_[last_opcode_-goto_op]= opcode_histogram_[last_opcode_-goto_op]+1;
+		pc_histogram_[last_pc_]= pc_histogram_[last_pc_]+1;
+		double time = MPI_Wtime();
+		total_time_[last_pc_] += (time-last_time_);
+		last_time_ = time;
+		last_pc_ = pc;
+		last_opcode_ = opcode;
 	}
 
 
-	std::string histogram_to_string(){
-		std::stringstream ss;
-		ss << "Opcode frequency\n";
-		opcode_t pc = goto_op;
-		std::vector<int>::iterator it;
-		for (it = opcode_histogram_.begin(); it != opcode_histogram_.end(); ++it){
-			int val = *it;
-			if (val != 0){
-				std::string opname = opcodeToName(pc);
-				ss << opname << ": " << val << std::endl;
-			}
-		}
-		ss<< "Line (actually optable entry) frequency\n";
-				for (it = pc_histogram_.begin(); it != pc_histogram_.end(); ++it){
-					int val = *it;
-					if (val != 0){
-						ss << pc << ": " << val << std::endl;
-					}
-				}
-		return ss.str();
-	}
+	void gather_pc_histogram_to_csv(std::ostream&);
+	void gather_opcode_histogram_to_csv(std::ostream&);
+	void gather_timing_to_csv(std::ostream&);
 
 private:
-	bool show_int_table_;
-	bool show_control_stack_;
-	bool show_selector_stack_;
-	bool show_expression_stack_;
-	const SipTables& sip_tables_;
-	Interpreter* worker_;
-	std::ostream& out_;
-	std::vector<int> opcode_histogram_;  //this records the number of times each opcode has been executed
+
+	std::vector<std::size_t> opcode_histogram_;  //this records the number of times each opcode has been executed
 	                                     //can be used to evaluate test coverage of the sial interpreter.
-	std::vector<int> pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
+	std::vector<std::size_t> pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
 	                                     //can be used to find dead code in a sial program.
+	std::vector<double> total_time_;
+	double last_time_;
+	int last_pc_;
+	opcode_t last_opcode_;
+
+	const SipTables& sip_tables_;
 
 	DISALLOW_COPY_AND_ASSIGN(Tracer);
 };

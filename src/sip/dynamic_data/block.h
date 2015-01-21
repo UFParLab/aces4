@@ -175,6 +175,9 @@ public:
 	bool test(){ return state_.test(); }
 //	void wait(int expected_count){ state_.wait(expected_count);}
 	void wait(){ state_.wait();}
+#else
+	bool test(){ return true; }
+	void wait(){ }
 #endif
 
 private:

@@ -230,6 +230,22 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 					put_accumulate_tag, MPI_COMM_WORLD, &status));
 	check_int_count(status, recv_data_count);
 
+	//construct a BlockId object from the message contents and retrieve the block.
+	BlockId::mpi_block_id_t buffer;
+	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
+	BlockId block_id(buffer);
+	//get the block size
+	int block_size;
+	block_size = sip_tables_.block_size(block_id);
+	//allocate a temporary buffer and post irecv.
+	ServerBlock::dataPtr temp = new double[block_size];
+	MPI_Request request;
+	MPI_Status status2;
+	MPI_Irecv(temp, block_size, MPI_DOUBLE, mpi_source, put_accumulate_data_tag,
+			MPI_COMM_WORLD, &request);
+
+
+
 	last_seen_line_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
 
@@ -240,14 +256,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 
-	//construct a BlockId object from the message contents and retrieve the block.
-	BlockId::mpi_block_id_t buffer;
-	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
-	BlockId block_id(buffer);
 
-	//get the block size
-	int block_size;
-	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 			<< " : put accumulate to receive block " << block_id.str(sip_tables_)
 			<< ", size = " << block_size
@@ -255,12 +264,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			<< ", at line = " << last_seen_line_
 			<< std::endl << std::flush;)
 
-	//allocate a temporary buffer and post irecv.
-	ServerBlock::dataPtr temp = new double[block_size];
-	MPI_Request request;
-	MPI_Status status2;
-	MPI_Irecv(temp, block_size, MPI_DOUBLE, mpi_source, put_accumulate_data_tag,
-			MPI_COMM_WORLD, &request);
+
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
@@ -301,6 +305,12 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			MPI_Recv(recv_buffer, 3, MPI_INT, mpi_source, delete_tag,
 					MPI_COMM_WORLD, &status));
 	check_int_count(status, 3);
+
+	//send ack
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
+
 	int array_id	= recv_buffer[0];
 
 	last_seen_line_ = recv_buffer[1];
@@ -317,9 +327,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			<< ", sent from = " << mpi_source
 			<< ", at line = " << last_seen_line_ << std::endl;)
 
-	//send ack
-	SIPMPIUtils::check_err(
-			MPI_Send(0, 0, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
 
 	//delete the block and map for the indicated array
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
