@@ -21,13 +21,14 @@ namespace sip {
 DiskBackedArraysIO::DiskBackedArraysIO(const SipTables& sip_tables,
 		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution):
 	sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr),
-	data_distribution_(data_distribution){
+	data_distribution_(data_distribution),mpiio_file_initialization_time_("mpiio_file_initialization_time",true){
+
 
 	// Data type checks
 	check_data_types();
 
 	int num_arrays = sip_tables_.num_arrays();
-
+	mpiio_file_initialization_time_.start();
 	mpi_file_arr_ = new MPI_File[num_arrays];
 	std::fill(mpi_file_arr_, mpi_file_arr_ + num_arrays, MPI_FILE_NULL);
 
@@ -39,6 +40,7 @@ DiskBackedArraysIO::DiskBackedArraysIO(const SipTables& sip_tables,
 			mpi_file_arr_[i] = create_uninitialized_file_for_array(i);
 		}
 	}
+	mpiio_file_initialization_time_.pause();
 }
 
 

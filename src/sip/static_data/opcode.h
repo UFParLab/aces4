@@ -151,16 +151,26 @@ enum opcode_t {
 			 */
 			std::string opcodeToName(opcode_t);
 			/**
-			 * Converts an integer to an opcode
+			 * Converts an op_code to an int
 			 * @param
 			 * @return
 			 */
-			opcode_t intToOpcode(int);
+			int opcodeToInt(opcode_t);
 			/**
-			 * Whether a certain opcode is printable
+			 * Converts an int to a
 			 * @param
 			 * @return
 			 */
+
+//			opcode_t intToName(int);
+//			/**
+//			 * Whether a certain opcode is printable
+//			 * @param
+//			 * @return
+//			 */
+
+			opcode_t intToOpcode(int opcode);
+
 			bool printableOpcode(opcode_t);
 			} /* namespace sip */
 #endif /* OPCODE_H_ */

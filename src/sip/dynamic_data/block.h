@@ -170,7 +170,14 @@ public:
 #endif
 
 #ifdef HAVE_MPI
-	MPIState& state() { return state_; }
+	MPI_Request* mpi_request() { return &(state_.mpi_request_); }
+//	bool pending(){ return state_.pending();}
+	bool test(){ return state_.test(); }
+//	void wait(int expected_count){ state_.wait(expected_count);}
+	void wait(){ state_.wait();}
+#else
+	bool test(){ return true; }
+	void wait(){ }
 #endif
 
 private:
@@ -211,6 +218,7 @@ private:
 
 	friend class DataManager;	// So that data_ of blocks wrapping
 								// Scalars can be set to NULL before destroying them.
+	friend class SialOpsParallel; //To get MPIState object's MPI_Request field
 	DISALLOW_COPY_AND_ASSIGN(Block);
 };
 

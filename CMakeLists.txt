@@ -190,12 +190,16 @@ set(ACES_WORKER_FILES
     src/sip/worker/sial_printer.cpp;
     src/sip/worker/sial_math.h;
     src/sip/worker/sial_math.cpp;
+    src/sip/worker/tracer.h;
+    src/sip/worker/tracer.cpp;
     src/sip/sip_interface.h;
     src/sip/sip_interface.cpp;
     src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
     src/sip/cuda/gpu_super_instructions.h;
     src/sip/mpi/sip_mpi_attr.h;
-    src/sip/mpi/sip_mpi_attr.cpp)
+    src/sip/mpi/sip_mpi_attr.cpp;
+    src/sip/mpi/counter.h;
+    src/sip/mpi/counter.cpp)
     
 #set(aces4_SRCS
 #    ${ACES_SETUP_FILES};

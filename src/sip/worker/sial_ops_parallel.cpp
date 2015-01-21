@@ -16,19 +16,16 @@
 
 namespace sip {
 
-
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 		WorkerPersistentArrayManager* persistent_array_manager,
-		SialxTimer* sialx_timers,
-		const SipTables& sip_tables) :
-		sip_tables_(sip_tables), sip_mpi_attr_(
-				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
-				data_manager.block_manager_), data_distribution_(sip_tables_,
-				sip_mpi_attr_), persistent_array_manager_(
-				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE),
-				sialx_timers_(sialx_timers)
-{
+		SialxTimer* sialx_timers, const SipTables& sip_tables) :
+		sip_tables_(sip_tables), sip_mpi_attr_(SIPMPIAttr::get_instance()), data_manager_(
+				data_manager), block_manager_(data_manager.block_manager_), data_distribution_(
+				sip_tables_, sip_mpi_attr_), persistent_array_manager_(
+				persistent_array_manager), mode_(sip_tables_.num_arrays(),
+				NONE), sialx_timers_(sialx_timers), sial_ops_block_wait_(
+				"sial_ops_block_wait_",true) {
 }
 
 SialOpsParallel::~SialOpsParallel() {
@@ -37,8 +34,12 @@ SialOpsParallel::~SialOpsParallel() {
 void SialOpsParallel::sip_barrier() {
 	//wait for all expected acks,
 	ack_handler_.wait_all();
-
-	//do an MPI barrier among all the workers
+	/* At this point, all puts should have been acked, thus the blocks are no longer pending.  After clean, the pending_list_ should be empty
+	 * Commented out for performance reasons.
+	 */
+//	block_manager_.block_map_.clean_pending();
+//	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
+//do an MPI barrier among all the workers
 	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
 	int num_workers;
 	MPI_Comm_size(worker_comm, &num_workers);
@@ -58,7 +59,8 @@ void SialOpsParallel::sip_barrier() {
 	}
 	reset_mode();
 
-	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
+	SIP_LOG(
+			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
 
 }
 
@@ -80,8 +82,10 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	int server_rank = sip_mpi_attr_.my_server();
 	if (server_rank > 0) {
 		int line_number = current_line();
-		int to_send[3] = { array_id, line_number, barrier_support_.section_number() };
-		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
+		int to_send[3] = { array_id, line_number,
+				barrier_support_.section_number() };
+		SIP_LOG(
+				std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 		SIPMPIUtils::check_err(
 				MPI_Send(to_send, 3, MPI_INT, server_rank, delete_tag,
@@ -106,36 +110,37 @@ void SialOpsParallel::get(BlockId& block_id) {
 	int get_tag;
 	get_tag = barrier_support_.make_mpi_tag_for_GET();
 
-    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+	sip::check(server_rank >= 0 && server_rank < sip_mpi_attr_.global_size(),
+			"invalid server rank", current_line());
 
-    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
-    		<< " : sending GET for block " << block_id
-    		<< " to server "<< server_rank << std::endl);
+	SIP_LOG(
+			std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending GET for block " << block_id << " to server "<< server_rank << std::endl);
 
-    // Construct int array to send to server.
-    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
-    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
-    const int section_num_offset = line_num_offset + 1;
-    int to_send[to_send_size]; // BlockId & line number
-    int *serialized_block_id = block_id.to_mpi_array();
-    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
-    to_send[section_num_offset] = barrier_support_.section_number();
+	// Construct int array to send to server.
+	const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
+	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	const int section_num_offset = line_num_offset + 1;
+	int to_send[to_send_size]; // BlockId & line number
+	int *serialized_block_id = block_id.to_mpi_array();
+	std::copy(serialized_block_id + 0,
+			serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
+	to_send[line_num_offset] = current_line();
+	to_send[section_num_offset] = barrier_support_.section_number();
 
 	SIPMPIUtils::check_err(
-			MPI_Send(to_send, to_send_size, MPI_INT,
-					server_rank, get_tag, MPI_COMM_WORLD));
+			MPI_Send(to_send, to_send_size, MPI_INT, server_rank, get_tag,
+					MPI_COMM_WORLD));
 
 	//allocate block, and insert in block map, using block data as buffer
 	block = block_manager_.get_block_for_writing(block_id, true);
 
 	//post an asynchronous receive and store the request in the
 	//block's state
-	MPI_Request request;
+//	MPI_Request request;
 	SIPMPIUtils::check_err(
 			MPI_Irecv(block->get_data(), block->size(), MPI_DOUBLE, server_rank,
-					get_tag, MPI_COMM_WORLD, &request));
-	block->state().mpi_request_ = request;
+					get_tag, MPI_COMM_WORLD, block->mpi_request()));
+//	block->state().set_request(request);
 }
 
 //NOTE:  I can't remember why the source block was copied.
@@ -208,35 +213,44 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 	int put_tag, put_data_tag;
 	put_tag = barrier_support_.make_mpi_tags_for_PUT(put_data_tag);
 
-    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+	sip::check(server_rank >= 0 && server_rank < sip_mpi_attr_.global_size(),
+			"invalid server rank", current_line());
 
-    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
-    		<< " : sending PUT for block " << target_id
-    		<< " to server "<< server_rank << std::endl);
+	SIP_LOG(
+			std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending PUT for block " << target_id << " to server "<< server_rank << std::endl);
 
-    // Construct int array to send to server.
-    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
-    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
-    const int section_num_offset = line_num_offset + 1;
-    int to_send[to_send_size]; // BlockId & line number
-    int *serialized_block_id = target_id.to_mpi_array();
-    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
-    to_send[section_num_offset] = barrier_support_.section_number();
+	// Construct int array to send to server.
+	const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
+	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	const int section_num_offset = line_num_offset + 1;
+	int to_send[to_send_size]; // BlockId & line number
+	int *serialized_block_id = target_id.to_mpi_array();
+	std::copy(serialized_block_id + 0,
+			serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
+	to_send[line_num_offset] = current_line();
+	to_send[section_num_offset] = barrier_support_.section_number();
 
 	SIPMPIUtils::check_err(
-			MPI_Send(to_send, to_send_size, MPI_INT,
-					server_rank, put_tag, MPI_COMM_WORLD));
+			MPI_Send(to_send, to_send_size, MPI_INT, server_rank, put_tag,
+					MPI_COMM_WORLD));
 
-	//immediately follow with the data
+//	//immediately follow with the data
+//	SIPMPIUtils::check_err(
+//			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
+//					server_rank, put_data_tag, MPI_COMM_WORLD));
+
+//	MPI_Request request;
 	SIPMPIUtils::check_err(
-			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
-					server_rank, put_data_tag, MPI_COMM_WORLD));
+			MPI_Isend(source_block->get_data(), source_block->size(),
+					MPI_DOUBLE, server_rank, put_data_tag, MPI_COMM_WORLD,
+					source_block->mpi_request()));
+//	source_block->state().set_request(request);
 
 	//the data message should be acked
 	ack_handler_.expect_ack_from(server_rank, put_data_tag);
 
-	SIP_LOG(std::cout << "W " << my_rank << " : Done with PUT for block " << target_id << " to server rank " << server_rank << std::endl;)
+	SIP_LOG(
+			std::cout << "W " << my_rank << " : Done with PUT for block " << target_id << " to server rank " << server_rank << std::endl;)
 
 }
 
@@ -302,32 +316,38 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 	put_accumulate_tag = barrier_support_.make_mpi_tags_for_PUT_ACCUMULATE(
 			put_accumulate_data_tag);
 
-    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+	sip::check(server_rank >= 0 && server_rank < sip_mpi_attr_.global_size(),
+			"invalid server rank", current_line());
 
-    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
-       		<< " : sending PUT_ACCUMULATE for block " << target_id
-       		<< " to server "<< server_rank << std::endl);
+	SIP_LOG(
+			std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending PUT_ACCUMULATE for block " << target_id << " to server "<< server_rank << std::endl);
 
-
-    // Construct int array to send to server.
-    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
-    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
-    const int section_num_offset = line_num_offset + 1;
-    int to_send[to_send_size]; // BlockId & line number
-    int *serialized_block_id = target_id.to_mpi_array();
-    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
-    to_send[section_num_offset] = barrier_support_.section_number();
+	// Construct int array to send to server.
+	const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
+	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
+	const int section_num_offset = line_num_offset + 1;
+	int to_send[to_send_size]; // BlockId & line number
+	int *serialized_block_id = target_id.to_mpi_array();
+	std::copy(serialized_block_id + 0,
+			serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
+	to_send[line_num_offset] = current_line();
+	to_send[section_num_offset] = barrier_support_.section_number();
 
 	//send block id
 	SIPMPIUtils::check_err(
-			MPI_Send(to_send, to_send_size, MPI_INT,
-					server_rank, put_accumulate_tag, MPI_COMM_WORLD));
-	//immediately follow with the data
-	SIPMPIUtils::check_err(
-			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
-					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
+			MPI_Send(to_send, to_send_size, MPI_INT, server_rank,
+					put_accumulate_tag, MPI_COMM_WORLD));
+//	//immediately follow with the data
+//	SIPMPIUtils::check_err(
+//			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
+//					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
 
+//	MPI_Request request;
+	SIPMPIUtils::check_err(
+			MPI_Isend(source_block->get_data(), source_block->size(),
+					MPI_DOUBLE, server_rank, put_accumulate_data_tag,
+					MPI_COMM_WORLD, source_block->mpi_request()));
+//		source_block->state().set_request(request);
 	//ack
 	ack_handler_.expect_ack_from(server_rank, put_accumulate_data_tag);
 
@@ -354,8 +374,7 @@ void SialOpsParallel::prepare_accumulate(BlockId& lhs_id,
 	put_accumulate(lhs_id, source_ptr);
 }
 
-void SialOpsParallel::collective_sum(double rhs_value,
-		int dest_array_slot) {
+void SialOpsParallel::collective_sum(double rhs_value, int dest_array_slot) {
 
 	double lhs_value = data_manager_.scalar_value(dest_array_slot);
 
@@ -363,42 +382,41 @@ void SialOpsParallel::collective_sum(double rhs_value,
 	if (sip_mpi_attr_.num_workers() > 1) {
 		const MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(
-				MPI_Allreduce(&rhs_value, &reduced_value, 1, MPI_DOUBLE, MPI_SUM,
-						worker_comm));
+				MPI_Allreduce(&rhs_value, &reduced_value, 1, MPI_DOUBLE,
+						MPI_SUM, worker_comm));
 	} else {
 		reduced_value = rhs_value;
 	}
 
-	data_manager_.set_scalar_value(dest_array_slot,lhs_value + reduced_value);
+	data_manager_.set_scalar_value(dest_array_slot, lhs_value + reduced_value);
 }
 
-
-
-
-bool SialOpsParallel::assert_same(int source_array_slot){
-	if (sip_mpi_attr_.num_workers() <= 1) return true;
+bool SialOpsParallel::assert_same(int source_array_slot) {
+	if (sip_mpi_attr_.num_workers() <= 1)
+		return true;
 	int rank = sip_mpi_attr_.company_rank_;
 	const MPI_Comm& worker_comm = sip_mpi_attr_.company_communicator();
 	double value;
-	if (rank == 0){
-       value = data_manager_.scalar_value(source_array_slot);
-	   SIPMPIUtils::check_err(MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
-	   return true;
+	if (rank == 0) {
+		value = data_manager_.scalar_value(source_array_slot);
+		SIPMPIUtils::check_err(
+				MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
+		return true;
 	}
-		value = 0.0;
-		double EPSILON = .00005;
-		SIPMPIUtils::check_err(MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
-		bool close = nearlyEqual(value, data_manager_.scalar_value(source_array_slot), EPSILON);
-		check (close, "values are too far apart");
-		//replace old value with new value from master.
-		data_manager_.set_scalar_value(source_array_slot, value);
-		return close;
+	value = 0.0;
+	double EPSILON = .00005;
+	SIPMPIUtils::check_err(MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
+	bool close = nearlyEqual(value,
+			data_manager_.scalar_value(source_array_slot), EPSILON);
+	check(close, "values are too far apart");
+	//replace old value with new value from master.
+	data_manager_.set_scalar_value(source_array_slot, value);
+	return close;
 }
-
 
 /* QUICK SOLUTION.  NEEDS IMPROVEMENT!
  */
-bool SialOpsParallel::nearlyEqual(double a, double  b, double epsilon) {
+bool SialOpsParallel::nearlyEqual(double a, double b, double epsilon) {
 	double absA = std::abs(a);
 	double absB = std::abs(b);
 	double diff = std::abs(a - b);
@@ -415,15 +433,15 @@ bool SialOpsParallel::nearlyEqual(double a, double  b, double epsilon) {
 	}
 }
 
-
-void SialOpsParallel::broadcast_static(Block::BlockPtr source_or_dest, int source_worker){
-	if (sip_mpi_attr_.num_workers()>0 ){
-	   SIPMPIUtils::check_err(MPI_Bcast(source_or_dest->get_data() , source_or_dest->size(), MPI_DOUBLE, source_worker,
-			   sip_mpi_attr_.company_communicator()));
-    }
+void SialOpsParallel::broadcast_static(Block::BlockPtr source_or_dest,
+		int source_worker) {
+	if (sip_mpi_attr_.num_workers() > 0) {
+		SIPMPIUtils::check_err(
+				MPI_Bcast(source_or_dest->get_data(), source_or_dest->size(),
+						MPI_DOUBLE, source_worker,
+						sip_mpi_attr_.company_communicator()));
+	}
 }
-
-
 
 /**
  * action depends on whether array is local or remote.  If remote,
@@ -444,7 +462,8 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 			set_persistent_tag =
 					barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
 			int line_number = current_line();
-			int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+			int buffer[4] = { array_slot, string_slot, line_number,
+					barrier_support_.section_number() };
 			SIPMPIUtils::check_err(
 					MPI_Send(buffer, 4, MPI_INT, my_server, set_persistent_tag,
 							MPI_COMM_WORLD));
@@ -469,7 +488,8 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 
 void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 		int string_slot) {
-	SIP_LOG(std::cout << "restore_persistent with array " << sip_tables_.array_name(array_slot) << " in slot " << array_slot << " and string \"" << sip_tables_.string_literal(string_slot) << "\"" << std::endl);
+	SIP_LOG(
+			std::cout << "restore_persistent with array " << sip_tables_.array_name(array_slot) << " in slot " << array_slot << " and string \"" << sip_tables_.string_literal(string_slot) << "\"" << std::endl);
 
 	if (sip_tables_.is_distributed(array_slot)
 			|| sip_tables_.is_served(array_slot)) {
@@ -479,17 +499,19 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 			restore_persistent_tag =
 					barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
 			int line_number = current_line();
-			int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+			int buffer[4] = { array_slot, string_slot, line_number,
+					barrier_support_.section_number() };
 			SIPMPIUtils::check_err(
 					MPI_Send(buffer, 4, MPI_INT, my_server,
 							restore_persistent_tag, MPI_COMM_WORLD));
 			//expect ack
 			ack_handler_.expect_ack_from(my_server, restore_persistent_tag);
-        	}
+		}
 	} else {
 		persistent_array_manager_->restore_persistent(worker, array_slot,
 				string_slot);
-		SIP_LOG(std::cout << "returned from restore_persistent" << std::endl << std::flush);
+		SIP_LOG(
+				std::cout << "returned from restore_persistent" << std::endl << std::flush);
 	}
 
 }
@@ -500,8 +522,13 @@ void SialOpsParallel::end_program() {
 	//at the server when the end_program message arrives.
 	sip_barrier();
 	int my_server = sip_mpi_attr_.my_server();
-	SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
+	SIP_LOG(
+			std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
+	std::cout << "I'm a worker with rank " << sip_mpi_attr_.global_rank()
+			<< "   in end_program and my server is " << my_server << std::endl
+			<< std::flush; //DEBUG
 	//send end_program message to server, if designated worker and wait for ack.
+	sip_barrier();
 	if (my_server > 0) {
 		int end_program_tag;
 		end_program_tag = barrier_support_.make_mpi_tag_for_END_PROGRAM();
@@ -548,13 +575,13 @@ void SialOpsParallel::reset_mode() {
 	std::fill(mode_.begin(), mode_.end(), NONE);
 }
 
-void SialOpsParallel::log_statement(opcode_t type, int line){
+void SialOpsParallel::log_statement(opcode_t type, int line) {
 	SIP_LOG(
-			std::cout<< "W " << sip_mpi_attr_.global_rank()
-					 << " : Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
+			std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int line) {
+Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id,
+		int line) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
@@ -573,7 +600,9 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 				"sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
-	return block_manager_.get_block_for_writing(id, is_scope_extent);
+	return wait_and_check(
+			block_manager_.get_block_for_writing(id, is_scope_extent),
+			current_line()); //TODO  get rid of call to current_line
 }
 
 Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
@@ -583,17 +612,28 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 					|| sip_tables_.is_served(array_id)),
 			"attempting to update distributed or served block", current_line());
 
-	return block_manager_.get_block_for_updating(id);
+	return wait_and_check(block_manager_.get_block_for_updating(id),
+			current_line());  //TODO  get rid of call to current_line
 }
 
+//The MPI_State does not store whether or not the request object was created as a result of
+// an Isend (put) or IReceive (get).  Checking the size only make sense for the latter.
+//For the time being, we will just call the version of wait that doesn not check the size.
+//If asynch puts turn out to be useful, we can revisit this.
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
-	if (b->state().pending()) {
-		if (sialx_timers_){
-			sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
-		    b->state().wait(b->size());
-	        sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
-		}
-		else b->state().wait(b->size());
+	if (b->test())
+		return b;
+
+	if (sialx_timers_) {
+		sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
+	}
+
+	sial_ops_block_wait_.start();
+	b->wait();
+	sial_ops_block_wait_.pause();
+
+	if (sialx_timers_) {
+		sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
 	}
 	return b;
 }

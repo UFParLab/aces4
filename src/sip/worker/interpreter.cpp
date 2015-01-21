@@ -72,7 +72,7 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	tracer_ = new Tracer(this, sip_tables, std::cout);
+	tracer_ = new Tracer(sip_tables);
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 	timer_line_=0;
 #ifdef HAVE_CUDA
@@ -89,13 +89,14 @@ void Interpreter::interpret() {
 
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
+	tracer_->init_trace();
 	while (pc < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc);
 		sip::check(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
-		tracer_->trace(pc, opcode);
-		timer_trace(pc, opcode, current_line());
+
+//		timer_trace(pc, opcode, current_line());
 
 		SIP_LOG(std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank()
 		                 << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
@@ -862,9 +863,10 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		//TODO  only call where necessary
 		contiguous_blocks_post_op();
+		tracer_->trace_op(pc, opcode);
 	}// while
 	//interpreter loop finished.  Ensure all timers turned off.
-	timer_trace(pc, invalid_op, -99);
+//	timer_trace(pc, invalid_op, -99);
 } //interpret
 
 void Interpreter::post_sial_program() {

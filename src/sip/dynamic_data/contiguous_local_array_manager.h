@@ -44,7 +44,8 @@ public:
 
 private:
 	const  SipTables& sip_tables_;
-	CachedBlockMap& block_map_;
+//	CachedBlockMap& block_map_;
+	IdBlockMap<Block>& block_map_;
 
 	/** Performs the actually work to get a contiguous copy of a subblock.
 	 * Several values that are obtained in the

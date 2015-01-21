@@ -32,6 +32,9 @@
 #include "array_constants.h"
 #include "sip_interface.h"
 #include "gpu_super_instructions.h"
+#ifdef HAVE_MPI
+#include "sip_mpi_attr.h"
+#endif
 
 
 namespace sip {
@@ -39,8 +42,13 @@ namespace sip {
 
 BlockManager::BlockManager(const SipTables &sip_tables) :
 sip_tables_(sip_tables),
-block_map_(sip_tables.num_arrays()){
+block_map_(sip_tables.num_arrays()),
+blocks_added_to_pending_delete_list_("blocks added to pending delete list", true),
+blocks_created_("total blocks created", true),
+max_blocks_("max blocks", true),
+wait_pending_delete_("waiting_pending_delete", true){
 }
+
 
 
 /**
@@ -53,6 +61,13 @@ BlockManager::~BlockManager() {
 	for (int i = 0; i < sip_tables_.num_arrays(); ++i)
 		delete_per_array_map_and_blocks(i);
 
+//	//DEBUG print
+//#ifdef HAVE_MPI
+//	blocks_added_to_pending_delete_list_.gather_from_workers(std::cout);
+//	blocks_created_.gather_from_workers(std::cout);
+//	max_blocks_.gather_from_workers(std::cout);
+//	std::cout << std::endl << std::flush;
+//#endif
 }
 
 
@@ -184,20 +199,49 @@ void BlockManager::leave_scope() {
 		BlockId &block_id = *it;
 		int array_id = block_id.array_id();
 
-		// Cached delete for distributed/served arrays.
-		// Regular delete for temp blocks.
-
-		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id))
-			cached_delete_block(*it);
-		else
-			delete_block(*it);
-//		delete_block(*it);
+		//CACHED BLOCK MAP
+//		// Cached delete for distributed/served arrays.
+//		// Regular delete for temp blocks.
+//
+//		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id))
+//			cached_delete_block(*it);
+//		else
+//			delete_block(*it);
+		delete_block(*it);
 	}
 	temp_block_list_stack_.pop_back();
 	delete temps;
+
+	test_and_clean_pending(); //empty proc if no mpi
 }
 
+//empty proc in serial version
+void BlockManager::test_and_clean_pending(){
+#ifdef HAVE_MPI
+	std::list<Block*>::iterator it;
+	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+		if ((**it).test()){
+			delete *it;
+			pending_delete_.erase(it++);
+		}
+		else ++it;
+	}
+#endif
+}
 
+//empty proc in serial version
+void BlockManager::wait_and_clean_pending(){
+#ifdef HAVE_MPI
+	std::list<Block*>::iterator it;
+	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+		wait_pending_delete_.start();
+		    (**it).wait();
+		wait_pending_delete_.pause();
+			delete *it;
+			pending_delete_.erase(it++);
+		}
+#endif
+}
 
 std::ostream& operator<<(std::ostream& os, const BlockManager& obj){
 	os << "block_map_:" << std::endl;
@@ -231,7 +275,12 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
 	try {
 		Block::BlockPtr block_ptr = new Block(shape);
-		insert_into_blockmap(block_id, block_ptr);
+		blocks_created_.inc();
+		max_blocks_.inc();
+//		current_blocks_++;
+//		max_blocks_ = current_blocks_>max_blocks_?current_blocks_:max_blocks_;
+//		insert_into_blockmap(block_id, block_ptr);
+		block_map_.insert_block(block_id, block_ptr);
 		return block_ptr;
 	} catch (const std::out_of_range& oor){
 		std::cerr << " In BlockManager::create_block" << std::endl;
@@ -241,6 +290,19 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 	}
 }
 
+//ASYNCH  without this, original is in .h file
+void BlockManager::delete_block(const BlockId& id){
+	Block::BlockPtr b = block_map_.get_and_remove_block(id);
+	if (!(b->test())){
+		pending_delete_.push_back(b);
+//		num_pending_delete_++;
+		blocks_added_to_pending_delete_list_.inc();
+	}
+
+	else delete b;
+//	current_blocks_--;
+	max_blocks_.dec();
+}
 
 void BlockManager::generate_local_block_list(const BlockId& id,
 		std::vector<BlockId>& list) {

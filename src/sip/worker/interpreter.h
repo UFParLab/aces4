@@ -234,6 +234,9 @@ public:
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
 
+
+	//TODO make private
+	Tracer* tracer_;
 private:
 	//static data
 	const SipTables& sip_tables_;
@@ -461,7 +464,7 @@ private:
 
 
 
-	Tracer* tracer_;
+
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;

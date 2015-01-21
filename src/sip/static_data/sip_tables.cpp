@@ -46,7 +46,7 @@ std::vector<std::string> SipTables::line_num_to_name() const{
 	int size = op_table_.size();
 	for (int i=0; i<size; i++){
 		int line = op_table_.line_number(i);
-		opcode_t opcode = intToOpcode(op_table_.opcode(i));
+		opcode_t opcode = op_table_.opcode(i);
 		if (printableOpcode(opcode))
 			lno2name.at(line) = opcodeToName(opcode);
 	}

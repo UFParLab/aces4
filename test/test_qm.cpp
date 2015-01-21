@@ -1,4 +1,6 @@
 #include "gtest/gtest.h"
+#include <fstream>
+
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
@@ -11,6 +13,8 @@
 #include "test_controller.h"
 #include "test_controller_parallel.h"
 #include "test_constants.h"
+#include "sip_mpi_attr.h"
+
 
 #include "block.h"
 
@@ -23,27 +27,53 @@
 bool VERBOSE_TEST = true;
 
 
+
+
 TEST(Sial_QM,ccsdpt_test){
 	std::string job("ccsdpt_test");
 
-	std::stringstream output;
+	std::stringstream sial_output;
+	std::ofstream instrumentation_output;
+	if(attr->is_worker() && attr->is_company_master()){ //only open the file at master worker
+		std::stringstream ss1;
+		ss1 << "inst_"<< job << ".csv";
+		std::string filename1 = ss1.str();
+		instrumentation_output.open(filename1.c_str(),std::ofstream::out);
+	}
 
-	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 
-	controller.initSipTables(qm_dir_name);
-	controller.run();
-
-	controller.initSipTables(qm_dir_name);
-	controller.run();
-
-	controller.initSipTables(qm_dir_name);
-	controller.run();
-
-	controller.initSipTables(qm_dir_name);
-	controller.run();
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", sial_output);
 
 	controller.initSipTables(qm_dir_name);
 	controller.run();
+	controller.gather_opcode_histogram(instrumentation_output);
+	controller.gather_pc_histogram(instrumentation_output);
+	controller.gather_timing(instrumentation_output);
+
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+	controller.gather_opcode_histogram(instrumentation_output);
+	controller.gather_pc_histogram(instrumentation_output);
+	controller.gather_timing(instrumentation_output);
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+	controller.gather_opcode_histogram(instrumentation_output);
+	controller.gather_pc_histogram(instrumentation_output);
+	controller.gather_timing(instrumentation_output);
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+	controller.gather_opcode_histogram(instrumentation_output);
+	controller.gather_pc_histogram(instrumentation_output);
+	controller.gather_timing(instrumentation_output);
+
+	controller.initSipTables(qm_dir_name);
+	controller.run();	std::stringstream ss4;
+	controller.gather_opcode_histogram(instrumentation_output);
+	controller.gather_pc_histogram(instrumentation_output);
+	controller.gather_timing(instrumentation_output);
 
 	if (attr->global_rank() == 0) {
 		double eaab = controller.scalar_value("eaab");
@@ -87,6 +117,9 @@ int main(int argc, char **argv) {
 	sip::SIPMPIUtils::set_error_handler();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
+	double tick = MPI_Wtick();
+	    printf("A single MPI tick is %0.9f seconds\n", tick);
+	    fflush(stdout);
 #endif
 	barrier();
 #ifdef HAVE_TAU

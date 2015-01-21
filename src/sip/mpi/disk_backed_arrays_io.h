@@ -19,6 +19,7 @@
 #include "sip_tables.h"
 #include "server_block.h"
 #include "data_distribution.h"
+#include "counter.h"
 
 namespace sip {
 
@@ -90,6 +91,8 @@ private:
 	const SIPMPIAttr& sip_mpi_attr_;			/**< Access to MPI Attributes for this rank */
 	const DataDistribution data_distribution_;	/**< Data distribution scheme */
 	MPI_File *mpi_file_arr_;					/**< MPI File handles, one per sip array */
+
+	SimpleTimer mpiio_file_initialization_time_;
 
 
 	/**
