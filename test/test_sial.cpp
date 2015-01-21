@@ -185,7 +185,7 @@ TEST(Sial,broadcast_static){
 	int side = 2+3+2; //size of one side, from seg sizes in segs array above
 	int size = side*side;
 	int i = 0;
-	for (i; i < size; ++i){
+	for (; i < size; ++i){
 		ASSERT_DOUBLE_EQ(expected[i], a[i]);
 	}
 }

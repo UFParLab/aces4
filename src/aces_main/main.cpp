@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
 
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
-		std::cout << it->c_str() << std::endl;
 		std::string sialfpath;
 		sialfpath.append(parameters.sialx_file_dir);
 		sialfpath.append("/");
@@ -70,8 +69,7 @@ int main(int argc, char* argv[]) {
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
-			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
-			SIP_MASTER(std::cout << "Started at " << sip_timestamp() << std::endl);
+			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
 			runner.interpret();
 			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);

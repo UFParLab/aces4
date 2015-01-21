@@ -81,6 +81,8 @@ public:
 		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~ServerPrint(){}
 	virtual void execute(TIMER& timer){
+		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
+		int num_servers = attr.num_servers();
 
 		mpi_reduce_timers(timer); // Reduce timers to server master.
 
@@ -91,27 +93,33 @@ public:
 
 			long long * timers = timer.get_timers();
 			long long * timer_counts = timer.get_timer_count();
-			const int LW = 10;	// Line num
-			const int CW = 15;	// Time
+			const int LW = 8;	// Line num
+			const int CW = 12;	// Time
 			const int SW = 20;	// String
+			const int PRECISION = 6; 	// Precision
+
+			out_.precision(PRECISION); // Reset precision to 6 places.
 
 			assert(timer.check_timers_off());
 			out_<<"Timers"<<std::endl
 				<<std::setw(LW)<<std::left<<"Line"
 				<<std::setw(SW)<<std::left<<"Type"
-				<<std::setw(CW)<<std::left<<"Avg"
-				<<std::setw(CW)<<std::left<<"AvgBlkWait"
-				<<std::setw(CW)<<std::left<<"AvgDiskRead"
-				<<std::setw(CW)<<std::left<<"AvgDiskWrite"
-				<<std::setw(CW)<<std::left<<"Tot"
+				<<std::setw(CW)<<std::left<<"Avg"			// Average time spent per server
+				<<std::setw(CW)<<std::left<<"AvgBlkWt"		// Average block wait per server
+				<<std::setw(CW)<<std::left<<"AvgDskRd"		// Average disk read per server
+				<<std::setw(CW)<<std::left<<"AvgDskWrte"	// Average disk write per server
+				<<std::setw(CW)<<std::left<<"AvgCount"		// Average count per server
+				//<<std::setw(CW)<<std::left<<"Tot"
 				<<std::endl;
 
 			for (int i=1; i<sialx_lines_; i++){
 
 				int tot_time_offset = i + static_cast<int>(ServerTimer::TOTALTIME) * sialx_lines_;
 				if (timer_counts[tot_time_offset] > 0L){
+					long long timer_count = timer_counts[tot_time_offset];
 					double tot_time = timer.to_seconds(timers[tot_time_offset]);	// Microsecond to second
-					double avg_time = tot_time / timer_counts[tot_time_offset];
+					double avg_time = tot_time / num_servers;
+					double avg_count =  timer_count /(double)num_servers;
 
 					double tot_blk_wait = 0;
 					double avg_blk_wait = 0;
@@ -123,19 +131,19 @@ public:
 					int blk_wait_offset = i + static_cast<int>(ServerTimer::BLOCKWAITTIME) * sialx_lines_;
 					if (timer_counts[blk_wait_offset] > 0L){
 						tot_blk_wait = timer.to_seconds(timers[blk_wait_offset]);
-						avg_blk_wait = tot_blk_wait / timer_counts[tot_time_offset];
+						avg_blk_wait = tot_blk_wait / num_servers;
 					}
 
 					int read_timer_offset = i + static_cast<int>(ServerTimer::READTIME) * sialx_lines_;
 					if (timer_counts[read_timer_offset] > 0L){
 						tot_disk_read = timer.to_seconds(timers[read_timer_offset]);
-						avg_disk_read = tot_disk_read / timer_counts[tot_time_offset];
+						avg_disk_read = tot_disk_read / num_servers;
 					}
 
 					int write_timer_offset = i + static_cast<int>(ServerTimer::WRITETIME) * sialx_lines_;
 					if (timer_counts[write_timer_offset] > 0L){
 						tot_disk_write = timer.to_seconds(timers[write_timer_offset]);
-						avg_disk_write = tot_disk_write / timer_counts[tot_time_offset];
+						avg_disk_write = tot_disk_write / num_servers;
 					}
 
 					out_<<std::setw(LW)<<std::left << i
@@ -144,7 +152,8 @@ public:
 							<< std::setw(CW)<< std::left << avg_blk_wait
 							<< std::setw(CW)<< std::left << avg_disk_read
 							<< std::setw(CW)<< std::left << avg_disk_write
-							<< std::setw(CW)<< std::left << tot_time
+							<< std::setw(CW)<< std::left << avg_count
+							//<< std::setw(CW)<< std::left << tot_time
 							<< std::endl;
 				}
 			}
