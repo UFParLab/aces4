@@ -117,15 +117,21 @@ const int SIOX_RELEASE = 0;
 const int MAX_OMP_THREADS = 8;
 
 
-void check(bool condition, std::string message, int line){
+void check(bool condition, const std::string& message, int line){
 	if (condition) return;
-//	std::cerr << "FATAL ERROR: " << message;
-//	if (line > 0){
-//		std::string prog = GlobalState::get_program_name();
-//		int length = prog.size()-std::string(".siox").size();
-//		std::cerr << " at "<< prog.substr(0,length) << ":" << line;
-//	}
-//	std::cerr << std::endl << std::flush;
+	std::stringstream s;
+	s << "FATAL ERROR: " << message;
+	if (line > 0){
+		std::string prog = GlobalState::get_program_name();
+		int length = prog.size()-std::string(".siox").size();
+		s << " at "<< prog.substr(0,length) << ":" << line;
+	}
+	s << std::endl << std::flush;
+	sip_abort(s.str());
+	//throw std::logic_error("logic error");
+}
+void check(bool condition, const char* message, int line){
+	if (condition) return;
 	std::stringstream s;
 	s << "FATAL ERROR: " << message;
 	if (line > 0){
@@ -139,7 +145,8 @@ void check(bool condition, std::string message, int line){
 }
 
 
-bool check_and_warn(bool condition, std::string message, int line){
+
+bool check_and_warn(bool condition, const std::string& message, int line){
 	if (condition) return true;
 	std::cerr << "WARNING:  "  << message;
 	if (line > 0){
@@ -149,24 +156,55 @@ bool check_and_warn(bool condition, std::string message, int line){
 	return false;
 }
 
-void fail(std::string message, int line){
+bool check_and_warn(bool condition, const char* message, int line){
+	if (condition) return true;
+	std::cerr << "WARNING:  "  << message;
+	if (line > 0){
+		std::cerr << " at "<< GlobalState::get_program_name() << ":" << line;
+	}
+	std::cerr << std::endl << std::flush;
+	return false;
+}
+
+
+void fail(const std::string& message, int line){
+	check(false, message, line);
+}
+void fail(const char* message, int line){
 	check(false, message, line);
 }
 
-void input_check(bool condition, std::string m, int line){
-	check(condition, "INVALID SETUP OR SIAL PROGRAM:  " + m, line);
+
+
+void input_check(bool condition, const std::string& m, int line){
+	if (!condition)
+		fail("INVALID SETUP OR SIAL PROGRAM:  " + m, line);
+}
+void input_check(bool condition, const char* m, int line){
+	if (!condition)
+		fail("INVALID SETUP OR SIAL PROGRAM:  " + std::string(m), line);
 }
 
-bool input_warn(bool condition, std::string m, int line){
+
+bool input_warn(bool condition, const std::string& m, int line){
 	return check_and_warn(condition, "INVALID SETUP OR SIAL PROGRAM:  " + m, line);
 }
-
-void sial_check(bool condition, std::string m, int line){
-    check(condition, "LIKELY ERRONEOUS SIAL PROGRAM. " + m, line);
+bool input_warn(bool condition, const char* m, int line){
+	return check_and_warn(condition, "INVALID SETUP OR SIAL PROGRAM:  " + std::string(m), line);
 }
 
-bool sial_warn(bool condition, std::string m, int line){
+void sial_check(bool condition, const std::string& m, int line){
+    check(condition, "LIKELY ERRONEOUS SIAL PROGRAM. " + m, line);
+}
+void sial_check(bool condition, const char* m, int line){
+    check(condition, "LIKELY ERRONEOUS SIAL PROGRAM. " + std::string(m), line);
+}
+
+bool sial_warn(bool condition, const std::string& m, int line){
     return check_and_warn(condition, "POSSIBLY ERRONEOUS SIAL PROGRAM:  " + m, line);
+}
+bool sial_warn(bool condition, const char* m, int line){
+    return check_and_warn(condition, "POSSIBLY ERRONEOUS SIAL PROGRAM:  " + std::string(m), line);
 }
 
 } //namespace sip
