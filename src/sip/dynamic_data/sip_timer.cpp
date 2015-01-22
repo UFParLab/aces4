@@ -27,6 +27,10 @@
 	#define MAX_TAU_IDENT_LEN 64
 #endif
 
+#ifdef HAVE_MPI
+	#include "mpi.h"
+#endif
+
 namespace sip {
 
 
@@ -55,13 +59,26 @@ LinuxSIPTimers::~LinuxSIPTimers(){
 }
 
 void LinuxSIPTimers::start_timer(int slot) {
+#ifdef HAVE_MPI
+	// MPI_Wtime returns time in seconds. We convert this to the CLOCKS_PER_SEC unit
+	timer_on_[slot] = (long)(MPI_Wtime() * CLOCKS_PER_SEC);
+#else // HAVE_MPI
+	// clock() measure CPU time, not walltime. This is ok for the single node version.
+	// Use clock(), since that is the most widely available.
+	// Consider using Boost or Chrono
+	// http://stackoverflow.com/questions/17432502/how-can-i-measure-cpu-time-and-wall-clock-time-on-both-linux-windows
 	timer_on_[slot] = clock();
+#endif
 }
 
 void LinuxSIPTimers::pause_timer(int slot) {
 	assert (slot < max_slots_);
 	assert (timer_on_[slot] != _timer_off_value_);
+#ifdef HAVE_MPI
+	timer_list_[slot] += (long)(MPI_Wtime() * CLOCKS_PER_SEC) - timer_on_[slot];
+#else
 	timer_list_[slot] += clock() - timer_on_[slot];
+#endif
 	timer_on_[slot] = _timer_off_value_;
 	timer_switched_[slot]++;
 }
