@@ -109,7 +109,7 @@ public:
 	 */
 	void insert_block(const BlockId& block_id, BLOCK_TYPE* block_ptr) {
 		if (block_id.is_contiguous_local()){
-			sial_check(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " +
+			SIAL_CHECK(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map ",
 					     current_line());
 		}
 		int array_id = block_id.array_id();
@@ -123,8 +123,7 @@ public:
 		std::pair<BlockId, BLOCK_TYPE*> bid_pair (block_id, block_ptr);
 		std::pair<typename PerArrayMap::iterator, bool> ret;
 		ret = map_ptr->insert(bid_pair);
-		sial_check(ret.second,
-		std::string("attempting to insert block that already exists into the block_map. Probable cause: sial program allocating block that exists"), current_line());
+		sial_check(ret.second, std::string("attempting to insert block that already exists into the block_map. Probable cause: sial program allocating block that exists"), current_line());
 	}
 
 	/** Obtains requested block and remove it from the map.

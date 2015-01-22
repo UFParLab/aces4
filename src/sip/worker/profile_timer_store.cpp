@@ -190,7 +190,7 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 		ss << ";";
 	} else {
 		// Construct SQL Query String
-		check (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
+		CHECK (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
 		ss << "INSERT INTO " << block_table[num_blocks] << "(";
 		ss << opcode_column ;
 
@@ -264,7 +264,7 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 
 	// Construct SQL Query String
 	int num_blocks = opcode_operands.blocks_.size();
-	check (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
+	CHECK (num_blocks <= MAX_BLOCK_OPERANDS, "Num of block operands exceeds maximum allowed");
 	std::stringstream ss;
 	ss << "SELECT "<< tottime_column << ", " << count_column  <<" FROM "
 	   << block_table[num_blocks];
@@ -383,7 +383,7 @@ ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
 
 			typedef std::map<ProfileTimer::Key, std::pair<long, long> >::iterator MapIterator_t;
 			std::pair<MapIterator_t, bool> returned = all_rows_map.insert(std::make_pair(key, time_count_pair));
-			sip::check(returned.second, "Trying to insert duplicate element from database into map in ProfileTimerStore");
+			CHECK(returned.second, "Trying to insert duplicate element from database into map in ProfileTimerStore");
 		}
 		rc = sqlite3_finalize(get_all_rows_from_table);
 		if (rc != SQLITE_OK)

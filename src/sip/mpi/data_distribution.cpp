@@ -54,8 +54,6 @@ void DataDistribution::validate_block_position(const sip::BlockId& bid,
 		long block_num) const {
 	int array_id = bid.array_id();
 	int array_rank = sip_tables_.array_rank(array_id);
-	std::stringstream ss1;
-	ss1 << " Block num is -ve : " << block_num << " Block Id : " << bid;
 	if (block_num < 0) {
 		for (int pos = array_rank - 1; pos >= 0; pos--) {
 			int index_slot = sip_tables_.selectors(array_id)[pos];
@@ -63,7 +61,10 @@ void DataDistribution::validate_block_position(const sip::BlockId& bid,
 			std::cerr << " index_slot : " << index_slot << " pos : " << pos
 					<< " nseg : " << num_segments << std::endl;
 		}
-		sip::check(block_num >= 0, ss1.str(), current_line());
+
+		std::stringstream ss1;
+		ss1 << " Block num is -ve : " << block_num << " Block Id : " << bid;
+		sip::fail(ss1.str(), current_line());
 	}
 }
 
@@ -74,10 +75,10 @@ int DataDistribution::server_rank_from_hash(std::size_t hash) const {
 	const std::vector<int>& server_ranks = sip_mpi_attr_.server_ranks();
 
 	// Validation
-	{
+	if (server_rank_slot < 0)	{
 		std::stringstream ss2;
 		ss2 << " Server rank slot is -ve : " << server_rank_slot;
-		sip::check(server_rank_slot >= 0, ss2.str(), current_line());
+		fail(ss2.str(), current_line());
 	}
 
 	int server_global_rank = server_ranks.at(server_rank_slot);
@@ -93,7 +94,7 @@ long DataDistribution::block_position_in_array(const sip::BlockId& bid) const {
 	for (int pos = array_rank - 1; pos >= 0; pos--) {
 		int index_slot = sip_tables_.selectors(array_id)[pos];
 		int num_segments = sip_tables_.num_segments(index_slot);
-		sip::check(num_segments >= 0, "num_segments is -ve", current_line());
+		CHECK_WITH_LINE(num_segments >= 0, "num_segments is -ve", current_line());
 		block_num += bid.index_values(pos) * tmp;
 		tmp *= num_segments;
 	}

@@ -150,8 +150,8 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
 					get_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	check(block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source),
-			"Incorrect block semantics !");
+	if(!block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source))
+		fail("Incorrect block semantics !");
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -205,8 +205,8 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 					put_data_tag, MPI_COMM_WORLD, &status), __LINE__, __FILE__);
 	check_double_count(status, block_size);
 
-	check(block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source),
-			"Incorrect block semantics !");
+	if (!block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source))
+		fail("Incorrect block semantics !");
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -272,8 +272,8 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	MPI_Wait(&request, &status2);
 	check_double_count(status2, block_size);
 
-	check(block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source),
-			"Incorrect block semantics !");
+	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source))
+		fail("Incorrect block semantics !");
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -449,14 +449,14 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 void SIPServer::check_int_count(MPI_Status& status, int expected_count) {
 	int received_count;
 	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_INT, &received_count), __LINE__, __FILE__);
-	check(received_count == expected_count,
+	CHECK(received_count == expected_count,
 			"message int count different than expected");
 }
 
 void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
 	int received_count;
 	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count), __LINE__, __FILE__);
-	check(received_count == expected_count,
+	CHECK(received_count == expected_count,
 			"message double count different than expected");
 }
 

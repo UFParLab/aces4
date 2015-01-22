@@ -315,7 +315,7 @@ SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(in
 		std::cout << oor.what() << std::endl;
 		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
 		std::cout << "special instruction " << it->second << " at slot " << function_slot << " not installed" << std::endl;
-		sip::check(false, std::string(" terminating get_instruction_ptr "));
+		sip::fail(" terminating get_instruction_ptr ");
 		return NULL;
 	}
 }
@@ -351,7 +351,7 @@ const std::string SpecialInstructionManager::get_signature(int function_slot) co
 		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
 		std::cout << "special instruction " << it->second << ", at slot " << function_slot << " not installed" << std::endl;
 		std::cout << *this << std::endl;
-		sip::check(false, std::string(" terminating get_signature"));
+		sip::fail(" terminating get_signature");
 		return std::string("should not get here");
 	}
 }

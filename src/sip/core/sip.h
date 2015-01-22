@@ -65,6 +65,9 @@ void sip_abort();
 }
 #endif
 
+#define SIAL_CHECK(condition, message, line) 		if (!(condition)) { sip::sial_fail(message, line); }
+#define CHECK_WITH_LINE(condition, message, line) 	if (!(condition)) { sip::fail(message, line); }
+#define CHECK(condition, message)					if (!(condition)) { sip::fail(message); }
 
 namespace sip {
 
@@ -77,7 +80,7 @@ extern const int SIOX_MAGIC;
 extern const int SIOX_VERSION;
 extern const int SIOX_RELEASE;
 
-/*! Debug printintg control, default:true */
+/*! Debug printing control, default:true */
 extern bool _sip_debug_print;
 
 /*! Whether to print from all workers or just master, default:false
@@ -106,6 +109,10 @@ bool check_and_warn(bool, const char*, int line = 0);
 void fail(const std::string&, int line = 0);
 void fail(const char*, int line = 0);
 
+/*! prints warning message to std::cerr */
+void warn(const char* message, int line=0);
+void warn(const std::string& message, int line=0);
+
 /** This test is intended for checking for fatal errors that are caused by the input data.
  * This is in contrast to checks that find bugs in the sip.
  * This feature was recently added, so is not used consistently.
@@ -116,6 +123,7 @@ void fail(const char*, int line = 0);
  */
 void input_check(bool condition, const std::string& m, int line = 0);
 void input_check(bool condition, const char* m, int line = 0);
+void input_fail(const char* m, int line = 0);
 
 
 /** This test is intended warn of potential problems caused by the input data.
@@ -139,6 +147,7 @@ bool input_warn(bool condition, const char* m, int line = 0);
  */
 void sial_check(bool condition, const std::string& m, int line = 0);
 void sial_check(bool condition, const char* m, int line = 0);
+void sial_fail(const std::string& m, int line = 0);
 
 /** This test is intended warn of potential problems caused by questionable sial program.
  *

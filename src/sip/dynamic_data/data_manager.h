@@ -56,7 +56,7 @@ public:
 	//for ints
 	int int_value(int int_table_slot) const;
 	int int_value(const std::string& name) const;
-	void set_int_value(std::string& name, int value);
+	void set_int_value(const std::string& name, int value);
 	void set_int_value(int int_table_slot, int value);
 
     //for indices

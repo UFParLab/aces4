@@ -126,7 +126,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 	std::stringstream ss;
 	ss << "S " << sip_mpi_attr_.company_rank() << " : Could not allocate memory for block of size "
 			<< block_size << ", Memory being used :" << ServerBlock::allocated_bytes() << std::endl;
-	sip :: check (block_size <= max_allocatable_bytes_ - ServerBlock::allocated_bytes(), ss.str());
+	CHECK(block_size <= max_allocatable_bytes_ - ServerBlock::allocated_bytes(), ss.str());
    
     if (block == NULL) {
 	    block = new ServerBlock(block_size, initialize);
@@ -240,7 +240,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 
 	policy_.touch(block_id);
 
-	sip::check(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
+	CHECK(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
 	return block;
 }
 

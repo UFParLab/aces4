@@ -100,7 +100,7 @@ ProfileTimer::Key::Key(const std::string& opcode, const std::vector<BlockInfo>& 
 			} else {
 				replace_index = indexit->second;
 			}
-			check(replace_index >= 0, "Error in ProfileTimer::Key::Key", current_line());
+			CHECK_WITH_LINE(replace_index >= 0, "Error in ProfileTimer::Key::Key", current_line());
 			indices[i] = replace_index;
 		}
 	}

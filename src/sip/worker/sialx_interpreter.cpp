@@ -179,7 +179,7 @@ void SialxInterpreter::handle_deallocate_op(int pc) {
 }
 
 void SialxInterpreter::handle_allocate_contiguous_op(int pc) {
-	check(sip_tables_.is_contiguous_local(arg1(pc)),
+	CHECK_WITH_LINE(sip_tables_.is_contiguous_local(arg1(pc)),
 			"attempting to allocate_contiguous with array that is not contiguous_local",
 			line_number());
 	BlockId id = get_block_id_from_instruction(pc);
@@ -187,7 +187,7 @@ void SialxInterpreter::handle_allocate_contiguous_op(int pc) {
 }
 
 void SialxInterpreter::handle_deallocate_contiguous_op(int pc) {
-	check(sip_tables_.is_contiguous_local(arg1(pc)),
+	CHECK_WITH_LINE(sip_tables_.is_contiguous_local(arg1(pc)),
 			"attempting to deallocate_contiguous with array that is not contiguous_local",
 			line_number());
 	BlockId id = get_block_id_from_instruction(pc);
@@ -550,7 +550,7 @@ void SialxInterpreter::handle_block_permute_op(int pc) {
 				++j) {
 			/* keep looking until matching index found */
 		}
-		sip::check(j < lhs_rank, "illegal transpose");
+		CHECK(j < lhs_rank, "illegal transpose");
 		permutation[j] = i;
 	}
 	for (int i = lhs_rank; i < MAX_RANK; ++i) {
@@ -756,7 +756,7 @@ void SialxInterpreter::post_interpret(int oldpc, int newpc) {
 }
 
 void SialxInterpreter::pre_interpret(int pc) {
-	sip::check(write_back_list_.empty() && read_block_list_.empty(),
+	CHECK(write_back_list_.empty() && read_block_list_.empty(),
 			"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 	SIP_LOG(opcode_t opcode = op_table_.opcode(pc_);
 			std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
@@ -935,7 +935,7 @@ void SialxInterpreter::handle_user_sub_op(int pc) {
 				sip_tables_.special_instruction_manager().get_no_arg_special_instruction_ptr(
 						func_slot);
 		func(ierr);
-		check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1109,8 +1109,7 @@ void SialxInterpreter::handle_user_sub_op(int pc) {
 		return;
 	}
 
-	sip::check(false,
-			"Implementation restriction:  At most 6 arguments to a super instruction supported.  This can be increased if necessary");
+	sip::fail("Implementation restriction:  At most 6 arguments to a super instruction supported.  This can be increased if necessary");
 }
 
 void SialxInterpreter::handle_contraction(int drank, const index_selector_t& dselected_index_ids, double *ddata, segment_size_array_t& dshape) {
@@ -1144,8 +1143,7 @@ void SialxInterpreter::handle_contraction(int drank, const index_selector_t& dse
 
 	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
 			contraction_pattern, ierr);
-	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
-			line_number());
+	CHECK_WITH_LINE(ierr == 0, "error returned from get_contraction_ptrn_", line_number());
 //    INPUT:
 //    ! - nthreads - number of threads requested;
 //    ! - contr_ptrn(1:left_rank+right_rank) - contraction pattern;
@@ -1481,7 +1479,7 @@ sip::BlockId SialxInterpreter::get_block_id_from_selector(const BlockSelector &s
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_rank(array_id);
 	if (sip_tables_.is_contiguous_local(array_id)){
-		check (selector.rank_ == rank,
+		CHECK_WITH_LINE (selector.rank_ == rank,
 				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",line_number() );
 		int upper[MAX_RANK];
 		int lower[MAX_RANK];
@@ -1521,7 +1519,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 	Block::BlockPtr block;
 	if (sip_tables_.is_contiguous_local(array_id)){
 		int rank = sip_tables_.array_rank(selector.array_id_);
-		check (selector.rank_ == rank,
+		CHECK_WITH_LINE (selector.rank_ == rank,
 				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",line_number() );
 		int upper[MAX_RANK];
 		int lower[MAX_RANK];
@@ -1581,7 +1579,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 	id = block_id(selector);
 	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-	sial_check(!is_contiguous || contiguous_allowed,
+	SIAL_CHECK(!is_contiguous || contiguous_allowed,
 			"using contiguous block in a context that doesn't support it", line_number());
 	switch (intent) {
 	case 'r': {

@@ -363,7 +363,7 @@ ProfileInterpreterTestControllerParallel::~ProfileInterpreterTestControllerParal
 }
 
 sip::ProfileTimer::Key ProfileInterpreterTestControllerParallel::key_for_line(int line){
-	sip::check(profile_timer_ != NULL, "Profile timer is NULL, cannot call key_for_line");
+	CHECK(profile_timer_ != NULL, "Profile timer is NULL, cannot call key_for_line");
 	sip::ProfileTimer::TimerMap_t& timer_map = profile_timer_->profile_timer_map_;
 	sip::ProfileTimer::TimerMap_t::iterator it = timer_map.begin();
 	for (; it != timer_map.end(); ++it){

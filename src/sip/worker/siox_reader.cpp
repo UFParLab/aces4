@@ -49,17 +49,17 @@ void SioxReader::read(){
 }
 
 double * SioxReader::contiguous_array_data(std::string name){
-    sip::check_and_warn(false, "implement SioxReader::get_contiguous_array_data");
+    sip::warn("implement SioxReader::get_contiguous_array_data");
     return NULL;
 }
 
 void SioxReader::read_and_check_header(){
 	int magic = file . read_int();
-	sip::check(magic == SIOX_MAGIC, std::string("siox file has the wrong magic number"));
+	sip::input_check(magic == SIOX_MAGIC, std::string("siox file has the wrong magic number"));
 	int version = file . read_int(); //version
-	sip::check(version == SIOX_VERSION, "siox file has the wrong version number");
+	sip::input_check(version == SIOX_VERSION, "siox file has the wrong version number");
 	int max_dim = file . read_int(); //release
-	sip::check(max_dim == MAX_RANK, "siox file has the inconsistent value for MAX_RANK number");
+	sip::input_check(max_dim == MAX_RANK, "siox file has the inconsistent value for MAX_RANK number");
 	}
 
 void SioxReader::read_int_table(){

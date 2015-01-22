@@ -54,20 +54,22 @@ ServerBlock::ServerBlock(int size, dataPtr data):
 
 ServerBlock::~ServerBlock(){
 	const std::size_t bytes_in_block = size_ * sizeof(double);
-	std::stringstream ss;
 	if (data_ != NULL) {
-		ss << "Allocated bytes [ " << allocated_bytes_ <<" ] less than size of block being destroyed "
-				<< " [ " << bytes_in_block << " ] ";
-		sip::check(allocated_bytes_ >= bytes_in_block, ss.str());
+		if (!(allocated_bytes_ >= bytes_in_block)){
+			std::stringstream ss;
+			ss << "Allocated bytes [ " << allocated_bytes_ <<" ] less than size of block being destroyed "
+					<< " [ " << bytes_in_block << " ] ";
+			sip::fail(ss.str());
+		}
 		allocated_bytes_ -= bytes_in_block;
 
-		sip::check(disk_status_[ServerBlock::IN_MEMORY], "ServerBlock not in memory yet data_ is not NULL");
+		CHECK(disk_status_[ServerBlock::IN_MEMORY], "ServerBlock not in memory yet data_ is not NULL");
 		delete [] data_;
 	}
 }
 
 ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
-	check(size_ == size, "accumulating blocks of unequal size");
+	CHECK(size_ == size, "accumulating blocks of unequal size");
 	for (unsigned i = 0; i < size; ++i){
 			data_[i] += to_add[i];
 	}
@@ -85,7 +87,7 @@ void ServerBlock::free_in_memory_data() {
 }
 
 void ServerBlock::allocate_in_memory_data(bool initialize) {
-   	sip::check(data_ == NULL, "data_ was not NULL, allocating memory in allocate_in_memory_data!");
+	CHECK(data_ == NULL, "data_ was not NULL, allocating memory in allocate_in_memory_data!");
    	if (initialize) 
         data_ = new double[size_]();
    	else 
@@ -117,7 +119,7 @@ std::ostream& operator<<(std::ostream& os, const ServerBlock& block) {
 }
 
 void ServerBlock::reset_consistency_status (){
-	check(consistency_status_.first != INVALID_MODE &&
+	CHECK(consistency_status_.first != INVALID_MODE &&
 			consistency_status_.second != INVALID_WORKER,
 			"Inconsistent block status !");
 	consistency_status_.first = NONE;

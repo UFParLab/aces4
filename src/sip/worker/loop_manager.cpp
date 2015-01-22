@@ -47,7 +47,7 @@ bool DoLoop::do_update() {
 	int current_value;
 	if (first_time_) {  //initialize index to lower value
 		first_time_ = false;
-		sip::check(data_manager_.index_value(index_id_) == DataManager::undefined_index_value,
+		CHECK_WITH_LINE(data_manager_.index_value(index_id_) == DataManager::undefined_index_value,
 				"SIAL or SIP error, index " + sip_tables_.index_name(index_id_) + " already has value before loop",
 				Interpreter::global_interpreter->line_number());
 		current_value = lower_seg_;
@@ -83,7 +83,7 @@ std::ostream& operator<<(std::ostream& os, const DoLoop &obj) {
 }
 SubindexDoLoop::SubindexDoLoop(int subindex_id, DataManager & data_manager, const SipTables & sip_tables) :
 		DoLoop(subindex_id, data_manager, sip_tables) {
-	sip::check(sip_tables_.is_subindex(subindex_id), "Attempting subindex do loop with non-subindex loop variable");
+	CHECK(sip_tables_.is_subindex(subindex_id), "Attempting subindex do loop with non-subindex loop variable");
 	parent_id_ = sip_tables_.parent_index(subindex_id);
 	parent_value_ = data_manager_.index_value(parent_id_);
 	lower_seg_ = 1;  //subindices always start at 1
@@ -121,7 +121,7 @@ SequentialPardoLoop::SequentialPardoLoop(int num_indices,
 		upper_bound_[i] = lower_seg_[i]
 				+ sip_tables_.num_segments(
 						index_id_[i]);
-		sip::check(lower_seg_[i] < upper_bound_[i],
+		CHECK_WITH_LINE(lower_seg_[i] < upper_bound_[i],
 				"Pardo loop index "
 						+ sip_tables_.index_name(index_id_[i]) + " has empty range",
 				Interpreter::global_interpreter->line_number());
@@ -147,7 +147,7 @@ bool SequentialPardoLoop::do_update() {
 		for (int i = 0; i < num_indices_; ++i) {
 			if (lower_seg_[i] >= upper_bound_[i])
 				return false; //this loop has an empty range in at least one dimension.
-			sip::check(
+			CHECK_WITH_LINE(
 					data_manager_.index_value(index_id_[i])
 							== DataManager::undefined_index_value,
 					"SIAL or SIP error, index "
@@ -222,7 +222,7 @@ StaticTaskAllocParallelPardoLoop::StaticTaskAllocParallelPardoLoop(int num_indic
 	for (int i = 0; i < num_indices; ++i) {
 		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
 		upper_bound_[i] = lower_seg_[i] + sip_tables_.num_segments(index_id_[i]);
-		sip::check(lower_seg_[i] < upper_bound_[i],	"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range", Interpreter::global_interpreter->line_number());
+		CHECK_WITH_LINE(lower_seg_[i] < upper_bound_[i],	"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range", Interpreter::global_interpreter->line_number());
 	}
 }
 
@@ -256,8 +256,7 @@ inline bool StaticTaskAllocParallelPardoLoop::initialize_indices() {
 			return more_iterations;
 		}
 
-		sip::check(
-				data_manager_.index_value(index_id_[i])
+		CHECK_WITH_LINE(data_manager_.index_value(index_id_[i])
 						== DataManager::undefined_index_value,
 				"SIAL or SIP error, index "
 						+ sip_tables_.index_name(index_id_[i])

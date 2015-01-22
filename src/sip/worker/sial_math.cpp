@@ -48,9 +48,9 @@ int cast_double_to_int(double e) {
 double pow(double e0, double e1) {
 	errno = 0;
 	double value = std::pow(e0, e1);
-	sip::check(errno != EDOM, "domain error in exponent expression",
+	CHECK_WITH_LINE(errno != EDOM, "domain error in exponent expression",
 			sip::get_line_number());
-	sip::check(errno != ERANGE,
+	CHECK_WITH_LINE(errno != ERANGE,
 			"pole or range error in raise-to-power expression",
 			sip::get_line_number());
 	return value;
@@ -59,7 +59,7 @@ double pow(double e0, double e1) {
 double sqrt(double e){
 	errno = 0;
 	double value = std::sqrt(e);
-	sip::check(errno != EDOM, "domain error in sqrt expression",
+	CHECK_WITH_LINE(errno != EDOM, "domain error in sqrt expression",
 			sip::get_line_number());
 	return value;
 }

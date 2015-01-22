@@ -376,7 +376,7 @@ SIPMaPTimer SIPMaPInterpreter::merge_sipmap_timers(
 
 	// Initial checks
 	std::size_t workers = pardo_sections_info_vector.size();
-	check(workers == sipmap_timers_vector.size(), "Unequal number of pardo sections & sipmap timers when merging");
+	CHECK(workers == sipmap_timers_vector.size(), "Unequal number of pardo sections & sipmap timers when merging");
 
 	// Check to see if number of sections recorded in each pardo_sections_info is the same.
 	int sections = pardo_sections_info_vector.at(0).size();

@@ -32,7 +32,7 @@ public:
 		MPI_Wait(&mpi_request_, &status);
 		int received_count;
 		MPI_Get_count(&status, MPI_DOUBLE, &received_count);
-			check(received_count == expected_count,
+		CHECK(received_count == expected_count,
 					"message's double count different than expected");
 	}
 

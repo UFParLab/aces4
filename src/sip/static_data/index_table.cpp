@@ -51,14 +51,13 @@ int NonuniformSegmentDescriptor::get_extent(int segment) const {
 	try {
 		return seg_extents_.at(segment - 1); //convert to c index before retrieving value
 	} catch (const std::out_of_range& oor) {
-		sip::check(false,
-				"SIAL program/ setup data incompatibility.  Not enough segments for index type");
+		sip::fail("SIAL program/ setup data incompatibility.  Not enough segments for index type");
 	}
 	return 0;  //should not get here
 }
 
 int NonuniformSegmentDescriptor::get_offset(int beg_segment, int segment) const{
-	sip::check(beg_segment <= segment,
+	CHECK(beg_segment <= segment,
 			"SIP or Compiler bug.  Illegal segment value in NonuniformSegmentDescriptor::get_offset");
 	int offset = 0;
 	for (int i = beg_segment; i < segment; ++i){
@@ -104,13 +103,12 @@ int SubindexSegmentDescriptor::get_extent(int segment) const {
 //			<< segment << "," << parent_segment_value << "," << extent
 //			<< std::endl;
 //	return extent;
-	sip::check(false, "Sip bug:  SubindexSegmentDescriptor::get_extent is unsupported operation");
+	sip::fail("Sip bug:  SubindexSegmentDescriptor::get_extent is unsupported operation");
 	return -1;
 }
 
 int SubindexSegmentDescriptor::get_offset(int beg_segment, int segment) const{
-	sip::check(false,
-			"SIP or Compiler bug:  calling get_offset in SubindexSegmentDescriptor");
+	fail("SIP or Compiler bug:  calling get_offset in SubindexSegmentDescriptor");
 	return -1;
 }
 
@@ -146,20 +144,20 @@ int IndexTableEntry::index_extent() const {
 }
 
 int IndexTableEntry::parent_index() const {
-	sip::check(index_type_ == subindex,
+	CHECK(index_type_ == subindex,
 			"attempting to get parent of an index that is not a subindex");
 	return lower_seg_;
 }
 
 bool IndexTableEntry::operator==(const IndexTableEntry& rhs) const {
-	sip::check(index_type_ != subindex, "== unsupported for subindex");
+	CHECK(index_type_ != subindex, "== unsupported for subindex");
      return (index_type_ == rhs.index_type_) &&
     		 (lower_seg_ == rhs.lower_seg_) &&
     		 (num_segments_ == rhs.num_segments_);
 }
 
 bool IndexTableEntry::operator< (const IndexTableEntry& rhs) const {
-	sip::check(index_type_ != subindex, "< unsupported for subindex");
+	CHECK(index_type_ != subindex, "< unsupported for subindex");
      return (index_type_ == rhs.index_type_) &&
     		 (rhs.lower_seg_ <= lower_seg_) &&
     		 (lower_seg_ + num_segments_ <= rhs.lower_seg_ + rhs.num_segments_);
@@ -187,8 +185,8 @@ void IndexTableEntry::init(const std::string& name, IndexTableEntry& entry,
 	entry.name_ = name;
 	entry.lower_seg_ = bseg;
 	entry.num_segments_ = (eseg - bseg) + 1;
-    sip::check(entry.index_type_ == simple || entry.lower_seg_ >= 0, "-ve value for lower_seg_");
-    sip::check(entry.num_segments_ >= 0, "-ve value for num_segements_");
+	CHECK(entry.index_type_ == simple || entry.lower_seg_ >= 0, "-ve value for lower_seg_");
+	CHECK(entry.num_segments_ >= 0, "-ve value for num_segements_");
     
 	if (entry.index_type_ != subindex) { //set subindex_descriptor in IndexTable::init rather than here
 		//entry.segment_descriptor_ptr_ = table.segment_descriptors_.at(entry.index_type_);
@@ -272,7 +270,7 @@ int IndexTable::offset_into_contiguous(int index_slot, int index_value) const{
 int IndexTable::segment_range_extent(int index_slot, int range_lower, int range_upper) const{
 	const IndexTableEntry entry = entries_.at(index_slot);
 	int extent = 0;
-	sial_check(range_upper < (entry.lower_seg_+ entry.num_segments_), std::string("upper bound of range undefined for index"), current_line());
+	SIAL_CHECK(range_upper < (entry.lower_seg_+ entry.num_segments_), "upper bound of range undefined for index", current_line());
 	for (int j = range_lower; j <= range_upper; ++j){
 		extent += entry.segment_extent(j);
 	}
@@ -281,7 +279,7 @@ int IndexTable::segment_range_extent(int index_slot, int range_lower, int range_
 
 int IndexTable::offset_into_contiguous_region(int index_slot, int index_base, int index_value) const{
 	const IndexTableEntry entry = entries_.at(index_slot);
-	sial_check(entry.lower_seg_ <= index_base && index_value < entry.lower_seg_+entry.num_segments_,
+	SIAL_CHECK(entry.lower_seg_ <= index_base && index_value < entry.lower_seg_+entry.num_segments_,
 			"region indices out of bounds", current_line());
 	return entry.segment_descriptor_ptr_->offset(index_base, index_value);
 }
@@ -324,8 +322,7 @@ int IndexTable::parent(int subindex_slot) const {
 /*! returns the offset of this subsegment within the parent segment */
 int IndexTable::subsegment_offset(int subindex_slot, int parent_segment_value,
 		int subsegment_value) const {
-	sip::check(is_subindex(subindex_slot),
-			"attempting to get subsegment offset of an index that is not a subindex");
+	CHECK(is_subindex(subindex_slot), "attempting to get subsegment offset of an index that is not a subindex");
 	SubindexSegmentDescriptor * desc =
 			static_cast<SubindexSegmentDescriptor*>(entries_.at(subindex_slot).segment_descriptor_ptr_);
 	return desc->subsegment_offset(parent_segment_value, subsegment_value);

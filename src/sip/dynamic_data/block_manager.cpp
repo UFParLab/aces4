@@ -139,7 +139,7 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 //TODO TEMPORARY FIX WHILE SEMANTICS BEING WORKED OUT
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	sial_check(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
+	SIAL_CHECK(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
 	////
 	//#ifdef HAVE_CUDA
 	//	// Lazy copying of data from gpu to host if needed.
@@ -156,8 +156,7 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 //	std::cout << "calling get_block_for_updating for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
-	sial_check(blk != NULL, "attempting to update non-existent block",
-			current_line());
+	SIAL_CHECK(blk != NULL, "attempting to update non-existent block " + id.str(sip_tables_), current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_update_on_host(blk);

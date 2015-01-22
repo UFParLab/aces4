@@ -87,7 +87,8 @@ Block::~Block() {
 //		        sleep(5);
 //		}
 //	}
-	if (!sial_warn( !state_.pending() ,"deleting block with pending request, probably due to a get for a block that is not used")){
+	if (state_.pending()){
+		warn("deleting block with pending request, probably due to a get for a block that is not used");
 		state_.wait(size());
 	}
 #endif //HAVE_MPI
@@ -136,8 +137,8 @@ Block::dataPtr Block::copy_data_(BlockPtr source_block, int offset) {
 					//less than in source_block.  This requires, and should be checked
 					//by compiler that for, say, a[i,j] = a[i,j,k] that k is a simple index.
 					//the caller needs to calculate and pass in the offset.
-	sip::check(target != NULL, "Cannot copy data, target is NULL", current_line());
-	sip::check(source != NULL, "Cannot copy data, source is NULL", current_line());
+	CHECK_WITH_LINE(target != NULL, "Cannot copy data, target is NULL", current_line());
+	CHECK_WITH_LINE(source != NULL, "Cannot copy data, source is NULL", current_line());
 	std::copy(source+ offset, source + offset + n, target);
 	return target;
 }
@@ -193,8 +194,8 @@ Block::dataPtr Block::scale_and_copy(BlockPtr source_block, double factor){
 					//less than in source_block.  This requires, and should be checked
 					//by compiler that for, say, a[i,j] = a[i,j,k] that k is a simple index.
 					//the caller needs to calculate and pass in the offset.
-	sip::check(target != NULL, "Cannot copy data, target is NULL", current_line());
-	sip::check(source != NULL, "Cannot copy data, source is NULL", current_line());
+	CHECK_WITH_LINE(target != NULL, "Cannot copy data, target is NULL", current_line());
+	CHECK_WITH_LINE(source != NULL, "Cannot copy data, source is NULL", current_line());
 	for (int i = 0; i < n; ++i){
 		target[i] = source[i]*factor;
 	}
@@ -249,16 +250,14 @@ Block::dataPtr Block::transpose_copy(BlockPtr source, int rank,
 	int nthreads = sip::MAX_OMP_THREADS;
 	tensor_block_copy__(nthreads, rank, source->shape_.segment_sizes_,
 			dmitry_permute, source_data, data, ierr);
-	sip::check(ierr == 0,
-			"error returned from tensor_block_copy_ on transpose");
+	CHECK(ierr == 0, "error returned from tensor_block_copy_ on transpose");
 	return data;
 }
 
 
 //TODO use Dimitry's routine
 Block::dataPtr Block::accumulate_data(BlockPtr source) {
-	sip::check(this->shape_ == source->shape_,
-			" += applied to blocks with different shapes");
+	CHECK(this->shape_ == source->shape_, " += applied to blocks with different shapes");
 	dataPtr source_data =  source->data_;
 	int n = size();
 	for (int i = 0; i < n; ++i) {
@@ -288,13 +287,13 @@ Block::dataPtr Block::extract_slice(int rank, offset_array_t& offsets,
 	int nthreads = sip::MAX_OMP_THREADS;
 	int ierr = 0;
 
-	sip::check(destination->data_ != NULL, "when trying to extract slice of a block, destination is NULL");
-	sip::check(data_ != NULL, "when trying to extract slice of a block, source is NULL");
+	CHECK(destination->data_ != NULL, "when trying to extract slice of a block, destination is NULL");
+	CHECK(data_ != NULL, "when trying to extract slice of a block, source is NULL");
 
 	tensor_block_slice__(nthreads, rank, data_, shape_.segment_sizes_,
 			destination->data_, destination->shape_.segment_sizes_, offsets,
 			ierr);
-	sip::check(ierr == 0, "error value returned from tensor_block_slice__");
+	CHECK(ierr == 0, "error value returned from tensor_block_slice__");
 	return destination->data_;
 }
 
@@ -319,7 +318,7 @@ void Block::insert_slice(int rank, offset_array_t& offsets, BlockPtr source){
 	int ierr = 0;
 	tensor_block_insert__(nthreads, rank, data_, shape_.segment_sizes_,
 			source->data_, source->shape_.segment_sizes_, offsets, ierr);
-	sip::check(ierr==0, "error value returned from tensor_block_insert__");
+	CHECK(ierr==0, "error value returned from tensor_block_insert__");
 }
 
 std::ostream& operator<<(std::ostream& os, const Block& block) {

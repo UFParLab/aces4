@@ -22,7 +22,7 @@ void sialx_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Dat
 	long long * inout = (long long*)r_inout;
 	for (int l=0; l<*len; l++){
 		long long num_timers = in[0];
-		sip::check(inout[0] == in[0], "Data corruption when trying to reduce timers !");
+		CHECK(inout[0] == in[0], "Data corruption when trying to reduce timers !");
 		// Sum up the number of times each timer is switched on & off
 		// Sum up the the total time spent at each line.
 		in++; inout++;	// 0th position has the length

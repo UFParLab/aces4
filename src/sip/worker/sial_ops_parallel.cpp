@@ -110,7 +110,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 	int get_tag;
 	get_tag = barrier_support_.make_mpi_tag_for_GET();
 
-    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+	CHECK_WITH_LINE(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
     		<< " : sending GET for block " << block_id
@@ -212,7 +212,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 	int put_tag, put_data_tag;
 	put_tag = barrier_support_.make_mpi_tags_for_PUT(put_data_tag);
 
-    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+	CHECK_WITH_LINE(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
     		<< " : sending PUT for block " << target_id
@@ -306,7 +306,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 	put_accumulate_tag = barrier_support_.make_mpi_tags_for_PUT_ACCUMULATE(
 			put_accumulate_data_tag);
 
-    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
+	CHECK_WITH_LINE(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
        		<< " : sending PUT_ACCUMULATE for block " << target_id
@@ -393,7 +393,7 @@ bool SialOpsParallel::assert_same(int source_array_slot){
 		double EPSILON = .00005;
 		SIPMPIUtils::check_err(MPI_Bcast(&value, 1, MPI_DOUBLE, 0, worker_comm));
 		bool close = nearlyEqual(value, data_manager_.scalar_value(source_array_slot), EPSILON);
-		check (close, "values are too far apart");
+		CHECK (close, "values are too far apart");
 		//replace old value with new value from master.
 		data_manager_.set_scalar_value(source_array_slot, value);
 		return close;
@@ -583,8 +583,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
-		check(!is_scope_extent,
-				"sip bug: asking for scope-extent dist or served block");
+		CHECK(!is_scope_extent, "sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
 	return block_manager_.get_block_for_writing(id, is_scope_extent);
@@ -592,9 +591,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 
 Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 	int array_id = id.array_id();
-	check(
-			!(sip_tables_.is_distributed(array_id)
-					|| sip_tables_.is_served(array_id)),
+	CHECK_WITH_LINE(!(sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id)),
 			"attempting to update distributed or served block", current_line());
 
 	return block_manager_.get_block_for_updating(id);

@@ -94,7 +94,7 @@ public:
 		data_manager_.set_scalar_value(name, value);
 	}
 
-	virtual double predefined_scalar_impl(std::string name) {
+	virtual double predefined_scalar_impl(const std::string& name) {
 		return sip_tables().setup_reader().predefined_scalar(name);
 	}
 
@@ -105,15 +105,15 @@ public:
 		return ss.str();
 	}
 
-	virtual int predefined_int_impl (std::string name) {
+	virtual int predefined_int_impl (const std::string& name) {
 		return sip_tables().setup_reader().predefined_int(name);
 	}
 
-	virtual setup::PredefContigArray predefined_contiguous_array_impl(std::string name){
+	virtual setup::PredefContigArray predefined_contiguous_array_impl(const std::string& name){
 		return sip_tables().setup_reader().predefined_contiguous_array(name);
 	}
 
-	virtual setup::PredefIntArray predefined_integer_array_impl(std::string name) {
+	virtual setup::PredefIntArray predefined_integer_array_impl(const std::string& name) {
 		return sip_tables().setup_reader().predefined_integer_array(name);
 	}
 
@@ -174,11 +174,11 @@ public:
 		return data_manager_.int_table_.value(int_table_slot);
 	}
 
-	virtual int int_value_impl(std::string name) {
+	virtual int int_value_impl(const std::string& name) {
 		return data_manager_.int_value(name);
 	}
 
-	virtual void set_int_value_impl(std::string name, int value){
+	virtual void set_int_value_impl(const std::string& name, int value){
 		data_manager_.set_int_value(name, value);
 	}
 
@@ -201,7 +201,7 @@ public:
 	 * @param array_name
 	 * @return
 	 */
-	virtual int array_slot(std::string array_name) {
+	virtual int array_slot(const std::string& array_name) {
 		return sip_tables_.array_table_.array_slot(array_name);
 	}
 

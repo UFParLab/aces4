@@ -33,7 +33,7 @@ namespace sip {
 	void WorkerPersistentArrayManager::set_persistent(Interpreter* runner, int array_id, int string_slot) {
 		SIP_LOG(std::cout << "set_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl);
 		std::pair<ArrayIdLabelMap::iterator, bool> ret = persistent_array_map_.insert(std::pair<int, int>(array_id, string_slot));
-		check(ret.second, "duplicate save of array in same sial program ");
+		CHECK(ret.second, "duplicate save of array in same sial program ");
 		//check(ret.second, "duplicate save of array in same sial program " + SipTables::instance().array_name(array_id));
 		//note that duplicate label for same type of object will
 		//be detected during the save process so we don't
@@ -87,7 +87,7 @@ namespace sip {
 			int string_slot) {
 		std::string label = worker->string_literal(string_slot);
 		LabelScalarValueMap::iterator it = scalar_value_map_.find(label);
-		check(it != scalar_value_map_.end(),
+		CHECK(it != scalar_value_map_.end(),
 				"scalar to restore with label " + label + " not found");
 		SIP_LOG(std::cout<< "restoring scalar " << worker -> array_name(array_id) << "=" << it -> second << std::endl);
 		worker->set_scalar_value(array_id, it->second);
@@ -99,7 +99,7 @@ namespace sip {
 		std::string label = worker->string_literal(string_slot);
 		LabelContiguousArrayMap::iterator it = contiguous_array_map_.find(
 				label);
-		check(it != contiguous_array_map_.end(),
+		CHECK(it != contiguous_array_map_.end(),
 				"contiguous array to restore with label " + label
 						+ " not found");
 		worker->set_contiguous_array(array_id, it->second);
@@ -110,7 +110,7 @@ namespace sip {
 			int array_id, int string_slot) {
 		std::string label = runner->string_literal(string_slot);
 		LabelDistributedArrayMap::iterator it = distributed_array_map_.find(label);
-		check(it != distributed_array_map_.end(),
+		CHECK(it != distributed_array_map_.end(),
 				"distributed/served array to restore with label " + label
 						+ " not found");
 		runner->set_per_array_map(array_id, it->second);
@@ -126,7 +126,7 @@ namespace sip {
 	}
 
 	void WorkerPersistentArrayManager::save_contiguous(const std::string label, Block* contig) {
-		check(contig != NULL, "attempting to save nonexistent contiguous array", current_line());
+		CHECK_WITH_LINE(contig != NULL, "attempting to save nonexistent contiguous array", current_line());
 		const std::pair<LabelContiguousArrayMap::iterator, bool> ret = contiguous_array_map_.insert(std::pair<std::string, Block*>(label, contig));
 		SIP_LOG(std::cout << "save_contiguous: ret= " << ret.second);
 		if (!check_and_warn(ret.second, "Label " + label + "already used for contiguous array.  Overwriting previously saved array.")) {

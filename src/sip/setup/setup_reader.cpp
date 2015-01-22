@@ -306,7 +306,7 @@ SetupReader::~SetupReader() {
     for (NamePredefinedContiguousArrayMapIterator iter = name_to_predefined_contiguous_array_map_.begin();
     		iter != name_to_predefined_contiguous_array_map_.end(); ++iter){
     	SIP_LOG(std::cout<<"From SetupReader, freeing "<<iter->first<<std::endl);
-    	check(iter->second.second, "attempting to delete NULL block in ~SetupReader");
+    	CHECK(iter->second.second, "attempting to delete NULL block in ~SetupReader");
 		delete iter->second.second;
 		iter->second.second = NULL;
     }

@@ -19,7 +19,7 @@ namespace sip {
 	void ServerPersistentArrayManager::set_persistent(SIPServer* runner, int array_id, int string_slot) {
 //		std::cout << "set_persistent: array= " << runner->sip_tables()->array_name(array_id) << ", label=" << runner->sip_tables()->string_literal(string_slot) << std::endl;
 		std::pair<ArrayIdLabelMap::iterator, bool> ret = persistent_array_map_.insert(std::pair<int, int>(array_id, string_slot));
-		check(ret.second, "duplicate save of array in same sial program ");
+		CHECK(ret.second, "duplicate save of array in same sial program ");
 	}
 
 
@@ -30,7 +30,7 @@ namespace sip {
 			int array_id = it->first;
 			int string_slot = it->second;
 			const std::string label = runner->sip_tables()->string_literal(string_slot);
-			sip::check ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
+			CHECK( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
 					" Tried to save a scalar or contiguous array. Something went very wrong in the server.");
 
 			IdBlockMap<ServerBlock>::PerArrayMap* per_array_map = runner->per_array_map(array_id);
@@ -45,7 +45,7 @@ namespace sip {
 //				runner->array_name(array_id) << ", label=" <<
 //				runner->string_literal(string_slot) << std::endl;)
 
-		sip::check ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
+		CHECK ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
 							" Tried to restore a scalar or contiguous array. Something went very wrong in the server.");
 
 		restore_persistent_distributed(runner, array_id, string_slot);

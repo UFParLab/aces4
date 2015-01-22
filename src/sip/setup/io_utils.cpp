@@ -149,7 +149,7 @@ double * BinaryInputStream::read_double_array(int *size){
 	int sizec = read_int();
 	double * values = new double[sizec];
 	stream_->read( reinterpret_cast<char *>(values), sizeof(double) * sizec);
-	sip::check(stream_->good(), std::string( "error in read_double_array of input "));
+	CHECK(stream_->good(), std::string( "error in read_double_array of input "));
 	*size = sizec;
 	return values;
 }

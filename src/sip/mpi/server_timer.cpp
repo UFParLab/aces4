@@ -280,14 +280,14 @@ private:
 
 
 void ServerTimer::start_timer(int line_number, TimerKind_t kind){
-	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-	check(line_number <= sialx_lines_, "Invalid line number", line_number);
+	CHECK_WITH_LINE(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
+	CHECK_WITH_LINE(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.start_timer(line_number + ((int)kind) * sialx_lines_);
 }
 
 void ServerTimer::pause_timer(int line_number, TimerKind_t kind){
-	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-	check(line_number <= sialx_lines_, "Invalid line number", line_number);
+	CHECK_WITH_LINE(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
+	CHECK_WITH_LINE(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.pause_timer(line_number + ((int)kind) * sialx_lines_);
 }
 

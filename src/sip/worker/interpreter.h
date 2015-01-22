@@ -62,13 +62,13 @@ public:
 
 	int int_value(int int_table_slot) { return int_value_impl(int_table_slot);}
 	void set_int_value(int int_table_slot, int value){ set_int_value_impl(int_table_slot, value);	}
-	int int_value(std::string name) { return int_value_impl(name);}
-	void set_int_value(std::string name, int value){ set_int_value_impl(name, value);	}
+	int int_value(const std::string& name) { return int_value_impl(name);}
+	void set_int_value(const std::string& name, int value){ set_int_value_impl(name, value);	}
 
-	double predefined_scalar(std::string name) { return predefined_scalar_impl(name); }
-	int predefined_int(std::string name) { return predefined_int_impl(name); }
-	setup::PredefContigArray predefined_contiguous_array(std::string name) { return predefined_contiguous_array_impl(name); }
-	setup::PredefIntArray predefined_integer_array(std::string name) { return predefined_integer_array_impl(name); }
+	double predefined_scalar(const std::string& name) { return predefined_scalar_impl(name); }
+	int predefined_int(const std::string& name) { return predefined_int_impl(name); }
+	setup::PredefContigArray predefined_contiguous_array(const std::string& name) { return predefined_contiguous_array_impl(name); }
+	setup::PredefIntArray predefined_integer_array(const std::string& name) { return predefined_integer_array_impl(name); }
 
 	int index_value(int index_table_slot) { return index_value_impl(index_table_slot); }
 	std::string index_value_to_string(int index_table_slot) { return index_value_to_string_impl(index_table_slot); }
@@ -114,7 +114,7 @@ public:
 	 * @param array_name
 	 * @return
 	 */
-	virtual int array_slot(std::string array_name) = 0;
+	virtual int array_slot(const std::string& array_name) = 0;
 
 	/**
 	 * For testing
@@ -143,13 +143,13 @@ protected:
 
 	virtual int int_value_impl(int int_table_slot) = 0;
 	virtual void set_int_value_impl(int int_table_slot, int value) = 0;
-	virtual int int_value_impl(std::string name) = 0;
-	virtual void set_int_value_impl(std::string name, int value) = 0;
+	virtual int int_value_impl(const std::string& name) = 0;
+	virtual void set_int_value_impl(const std::string&, int value) = 0;
 
-	virtual double predefined_scalar_impl(std::string name) = 0;
-	virtual int predefined_int_impl (std::string name) = 0;
-	virtual setup::PredefContigArray predefined_contiguous_array_impl(std::string name) = 0;
-	virtual setup::PredefIntArray predefined_integer_array_impl(std::string name) = 0;
+	virtual double predefined_scalar_impl(const std::string& name) = 0;
+	virtual int predefined_int_impl (const std::string& name) = 0;
+	virtual setup::PredefContigArray predefined_contiguous_array_impl(const std::string& name) = 0;
+	virtual setup::PredefIntArray predefined_integer_array_impl(const std::string& name) = 0;
 
 	virtual int index_value_impl(int index_table_slot) = 0;
 	virtual std::string index_value_to_string_impl(int index_table_slot) = 0;

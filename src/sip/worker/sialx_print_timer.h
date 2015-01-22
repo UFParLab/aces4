@@ -246,7 +246,7 @@ private:
 	void mpi_reduce_timers(TIMER& timer, std::vector<long long>& timers_vector,
 			std::vector<long long>& timer_counts_vector) {
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
-		sip::check(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
+		CHECK(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
 

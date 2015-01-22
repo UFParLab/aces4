@@ -46,8 +46,8 @@ void SIPMaPTimer::record_time(int line_number, long time, SialxTimer::TimerKind_
 }
 
 void SIPMaPTimer::merge_other_timer(const SIPMaPTimer& other){
-	check(sialx_lines_ == other.sialx_lines_, "Different sialx_lines_ when trying to merge other SIPMaPTimer");
-	check(max_slots_ == other.max_slots_, "Different max_slots when trying to merge other SIPMaPTimer");
+	CHECK(sialx_lines_ == other.sialx_lines_, "Different sialx_lines_ when trying to merge other SIPMaPTimer");
+	CHECK(max_slots_ == other.max_slots_, "Different max_slots when trying to merge other SIPMaPTimer");
 	for (int i=0; i<max_slots_; ++i)
 		timer_list_.at(i) += other.timer_list_.at(i);
 	for (int i=0; i<max_slots_; ++i)
