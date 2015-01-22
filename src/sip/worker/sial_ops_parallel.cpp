@@ -37,7 +37,9 @@ SialOpsParallel::~SialOpsParallel() {
 
 void SialOpsParallel::sip_barrier() {
 	//wait for all expected acks,
+	if (sialx_timers_) sialx_timers_->start_timer(current_line(), SialxTimer::BLOCKWAITTIME);
 	ack_handler_.wait_all();
+	if (sialx_timers_) sialx_timers_->pause_timer(current_line(), SialxTimer::BLOCKWAITTIME);
 
 	//do an MPI barrier among all the workers
 	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
