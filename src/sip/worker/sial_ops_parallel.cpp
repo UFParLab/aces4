@@ -206,7 +206,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 void SialOpsParallel::put_replace(BlockId& target_id,
 		const Block::BlockPtr source_block) {
 	//partial check for data races
-	check_and_set_mode(target_id, WRITE);
+	check_and_set_mode(target_id, UPDATE);
 
 	//send message with array_id to server
 	int my_rank = sip_mpi_attr_.global_rank();
