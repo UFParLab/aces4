@@ -342,8 +342,6 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	last_seen_line_ = 0; 	// Special line number for end program
 	last_seen_worker_ = mpi_source;
 
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
-
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 				<< " : ending program "
 				<< ", sent from = " << mpi_source << std::endl;)
@@ -355,9 +353,6 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 
 	//set terminated flag;
 	terminated_ = true;
-
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
-
 }
 
 void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {

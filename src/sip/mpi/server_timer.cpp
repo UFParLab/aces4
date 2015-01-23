@@ -84,15 +84,17 @@ public:
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		int num_servers = attr.num_servers();
 
-		mpi_reduce_timers(timer); // Reduce timers to server master.
+		std::vector<long long> timers_vector(timer.max_slots(), 0L);
+		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
+		mpi_reduce_timers(timer, timers_vector, timer_counts_vector); // Reduce timers to server master.
 
 		// Print from the server master.
 		if (SIPMPIAttr::get_instance().is_company_master()){
 
 			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 
-			long long * timers = timer.get_timers();
-			long long * timer_counts = timer.get_timer_count();
+			long long * timers = &timers_vector[0];
+			long long * timer_counts = &timer_counts_vector[0];
 			const int LW = 8;	// Line num
 			const int CW = 12;	// Time
 			const int SW = 20;	// String
@@ -112,6 +114,9 @@ public:
 				//<<std::setw(CW)<<std::left<<"Tot"
 				<<std::endl;
 
+			double total_wall_time = timer.to_seconds(timers[0] / (double)timer_counts[0]);
+			double sum_of_avg_busy_time = 0.0;
+
 			for (int i=1; i<sialx_lines_; i++){
 
 				int tot_time_offset = i + static_cast<int>(ServerTimer::TOTALTIME) * sialx_lines_;
@@ -120,6 +125,7 @@ public:
 					double tot_time = timer.to_seconds(timers[tot_time_offset]);	// Microsecond to second
 					double avg_time = tot_time / num_servers;
 					double avg_count =  timer_count /(double)num_servers;
+					sum_of_avg_busy_time += avg_time;
 
 					double tot_blk_wait = 0;
 					double avg_blk_wait = 0;
@@ -157,6 +163,9 @@ public:
 							<< std::endl;
 				}
 			}
+			out_ << "Total Walltime : " << total_wall_time << " Seconds "<< std::endl;
+			out_ << "Average Busy Time : " << sum_of_avg_busy_time << " Seconds " << std::endl;
+			out_ << "Average Idle Time : " << (total_wall_time - sum_of_avg_busy_time) << " Seconds " << std::endl;
 			out_<<std::endl;
 		}
 	}
@@ -168,8 +177,11 @@ private:
 	/**
 	 * Reduce all server timers to server master.
 	 * @param timer
+	 * @param timers_vector
+	 * @param timer_counts_vector
 	 */
-	void mpi_reduce_timers(TIMER& timer){
+	void mpi_reduce_timers(TIMER& timer, std::vector<long long>& timers_vector,
+			std::vector<long long>& timer_counts_vector){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_server(), "Trying to reduce timer on a non-server rank !");
 		long long * timers = timer.get_timers();
@@ -199,8 +211,8 @@ private:
 		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, server_timer_reduce_dt, server_timer_reduce_op, server_master, server_company));
 
 		if (attr.is_company_master()){
-			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts);
-			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers);
+			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
+			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
 		}
 
 		// Cleanup
@@ -219,8 +231,8 @@ private:
 template<typename TIMER>
 class TAUTimersPrint : public PrintTimers<TIMER> {
 public:
-	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines)
-		:line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
+	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out)
+		:line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~TAUTimersPrint() {/* Do Nothing */}
 	virtual void execute(TIMER& timer) {
 		void ** tau_timers = timer.get_tau_timers();
@@ -273,6 +285,7 @@ public:
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+	std::ostream& out_;
 };
 #endif // HAVE_TAU
 
@@ -297,11 +310,21 @@ void ServerTimer::print_timers(std::vector<std::string> line_to_str, std::ostrea
 	typedef TAUTimersPrint<SipTimer_t> PrintTimersType_t;
 #elif defined HAVE_MPI
 	typedef ServerPrint<SipTimer_t> PrintTimersType_t;
-//#else
-	//typedef SingleNodePrint<SipTimer_t> PrintTimersType_t;
 #endif
 	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
+}
+
+void ServerTimer::start_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.start_timer(0);
+#endif
+}
+
+void ServerTimer::stop_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.pause_timer(0);
+#endif
 }
 
 

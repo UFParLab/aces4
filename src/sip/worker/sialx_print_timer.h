@@ -258,7 +258,7 @@ private:
 
 		long long * recvbuf = new long long[2*timer.max_slots() + 1]();
 
-		int worker_master = attr.worker_master();
+		int worker_master = attr.COMPANY_MASTER_RANK;
 		MPI_Comm worker_company = attr.company_communicator();
 
 		// The data will be structured as

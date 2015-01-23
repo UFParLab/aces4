@@ -70,7 +70,6 @@ void SialxTimer::stop_program_timer(){
 #ifndef HAVE_TAU
 	delegate_.pause_timer(0);
 #endif
-
 }
 
 
