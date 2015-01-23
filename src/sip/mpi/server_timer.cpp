@@ -30,7 +30,13 @@ namespace sip {
 
 ServerTimer::ServerTimer(int sialx_lines):
 		sialx_lines_(sialx_lines),
-		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)){}
+		delegate_(NUMBER_TIMER_KINDS_*(1 + sialx_lines)){
+	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
+	 * one for each kind defined in the TimerKind_t enum.
+	 * One extra added since line numbers begin at 1.
+	 * The 0th slot is for the entire program
+	 */
+}
 
 ServerTimer::~ServerTimer() {}
 
@@ -71,41 +77,55 @@ void server_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Da
 template<typename TIMER>
 class ServerPrint : public PrintTimers<TIMER> {
 public:
-	ServerPrint(const std::vector<std::string> &line_to_str, int sialx_lines) :
-		line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
+	ServerPrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out) :
+		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~ServerPrint(){}
 	virtual void execute(TIMER& timer){
+		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
+		int num_servers = attr.num_servers();
 
-		mpi_reduce_timers(timer); // Reduce timers to server master.
+		std::vector<long long> timers_vector(timer.max_slots(), 0L);
+		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
+		mpi_reduce_timers(timer, timers_vector, timer_counts_vector); // Reduce timers to server master.
 
 		// Print from the server master.
 		if (SIPMPIAttr::get_instance().is_company_master()){
 
-			std::cout << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 
-			long long * timers = timer.get_timers();
-			long long * timer_counts = timer.get_timer_count();
-			const int LW = 10;	// Line num
-			const int CW = 15;	// Time
+			long long * timers = &timers_vector[0];
+			long long * timer_counts = &timer_counts_vector[0];
+			const int LW = 8;	// Line num
+			const int CW = 12;	// Time
 			const int SW = 20;	// String
+			const int PRECISION = 6; 	// Precision
+
+			out_.precision(PRECISION); // Reset precision to 6 places.
 
 			assert(timer.check_timers_off());
-			std::cout<<"Timers"<<std::endl
+			out_<<"Timers"<<std::endl
 				<<std::setw(LW)<<std::left<<"Line"
 				<<std::setw(SW)<<std::left<<"Type"
-				<<std::setw(CW)<<std::left<<"Avg"
-				<<std::setw(CW)<<std::left<<"AvgBlkWait"
-				<<std::setw(CW)<<std::left<<"AvgDiskRead"
-				<<std::setw(CW)<<std::left<<"AvgDiskWrite"
-				<<std::setw(CW)<<std::left<<"Tot"
+				<<std::setw(CW)<<std::left<<"Avg"			// Average time spent per server
+				<<std::setw(CW)<<std::left<<"AvgBlkWt"		// Average block wait per server
+				<<std::setw(CW)<<std::left<<"AvgDskRd"		// Average disk read per server
+				<<std::setw(CW)<<std::left<<"AvgDskWrte"	// Average disk write per server
+				<<std::setw(CW)<<std::left<<"AvgCount"		// Average count per server
+				//<<std::setw(CW)<<std::left<<"Tot"
 				<<std::endl;
+
+			double total_wall_time = timer.to_seconds(timers[0] / (double)timer_counts[0]);
+			double sum_of_avg_busy_time = 0.0;
 
 			for (int i=1; i<sialx_lines_; i++){
 
 				int tot_time_offset = i + static_cast<int>(ServerTimer::TOTALTIME) * sialx_lines_;
 				if (timer_counts[tot_time_offset] > 0L){
+					long long timer_count = timer_counts[tot_time_offset];
 					double tot_time = timer.to_seconds(timers[tot_time_offset]);	// Microsecond to second
-					double avg_time = tot_time / timer_counts[tot_time_offset];
+					double avg_time = tot_time / num_servers;
+					double avg_count =  timer_count /(double)num_servers;
+					sum_of_avg_busy_time += avg_time;
 
 					double tot_blk_wait = 0;
 					double avg_blk_wait = 0;
@@ -117,74 +137,82 @@ public:
 					int blk_wait_offset = i + static_cast<int>(ServerTimer::BLOCKWAITTIME) * sialx_lines_;
 					if (timer_counts[blk_wait_offset] > 0L){
 						tot_blk_wait = timer.to_seconds(timers[blk_wait_offset]);
-						avg_blk_wait = tot_blk_wait / timer_counts[blk_wait_offset];
+						avg_blk_wait = tot_blk_wait / num_servers;
 					}
 
 					int read_timer_offset = i + static_cast<int>(ServerTimer::READTIME) * sialx_lines_;
 					if (timer_counts[read_timer_offset] > 0L){
 						tot_disk_read = timer.to_seconds(timers[read_timer_offset]);
-						avg_disk_read = tot_disk_read / timer_counts[read_timer_offset];
+						avg_disk_read = tot_disk_read / num_servers;
 					}
 
 					int write_timer_offset = i + static_cast<int>(ServerTimer::WRITETIME) * sialx_lines_;
 					if (timer_counts[write_timer_offset] > 0L){
 						tot_disk_write = timer.to_seconds(timers[write_timer_offset]);
-						avg_disk_write = tot_disk_write / timer_counts[write_timer_offset];
+						avg_disk_write = tot_disk_write / num_servers;
 					}
 
-					std::cout<<std::setw(LW)<<std::left << i
+					out_<<std::setw(LW)<<std::left << i
 							<< std::setw(SW)<< std::left << line_to_str_.at(i)
 							<< std::setw(CW)<< std::left << avg_time
 							<< std::setw(CW)<< std::left << avg_blk_wait
 							<< std::setw(CW)<< std::left << avg_disk_read
 							<< std::setw(CW)<< std::left << avg_disk_write
-							<< std::setw(CW)<< std::left << tot_time
+							<< std::setw(CW)<< std::left << avg_count
+							//<< std::setw(CW)<< std::left << tot_time
 							<< std::endl;
 				}
 			}
-			std::cout<<std::endl;
+			out_ << "Total Walltime : " << total_wall_time << " Seconds "<< std::endl;
+			out_ << "Average Busy Time : " << sum_of_avg_busy_time << " Seconds " << std::endl;
+			out_ << "Average Idle Time : " << (total_wall_time - sum_of_avg_busy_time) << " Seconds " << std::endl;
+			out_<<std::endl;
 		}
 	}
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+	std::ostream& out_;
 
 	/**
 	 * Reduce all server timers to server master.
 	 * @param timer
+	 * @param timers_vector
+	 * @param timer_counts_vector
 	 */
-	void mpi_reduce_timers(TIMER& timer){
+	void mpi_reduce_timers(TIMER& timer, std::vector<long long>& timers_vector,
+			std::vector<long long>& timer_counts_vector){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		sip::check(attr.is_server(), "Trying to reduce timer on a non-server rank !");
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
 
 		// Data to send to reduce
-		long long * sendbuf = new long long[2*timer.max_slots + 1];
-		sendbuf[0] = timer.max_slots;
+		long long * sendbuf = new long long[2*timer.max_slots() + 1];
+		sendbuf[0] = timer.max_slots();
 		// The data will be structured as
 		// Length of arrays 1 & 2
 		// Array1 -> timer_switched_ array
 		// Array2 -> timer_list_ array
-		std::copy(timer_counts + 0, timer_counts + timer.max_slots, sendbuf+1);
-		std::copy(timers + 0, timers + timer.max_slots, sendbuf+1+ timer.max_slots);
+		std::copy(timer_counts + 0, timer_counts + timer.max_slots(), sendbuf+1);
+		std::copy(timers + 0, timers + timer.max_slots(), sendbuf+1+ timer.max_slots());
 
-		long long * recvbuf = new long long[2*timer.max_slots + 1]();
+		long long * recvbuf = new long long[2*timer.max_slots() + 1]();
 
 		int server_master = attr.COMPANY_MASTER_RANK;
 		MPI_Comm server_company = attr.company_communicator();
 
 		MPI_Datatype server_timer_reduce_dt; // MPI Type for timer data to be reduced.
 		MPI_Op server_timer_reduce_op;	// MPI OP to reduce timer data.
-		SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots*2+1, MPI_LONG_LONG, &server_timer_reduce_dt));
+		SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots()*2+1, MPI_LONG_LONG, &server_timer_reduce_dt));
 		SIPMPIUtils::check_err(MPI_Type_commit(&server_timer_reduce_dt));
 		SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)server_timer_reduce_op_function, 1, &server_timer_reduce_op));
 
 		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, server_timer_reduce_dt, server_timer_reduce_op, server_master, server_company));
 
 		if (attr.is_company_master()){
-			std::copy(recvbuf+1, recvbuf+1+timer.max_slots, timer_counts);
-			std::copy(recvbuf+1+timer.max_slots, recvbuf+1+2*timer.max_slots, timers);
+			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
+			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
 		}
 
 		// Cleanup
@@ -203,8 +231,8 @@ private:
 template<typename TIMER>
 class TAUTimersPrint : public PrintTimers<TIMER> {
 public:
-	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines)
-		:line_to_str_(line_to_str), sialx_lines_(sialx_lines) {}
+	TAUTimersPrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out)
+		:line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~TAUTimersPrint() {/* Do Nothing */}
 	virtual void execute(TIMER& timer) {
 		void ** tau_timers = timer.get_tau_timers();
@@ -257,6 +285,7 @@ public:
 private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
+	std::ostream& out_;
 };
 #endif // HAVE_TAU
 
@@ -264,28 +293,39 @@ private:
 
 
 void ServerTimer::start_timer(int line_number, TimerKind_t kind){
-	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-	check(line_number <= sialx_lines_, "Invalid line number", line_number);
+	CHECK_WITH_LINE(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
+	CHECK_WITH_LINE(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.start_timer(line_number + ((int)kind) * sialx_lines_);
 }
 
 void ServerTimer::pause_timer(int line_number, TimerKind_t kind){
-	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
-	check(line_number <= sialx_lines_, "Invalid line number", line_number);
+	CHECK_WITH_LINE(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);
+	CHECK_WITH_LINE(line_number <= sialx_lines_, "Invalid line number", line_number);
 	delegate_.pause_timer(line_number + ((int)kind) * sialx_lines_);
 }
 
 
-void ServerTimer::print_timers(std::vector<std::string> line_to_str) {
+void ServerTimer::print_timers(std::vector<std::string> line_to_str, std::ostream& out) {
 #ifdef HAVE_TAU
-	typedef TAUTimersPrint<TimerType_t> PrintTimersType_t;
+	typedef TAUTimersPrint<SipTimer_t> PrintTimersType_t;
 #elif defined HAVE_MPI
-	typedef ServerPrint<TimerType_t> PrintTimersType_t;
-#else
-	typedef SingleNodePrint<TimerType_t> PrintTimersType_t;
+	typedef ServerPrint<SipTimer_t> PrintTimersType_t;
 #endif
-	PrintTimersType_t p(line_to_str, sialx_lines_);
+	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
 }
+
+void ServerTimer::start_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.start_timer(0);
+#endif
+}
+
+void ServerTimer::stop_program_timer(){
+#ifndef HAVE_TAU
+	delegate_.pause_timer(0);
+#endif
+}
+
 
 } /* namespace sip */

@@ -46,6 +46,20 @@ void bt_sighandler(int signum) {
     sip_abort();
 }
 
+/**
+ * Returns the system timestamp as a string
+ * @return
+ */
+std::string sip_timestamp(){
+	time_t rawtime;
+	struct tm * timeinfo;
+	time (&rawtime);
+	timeinfo = localtime (&rawtime);
+	std::stringstream ss;
+	std::string timestamp_str(asctime(timeinfo));
+	return timestamp_str;
+}
+
 int main(int argc, char* argv[]) {
 #ifdef __GLIBC__
 #ifdef __GNU_LIBRARY__
@@ -53,7 +67,7 @@ int main(int argc, char* argv[]) {
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);
-#endif _GNU_SOURCE
+#endif // _GNU_SOURCE
 #endif // __GNU_LIBRARY__
 #endif // __GLIBC__
 
@@ -188,11 +202,14 @@ int main(int argc, char* argv[]) {
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
+			server_timer.start_program_timer();
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
-			server_timer.print_timers(lno2name);
+			server_timer.stop_program_timer();
+			std::ofstream server_file("server.timer", std::ofstream::app);
+			server_timer.print_timers(lno2name, server_file);
 		} else
 #endif
 
@@ -200,27 +217,19 @@ int main(int argc, char* argv[]) {
 		{
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-
+			sialxTimer.start_program_timer();
 			sip::Interpreter runner(sipTables, &sialxTimer, &persistent_worker);
 
-			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl;
-                        time_t rawtime;
-                        struct tm * timeinfo;
-                        time (&rawtime);
-                        timeinfo = localtime (&rawtime);
-                        std::cout << "Current local time and date:" << asctime(timeinfo));
+			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
+
 			runner.interpret();
 			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
-			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl;
-			time_t rawtime;
-			struct tm * timeinfo;
-			time (&rawtime);
-			timeinfo = localtime (&rawtime);
-			std::cout << "Current local time and date:" << asctime(timeinfo));
-
-			sialxTimer.print_timers(lno2name);
+			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
+			sialxTimer.stop_program_timer();
+			std::ofstream worker_file("worker.timer", std::ofstream::app);
+			sialxTimer.print_timers(lno2name, worker_file);
 
 
 		}// end of worker or server

@@ -84,6 +84,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
+./src/sip/worker/sialx_print_timer.cpp\
+./src/sip/worker/sialx_print_timer.h\
 ./src/sip/worker/global_state.h\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
