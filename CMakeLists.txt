@@ -469,11 +469,11 @@ set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLA
 set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_interpreters PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
-add_dependencies(test_basic_sial   gtest gtest_main test_contollers)
-add_dependencies(test_sial         gtest gtest_main test_contollers)
-add_dependencies(test_qm           gtest gtest_main test_contollers)
-add_dependencies(test_unit         gtest gtest_main test_contollers)
-add_dependencies(test_interpreters gtest gtest_main test_contollers)
+add_dependencies(test_basic_sial   gtest gtest_main test_controllers)
+add_dependencies(test_sial         gtest gtest_main test_controllers)
+add_dependencies(test_qm           gtest gtest_main test_controllers)
+add_dependencies(test_unit         gtest gtest_main test_controllers)
+add_dependencies(test_interpreters gtest gtest_main test_controllers)
 
 
 
