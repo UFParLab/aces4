@@ -1141,7 +1141,7 @@ void SialxInterpreter::handle_contraction(int drank, const index_selector_t& dse
 	int contraction_pattern[MAX_RANK * 2];
 	int ierr;
 
-	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
+	get_contraction_ptrn_(drank, lrank, rrank, &aces_pattern[0],
 			contraction_pattern, ierr);
 	CHECK_WITH_LINE(ierr == 0, "error returned from get_contraction_ptrn_", line_number());
 //    INPUT:
