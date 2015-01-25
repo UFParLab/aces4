@@ -147,10 +147,10 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 	ServerBlock* block = block_map_.block(block_id);
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
-		std::stringstream msg;
-		msg << "S " << sip_mpi_attr_.global_rank();
-		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
-		SIP_LOG(std::cout << msg.str() << std::flush);
+		SIP_LOG(std::stringstream msg;
+			msg << "S " << sip_mpi_attr_.global_rank();
+			msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
+			std::cout << msg.str() << std::flush);
 		block = allocate_block(NULL, block_size);
 	    block_map_.insert_block(block_id, block);
 	} else {

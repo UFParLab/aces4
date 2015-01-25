@@ -17,7 +17,7 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		SIPMPIAttr& sip_mpi_attr,
 		ServerPersistentArrayManager* persistent_array_manager,
 		ServerTimer& server_timer) :
-		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
+		sip_tables_(sip_tables), data_distribution_(data_distribution), block_map_(
 				sip_tables, sip_mpi_attr, data_distribution, server_timer), sip_mpi_attr_(
 				sip_mpi_attr), persistent_array_manager_(persistent_array_manager),
 				terminated_(false), server_timer_(server_timer),
@@ -126,7 +126,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	size_t block_size = sip_tables_.block_size(block_id);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
+	ServerBlock* block = block_map_.get_block_for_reading(block_id);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
@@ -195,7 +195,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 					<<std::endl;)
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
+	ServerBlock* block = block_map_.get_block_for_writing(block_id);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 
@@ -264,7 +264,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-	ServerBlock* block = disk_backed_block_map_.get_block_for_updating(block_id);
+	ServerBlock* block = block_map_.get_block_for_updating(block_id);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 
@@ -322,7 +322,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			MPI_Send(0, 0, MPI_INT, mpi_source, delete_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//delete the block and map for the indicated array
-	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
+	block_map_.delete_per_array_map_and_blocks(array_id);
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -459,13 +459,13 @@ void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
 void SIPServer::handle_section_number_change(bool section_number_changed) {
 	// If section number is changed, reset the "mode" of all blocks to "OPEN, NONE".
 	if (section_number_changed) {
-		disk_backed_block_map_.reset_consistency_status_for_all_blocks();
+		block_map_.reset_consistency_status_for_all_blocks();
 	}
 }
 
 
 std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
-	os << "\nblock_map_:" << std::endl << obj.disk_backed_block_map_;
+	os << "\nblock_map_:" << std::endl << obj.block_map_;
 	os << "state_: " << obj.state_ << std::endl;
 	os << "terminated=" << obj.terminated_ << std::endl;
 	return os;

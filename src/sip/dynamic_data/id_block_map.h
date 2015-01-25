@@ -267,7 +267,7 @@ public:
 			(*new_map)[new_id] = it->second;
 		}
 		block_map_.at(array_id) = new_map;
-		delete map_ptr;
+		//delete map_ptr;
 		return tot_byes_inserted;
 	}
 

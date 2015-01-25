@@ -114,6 +114,8 @@ namespace sip {
 				"distributed/served array to restore with label " + label
 						+ " not found");
 		runner->set_per_array_map(array_id, it->second);
+		delete it->second;
+		it->second = NULL;
 		distributed_array_map_.erase(it);
 	}
 

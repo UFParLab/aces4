@@ -33,6 +33,7 @@ public:
 	 */
 	typedef std::map<int, int> ArrayIdLabelMap;	// Map of arrays marked for persistence
 
+
 	ServerPersistentArrayManager() ;
 	~ServerPersistentArrayManager() ;
 
@@ -78,7 +79,8 @@ private:
 
 	/** holder for arrays and scalars that have been marked as persistent */
 	ArrayIdLabelMap persistent_array_map_;
-
+	/** holder for saved distributed arrays*/
+	LabelDistributedArrayMap distributed_array_map_;
 
     /**	/** Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a distributed/served array.  The block map associated

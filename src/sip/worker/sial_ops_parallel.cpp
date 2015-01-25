@@ -515,7 +515,7 @@ void SialOpsParallel::end_program() {
 	const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();
 	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
 		int my_server = *it;
-		SIP_LOG(std::cout << "I'm a worker and my server is " << my_servers << std::endl << std::flush);
+		SIP_LOG(std::cout << "I'm a worker and my server is " << my_server << std::endl << std::flush);
 		//send end_program message to server, if designated worker and wait for ack.
 		if (my_server >= 0) {
 			int end_program_tag;

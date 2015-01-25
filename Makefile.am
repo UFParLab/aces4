@@ -169,6 +169,8 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/server_block.cpp\
 ./src/sip/mpi/disk_backed_block_map.h\
 ./src/sip/mpi/disk_backed_block_map.cpp\
+./src/sip/mpi/server_map.h\
+./src/sip/mpi/server_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
 ./src/sip/mpi/server_timer.h\

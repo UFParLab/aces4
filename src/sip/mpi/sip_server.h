@@ -14,6 +14,7 @@
 #include "barrier_support.h"
 #include "server_persistent_array_manager.h"
 #include "disk_backed_block_map.h"
+#include "server_block_map.h"
 #include "server_timer.h"
 
 
@@ -75,14 +76,14 @@ public:
 
 
 	IdBlockMap<ServerBlock>::PerArrayMap* per_array_map(int array_id){
-		return disk_backed_block_map_.per_array_map(array_id);
+		return block_map_.per_array_map(array_id);
 	}
 
 	/**
 	 * Called by persistent_array_manager. Delegates to block_map_.
 	 */
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
-			return disk_backed_block_map_.get_and_remove_per_array_map(array_id);
+			return block_map_.get_and_remove_per_array_map(array_id);
 	}
 
 	/**
@@ -93,7 +94,7 @@ public:
 	 * @param map_ptr
 	 */
 	void set_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr){
-		disk_backed_block_map_.insert_per_array_map(array_id, map_ptr);
+		block_map_.insert_per_array_map(array_id, map_ptr);
 	}
 
 
@@ -154,9 +155,10 @@ private:
 	ServerPersistentArrayManager* persistent_array_manager_;
 
 	/**
-	 * Interface to disk backed block manager.
+	 * Interface to (disk backed) block manager.
 	 */
-	DiskBackedBlockMap disk_backed_block_map_;
+	//DiskBackedBlockMap block_map_;
+	ServerBlockMap block_map_;
 
 
 	/**
