@@ -11,7 +11,7 @@
 #include <exception>
 #include <sstream>
 #include <utility>
-
+#include <cblas.h>
 #include "sip.h"
 
 #include "lru_array_policy.h"
@@ -70,9 +70,11 @@ ServerBlock::~ServerBlock(){
 
 ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	CHECK(size_ == size, "accumulating blocks of unequal size");
-	for (unsigned i = 0; i < size; ++i){
-			data_[i] += to_add[i];
-	}
+	// USE BLAS DAXPY or Loop
+	//for (unsigned i = 0; i < size; ++i){
+	//		data_[i] += to_add[i];
+	//}
+	cblas_daxpy(size, 1.0, to_add, 1, data_, 1);
 	return data_;
 }
 

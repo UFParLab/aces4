@@ -8,10 +8,10 @@
 #include "sialx_interpreter.h"
 #include <vector>
 #include <assert.h>
-//#include <sstream>
 #include <string>
 #include <algorithm>
 #include <iomanip>
+#include <cblas.h>
 
 #include "aces_defs.h"
 #include "loop_manager.h"
@@ -1625,8 +1625,20 @@ void SialxInterpreter::handle_block_add(int pc) {
 	Block::BlockPtr dblock = get_block_from_instruction(pc, 'w',  true);
 	double *ddata = dblock->get_data();
 	size_t size = dblock->size();
-	for(size_t i = 0; i != size; ++i){
-		*(ddata++) = *(ldata++)  + *(rdata++);
+
+	// Use BLAS DAXPY or loop
+	//for(size_t i = 0; i != size; ++i){
+	//	*(ddata++) = *(ldata++)  + *(rdata++);
+	//}
+
+	if (rdata == ddata){							// In ideal shape Y = X + Y
+		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
+	} else if (ldata == ddata){ 					// In shape Y = Y + X
+		cblas_daxpy(size, 1.0, rdata, 1, ddata, 1);
+	} else {										// In shape Z = X + Y
+		//std::copy(rdata, rdata + size, ddata);
+		cblas_dcopy(size, rdata, 1, ddata, 1);
+		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
 	}
 }
 
@@ -1638,8 +1650,21 @@ void SialxInterpreter::handle_block_subtract(int pc){
 	Block::BlockPtr dblock = get_block_from_instruction(pc, 'w', true);
 	double *ddata = dblock->get_data();
 	size_t size = dblock->size();
-	for(size_t i = 0; i != size; ++i){
-		*(ddata++) = *(ldata++)  - *(rdata++);
+
+	// Use BLAS DAXPY or loop
+	//for(size_t i = 0; i != size; ++i){
+	//	*(ddata++) = *(ldata++)  - *(rdata++);
+	//}
+
+	if (rdata == ddata){							// In shape Y = X - Y
+		cblas_dscal(size, -1.0, ddata, 1);
+		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
+	} else if (ldata == ddata){ 					// In shape Y = Y - X
+		cblas_daxpy(size, -1.0, rdata, 1, ddata, 1);
+	} else {										// In shape Z = X - Y
+		cblas_dcopy(size, rdata, 1, ddata, 1);
+		cblas_dscal(size, -1.0, ddata, 1);
+		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
 	}
 }
 

@@ -9,6 +9,7 @@
 #include "block.h"
 #include <iostream>
 #include <cstring>
+#include <cblas.h>
 #include "sip.h"
 #include "tensor_ops_c_prototypes.h"
 #include "sip_tables.h"
@@ -180,9 +181,12 @@ Block::dataPtr Block::fill(double value) {
 Block::dataPtr Block::scale(double factor) {
 	dataPtr ptr = get_data();
 	int n = size();
-	for (int i = 0; i < n; ++i) {
-		ptr[i] *= factor;
-	}
+	// Use BLAS DSCAL or Loop
+	//for (int i = 0; i < n; ++i) {
+	//	ptr[i] *= factor;
+	//}
+	cblas_dscal(n, factor, ptr, 1);
+
 	return ptr;
 }
 
@@ -196,9 +200,14 @@ Block::dataPtr Block::scale_and_copy(BlockPtr source_block, double factor){
 					//the caller needs to calculate and pass in the offset.
 	CHECK_WITH_LINE(target != NULL, "Cannot copy data, target is NULL", current_line());
 	CHECK_WITH_LINE(source != NULL, "Cannot copy data, source is NULL", current_line());
-	for (int i = 0; i < n; ++i){
-		target[i] = source[i]*factor;
-	}
+
+	// Use BLAS DAXPY or Loop
+	//for (int i = 0; i < n; ++i){
+	//	target[i] = source[i]*factor;
+	//}
+	std::fill(target, target + n, 0);
+	cblas_daxpy(n, factor, source, 1, target, 1);
+
 	return target;
 }
 
@@ -230,7 +239,6 @@ Block::dataPtr Block::transpose_copy(BlockPtr source, int rank,
 	for (int i = 0; i < MAX_RANK; ++i) {
 		dmitry_permute[i + 1] = permute[i] + 1;
 	} //modify permutation vector for fortran
-
 	/*subroutine tensor_block_copy_(nthreads,dim_num,dim_extents,dim_transp,tens_in,tens_out,ierr) bind(c,name='tensor_block_copy__') !PARALLEL
 	 !Given a dense tensor block, this subroutine makes a copy of it, permuting the indices according to the <dim_transp>.
 	 !The algorithm is expected to be cache-efficient (Author: Dmitry I. Lyakh: quant4me@gmail.com).
@@ -260,9 +268,11 @@ Block::dataPtr Block::accumulate_data(BlockPtr source) {
 	CHECK(this->shape_ == source->shape_, " += applied to blocks with different shapes");
 	dataPtr source_data =  source->data_;
 	int n = size();
-	for (int i = 0; i < n; ++i) {
-		data_[i] += source_data[i];
-	}
+	// USE BLAS DAXPY or Loop
+	//for (int i = 0; i < n; ++i) {
+	//	data_[i] += source_data[i];
+	//}
+	cblas_daxpy(n, 1.0, source_data, 1, data_, 1);
 	return data_;
 }
 
