@@ -21,11 +21,12 @@
 #include <string>
 #include <stack>
 #include <sstream>
+
+#include "config.h"
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
 #include "data_manager.h"
 #include "sialx_timer.h"
-#include "config.h"
 #include "worker_persistent_array_manager.h"
 #include "sial_math.h"
 #include "interpreter.h"

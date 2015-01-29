@@ -11,9 +11,9 @@
 #include <exception>
 #include <sstream>
 #include <utility>
-#include <cblas.h>
-#include "sip.h"
 
+#include "sip.h"
+#include "sip_c_blas.h"
 #include "lru_array_policy.h"
 
 namespace sip {
@@ -74,7 +74,10 @@ ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	//for (unsigned i = 0; i < size; ++i){
 	//		data_[i] += to_add[i];
 	//}
-	cblas_daxpy(size, 1.0, to_add, 1, data_, 1);
+	int i_one = 1;
+	double d_one = 1.0;
+	int size__ = size;
+	sip_blas_daxpy(size__, d_one, to_add, i_one, data_, i_one);
 	return data_;
 }
 

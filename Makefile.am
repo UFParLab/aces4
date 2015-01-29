@@ -19,7 +19,10 @@ sqlite3
 
 # Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
-libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
+libtensordil_a_SOURCES =\
+./src/sip/tensor_algebra/tensor_dil_omp.F90\
+./src/sip/tensor_algebra/sip_c_blas.F
+
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
 
 # External project sqlite3
@@ -140,6 +143,7 @@ ACES_SOURCEFILES=\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
+./src/sip/tensor_algebra/sip_c_blas.h\
 ./src/sip/cuda/gpu_super_instructions.h\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\

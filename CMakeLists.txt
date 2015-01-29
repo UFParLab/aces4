@@ -209,6 +209,7 @@ set(ACES_WORKER_FILES
     src/sip/sip_interface.h;
     src/sip/sip_interface.cpp;
     src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
+    src/sip/tensor_algebra/sip_c_blas;
     src/sip/cuda/gpu_super_instructions.h;
     src/sip/mpi/sip_mpi_attr.h;
     src/sip/mpi/sip_mpi_attr.cpp;
@@ -223,7 +224,10 @@ set(ACES_WORKER_FILES
 #    ${ACES_WORKER_FILES})
 
 # Dmitry's Tensor library
-set(tensordil_SRCS src/sip/tensor_algebra/tensor_dil_omp.F90)
+set(tensordil_SRCS 
+	src/sip/tensor_algebra/tensor_dil_omp.F90;
+	src/sip/tensor_algebra/sip_c_blas.F;
+)
 
 set(INCLUDE_DIRS     
     ${CMAKE_BINARY_DIR};

@@ -9,9 +9,9 @@
 #include "block.h"
 #include <iostream>
 #include <cstring>
-#include <cblas.h>
 #include "sip.h"
 #include "tensor_ops_c_prototypes.h"
+#include "sip_c_blas.h"
 #include "sip_tables.h"
 
 #ifdef HAVE_MPI
@@ -185,7 +185,8 @@ Block::dataPtr Block::scale(double factor) {
 	//for (int i = 0; i < n; ++i) {
 	//	ptr[i] *= factor;
 	//}
-	cblas_dscal(n, factor, ptr, 1);
+	int i_one = 1;
+	sip_blas_dscal(n, factor, ptr, i_one);
 
 	return ptr;
 }
@@ -205,8 +206,9 @@ Block::dataPtr Block::scale_and_copy(BlockPtr source_block, double factor){
 	//for (int i = 0; i < n; ++i){
 	//	target[i] = source[i]*factor;
 	//}
+	int i_one = 1;
 	std::fill(target, target + n, 0);
-	cblas_daxpy(n, factor, source, 1, target, 1);
+	sip_blas_daxpy(n, factor, source, i_one, target, i_one);
 
 	return target;
 }
@@ -272,7 +274,9 @@ Block::dataPtr Block::accumulate_data(BlockPtr source) {
 	//for (int i = 0; i < n; ++i) {
 	//	data_[i] += source_data[i];
 	//}
-	cblas_daxpy(n, 1.0, source_data, 1, data_, 1);
+	int i_one = 1;
+	double d_one = 1.0;
+	sip_blas_daxpy(n, d_one, source_data, i_one, data_, i_one);
 	return data_;
 }
 

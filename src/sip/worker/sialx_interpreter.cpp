@@ -11,7 +11,6 @@
 #include <string>
 #include <algorithm>
 #include <iomanip>
-#include <cblas.h>
 
 #include "aces_defs.h"
 #include "loop_manager.h"
@@ -23,6 +22,8 @@
 #include "sial_math.h"
 #include "config.h"
 #include "sial_math.h"
+#include "sip_c_blas.h"
+
 
 // For CUDA Super Instructions
 #ifdef HAVE_CUDA
@@ -1624,21 +1625,23 @@ void SialxInterpreter::handle_block_add(int pc) {
 	double *ldata = lblock->get_data();
 	Block::BlockPtr dblock = get_block_from_instruction(pc, 'w',  true);
 	double *ddata = dblock->get_data();
-	size_t size = dblock->size();
+	int size = dblock->size();
 
 	// Use BLAS DAXPY or loop
 	//for(size_t i = 0; i != size; ++i){
 	//	*(ddata++) = *(ldata++)  + *(rdata++);
 	//}
 
+	double d_one = 1.0;
+	int i_one = 1;
 	if (rdata == ddata){							// In ideal shape Y = X + Y
-		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
+		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
 	} else if (ldata == ddata){ 					// In shape Y = Y + X
-		cblas_daxpy(size, 1.0, rdata, 1, ddata, 1);
+		sip_blas_daxpy(size, d_one, rdata, i_one, ddata, i_one);
 	} else {										// In shape Z = X + Y
 		//std::copy(rdata, rdata + size, ddata);
-		cblas_dcopy(size, rdata, 1, ddata, 1);
-		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
+		sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
+		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
 	}
 }
 
@@ -1649,22 +1652,25 @@ void SialxInterpreter::handle_block_subtract(int pc){
 	double *ldata = lblock->get_data();
 	Block::BlockPtr dblock = get_block_from_instruction(pc, 'w', true);
 	double *ddata = dblock->get_data();
-	size_t size = dblock->size();
+	int size = dblock->size();
 
 	// Use BLAS DAXPY or loop
 	//for(size_t i = 0; i != size; ++i){
 	//	*(ddata++) = *(ldata++)  - *(rdata++);
 	//}
 
+	double d_one = 1.0;
+	double d_negative_one = -1.0;
+	int i_one = 1;
 	if (rdata == ddata){							// In shape Y = X - Y
-		cblas_dscal(size, -1.0, ddata, 1);
-		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
+		sip_blas_dscal(size, d_negative_one, ddata, i_one);
+		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
 	} else if (ldata == ddata){ 					// In shape Y = Y - X
-		cblas_daxpy(size, -1.0, rdata, 1, ddata, 1);
+		sip_blas_daxpy(size, d_negative_one, rdata, i_one, ddata, i_one);
 	} else {										// In shape Z = X - Y
-		cblas_dcopy(size, rdata, 1, ddata, 1);
-		cblas_dscal(size, -1.0, ddata, 1);
-		cblas_daxpy(size, 1.0, ldata, 1, ddata, 1);
+		sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
+		sip_blas_dscal(size, d_negative_one, ddata, i_one);
+		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
 	}
 }
 
