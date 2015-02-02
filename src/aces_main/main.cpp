@@ -55,31 +55,58 @@ int main(int argc, char* argv[]) {
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
+			sip::SIPStaticNamedTimers staticNamedTimers;
+
 			server_timer.start_program_timer();
+
+			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
+			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
+
+			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SERVER_RUN);
 			server.run();
+			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SERVER_RUN);
+
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
+
+			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
 			persistent_server.save_marked_arrays(&server);
+			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
 			server_timer.stop_program_timer();
+
 			std::ofstream server_file("server.timer", std::ofstream::app);
 			server_timer.print_timers(lno2name, server_file);
+			staticNamedTimers.print_timers(server_file);
+
 		} else
 #endif
 
 		//interpret current program on worker
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			sip::SIPStaticNamedTimers staticNamedTimers;
 			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
+
+
+			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INTERPRET_PROGRAM);
 			runner.interpret();
 			runner.post_sial_program();
+			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INTERPRET_PROGRAM);
+
+
+			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
 			persistent_worker.save_marked_arrays(&runner);
+			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
+
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
 			sialxTimer.stop_program_timer();
+
 			std::ofstream worker_file("worker.timer", std::ofstream::app);
 			sialxTimer.print_timers(lno2name, worker_file);
+			staticNamedTimers.print_timers(worker_file);
 
 		}// end of worker or server
 

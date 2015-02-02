@@ -150,11 +150,16 @@ void PAPISIPTimers::print_timers(PrintTimers<PAPISIPTimers>& p){
 //*********************************************************************
 #ifdef HAVE_TAU
 
+long TAUSIPTimers::already_allocated_slots_ = 0;
+
 TAUSIPTimers::TAUSIPTimers(int max_slots_) : max_slots_(max_slots_),
 		timer_list_(NULL), timer_switched_(NULL){
 	tau_timers_ = new void*[max_slots_];
 	for (int i=0; i<max_slots_; i++)
 		tau_timers_[i] = NULL;
+
+	already_allocated_slots_ += max_slots_;
+	previous_max_slots_ += already_allocated_slots_;
 }
 
 TAUSIPTimers::~TAUSIPTimers(){
@@ -171,7 +176,7 @@ void TAUSIPTimers::start_timer(int slot) {
 	void *timer = tau_timers_[slot];
 	if (timer == NULL){
 		char name[MAX_TAU_IDENT_LEN];
-		sprintf(name, "%d : Line %d", sip::GlobalState::get_program_num(), slot);
+		sprintf(name, "%ld", previous_max_slots_+slot);
 		TAU_PROFILER_CREATE(timer, name, "", TAU_USER);
 		tau_timers_[slot] = timer;
 	}
@@ -181,7 +186,7 @@ void TAUSIPTimers::start_timer(int slot) {
 
 void TAUSIPTimers::pause_timer(int slot) {
 	char name[MAX_TAU_IDENT_LEN];
-	sprintf(name, "%d : Line %d", sip::GlobalState::get_program_num(), slot);
+	sprintf(name, "%ld", previous_max_slots_+slot);
 	void *timer = tau_timers_[slot];
 	sip::check(timer != NULL, "Error in Tau Timer management !", current_line());
 	TAU_PROFILER_STOP(timer);
@@ -232,3 +237,26 @@ long long *TAUSIPTimers::get_timer_count() {
 
 
 } /* namespace sip */
+
+
+// Utility Functions to collect & merge LinuxSIPTimers & PAPISIPTimers
+
+#ifdef HAVE_MPI
+void sip_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Datatype *type){
+	long long * in = (long long*)r_in;
+	long long * inout = (long long*)r_inout;
+	for (int l=0; l<*len; l++){
+		long long num_timers = in[0];
+		CHECK(inout[0] == in[0], "Data corruption when trying to reduce timers !");
+		// Sum up the number of times each timer is switched on & off
+		// Sum up the the total time spent at each line.
+		in++; inout++;	// 0th position has the length
+		for (int i=0; i<num_timers*2; i++){
+			*inout += *in;
+			in++; inout++;
+		}
+	}
+}
+
+#endif // HAVE_MPI
+

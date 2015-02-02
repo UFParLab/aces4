@@ -47,29 +47,6 @@ ServerTimer::~ServerTimer() {}
 //*********************************************************************
 
 /**
- * MPI_Reduce Reduction function for Timers
- * @param r_in
- * @param r_inout
- * @param len
- * @param type
- */
-void server_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Datatype *type){
-	long long * in = (long long*)r_in;
-	long long * inout = (long long*)r_inout;
-	for (int l=0; l<*len; l++){
-		long long num_timers = in[0];
-		sip::check(inout[0] == in[0], "Data corruption when trying to reduce timers !");
-		// Sum up the number of times each timer is switched on & off
-		// Sum up the the total time spent at each line.
-		in++; inout++;	// 0th position has the length
-		for (int i=0; i<num_timers*2; i++){
-			*inout += *in;
-			in++; inout++;
-		}
-	}
-}
-
-/**
  * PrintTimers instance for servers.
  * Prints out total & average times of each interesting sialx line to stdout.
  * The average and total is over all servers.
@@ -86,7 +63,7 @@ public:
 
 		std::vector<long long> timers_vector(timer.max_slots(), 0L);
 		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
-		mpi_reduce_timers(timer, timers_vector, timer_counts_vector); // Reduce timers to server master.
+		sip::mpi_reduce_sip_timers(timer, timers_vector, timer_counts_vector, attr.company_communicator()); // Reduce timers to server master.
 
 		// Print from the server master.
 		if (SIPMPIAttr::get_instance().is_company_master()){
@@ -173,55 +150,6 @@ private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
 	std::ostream& out_;
-
-	/**
-	 * Reduce all server timers to server master.
-	 * @param timer
-	 * @param timers_vector
-	 * @param timer_counts_vector
-	 */
-	void mpi_reduce_timers(TIMER& timer, std::vector<long long>& timers_vector,
-			std::vector<long long>& timer_counts_vector){
-		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
-		sip::check(attr.is_server(), "Trying to reduce timer on a non-server rank !");
-		long long * timers = timer.get_timers();
-		long long * timer_counts = timer.get_timer_count();
-
-		// Data to send to reduce
-		long long * sendbuf = new long long[2*timer.max_slots() + 1];
-		sendbuf[0] = timer.max_slots();
-		// The data will be structured as
-		// Length of arrays 1 & 2
-		// Array1 -> timer_switched_ array
-		// Array2 -> timer_list_ array
-		std::copy(timer_counts + 0, timer_counts + timer.max_slots(), sendbuf+1);
-		std::copy(timers + 0, timers + timer.max_slots(), sendbuf+1+ timer.max_slots());
-
-		long long * recvbuf = new long long[2*timer.max_slots() + 1]();
-
-		int server_master = attr.COMPANY_MASTER_RANK;
-		MPI_Comm server_company = attr.company_communicator();
-
-		MPI_Datatype server_timer_reduce_dt; // MPI Type for timer data to be reduced.
-		MPI_Op server_timer_reduce_op;	// MPI OP to reduce timer data.
-		SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots()*2+1, MPI_LONG_LONG, &server_timer_reduce_dt));
-		SIPMPIUtils::check_err(MPI_Type_commit(&server_timer_reduce_dt));
-		SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)server_timer_reduce_op_function, 1, &server_timer_reduce_op));
-
-		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, server_timer_reduce_dt, server_timer_reduce_op, server_master, server_company));
-
-		if (attr.is_company_master()){
-			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
-			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
-		}
-
-		// Cleanup
-		delete [] sendbuf;
-		delete [] recvbuf;
-
-		SIPMPIUtils::check_err(MPI_Type_free(&server_timer_reduce_dt));
-		SIPMPIUtils::check_err(MPI_Op_free(&server_timer_reduce_op));
-	}
 };
 
 //*********************************************************************

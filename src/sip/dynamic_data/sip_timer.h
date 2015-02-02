@@ -13,6 +13,7 @@
 #include "config.h"
 #include "sip.h"
 #include "sip_mpi_utils.h"
+#include "sip_mpi_attr.h"
 #include "print_timers.h"
 
 #include <ctime>
@@ -110,13 +111,16 @@ public:
 	static double to_seconds(long long default_unit) { return (double)default_unit / CLOCKS_PER_SEC; }
 
 	bool check_timers_off() { ; /* Do Nothing */ }
-
+	int max_slots() { return max_slots_; }
 protected:
 	void **tau_timers_;
 
 	const int max_slots_;		/*!	Maximum number of timer slots */
 	long long *timer_list_;		/*! Contains total 'time unit' for every line 		*/
 	long long *timer_switched_;	/*! Number of times a timer was switched on & off 	*/
+
+	long previous_max_slots_;
+	static long already_allocated_slots_;
 
 	DISALLOW_COPY_AND_ASSIGN(TAUSIPTimers);
 };
@@ -132,5 +136,71 @@ protected:
 
 
 } /* namespace sip */
+
+
+
+// Utility Functions to collect & merge LinuxSIPTimers & PAPISIPTimers from various workers & servers
+
+#ifdef HAVE_MPI
+/**
+ * MPI_Reduce Reduction function for Timers
+ * @param r_in
+ * @param r_inout
+ * @param len
+ * @param type
+ */
+void sip_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Datatype *type);
+
+namespace sip{
+/**
+ * Reduces timers from all workers/servers to COMPANY_MASTER_RANK for that company.
+ * Puts the aggregated timers and timer counts into passed in vectors
+ * @param timer [in]
+ * @param timers_vector [out]
+ * @param timer_counts_vector [out]
+ */
+template<typename TIMER>
+void mpi_reduce_sip_timers(TIMER& timer, std::vector<long long>& timers_vector, std::vector<long long>& timer_counts_vector, MPI_Comm company) {
+	sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
+	//CHECK(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
+	long long * timers = timer.get_timers();
+	long long * timer_counts = timer.get_timer_count();
+
+	// Data to send to reduce
+	long long * sendbuf = new long long[2*timer.max_slots() + 1]();
+	sendbuf[0] = timer.max_slots();
+	std::copy(timer_counts + 0, timer_counts + timer.max_slots(), sendbuf+1);
+	std::copy(timers + 0, timers + timer.max_slots(), sendbuf+1+ timer.max_slots());
+
+	long long * recvbuf = new long long[2*timer.max_slots() + 1]();
+
+	int master = attr.COMPANY_MASTER_RANK;
+
+	// The data will be structured as
+	// Length of arrays 1 & 2
+	// Array1 -> timer_switched_ array
+	// Array2 -> timer_list_ array
+	MPI_Datatype sip_timer_reduce_dt; // MPI Type for timer data to be reduced.
+	MPI_Op sip_timer_reduce_op;	// MPI OP to reduce timer data.
+	SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots()*2+1, MPI_LONG_LONG, &sip_timer_reduce_dt));
+	SIPMPIUtils::check_err(MPI_Type_commit(&sip_timer_reduce_dt));
+	SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)sip_timer_reduce_op_function, 1, &sip_timer_reduce_op));
+
+	SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, sip_timer_reduce_dt, sip_timer_reduce_op, master, company));
+	if (attr.is_company_master()){
+		std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
+		std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
+	}
+
+	// Cleanup
+	delete [] sendbuf;
+	delete [] recvbuf;
+
+	SIPMPIUtils::check_err(MPI_Type_free(&sip_timer_reduce_dt));
+	SIPMPIUtils::check_err(MPI_Op_free(&sip_timer_reduce_op));
+}
+} // Namespace sip
+
+#endif // HAVE_MPI
 
 #endif /* SIP_TIMER_H_ */

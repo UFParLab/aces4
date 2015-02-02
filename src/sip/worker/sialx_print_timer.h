@@ -31,18 +31,6 @@
 #endif
 
 
-#ifdef HAVE_MPI
-/**
- * MPI_Reduce Reduction function for Timers
- * @param r_in
- * @param r_inout
- * @param len
- * @param type
- */
-void sialx_timer_reduce_op_function(void* r_in, void* r_inout, int *len, MPI_Datatype *type);
-#endif // HAVE_MPI
-
-
 namespace sip {
 
 
@@ -137,11 +125,11 @@ public:
 		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~MultiNodePrint(){}
 	virtual void execute(TIMER& timer){
-
+		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		std::vector<long long> timers_vector(timer.max_slots(), 0L);
 		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
 
-		mpi_reduce_timers(timer, timers_vector, timer_counts_vector);
+		sip::mpi_reduce_sip_timers(timer, timers_vector, timer_counts_vector, attr.company_communicator());
 
 		/**
 		 * The printing originally modified the times & the counts array
@@ -236,54 +224,6 @@ private:
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
 	std::ostream& out_;
-	/**
-	 * Reduces timers from all workers. Puts the aggregated timers
-	 * and timer counts into passed in vectors
-	 * @param timer [in]
-	 * @param timers_vector [out]
-	 * @param timer_counts_vector [out]
-	 */
-	void mpi_reduce_timers(TIMER& timer, std::vector<long long>& timers_vector,
-			std::vector<long long>& timer_counts_vector) {
-		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
-		CHECK(attr.is_worker(), "Trying to reduce timer on a non-worker rank !");
-		long long * timers = timer.get_timers();
-		long long * timer_counts = timer.get_timer_count();
-
-		// Data to send to reduce
-		long long * sendbuf = new long long[2*timer.max_slots() + 1]();
-		sendbuf[0] = timer.max_slots();
-		std::copy(timer_counts + 0, timer_counts + timer.max_slots(), sendbuf+1);
-		std::copy(timers + 0, timers + timer.max_slots(), sendbuf+1+ timer.max_slots());
-
-		long long * recvbuf = new long long[2*timer.max_slots() + 1]();
-
-		int worker_master = attr.COMPANY_MASTER_RANK;
-		MPI_Comm worker_company = attr.company_communicator();
-
-		// The data will be structured as
-		// Length of arrays 1 & 2
-		// Array1 -> timer_switched_ array
-		// Array2 -> timer_list_ array
-		MPI_Datatype sialx_timer_reduce_dt; // MPI Type for timer data to be reduced.
-		MPI_Op sialx_timer_reduce_op;	// MPI OP to reduce timer data.
-		SIPMPIUtils::check_err(MPI_Type_contiguous(timer.max_slots()*2+1, MPI_LONG_LONG, &sialx_timer_reduce_dt));
-		SIPMPIUtils::check_err(MPI_Type_commit(&sialx_timer_reduce_dt));
-		SIPMPIUtils::check_err(MPI_Op_create((MPI_User_function *)sialx_timer_reduce_op_function, 1, &sialx_timer_reduce_op));
-
-		SIPMPIUtils::check_err(MPI_Reduce(sendbuf, recvbuf, 1, sialx_timer_reduce_dt, sialx_timer_reduce_op, worker_master, worker_company));
-		if (attr.is_company_master()){
-			std::copy(recvbuf+1, recvbuf+1+timer.max_slots(), timer_counts_vector.begin());
-			std::copy(recvbuf+1+timer.max_slots(), recvbuf+1+2*timer.max_slots(), timers_vector.begin());
-		}
-
-		// Cleanup
-		delete [] sendbuf;
-		delete [] recvbuf;
-
-		SIPMPIUtils::check_err(MPI_Type_free(&sialx_timer_reduce_dt));
-		SIPMPIUtils::check_err(MPI_Op_free(&sialx_timer_reduce_op));
-	}
 };
 #endif // HAVE_MPI
 
