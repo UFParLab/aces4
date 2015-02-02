@@ -203,7 +203,7 @@ void TestControllerParallel::print_timers(std::ostream& out){
 		return;
 	}
 	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
-	sialx_timers_->print_timers(lno2name, out);
+	sialx_timers_->print_aggregate_timers(lno2name, out);
 	out<< std::flush;
 }
 
@@ -419,7 +419,7 @@ bool ProfileInterpreterTestControllerParallel::runWorker() {
 		wpam_->save_marked_arrays(worker_);
 		if (verbose_){
 			profile_timer_->print_timers();
-			sialx_timers_->print_timers(sip_tables_->line_num_to_name());
+			sialx_timers_->print_aggregate_timers(sip_tables_->line_num_to_name());
 		}
 		profile_timer_->save_to_store(*profile_timer_store_);
 	}

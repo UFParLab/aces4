@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 			profile_timer.save_to_store(profile_timer_store); // Saves to database store.
 			profile_timer.print_timers(std::cout);
 			sialxTimer.stop_program_timer();
-			sialxTimer.print_timers(lno2name);
+			sialxTimer.print_aggregate_timers(lno2name);
 
 		}// end of worker or server
 

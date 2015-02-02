@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 			runner.interpret();
 			runner.post_sial_program();
             sialxTimer.stop_program_timer();
-            sialxTimer.print_timers(lno2name);
+            sialxTimer.print_aggregate_timers(lno2name);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 
 

@@ -49,7 +49,7 @@ ServerTimer::~ServerTimer() {}
 /**
  * PrintTimers instance for servers.
  * Prints out total & average times of each interesting sialx line to stdout.
- * The average and total is over all servers.
+ * Print is per server
  */
 template<typename TIMER>
 class ServerPrint : public PrintTimers<TIMER> {
@@ -57,6 +57,82 @@ public:
 	ServerPrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out) :
 		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~ServerPrint(){}
+	virtual void execute(TIMER& timer){
+
+
+		out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+
+		long long * timers = timer.get_timers();
+		long long * timer_counts = timer.get_timer_count();
+		const int LW = 8;	// Line num
+		const int CW = 12;	// Time
+		const int SW = 20;	// String
+		const int PRECISION = 6; 	// Precision
+
+		out_.precision(PRECISION); // Reset precision to 6 places.
+
+		assert(timer.check_timers_off());
+		out_<<"Timers"<<std::endl
+			<<std::setw(LW)<<std::left<<"Line"
+			<<std::setw(SW)<<std::left<<"Type"
+			<<std::setw(CW)<<std::left<<"Tot"		// time spent
+			<<std::setw(CW)<<std::left<<"BlkWt"		// block wait
+			<<std::setw(CW)<<std::left<<"DskRd"		// disk read
+			<<std::setw(CW)<<std::left<<"DskWrte"	// disk write
+			<<std::setw(CW)<<std::left<<"Count"		// count
+			<<std::endl;
+
+		double total_wall_time = timer.to_seconds(timers[0] / (double)timer_counts[0]);
+		double sum_of_busy_time = 0.0;
+
+		for (int i=1; i<sialx_lines_; i++){
+
+			int tot_time_offset = i + static_cast<int>(ServerTimer::TOTALTIME) * sialx_lines_;
+			if (timer_counts[tot_time_offset] > 0L){
+				long long timer_count = timer_counts[tot_time_offset];
+				double tot_time = timer.to_seconds(timers[tot_time_offset]);	// Microsecond to second
+				sum_of_busy_time += tot_time;
+
+				double tot_blk_wait = timer.to_seconds(timers[i + static_cast<int>(ServerTimer::BLOCKWAITTIME) * sialx_lines_]);
+				double tot_disk_read = timer.to_seconds(timers[i + static_cast<int>(ServerTimer::READTIME) * sialx_lines_]);
+				double tot_disk_write = timer.to_seconds(timers[i + static_cast<int>(ServerTimer::WRITETIME) * sialx_lines_]);
+
+				out_<<std::setw(LW)<<std::left << i
+						<< std::setw(SW)<< std::left << line_to_str_.at(i)
+						<< std::setw(CW)<< std::left << tot_time
+						<< std::setw(CW)<< std::left << tot_blk_wait
+						<< std::setw(CW)<< std::left << tot_disk_read
+						<< std::setw(CW)<< std::left << tot_disk_write
+						<< std::setw(CW)<< std::left << timer_count
+						<< std::endl;
+			}
+		}
+		out_ << "Total Walltime : " << total_wall_time << " Seconds "<< std::endl;
+		out_ << "Average Busy Time : " << sum_of_busy_time << " Seconds " << std::endl;
+		out_ << "Average Idle Time : " << (total_wall_time - sum_of_busy_time) << " Seconds " << std::endl;
+		out_<<std::endl;
+	}
+private:
+	const std::vector<std::string>& line_to_str_;
+	const int sialx_lines_;
+	std::ostream& out_;
+};
+
+//*********************************************************************
+//						Multi node print
+//*********************************************************************
+
+/**
+ * PrintTimers instance for servers.
+ * Prints out total & average times of each interesting sialx line to stdout.
+ * The average and total is over all servers.
+ */
+template<typename TIMER>
+class ServerAggregatePrint : public PrintTimers<TIMER> {
+public:
+	ServerAggregatePrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out) :
+		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
+	virtual ~ServerAggregatePrint(){}
 	virtual void execute(TIMER& timer){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		int num_servers = attr.num_servers();
@@ -241,6 +317,14 @@ void ServerTimer::print_timers(std::vector<std::string> line_to_str, std::ostrea
 #endif
 	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
+}
+
+void ServerTimer::print_aggregate_timers(std::vector<std::string> line_to_str, std::ostream& out){
+#if !defined(HAVE_TAU) && defined(HAVE_MPI)
+	typedef ServerAggregatePrint<SipTimer_t> PrintTimersType_t;
+	PrintTimersType_t p(line_to_str, sialx_lines_, out);
+	delegate_.print_timers(p);
+#endif
 }
 
 void ServerTimer::start_program_timer(){

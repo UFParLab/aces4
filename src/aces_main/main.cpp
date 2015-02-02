@@ -74,9 +74,16 @@ int main(int argc, char* argv[]) {
 			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
 			server_timer.stop_program_timer();
 
-			std::ofstream server_file("server.timer", std::ofstream::app);
+			char server_timer_file_name[64];
+			std::sprintf(server_timer_file_name, "server.timer.%d", sip_mpi_attr.company_rank());
+			std::ofstream server_file(server_timer_file_name, std::ofstream::app);
 			server_timer.print_timers(lno2name, server_file);
 			staticNamedTimers.print_timers(server_file);
+
+			std::ofstream aggregate_file("server.timer.aggregate", std::ofstream::app);
+			server_timer.print_timers(lno2name, aggregate_file);
+			staticNamedTimers.print_aggregate_timers(aggregate_file);
+
 
 		} else
 #endif
@@ -104,9 +111,15 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
 			sialxTimer.stop_program_timer();
 
-			std::ofstream worker_file("worker.timer", std::ofstream::app);
+			char sialx_timer_file_name[64];
+			std::sprintf(sialx_timer_file_name, "worker.timer.%d", sip_mpi_attr.company_rank());
+			std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
 			sialxTimer.print_timers(lno2name, worker_file);
 			staticNamedTimers.print_timers(worker_file);
+
+			std::ofstream aggregate_file("worker.timer.aggregate", std::ofstream::app);
+			sialxTimer.print_aggregate_timers(lno2name, aggregate_file);
+			staticNamedTimers.print_aggregate_timers(aggregate_file);
 
 		}// end of worker or server
 

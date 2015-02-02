@@ -98,7 +98,7 @@ private:
 /**
  * PrintTimers instance for multi node version of aces4.
  * Prints out total & average times of each interesting sialx line to stdout.
- * The average and total is over all workers.
+ * This prints out timers per worker/server
  */
 template<typename TIMER>
 class MultiNodeStaticTimersPrint : public PrintTimers<TIMER> {
@@ -107,12 +107,67 @@ public:
 		: static_named_timers_(static_named_timers), out_(out) {}
 	virtual ~MultiNodeStaticTimersPrint(){}
 	virtual void execute(TIMER& timer){
+		long long * timers = timer.get_timers();
+		long long * timer_counts = timer.get_timer_count();
+		if (SIPMPIAttr::get_instance().is_company_master()){
+			sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
+			int num_workers = attr.num_workers();
+
+			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+			const int CW = 15;	// Time
+			const int SW = 30;	// String
+			const int PRECISION = 6; 	// Precision
+
+			out_.precision(PRECISION); // Reset precision to 6 places.
+
+			assert(timer.check_timers_off());
+			out_<<"Timers"<<std::endl
+				<<std::setw(SW)<<std::left<<"TimerName"
+				<<std::setw(CW)<<std::left<<"Tot"			// Sum of time spent over all workers
+				<<std::setw(CW)<<std::left<<"Count"			// Sum of counts over all workers
+				<<std::setw(CW)<<std::left<<"PerCall"		// Average time per call per worker
+				<<std::endl;
+
+			for (int i=0; i<timer.max_slots(); i++){
+
+				if (timer_counts[i] > 0L){
+					double tot_time = timer.to_seconds(timers[i]);	// Microsecond to second
+					long count = timer_counts[i];
+					double per_call = tot_time / count;
+
+					const char * name = static_named_timers_.intToTimerName(i);
+					out_	<< std::setw(SW)<< std::left << name
+							<< std::setw(CW)<< std::left << tot_time
+							<< std::setw(CW)<< std::left << count
+							<< std::setw(CW)<< std::left << per_call
+							<< std::endl;
+				}
+			}
+			out_ << std::endl;
+		}
+	}
+private:
+	const SIPStaticNamedTimers& static_named_timers_;
+	std::ostream& out_;
+};
+
+/**
+ * PrintTimers instance for multi node version of aces4.
+ * Prints out total & average times of each interesting sialx line to stdout.
+ * The average and total is over all workers.
+ */
+template<typename TIMER>
+class MultiNodeStaticAggregateTimersPrint : public PrintTimers<TIMER> {
+public:
+	MultiNodeStaticAggregateTimersPrint(const SIPStaticNamedTimers& static_named_timers, std::ostream& out)
+		: static_named_timers_(static_named_timers), out_(out) {}
+	virtual ~MultiNodeStaticAggregateTimersPrint(){}
+	virtual void execute(TIMER& timer){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		std::vector<long long> timers_vector(timer.max_slots(), 0L);
 		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
 
 		sip::mpi_reduce_sip_timers(timer, timers_vector, timer_counts_vector, attr.company_communicator());
-
 
 		if (SIPMPIAttr::get_instance().is_company_master()){
 			sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
@@ -163,6 +218,7 @@ private:
 	const SIPStaticNamedTimers& static_named_timers_;
 	std::ostream& out_;
 };
+
 #endif // HAVE_MPI
 
 
@@ -211,6 +267,14 @@ void SIPStaticNamedTimers::print_timers(std::ostream& out){
 #endif
 	PrintTimersType_t p(*this, out);
 	delegate_.print_timers(p);
+}
+
+void SIPStaticNamedTimers::print_aggregate_timers(std::ostream& out){
+#if !defined(HAVE_TAU) && defined(HAVE_MPI)
+	typedef MultiNodeStaticAggregateTimersPrint<SipTimer_t> PrintTimersType_t;
+	PrintTimersType_t p(*this, out);
+	delegate_.print_timers(p);
+#endif
 }
 
 } /* namespace sip */

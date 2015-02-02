@@ -71,7 +71,7 @@ public:
 		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
 
 		out_.precision(6); // Reset precision to 6 places.
-		for (int i=1; i<timer.max_slots() - sialx_lines_; i++){
+		for (int i=1; i<=sialx_lines_; i++){
 			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
 				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
 				long count = timer_counts[i + total_time_timer_offset * sialx_lines_];
@@ -125,6 +125,85 @@ public:
 		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
 	virtual ~MultiNodePrint(){}
 	virtual void execute(TIMER& timer){
+		long long * timers = timer.get_timers();
+		long long * timer_counts = timer.get_timer_count();
+		printTable(timer, timers, timer_counts);
+	}
+
+protected:
+	const std::vector<std::string>& line_to_str_;
+	const int sialx_lines_;
+	std::ostream& out_;
+
+	void printTable(TIMER& timer, long long * timers, long long * timer_counts) {
+
+		out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+		const int LW = 8;			// Line num
+		const int CW = 12;			// Time
+		const int SW = 25;			// String
+		const int PRECISION = 6; 	// Precision
+
+		out_.precision(PRECISION); // Reset precision to 6 places.
+
+		assert(timer.check_timers_off());
+		out_<<"Timers"<<std::endl
+			<<std::setw(LW)<<std::left<<"Line"			// Line Number
+			<<std::setw(SW)<<std::left<<"Type"			// Type of instruction
+			<<std::setw(CW)<<std::left<<"Tot"			// Time spent
+			<<std::setw(CW)<<std::left<<"TotBlkWt"		// Block wait
+			<<std::setw(CW)<<std::left<<"Count"			// Counts
+			<<std::setw(CW)<<std::left<<"PerCall"		// Average time per call
+			<<std::setw(CW)<<std::left<<"BlkWtPC"		// Average block wait per call
+			<<std::endl;
+
+		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
+		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
+
+		double sum_of_block_wait_time = 0.0;
+		double total_wall_time = timer.to_seconds(timers[0] / (double)timer_counts[0]);
+
+		for (int i=1; i<=sialx_lines_; i++){
+
+			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
+				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
+				long count = timer_counts[i + total_time_timer_offset * sialx_lines_];
+				double per_call = tot_time / count;
+				double tot_blk_wait = 0;
+				double blk_wait_per_call = 0;
+
+				if (timer_counts[i + block_wait_timer_offset * sialx_lines_] > 0L){
+					tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
+					blk_wait_per_call = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
+					sum_of_block_wait_time += tot_blk_wait;
+				}
+				out_	<< std::setw(LW)<< std::left << i
+						<< std::setw(SW)<< std::left << line_to_str_.at(i)
+						<< std::setw(CW)<< std::left << tot_time
+						<< std::setw(CW)<< std::left << tot_blk_wait
+						<< std::setw(CW)<< std::left << count
+						<< std::setw(CW)<< std::left << per_call
+						<< std::setw(CW)<< std::left << blk_wait_per_call
+						<< std::endl;
+			}
+		}
+		out_ << "Total Walltime : " << total_wall_time << " Seconds "<< std::endl;
+		out_ << "Total Block Wait time : " << sum_of_block_wait_time << " Seconds " << std::endl;
+		out_ << std::endl;
+	}
+};
+
+
+//*********************************************************************
+//						Aggregated Multi node print
+//*********************************************************************
+
+template<typename TIMER>
+class MultiNodeAggregatePrint : public PrintTimers<TIMER> {
+public:
+	MultiNodeAggregatePrint(const std::vector<std::string> &line_to_str, int sialx_lines, std::ostream& out) :
+		line_to_str_(line_to_str), sialx_lines_(sialx_lines), out_(out) {}
+	virtual ~MultiNodeAggregatePrint(){}
+	virtual void execute(TIMER& timer){
 		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 		std::vector<long long> timers_vector(timer.max_slots(), 0L);
 		std::vector<long long> timer_counts_vector(timer.max_slots(), 0L);
@@ -150,81 +229,88 @@ public:
 		 */
 
 
+		long long * timers = &timers_vector[0];
+		long long * timer_counts = &timer_counts_vector[0];
 		if (SIPMPIAttr::get_instance().is_company_master()){
-			sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
-			int num_workers = attr.num_workers();
-
-			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
-			long long * timers = &timers_vector[0];
-			long long * timer_counts = &timer_counts_vector[0];
-			const int LW = 8;			// Line num
-			const int CW = 12;			// Time
-			const int SW = 25;			// String
-			const int PRECISION = 6; 	// Precision
-
-			out_.precision(PRECISION); // Reset precision to 6 places.
-
-			assert(timer.check_timers_off());
-			out_<<"Timers"<<std::endl
-				<<std::setw(LW)<<std::left<<"Line"			// Line Number
-				<<std::setw(SW)<<std::left<<"Type"			// Type of instruction
-				<<std::setw(CW)<<std::left<<"Avg"			// Average time spent per worker
-				<<std::setw(CW)<<std::left<<"AvgBlkWt"		// Average block wait per worker
-				<<std::setw(CW)<<std::left<<"AvgCount"		// Average counts per workers
-				<<std::setw(CW)<<std::left<<"PerCall"		// Average time per call per worker
-				<<std::setw(CW)<<std::left<<"BlkWtPC"		// Average block wait per call per worker
-				//<<std::setw(CW)<<std::left<<"Tot"			// Sum of time spent over all workers
-				//<<std::setw(CW)<<std::left<<"TotBlkWt"	// Sum of block wait time over all workers
-				<<std::setw(CW)<<std::left<<"Count"			// Sum of counts over all workers
-				<<std::endl;
-
-			int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
-			int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
-
-			double sum_of_average_block_wait_time = 0.0;
-			double total_wall_time = timer.to_seconds(timers[0] / (double)timer_counts[0]);
-
-			for (int i=1; i<timer.max_slots() - sialx_lines_; i++){
-
-				if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
-					double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
-					long count = timer_counts[i + total_time_timer_offset * sialx_lines_];
-					double avg_count = count / num_workers;
-					double per_call = tot_time / count;
-					double avg = tot_time / num_workers;
-					double tot_blk_wait = 0;
-					double avg_blk_wait = 0;
-					double blk_wait_per_call = 0;
-
-					if (timer_counts[i + block_wait_timer_offset * sialx_lines_] > 0L){
-						tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
-						blk_wait_per_call = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
-						avg_blk_wait = tot_blk_wait / num_workers;
-						sum_of_average_block_wait_time += avg_blk_wait;
-					}
-					out_	<< std::setw(LW)<< std::left << i
-							<< std::setw(SW)<< std::left << line_to_str_.at(i)
-							<< std::setw(CW)<< std::left << avg
-							<< std::setw(CW)<< std::left << avg_blk_wait
-							<< std::setw(CW)<< std::left << avg_count
-							<< std::setw(CW)<< std::left << per_call
-							<< std::setw(CW)<< std::left << blk_wait_per_call
-							//<< std::setw(CW)<< std::left << tot_time
-							//<< std::setw(CW)<< std::left << tot_blk_wait
-							<< std::setw(CW)<< std::left << count
-							<< std::endl;
-				}
-			}
-			out_ << "Total Walltime : " << total_wall_time << " Seconds "<< std::endl;
-			out_ << "Total Block Wait time : " << sum_of_average_block_wait_time << " Seconds " << std::endl;
-			out_ << std::endl;
+			printAggregateTable(timer, timers, timer_counts);
 		}
 	}
-private:
+
+protected:
+
+	void printAggregateTable(TIMER& timer, long long * timers, long long * timer_counts) {
+		sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
+		int num_workers = attr.num_workers();
+
+		out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+		const int LW = 8;			// Line num
+		const int CW = 12;			// Time
+		const int SW = 25;			// String
+		const int PRECISION = 6; 	// Precision
+
+		out_.precision(PRECISION); // Reset precision to 6 places.
+
+		assert(timer.check_timers_off());
+		out_<<"Timers"<<std::endl
+			<<std::setw(LW)<<std::left<<"Line"			// Line Number
+			<<std::setw(SW)<<std::left<<"Type"			// Type of instruction
+			<<std::setw(CW)<<std::left<<"Avg"			// Average time spent per worker
+			<<std::setw(CW)<<std::left<<"AvgBlkWt"		// Average block wait per worker
+			<<std::setw(CW)<<std::left<<"AvgCount"		// Average counts per workers
+			<<std::setw(CW)<<std::left<<"PerCall"		// Average time per call per worker
+			<<std::setw(CW)<<std::left<<"BlkWtPC"		// Average block wait per call per worker
+			//<<std::setw(CW)<<std::left<<"Tot"			// Sum of time spent over all workers
+			//<<std::setw(CW)<<std::left<<"TotBlkWt"	// Sum of block wait time over all workers
+			<<std::setw(CW)<<std::left<<"Count"			// Sum of counts over all workers
+			<<std::endl;
+
+		int total_time_timer_offset = static_cast<int>(SialxTimer::TOTALTIME);
+		int block_wait_timer_offset = static_cast<int>(SialxTimer::BLOCKWAITTIME);
+
+		double sum_of_average_block_wait_time = 0.0;
+		double total_wall_time = timer.to_seconds(timers[0] / (double)timer_counts[0]);
+
+		for (int i=1; i<=sialx_lines_; i++){
+
+			if (timer_counts[i + total_time_timer_offset * sialx_lines_] > 0L){
+				double tot_time = timer.to_seconds(timers[i + total_time_timer_offset * sialx_lines_]);	// Microsecond to second
+				long count = timer_counts[i + total_time_timer_offset * sialx_lines_];
+				double avg_count = count / num_workers;
+				double per_call = tot_time / count;
+				double avg = tot_time / num_workers;
+				double tot_blk_wait = 0;
+				double avg_blk_wait = 0;
+				double blk_wait_per_call = 0;
+
+				if (timer_counts[i + block_wait_timer_offset * sialx_lines_] > 0L){
+					tot_blk_wait = timer.to_seconds(timers[i + block_wait_timer_offset * sialx_lines_]);
+					blk_wait_per_call = tot_blk_wait / timer_counts[i + block_wait_timer_offset * sialx_lines_];
+					avg_blk_wait = tot_blk_wait / num_workers;
+					sum_of_average_block_wait_time += avg_blk_wait;
+				}
+				out_	<< std::setw(LW)<< std::left << i
+						<< std::setw(SW)<< std::left << line_to_str_.at(i)
+						<< std::setw(CW)<< std::left << avg
+						<< std::setw(CW)<< std::left << avg_blk_wait
+						<< std::setw(CW)<< std::left << avg_count
+						<< std::setw(CW)<< std::left << per_call
+						<< std::setw(CW)<< std::left << blk_wait_per_call
+						//<< std::setw(CW)<< std::left << tot_time
+						//<< std::setw(CW)<< std::left << tot_blk_wait
+						<< std::setw(CW)<< std::left << count
+						<< std::endl;
+			}
+		}
+		out_ << "Total Walltime : " << total_wall_time << " Seconds "<< std::endl;
+		out_ << "Total Block Wait time : " << sum_of_average_block_wait_time << " Seconds " << std::endl;
+		out_ << std::endl;
+	}
+
 	const std::vector<std::string>& line_to_str_;
 	const int sialx_lines_;
 	std::ostream& out_;
 };
+
 #endif // HAVE_MPI
 
 

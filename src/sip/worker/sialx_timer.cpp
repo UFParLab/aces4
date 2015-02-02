@@ -1,3 +1,4 @@
+#include "config.h"
 #include "sialx_timer.h"
 #include "assert.h"
 #include "sip_interface.h"
@@ -48,7 +49,16 @@ long long SialxTimer::get_timer_count(int line_number, TimerKind_t kind){
 }
 
 
-void SialxTimer::print_timers(const std::vector<std::string>& line_to_str, std::ostream& out) {
+void SialxTimer::print_aggregate_timers(const std::vector<std::string>& line_to_str, std::ostream& out) {
+	// Only for Multinode without TAU
+#if defined(HAVE_MPI) && !defined(HAVE_TAU)
+	typedef MultiNodeAggregatePrint<SipTimer_t> PrintTimersType_t;
+	PrintTimersType_t p(line_to_str, sialx_lines_, out);
+	delegate_.print_timers(p);
+#endif
+}
+
+void SialxTimer::print_timers(const std::vector<std::string>& line_to_str, std::ostream& out){
 #ifdef HAVE_TAU
 	typedef TAUTimersPrint<SipTimer_t> PrintTimersType_t;
 #elif defined HAVE_MPI
@@ -59,7 +69,6 @@ void SialxTimer::print_timers(const std::vector<std::string>& line_to_str, std::
 	PrintTimersType_t p(line_to_str, sialx_lines_, out);
 	delegate_.print_timers(p);
 }
-
 
 void SialxTimer::start_program_timer(){
 #ifndef HAVE_TAU

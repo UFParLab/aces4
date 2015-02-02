@@ -47,6 +47,7 @@ public:
 	void pause_timer(Timers_t timer) { delegate_.pause_timer(static_cast<int>(timer)); }
 
 	void print_timers(std::ostream& out);
+	void print_aggregate_timers(std::ostream& out);
 
 private:
 

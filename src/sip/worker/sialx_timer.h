@@ -82,7 +82,14 @@ public:
 	double to_seconds(long long default_unit) { return SipTimer_t::to_seconds(default_unit); }
 
 	/**
-	 * Prints the timers to the given std::ostream (std::cout by default)
+	 * Master worker prints aggregated timers to the given std::ostream (std::cout by default)
+	 * @param line_to_str
+	 * @param out
+	 */
+	void print_aggregate_timers(const std::vector<std::string>& line_to_str, std::ostream& out = std::cout); /*! For each slot, the total time and the average time is printed */
+
+	/**
+	 * Timer print per worker
 	 * @param line_to_str
 	 * @param out
 	 */
