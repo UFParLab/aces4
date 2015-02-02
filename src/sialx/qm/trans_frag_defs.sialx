@@ -31,6 +31,9 @@ moaindex aces_defs_pa = baocc: eavirt
 mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
 
+predefined  int max_aoseg # maximum ao segment size 
+predefined  int max_alphaseg # maximum alpha segment size 
+predefined  int max_betaseg # maximum beta segment size 
 
 #these s are predefined in the array and scalar tables
 
@@ -67,6 +70,8 @@ special return_pairs rrrw
 special compute_xyz_batch uru 
 special enable_debug_print
 special disable_debug_print  
+special scf_atom_lowmem rwwww 
+special place_scratch urrr
 
 endsial trans_frag_defs
 

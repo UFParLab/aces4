@@ -27,11 +27,17 @@ import "trans_frag_defs.sialx"
       index   jiter  = 1: 10 # macroiterations 
       index   ifrag  = 1: nfrags # Nsolute   
       index  iifrag  = 1: nfrags # Nsolute    
+      index   katom  = 1: nfrags # Nfrags  
+      index   jatom  = 1: nfrags # Nfrags  
 
       index   jfrag  = 1: nfrags # Nfragments   
       index  jjfrag  = 1: nfrags # Nfragments   
       index   kfrag  = 1: nfrags # Nfragments   
       index  kkfrag  = 1: nfrags # Nfragments   
+
+      index   ao_scratch    = 1: max_aoseg    # maximum ao segment size 
+      index   alpha_scratch = 1: max_alphaseg # maximum alpha segment size 
+      index   beta_scratch  = 1: max_betaseg  # maximum beta segment size 
 
       index  isolute = 1: 1 
       index  jsolute = 1: 1 
@@ -141,6 +147,7 @@ import "trans_frag_defs.sialx"
       scalar yDip_tot 
       scalar zDip_tot 
       scalar se10c
+      scalar stype 
 #
 # Declare arrays  
 # -------------- 
@@ -318,6 +325,12 @@ import "trans_frag_defs.sialx"
       contiguous local y_dipole[kfrag]
       contiguous local z_dipole[kfrag]
       contiguous local abs_dipole[kfrag]
+
+      contiguous local scr_1[ao_scratch,ao_scratch] 
+      contiguous local scr_2[ao_scratch,ao_scratch] 
+      contiguous local scr_3[ao_scratch,ao_scratch] 
+      contiguous local scr_4[ao_scratch,ao_scratch] 
+      contiguous local scr_5[ao_scratch,ao_scratch] 
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -485,6 +498,136 @@ import "trans_frag_defs.sialx"
 #
       ENDPROC SET_FRAG_PARMS    
 #     ---------------------- 
+
+      PROC IGUESS   
+#     ----------- 
+#
+#     Get memory requirements from integral calculation 
+#     ------------------------------------------------- 
+      print "Starting scratch memory calculation" 
+      imax = 0.0  
+      zmax = 0.0  
+      execute compute_int_scratchmem_lowmem zmax imax 
+      sip_barrier 
+      print "Done computing scratch memory" 
+#
+      sip_barrier 
+      allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
+
+    PARDO katom  
+	icount = (scalar)katom
+
+	print icount # etemp 
+
+	print "Starting computing fragment scf" 
+	execute scf_atom_lowmem icount scr_1[1:max_aoseg,1:max_aoseg] scr_2[1:max_aoseg,1:max_aoseg] scr_3[1:max_aoseg,1:max_aoseg] scr_4[1:max_aoseg,1:max_aoseg]
+	print "Done computing fragment scf" 
+#
+# Nowput the coefficients and fock matrices into the full distributed arrays 
+
+	stype = 1.0 # HF coefficients  
+	DO mu
+	 x1[mu] = wAO_frag[mu]
+	 execute return_sval x1[mu]  m
+	 if m == icount
+	DO a
+	 xa[a]      = wVirtA_frag[a]
+	 execute return_sval xa[a]  l
+	 if l == icount
+	    txp[mu,a]      = 0.0  
+	    execute place_scratch txp[mu,a]  scr_1[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT DCa[mu,a] += txp[mu,a]
+	 endif
+	ENDDO a
+	DO i
+	 xi[i]      = wOccA_frag[i]
+	 execute return_sval xi[i]  s
+	 if s == icount
+	    txp[mu,i]      = 0.0  
+	    execute place_scratch txp[mu,i]  scr_1[1:max_aoseg,1:max_aoseg] stype icount  
+	    PUT DCa[mu,i] += txp[mu,i]
+	 endif
+	ENDDO i
+	 endif
+	ENDDO mu
+	print "Done placing coefficients"
+
+	stype = 2.0 # Fock matrix  
+	DO a   
+	 xa[a]      = wVirtA_frag[a]
+	 execute return_sval xa[a]  l   
+	 if l == icount 
+	DO a1
+	 xa1[a1]      = wVirtA_frag[a1]
+	 execute return_sval xa1[a1]  m   
+	 if m == icount 
+	    tpp[a,a1]          = 0.0  
+	    execute place_scratch tpp[a,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[a,a1] += tpp[a,a1] 
+	 endif 
+	ENDDO a1
+	DO i1
+	 xi1[i1]      = wOccA_frag[i1]
+	 execute return_sval xi1[i1]  m   
+	 if m == icount 
+	    tpp[a,i1]          = 0.0  
+	    execute place_scratch tpp[a,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[a,i1] += tpp[a,i1] 
+	 endif 
+	ENDDO i1
+	 endif 
+	ENDDO a   
+
+	DO i   
+	 xi[i]      = wOccA_frag[i]
+	 execute return_sval xi[i]  l   
+	 if l == icount 
+	DO i1
+	 xi1[i1]      = wOccA_frag[i1]
+	 execute return_sval xi1[i1]  m
+	 if m == icount
+	    tpp[i,i1]          = 0.0  
+	    execute place_scratch tpp[i,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[i,i1] += tpp[i,i1]
+	 endif
+	ENDDO i1
+	DO a1
+	 xa1[a1]      = wVirtA_frag[a1]
+	 execute return_sval xa1[a1]  m
+	 if m == icount
+	    tpp[i,a1]          = 0.0  
+	    execute place_scratch tpp[i,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[i,a1] += tpp[i,a1]
+	 endif
+	ENDDO a1
+	 endif
+	ENDDO i
+
+#                 DO p 
+#                 DO p1 
+#                    tpp(p,p1) = 0.0 
+#                    execute place_scratch tpp(p,p1)  scratch3 stype  
+#                    PUT Dfock_a(p,p1) += tpp(p,p1)
+#                 ENDDO p1 
+#                 ENDDO p 
+	print "Done placing fock_matrix"
+
+
+    ENDPARDO katom   
+      sip_barrier 
+      deallocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
+#
+      ENDPROC IGUESS   
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -1670,6 +1813,7 @@ import "trans_frag_defs.sialx"
                GET e20disp[ifrag,jfrag] 
 	       final_e20disp[ifrag:ifrag,jfrag:jfrag] = e20disp[ifrag,jfrag]
                print final_e20disp[ifrag:ifrag,jfrag:jfrag]
+	       deallocate contiguous final_e20disp[ifrag:ifrag,jfrag:jfrag]
 
            #ENDIF # jfrag >= ifrag  
 
@@ -1949,6 +2093,7 @@ import "trans_frag_defs.sialx"
          GET e10c[ifrag] 
 	 initial_e10c[ifrag:ifrag] = e10c[ifrag]
 	 print initial_e10c[ifrag:ifrag]
+         deallocate contiguous initial_e10c[ifrag:ifrag]
       ENDDO ifrag 
       endif
 
@@ -2190,6 +2335,7 @@ import "trans_frag_defs.sialx"
 	 print final_e10c[ifrag:ifrag]
          etemp = e10c[ifrag] 
          singles += etemp
+         deallocate contiguous final_e10c[ifrag:ifrag]
       ENDDO ifrag 
       sip_barrier 
 
@@ -4606,6 +4752,7 @@ import "trans_frag_defs.sialx"
 	 print final_e10pol[ifrag:ifrag,jfrag:jfrag]
          etemp = e10pol[ifrag,jfrag] 
          esum += etemp 
+         deallocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
       ENDPARDO ifrag, jfrag 
       sip_barrier
       collective e10pol_at += esum 
@@ -4905,6 +5052,7 @@ import "trans_frag_defs.sialx"
               GET e20exch[ifrag,jfrag] 
 	      final_e20exch[ifrag:ifrag,jfrag:jfrag] = e20exch[ifrag,jfrag]
 	      print final_e20exch[ifrag:ifrag,jfrag:jfrag]
+	      deallocate contiguous final_e20exch[ifrag:ifrag,jfrag:jfrag]
 	  endif
 	  enddo jfrag
       enddo ifrag
@@ -5987,6 +6135,7 @@ import "trans_frag_defs.sialx"
          PUT e20monomer[ifrag,jfrag] = t20disp[ifrag,jfrag] 
          etemp = e20c[ifrag] 
          esum -= etemp 
+	 deallocate contiguous monomer_e20disp[ifrag:ifrag,jfrag:jfrag]
        endif 
       enddo jfrag
       enddo ifrag
@@ -6446,10 +6595,10 @@ import "trans_frag_defs.sialx"
      #create DCa 
      #create DFock_a
       sip_barrier
-      restore_persistent Dca "ca" 
-      set_persistent Dca "ca" 
-      restore_persistent DFock_a "fock_a"
-      set_persistent DFock_a "fock_a"
+#      restore_persistent Dca "ca" 
+#      set_persistent Dca "ca" 
+#      restore_persistent DFock_a "fock_a"
+#      set_persistent DFock_a "fock_a"
       rmaster = 0
      #allocate ca(*,*) 
       allocate sp[*] 
@@ -6459,8 +6608,7 @@ import "trans_frag_defs.sialx"
       print r_thresh 
       print elst_thresh 
       sip_barrier
-      print "Done restoring persistent arrays" 
-
+      #print "Done restoring persistent arrays" 
       allocate contiguous macro_e20[1:nfrags]
       sip_barrier
 #
@@ -6470,6 +6618,9 @@ import "trans_frag_defs.sialx"
       CALL SET_FRAG_PARMS   
       sip_barrier 
       print "Done setting fragment parameters" 
+      print "Performing monomer SCF"
+      call IGUESS
+      sip_barrier 
 
       DO p 
          Sx3[p] = 1.0 
