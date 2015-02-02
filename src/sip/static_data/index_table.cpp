@@ -272,7 +272,8 @@ int IndexTable::offset_into_contiguous(int index_slot, int index_value) const{
 int IndexTable::segment_range_extent(int index_slot, int range_lower, int range_upper) const{
 	const IndexTableEntry entry = entries_.at(index_slot);
 	int extent = 0;
-	sial_check(range_upper < (entry.lower_seg_+ entry.num_segments_), std::string("upper bound of range undefined for index"), current_line());
+	sial_check(entry.lower_seg_ <= range_lower, std::string("lower bound of range undefined for index " + entry.name_), current_line());
+	sial_check(range_upper < (entry.lower_seg_+ entry.num_segments_), std::string("upper bound of range undefined for index " + entry.name_), current_line());
 	for (int j = range_lower; j <= range_upper; ++j){
 		extent += entry.segment_extent(j);
 	}

@@ -29,9 +29,12 @@ public:
 
 	void initSipTables(const std::string& sial_dir_name = dir_name);
 	void run();
+
+/** These methods can be called to retrieve values computed during the sial program. */
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
 	double* local_block(const std::string& name, const std::vector<int>indices);
+	double* static_array(const std::string& name);
 	void runWorker();
 	int num_workers();
 	std::string expectedOutput();
