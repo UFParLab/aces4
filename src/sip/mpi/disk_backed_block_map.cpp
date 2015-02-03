@@ -160,7 +160,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 			if (block->is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
             } else {
-				block->allocate_in_memory_data();
+            	allocate_block(block, block_size, true);
             }
         }
 	}
@@ -189,7 +189,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	    block_map_.insert_block(block_id, block);
 	} else {
 		if (!block->is_in_memory())
-			block->allocate_in_memory_data();
+			allocate_block(block, block_size, false);
 	}
 
 	block->set_in_memory();
