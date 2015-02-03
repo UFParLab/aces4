@@ -13,6 +13,7 @@
 #include "io_utils.h"
 #include "setup_reader.h"
 #include "assert.h"
+#include "sip_counter.h"
 #include "sialx_timer.h"
 #include "sip_static_named_timers.h"
 #include "sip_tables.h"

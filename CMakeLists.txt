@@ -167,6 +167,8 @@ set(ACES_DATA_FILES
     src/sip/dynamic_data/cached_block_map.cpp;
     src/sip/dynamic_data/sip_timer.h;
 	src/sip/dynamic_data/sip_timer.cpp;
+	src/sip/dynamic_data/sip_counter.h;
+	src/sip/dynamic_data/sip_counter.cpp;
 	src/sip/dynamic_data/sip_static_named_timers.h;
 	src/sip/dynamic_data/sip_static_named_timers.cpp;
     src/sip/dynamic_data/contiguous_local_array_manager.h;

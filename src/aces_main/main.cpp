@@ -56,6 +56,8 @@ int main(int argc, char* argv[]) {
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
 			sip::SIPStaticNamedTimers staticNamedTimers;
+			sip::Counters counters;
+			sip::MaxCounter maxCounters;
 
 			server_timer.start_program_timer();
 
@@ -92,6 +94,9 @@ int main(int argc, char* argv[]) {
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sip::SIPStaticNamedTimers staticNamedTimers;
+			sip::Counters counters;
+			sip::MaxCounter maxCounters;
+
 			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
