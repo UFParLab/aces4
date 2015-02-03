@@ -6,38 +6,76 @@
  */
 
 #include <sip_counter.h>
+#include <iomanip>
+#include "global_state.h"
 
 namespace sip {
 
-Counter::Counter(const std::string& name) :name_(name), counter_(0) {}
+// Static Variables
+std::vector<Counter*>  Counter::list_;
+std::vector<MaxCounter*>  MaxCounter::list_;
 
-MaxCounter::MaxCounter(const std::string& name) :name_(name), counter_(0), max_(-1) {}
-
-
-CounterFactory::~CounterFactory(){
-	// Delete all allocated Counters
-	for (std::vector<Counter*>::iterator it = counters_.begin(); it!= counters_.end(); ++it){
-		Counter * counter = *it;
-		delete counter;
-	}
-	// Delete all allocated MaxCounters
-	for (std::vector<MaxCounter*>::iterator it = max_counters_.begin(); it!= max_counters_.end(); ++it){
-		MaxCounter * max_counter = *it;
-		delete max_counter;
-	}
+Counter::Counter(const std::string& name) : name_(name), counter_(0) {
+	list_.push_back(this);
+}
+Counter::Counter(const std::string& name, bool register_counter) : name_(name), counter_(0) {
+	if (register_counter)
+		list_.push_back(this);
 }
 
-MaxCounter* CounterFactory::getNewMaxCounter(const std::string& name){
-	MaxCounter* max_counter = new MaxCounter(name);
-	max_counters_.push_back(max_counter);
-	return max_counter;
+MaxCounter::MaxCounter(const std::string& name,  bool register_counter) :name_(name), counter_(0), max_(-1) {
+	if (register_counter)
+		list_.push_back(this);
 }
 
+MaxCounter::MaxCounter(const std::string& name) :name_(name), counter_(0), max_(-1) {
+	list_.push_back(this);
+}
 
-Counter* CounterFactory::getNewCounter(const std::string& name){
-	Counter* counter = new Counter(name);
-	counters_.push_back(counter);
-	return counter;
+void Counter::print_counters(std::ostream& out_){
+	out_ << "Counters for Program " << GlobalState::get_program_name() << std::endl;
+	const int CW = 12;			// Count
+	const int SW = 64;			// String
+
+	out_<<"Timers"<<std::endl
+		<<std::setw(SW)<<std::left<<"Name"
+		<<std::setw(CW)<<std::left<<"Count"
+		<<std::endl;
+
+	std::vector<Counter*>::const_iterator it = list_.begin();
+	for (; it != list_.end(); ++it){
+		Counter* counter = *it;
+		const std::string& name = counter->name();
+		std::size_t count = counter->get_value();
+		out_<< std::setw(SW)<< std::left << name
+			<< std::setw(CW)<< std::left << count
+			<< std::endl;
+	}
+
+	out_ << std::endl;
+}
+
+void MaxCounter::print_max_counters(std::ostream& out_){
+	out_ << "MaxCounters for Program " << GlobalState::get_program_name() << std::endl;
+	const int CW = 12;			// Count
+	const int SW = 64;			// String
+
+	out_<<"Timers"<<std::endl
+		<<std::setw(SW)<<std::left<<"Name"
+		<<std::setw(CW)<<std::left<<"MaxCount"
+		<<std::endl;
+
+	std::vector<MaxCounter*>::const_iterator it = list_.begin();
+	for (; it != list_.end(); ++it){
+		MaxCounter* max_counter = *it;
+		const std::string& name = max_counter->name();
+		std::size_t count = max_counter->get_value();
+		out_<< std::setw(SW)<< std::left << name
+			<< std::setw(CW)<< std::left << count
+			<< std::endl;
+	}
+
+	out_ << std::endl;
 }
 
 

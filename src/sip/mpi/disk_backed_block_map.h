@@ -25,7 +25,7 @@ class ServerPersistentArrayManager;
  */
 class DiskBackedBlockMap {
 public:
-	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&, ServerTimer&, CounterFactory&);
+	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&, ServerTimer&);
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
@@ -58,7 +58,9 @@ private:
 
 	void read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size);
     void write_block_to_disk(const BlockId& block_id, ServerBlock* block);
-	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, bool initialze=true);
+	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, const BlockId& bid, bool initialize);
+	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, const BlockId& bid);
+
 
 	//ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 
@@ -67,10 +69,12 @@ private:
 	const DataDistribution &data_distribution_;
 
 	ServerTimer &server_timer_;
-	CounterFactory& counter_factory_;		/*! Factory to create counters */
 
-	MaxCounter* blocks_created_maxcount_;	/*! Counts the maximum number of blocks created */
-	Counter* blocks_created_count_;			/*! Counts the total number of blocks created */
+	std::vector<MaxCounter*> blocks_created_maxcount_;	/*! Counts the maximum number of blocks created per array */
+	std::vector<Counter*> blocks_created_count_;		/*! Counts the total number of blocks created per array */
+	std::vector<Counter*> blocks_read_count_;			/*! Counts the total number of blocks read per array */
+	std::vector<Counter*> blocks_write_count_;			/*! Counts the total number of blocks written per array */
+
 
     // Since the policy_ can be constructed only
     // after the block_map_ has been constructed, 

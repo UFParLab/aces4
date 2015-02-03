@@ -48,30 +48,66 @@ template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(){
 }
 
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
-		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution,
-		ServerTimer& server_timer, CounterFactory& counter_factory) :
+		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution, ServerTimer& server_timer) :
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
 		block_map_(sip_tables.num_arrays()),
 		disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution),
         policy_(block_map_),
         max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
-        server_timer_(server_timer), counter_factory_(counter_factory){
-	blocks_created_maxcount_ = counter_factory_.getNewMaxCounter("Max Blocks Created");
-	blocks_created_count_ = counter_factory_.getNewCounter("Total Blocks Created");
+        server_timer_(server_timer),
+        blocks_created_maxcount_(sip_tables.num_arrays(), NULL),
+        blocks_created_count_(sip_tables.num_arrays(), NULL),
+        blocks_read_count_(sip_tables.num_arrays(), NULL),
+        blocks_write_count_(sip_tables.num_arrays(), NULL)
+
+        {
+
+
+	// Initialize Counters.
+
+	int all_arrays = sip_tables_.num_arrays();
+	for (int i=0; i<all_arrays; ++i){
+		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i)){
+			std::stringstream maxblocks_ss, blocks_ss, read_ss, write_ss;
+			maxblocks_ss << "Max Blocks Created for " << sip_tables_.array_name(i);
+			blocks_ss << "Total Blocks Created for " << sip_tables_.array_name(i);
+			read_ss << "Total Blocks Read for " << sip_tables_.array_name(i);
+			write_ss << "Total Blocks Written for " << sip_tables_.array_name(i);
+			blocks_created_maxcount_[i] = new MaxCounter(maxblocks_ss.str());
+			blocks_created_count_[i] = new Counter(blocks_ss.str());
+			blocks_read_count_[i] = new Counter(read_ss.str());
+			blocks_write_count_[i] = new Counter(write_ss.str());
+		} else {
+			blocks_created_maxcount_[i] = NULL;
+			blocks_created_count_[i] = NULL;
+			blocks_read_count_[i] = NULL;
+			blocks_write_count_[i] = NULL;
+		}
+	}
+	// Done Initializing Counters
 }
 
-DiskBackedBlockMap::~DiskBackedBlockMap(){}
+DiskBackedBlockMap::~DiskBackedBlockMap(){
+	int all_arrays = sip_tables_.num_arrays();
+	for (int i=0; i<all_arrays; ++i){
+		if (blocks_created_maxcount_[i] != NULL) delete blocks_created_maxcount_[i];
+		if (blocks_created_count_[i] != NULL) delete blocks_created_count_[i];
+		if (blocks_read_count_[i] != NULL) delete blocks_read_count_[i];
+		if (blocks_write_count_[i] != NULL) delete blocks_write_count_[i];
+	}
+}
 
 void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size){
     /** Allocates space for a block, reads block from disk
      * into newly allocated space, sets the in_memory flag,
      * inserts into block_map_ if needed
      */
-	block = allocate_block(block, block_size);
+	block = allocate_block(block, block_size, block_id);
 	server_timer_.start_timer(current_line(), ServerTimer::READTIME);
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
 	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
 	block->set_in_memory();
+	blocks_read_count_[block_id.array_id()]->inc();
 }
 
 void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBlock* block){
@@ -81,9 +117,14 @@ void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBloc
 
     block->unset_dirty();
     block->set_on_disk();
+    blocks_write_count_[block_id.array_id()]->inc();
 }
 
-ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, bool initialize){
+ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, const BlockId& block_id){
+	allocate_block(block, block_size, block_id, true);
+}
+
+ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, const BlockId& block_id, bool initialize){
     /** If enough memory remains, allocates block and returns.
      * Otherwise, frees up memory by writing out dirty blocks
      * till enough memory has been obtained, then allocates
@@ -103,6 +144,8 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 				write_block_to_disk(bid, blk);
 			}
 			blk->free_in_memory_data();
+			std::cout << bid << std::endl;
+		    blocks_created_maxcount_[bid.array_id()]->dec(); // Block Ejected
 
 			// Junmin's fix :
 			// As a result of freeing up block memory, the remaining memory should
@@ -132,9 +175,13 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
    
     if (block == NULL) {
 	    block = new ServerBlock(block_size, initialize);
+	    // If metadata is already in memory, this block has been seen before.
+	    // Only if new ServerBlock is called, this block is being seen for the 1st time.
+	    blocks_created_count_[block_id.array_id()]->inc();
     } else {
         block->allocate_in_memory_data();
     }
+    blocks_created_maxcount_[block_id.array_id()]->inc();
 
 	return block;
 }
@@ -153,14 +200,14 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 		msg << "S " << sip_mpi_attr_.global_rank();
 		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
-		block = allocate_block(NULL, block_size);
+		block = allocate_block(NULL, block_size, block_id);
 	    block_map_.insert_block(block_id, block);
 	} else {
 		if(!block->is_in_memory()){
 			if (block->is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
             } else {
-            	allocate_block(block, block_size, true);
+            	allocate_block(block, block_size, block_id, true);
             }
         }
 	}
@@ -185,11 +232,11 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 		msg << "S " << sip_mpi_attr_.global_rank();
 		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
-		block = allocate_block(NULL, block_size);
+		block = allocate_block(NULL, block_size, block_id);
 	    block_map_.insert_block(block_id, block);
 	} else {
 		if (!block->is_in_memory())
-			allocate_block(block, block_size, false);
+			allocate_block(block, block_size, block_id, false);
 	}
 
 	block->set_in_memory();
@@ -224,7 +271,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 			msg << "S " << sip_mpi_attr_.global_rank();
 			msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
 			std::cout << msg.str() << std::flush;
-			block = allocate_block(NULL, block_size);
+			block = allocate_block(NULL, block_size, block_id);
 			block_map_.insert_block(block_id, block);
 		}
 

@@ -58,7 +58,7 @@ namespace sip {
 class SIPServer {
 
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*, ServerTimer&, CounterFactory&);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*, ServerTimer&);
 	~SIPServer();
 
 
@@ -135,7 +135,6 @@ private:
 	const DataDistribution &data_distribution_;
 
 	ServerTimer& server_timer_;
-	CounterFactory& counter_factory_; /* Factory to create counters */
 
 	int last_seen_line_;
 	int last_seen_worker_;

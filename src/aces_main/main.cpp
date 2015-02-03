@@ -56,12 +56,11 @@ int main(int argc, char* argv[]) {
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
 			sip::SIPStaticNamedTimers staticNamedTimers;
-			sip::CounterFactory counter_factory;
 
 			server_timer.start_program_timer();
 
 			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer, counter_factory);
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
 
 			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SERVER_RUN);
@@ -80,6 +79,9 @@ int main(int argc, char* argv[]) {
 			std::ofstream server_file(server_timer_file_name, std::ofstream::app);
 			server_timer.print_timers(lno2name, server_file);
 			staticNamedTimers.print_timers(server_file);
+			sip::Counter::print_counters(server_file);
+			sip::MaxCounter::print_max_counters(server_file);
+
 
 			std::ofstream aggregate_file("server.timer.aggregate", std::ofstream::app);
 			server_timer.print_timers(lno2name, aggregate_file);
@@ -93,7 +95,6 @@ int main(int argc, char* argv[]) {
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sip::SIPStaticNamedTimers staticNamedTimers;
-			sip::CounterFactory counter_factory;
 
 			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);

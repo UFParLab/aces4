@@ -16,12 +16,11 @@ SIPServer* SIPServer::global_sipserver = NULL;
 SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 		SIPMPIAttr& sip_mpi_attr,
 		ServerPersistentArrayManager* persistent_array_manager,
-		ServerTimer& server_timer,
-		CounterFactory& counter_factory) :
+		ServerTimer& server_timer) :
 		sip_tables_(sip_tables), data_distribution_(data_distribution), disk_backed_block_map_(
-				sip_tables, sip_mpi_attr, data_distribution, server_timer, counter_factory),
+				sip_tables, sip_mpi_attr, data_distribution, server_timer),
 				sip_mpi_attr_(sip_mpi_attr), persistent_array_manager_(persistent_array_manager),
-				terminated_(false), server_timer_(server_timer), counter_factory_(counter_factory),
+				terminated_(false), server_timer_(server_timer),
 				last_seen_line_(0), last_seen_worker_(0){
 	SIPServer::global_sipserver = this;
 }
