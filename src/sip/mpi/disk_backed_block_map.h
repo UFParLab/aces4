@@ -13,6 +13,7 @@
 #include "disk_backed_arrays_io.h"
 #include "lru_array_policy.h"
 #include "server_timer.h"
+#include "sip_counter.h"
 
 namespace sip {
 class BlockId;
@@ -24,7 +25,7 @@ class ServerPersistentArrayManager;
  */
 class DiskBackedBlockMap {
 public:
-	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&, ServerTimer&);
+	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&, ServerTimer&, CounterFactory&);
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
@@ -66,6 +67,10 @@ private:
 	const DataDistribution &data_distribution_;
 
 	ServerTimer &server_timer_;
+	CounterFactory& counter_factory_;		/*! Factory to create counters */
+
+	MaxCounter* blocks_created_maxcount_;	/*! Counts the maximum number of blocks created */
+	Counter* blocks_created_count_;			/*! Counts the total number of blocks created */
 
     // Since the policy_ can be constructed only
     // after the block_map_ has been constructed, 

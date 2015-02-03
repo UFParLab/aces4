@@ -49,13 +49,15 @@ template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(){
 
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		const SIPMPIAttr& sip_mpi_attr, const DataDistribution& data_distribution,
-		ServerTimer& server_timer) :
+		ServerTimer& server_timer, CounterFactory& counter_factory) :
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr), data_distribution_(data_distribution),
 		block_map_(sip_tables.num_arrays()),
 		disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution),
         policy_(block_map_),
         max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
-        server_timer_(server_timer){
+        server_timer_(server_timer), counter_factory_(counter_factory){
+	blocks_created_maxcount_ = counter_factory_.getNewMaxCounter("Max Blocks Created");
+	blocks_created_count_ = counter_factory_.getNewCounter("Total Blocks Created");
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap(){}

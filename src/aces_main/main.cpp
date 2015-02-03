@@ -56,13 +56,12 @@ int main(int argc, char* argv[]) {
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
 			sip::SIPStaticNamedTimers staticNamedTimers;
-			sip::Counters counters;
-			sip::MaxCounter maxCounters;
+			sip::CounterFactory counter_factory;
 
 			server_timer.start_program_timer();
 
 			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer, counter_factory);
 			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
 
 			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SERVER_RUN);
@@ -94,19 +93,16 @@ int main(int argc, char* argv[]) {
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sip::SIPStaticNamedTimers staticNamedTimers;
-			sip::Counters counters;
-			sip::MaxCounter maxCounters;
+			sip::CounterFactory counter_factory;
 
 			sialxTimer.start_program_timer();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
 
-
 			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INTERPRET_PROGRAM);
 			runner.interpret();
 			runner.post_sial_program();
 			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INTERPRET_PROGRAM);
-
 
 			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
 			persistent_worker.save_marked_arrays(&runner);

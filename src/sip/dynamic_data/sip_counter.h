@@ -20,10 +20,8 @@ namespace sip {
 class Counter {
 public:
 	Counter(const std::string& name_);
-	void inc() { counter_++; }
-	void inc(std::size_t delta) { counter_ += delta; }
-	void dec() { counter_--; }
-	void dec(std::size_t delta) { counter_ -= delta; }
+	void inc(int slot) { counter_++ ; }
+	void inc(int slot, std::size_t delta) { counter_ += delta;  }
 
 private:
 	std::size_t counter_;
@@ -45,21 +43,14 @@ private:
 	const std::string name_;
 };
 
-class Counters {
+class CounterFactory {
 public:
-	~Counters();
+	~CounterFactory();
 	Counter* getNewCounter(const std::string& name);
-
-private:
-	std::vector<Counter*> counters_;
-};
-
-class MaxCounters {
-public:
-	~MaxCounters();
 	MaxCounter* getNewMaxCounter(const std::string& name);
 
 private:
+	std::vector<Counter*> counters_;
 	std::vector<MaxCounter*> max_counters_;
 };
 

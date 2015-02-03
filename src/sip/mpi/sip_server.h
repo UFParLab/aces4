@@ -15,6 +15,7 @@
 #include "server_persistent_array_manager.h"
 #include "disk_backed_block_map.h"
 #include "server_timer.h"
+#include "sip_counter.h"
 
 
 
@@ -57,7 +58,7 @@ namespace sip {
 class SIPServer {
 
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*, ServerTimer&);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*, ServerTimer&, CounterFactory&);
 	~SIPServer();
 
 
@@ -134,6 +135,7 @@ private:
 	const DataDistribution &data_distribution_;
 
 	ServerTimer& server_timer_;
+	CounterFactory& counter_factory_; /* Factory to create counters */
 
 	int last_seen_line_;
 	int last_seen_worker_;
