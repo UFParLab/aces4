@@ -2910,7 +2910,7 @@ import "trans_frag_defs.sialx"
       sip_barrier
 #
       eold = 0.0
-      print "Performing a MCPT2 calc on fragment "
+      print "Performing a fragment CCPT2 calc"
       DO kiter 
          do_iter = 0.0 
 #
@@ -2925,6 +2925,7 @@ import "trans_frag_defs.sialx"
          ENDDO iifrag 
         #print icount
 
+
          GET     e2error[ifrag] 
          execute return_sval e2error[ifrag] etemp  
          if etemp < zero  
@@ -2935,6 +2936,8 @@ import "trans_frag_defs.sialx"
          GET     e20c_old[ifrag] 
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
+	 
+	 print ifrag
 #
 # -----------------------------------------------------------------------------
 #     START OF FRAGMENT ITERATIONS 
@@ -3634,6 +3637,8 @@ import "trans_frag_defs.sialx"
          do_iter = 0.0 
          sip_barrier 
 #
+         print "Performing a dimer CCPT2 calc"
+	 print kiter
       PARDO ifrag, jfrag   
          if jfrag != ifrag 
          icount = 0.0 
@@ -3665,9 +3670,8 @@ import "trans_frag_defs.sialx"
          e1old = d20c_old[ifrag,jfrag] 
          do_iter = 1.0 
 #
-         print "Performing a CCPT2 calc on DIMER "
-         print icount
-         print jcount
+#         print icount
+#         print jcount
 #
 # -----------------------------------------------------------------------------
 #     START OF FRAGMENT ITERATIONS 
@@ -6803,6 +6807,8 @@ import "trans_frag_defs.sialx"
 # Start macro-iterations 
       DO jiter 
          sip_barrier 
+	 print "Macro iteration"
+	 print jiter
 
          PARDO ifrag 
            GET                   e20c[ifrag] 
