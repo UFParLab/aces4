@@ -1,0 +1,52 @@
+
+sial contig_local3
+
+predefined int baocc #1
+predefined int eaocc #3
+predefined int bavirt #4
+predefined int eavirt #8
+predefined int eom_roots # 4
+predefined int eom_subspc # 8
+index kstate   = 1: eom_roots
+index ksub     = 1: eom_subspc
+moaindex i = baocc: eaocc  #maoindex  segs[]  = {2,3,4,1,4,4,4,4};
+moaindex i1= baocc: eaocc
+moaindex a = bavirt: eavirt
+moaindex a1= bavirt: eavirt
+
+served RB2_aa[ksub,a,i,a1,i1]
+served R1k2_aa[kstate,a,i,a1,i1]
+temp TR1k2_aa[kstate,a,i,a1,i1]
+temp Tkaiai[ksub,a,i,a1,i1]
+contiguous local CLRB2_aa[ksub,a,i,a1,i1]
+
+print baocc
+print eaocc
+print bavirt
+print eavirt
+print eom_roots
+print eom_subspc
+
+pardo a,i,a1,i1
+do kstate
+   TR1k2_aa[kstate,a,i,a1,i1] = (scalar)kstate
+   prepare 	R1k2_aa[kstate,a,i,a1,i1] = TR1k2_aa[kstate,a,i,a1,i1]
+   enddo kstate
+endpardo a,i,a1,i1
+
+pardo a,i,a1,i1
+allocate contiguous CLRB2_aa[1:eom_subspc,a:a,i:i,a1:a1,i1:i1]
+do kstate
+        request R1k2_aa[kstate,a,i,a1,i1]
+        CLRB2_aa[kstate:kstate,a:a,i:i,a1:a1,i1:i1] = R1k2_aa[kstate,a,i,a1,i1]   # <<<------this is line 6289
+enddo kstate
+do ksub
+Tkaiai[ksub,a,i,a1,i1] = CLRB2_aa[ksub:ksub,a:a,i:i,a1:a1,i1:i1]
+prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+print Tkaiai[ksub,a,i,a1,i1]
+enddo ksub
+#print CLRB2_aa[1:eom_subspc,a:a,i:i,a1:a1,i1:i1]
+deallocate contiguous CLRB2_aa[1:eom_subspc,a:a,i:i,a1:a1,i1:i1]
+endpardo a,i,a1,i1
+
+endsial contig_local3
