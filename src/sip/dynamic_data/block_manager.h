@@ -18,6 +18,7 @@
 #include <stack>
 #include "block.h"
 #include "cached_block_map.h"
+#include "sip_counter.h"
 
 
 namespace sip {
@@ -190,7 +191,7 @@ private:
 	 * to try to delete a block that doesn't exist.
 	 * @param id
 	 */
-	void delete_block(const BlockId& id){block_map_.delete_block(id);}
+	void delete_block(const BlockId& id){ block_map_.delete_block(id); }
 
 	/** Creates and returns a new block with the given shape and records it in the block_map_ with the given BlockId.
 	 * Requires the block with given id does not already exist.
@@ -256,12 +257,15 @@ private:
 													//to allow more convenient printing of
 													//contents.
 
+	// Counters
+	std::vector<Counter*> distributed_blocks_created_per_array_;	/*! Counts the total number of blocks created per array */
+	Counter distributed_blocks_created_count_;						/*! Total number of distributed blocks created */
+	Counter temp_blocks_created_count_;								/*! Total number of temp blocks created */
+	Counter local_blocks_created_count_;							/*! Total number of local blocks created */
 
 	friend class SialOpsSequential;
 	friend class SialOpsParallel;
 	friend class ContiguousLocalArrayManager;
-
-
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

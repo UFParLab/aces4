@@ -8,9 +8,12 @@
 #ifndef CACHED_BLOCK_MAP_H_
 #define CACHED_BLOCK_MAP_H_
 
+#include <vector>
+
 #include "id_block_map.h"
 #include "lru_array_policy.h"
 #include "block.h"
+#include "sip_counter.h"
 
 namespace sip {
 
@@ -120,6 +123,11 @@ private:
 
 	/** Allocated bytes in blocks */
 	std::size_t allocated_bytes_;
+
+	MaxCounter blocks_in_blockmap_maxcount_;	/*! Counts the maximum number of blocks in block map on this worker */
+	Counter blocks_in_blockmap_count_;			/*! Total number of blocks inserted into the block map */
+	Counter cached_blocks_used_;				/*! Counts the total use of cached blocks on this worker */
+
 };
 
 } /* namespace sip */

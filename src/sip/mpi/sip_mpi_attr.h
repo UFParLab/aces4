@@ -147,7 +147,7 @@ public:
 	int global_size() const { return 1; }
 
 	// Each worker is in a worker company. Each server is in a server company.
-	int company_rank() const { return 1; }
+	int company_rank() const { return 0; }
 	int company_size() const { return 1; }
 	bool is_company_master() const { return true; }
 

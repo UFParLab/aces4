@@ -50,20 +50,19 @@ public:
 	virtual void execute(TIMER& timer){
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
-		out_ << "Total Walltime : " << timer.to_seconds(timers[0] / (double)timer_counts[0]) << " Seconds "<< std::endl;
+		out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
 
 		const int LW = 10;	// Line num
 		const int CW = 15;	// Time
 		const int SW = 30;	// String
 
 		assert(timer.check_timers_off());
-		out_ <<"Timers"<<std::endl
-			<<std::setw(LW)<<std::left<<"Line"
+		out_<<std::setw(LW)<<std::left<<"Line"
 			<<std::setw(SW)<<std::left<<"Type"
-			<<std::setw(CW)<<std::left<<"AvgPerCall"
-			<<std::setw(CW)<<std::left<<"AvgBlkWait"
 			<<std::setw(CW)<<std::left<<"Tot"
-			<<std::setw(CW)<<std::left<<"TotBlkWait"
+			//<<std::setw(CW)<<std::left<<"TotBlkWait"
+			<<std::setw(CW)<<std::left<<"AvgPerCall"
+			//<<std::setw(CW)<<std::left<<"AvgBlkWait"
 			<<std::setw(CW)<<std::left<<"Count"
 			<<std::endl;
 
@@ -86,14 +85,15 @@ public:
 
 				out_<<std::setw(LW)<<std::left << i
 						<< std::setw(SW)<< std::left << line_to_str_.at(i)
-						<< std::setw(CW)<< std::left << avg_time
-						<< std::setw(CW)<< std::left << avg_blk_wait
 						<< std::setw(CW)<< std::left << tot_time
-						<< std::setw(CW)<< std::left << tot_blk_wait
+						//<< std::setw(CW)<< std::left << tot_blk_wait
+						<< std::setw(CW)<< std::left << avg_time
+						//<< std::setw(CW)<< std::left << avg_blk_wait
 						<< std::setw(CW)<< std::left << count
 						<< std::endl;
 			}
 		}
+		out_ << "Total Walltime : " << timer.to_seconds(timers[0] / (double)timer_counts[0]) << " Seconds "<< std::endl;
 		out_ << std::endl;
 	}
 private:
@@ -146,8 +146,7 @@ protected:
 		out_.precision(PRECISION); // Reset precision to 6 places.
 
 		assert(timer.check_timers_off());
-		out_<<"Timers"<<std::endl
-			<<std::setw(LW)<<std::left<<"Line"			// Line Number
+		out_<<std::setw(LW)<<std::left<<"Line"			// Line Number
 			<<std::setw(SW)<<std::left<<"Type"			// Type of instruction
 			<<std::setw(CW)<<std::left<<"Tot"			// Time spent
 			<<std::setw(CW)<<std::left<<"TotBlkWt"		// Block wait
@@ -251,8 +250,7 @@ protected:
 		out_.precision(PRECISION); // Reset precision to 6 places.
 
 		assert(timer.check_timers_off());
-		out_<<"Timers"<<std::endl
-			<<std::setw(LW)<<std::left<<"Line"			// Line Number
+		out_<<std::setw(LW)<<std::left<<"Line"			// Line Number
 			<<std::setw(SW)<<std::left<<"Type"			// Type of instruction
 			<<std::setw(CW)<<std::left<<"Avg"			// Average time spent per worker
 			<<std::setw(CW)<<std::left<<"AvgBlkWt"		// Average block wait per worker

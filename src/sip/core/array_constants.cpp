@@ -151,6 +151,9 @@ bool is_sparse_attr(int attr){
 bool is_contiguous_local_attr(int attr){
 	return is_contiguous_attr(attr)  && !is_auto_allocate_attr(attr);
 }
+bool is_temp_attr(int attr){
+	return is_auto_allocate_attr(attr) && is_scope_extent_attr(attr);
+}
 
 } // namespace array
 

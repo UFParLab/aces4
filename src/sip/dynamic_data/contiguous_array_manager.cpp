@@ -54,7 +54,9 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 
 ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 		setup::SetupReader& setup_reader) :
-		sip_tables_(sip_tables), setup_reader_(setup_reader) {
+		sip_tables_(sip_tables), setup_reader_(setup_reader),
+		contiguous_array_created_count_("Total Contiguous Arrays Created"),
+		contiguous_slices_made_count_("Total Contiguous Array Slices Created") {
 	//create static arrays in sial program.  All static arrays are allocated a startup
 	int num_arrays = sip_tables_.num_arrays();
 	for (int i = 0; i < num_arrays; ++i) {
@@ -132,6 +134,7 @@ Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 }
 
 Block::BlockPtr ContiguousArrayManager::create_contiguous_array(int array_id) {
+	contiguous_array_created_count_.inc();
 	BlockShape shape = sip_tables_.contiguous_array_shape(array_id);
 	SIP_LOG(
 			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape << " and array id :" << array_id << std::endl);
@@ -216,6 +219,7 @@ Block::BlockPtr ContiguousArrayManager::get_block(const BlockId& block_id, int& 
 
 //allocate a new block and copy data from contiguous block
 	Block::BlockPtr block = new Block(block_shape);
+	contiguous_slices_made_count_.inc();
 	contiguous->extract_slice(rank, offsets, block);
 	return block;
 }

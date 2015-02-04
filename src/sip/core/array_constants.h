@@ -154,6 +154,7 @@ bool is_scalar_attr(int attr);
 bool is_predefined_scalar_attr(int attr);
 bool is_sparse_attr(int attr);
 bool is_contiguous_local_attr(int attr);
+bool is_temp_attr(int attr);
 
 ArrayType_t intToArrayType_t(int);
 

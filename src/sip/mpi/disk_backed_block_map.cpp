@@ -58,38 +58,29 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
         blocks_created_maxcount_(sip_tables.num_arrays(), NULL),
         blocks_created_count_(sip_tables.num_arrays(), NULL),
         blocks_read_count_(sip_tables.num_arrays(), NULL),
-        blocks_write_count_(sip_tables.num_arrays(), NULL)
-
-        {
-
+        blocks_write_count_(sip_tables.num_arrays(), NULL),
+        total_blocks_read_count_("Total Blocks Read from Disk"),
+        total_blocks_written_count_("Total Blocks Written to Disk"),
+        total_cache_misses_count_("Total Number of Cache Misses") {
 
 	// Initialize Counters.
-
-	int all_arrays = sip_tables_.num_arrays();
-	for (int i=0; i<all_arrays; ++i){
+	int num_arrays = sip_tables_.num_arrays();
+	for (int i=0; i<num_arrays; ++i){
 		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i)){
-			std::stringstream maxblocks_ss, blocks_ss, read_ss, write_ss;
-			maxblocks_ss << "Max Blocks Created for " << sip_tables_.array_name(i);
-			blocks_ss << "Total Blocks Created for " << sip_tables_.array_name(i);
-			read_ss << "Total Blocks Read for " << sip_tables_.array_name(i);
-			write_ss << "Total Blocks Written for " << sip_tables_.array_name(i);
-			blocks_created_maxcount_[i] = new MaxCounter(maxblocks_ss.str());
-			blocks_created_count_[i] = new Counter(blocks_ss.str());
-			blocks_read_count_[i] = new Counter(read_ss.str());
-			blocks_write_count_[i] = new Counter(write_ss.str());
-		} else {
-			blocks_created_maxcount_[i] = NULL;
-			blocks_created_count_[i] = NULL;
-			blocks_read_count_[i] = NULL;
-			blocks_write_count_[i] = NULL;
+			std::string array_name (sip_tables_.array_name(i));
+			blocks_created_maxcount_[i] = new MaxCounter("Max Blocks Created for " + array_name);
+			blocks_created_count_[i] = new Counter("Total Blocks Created for " + array_name);
+			blocks_read_count_[i] = new Counter("Total Blocks Read for " + array_name);
+			blocks_write_count_[i] = new Counter("Total Blocks Written for " + array_name);
 		}
 	}
 	// Done Initializing Counters
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap(){
-	int all_arrays = sip_tables_.num_arrays();
-	for (int i=0; i<all_arrays; ++i){
+	// Delete Counters
+	int num_arrays = sip_tables_.num_arrays();
+	for (int i=0; i<num_arrays; ++i){
 		if (blocks_created_maxcount_[i] != NULL) delete blocks_created_maxcount_[i];
 		if (blocks_created_count_[i] != NULL) delete blocks_created_count_[i];
 		if (blocks_read_count_[i] != NULL) delete blocks_read_count_[i];
@@ -108,6 +99,7 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
 	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
 	block->set_in_memory();
 	blocks_read_count_[block_id.array_id()]->inc();
+	total_blocks_read_count_.inc();
 }
 
 void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBlock* block){
@@ -118,6 +110,7 @@ void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBloc
     block->unset_dirty();
     block->set_on_disk();
     blocks_write_count_[block_id.array_id()]->inc();
+    total_blocks_written_count_.inc();
 }
 
 ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, const BlockId& block_id){
@@ -143,9 +136,10 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 			if(blk->is_dirty()){
 				write_block_to_disk(bid, blk);
 			}
-			blk->free_in_memory_data();
+			bool deleted_block = blk->free_in_memory_data();
 			std::cout << bid << std::endl;
-		    blocks_created_maxcount_[bid.array_id()]->dec(); // Block Ejected
+			if (deleted_block)
+				blocks_created_maxcount_[bid.array_id()]->dec(); // Block Ejected
 
 			// Junmin's fix :
 			// As a result of freeing up block memory, the remaining memory should
@@ -206,6 +200,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 		if(!block->is_in_memory()){
 			if (block->is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
+				total_cache_misses_count_.inc();
             } else {
             	allocate_block(block, block_size, block_id, true);
             }
@@ -280,6 +275,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 		if(!block->is_in_memory())
 			if (block->is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
+				total_cache_misses_count_.inc();
             } else {
 				sip::fail("get_block_for_reading : ServerBlock neither on memory or on disk !");
             }
@@ -316,6 +312,7 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id){
 
 	block_map_.delete_per_array_map_and_blocks(array_id);	// remove from memory
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank() << " : Removed blocks from memory" << std::endl;);
+	blocks_created_maxcount_[array_id]->set_value(0);
 }
 
 void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& label){

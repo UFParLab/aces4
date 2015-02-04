@@ -30,9 +30,6 @@ public:
 	STATIC_TIMER(	INTERPRET_PROGRAM, 				3, 	"Interpret Program")\
 	STATIC_TIMER(	SERVER_RUN, 					4, 	"Server Run")\
 
-
-
-
 	enum Timers_t {
 	#define STATIC_TIMER(e, n, s) e = n,
 		SIP_STATIC_TIMERS

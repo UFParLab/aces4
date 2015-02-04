@@ -15,6 +15,7 @@
 #include <iostream>
 
 #define MAX(x, y) (x ^ ((x ^ y) & -(x < y)))	// Bit Hacks - http://graphics.stanford.edu/~seander/bithacks.html#IntegerMinOrMax
+//#define MAX(x, y) (x > y ? x : y)
 
 namespace sip {
 
@@ -46,6 +47,7 @@ public:
 	void inc(std::size_t delta) { counter_ += delta; max_ = MAX(max_, counter_); }
 	void dec() { counter_--; }
 	void dec(std::size_t delta) { counter_-= delta; }
+	void set_value(std::size_t val) { counter_ = val; max_ = MAX(max_, counter_); }
 	std::size_t get_max() { return max_;}
 	std::size_t get_value() { return counter_; }
 	const std::string& name() { return name_; }

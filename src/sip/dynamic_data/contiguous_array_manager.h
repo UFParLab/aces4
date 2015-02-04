@@ -33,6 +33,7 @@
 #include <stack>
 #include "block_id.h"
 #include "block.h"
+#include "sip_counter.h"
 
 namespace sip {
 class SipTables;
@@ -207,6 +208,8 @@ private:
 	const sip::SipTables & sip_tables_;
 	setup::SetupReader & setup_reader_;
 
+	Counter contiguous_array_created_count_;
+	Counter contiguous_slices_made_count_;
 
 	DISALLOW_COPY_AND_ASSIGN(ContiguousArrayManager);
 };

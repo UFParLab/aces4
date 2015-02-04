@@ -87,7 +87,6 @@ int main(int argc, char* argv[]) {
 			server_timer.print_timers(lno2name, aggregate_file);
 			staticNamedTimers.print_aggregate_timers(aggregate_file);
 
-
 		} else
 #endif
 
@@ -118,12 +117,18 @@ int main(int argc, char* argv[]) {
 			std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
 			sialxTimer.print_timers(lno2name, worker_file);
 			staticNamedTimers.print_timers(worker_file);
+			sip::Counter::print_counters(worker_file);
+			sip::MaxCounter::print_max_counters(worker_file);
 
 			std::ofstream aggregate_file("worker.timer.aggregate", std::ofstream::app);
 			sialxTimer.print_aggregate_timers(lno2name, aggregate_file);
 			staticNamedTimers.print_aggregate_timers(aggregate_file);
 
 		}// end of worker or server
+
+		// Reset counters for next program
+		sip::Counter::clear_list();
+		sip::MaxCounter::clear_list();
 
 		STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
 

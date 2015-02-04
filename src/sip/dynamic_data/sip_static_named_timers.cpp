@@ -49,15 +49,14 @@ public:
 	virtual void execute(TIMER& timer){
 		long long * timers = timer.get_timers();
 		long long * timer_counts = timer.get_timer_count();
-
+		out_ << "Static Timers for Program " << GlobalState::get_program_name() << std::endl;
 		const int CW = 15;	// Time
 		const int SW = 30;	// String
 		const int PRECISION = 6; 	// Precision
 		out_.precision(PRECISION); // Reset precision to 6 places.
 
 		assert(timer.check_timers_off());
-		out_ <<"Timers"<<std::endl
-			<<std::setw(SW)<<std::left<<"TimerName"
+		out_<<std::setw(SW)<<std::left<<"TimerName"
 			<<std::setw(CW)<<std::left<<"AvgPerCall"
 			<<std::setw(CW)<<std::left<<"TotTime"
 			<<std::setw(CW)<<std::left<<"Count"
@@ -113,7 +112,7 @@ public:
 			sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 			int num_workers = attr.num_workers();
 
-			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+			out_ << "Static Timers for Program " << GlobalState::get_program_name() << std::endl;
 			const int CW = 15;	// Time
 			const int SW = 30;	// String
 			const int PRECISION = 6; 	// Precision
@@ -173,7 +172,7 @@ public:
 			sip::SIPMPIAttr &attr = sip::SIPMPIAttr::get_instance();
 			int num_workers = attr.num_workers();
 
-			out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+			out_ << "Static Timers for Program " << GlobalState::get_program_name() << std::endl;
 			long long * timers = &timers_vector[0];
 			long long * timer_counts = &timer_counts_vector[0];
 			const int CW = 15;	// Time

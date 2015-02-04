@@ -38,8 +38,21 @@ namespace sip {
 
 
 BlockManager::BlockManager(const SipTables &sip_tables) :
-sip_tables_(sip_tables),
-block_map_(sip_tables.num_arrays()){
+	sip_tables_(sip_tables),
+	block_map_(sip_tables.num_arrays()),
+	distributed_blocks_created_per_array_(sip_tables.num_arrays(), NULL),
+	distributed_blocks_created_count_("Total Distributed Array Blocks"),
+	temp_blocks_created_count_("Total Temp Blocks Allocated"),
+	local_blocks_created_count_("Total Local Blocks Allocated"){
+	// Initialize Counters.
+	int num_arrays = sip_tables_.num_arrays();
+	for (int i=0; i<num_arrays; ++i){
+		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i)){
+			std::string array_name (sip_tables_.array_name(i));
+			distributed_blocks_created_per_array_[i] = new Counter("Total Blocks Created for " + array_name);
+		}
+	}
+	// Done Initializing Counters
 }
 
 
@@ -53,6 +66,11 @@ BlockManager::~BlockManager() {
 	for (int i = 0; i < sip_tables_.num_arrays(); ++i)
 		delete_per_array_map_and_blocks(i);
 
+	// Delete Counters
+	int num_arrays = sip_tables_.num_arrays();
+	for (int i=0; i<num_arrays; ++i){
+		if (distributed_blocks_created_per_array_[i] != NULL) delete distributed_blocks_created_per_array_[i];
+	}
 }
 
 
@@ -82,6 +100,7 @@ void BlockManager::allocate_local(const BlockId& id) {
 		std::vector<BlockId>::iterator it;
 		for (it = list.begin(); it != list.end(); ++it) {
 			Block* blk = get_block_for_writing(*it, false);
+			local_blocks_created_count_.inc();
 		}
 	} else {
 		Block* blk = get_block_for_writing(id, false);
@@ -231,6 +250,14 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 	try {
 		Block::BlockPtr block_ptr = new Block(shape);
 		insert_into_blockmap(block_id, block_ptr);
+		int array_id = block_id.array_id();
+		if (sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id)){
+			distributed_blocks_created_per_array_[array_id]->inc();
+			distributed_blocks_created_count_.inc();
+		}
+		if (sip_tables_.is_temp(array_id)){
+			temp_blocks_created_count_.inc();
+		}
 		return block_ptr;
 	} catch (const std::out_of_range& oor){
 		std::cerr << " In BlockManager::create_block" << std::endl;

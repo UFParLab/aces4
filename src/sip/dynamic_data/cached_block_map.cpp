@@ -12,7 +12,10 @@ namespace sip {
 CachedBlockMap::CachedBlockMap(int num_arrays)
 	: block_map_(num_arrays), cache_(num_arrays), policy_(cache_),
 	  max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
-	  allocated_bytes_(0){
+	  allocated_bytes_(0),
+	blocks_in_blockmap_maxcount_("Maximum Num Blocks Inserted into Block Map"),
+	cached_blocks_used_("Use of Cached Block"),
+	blocks_in_blockmap_count_("Total Num Blocks Inserted into Block Map") {
 }
 
 CachedBlockMap::~CachedBlockMap() {
@@ -27,6 +30,7 @@ Block* CachedBlockMap::block(const BlockId& block_id){
 	if (block_ptr == NULL){
 		block_ptr = cache_.block(block_id);
 		if (block_ptr != NULL){
+			cached_blocks_used_.inc();
 			Block * dont_delete_block = cache_.get_and_remove_block(block_id);
 			block_map_.insert_block(block_id, block_ptr);
 		}
@@ -39,6 +43,7 @@ void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
 		BlockId block_id = policy_.get_next_block_for_removal();
 		Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
 		allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
+		blocks_in_blockmap_maxcount_.dec();
 	}
 }
 
@@ -51,6 +56,8 @@ void CachedBlockMap::insert_block(const BlockId& block_id, Block* block_ptr){
 
 	block_map_.insert_block(block_id, block_ptr);
 	allocated_bytes_ += block_size;
+	blocks_in_blockmap_maxcount_.inc();
+	blocks_in_blockmap_count_.inc();
 }
 
 void CachedBlockMap::cached_delete_block(const BlockId& block_id){
@@ -68,6 +75,7 @@ void CachedBlockMap::cached_delete_block(const BlockId& block_id){
 void CachedBlockMap::delete_block(const BlockId& block_id){
 	Block* tmp_block_ptr = block_map_.get_and_remove_block(block_id);
 	allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
+	blocks_in_blockmap_maxcount_.dec();
 	delete tmp_block_ptr;
 
 }

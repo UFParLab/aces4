@@ -104,8 +104,14 @@ bool SipTables::is_served(int array_table_slot) const {
 
 bool SipTables::is_contiguous_local(int array_table_slot) const {
     int attr = array_table_.array_type(array_table_slot);
-	return is_contiguous_local_attr(attr);
+	return sip::is_contiguous_local_attr(attr);
 }
+
+bool SipTables::is_temp(int array_table_slot) const {
+    int attr = array_table_.array_type(array_table_slot);
+    return sip::is_temp_attr(attr);
+}
+
 
 int SipTables::num_arrays() const{
 	return array_table_.entries_.size();

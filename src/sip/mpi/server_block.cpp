@@ -82,13 +82,16 @@ ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 }
 
 
-void ServerBlock::free_in_memory_data() {
+bool ServerBlock::free_in_memory_data() {
+	bool deleted_block = false;
 	if (data_ != NULL) {
 		delete [] data_; data_ = NULL;
 		disk_status_[ServerBlock::IN_MEMORY] = false;
 		disk_status_[ServerBlock::DIRTY_IN_MEMORY] = false;
 		allocated_bytes_ -= size_ * sizeof(double);
+		deleted_block = true;
 	}
+	return deleted_block;
 }
 
 void ServerBlock::allocate_in_memory_data(bool initialize) {

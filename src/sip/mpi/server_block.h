@@ -135,7 +135,7 @@ public:
     dataPtr accumulate_data(size_t size, dataPtr to_add); /*! for all elements, this->data += to_add->data */
 
 
-    void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
+    bool free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
 	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */

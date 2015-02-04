@@ -81,6 +81,7 @@ public:
 	bool is_distributed(int array_table_slot) const;
 	bool is_served(int array_table_slot) const;
 	bool is_contiguous_local(int array_table_slot) const;
+	bool is_temp(int array_table_slot) const;
 	int num_arrays() const;
 
 //int (symbolic constants)

@@ -70,6 +70,10 @@ private:
 
 	ServerTimer &server_timer_;
 
+	// Counters
+	Counter total_blocks_read_count_;					/*! Total number of blocks read from disk */
+	Counter total_blocks_written_count_;				/*! Total number of blocks written to disk */
+	Counter total_cache_misses_count_;					/*! Total number of blocks which could not be found in cache */
 	std::vector<MaxCounter*> blocks_created_maxcount_;	/*! Counts the maximum number of blocks created per array */
 	std::vector<Counter*> blocks_created_count_;		/*! Counts the total number of blocks created per array */
 	std::vector<Counter*> blocks_read_count_;			/*! Counts the total number of blocks read per array */
