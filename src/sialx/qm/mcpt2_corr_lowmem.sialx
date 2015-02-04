@@ -6742,11 +6742,11 @@ import "trans_frag_defs.sialx"
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
-      imax = 0.0  
-      zmax = 0.0  
-      print "Start computing scratch memory" 
-      execute compute_int_scratchmem_lowmem  zmax imax 
-      print "Done computing scratch memory" 
+#      imax = 0.0  
+#      zmax = 0.0  
+#      print "Start computing scratch memory" 
+#      execute compute_int_scratchmem_lowmem  zmax imax 
+#      print "Done computing scratch memory" 
 
 #     Compute the NN repusion between fragments  
 #     ----------------------------------------- 
