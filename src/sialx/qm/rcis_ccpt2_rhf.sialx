@@ -1,18 +1,4 @@
-#  Copyright (c) 2003-2010 University of Florida
   import "cis_rhf_defs.sialx" 
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
                            SIAL CCSD_RHF_SV1
 #
 #-------------------------------------------------------------------------------
@@ -1607,7 +1593,13 @@
 #    ------------------------------------------------------------------------ 
 #           MAIN
 #    ------------------------------------------------------------------------ 
-    println "starting CIS-CCPT(2)"
+
+print " "
+print "-- Parallel CIS-CCPT(2) program"
+print "-- J Chem Phys 2014, 140, 234108."
+print "-- Written by Jason N. Byrd, 2014"
+print "  " 
+
     ecrit = 0.00000001
     zero = 0.0
     one = 1.0

@@ -428,8 +428,6 @@ SIOX_FILES=\
 ./src/sialx/test/broadcast_static.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
-./src/sialx/qm/scf_mp2_rhf.siox\
-./src/sialx/qm/scf_mp2_defs.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
 ./src/sialx/qm/scf_frag_defs_lowmem.siox\
 ./src/sialx/qm/frag_2order_corr_lowmem.siox\
@@ -453,6 +451,10 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsdpt_aab_defs.siox\
 ./src/sialx/qm/rccsdpt_aab.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox
+
+#./src/sialx/qm/scf_mp2_rhf.siox\
+#./src/sialx/qm/scf_mp2_defs.siox\
+#./src/sialx/qm/rlambda_rhf.siox\
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -546,9 +548,7 @@ EXTRA_DIST += \
 ./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/test/broadcast_static.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
-./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\
-./src/sialx/qm/scf_mp2_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
 ./src/sialx/qm/scf_frag_defs_lowmem.sialx\
 ./src/sialx/qm/trans_frag_defs.sialx\
@@ -572,6 +572,10 @@ EXTRA_DIST += \
 ./src/sialx/qm/rccsdpt_aaa.sialx\
 ./src/sialx/qm/rccsdpt_aab_defs.sialx\
 ./src/sialx/qm/rccsdpt_aab.sialx
+
+#./src/sialx/qm/scf_mp2_rhf.sialx\
+#./src/sialx/qm/scf_mp2_defs.sialx\
+#./src/sialx/qm/rlambda_rhf.sialx\
 
 SIALX_DIR = ${top_srcdir}/src/sialx/
 .sialx.siox: $(SIAL_COMPILER_JAR)

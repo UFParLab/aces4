@@ -522,9 +522,7 @@ set(SIAL_FILES
     src/sialx/test/index_scalar_cast.sialx;
     src/sialx/test/contig_local3.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
-    src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
-    src/sialx/qm/scf_mp2_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
     src/sialx/qm/scf_frag_defs_lowmem.sialx;
     src/sialx/qm/frag_2order_corr_lowmem.sialx;
@@ -548,6 +546,9 @@ set(SIAL_FILES
     src/sialx/qm/rccsd_rhf_defs.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx)
 
+#    src/sialx/qm/scf_mp2_rhf.sialx;
+#    src/sialx/qm/scf_mp2_defs.sialx;
+#    src/sialx/qm/rlambda_rhf.sialx;
 #    src/sialx/qm/scf_frag.sialx;
 #    src/sialx/qm/scf_frag_defs.sialx;
 #    src/sialx/qm/trans_frag_fpardo.sialx;
