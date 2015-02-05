@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
 	set_rank_distribution(parameters);
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
-	INIT_GLOBAL_TIMERS(&argc, &argv);
+	//INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	// Set Approx Max memory usage
 	sip::GlobalState::set_max_data_memory_usage(parameters.memory);
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
 
-		START_TAU_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
+		//START_TAU_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(*setup_reader, siox_file);
@@ -48,44 +48,47 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
-		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
+		//const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
-			sip::SIPStaticNamedTimers staticNamedTimers;
 
-			server_timer.start_program_timer();
+			//server_timer.start_program_timer();
 
-			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
+			sip::Timer init_server_timer("Initialize Server");
+			init_server_timer.start();
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
-			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INIT_SERVER);
+			init_server_timer.pause();
 
-			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SERVER_RUN);
+			sip::Timer server_run_timer("Server Run");
+			server_run_timer.start();
 			server.run();
-			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SERVER_RUN);
+			server_run_timer.pause();
 
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 
-			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
+			sip::Timer save_persistent_timer("Save Persistent Arrays");
+			save_persistent_timer.start();
 			persistent_server.save_marked_arrays(&server);
-			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
-			server_timer.stop_program_timer();
+			save_persistent_timer.pause();
+			//server_timer.stop_program_timer();
 
 			char server_timer_file_name[64];
 			std::sprintf(server_timer_file_name, "server.timer.%d", sip_mpi_attr.company_rank());
 			std::ofstream server_file(server_timer_file_name, std::ofstream::app);
-			server_timer.print_timers(lno2name, server_file);
-			staticNamedTimers.print_timers(server_file);
+			//server_timer.print_timers(lno2name, server_file);
+			server_timer.print_timers(server_file, sipTables);
+			sip::Timer::print_timers(server_file);
 			sip::Counter::print_counters(server_file);
 			sip::MaxCounter::print_max_counters(server_file);
 
 
-			std::ofstream aggregate_file("server.timer.aggregate", std::ofstream::app);
-			server_timer.print_timers(lno2name, aggregate_file);
-			staticNamedTimers.print_aggregate_timers(aggregate_file);
+			//std::ofstream aggregate_file("server.timer.aggregate", std::ofstream::app);
+			//server_timer.print_timers(lno2name, aggregate_file);
+			//staticNamedTimers.print_aggregate_timers(aggregate_file);
 
 		} else
 #endif
@@ -93,50 +96,63 @@ int main(int argc, char* argv[]) {
 		//interpret current program on worker
 		{
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
-			sip::SIPStaticNamedTimers staticNamedTimers;
 
-			sialxTimer.start_program_timer();
+			//sialxTimer.start_program_timer();
+			sip::Timer initialize_worker_timer("Initialize Worker");
+			initialize_worker_timer.start();
 			sip::SialxInterpreter runner(sipTables, &sialxTimer, NULL, &persistent_worker);
+			initialize_worker_timer.pause();
+
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
 
-			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::INTERPRET_PROGRAM);
+			sip::Timer interpret_timer("Interpret Program");
+			interpret_timer.start();
 			runner.interpret();
-			runner.post_sial_program();
-			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::INTERPRET_PROGRAM);
+			interpret_timer.pause();
 
-			staticNamedTimers.start_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
+			sip::Timer post_sial_timer("Post SIAL Program");
+			interpret_timer.start();
+			runner.post_sial_program();
+			post_sial_timer.pause();
+
+
+			sip::Timer save_persistent_timer("Save Persistent Arrays");
+			save_persistent_timer.start();
 			persistent_worker.save_marked_arrays(&runner);
-			staticNamedTimers.pause_timer(sip::SIPStaticNamedTimers::SAVE_PERSISTENT_ARRAYS);
+			save_persistent_timer.pause();
 
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
-			sialxTimer.stop_program_timer();
+			//sialxTimer.stop_program_timer();
 
 			char sialx_timer_file_name[64];
 			std::sprintf(sialx_timer_file_name, "worker.timer.%d", sip_mpi_attr.company_rank());
 			std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
-			sialxTimer.print_timers(lno2name, worker_file);
-			staticNamedTimers.print_timers(worker_file);
+
+			sialxTimer.print_timers(worker_file, sipTables);
+			sip::Timer::print_timers(worker_file);
 			sip::Counter::print_counters(worker_file);
 			sip::MaxCounter::print_max_counters(worker_file);
 
-			std::ofstream aggregate_file("worker.timer.aggregate", std::ofstream::app);
-			sialxTimer.print_aggregate_timers(lno2name, aggregate_file);
-			staticNamedTimers.print_aggregate_timers(aggregate_file);
+
+			//std::ofstream aggregate_file("worker.timer.aggregate", std::ofstream::app);
+			//sialxTimer.print_aggregate_timers(lno2name, aggregate_file);
+			//staticNamedTimers.print_aggregate_timers(aggregate_file);
 
 		}// end of worker or server
 
 		// Reset counters for next program
 		sip::Counter::clear_list();
 		sip::MaxCounter::clear_list();
+		sip::Timer::clear_list();
 
-		STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
+		//STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
 
   		barrier();
 	} //end of loop over programs
 
 	delete setup_reader;
-	FINALIZE_GLOBAL_TIMERS();
+	//FINALIZE_GLOBAL_TIMERS();
 	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
 	mpi_finalize();
 

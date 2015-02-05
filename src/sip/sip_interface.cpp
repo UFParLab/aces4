@@ -150,13 +150,10 @@ void predefined_int_array(const char*aname, int& num_dims, int **dims,
 	}
 }
 
-/**
- * Gets the current SIALX line number begin executed
- * @return
- */
-int current_line() {
-	return sip::get_line_number();
-}
+int current_line() { return sip::get_line_number(); }
+
+int current_pc() { return sip::get_current_pc(); }
+
 
 //NOT YET IMPLEMENTED
 //void get_config_info(const char* sialfile, const char* key, const char* value);
@@ -174,19 +171,44 @@ std::string array_name_value(int array_table_slot) {
 }
 int get_line_number() {
 #ifdef HAVE_MPI
-	sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
-	sip::SIPServer * server = sip::SIPServer::global_sipserver;
 	sip::SIPMPIAttr &mpiattr = sip::SIPMPIAttr::get_instance();
 	if (mpiattr.is_worker()){
+		sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
 		if (interpreter != NULL)
 			return interpreter->line_number();
 		else
 			return 0;
 	} else {
+		sip::SIPServer * server = sip::SIPServer::global_sipserver;
 		if (server != NULL)
 			return server->last_seen_line();
 		else
 			return 0;
+	}
+
+#else	// HAVE_MPI
+	if (sip::Interpreter::global_interpreter != NULL) {
+		return sip::Interpreter::global_interpreter->line_number();
+	} else
+		return 0;
+#endif	// HAVE_MPI
+}
+
+int get_current_pc(){
+#ifdef HAVE_MPI
+	sip::SIPMPIAttr &mpiattr = sip::SIPMPIAttr::get_instance();
+	if (mpiattr.is_worker()){
+		sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
+		if (interpreter != NULL)
+			return interpreter->current_pc();
+		else
+			return 0;
+	} else {
+		sip::SIPServer * server = sip::SIPServer::global_sipserver;
+		if (server != NULL)
+			return server->last_seen_pc();
+		else
+			return -1;
 	}
 
 #else	// HAVE_MPI

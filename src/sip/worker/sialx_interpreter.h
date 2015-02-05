@@ -81,6 +81,13 @@ public:
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
 
+	/**
+	 * @return the currently executing pc_, -1 if past the end of program
+	 */
+	virtual int get_pc() {
+		return pc_ < op_table_.size() ? pc_ : -1;
+	}
+
 	/** Allows superinstructions to use the same ostream as sial. */
 	virtual SialPrinter* get_printer(){
 		return printer_;
@@ -286,8 +293,8 @@ public:
 	SialPrinter& printer() const { return *printer_; }
 
 private:
-	int pc_; 					/*! the "program counter". Actually, the current location in the op_table_.	 */
-	int timer_line_; /** Auxillary field needed by timers. initialize to value < 0 **/
+	int pc_; 			/*! the "program counter". Actually, the current location in the op_table_.	 */
+	int timer_pc_; 		/** Auxillary field needed by timers. initialize to value < 0 **/
 
 protected:
 	const SipTables& sip_tables_; /*! static data */

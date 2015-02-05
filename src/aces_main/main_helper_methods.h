@@ -15,7 +15,7 @@
 #include "assert.h"
 #include "sip_counter.h"
 #include "sialx_timer.h"
-#include "sip_static_named_timers.h"
+#include "sip_timer.h"
 #include "sip_tables.h"
 #include "interpreter.h"
 #include "sialx_interpreter.h"

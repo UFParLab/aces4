@@ -58,7 +58,7 @@ void SialxInterpreter::_init(const SipTables& sip_tables) {
 	pc_ = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	timer_line_ = -1;
+	timer_pc_ = -1;
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 #ifdef HAVE_CUDA
 	int devid;
@@ -151,7 +151,7 @@ void SialxInterpreter::handle_execute_op(int pc) {
 }
 
 void SialxInterpreter::handle_sip_barrier_op(int pc) {
-	sial_ops_.sip_barrier();
+	sial_ops_.sip_barrier(pc);
 }
 
 void SialxInterpreter::handle_broadcast_static_op(int pc) {
@@ -753,14 +753,14 @@ void SialxInterpreter::post_interpret(int oldpc, int newpc) {
 	//TODO  only call where necessary
 	contiguous_blocks_post_op();
 	//interpreter loop finished.  Ensure all timers turned off.
-	timer_trace(newpc, invalid_op, -99);
+	timer_trace(newpc, invalid_op, -1);
 }
 
 void SialxInterpreter::pre_interpret(int pc) {
 	CHECK(write_back_list_.empty() && read_block_list_.empty(),
 			"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 	SIP_LOG(opcode_t opcode = op_table_.opcode(pc_);
-			std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
+			std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " " << pc << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
 	opcode_t opcode = op_table_.opcode(pc_);
 	timer_trace(pc, opcode, current_line());
 }
@@ -880,50 +880,58 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 } //interpret
 
 void SialxInterpreter::do_post_sial_program() {
-	sial_ops_.end_program();
+	sial_ops_.end_program(pc_);
 }
 
 void SialxInterpreter::timer_trace(int pc, opcode_t opcode, int line) {
 	if (sialx_timers_ == NULL)
 		return;
-	if (timer_line_ > 0) { //a timer is on
-		if (timer_line_ == line) { //still on same line, no change to timer
+	if (timer_pc_ >= 0) { //a timer is on
+		if (timer_pc_ == pc) { //still on same line, no change to timer
 			return;
 		}
-		sialx_timers_->pause_timer(timer_line_, SialxTimer::TOTALTIME); //have moved to different line, so pause the current timer
+		sialx_timers_->timer(timer_pc_).pause_total_time(); //have moved to different pc, so pause the current timer
+		timer_pc_ = -1;
 	}
-	//only start a timer for the interesting op_codes.
-	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
-	switch (opcode) {  //everything falls through
-	case execute_op:
-	case sip_barrier_op:
-	case broadcast_static_op:
-	case allocate_op:
-	case deallocate_op:
-	case get_op:
-	case put_accumulate_op:
-	case put_replace_op:
-	case create_op:
-	case delete_op:
-	case collective_sum_op:
-	case assert_same_op:
-	case block_copy_op:
-	case block_permute_op:
-	case block_fill_op:
-	case block_scale_op:
-	case block_accumulate_scalar_op:
-	case block_add_op:
-	case block_subtract_op:
-	case block_contract_op:
-	case block_contract_to_scalar_op:
-	case set_persistent_op:
-	case restore_persistent_op:
-		sialx_timers_->start_timer(line, SialxTimer::TOTALTIME);
-		timer_line_ = line;
-		break;
-	default:
-		timer_line_ = 0;
+
+	if (opcode != invalid_op){
+		sialx_timers_->timer(pc).start_total_time();
+		timer_pc_ = pc;
 	}
+
+//	//only start a timer for the interesting op_codes.
+//	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
+//	switch (opcode) {  //everything falls through
+//	case execute_op:
+//	case sip_barrier_op:
+//	case broadcast_static_op:
+//	case allocate_op:
+//	case deallocate_op:
+//	case get_op:
+//	case put_accumulate_op:
+//	case put_replace_op:
+//	case create_op:
+//	case delete_op:
+//	case collective_sum_op:
+//	case assert_same_op:
+//	case block_copy_op:abcc
+
+//	case block_permute_op:
+//	case block_fill_op:
+//	case block_scale_op:
+//	case block_accumulate_scalar_op:
+//	case block_add_op:
+//	case block_subtract_op:
+//	case block_contract_op:
+//	case block_contract_to_scalar_op:
+//	case set_persistent_op:
+//	case restore_persistent_op:
+//		sialx_timers_->timer(pc).start_total_time();
+//		timer_pc_ = pc;
+//		break;
+//	default:
+//		timer_pc_ = -1;
+//	}
 }
 
 
@@ -1587,7 +1595,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_reading(
 						id, read_block_list_) :
-				sial_ops_.get_block_for_reading(id, current_line());
+				sial_ops_.get_block_for_reading(id, pc_);
 	}
 		break;
 	case 'w': {

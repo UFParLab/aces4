@@ -41,6 +41,8 @@ public:
 	 */
 	int line_number() { return get_line_number(); }
 
+	int current_pc() { return get_pc(); }
+
 	/** Allows superinstructions to use the same ostream as sial. */
 	SialPrinter* printer() { return get_printer(); }
 
@@ -128,6 +130,7 @@ protected:
 
 	virtual SialPrinter* get_printer() = 0;
 	virtual int get_line_number() = 0;
+	virtual int get_pc() = 0;
 	virtual void do_post_sial_program() = 0;
 	virtual void do_interpret() = 0;
 

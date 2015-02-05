@@ -27,7 +27,7 @@ public:
 	~SialOpsSequential();
 
 	/** implements a global SIAL barrier */
-	void sip_barrier();
+	void sip_barrier(int pc);
 
 	/** SIAL operations on arrays */
 	void create_distributed(int array_id);
@@ -50,7 +50,7 @@ public:
 	void set_persistent(Interpreter*, int array_id, int string_slot);
 	void restore_persistent(Interpreter*, int array_id, int string_slot);
 
-	void end_program();
+	void end_program(int pc);
 
 
 

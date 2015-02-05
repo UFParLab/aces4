@@ -1,85 +1,55 @@
-#include "config.h"
-#include "sialx_timer.h"
-#include "assert.h"
-#include "sip_interface.h"
-#include "global_state.h"
-#include "print_timers.h"
-#include "sialx_print_timer.h"
-#include "sip_mpi_attr.h"
-#include <iostream>
+/*
+ * sialx_timer.cpp
+ *
+ *  Created on: Feb 4, 2015
+ *      Author: njindal
+ */
+
+#include <sialx_timer.h>
+
 #include <iomanip>
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
+#include "global_state.h"
 
-namespace sip{
+namespace sip {
 
-
-//*********************************************************************
-// 						Methods for SialxTimers
-//*********************************************************************
-
-SialxTimer::SialxTimer(int sialx_lines) :
-		delegate_(NUMBER_TIMER_KINDS_*(1 + sialx_lines)),
-		sialx_lines_(sialx_lines){
-	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
-	 * one for each kind defined in the TimerKind_t enum.
-	 * One extra added since line numbers begin at 1.
-	 * The 0th slot is for the entire program
-	 */
+SialxTimer::SialxTimer(int max_slots) :
+		max_slots_(max_slots), list_(max_slots, SialxUnitTimer()) {
 }
 
-void SialxTimer::start_timer(int line_number, TimerKind_t kind){
-	delegate_.start_timer(line_number + static_cast<int>(kind) * sialx_lines_);
-}
+void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables){
+	out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+	const int LW = 8;			// Line Number & PC Width
+	const int SW = 25;			// String
+	const int CW = 12;			// Time
 
-void SialxTimer::pause_timer(int line_number, TimerKind_t kind){
-	delegate_.pause_timer(line_number + static_cast<int>(kind) * sialx_lines_);
-}
+	out_<<std::setw(LW)<<std::left<<"PC"
+		<<std::setw(LW)<<std::left<<"Line"
+		<<std::setw(SW)<<std::left<<"Name"
+		<<std::setw(CW)<<std::left<<"Time"
+		<<std::setw(CW)<<std::left<<"BlkWtTime"
+		<<std::setw(CW)<<std::left<<"Epochs"
+		<<std::endl;
 
+	std::vector<SialxUnitTimer>::const_iterator it = list_.begin();
+	for (int i=0; it != list_.end(); ++it, ++i){
+		const SialxUnitTimer& timer = *it;
+		opcode_t opcode = sip_tables.op_table().opcode(i);
+		int line_number = sip_tables.op_table().line_number(i);
+		const std::string& name = opcodeToName(opcode);
+		double total_time = timer.get_total_time();
+		double block_wait_time = timer.get_block_wait_time();
+		std::size_t epochs = timer.get_num_epochs();
+		out_<< std::setw(LW)<< std::left << i		// PC
+			<< std::setw(LW)<< std::left << line_number
+			<< std::setw(SW)<< std::left << name
+			<< std::setw(CW)<< std::left << total_time
+			<< std::setw(CW)<< std::left << block_wait_time
+			<< std::setw(CW)<< std::left << epochs
+			<< std::endl;
+	}
 
-long long SialxTimer::get_timer_value(int line_number, TimerKind_t kind){
-	const long long * timer_values = delegate_.get_timers();
-	return timer_values[line_number + static_cast<int>(kind) * sialx_lines_];
-}
-
-long long SialxTimer::get_timer_count(int line_number, TimerKind_t kind){
-	const long long * timer_counts = delegate_.get_timer_count();
-	return timer_counts[line_number + static_cast<int>(kind) * sialx_lines_];
-}
-
-
-void SialxTimer::print_aggregate_timers(const std::vector<std::string>& line_to_str, std::ostream& out) {
-	// Only for Multinode without TAU
-#if defined(HAVE_MPI) && !defined(HAVE_TAU)
-	typedef MultiNodeAggregatePrint<SipTimer_t> PrintTimersType_t;
-	PrintTimersType_t p(line_to_str, sialx_lines_, out);
-	delegate_.print_timers(p);
-#endif
-}
-
-void SialxTimer::print_timers(const std::vector<std::string>& line_to_str, std::ostream& out){
-#ifdef HAVE_TAU
-	typedef TAUTimersPrint<SipTimer_t> PrintTimersType_t;
-#elif defined HAVE_MPI
-	typedef MultiNodePrint<SipTimer_t> PrintTimersType_t;
-#else
-	typedef SingleNodePrint<SipTimer_t> PrintTimersType_t;
-#endif
-	PrintTimersType_t p(line_to_str, sialx_lines_, out);
-	delegate_.print_timers(p);
-}
-
-void SialxTimer::start_program_timer(){
-#ifndef HAVE_TAU
-	delegate_.start_timer(0);
-#endif
-}
-void SialxTimer::stop_program_timer(){
-#ifndef HAVE_TAU
-	delegate_.pause_timer(0);
-#endif
+	out_ << std::endl;
 }
 
 
-} /* Namespace sip */
+} /* namespace sip */

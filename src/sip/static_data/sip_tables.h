@@ -61,11 +61,11 @@ public:
 	 */
 	int max_timer_slots() const;
 
-	/**
-	 * Returns a vector that contain super instruction names
-	 * @return
-	 */
-	std::vector<std::string> line_num_to_name() const;
+//	/**
+//	 * Returns a vector that contain super instruction names
+//	 * @return
+//	 */
+//	std::vector<std::string> line_num_to_name() const;
 
 //scalars and arrays
 	int array_slot(const std::string& name){return array_table_.array_slot(name);}
@@ -161,7 +161,7 @@ public:
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 
 	setup::SetupReader& setup_reader() const { return setup_reader_; }
-
+	const OpTable& op_table() const { return op_table_; }
 
 private:
 

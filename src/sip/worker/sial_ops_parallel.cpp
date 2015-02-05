@@ -35,11 +35,11 @@ SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 SialOpsParallel::~SialOpsParallel() {
 }
 
-void SialOpsParallel::sip_barrier() {
+void SialOpsParallel::sip_barrier(int pc) {
 	//wait for all expected acks,
-	if (sialx_timers_) sialx_timers_->start_timer(current_line(), SialxTimer::BLOCKWAITTIME);
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_block_wait();
 	ack_handler_.wait_all();
-	if (sialx_timers_) sialx_timers_->pause_timer(current_line(), SialxTimer::BLOCKWAITTIME);
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).pause_block_wait();
 
 	//do an MPI barrier among all the workers
 	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
@@ -84,8 +84,8 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
 		int server_rank = *it;
 		if (server_rank >= 0) {
-			int line_number = current_line();
-			int to_send[3] = { array_id, line_number, barrier_support_.section_number() };
+			int pc = current_pc();
+			int to_send[3] = { array_id, pc, barrier_support_.section_number() };
 			SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 			int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 			SIPMPIUtils::check_err(
@@ -125,7 +125,7 @@ void SialOpsParallel::get(BlockId& block_id) {
     int to_send[to_send_size]; // BlockId & line number
     int *serialized_block_id = block_id.to_mpi_array();
     std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
+    to_send[line_num_offset] = current_pc();
     to_send[section_num_offset] = barrier_support_.section_number();
 
 	SIPMPIUtils::check_err(
@@ -227,7 +227,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
     int to_send[to_send_size]; // BlockId & line number
     int *serialized_block_id = target_id.to_mpi_array();
     std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
+    to_send[line_num_offset] = current_pc();
     to_send[section_num_offset] = barrier_support_.section_number();
 
 	SIPMPIUtils::check_err(
@@ -322,7 +322,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
     int to_send[to_send_size]; // BlockId & line number
     int *serialized_block_id = target_id.to_mpi_array();
     std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
+    to_send[line_num_offset] = current_pc();
     to_send[section_num_offset] = barrier_support_.section_number();
 
 	//send block id
@@ -451,8 +451,8 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 				int set_persistent_tag;
 				set_persistent_tag =
 						barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
-				int line_number = current_line();
-				int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+				int pc = current_pc();
+				int buffer[4] = { array_slot, string_slot, pc, barrier_support_.section_number()};
 				SIPMPIUtils::check_err(
 						MPI_Send(buffer, 4, MPI_INT, my_server, set_persistent_tag,
 								MPI_COMM_WORLD));
@@ -490,8 +490,8 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 				int restore_persistent_tag;
 				restore_persistent_tag =
 						barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
-				int line_number = current_line();
-				int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+				int pc = current_pc();
+				int buffer[4] = { array_slot, string_slot, pc, barrier_support_.section_number()};
 				SIPMPIUtils::check_err(
 						MPI_Send(buffer, 4, MPI_INT, my_server,
 								restore_persistent_tag, MPI_COMM_WORLD));
@@ -507,11 +507,11 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 
 }
 
-void SialOpsParallel::end_program() {
+void SialOpsParallel::end_program(int pc) {
 	//implicit sip_barrier
 	//this is required to ensure that there are no pending messages
 	//at the server when the end_program message arrives.
-	sip_barrier();
+	sip_barrier(-1);
 	const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();
 	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
 		int my_server = *it;
@@ -570,12 +570,12 @@ void SialOpsParallel::log_statement(opcode_t type, int line){
 					 << " : Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int line) {
+Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int pc) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
 		check_and_set_mode(array_id, READ);
-		return wait_and_check(block_manager_.get_block_for_reading(id), line);
+		return wait_and_check(block_manager_.get_block_for_reading(id), pc);
 	}
 	return block_manager_.get_block_for_reading(id);
 }
@@ -599,12 +599,12 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 	return block_manager_.get_block_for_updating(id);
 }
 
-Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
-	if (sialx_timers_) sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
+Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
+	if (sialx_timers_) sialx_timers_->timer(pc).start_block_wait();
 	if (b->state().pending()) {
 		    b->state().wait(b->size());
 	}
-	if (sialx_timers_) sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
+	if (sialx_timers_) sialx_timers_->timer(pc).pause_block_wait();
 	return b;
 }
 

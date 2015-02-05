@@ -53,6 +53,16 @@
 
 #endif
 
+// Performance measurement macros
+// If MPI Is available, use MPI_Wtime, otherwise use POSIX clock();
+#ifdef HAVE_MPI
+	#include "mpi.h"
+	#define GETTIME MPI_Wtime()
+#else // HAVE_MPI
+	#include <ctime>
+	#define GETTIME clock() / (double)CLOCKS_PER_SEC
+#endif
+
 
 // Fortran Callable sip_abort
 #ifdef __cplusplus

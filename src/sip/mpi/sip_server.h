@@ -16,6 +16,7 @@
 #include "disk_backed_block_map.h"
 #include "server_timer.h"
 #include "sip_counter.h"
+#include "sip_timer.h"
 
 
 
@@ -127,7 +128,16 @@ public:
      * sent a message. Line 0 is seen for PROGRAM_END.
      * @return
      */
-    int last_seen_line();
+    int last_seen_line() {
+    	if (last_seen_pc_ == -1)
+    		return 0;		// Line number 0 is an invalid line number.
+    	return sip_tables_.op_table().line_number(last_seen_pc_);
+    }
+
+    /**
+     * @return the last seen program counter from which the worker sent a message.
+     */
+    int last_seen_pc() { return last_seen_pc_; }
 
 private:
     const SipTables &sip_tables_;
@@ -136,7 +146,10 @@ private:
 
 	ServerTimer& server_timer_;
 
-	int last_seen_line_;
+	Timer idle_timer_;				/*! Measures time spent in MPI_Probe */
+	Timer restore_persistent_timer_;/*! Time spent in restoring persistent arrays */
+
+	int last_seen_pc_;
 	int last_seen_worker_;
 
 	/** maintains message, section number, etc for barrier.  This

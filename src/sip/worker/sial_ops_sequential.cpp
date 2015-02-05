@@ -28,7 +28,7 @@ SialOpsSequential::~SialOpsSequential() {
 /** the sequential version is a no-op.
  * TODO consider adding data race detection to the sequential version
  */
-void SialOpsSequential::sip_barrier() {
+void SialOpsSequential::sip_barrier(int pc) {
 	/*is empty for the sequential, serverless version.  May want to add data race detection.
 	 */
 }
@@ -113,7 +113,7 @@ void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_i
 		persistent_array_manager_->restore_persistent(interpreter, array_id, string_slot);
 }
 
-void SialOpsSequential::end_program() {
+void SialOpsSequential::end_program(int pc) {
 }
 
 

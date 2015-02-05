@@ -94,18 +94,18 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
      * inserts into block_map_ if needed
      */
 	block = allocate_block(block, block_size, block_id);
-	server_timer_.start_timer(current_line(), ServerTimer::READTIME);
+	server_timer_[current_pc()].start_disk_read();
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
-	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
+	server_timer_[current_pc()].pause_disk_read();
 	block->set_in_memory();
 	blocks_read_count_[block_id.array_id()]->inc();
 	total_blocks_read_count_.inc();
 }
 
 void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBlock* block){
-	server_timer_.start_timer(current_line(), ServerTimer::WRITETIME);
+	server_timer_[current_pc()].start_disk_write();
     disk_backed_arrays_io_.write_block_to_disk(block_id, block);
-	server_timer_.pause_timer(current_line(), ServerTimer::WRITETIME);
+	server_timer_[current_pc()].pause_disk_write();
 
     block->unset_dirty();
     block->set_on_disk();
@@ -344,10 +344,7 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& lab
 void DiskBackedBlockMap::save_persistent_array(const int array_id,
 		const std::string& array_label,
 		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
-	server_timer_.start_timer(current_line(), ServerTimer::WRITETIME);
 	disk_backed_arrays_io_.save_persistent_array(array_id, array_label, array_blocks);
-	server_timer_.pause_timer(current_line(), ServerTimer::WRITETIME);
-
 }
 
 

@@ -37,7 +37,7 @@ public:
 	~SialOpsParallel();
 
 	/** implements a global SIAL barrier */
-	void sip_barrier();
+	void sip_barrier(int pc);
 
 	/** SIAL operations on arrays */
 	void create_distributed(int array_id);
@@ -60,7 +60,7 @@ public:
 	void set_persistent(Interpreter*, int array_id, int string_slot);
 	void restore_persistent(Interpreter*, int array_id, int string_slot);
 
-	void end_program();
+	void end_program(int pc);
 
 //	void print_to_ostream(std::ostream& out, const std::string& to_print);
 
@@ -81,7 +81,7 @@ public:
 	 * @param id
 	 * @return
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId& id, int line);
+	Block::BlockPtr get_block_for_reading(const BlockId& id, int pc);
 
 	Block::BlockPtr get_block_for_writing(const BlockId& id,
 			bool is_scope_extent = false);

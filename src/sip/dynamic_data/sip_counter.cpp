@@ -7,6 +7,7 @@
 
 #include <sip_counter.h>
 #include <iomanip>
+#include <algorithm>
 #include "global_state.h"
 
 namespace sip {
@@ -44,7 +45,8 @@ void Counter::print_counters(std::ostream& out_){
 	std::vector<Counter*>::const_iterator it = list_.begin();
 	for (; it != list_.end(); ++it){
 		Counter* counter = *it;
-		const std::string& name = counter->name();
+		std::string name = counter->name();
+		std::replace(name.begin(), name.end(), ' ', '_');
 		std::size_t count = counter->get_value();
 		out_<< std::setw(SW)<< std::left << name
 			<< std::setw(CW)<< std::left << count
@@ -67,7 +69,8 @@ void MaxCounter::print_max_counters(std::ostream& out_){
 	std::vector<MaxCounter*>::const_iterator it = list_.begin();
 	for (; it != list_.end(); ++it){
 		MaxCounter* max_counter = *it;
-		const std::string& name = max_counter->name();
+		std::string name = max_counter->name();
+		std::replace(name.begin(), name.end(), ' ', '_');
 		std::size_t max_count = max_counter->get_max();
 		std::size_t count = max_counter->get_value();
 		out_<< std::setw(SW)<< std::left << name
