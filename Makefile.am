@@ -307,7 +307,6 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/core\
 -I${top_srcdir}/src/sip/setup\
 -I${top_srcdir}/src/sip/worker\
--I${top_srcdir}/src/sip/server\
 -I${top_srcdir}/src/sip/static_data\
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\

@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 			//server_timer.stop_program_timer();
 
 			char server_timer_file_name[64];
-			std::sprintf(server_timer_file_name, "server.timer.%d", sip_mpi_attr.company_rank());
+			std::sprintf(server_timer_file_name, "server.profile.%d", sip_mpi_attr.company_rank());
 			std::ofstream server_file(server_timer_file_name, std::ofstream::app);
 			//server_timer.print_timers(lno2name, server_file);
 			server_timer.print_timers(server_file, sipTables);
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
 			interpret_timer.pause();
 
 			sip::Timer post_sial_timer("Post SIAL Program");
-			interpret_timer.start();
+			post_sial_timer.start();
 			runner.post_sial_program();
 			post_sial_timer.pause();
 
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
 			//sialxTimer.stop_program_timer();
 
 			char sialx_timer_file_name[64];
-			std::sprintf(sialx_timer_file_name, "worker.timer.%d", sip_mpi_attr.company_rank());
+			std::sprintf(sialx_timer_file_name, "worker.profile.%d", sip_mpi_attr.company_rank());
 			std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
 
 			sialxTimer.print_timers(worker_file, sipTables);

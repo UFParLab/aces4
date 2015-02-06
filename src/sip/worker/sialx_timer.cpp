@@ -17,7 +17,7 @@ SialxTimer::SialxTimer(int max_slots) :
 }
 
 void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables){
-	out_ << "Timers for Program " << GlobalState::get_program_name() << std::endl;
+	out_ << "SialxTimers for Program " << GlobalState::get_program_name() << std::endl;
 	const int LW = 8;			// Line Number & PC Width
 	const int SW = 25;			// String
 	const int CW = 12;			// Time

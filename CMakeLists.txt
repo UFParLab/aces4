@@ -169,8 +169,6 @@ set(ACES_DATA_FILES
 	src/sip/dynamic_data/sip_timer.cpp;
 	src/sip/dynamic_data/sip_counter.h;
 	src/sip/dynamic_data/sip_counter.cpp;
-	src/sip/dynamic_data/sip_static_named_timers.h;
-	src/sip/dynamic_data/sip_static_named_timers.cpp;
     src/sip/dynamic_data/contiguous_local_array_manager.h;
     src/sip/dynamic_data/contiguous_local_array_manager.cpp;)
 #need only header files for templates--these include .cpp
@@ -182,23 +180,8 @@ set(ACES_WORKER_FILES
     src/sip/worker/interpreter.h;
     src/sip/worker/sialx_interpreter.cpp;
    	src/sip/worker/sialx_interpreter.h;
-   	src/sip/worker/profile_interpreter.cpp;
-   	src/sip/worker/profile_interpreter.h;
-   	src/sip/worker/sipmap_interpreter.cpp;
-   	src/sip/worker/sipmap_interpreter.h;
-   	src/sip/worker/remote_array_model.h;
-   	src/sip/worker/remote_array_model.cpp;
-   	src/sip/worker/memory_ops_interpreter.cpp;
-   	src/sip/worker/memory_ops_interpreter.h;
     src/sip/worker/sialx_timer.cpp;
     src/sip/worker/sialx_timer.h;
-    src/sip/worker/sialx_print_timer.h;
-    src/sip/worker/profile_timer.cpp;
-    src/sip/worker/profile_timer.h;
-    src/sip/worker/sipmap_timer.cpp;
-    src/sip/worker/sipmap_timer.h;
-    src/sip/worker/profile_timer_store.cpp;
-    src/sip/worker/profile_timer_store.h;
     src/sip/worker/global_state.h;
     src/sip/worker/global_state.cpp;
     src/sip/worker/siox_reader.h;
@@ -219,13 +202,22 @@ set(ACES_WORKER_FILES
     src/sip/mpi/rank_distribution.h ;
     src/sip/mpi/rank_distribution.cpp ;)
     
-#set(aces4_SRCS
-#    ${ACES_SETUP_FILES};
-#    ${ACES_CORE_FILES};
-#    ${ACES_DATA_FILES};
-#    ${ACES_MPI_FILES};
-#    ${ACES_WORKER_FILES})
-
+set(ABSTRACT_INTERPRETER_FILES
+	src/sip/worker/profile_interpreter.cpp;
+   	src/sip/worker/profile_interpreter.h;
+   	src/sip/worker/profile_timer.cpp;
+    src/sip/worker/profile_timer.h;
+    src/sip/worker/profile_timer_store.cpp;
+    src/sip/worker/profile_timer_store.h;
+    src/sip/worker/sipmap_interpreter.cpp;
+   	src/sip/worker/sipmap_interpreter.h;
+   	src/sip/worker/remote_array_model.h;
+   	src/sip/worker/remote_array_model.cpp;
+   	src/sip/worker/memory_ops_interpreter.cpp;
+   	src/sip/worker/memory_ops_interpreter.h;
+    src/sip/worker/sipmap_timer.cpp;
+    src/sip/worker/sipmap_timer.h;)
+    
 # Dmitry's Tensor library
 set(tensordil_SRCS 
 	src/sip/tensor_algebra/tensor_dil_omp.F90;
@@ -250,15 +242,16 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/jsoncpp;
     ${CMAKE_SOURCE_DIR}/test)
 
-set (TOLINK_LIBRARIES
-    ${TOLINK_LIBRARIES}
+set (ACES4_LIBRARIES
+	aces4_sip
+    ${ACES4_LIBRARIES}
     tensordil;
     jsoncpp;
-    sqlite3l;
     #${CMAKE_DL_LIBS};		# Needed by SQLITE3 but disabled by use of -DSQLITE_OMIT_LOAD_EXTENSION
     ${MPI_LIBRARIES};
-    superinstructions 		# Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
-    ${LAPACK_LIBRARIES})
+    superinstructions; 		# Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
+    ${LAPACK_LIBRARIES};
+    aces4_sip)
 
 # Append TAU include & library paths
 if (TAU_FOUND)
@@ -266,13 +259,13 @@ if (TAU_FOUND)
     add_definitions(-DPROFILING_ON)
     add_definitions(-DTAU_DOT_H_LESS_HEADERS)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TAU_INCLUDE_PATH})
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY})
+    set(ACES4_LIBRARIES ${ACES4_LIBRARIES} ${TAU_LIBRARY})
 endif()
 
 # Append PAPI include & library paths
 if (PAPI_FOUND)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PAPI_INCLUDE_PATH})
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY})
+    set(ACES4_LIBRARIES ${ACES4_LIBRARIES} ${PAPI_LIBRARY})
 endif()
 
 # CUDA Super instructions
@@ -284,10 +277,16 @@ if (CUDA_FOUND)
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_13) 
     CUDA_ADD_LIBRARY(cudasuperinstructions ${ACES_CUDA_FILES})
     CUDA_ADD_CUBLAS_TO_TARGET(cudasuperinstructions)
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} cudasuperinstructions)
+    set(ACES4_LIBRARIES ${ACES4_LIBRARIES} cudasuperinstructions)
 endif()
 
+
 # Accumulating Compile & Link Flags
+
+# Interpreter Libraries
+set (INTERPRETER_LIBRARIES
+    ${ACES4_LIBRARIES};
+    sqlite3l)
 
 set(ACES4_COMPILE_FLAGS "")
 set(LIBTENSORDIL_DEFINITIONS "")
@@ -334,8 +333,11 @@ add_library(aces4_sip
             ${ACES_WORKER_FILES}
             ${ACES_DATA_FILES}
             ${ACES_MPI_FILES})
+            
+add_library(aces4_interpreter 
+			${ABSTRACT_INTERPRETER_FILES})            
 
-set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES} aces4_sip)
+#set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES} aces4_sip)
 
 # All Super instructions are in this directory
 add_subdirectory(src/sip/super_instructions)
@@ -407,14 +409,15 @@ set_target_properties(profile_merge PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(sqlite3 PROPERTIES COMPILE_DEFINITIONS "SQLITE_OMIT_LOAD_EXTENSION; SQLITE_THREADSAFE=0")
 
 # Libraries to link
-target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
-target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
-target_link_libraries(aces4_sipmap ${TOLINK_LIBRARIES})
-target_link_libraries(aces4_memory_ops ${TOLINK_LIBRARIES})
-target_link_libraries(print_siptables ${TOLINK_LIBRARIES})
-target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
-target_link_libraries(profile_merge ${TOLINK_LIBRARIES})    
+target_link_libraries(aces4 ${ACES4_LIBRARIES}) 
+target_link_libraries(print_siptables ${ACES4_LIBRARIES})
+target_link_libraries(print_init_file ${ACES4_LIBRARIES})
 target_link_libraries(sqlite3 sqlite3l)
+
+target_link_libraries(profile_merge ${INTERPRETER_LIBRARIES})    
+target_link_libraries(aces4_profile ${INTERPRETER_LIBRARIES})
+target_link_libraries(aces4_sipmap ${INTERPRETER_LIBRARIES})
+target_link_libraries(aces4_memory_ops ${INTERPRETER_LIBRARIES})
 
 # Dependencies
 if(HAVE_CUDA)
@@ -464,11 +467,11 @@ set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPI
 set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_interpreters PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
-target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
-target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
-target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
-target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
-target_link_libraries(test_interpreters test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${ACES4_LIBRARIES})
+target_link_libraries(test_sial         test_controllers gtest gtest_main  ${ACES4_LIBRARIES})
+target_link_libraries(test_qm           test_controllers gtest gtest_main  ${ACES4_LIBRARIES})
+target_link_libraries(test_unit         test_controllers gtest gtest_main  ${ACES4_LIBRARIES})
+target_link_libraries(test_interpreters test_controllers gtest gtest_main  ${INTERPRETER_LIBRARIES})
 
 set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
