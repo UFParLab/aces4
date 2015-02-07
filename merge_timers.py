@@ -4,6 +4,7 @@ import glob
 import csv
 import sys
 import os
+import time
 
 # Program to merge worker.timer.* and server.timer.* in a directory
 # and spit out a csv file.
@@ -11,8 +12,11 @@ import os
 # exact same line numbers for corresponding events
 
 # USAGE:
-# In the directory with 
+# python /path/to/merge_timer.py /directory/of/profile/files
+# Will create the csv in the current directory.
 
+
+# GLOBALS
 prefix_dir = "."        # Dir to find profile files
 if len(sys.argv) > 1:
     prefix_dir = sys.argv[1]
@@ -21,6 +25,19 @@ program_re = re.compile( r'(.*)\s*for\s*Program\s*(.*)', re.I) # match()
 line_re = re.compile(r'([\+\.a-zA-Z0-9_-]*)\s*', re.I)  # Use findall())
 
 
+# Measures and prints time of a method using decorators.
+# http://stackoverflow.com/questions/5478351/python-time-measure-function
+def timing(f):
+    def wrap(*args):
+        time1 = time.time()
+        ret = f(*args)
+        time2 = time.time()
+        print '%s function took %0.3f ms' % (f.func_name, (time2-time1)*1000.0)
+        return ret
+    return wrap
+
+# Merges *.profile.* files and spits out a csv
+@timing
 def merge_files(files, output_name, prefix_of_file, column_to_write_map, header_columns_map):
     ''' Arguments
     files -- the list of files to create a csv for
@@ -88,8 +105,6 @@ def merge_files(files, output_name, prefix_of_file, column_to_write_map, header_
                         header_column[line_number].append(row[i])
                         #print 'appended ' + row[i] + ' to ' + str(line_number) + ' of header_column' 
 
-                        
-                
                 # Add Row header (rank of worker / server)
                 if line_after_program_name:
                     base_file_name = os.path.basename(fname)
@@ -116,24 +131,42 @@ def merge_files(files, output_name, prefix_of_file, column_to_write_map, header_
             writer.writerow(to_write_row)
     finally:
         f.close()
+    
+    print "Created file " + output_name
 
 
 # MAIN
 
-# Time Column, everything before is not extracted
+# Time Column
 extract_column_map = {"SialxTimers":3,
                       "Timers":1, 
                       "Counters":1, 
                       "MaxCounters":1,
                       "ServerTimers":3}
 
+extract_block_wait_map = {"SialxTimers":4,
+                      "Timers":1, 
+                      "Counters":1, 
+                      "MaxCounters":1,
+                      "ServerTimers":4}
+
+extract_count_map = {"SialxTimers":5,
+                      "Timers":1, 
+                      "Counters":1, 
+                      "MaxCounters":1,
+                      "ServerTimers":7}
 # Merge worker files
 worker_files = glob.glob(prefix_dir + '/worker.profile.*')
 merge_files(worker_files, 'worker_profile.csv', 'worker.profile.', extract_column_map, extract_column_map)
+merge_files(worker_files, 'worker_blkwt.csv', 'worker.profile.', extract_block_wait_map, extract_column_map)
+merge_files(worker_files, 'worker_count.csv', 'worker.profile.', extract_count_map, extract_column_map)
+
 
 # Merge server files
 server_files = glob.glob(prefix_dir + '/server.profile.*')
 merge_files(server_files, 'server_profile.csv', 'server.profile.', extract_column_map, extract_column_map)
+merge_files(server_files, 'server_blkwt.csv', 'server.profile.', extract_block_wait_map, extract_column_map)
+merge_files(server_files, 'server_count.csv', 'server.profile.', extract_count_map, extract_column_map)
 
 
 
