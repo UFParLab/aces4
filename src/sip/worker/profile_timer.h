@@ -94,17 +94,17 @@ public:
 	//void record_time(const ProfileTimer::Key& key, long long time, long long count);
 
 
-	typedef std::map<Key, std::set<int> > TimerMap_t;	// Key -> Set of line numbers
+	typedef std::map<Key, std::set<int> > TimerMap_t;	// Key -> Set of program counters
 
 	/**
-	 * Records occurrence of operation & operand type at given sialx line
+	 * Records occurrence of operation & operand type at given program counter
 	 * @param key
-	 * @param sialx_line
+	 * @param pc
 	 */
-	void record_line(const ProfileTimer::Key& key, int sialx_line);
+	void record_line(const ProfileTimer::Key& key, int pc);
 
 	/** Prints timers to an ostream */
-	void print_timers(std::ostream& out = std::cout);
+	void print_timers(std::ostream& out);
 
 	/** Saves timer to underlying ProfileTimerStore */
 	void save_to_store(ProfileTimerStore& profile_timer_store);
@@ -113,7 +113,7 @@ public:
 
 private:
 	SialxTimer& sialx_timer_;
-	TimerMap_t profile_timer_map_; 				//! Key -> time
+	TimerMap_t profile_timer_map_; 				//! Key -> Set of program counters
 
 
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);

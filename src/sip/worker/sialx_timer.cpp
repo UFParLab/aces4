@@ -16,6 +16,11 @@ SialxTimer::SialxTimer(int max_slots) :
 		max_slots_(max_slots), list_(max_slots, SialxUnitTimer()) {
 }
 
+SialxTimer::SialxTimer(const SialxTimer& other):
+		max_slots_(other.max_slots_), list_(other.list_){
+}
+
+
 void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables){
 	out_ << "SialxTimers for Program " << GlobalState::get_program_name() << std::endl;
 	const int LW = 8;			// Line Number & PC Width

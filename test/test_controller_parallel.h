@@ -21,6 +21,7 @@ class IntTable;
 class ServerPersistentArrayManager;
 class SIPServer;
 class ProfileTimerStore;
+class ProfileInterpreter;
 
 }
 
@@ -110,9 +111,12 @@ public:
 	virtual ~ProfileInterpreterTestControllerParallel();
 	virtual bool runWorker();
 
-	sip::ProfileTimer::Key key_for_line(int line); /*! Utility method to search underlying profile timer */
+	sip::ProfileTimer::Key key_for_pc(int line); 	/*! @returns ProfileTimerKey for a given sialx line */
+	std::set<int> pcs_for_line();					/*! @return Program counters for line number */
 	sip::ProfileTimer *profile_timer_;
 	sip::ProfileTimerStore *profile_timer_store_;
+
+	sip::ProfileInterpreter * profile_interpreter_;	/*! handle to profile interpreter instance. Otherwise stored in *interpreter*/
 };
 
 #endif //__TEST_CONTROLLER_PARALLEL__

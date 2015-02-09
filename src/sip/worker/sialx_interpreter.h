@@ -20,6 +20,7 @@
 
 #include <string>
 #include <stack>
+#include <set>
 #include <sstream>
 
 #include "config.h"
@@ -286,11 +287,33 @@ public:
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
 
+	/**
+	 * Helper method to get a set of PCs for a given line number
+	 * @param line
+	 * @return
+	 */
+	std::set<int> line_to_pc_set(int line){
+
+		for (LineToPCMap::iterator it = line_to_pc_map_.begin(); it!= line_to_pc_map_.end(); ++it){
+			std::cout << it->first << "\t";
+			std::set<int>& s = it->second;
+			for (std::set<int>::iterator it2 = s.begin(); it2 != s.end(); ++it2){
+				std::cout << *it2 << ", ";
+			}
+			std::cout << std::endl;
+		}
+
+		LineToPCMap::iterator it = line_to_pc_map_.find(line);
+		if (it == line_to_pc_map_.end()) fail("Invalid line number !", get_line_number());
+		return it->second;
+	}
+
 
 	// Convenience methods to access data members.
 	const DataManager& data_manager() const { return data_manager_; }
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
+
 
 private:
 	int pc_; 			/*! the "program counter". Actually, the current location in the op_table_.	 */
@@ -370,6 +393,10 @@ protected:
 	 * TODO  is nesting of gpu sections allowed?  If so, this needs to be an int.  If not, need check.
 	 */
 	bool gpu_enabled_;
+
+	/** sialx line number -> {set of program counters} */
+	typedef std::map<int, std::set<int> > LineToPCMap;
+	LineToPCMap line_to_pc_map_;
 
 
 	// Convenience methods for getting data from the current pc's optable entry

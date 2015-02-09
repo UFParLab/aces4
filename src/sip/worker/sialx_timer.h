@@ -37,9 +37,19 @@ public:
 	void start_block_wait() { block_wait_timer_.start(); }
 	double pause_block_wait() { return block_wait_timer_.pause(); }
 
+	void set_total_time(double val) { total_time_timer_.value_ = val; }
+	void set_block_wait_time(double val) { block_wait_timer_.value_ = val; }
 	double get_total_time() const {return total_time_timer_.value_;}
 	double get_block_wait_time() const {return block_wait_timer_.value_; }
 	std::size_t get_num_epochs() const {return total_time_timer_.epochs_;}
+
+	/*! Sums up other SialxUnitTimer instance into this one, Used when merging SIPMaPTimer instances */
+	void accumulate_other(const SialxUnitTimer& other){
+		total_time_timer_.value_ += total_time_timer_.value_;
+		total_time_timer_.epochs_ += total_time_timer_.epochs_;
+		block_wait_timer_.value_ += block_wait_timer_.value_;
+		block_wait_timer_.epochs_ += block_wait_timer_.epochs_;
+	}
 
 private:
 	SimpleTimer_t total_time_timer_;	/*! timer to measure total time (for a sialx PC or line) */
@@ -55,8 +65,9 @@ public:
 	SialxUnitTimer& operator[](int slot) {return list_.at(slot); }
 	SialxUnitTimer& timer(int slot) {return list_.at(slot); }
 	void print_timers(std::ostream& out, const SipTables& sip_tables);
-private:
-	const int max_slots_;
+protected:
+	SialxTimer(const SialxTimer& other);
+	int max_slots_;
 	std::vector<SialxUnitTimer> list_;
 };
 

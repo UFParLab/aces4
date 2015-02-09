@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
 
-	INIT_GLOBAL_TIMERS(&argc, &argv);
+	//INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	Aces4Parameters parameters = parse_command_line_parameters(argc, argv);
 
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
 
-		START_TAU_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
+		//START_TAU_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(*setup_reader, siox_file);
@@ -55,11 +55,7 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "SIP TABLES" << '\n' << sipTables << std::endl);
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
-
-		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 		//sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-
-
 
 		//interpret current program on worker
 		{
@@ -84,7 +80,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			sip::SIPMaPTimer merged_timer = sip::SIPMaPInterpreter::merge_sipmap_timers(pardo_sections_info_vector, sipmap_timer_vector);
-			merged_timer.print_timers(lno2name);
+			merged_timer.print_timers(std::cout, sipTables);
 
 			sipmap_timer_vector.clear();
 			pardo_sections_info_vector.clear();
@@ -92,13 +88,13 @@ int main(int argc, char* argv[]) {
 		}// end of worker
 
 
-		STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
+		//STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
 
   		barrier();
 	} //end of loop over programs
 
 	delete setup_reader;
-	FINALIZE_GLOBAL_TIMERS();
+	//FINALIZE_GLOBAL_TIMERS();
 	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
 	mpi_finalize();
 

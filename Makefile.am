@@ -104,9 +104,7 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/sip_timer.h\
 ./src/sip/dynamic_data/sip_timer.cpp\
 ./src/sip/dynamic_data/sip_counter.h\
-./src/sip/dynamic_data/sip_counter.cpp\
-./src/sip/dynamic_data/sip_static_named_timers.h\
-./src/sip/dynamic_data/sip_static_named_timers.cpp
+./src/sip/dynamic_data/sip_counter.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -126,7 +124,6 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/memory_ops_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
-./src/sip/worker/sialx_print_timer.h\
 ./src/sip/worker/profile_timer.h\
 ./src/sip/worker/profile_timer.cpp\
 ./src/sip/worker/sipmap_timer.h\

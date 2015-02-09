@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <set>
 #include <map>
+#include <algorithm>
 #include "siox_reader.h"
 #include "io_utils.h"
 #include "setup_reader.h"
@@ -202,8 +203,7 @@ void TestControllerParallel::print_timers(std::ostream& out){
 				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
 		return;
 	}
-	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
-	sialx_timers_->print_aggregate_timers(lno2name, out);
+	sialx_timers_->print_timers(out, *sip_tables_);
 	out<< std::flush;
 }
 
@@ -362,20 +362,21 @@ ProfileInterpreterTestControllerParallel::~ProfileInterpreterTestControllerParal
 		delete profile_timer_store_;
 }
 
-sip::ProfileTimer::Key ProfileInterpreterTestControllerParallel::key_for_line(int line){
+
+sip::ProfileTimer::Key ProfileInterpreterTestControllerParallel::key_for_pc(int pc){
 	CHECK(profile_timer_ != NULL, "Profile timer is NULL, cannot call key_for_line");
 	sip::ProfileTimer::TimerMap_t& timer_map = profile_timer_->profile_timer_map_;
 	sip::ProfileTimer::TimerMap_t::iterator it = timer_map.begin();
 	for (; it != timer_map.end(); ++it){
-		std::set<int>& line_num_set = it->second;
-		std::set<int>::iterator lineit = line_num_set.find(line);
-		if (lineit != line_num_set.end()){
+		std::set<int>& profile_pc_set = it->second;
+		std::set<int>::iterator pc_it = profile_pc_set.find(pc);
+		if (pc_it != profile_pc_set.end()){
 			return it->first;
 		}
 	}
 	// If the line doesn't exist in any map key-value pair, throw an exception.
 	std::stringstream err_ss;
-	err_ss << "No key for line " << line;
+	err_ss << "No key for line " << pc;
 	throw std::out_of_range(err_ss.str());
 }
 
@@ -386,7 +387,8 @@ bool ProfileInterpreterTestControllerParallel::runWorker() {
 		int slot = sip_tables_->max_timer_slots();
 		sialx_timers_ = new sip::SialxTimer(sip_tables_->max_timer_slots());
 		profile_timer_ = new sip::ProfileTimer(*sialx_timers_);
-		worker_ = new sip::ProfileInterpreter(*sip_tables_, *profile_timer_, *sialx_timers_, printer_, wpam_);
+		profile_interpreter_ = new sip::ProfileInterpreter(*sip_tables_, *profile_timer_, *sialx_timers_, printer_, wpam_);
+		worker_ = profile_interpreter_;
 		barrier();
 
 		if (verbose_)
@@ -418,8 +420,8 @@ bool ProfileInterpreterTestControllerParallel::runWorker() {
 		std::cout << "after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
 		if (verbose_){
-			profile_timer_->print_timers();
-			sialx_timers_->print_aggregate_timers(sip_tables_->line_num_to_name());
+			profile_timer_->print_timers(std::cout);
+			sialx_timers_->print_timers(std::cout, *sip_tables_);
 		}
 		profile_timer_->save_to_store(*profile_timer_store_);
 	}

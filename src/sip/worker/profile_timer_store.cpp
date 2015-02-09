@@ -40,7 +40,7 @@ const std::string ProfileTimerStore::block_prefix("block");
 const std::string ProfileTimerStore::indices_prefix("index");
 const std::string ProfileTimerStore::segment_prefix("segment");
 
-// BIGINT COLUMN
+// REAL COLUMN
 const std::string ProfileTimerStore::tottime_column("totaltime");
 
 // BIGINT COLUMN
@@ -80,7 +80,7 @@ void ProfileTimerStore::create_table(int num_blocks) {
 		}
 	}
 
-	create_table_ss << tottime_column << " BIGINT  NOT NULL,"	// in micro-seconds
+	create_table_ss << tottime_column << " REAL  NOT NULL,"	// in seconds
 			 	    << count_column << " BIGINT  NOT NULL,";
 
 	// Create the uniqueness constraint over all columns except the totaltime & count columns
@@ -162,17 +162,17 @@ ProfileTimerStore::~ProfileTimerStore() {
 		sip_sqlite3_error(rc);
 }
 
-void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<long, long>& const_time_count_pair){
+void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, const std::pair<double, long>& const_time_count_pair){
 
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 
-	std::pair<long, long> time_count_pair = const_time_count_pair;
+	std::pair<double, long> time_count_pair = const_time_count_pair;
 
 	bool do_insert = false;
 
 	// Get value from store if something exists & merge.
 	try {
-		std::pair<long, long> prev_timer_count_pair = get_from_store(opcode_operands);
+		std::pair<double, long> prev_timer_count_pair = get_from_store(opcode_operands);
 		time_count_pair.first += prev_timer_count_pair.first;
 		time_count_pair.second += prev_timer_count_pair.second;
 	} catch (const std::invalid_argument& e){
@@ -257,7 +257,7 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 
 }
 
-std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands) const {
+std::pair<double, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands) const {
 
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 	// Specially needed in this routine, since it will be called by the modeling interpreter.
@@ -284,12 +284,12 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 	if (rc != SQLITE_OK)
 		sip_sqlite3_error(rc);
 
-	long totaltime = -1;
+	double totaltime = -1.0;
 	long count = -1;
 	int row_count = 0;
 	int sqlite3_step_result = sqlite3_step(get_from_store_stmt);
 	while (sqlite3_step_result == SQLITE_ROW){
-		totaltime = sqlite3_column_int64(get_from_store_stmt, 0); 	// 1st column is tottime_column
+		totaltime = sqlite3_column_double(get_from_store_stmt, 0); 	// 1st column is tottime_column
 		count = sqlite3_column_int64(get_from_store_stmt, 1);		// 2nd column is count_column
 		row_count++;
 		if (sqlite3_step_result != SQLITE_DONE && sqlite3_step_result != SQLITE_ROW){
@@ -329,7 +329,7 @@ std::pair<long, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key&
 
 
 ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
-	std::map<ProfileTimer::Key, std::pair<long, long> > all_rows_map;
+	std::map<ProfileTimer::Key, std::pair<double, long> > all_rows_map;
 
 	for (int operands=0; operands<=MAX_BLOCK_OPERANDS; ++operands){
 		std::stringstream query_ss;
@@ -370,10 +370,10 @@ ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
 			}
 
 			// Get total time & counts
-			long totaltime = sqlite3_column_int64(get_all_rows_from_table, col_num++);
+			long totaltime = sqlite3_column_double(get_all_rows_from_table, col_num++);
 			long count = sqlite3_column_int64(get_all_rows_from_table, col_num++);
 
-			std::pair<long, long> time_count_pair = std::make_pair(totaltime, count);
+			std::pair<double, long> time_count_pair = std::make_pair(totaltime, count);
 			std::vector<ProfileTimer::BlockInfo> block_infos;
 			for (int i=0; i<operands; ++i){
 				ProfileTimer::BlockInfo block_info (ranks[i], indices[i], segments[i]);
@@ -381,7 +381,7 @@ ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
 			}
 			ProfileTimer::Key key(opcode, block_infos);
 
-			typedef std::map<ProfileTimer::Key, std::pair<long, long> >::iterator MapIterator_t;
+			typedef std::map<ProfileTimer::Key, std::pair<double, long> >::iterator MapIterator_t;
 			std::pair<MapIterator_t, bool> returned = all_rows_map.insert(std::make_pair(key, time_count_pair));
 			CHECK(returned.second, "Trying to insert duplicate element from database into map in ProfileTimerStore");
 		}

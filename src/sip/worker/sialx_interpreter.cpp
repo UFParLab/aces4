@@ -60,6 +60,17 @@ void SialxInterpreter::_init(const SipTables& sip_tables) {
 	gpu_enabled_ = false;
 	timer_pc_ = -1;
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+
+	// Populate the map from line number to pc
+	const std::vector<OpTableEntry>& optable_entries = sip_tables_.op_table_.entries_;
+	std::vector<OpTableEntry>::const_iterator op_it = optable_entries.begin();
+	for (int op_num=0; op_it != optable_entries.end(); ++op_it, ++op_num){
+		int line_num = op_it->line();
+		std::set<int>& pc_set = line_to_pc_map_[line_num];	// Inserts new std::set<int> if not present
+		pc_set.insert(op_num);
+	}
+
+
 #ifdef HAVE_CUDA
 	int devid;
 	int rank = 0;

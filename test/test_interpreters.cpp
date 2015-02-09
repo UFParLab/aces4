@@ -36,6 +36,9 @@
 #include <TAU.h>
 #endif
 
+#ifdef HAVE_MPI
+#include "sip_mpi_utils.h"
+#endif
 
 #include "test_constants.h"
 #include "test_controller.h"
@@ -63,10 +66,10 @@ TEST(ProfileInterpreter, test1){
 	controller.initSipTables();
 	controller.run();
 
-	sip::ProfileTimer::Key key = controller.key_for_line(27);	// Contraction line.
-	std::pair<long, long> time_count_pair = controller.profile_timer_store_->get_from_store(key);
+	sip::ProfileTimer::Key key = controller.key_for_pc(16);	// PC for Contraction line.
+	std::pair<double, long> time_count_pair = controller.profile_timer_store_->get_from_store(key);
 	ASSERT_EQ(time_count_pair.second, 1);
-	ASSERT_GT(time_count_pair.first, 0);
+	ASSERT_GT(time_count_pair.first, 0.0);
 
 }
 
@@ -97,7 +100,7 @@ int main(int argc, char **argv) {
 	attr = &sip_mpi_attr;
 	barrier();
 
-	INIT_GLOBAL_TIMERS(&argc, &argv);
+	//INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	check_expected_datasizes();
 
@@ -106,7 +109,7 @@ int main(int argc, char **argv) {
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-	FINALIZE_GLOBAL_TIMERS();
+	//FINALIZE_GLOBAL_TIMERS();
 
 	barrier();
 

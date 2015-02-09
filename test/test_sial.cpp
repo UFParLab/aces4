@@ -32,9 +32,9 @@
 #ifdef HAVE_MPI
 #include "sip_server.h"
 #include "server_persistent_array_manager.h"
+#include "sip_mpi_utils.h"
 //#include "sip_mpi_attr.h"
 //#include "global_state.h"
-//#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"
 #endif
@@ -530,7 +530,7 @@ int main(int argc, char **argv) {
 	attr = &sip_mpi_attr;
 	barrier();
 
-	INIT_GLOBAL_TIMERS(&argc, &argv);
+	//INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	check_expected_datasizes();
 
@@ -539,7 +539,7 @@ int main(int argc, char **argv) {
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-	FINALIZE_GLOBAL_TIMERS();
+	//FINALIZE_GLOBAL_TIMERS();
 
 	barrier();
 

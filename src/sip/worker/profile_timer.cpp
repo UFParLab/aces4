@@ -38,15 +38,15 @@ ProfileTimer::~ProfileTimer() {}
 //	}
 //}
 
-void ProfileTimer::record_line(const ProfileTimer::Key& key, int sialx_line){
+void ProfileTimer::record_line(const ProfileTimer::Key& key, int pc){
 	TimerMap_t::iterator it = profile_timer_map_.find(key);
 	if (it == profile_timer_map_.end()){
 		std::set<int> line_num_set;
-		line_num_set.insert(sialx_line);
+		line_num_set.insert(pc);
 		profile_timer_map_.insert(std::make_pair(key, line_num_set));
 	} else {
 		std::set<int>& line_num_set = it->second;
-		line_num_set.insert(sialx_line);
+		line_num_set.insert(pc);
 	}
 }
 
@@ -233,16 +233,15 @@ void ProfileTimer::save_to_store(ProfileTimerStore& profile_timer_store){
 	TimerMap_t::const_iterator it = profile_timer_map_.begin();
 	for (; it!= profile_timer_map_.end(); ++it){
 		const Key &key = it->first;
-		const std::set<int>& line_num_set = it->second;
-		std::set<int>::const_iterator it = line_num_set.begin();
-		long long total_computation_time = 0L;
-		long long total_count = 0L;
-		for (; it != line_num_set.end(); ++it){
-			int line_number = *it;
-			long long walltime = sialx_timer_.get_timer_value(line_number, SialxTimer::TOTALTIME);
-			long long walltime_count = sialx_timer_.get_timer_count(line_number, SialxTimer::TOTALTIME);
-			long long blockwait =  sialx_timer_.get_timer_value(line_number, SialxTimer::BLOCKWAITTIME);
-
+		const std::set<int>& pc_set = it->second;
+		std::set<int>::const_iterator it = pc_set.begin();
+		double total_computation_time = 0.0;
+		long total_count = 0L;
+		for (; it != pc_set.end(); ++it){
+			int pc = *it;
+			double walltime = sialx_timer_[pc].get_total_time();
+			long walltime_count = sialx_timer_[pc].get_num_epochs();
+			double blockwait =  sialx_timer_[pc].get_block_wait_time();
 			total_computation_time +=  walltime - blockwait;
 			total_count += walltime_count;	// Number of times the line was invoked.
 		}
@@ -259,7 +258,7 @@ void ProfileTimer::print_timers(std::ostream& out) {
 
 	out<<"Timers"<<std::endl
 		<<std::setw(SW)<<std::left<<"Type"
-		<<std::setw(LW)<<std::left<<"Lines"
+		<<std::setw(LW)<<std::left<<"PCs"
 		<<std::setw(CW)<<std::left<<"AvgComputation"
 		<<std::setw(CW)<<std::left<<"TotComputation"
 		<<std::setw(CW)<<std::left<<"Count"
@@ -270,19 +269,19 @@ void ProfileTimer::print_timers(std::ostream& out) {
 		const Key &kp = it->first;
 		const std::set<int>& line_num_set = it->second;
 		std::set<int>::const_iterator lineit = line_num_set.begin();
-		long long total_walltime = 0L;
-		long long total_blockwait = 0L;
-		long long total_computation_time = 0L;
-		long long total_count = 0L;
+		double total_walltime = 0L;
+		double total_blockwait = 0L;
+		double total_computation_time = 0L;
+		long total_count = 0L;
 		std::stringstream line_nums_str;
 		bool lines_printed = false;
 		int lines = 0;
 		int total_lines = line_num_set.size();
 		for (; lineit != line_num_set.end(); ++lineit, ++lines){
 			int line_number = *lineit;
-			long long walltime = sialx_timer_.get_timer_value(line_number, SialxTimer::TOTALTIME);
-			long long walltime_count = sialx_timer_.get_timer_count(line_number, SialxTimer::TOTALTIME);
-			long long blockwait =  sialx_timer_.get_timer_value(line_number, SialxTimer::BLOCKWAITTIME);
+			double walltime = sialx_timer_[line_number].get_total_time();
+			double walltime_count = sialx_timer_[line_number].get_num_epochs();
+			double blockwait =  sialx_timer_[line_number].get_block_wait_time();
 			total_walltime += walltime;
 			total_blockwait += blockwait;
 			total_count += walltime_count; // Number of times the line was invoked.
@@ -298,7 +297,7 @@ void ProfileTimer::print_timers(std::ostream& out) {
 
 		if (total_count > 0){
 			out.precision(6); // Reset precision to 6 places.
-			double to_print_tot_time = SipTimer_t::to_seconds(total_computation_time);
+			double to_print_tot_time = total_computation_time;
 			double to_print_avg_time = to_print_tot_time / total_count;
 			long to_print_count = total_count;
 

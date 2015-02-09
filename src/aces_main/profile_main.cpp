@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
 
-	INIT_GLOBAL_TIMERS(&argc, &argv);
+	//INIT_GLOBAL_TIMERS(&argc, &argv);
 
 	// Set Approx Max memory usage
 	sip::GlobalState::set_max_data_memory_usage(parameters.memory);
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
 
-		START_TAU_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
+		//START_TAU_SIALX_PROGRAM_DYNAMIC_PHASE(it->c_str());
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(*setup_reader, siox_file);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
-		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
+		//const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
-			server_timer.print_timers(lno2name);
+			server_timer.print_timers(std::cout, sipTables);
 		} else
 #endif
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sip::ProfileTimer profile_timer(sialxTimer);
-			sialxTimer.start_program_timer();
+			//sialxTimer.start_program_timer();
 			sip::ProfileInterpreter runner(sipTables, profile_timer, sialxTimer, NULL, &persistent_worker);
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
 			runner.interpret();
@@ -95,12 +95,13 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
 			profile_timer.save_to_store(profile_timer_store); // Saves to database store.
 			profile_timer.print_timers(std::cout);
-			sialxTimer.stop_program_timer();
-			sialxTimer.print_aggregate_timers(lno2name);
+			sialxTimer.print_timers(std::cout, sipTables);
+			//sialxTimer.stop_program_timer();
+			//sialxTimer.print_aggregate_timers(lno2name);
 
 		}// end of worker or server
 
-		STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
+		///STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
 
   		barrier();
 	} //end of loop over programs
@@ -115,7 +116,7 @@ int main(int argc, char* argv[]) {
 	profile_timer_store.backup_to_other(disk_profile_timer_store);
 
 	delete setup_reader;
-	FINALIZE_GLOBAL_TIMERS();
+	//FINALIZE_GLOBAL_TIMERS();
 	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
 	mpi_finalize();
 

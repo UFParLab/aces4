@@ -27,6 +27,7 @@ public:
 	static void read(OpTableEntry&, setup::InputStream&);
 	friend class OpTable;
 	friend std::ostream& operator<<(std::ostream&, const OpTableEntry &);
+	int line() const { return line_number; }
 private:
 	opcode_t opcode;
 	int arg0;  //also user_sub, and rank in push_block_selector_op
