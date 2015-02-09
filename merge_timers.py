@@ -38,17 +38,18 @@ def timing(f):
 
 # Merges *.profile.* files and spits out a csv
 @timing
-def merge_files(files, output_name, prefix_of_file, column_to_write_map, header_columns_map):
+def merge_files(files, output_name, prefix_of_file, size_of_header_columns_map):
     ''' Arguments
     files -- the list of files to create a csv for
     output_name -- the name of the output csv file
     prefix_of_file -- the prefix of the files to merge. Used to provide headers
-    column_to_write_map -- index of the column to merge
-    header_columns_map -- size(number) of header columns
+    size_of_header_columns_map -- size(number) of header columns
     '''
     files.sort()    # Sort the list of file names
-    data_table = []
-    header_column = []
+    
+    data_map = {}           # "CounterTypeForProgram" => 3d table of data per rank
+    header_column_map = {}  # "CounterTypeForProgram" => 2d table of data per rank
+    header_row_map = {}     # "CounterTypeForProgram" => 1d table of data per rank - row header
     for fnum, fname in enumerate(files, start=0):
         #print fname
         with open(fname) as f:
@@ -57,84 +58,136 @@ def merge_files(files, output_name, prefix_of_file, column_to_write_map, header_
             profile_type = ""   # Type of profile being read         
             matched_program_name = False # Whether currenly processed line contains program name
             line_after_program_name = False # Whether current line is the one after program name
-            
-            # When encounter 1st file, allocate as many lists as there are lines.
-            if fnum == 0:
-                for i in range(len(lines)):
-                    data_table.append([])
-                    header_column.append([])
-                    
-            
+    
+            data_table = None
+            header_column = None    
+            header_row = None    
             # Process all lines in the file
             for line_number, l in enumerate(lines, start=0):
-
+                
                 # Match empty Line
                 if l == '\n':   # empty lines indicate the end of a table
-                    sialx_prog = ""
-                    profile_type = ""
+                    sialx_prog = None
+                    profile_type = None
                     matched_program_name = False
                     line_after_program_name = False 
                     continue
-                
+                l = l.strip()
                 # Match line containing program name    
                 m_prog = program_re.match(l)
                 if m_prog is not None:
                     profile_type = m_prog.group(1).strip() # Type of profile info
                     sialx_prog = m_prog.group(2).strip()  # Name of sialx program
-
-                    # processing 1st file, add program name
-                    if fnum == 0:                    
-                    # Append program line
-                        header_column[line_number].append(l.strip()) # Remove newline at the end
-                        #print 'appended ' + l + ' to ' + str(line_number) + ' of header_column'
+                    l = sialx_prog + ' ' + profile_type
+                    data_table = data_map.get(l)
+                    header_column = header_column_map.get(l)
+                    header_row = header_row_map.get(l)
+                    if (data_table is None):
+                        data_table = []
+                        data_map[l] = data_table
+                        header_column = []
+                        header_column_map[l] = header_column
+                        header_row = []
+                        header_row_map[l] = header_row
+                        
                     
+                    data_table.append([])   # For this fnum
+                    assert len(data_table) == fnum + 1
+                                                          
                     line_after_program_name = True
                     continue
                 
                                                        
-                header_columns_length = header_columns_map[profile_type]
-                column_to_merge = column_to_write_map[profile_type]
+                size_of_header_column = size_of_header_columns_map[profile_type]
+                #column_to_merge = column_to_write_map[profile_type]
                 
                 row = line_re.findall(l)
+                row = filter(None, row)
                 num_columns = len(row)
                 
-                # processing 1st file, add program name & header columns
-                if fnum == 0:        
-                    #Append header columns (name of event, sialx line, pc, etc)  
-                    for i in range(header_columns_length):
-                        header_column[line_number].append(row[i])
-                        #print 'appended ' + row[i] + ' to ' + str(line_number) + ' of header_column' 
-
-                # Add Row header (rank of worker / server)
+                
+                 # Record table headers from file numbered 0
                 if line_after_program_name:
-                    base_file_name = os.path.basename(fname)
-                    row_header = base_file_name.replace(prefix_of_file, '')
-                    data_table[line_number].append(row_header)
-                    #print 'appended ' + row_header + ' to ' + str(line_number) + ' of data_table' 
-
                     line_after_program_name = False
+                    if fnum == 0:
+                        for i in row:
+                            header_row.append(i.strip())
+                        #print 'appended ' + row_header + ' to ' + str(line_number) + ' of data_table' 
+                    continue
+                
+                # Recored column headers like PC, instruction opcode, etc
+                if fnum == 0:      
+                    this_column = []
+                    #Append header columns (name of event, sialx line, pc, etc)  
+                    for i in range(size_of_header_column):
+                        this_column.append(row[i])
+                    header_column.append(this_column)  
+                    #print 'appended ' + row[i] + ' to ' + str(line_number) + ' of header_column' 
+
+                             
+                # Data line - time, counter, blockwait, etc
+                this_file_data_row = []
+                for i in range(size_of_header_column, num_columns):
+                    this_file_data_row.append(row[i])
                     
-                # Data line - time, counter, blockwait, etc                 
-                else:
-                    data_table[line_number].append(row[column_to_merge])
-                    #print 'appended ' + row[column_to_merge] + ' to ' + str(line_number) + ' of data_table'
+                data_table[fnum].append(this_file_data_row)                 
+                #print 'appended ' + row[column_to_merge] + ' to ' + str(line_number) + ' of data_table'
                                                        
         
     f = open(output_name, 'wb')
     try:
         writer = csv.writer(f)
-        assert len(data_table) == len(header_column)
-        for i in range(len(data_table)):
-            to_write_row = []
-            to_write_row.extend(header_column[i])
-            to_write_row.extend(data_table[i])
-            writer.writerow(to_write_row)
+        program_list = data_map.keys()
+        program_list.sort()
+        for p in program_list:
+            header_row = header_row_map[p]
+            header_column = header_column_map[p]
+            
+            # data[x] contains data from rank x
+            # data[x][y] contains the data row y from rank x
+            # data[x][y][z] is the zth data element of data row y from rank x
+            data = data_map[p]
+            
+            header_row_of_header_columns = []
+            len_header_row_of_header_columns = len(header_column[0])
+            
+            for i in range(len_header_row_of_header_columns):# write out len(header_column_map of header_row)
+                header_row_of_header_columns.append(header_row[i])
+    
+            # for each of the data columns, choose the appropriate data header
+            for dc in range(len(data[0][0])):# Number of data elems in Worker/Server 0's row should be the same as others
+                
+                # Write out the type of counter and program name 
+                writer.writerow([p])            
+            
+                # Write out the header row (Will look like so : Name | Count (0) | Count(1) | Count(2) |...
+                header_row_to_write = header_row_of_header_columns[:]
+                for d in range(len(data)):
+                    base_file_name = os.path.basename(files[d])
+                    rank = base_file_name.replace(prefix_of_file, '')
+                    header_row_to_write += [header_row[len_header_row_of_header_columns + dc] + '('+ rank + ')']
+                writer.writerow(header_row_to_write)
+                
+                # write out the data (including header column)
+                for drow in range(len(data[0])):
+                    data_to_write = []
+                    for d in range(len(data)):
+                        # Append column header when appending data for rank 0
+                        if d == 0:
+                            data_to_write.extend(header_column[drow])
+                        data_to_write.append(data[d][drow][dc])
+                    writer.writerow(data_to_write)
+                #print data_to_write
+                
+            # write empty row       
+                writer.writerow([]) 
+            writer.writerow([])
+       
     finally:
         f.close()
-    
+     
     print "Created file " + output_name
-
-
+    
 # MAIN
 
 # Time Column
@@ -143,45 +196,11 @@ extract_column_map = {"SialxTimers":3,
                       "Counters":1, 
                       "MaxCounters":1,
                       "ServerTimers":3}
-
-extract_block_wait_map = {"SialxTimers":4,
-                      "Timers":1, 
-                      "Counters":1, 
-                      "MaxCounters":1,
-                      "ServerTimers":4}
-
-extract_count_map = {"SialxTimers":5,
-                      "Timers":1, 
-                      "Counters":1, 
-                      "MaxCounters":1,
-                      "ServerTimers":7}
 # Merge worker files
 worker_files = glob.glob(prefix_dir + '/worker.profile.*')
-merge_files(worker_files, 'worker_profile.csv', 'worker.profile.', extract_column_map, extract_column_map)
-merge_files(worker_files, 'worker_blkwt.csv', 'worker.profile.', extract_block_wait_map, extract_column_map)
-merge_files(worker_files, 'worker_count.csv', 'worker.profile.', extract_count_map, extract_column_map)
+merge_files(worker_files, 'worker_profile.csv', 'worker.profile.', extract_column_map)
 
 
 # Merge server files
 server_files = glob.glob(prefix_dir + '/server.profile.*')
-merge_files(server_files, 'server_profile.csv', 'server.profile.', extract_column_map, extract_column_map)
-merge_files(server_files, 'server_blkwt.csv', 'server.profile.', extract_block_wait_map, extract_column_map)
-merge_files(server_files, 'server_count.csv', 'server.profile.', extract_count_map, extract_column_map)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+merge_files(server_files, 'server_profile.csv', 'server.profile.', extract_column_map)
