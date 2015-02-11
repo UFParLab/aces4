@@ -72,6 +72,7 @@ special enable_debug_print
 special disable_debug_print  
 special scf_atom_lowmem rwwww 
 special place_scratch urrr
+special compute_pair_nn rrw
 
 endsial trans_frag_defs
 

@@ -255,7 +255,6 @@ import "trans_frag_defs.sialx"
       distributed e20disp[ifrag,jfrag] 
       distributed e10exch[ifrag,jfrag] 
       distributed e20exch[ifrag,jfrag] 
-      distributed e20monomer[ifrag,jfrag] 
       distributed e20exch_pbar[ifrag] 
       distributed e10pol[ifrag,jfrag] 
       distributed e10c[ifrag] 
@@ -288,6 +287,8 @@ import "trans_frag_defs.sialx"
       temp LwC_ao[mu,nu] 
       local LwC[p,p1]  
       temp t20disp[ifrag,jfrag] 
+      temp Tij[ifrag,jfrag]
+      temp T1ij[ifrag,jfrag]
       local wAO_frag[mu] 
       local wOccA_frag[i] 
       local wOccB_frag[j] 
@@ -320,7 +321,7 @@ import "trans_frag_defs.sialx"
       contiguous local final_e20disp[ifrag,jfrag]
       contiguous local final_e20exch[ifrag,jfrag]
       contiguous local final_e10pol[ifrag,jfrag]
-      contiguous local monomer_e20disp[ifrag,jfrag]
+      contiguous local monomer_lccd[ifrag]
       contiguous local x_dipole[kfrag]
       contiguous local y_dipole[kfrag]
       contiguous local z_dipole[kfrag]
@@ -348,13 +349,7 @@ import "trans_frag_defs.sialx"
       allocate wVirtB_frag[*] 
 
       PARDO jfrag 
-         icount = 0.0 
-         DO jjfrag 
-            icount += 1.0 
-            if jjfrag == jfrag
-               exit
-            endif 
-         ENDDO jjfrag 
+	 icount = (scalar)jfrag
 
          i_aostart = icount 
          i_aoend   = 1.0  
@@ -376,13 +371,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO jfrag 
       PARDO jfrag
 
-         icount = 0.0 
-         DO jjfrag 
-            icount += 1.0 
-            if jjfrag == jfrag
-               exit
-            endif
-         ENDDO jjfrag
+	 icount = (scalar)jfrag
 
          i_vstart  = icount
          i_vend    = 6.0
@@ -426,13 +415,7 @@ import "trans_frag_defs.sialx"
 
       PARDO jfrag
 
-         icount = 0.0
-         DO jjfrag
-            icount += 1.0
-            if jjfrag == jfrag
-               exit
-            endif
-         ENDDO jjfrag
+	 icount = (scalar)jfrag
 
          i_vstart  = icount
          i_vend    = 9.0
@@ -522,7 +505,7 @@ import "trans_frag_defs.sialx"
     PARDO katom  
 	icount = (scalar)katom
 
-	print icount # etemp 
+#	print icount # etemp 
 
 	print "Starting computing fragment scf" 
 	execute scf_atom_lowmem icount scr_1[1:max_aoseg,1:max_aoseg] scr_2[1:max_aoseg,1:max_aoseg] scr_3[1:max_aoseg,1:max_aoseg] scr_4[1:max_aoseg,1:max_aoseg]
@@ -638,20 +621,8 @@ import "trans_frag_defs.sialx"
 
       PARDO kfrag, jfrag
       WHERE jfrag != kfrag
-         icount = 0.0
-         DO kkfrag
-            icount   += 1.0
-            IF kkfrag == kfrag
-               exit
-            ENDIF
-         ENDDO kkfrag 
-         jcount = 0.0
-         DO jjfrag
-            jcount   += 1.0
-            IF jjfrag == jfrag
-               exit
-            ENDIF
-         ENDDO jjfrag
+	 icount = (scalar)kfrag
+	 jcount = (scalar)jfrag
 
          execute return_pairs icount jcount elst_thresh pair_flag 
          if pair_flag > zero
@@ -1804,22 +1775,25 @@ import "trans_frag_defs.sialx"
            ENDIF 
         ENDDO iifrag 
 
-         execute return_pairs icount jcount r_thresh pair_flag 
-         if pair_flag > zero
-        
-           #IF jfrag >= ifrag  
+      ENDPARDO ifrag, jfrag 
 
+execute get_my_rank rank
+if rank == 0.0
+do ifrag
+do jfrag
+icount = (scalar)ifrag
+jcount = (scalar)jfrag
+execute return_pairs icount jcount r_thresh pair_flag 
+if pair_flag > zero
 	       allocate contiguous final_e20disp[ifrag:ifrag,jfrag:jfrag]
                GET e20disp[ifrag,jfrag] 
 	       final_e20disp[ifrag:ifrag,jfrag:jfrag] = e20disp[ifrag,jfrag]
                print final_e20disp[ifrag:ifrag,jfrag:jfrag]
 	       deallocate contiguous final_e20disp[ifrag:ifrag,jfrag:jfrag]
-
-           #ENDIF # jfrag >= ifrag  
-
-         endif 
-      ENDPARDO ifrag, jfrag 
-
+endif 
+enddo jfrag
+enddo ifrag
+endif
      #ENDIF 
 #
       ENDPROC FRAG_TRAN    
@@ -1845,7 +1819,6 @@ import "trans_frag_defs.sialx"
                exit 
             ENDIF 
          ENDDO kkfrag 
-         print icount 
 
          DO mu 
             x1[mu]     = wAO_frag[mu]     
@@ -2437,7 +2410,7 @@ import "trans_frag_defs.sialx"
       ENDDO a  
 
         t2p[ifrag]          = esum 
-        print esum
+        #print esum
         PUT e20c[ifrag] = t2p[ifrag] 
 
 # 
@@ -2937,7 +2910,7 @@ import "trans_frag_defs.sialx"
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
 	 
-	 print ifrag
+	 #print ifrag
 #
 # -----------------------------------------------------------------------------
 #     START OF FRAGMENT ITERATIONS 
@@ -3633,11 +3606,11 @@ import "trans_frag_defs.sialx"
 #
       eold = 0.0
 
+         print "Performing a dimer CCPT2 calc"
       DO kiter 
          do_iter = 0.0 
          sip_barrier 
 #
-         print "Performing a dimer CCPT2 calc"
 	 print kiter
       PARDO ifrag, jfrag   
          if jfrag != ifrag 
@@ -4405,13 +4378,7 @@ import "trans_frag_defs.sialx"
       sip_barrier 
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar) ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4448,13 +4415,7 @@ import "trans_frag_defs.sialx"
       sip_barrier
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar) ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4538,13 +4499,7 @@ import "trans_frag_defs.sialx"
 
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4637,13 +4592,7 @@ import "trans_frag_defs.sialx"
 #
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4700,13 +4649,7 @@ import "trans_frag_defs.sialx"
 #
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4744,22 +4687,50 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag 
       sip_barrier
 
-     ### REMOVE FOR LARGE CALC execute compute_nn_repulsion nn_rep 
-      e10pol_at = nn_rep 
+      e10pol_at = 0.0
       esum = 0.0 
       sip_barrier
-# SKIP AS TOO MUCH PRINT 
-      PARDO ifrag, jfrag 
-         allocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
-         GET                 e10pol[ifrag,jfrag] 
-         final_e10pol[ifrag:ifrag,jfrag:jfrag] = e10pol[ifrag,jfrag] 
-	 print final_e10pol[ifrag:ifrag,jfrag:jfrag]
+      pardo ifrag,jfrag
+         GET e10pol[ifrag,jfrag] 
          etemp = e10pol[ifrag,jfrag] 
          esum += etemp 
-         deallocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
-      ENDPARDO ifrag, jfrag 
+      endpardo ifrag,jfrag
       sip_barrier
       collective e10pol_at += esum 
+      execute compute_nn_repulsion nn_rep
+# this is the total systems e10 polarization energy
+      e10pol_at += nn_rep
+#
+execute get_my_rank rank
+if rank == 0.0
+do ifrag
+do jfrag
+where jfrag >= ifrag
+icount = (scalar)ifrag
+jcount = (scalar)jfrag
+execute return_pairs icount jcount r_thresh pair_flag 
+if pair_flag > zero
+
+# nn rep between fragments
+execute compute_pair_nn icount jcount nn_rep
+         allocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
+         GET                 e10pol[ifrag,jfrag] 
+         Tij[ifrag,jfrag] = e10pol[ifrag,jfrag]
+# factor of two for upper triangle
+	 if jfrag > ifrag
+         Tij[ifrag,jfrag] *= 2.0 
+	 endif
+	 T1ij[ifrag,jfrag] = nn_rep
+	 Tij[ifrag,jfrag] += T1ij[ifrag,jfrag]
+         final_e10pol[ifrag:ifrag,jfrag:jfrag] = Tij[ifrag,jfrag]
+#print pair polarization energies
+	 print final_e10pol[ifrag:ifrag,jfrag:jfrag]
+         deallocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
+endif
+enddo jfrag
+enddo ifrag
+endif
+      sip_barrier
 
 # 
       ENDPROC OVERLAP_TRANS 
@@ -4773,13 +4744,7 @@ import "trans_frag_defs.sialx"
 # Calculate Pbar1_ai 
 #
       PARDO ifrag 
-            icount = 0.0 
-            DO iifrag 
-               icount += 1.0 
-               if iifrag == ifrag 
-                  exit 
-               endif 
-            ENDDO iifrag 
+	    icount = (scalar)ifrag
 
             jcount = 0.0 
             DO jfrag 
@@ -4901,13 +4866,7 @@ import "trans_frag_defs.sialx"
 # Calculate Hbar2_ia 
 #
       PARDO ifrag 
-            icount = 0.0 
-            DO iifrag 
-               icount += 1.0 
-               if iifrag == ifrag 
-                  exit 
-               endif 
-            ENDDO iifrag 
+	    icount = (scalar)ifrag
 # -2V^ab_ij t^b_j  
 
             DO a 
@@ -4996,13 +4955,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag 
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -5076,21 +5029,9 @@ import "trans_frag_defs.sialx"
 
 
       PARDO ifrag, jfrag  
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
          if ifrag != jfrag 
-         jcount = 0.0 
-         DO jjfrag 
-            jcount += 1.0 
-            if jjfrag == jfrag 
-               exit 
-            endif 
-         ENDDO jjfrag 
+	     jcount = (scalar)jfrag
 
          execute return_pairs icount jcount r_thresh pair_flag 
          if pair_flag > zero  
@@ -5132,7 +5073,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO i 
 
-      print esum  
+      #print esum  
 
 # second-term 
 
@@ -5188,7 +5129,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO j 
 
-      print esum  
+      #print esum  
 
 # Third-term 
 
@@ -5246,7 +5187,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO j 
 
-      print esum 
+      #print esum 
 
 # Fourth-term 
 
@@ -5289,7 +5230,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO j 
 
-         print esum 
+         #print esum 
 
 
          DO i
@@ -5321,7 +5262,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO i 
 
-         print esum 
+         #print esum 
 
 #        DO i
 #           xi(i)      = wOccA_frag(i)
@@ -5359,13 +5300,7 @@ import "trans_frag_defs.sialx"
       sip_barrier
 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -5476,13 +5411,7 @@ import "trans_frag_defs.sialx"
 #
       sip_barrier
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 
         DO a
          xa[a]      = wVirtA_frag[a]     
@@ -5522,13 +5451,7 @@ import "trans_frag_defs.sialx"
 #
       sip_barrier
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
         #print_scalar icount
 
          GET     e2error[ifrag] 
@@ -6129,19 +6052,17 @@ import "trans_frag_defs.sialx"
       execute get_my_rank rank
       if rank == 0.0
       do ifrag
-      do jfrag
-       if ifrag == jfrag 
-	 allocate contiguous monomer_e20disp[ifrag:ifrag,jfrag:jfrag]
+#      do jfrag
+#       if ifrag == jfrag 
+	 allocate contiguous monomer_lccd[ifrag:ifrag]
          GET                        e20c[ifrag] 
-         t20disp[ifrag,jfrag]     = e20c[ifrag]
-         monomer_e20disp[ifrag:ifrag,jfrag:jfrag] = e20c[ifrag]  
-	 print monomer_e20disp[ifrag:ifrag,jfrag:jfrag]
-         PUT e20monomer[ifrag,jfrag] = t20disp[ifrag,jfrag] 
+         monomer_lccd[ifrag:ifrag] = e20c[ifrag]  
+	 print monomer_lccd[ifrag:ifrag]
          etemp = e20c[ifrag] 
          esum -= etemp 
-	 deallocate contiguous monomer_e20disp[ifrag:ifrag,jfrag:jfrag]
-       endif 
-      enddo jfrag
+	 deallocate contiguous monomer_lccd[ifrag:ifrag]
+#       endif 
+#      enddo jfrag
       enddo ifrag
       endif
       sip_barrier
@@ -6225,13 +6146,7 @@ import "trans_frag_defs.sialx"
 #     sip_barrier 
 #
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 
         DO a2 
          xa2[a2]    = wVirtA_frag[a2]     
@@ -6451,13 +6366,7 @@ import "trans_frag_defs.sialx"
 #
 #
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 
         DO a2 
          xa2[a2]    = wVirtA_frag[a2]     

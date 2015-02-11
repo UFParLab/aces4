@@ -74,6 +74,12 @@ int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extent
 int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
 int& ierr);
 
+void compute_pair_nn(
+int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+int& ierr);
+
 void return_h1frag(
 int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
 int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
@@ -397,6 +403,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["scf_atom_lowmem"]=(fp0)&scf_atom_lowmem;
 	procmap_["place_scratch"]=(fp0)&place_scratch;
 	procmap_["return_pairs"]=(fp0)&return_pairs;
+	procmap_["compute_pair_nn"]=(fp0)&compute_pair_nn;
 	procmap_["return_h1frag"]=(fp0)&return_h1frag;
 	procmap_["compute_int_scratchmem"]=(fp0)&compute_int_scratchmem;
 	procmap_["compute_int_scratchmem_lowmem"]=(fp0)&compute_int_scratchmem_lowmem;
