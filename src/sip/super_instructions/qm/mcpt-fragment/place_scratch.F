@@ -148,8 +148,9 @@ C map segments to fragments
 
       wfrag = data_3(1) ! Clean up  
 
-      print *, "FRAG index values",
-     *         wfrag,index_values_0(1),index_values_0(2)
+C JNB debug
+C      print *, "FRAG index values",
+C     *         wfrag,index_values_0(1),index_values_0(2)
 
       if (rank_0 .eq. 2) then 
          offset_1 = 0 
@@ -203,7 +204,8 @@ C            endif
              endif
          enddo
 
-         write(6,*) 'SCRATCH TYPE = ', data_2(1), offset_1, offset_2 
+C JNB debug
+C         write(6,*) 'SCRATCH TYPE = ', data_2(1), offset_1, offset_2 
 
       call place_scratch_2D(1, extents_0(1),offset_1, 
      *                      1, extents_0(2),offset_2, 
