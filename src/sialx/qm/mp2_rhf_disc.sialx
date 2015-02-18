@@ -1,5 +1,5 @@
 #  Copyright (c) 2003-2010 University of Florida
-import "scf_mp2_defs.sialx"
+import "rccsd_rhf_defs.sialx"
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -105,6 +105,7 @@ import "scf_mp2_defs.sialx"
 # Declare one-particle density arrays 
 # ----------------------------------- 
 #
+
       distributed Dhfa[mu,nu] 
       distributed Dhfb[mu,nu] 
       distributed Dhfa_old[mu,nu] 
@@ -243,6 +244,15 @@ import "scf_mp2_defs.sialx"
       scalar ecorraa 
       scalar esumaa 
       scalar mp2_energy 
+
+      static ca[mu,p]
+      static fock_a[p,p1]
+      static oed_nai[aces_defs_mu,aces_defs_mu]
+      static oed_kin[aces_defs_mu,aces_defs_mu]
+      static oed_ovl[aces_defs_mu,aces_defs_mu]
+
+      static fockrohf_a[aces_defs_mu,aces_defs_mu]
+      static fockrohf_b[aces_defs_mu,aces_defs_mu]
  
 # ---------------------------------------------------------------------------- 
 #
@@ -502,30 +512,14 @@ import "scf_mp2_defs.sialx"
 #
 #     Define a few constants 
 #     ---------------------- 
-      create Dca 
-      create Fta
       sip_barrier
 #
-      restore_persistent FTa "fock_a" 
+      restore_persistent fock_a "fock_a" 
       println " past restoring fock_a" 
-      restore_persistent Dca "ca"
+      restore_persistent Ca "ca"
       println " past restoring ca" 
       sip_barrier
 
-      DO p 
-      DO p1 
-         GET Fta[p,p1] 
-         fock_a[p,p1] = Fta[p,p1] 
-      ENDDO p1 
-      ENDDO p 
-
-      DO mu
-      DO p 
-         GET Dca[mu,p] 
-         ca[mu,p] = Dca[mu,p] 
-      ENDDO p 
-      ENDDO mu
-#
 #     Start the mp2 calculation  
 #     ------------------------------------------------ 
 
