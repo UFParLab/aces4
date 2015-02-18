@@ -38,6 +38,7 @@ set(QM_SOURCE_FILES
     qm/mcpt-fragment/place_scratch.F;
     qm/mcpt-fragment/compute_return_h1_frag.F;
     qm/mcpt-fragment/return_pairs.F;
+    qm/mcpt-fragment/compute_pair_nn.F;
     qm/mcpt-fragment/return_vpq.F;
     qm/direct_integral/move_integrals.f;
     qm/direct_integral/pack_coeffs.f;

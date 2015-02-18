@@ -27,11 +27,17 @@ import "trans_frag_defs.sialx"
       index   jiter  = 1: 10 # macroiterations 
       index   ifrag  = 1: nfrags # Nsolute   
       index  iifrag  = 1: nfrags # Nsolute    
+      index   katom  = 1: nfrags # Nfrags  
+      index   jatom  = 1: nfrags # Nfrags  
 
       index   jfrag  = 1: nfrags # Nfragments   
       index  jjfrag  = 1: nfrags # Nfragments   
       index   kfrag  = 1: nfrags # Nfragments   
       index  kkfrag  = 1: nfrags # Nfragments   
+
+      index   ao_scratch    = 1: max_aoseg    # maximum ao segment size 
+      index   alpha_scratch = 1: max_alphaseg # maximum alpha segment size 
+      index   beta_scratch  = 1: max_betaseg  # maximum beta segment size 
 
       index  isolute = 1: 1 
       index  jsolute = 1: 1 
@@ -141,6 +147,7 @@ import "trans_frag_defs.sialx"
       scalar yDip_tot 
       scalar zDip_tot 
       scalar se10c
+      scalar stype 
 #
 # Declare arrays  
 # -------------- 
@@ -248,7 +255,6 @@ import "trans_frag_defs.sialx"
       distributed e20disp[ifrag,jfrag] 
       distributed e10exch[ifrag,jfrag] 
       distributed e20exch[ifrag,jfrag] 
-      distributed e20monomer[ifrag,jfrag] 
       distributed e20exch_pbar[ifrag] 
       distributed e10pol[ifrag,jfrag] 
       distributed e10c[ifrag] 
@@ -281,6 +287,8 @@ import "trans_frag_defs.sialx"
       temp LwC_ao[mu,nu] 
       local LwC[p,p1]  
       temp t20disp[ifrag,jfrag] 
+      temp Tij[ifrag,jfrag]
+      temp T1ij[ifrag,jfrag]
       local wAO_frag[mu] 
       local wOccA_frag[i] 
       local wOccB_frag[j] 
@@ -308,16 +316,24 @@ import "trans_frag_defs.sialx"
       distributed DwVirtB_frag[b]
 
       contiguous local macro_e20[ifrag] 
+      contiguous local macro_d20[ifrag,jfrag] 
       contiguous local initial_e10c[ifrag]
       contiguous local final_e10c[ifrag]
       contiguous local final_e20disp[ifrag,jfrag]
       contiguous local final_e20exch[ifrag,jfrag]
       contiguous local final_e10pol[ifrag,jfrag]
-      contiguous local monomer_e20disp[ifrag,jfrag]
+      contiguous local final_e10exch[ifrag,jfrag]
+      contiguous local monomer_lccd[ifrag]
       contiguous local x_dipole[kfrag]
       contiguous local y_dipole[kfrag]
       contiguous local z_dipole[kfrag]
       contiguous local abs_dipole[kfrag]
+
+      contiguous local scr_1[ao_scratch,ao_scratch] 
+      contiguous local scr_2[ao_scratch,ao_scratch] 
+      contiguous local scr_3[ao_scratch,ao_scratch] 
+      contiguous local scr_4[ao_scratch,ao_scratch] 
+      contiguous local scr_5[ao_scratch,ao_scratch] 
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -335,13 +351,7 @@ import "trans_frag_defs.sialx"
       allocate wVirtB_frag[*] 
 
       PARDO jfrag 
-         icount = 0.0 
-         DO jjfrag 
-            icount += 1.0 
-            if jjfrag == jfrag
-               exit
-            endif 
-         ENDDO jjfrag 
+	 icount = (scalar)jfrag
 
          i_aostart = icount 
          i_aoend   = 1.0  
@@ -363,13 +373,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO jfrag 
       PARDO jfrag
 
-         icount = 0.0 
-         DO jjfrag 
-            icount += 1.0 
-            if jjfrag == jfrag
-               exit
-            endif
-         ENDDO jjfrag
+	 icount = (scalar)jfrag
 
          i_vstart  = icount
          i_vend    = 6.0
@@ -413,13 +417,7 @@ import "trans_frag_defs.sialx"
 
       PARDO jfrag
 
-         icount = 0.0
-         DO jjfrag
-            icount += 1.0
-            if jjfrag == jfrag
-               exit
-            endif
-         ENDDO jjfrag
+	 icount = (scalar)jfrag
 
          i_vstart  = icount
          i_vend    = 9.0
@@ -485,6 +483,136 @@ import "trans_frag_defs.sialx"
 #
       ENDPROC SET_FRAG_PARMS    
 #     ---------------------- 
+
+      PROC IGUESS   
+#     ----------- 
+#
+#     Get memory requirements from integral calculation 
+#     ------------------------------------------------- 
+      print "Starting scratch memory calculation" 
+      imax = 0.0  
+      zmax = 0.0  
+      execute compute_int_scratchmem_lowmem zmax imax 
+      sip_barrier 
+      print "Done computing scratch memory" 
+#
+      sip_barrier 
+      allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
+
+    PARDO katom  
+	icount = (scalar)katom
+
+#	print icount # etemp 
+
+	print "Starting computing fragment scf" 
+	execute scf_atom_lowmem icount scr_1[1:max_aoseg,1:max_aoseg] scr_2[1:max_aoseg,1:max_aoseg] scr_3[1:max_aoseg,1:max_aoseg] scr_4[1:max_aoseg,1:max_aoseg]
+	print "Done computing fragment scf" 
+#
+# Nowput the coefficients and fock matrices into the full distributed arrays 
+
+	stype = 1.0 # HF coefficients  
+	DO mu
+	 x1[mu] = wAO_frag[mu]
+	 execute return_sval x1[mu]  m
+	 if m == icount
+	DO a
+	 xa[a]      = wVirtA_frag[a]
+	 execute return_sval xa[a]  l
+	 if l == icount
+	    txp[mu,a]      = 0.0  
+	    execute place_scratch txp[mu,a]  scr_1[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT DCa[mu,a] += txp[mu,a]
+	 endif
+	ENDDO a
+	DO i
+	 xi[i]      = wOccA_frag[i]
+	 execute return_sval xi[i]  s
+	 if s == icount
+	    txp[mu,i]      = 0.0  
+	    execute place_scratch txp[mu,i]  scr_1[1:max_aoseg,1:max_aoseg] stype icount  
+	    PUT DCa[mu,i] += txp[mu,i]
+	 endif
+	ENDDO i
+	 endif
+	ENDDO mu
+	print "Done placing coefficients"
+
+	stype = 2.0 # Fock matrix  
+	DO a   
+	 xa[a]      = wVirtA_frag[a]
+	 execute return_sval xa[a]  l   
+	 if l == icount 
+	DO a1
+	 xa1[a1]      = wVirtA_frag[a1]
+	 execute return_sval xa1[a1]  m   
+	 if m == icount 
+	    tpp[a,a1]          = 0.0  
+	    execute place_scratch tpp[a,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[a,a1] += tpp[a,a1] 
+	 endif 
+	ENDDO a1
+	DO i1
+	 xi1[i1]      = wOccA_frag[i1]
+	 execute return_sval xi1[i1]  m   
+	 if m == icount 
+	    tpp[a,i1]          = 0.0  
+	    execute place_scratch tpp[a,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[a,i1] += tpp[a,i1] 
+	 endif 
+	ENDDO i1
+	 endif 
+	ENDDO a   
+
+	DO i   
+	 xi[i]      = wOccA_frag[i]
+	 execute return_sval xi[i]  l   
+	 if l == icount 
+	DO i1
+	 xi1[i1]      = wOccA_frag[i1]
+	 execute return_sval xi1[i1]  m
+	 if m == icount
+	    tpp[i,i1]          = 0.0  
+	    execute place_scratch tpp[i,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[i,i1] += tpp[i,i1]
+	 endif
+	ENDDO i1
+	DO a1
+	 xa1[a1]      = wVirtA_frag[a1]
+	 execute return_sval xa1[a1]  m
+	 if m == icount
+	    tpp[i,a1]          = 0.0  
+	    execute place_scratch tpp[i,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+	    PUT Dfock_a[i,a1] += tpp[i,a1]
+	 endif
+	ENDDO a1
+	 endif
+	ENDDO i
+
+#                 DO p 
+#                 DO p1 
+#                    tpp(p,p1) = 0.0 
+#                    execute place_scratch tpp(p,p1)  scratch3 stype  
+#                    PUT Dfock_a(p,p1) += tpp(p,p1)
+#                 ENDDO p1 
+#                 ENDDO p 
+	print "Done placing fock_matrix"
+
+
+    ENDPARDO katom   
+      sip_barrier 
+      deallocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
+#
+      ENDPROC IGUESS   
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -493,24 +621,43 @@ import "trans_frag_defs.sialx"
 
       sip_barrier
 
+      print "Computing wC_ao"
       PARDO kfrag, jfrag
       WHERE jfrag != kfrag
-         icount = 0.0
-         DO kkfrag
-            icount   += 1.0
-            IF kkfrag == kfrag
-               exit
-            ENDIF
-         ENDDO kkfrag 
-         jcount = 0.0
-         DO jjfrag
-            jcount   += 1.0
-            IF jjfrag == jfrag
-               exit
-            ENDIF
-         ENDDO jjfrag
+	 icount = (scalar)kfrag
+	 jcount = (scalar)jfrag
 
-         execute return_pairs icount jcount r_thresh pair_flag 
+         execute return_pairs icount jcount elst_thresh pair_flag 
+         if pair_flag == zero
+# ---------------------------------------------------------------------------- 
+#     Set wC_ao  for far away monomers
+# ---------------------------------------------------------------------------- 
+#
+      DO mu
+            x1[mu]     = wAO_frag[mu]
+            execute return_sval x1[mu]  m
+            if m == icount
+      DO nu
+            x2[nu]     = wAO_frag[nu]
+            execute return_sval x2[nu]  n
+            if n == icount
+
+              LwC_ao[mu,nu] = 0.0 
+              PUT wC_ao[mu,nu] = LwC_ao[mu,nu]
+
+	    endif # n
+      ENDDO nu
+             endif # m 
+      ENDDO mu
+         endif # pair flag  
+      ENDPARDO kfrag, jfrag
+
+      PARDO kfrag, jfrag
+      WHERE jfrag != kfrag
+	 icount = (scalar)kfrag
+	 jcount = (scalar)jfrag
+
+         execute return_pairs icount jcount elst_thresh pair_flag 
          if pair_flag > zero
 
         #print_scalar icount
@@ -1661,21 +1808,25 @@ import "trans_frag_defs.sialx"
            ENDIF 
         ENDDO iifrag 
 
-         execute return_pairs icount jcount r_thresh pair_flag 
-         if pair_flag > zero
-        
-           #IF jfrag >= ifrag  
+      ENDPARDO ifrag, jfrag 
 
+execute get_my_rank rank
+if rank == 0.0
+do ifrag
+do jfrag
+icount = (scalar)ifrag
+jcount = (scalar)jfrag
+execute return_pairs icount jcount r_thresh pair_flag 
+if pair_flag > zero
 	       allocate contiguous final_e20disp[ifrag:ifrag,jfrag:jfrag]
                GET e20disp[ifrag,jfrag] 
 	       final_e20disp[ifrag:ifrag,jfrag:jfrag] = e20disp[ifrag,jfrag]
                print final_e20disp[ifrag:ifrag,jfrag:jfrag]
-
-           #ENDIF # jfrag >= ifrag  
-
-         endif 
-      ENDPARDO ifrag, jfrag 
-
+	       deallocate contiguous final_e20disp[ifrag:ifrag,jfrag:jfrag]
+endif 
+enddo jfrag
+enddo ifrag
+endif
      #ENDIF 
 #
       ENDPROC FRAG_TRAN    
@@ -1701,7 +1852,6 @@ import "trans_frag_defs.sialx"
                exit 
             ENDIF 
          ENDDO kkfrag 
-         print icount 
 
          DO mu 
             x1[mu]     = wAO_frag[mu]     
@@ -1848,13 +1998,7 @@ import "trans_frag_defs.sialx"
       et1_correction = 0.0  
 
       PARDO ifrag 
-        icount = 0.0 
-        DO iifrag 
-           icount += 1.0 
-           if iifrag == ifrag 
-              exit 
-           endif 
-        ENDDO iifrag 
+	icount = (scalar)ifrag
 
         DO a
             xa[a]      = wVirtA_frag[a]     
@@ -1901,13 +2045,7 @@ import "trans_frag_defs.sialx"
 # Compute initial singles energy of clusters  
 
       PARDO ifrag 
-        icount = 0.0 
-        DO iifrag 
-           icount += 1.0 
-           if iifrag == ifrag 
-              exit 
-           endif 
-        ENDDO iifrag 
+      icount = (scalar)ifrag
 #
         esum = 0.0 
 
@@ -1949,6 +2087,7 @@ import "trans_frag_defs.sialx"
          GET e10c[ifrag] 
 	 initial_e10c[ifrag:ifrag] = e10c[ifrag]
 	 print initial_e10c[ifrag:ifrag]
+         deallocate contiguous initial_e10c[ifrag:ifrag]
       ENDDO ifrag 
       endif
 
@@ -2190,6 +2329,7 @@ import "trans_frag_defs.sialx"
 	 print final_e10c[ifrag:ifrag]
          etemp = e10c[ifrag] 
          singles += etemp
+         deallocate contiguous final_e10c[ifrag:ifrag]
       ENDDO ifrag 
       sip_barrier 
 
@@ -2291,7 +2431,7 @@ import "trans_frag_defs.sialx"
       ENDDO a  
 
         t2p[ifrag]          = esum 
-        print esum
+        #print esum
         PUT e20c[ifrag] = t2p[ifrag] 
 
 # 
@@ -2764,8 +2904,9 @@ import "trans_frag_defs.sialx"
       sip_barrier
 #
       eold = 0.0
-      print "Performing a MCPT2 calc on fragment "
+      print "Performing a fragment CCPT2 calc"
       DO kiter 
+      print kiter
          do_iter = 0.0 
 #
       sip_barrier
@@ -2779,6 +2920,7 @@ import "trans_frag_defs.sialx"
          ENDDO iifrag 
         #print icount
 
+
          GET     e2error[ifrag] 
          execute return_sval e2error[ifrag] etemp  
          if etemp < zero  
@@ -2789,6 +2931,8 @@ import "trans_frag_defs.sialx"
          GET     e20c_old[ifrag] 
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
+	 
+	 #print ifrag
 #
 # -----------------------------------------------------------------------------
 #     START OF FRAGMENT ITERATIONS 
@@ -3444,6 +3588,7 @@ import "trans_frag_defs.sialx"
       ediff = fragment_doubles - eold
       escr = ediff**2.0
       ediff = escr**0.5
+      print ediff
       if ediff < cc_conv
 	  exit #kiter
       endif
@@ -3484,10 +3629,12 @@ import "trans_frag_defs.sialx"
 #
       eold = 0.0
 
+         print "Performing a dimer CCPT2 calc"
       DO kiter 
          do_iter = 0.0 
          sip_barrier 
 #
+	 print kiter
       PARDO ifrag, jfrag   
          if jfrag != ifrag 
          icount = 0.0 
@@ -3519,9 +3666,8 @@ import "trans_frag_defs.sialx"
          e1old = d20c_old[ifrag,jfrag] 
          do_iter = 1.0 
 #
-         print "Performing a CCPT2 calc on DIMER "
-         print icount
-         print jcount
+#         print icount
+#         print jcount
 #
 # -----------------------------------------------------------------------------
 #     START OF FRAGMENT ITERATIONS 
@@ -4190,20 +4336,8 @@ import "trans_frag_defs.sialx"
 
       PARDO ifrag, jfrag  
          WHERE ifrag != jfrag 
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
-         jcount = 0.0 
-         DO jjfrag 
-            jcount   += 1.0 
-            IF jjfrag == jfrag 
-               exit 
-            ENDIF 
-         ENDDO jjfrag 
+	 icount = (scalar)ifrag
+	 jcount = (scalar)jfrag
 
          execute return_pairs icount jcount r_thresh pair_flag 
          if pair_flag > zero 
@@ -4231,6 +4365,8 @@ import "trans_frag_defs.sialx"
       ediff = dimer_doubles - eold
       escr = ediff**2.0
       ediff = escr**0.5
+
+      print ediff
       if ediff < cc_conv
 	  exit #kiter
       endif
@@ -4255,13 +4391,7 @@ import "trans_frag_defs.sialx"
       sip_barrier 
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar) ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4298,13 +4428,7 @@ import "trans_frag_defs.sialx"
       sip_barrier
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar) ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4388,13 +4512,7 @@ import "trans_frag_defs.sialx"
 
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4487,13 +4605,7 @@ import "trans_frag_defs.sialx"
 #
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4550,13 +4662,7 @@ import "trans_frag_defs.sialx"
 #
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4594,21 +4700,50 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag 
       sip_barrier
 
-     ### REMOVE FOR LARGE CALC execute compute_nn_repulsion nn_rep 
-      e10pol_at = nn_rep 
+      e10pol_at = 0.0
       esum = 0.0 
       sip_barrier
-# SKIP AS TOO MUCH PRINT 
-      PARDO ifrag, jfrag 
-         allocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
-         GET                 e10pol[ifrag,jfrag] 
-         final_e10pol[ifrag:ifrag,jfrag:jfrag] = e10pol[ifrag,jfrag] 
-	 print final_e10pol[ifrag:ifrag,jfrag:jfrag]
+      pardo ifrag,jfrag
+         GET e10pol[ifrag,jfrag] 
          etemp = e10pol[ifrag,jfrag] 
          esum += etemp 
-      ENDPARDO ifrag, jfrag 
+      endpardo ifrag,jfrag
       sip_barrier
       collective e10pol_at += esum 
+# this is the total systems e10 polarization energy
+      e10pol_at += nn_rep
+      print e10pol_at
+#
+    execute get_my_rank rank
+    if rank == 0.0
+    do ifrag
+    do jfrag
+    where jfrag >= ifrag
+    icount = (scalar)ifrag
+    jcount = (scalar)jfrag
+    execute return_pairs icount jcount r_thresh pair_flag 
+    if pair_flag > zero
+
+# nn rep between fragments
+    execute compute_pair_nn icount jcount nn_rep
+         allocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
+         GET                 e10pol[ifrag,jfrag] 
+         Tij[ifrag,jfrag] = e10pol[ifrag,jfrag]
+# factor of two for upper triangle
+	 if jfrag > ifrag
+         Tij[ifrag,jfrag] *= 2.0 
+	 endif
+	 T1ij[ifrag,jfrag] = nn_rep
+	 Tij[ifrag,jfrag] += T1ij[ifrag,jfrag]
+         final_e10pol[ifrag:ifrag,jfrag:jfrag] = Tij[ifrag,jfrag]
+#print pair polarization energies
+	 print final_e10pol[ifrag:ifrag,jfrag:jfrag]
+         deallocate contiguous final_e10pol[ifrag:ifrag,jfrag:jfrag]
+    endif
+    enddo jfrag
+    enddo ifrag
+    endif
+      sip_barrier
 
 # 
       ENDPROC OVERLAP_TRANS 
@@ -4622,13 +4757,7 @@ import "trans_frag_defs.sialx"
 # Calculate Pbar1_ai 
 #
       PARDO ifrag 
-            icount = 0.0 
-            DO iifrag 
-               icount += 1.0 
-               if iifrag == ifrag 
-                  exit 
-               endif 
-            ENDDO iifrag 
+	    icount = (scalar)ifrag
 
             jcount = 0.0 
             DO jfrag 
@@ -4750,13 +4879,7 @@ import "trans_frag_defs.sialx"
 # Calculate Hbar2_ia 
 #
       PARDO ifrag 
-            icount = 0.0 
-            DO iifrag 
-               icount += 1.0 
-               if iifrag == ifrag 
-                  exit 
-               endif 
-            ENDDO iifrag 
+	    icount = (scalar)ifrag
 # -2V^ab_ij t^b_j  
 
             DO a 
@@ -4808,13 +4931,7 @@ import "trans_frag_defs.sialx"
 # Compute energy contribution 
 
       PARDO ifrag 
-            icount = 0.0 
-            DO iifrag 
-               icount += 1.0 
-               if iifrag == ifrag 
-                  exit 
-               endif 
-            ENDDO iifrag 
+      icount = (scalar)ifrag
             DO jfrag 
             if ifrag == jfrag 
             esum = 0.0 
@@ -4845,13 +4962,7 @@ import "trans_frag_defs.sialx"
       ENDPARDO ifrag 
 # 
       PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 # 
       jcount = 0.0 
       DO jfrag 
@@ -4905,6 +5016,7 @@ import "trans_frag_defs.sialx"
               GET e20exch[ifrag,jfrag] 
 	      final_e20exch[ifrag:ifrag,jfrag:jfrag] = e20exch[ifrag,jfrag]
 	      print final_e20exch[ifrag:ifrag,jfrag:jfrag]
+	      deallocate contiguous final_e20exch[ifrag:ifrag,jfrag:jfrag]
 	  endif
 	  enddo jfrag
       enddo ifrag
@@ -4920,25 +5032,18 @@ import "trans_frag_defs.sialx"
 
       e1x_at = 0.0  
       esum = 0.0 
+
+      PARDO ifrag, jfrag  
+          Tij[ifrag,jfrag] = 0.0
+	  put e10exch[ifrag,jfrag] = Tij[ifrag,jfrag]
+      endPARDO ifrag, jfrag  
       sip_barrier 
 
 
       PARDO ifrag, jfrag  
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
          if ifrag != jfrag 
-         jcount = 0.0 
-         DO jjfrag 
-            jcount += 1.0 
-            if jjfrag == jfrag 
-               exit 
-            endif 
-         ENDDO jjfrag 
+	     jcount = (scalar)jfrag
 
          execute return_pairs icount jcount r_thresh pair_flag 
          if pair_flag > zero  
@@ -4980,7 +5085,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO i 
 
-      print esum  
+      #print esum  
 
 # second-term 
 
@@ -5036,7 +5141,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO j 
 
-      print esum  
+      #print esum  
 
 # Third-term 
 
@@ -5094,7 +5199,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO j 
 
-      print esum 
+      #print esum 
 
 # Fourth-term 
 
@@ -5137,7 +5242,7 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO j 
 
-         print esum 
+         #print esum 
 
 
          DO i
@@ -5169,26 +5274,8 @@ import "trans_frag_defs.sialx"
             endif 
          ENDDO i 
 
-         print esum 
-
-#        DO i
-#           xi(i)      = wOccA_frag(i)
-#           execute return_sval xi(i)  m
-#           if m == icount
-#        DO j 
-#              xj(j)     = wOccA_frag(j)
-#              execute return_sval xj(j)  n
-#              if n == jcount
-#                GET SOVL(i,j) 
-#                etemp = SOVL(i,j)*SOVL(i,j) 
-#                etemp *= nn_rep 
-#                etemp *= 0.5  
-#                esum += etemp 
-#              endif 
-#        ENDDO j 
-#              endif 
-#        ENDDO i 
-#        print_scalar esum 
+         Tij[ifrag,jfrag] = esum
+	 put e10exch[ifrag,jfrag] += Tij[ifrag,jfrag]
 # 
          endif # pair_flag > zero  
          endif 
@@ -5198,115 +5285,30 @@ import "trans_frag_defs.sialx"
       collective e1x_at += esum   
       print e1x_at 
 # 
+      execute get_my_rank rank
+      if rank == 0.0
+	 do ifrag
+         do jfrag
+	 icount = (scalar)ifrag
+         if ifrag != jfrag 
+         jcount = (scalar)jfrag
+         execute return_pairs icount jcount r_thresh pair_flag 
+         if pair_flag > zero  
+
+         allocate contiguous final_e10exch[ifrag:ifrag,jfrag:jfrag]
+         get e10exch[ifrag,jfrag]
+	 final_e10exch[ifrag:ifrag,jfrag:jfrag] = e10exch[ifrag,jfrag]
+	 print final_e10exch[ifrag:ifrag,jfrag:jfrag]
+	 deallocate contiguous final_e10exch[ifrag:ifrag,jfrag:jfrag]
+
+	 endif    
+	 endif
+	 enddo jfrag
+	 enddo ifrag
+      endif
    
       ENDPROC EXCHANGE_ALT
 #     -------------------- 
-# 
-      PROC EXCHANGE_TEST 
-# 
-      sip_barrier
-
-      PARDO ifrag 
-         icount = 0.0 
-         DO iifrag 
-            icount += 1.0 
-            if iifrag == ifrag 
-               exit 
-            endif 
-         ENDDO iifrag 
-# 
-      jcount = 0.0 
-      DO jfrag 
-         jcount += 1.0 
-        if ifrag != jfrag 
-#
-         esum = 0.0 
-         DO a
-            xa[a]      = wVirtA_frag[a]
-            execute return_sval xa[a]  l
-            if l == icount
-         DO i
-            xi[i]      = wOccA_frag[i]
-            execute return_sval xi[i]  s
-            if s == icount
-               GET wC[a,i] 
-               GET x1new[a,i] 
-               DO j
-                  xj[j]      = wOccA_frag[j]
-                  execute return_sval xj[j]  m
-                  if m == jcount
-                     GET SOVL[j,a] 
-                     GET SOVL[i,j] 
-
-                     tpp[i,a] = SOVL[i,j]*SOVL[j,a] 
-                     etemp = wC[a,i]*tpp[i,a] 
-                     etemp*=  2.0  
-                     esum += etemp 
-                     etemp = x1new[a,i]*tpp[i,a] # VFL TEST  
-                     etemp*= -2.0  
-                     esum += etemp 
-
-                  endif # m == jcount
-               ENDDO j
-            endif # s == icount
-         ENDDO i
-            endif 
-         ENDDO a
-#
-         DO a
-            xa[a]      = wVirtA_frag[a]
-            execute return_sval xa[a]  l
-            if l == icount
-         DO i
-            xi[i]      = wOccA_frag[i]
-            execute return_sval xi[i]  s
-            if s == icount
-               DO b
-                  xb[b]      = wVirtA_frag[b]
-                  execute return_sval xb[b]  n
-                  if n == jcount
-               DO j
-                  xj[j]      = wOccA_frag[j]
-                  execute return_sval xj[j]  m
-                  if m == jcount
-                     GET Vaibj[a,i,b,j] 
-                     GET T2new[a,i,b,j] 
-                     GET SOVL[j,a] 
-                     GET SOVL[i,b] 
-                     t1pp[a,j]  = Vaibj[a,i,b,j]*SOVL[i,b]  
-                     tpp[a,j] = T2new[a,i,b,j]*SOVL[i,b]  
-                     tpp[a,j] -= t1pp[a,j] 
-                     etemp = SOVL[j,a]*tpp[a,j] 
-
-                     etemp*= -1.0  # Not 2 to avoid overcounting ??? 
-                     esum += etemp 
-                  endif # m == jcount
-               ENDDO j
-                  endif # n == jcount
-               ENDDO b
-            endif # s == icount
-         ENDDO i
-            endif 
-         ENDDO a
-
-         t20disp[ifrag,jfrag]      = esum   
-         PUT e10exch[ifrag,jfrag] += t20disp[ifrag,jfrag] 
-
-        endif # ifrag != jfrag 
-      ENDDO jfrag 
-      ENDPARDO ifrag 
-      sip_barrier
-
-# SKIP AS TOO MUCH PRINT 
-   #  PARDO ifrag, jfrag 
-   #   if ifrag != jfrag 
-   #     GET e10exch(ifrag,jfrag) 
-   #     execute print_block e10exch(ifrag,jfrag) 
-   #   endif 
-   #  ENDPARDO ifrag, jfrag 
-# 
-      ENDPROC EXCHANGE_TEST 
-# 
 # -----------------------------------------------------------------------------
 # 
       PROC FORM_T2_MONOMER  
@@ -5324,13 +5326,7 @@ import "trans_frag_defs.sialx"
 #
       sip_barrier
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 
         DO a
          xa[a]      = wVirtA_frag[a]     
@@ -5370,13 +5366,7 @@ import "trans_frag_defs.sialx"
 #
       sip_barrier
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
         #print_scalar icount
 
          GET     e2error[ifrag] 
@@ -5977,18 +5967,17 @@ import "trans_frag_defs.sialx"
       execute get_my_rank rank
       if rank == 0.0
       do ifrag
-      do jfrag
-       if ifrag == jfrag 
-	 allocate contiguous monomer_e20disp[ifrag:ifrag,jfrag:jfrag]
+#      do jfrag
+#       if ifrag == jfrag 
+	 allocate contiguous monomer_lccd[ifrag:ifrag]
          GET                        e20c[ifrag] 
-         t20disp[ifrag,jfrag]     = e20c[ifrag]
-         monomer_e20disp[ifrag:ifrag,jfrag:jfrag] = e20c[ifrag]  
-	 print monomer_e20disp[ifrag:ifrag,jfrag:jfrag]
-         PUT e20monomer[ifrag,jfrag] = t20disp[ifrag,jfrag] 
+         monomer_lccd[ifrag:ifrag] = e20c[ifrag]  
+	 print monomer_lccd[ifrag:ifrag]
          etemp = e20c[ifrag] 
          esum -= etemp 
-       endif 
-      enddo jfrag
+	 deallocate contiguous monomer_lccd[ifrag:ifrag]
+#       endif 
+#      enddo jfrag
       enddo ifrag
       endif
       sip_barrier
@@ -6072,13 +6061,7 @@ import "trans_frag_defs.sialx"
 #     sip_barrier 
 #
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 
         DO a2 
          xa2[a2]    = wVirtA_frag[a2]     
@@ -6298,13 +6281,7 @@ import "trans_frag_defs.sialx"
 #
 #
       PARDO ifrag  
-         icount = 0.0 
-         DO iifrag 
-            icount   += 1.0 
-            IF iifrag == ifrag 
-               exit 
-            ENDIF 
-         ENDDO iifrag 
+	 icount = (scalar)ifrag
 
         DO a2 
          xa2[a2]    = wVirtA_frag[a2]     
@@ -6446,10 +6423,10 @@ import "trans_frag_defs.sialx"
      #create DCa 
      #create DFock_a
       sip_barrier
-      restore_persistent Dca "ca" 
-      set_persistent Dca "ca" 
-      restore_persistent DFock_a "fock_a"
-      set_persistent DFock_a "fock_a"
+#      restore_persistent Dca "ca" 
+#      set_persistent Dca "ca" 
+#      restore_persistent DFock_a "fock_a"
+#      set_persistent DFock_a "fock_a"
       rmaster = 0
      #allocate ca(*,*) 
       allocate sp[*] 
@@ -6457,10 +6434,12 @@ import "trans_frag_defs.sialx"
       one  = 1.0 
 ###   r_thresh = 12.0 # SHOULD BE READ ???? 
       print r_thresh 
+      print elst_thresh 
+      mone = -1.0 
+#      cc_conv = cc_conv 
+      print cc_conv 
       sip_barrier
-      print "Done restoring persistent arrays" 
-
-      allocate contiguous macro_e20[1:nfrags]
+      #print "Done restoring persistent arrays" 
       sip_barrier
 #
 # Declare the solute fragment 
@@ -6469,7 +6448,11 @@ import "trans_frag_defs.sialx"
       CALL SET_FRAG_PARMS   
       sip_barrier 
       print "Done setting fragment parameters" 
+      print "Performing monomer SCF"
+      call IGUESS
+      sip_barrier 
 
+      print "Placing HF coefficients on nodes"
       DO p 
          Sx3[p] = 1.0 
       ENDDO p  
@@ -6520,87 +6503,23 @@ import "trans_frag_defs.sialx"
            endif # m
          ENDDO mu  
 
-#        DO a  
-#           xa(a)     = wVirtA_frag(a)
-#           execute return_sval xa(a)  m
-#           if m == icount
-#           DO a1  
-#             xa1(a1)     = wVirtA_frag(a1)
-#             execute return_sval xa1(a1)  n
-#             if n == icount
-#                GET            Dfock_a(a,a1) 
-#                fock_a(a,a1) = Dfock_a(a,a1) 
-#             endif # n 
-#           ENDDO a1  
-#           endif # m 
-#       ENDDO a  
-
-#        DO i  
-#           xi(i)     = wOccA_frag(i)
-#           execute return_sval xi(i)  m
-#           if m == icount
-#           DO a1  
-#             xa1(a1)     = wVirtA_frag(a1)
-#             execute return_sval xa1(a1)  n
-#             if n == icount
-#                GET            Dfock_a(i,a1) 
-#                fock_a(i,a1) = Dfock_a(i,a1) 
-#             endif # n 
-#           ENDDO a1  
-#           endif # m 
-#       ENDDO i  
-
-#        DO a  
-#           xa(a)     = wVirtA_frag(a)
-#           execute return_sval xa(a)  m
-#           if m == icount
-#           DO i1  
-#             xi1(i1)     = wOccA_frag(i1)
-#             execute return_sval xi1(i1)  n
-#             if n == icount
-#                GET            Dfock_a(a,i1) 
-#                fock_a(a,i1) = Dfock_a(a,i1) 
-#             endif # n 
-#           ENDDO i1  
-#           endif # m 
-#       ENDDO a  
-
-#        DO i  
-#           xi(i)     = wOccA_frag(i)
-#           execute return_sval xi(i)  m
-#           if m == icount
-#           DO i1  
-#             xi1(i1)     = wOccA_frag(i1)
-#             execute return_sval xi1(i1)  n
-#             if n == icount
-#                GET            Dfock_a(i,i1) 
-#                fock_a(i,i1) = Dfock_a(i,i1) 
-#             endif # n 
-#           ENDDO i1  
-#           endif # m 
-#       ENDDO i  
-
       ENDDO ifrag
 
       sip_barrier
 
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
-      imax = 0.0  
-      zmax = 0.0  
-      print "Start computing scratch memory" 
-      execute compute_int_scratchmem_lowmem  zmax imax 
-      print "Done computing scratch memory" 
+#      imax = 0.0  
+#      zmax = 0.0  
+#      print "Start computing scratch memory" 
+#      execute compute_int_scratchmem_lowmem  zmax imax 
+#      print "Done computing scratch memory" 
 
 #     Compute the NN repusion between fragments  
 #     ----------------------------------------- 
-      #nn_rep = 0.0 
-      ###execute compute_nn_repulsion nn_rep 
-      #print nn_rep 
-
-      mone = -1.0 
-#      cc_conv = cc_conv 
-      print cc_conv 
+      nn_rep = 0.0 
+      execute compute_nn_repulsion nn_rep
+      print nn_rep 
 #
 #     Perform 2-el integral transformation and calculate second order energies   
 #     ------------------------------------------------------------------------ 
@@ -6635,588 +6554,19 @@ import "trans_frag_defs.sialx"
       CALL FORM_T1
       sip_barrier 
       print "Completely Done singles formation" 
-# Do NOT use wC in the dimer_doubles calculations 
-     #PARDO p, p1 
-     #   tpp(p,p1)    = 0.0 
-     #   PUT wC(p,p1) = tpp(p,p1)  
-     #ENDPARDO p, p1 
-      sip_barrier 
-#
-#     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
-#     ------------------------------------------------------ 
-      CALL FORM_T2_0GUESS 
-      sip_barrier 
-      print "Done forming T2_0guess" 
-
-# Start macro-iterations 
-      DO jiter 
-         sip_barrier 
-
-         PARDO ifrag 
-           GET                   e20c[ifrag] 
-           PUT e2_macro[ifrag] = e20c[ifrag] 
-         ENDPARDO ifrag  
-
-         sip_barrier 
-         CALL FORM_T2_GUESS 
-         sip_barrier 
-	 print "Entering FORM_T2_FRAGMENT_ITERS"
-         CALL FORM_T2_FRAGMENT_ITERS 
-         sip_barrier 
-	 print "Entering FORM_T2_DIMER_ITERS"
-         CALL FORM_T2_DIMER_ITERS 
-         fragment_doubles = 0.0 
-         esum = 0.0 
-         sip_barrier 
-# Print out energies after each macroiteration  
-         print "MCPT(2) monomer macro-iteration energies"
-         execute get_my_rank rank
-         if rank == 0.0
-         DO ifrag
-            GET                 e20c[ifrag] 
-            macro_e20[ifrag:ifrag]  = e20c[ifrag] 
-            print macro_e20[ifrag:ifrag] 
-            etemp = e20c[ifrag] 
-            fragment_doubles += etemp 
-         ENDDO ifrag   
-         endif
-         sip_barrier 
-         print "Done forming T2 Dimer calculation" 
-# Determine if full macro convergence is met 
-         do_iter = 0.0 
-         DO ifrag 
-           GET          e20c[ifrag] 
-           GET          e2_macro[ifrag] 
-           tp[ifrag]  = e20c[ifrag]  
-           tp[ifrag] -= e2_macro[ifrag]  
-           execute return_sval tp[ifrag] etemp  
-           if etemp < zero 
-              etemp *= -1.0 
-           endif 
-           IF etemp > cc_conv 
-              do_iter = 2.0 
-           ENDIF 
-         ENDDO ifrag 
-         print etemp 
-         print do_iter  
-         sip_barrier 
-         if do_iter < 1.0 
-            exit 
-         endif 
-#
-      ENDDO jiter 
-      sip_barrier
-     #CALL EXCHANGE_TEST 
-#
-# Finally we want to compute, at least approximately, the intramonomer correlation 
-# effects to the first-order. The following steps must be performed. 
-# 1. Form monomer T2 amplitudes. 
-# 2. Form 3-virt and 3-occ integrals on monomers. !!! DONE EARLIER IN TRANSFORMATION 
-# 3. Compute eps pol 
-#
-      CALL FORM_T2_MONOMER  
-      sip_barrier
-#
-#      CALL POL1_EPS 
 #
       eint_tot  = 0.0 
       eint_tot += e1x_at  
       eint_tot += e10pol_at  
-      eint_tot += eps1_pol   
       eint_tot += singles  
-      eint_tot += dimer_doubles  
-      eint_tot += fragment_doubles  
-      eint_tot += mono_lccd   
 
 
       print e1x_at 
       print e10pol_at 
-      print eps1_pol  
       print singles  
-      print dimer_doubles  
-      print fragment_doubles  
-      print mono_lccd  
 
       print eint_tot 
-# Compute the second-order exchange energy 
-     #CALL EXCHANGE_TEST  
          sip_barrier 
-##
-## Compute the 1-density of the monomers. 
-##
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#         DO a 
-#            xa[a] = wVirtA_frag[a]  
-#            execute return_sval xa[a]  m  
-#            if m == icount 
-#         DO a1 
-#            xa1[a1] = wVirtA_frag[a1]  
-#            execute return_sval xa1[a1]  n  
-#            if n == icount 
-#               tpp[a,a1] = 0.0 
-#         DO a2 
-#            xa2[a2] = wVirtA_frag[a2]  
-#            execute return_sval xa2[a2]  n1  
-#            if n1 == icount 
-#         DO i 
-#            xi[i] = wOccA_frag[i]  
-#            execute return_sval xi[i]  s  
-#            if s == icount 
-#         DO i2 
-#            xi1[i2] = wOccA_frag[i2]  
-#            execute return_sval xi1[i2] l  
-#            if l == icount 
-#
-#               GET T2old[a,i,a2,i2] 
-#               GET T2old[a1,i,a2,i2] 
-#               GET T2old[a1,i2,a2,i] 
-#
-#               taiai[a1,i2,a2,i] = T2old[a1,i,a2,i2] 
-#               taiai[a1,i2,a2,i]*= 2.0  
-#               taiai[a1,i2,a2,i]-= T2old[a1,i2,a2,i] 
-#
-#               t1pp[a,a1] = T2old[a,i,a2,i2]*taiai[a1,i2,a2,i] 
-#               tpp[a,a1] -= t1pp[a,a1] 
-#
-#             endif 
-#         ENDDO i2 
-#             endif 
-#         ENDDO i 
-#             endif 
-#         ENDDO a2 
-#               PUT DENSAA[a,a1] += tpp[a,a1] 
-#             endif 
-#         ENDDO a1 
-#             endif 
-#         ENDDO a 
-#      ENDPARDO kfrag   
-##
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#         DO i 
-#            xi[i] = wOccA_frag[i]  
-#            execute return_sval xi[i]  m  
-#            if m == icount 
-#         DO i1 
-#            xi1[i1] = wOccA_frag[i1]  
-#            execute return_sval xi1[i1]  n  
-#            if n == icount 
-#               tpp[i,i1] = 0.0 
-#         DO i2 
-#            xi2[i2] = wOccA_frag[i2]  
-#            execute return_sval xi2[i2]  n1  
-#            if n1 == icount 
-#         DO a 
-#            xa[a] = wVirtA_frag[a]  
-#            execute return_sval xa[a]  s  
-#            if s == icount 
-#         DO a2 
-#            xa1[a2] = wVirtA_frag[a2]  
-#            execute return_sval xa1[a2] l  
-#            if l == icount 
-#
-#               GET T2old[a,i,a2,i2] 
-#               GET T2old[a,i1,a2,i2] 
-#               GET T2old[a,i2,a2,i1] 
-#
-#               taiai[a,i2,a2,i1] = T2old[a,i1,a2,i2] 
-#               taiai[a,i2,a2,i1]*= 2.0  
-#               taiai[a,i2,a2,i1]-= T2old[a,i2,a2,i1] 
-#
-#               t1pp[i,i1] = T2old[a,i,a2,i2]*taiai[a,i2,a2,i1] 
-#               tpp[i,i1] += t1pp[i,i1] 
-#
-#             endif 
-#         ENDDO a2 
-#             endif 
-#         ENDDO a 
-#             endif 
-#         ENDDO i2 
-#               PUT DENSAA[i,i1] += tpp[i,i1] 
-#             endif 
-#         ENDDO i1 
-#             endif 
-#         ENDDO i 
-#      ENDPARDO kfrag   
-# 
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#
-#         DO a 
-#            xa[a] = wVirtA_frag[a]  
-#            execute return_sval xa[a]  m  
-#            if m == icount 
-#         DO a1 
-#            xa1[a1] = wVirtA_frag[a1]  
-#            execute return_sval xa1[a1]  n  
-#            if n == icount 
-#            tpp[a,a1] = 0.0 
-#         DO i 
-#            xi[i] = wOccA_frag[i]  
-#            execute return_sval xi[i]  s  
-#            if s == icount 
-#               GET t1old[a,i]  
-#               GET t1old[a1,i]  
-#               t1pp[a,a1] = t1old[a,i]*t1old[a1,i] 
-#               tpp[a,a1] -= t1pp[a,a1] 
-#             endif 
-#         ENDDO i 
-#             PUT DensAA[a,a1] += tpp[a,a1] 
-#             endif 
-#         ENDDO a1  
-#             endif 
-#         ENDDO a 
-#
-#         DO i 
-#            xi[i] = wOccA_frag[i]  
-#            execute return_sval xi[i]  m  
-#            if m == icount 
-#         DO i1 
-#            xi1[i1] = wOccA_frag[i1]  
-#            execute return_sval xi1[i1]  n  
-#            if n == icount 
-#            tpp[i,i1] = 0.0 
-#         DO a 
-#            xa[a] = wVirtA_frag[a]  
-#            execute return_sval xa[a]  s  
-#            if s == icount 
-#               GET t1old[a,i]  
-#               GET t1old[a,i1]  
-#               t1pp[i,i1] = t1old[a,i]*t1old[a,i1] 
-#               tpp[i,i1] += t1pp[i,i1] 
-#             endif 
-#         ENDDO a 
-#             PUT DensAA[i,i1] += tpp[i,i1] 
-#             endif 
-#         ENDDO i1  
-#             endif 
-#         ENDDO i 
-#
-#      ENDPARDO kfrag   
-#      server_barrier 
-##
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#
-#         DO mu 
-#            x1[mu]     = wAO_frag[mu]     
-#            execute return_sval x1[mu]  m  
-#            if m == icount  
-#         DO nu 
-#            x2[nu]     = wAO_frag[nu] 
-#            execute return_sval x2[nu]  n  
-#            if n == icount  
-#
-#               txx[mu,nu] = 0.0 
-#
-#               DO a 
-#                  xa[a] = wVirtA_frag[a]  
-#                  execute return_sval xa[a]  s  
-#                  if s == icount 
-#               DO a1 
-#                  xa1[a1] = wVirtA_frag[a1]  
-#                  execute return_sval xa1[a1]  l  
-#                  if l == icount 
-#
-#                     GET           DensAA[a1,a]  
-#                     txp[mu,a]   = ca[mu,a1]*DensAA[a1,a] 
-#                     t1xx[mu,nu] = txp[mu,a]*ca[nu,a] 
-#                     txx[mu,nu] += t1xx[mu,nu] 
-#
-#                  endif 
-#               ENDDO a1 
-#                  endif 
-#               ENDDO a 
-#
-#               DO i 
-#                  xi[i] = wOccA_frag[i]  
-#                  execute return_sval xi[i]  m  
-#                  if m == icount 
-#               DO i1 
-#                  xi1[i1] = wOccA_frag[i1]  
-#                  execute return_sval xi1[i1]  n  
-#                  if n == icount 
-#
-#                     GET           DensAA[i1,i]  
-#                     txp[mu,i]   = ca[mu,i1]*DensAA[i1,i] 
-#                     t1xx[mu,nu] = txp[mu,i]*ca[nu,i] 
-#                     txx[mu,nu] += t1xx[mu,nu] 
-#
-#                  endif 
-#               ENDDO i1 
-#                  endif 
-#               ENDDO i 
-#
-#               txx[mu,nu] *= 2.0 
-#               PUT DENS_ao[mu,nu] += txx[mu,nu] 
-#
-#            endif 
-#         ENDDO nu 
-#            endif 
-#         ENDDO mu 
-#
-#      ENDPARDO kfrag   
-#      server_barrier 
-##
-##
-## Compute the dipole moment for the momomers 
-#
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#         print icount 
-#
-#         etemp = 10.0 # x_nuc   
-#         execute compute_xyz_batch jcount icount  etemp  
-#         print etemp 
-#         tp[kfrag] = etemp 
-#         put dip_xmom[kfrag] = tp[kfrag]  
-#
-#         etemp = 11.0 # y_nuc   
-#         execute compute_xyz_batch jcount icount  etemp  
-#         tp[kfrag] = etemp 
-#         put dip_ymom[kfrag] = tp[kfrag]  
-#         print etemp 
-#
-#         etemp = 12.0 # z_nuc   
-#         execute compute_xyz_batch jcount icount  etemp  
-#         tp[kfrag] = etemp 
-#         put dip_zmom[kfrag] = tp[kfrag]  
-#         print etemp 
-#      ENDPARDO kfrag 
-#      server_barrier 
-#
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#         print icount 
-#
-#         DO mu 
-#            x1[mu]     = wAO_frag[mu]     
-#            execute return_sval x1[mu]  m  
-#            if m == icount  
-#         DO nu 
-#            x2[nu]     = wAO_frag[nu] 
-#            execute return_sval x2[nu]  n  
-#            if n == icount  
-#
-#               GET          DENS_ao[mu,nu] 
-#               txx[mu,nu] = 0.0 
-#               do i 
-#                  xi[i] = wOccA_frag[i]  
-#                  execute return_sval xi[i]  s  
-#                  if s == icount 
-#                     t1xx[mu,nu] = ca[mu,i]*ca[nu,i] 
-#                     txx[mu,nu] -= t1xx[mu,nu] 
-#                  endif 
-#               enddo i 
-#               txx[mu,nu] *= 2.0 
-#               PUT HFDENS[mu,nu] += txx[mu,nu] 
-#               txx[mu,nu] += DENS_ao[mu,nu] 
-#
-#               t2xx[mu,nu] = 0.0 
-#               etemp = 1.0 # x  
-#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-#               etemp = txx[mu,nu] * t2xx[mu,nu] 
-#               tp[kfrag] = etemp 
-#               put dip_xmom[kfrag] += tp[kfrag]  
-#
-#               t2xx[mu,nu] = 0.0 
-#               etemp = 2.0 # y  
-#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-#               etemp = txx[mu,nu] * t2xx[mu,nu] 
-#               tp[kfrag] = etemp 
-#               put dip_ymom[kfrag] += tp[kfrag]  
-#
-#               t2xx[mu,nu] = 0.0 
-#               etemp = 3.0 # z  
-#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-#               etemp = txx[mu,nu] * t2xx[mu,nu] 
-#               tp[kfrag] = etemp 
-#               put dip_zmom[kfrag] += tp[kfrag]  
-#
-#            endif # ncount 
-#         ENDDO nu 
-#            endif # m == icount  
-#         ENDDO mu 
-#
-#      ENDPARDO kfrag   
-#      server_barrier 
-#
-#      PARDO kfrag   
-#         icount = 0.0 
-#         DO kkfrag 
-#            icount   += 1.0 
-#            IF kkfrag == kfrag 
-#               exit 
-#            ENDIF 
-#         ENDDO kkfrag 
-#
-#         GET e10c[kfrag] 
-#         etemp1 = e10c[kfrag] 
-#
-#      jcount = 0.0 
-#      DO jfrag 
-#         jcount += 1.0 
-#
-#      if jfrag != kfrag  
-#         GET e10c[jfrag] 
-#         etemp2 = e10c[jfrag] 
-#         etemp3 = etemp2/etemp1 
-#         etemp3 = 1.0 
-#
-#        #execute return_pairs icount jcount r_thresh pair_flag 
-#        #if pair_flag > zero  
-##
-#
-#         DO mu 
-#            x1[mu]     = wAO_frag[mu]     
-#            execute return_sval x1[mu]  m  
-#            if m == icount  
-#         DO nu 
-#            x2[nu]     = wAO_frag[nu] 
-#            execute return_sval x2[nu]  n  
-#            if n == jcount  
-#
-#            t3xx[mu,nu] = 0.0 
-#
-#         DO mu1 
-#            x3[mu1]     = wAO_frag[mu1]     
-#            execute return_sval x3[mu1]  m1  
-#            if m1 == icount  
-#         DO nu1 
-#            x4[nu1]     = wAO_frag[nu1] 
-#            execute return_sval x4[nu1]  n1  
-#            if n1 == jcount  
-#
-#               GET           oed_ovl[mu1,nu1] 
-#               GET           HFDENS[mu,mu1] 
-#               GET           HFDENS[nu,nu1] 
-#               txx[mu,nu1] = HFDENS[mu,mu1]*oed_ovl[mu1,nu1] 
-#               t1xx[mu,nu] = txx[mu,nu1]*HFDENS[nu,nu1] 
-#               t1xx[mu,nu]*= 0.5 # To avoid overcounting  
-#               t3xx[mu,nu] += t1xx[mu,nu] 
-#
-#            endif 
-#         ENDDO nu1 
-#            endif 
-#         ENDDO mu1 
-#
-#               t2xx[mu,nu] = 0.0 
-#               etemp = 1.0 # x  
-#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-#               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
-#               tp[kfrag] = etemp 
-#               tp[kfrag]*= etemp3
-#               put dip_xmom[kfrag] += tp[kfrag]  
-#
-#               t2xx[mu,nu] = 0.0 
-#               etemp = 2.0 # y  
-#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-#               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
-#               tp[kfrag] = etemp 
-#               tp[kfrag]*= etemp3
-#               put dip_ymom[kfrag] += tp[kfrag]  
-#
-#               t2xx[mu,nu] = 0.0 
-#               etemp = 3.0 # z  
-#               execute compute_xyz_batch t2xx[mu,nu] icount  etemp  
-#               etemp = t3xx[mu,nu] * t2xx[mu,nu] 
-#               tp[kfrag] = etemp 
-#               tp[kfrag]*= etemp3
-#               put dip_zmom[kfrag] += tp[kfrag]  
-#
-#            endif 
-#         ENDDO nu 
-#            endif 
-#         ENDDO mu 
-#
-#        #endif 
-#         endif # jcount 
-#      ENDDO jfrag 
-#      ENDPARDO kfrag 
-#
-#      xDip_tot = 0.0 
-#      yDip_tot = 0.0 
-#      zDip_tot = 0.0 
-#      server_barrier 
-#
-#      execute get_my_rank rank
-#      if rank == 0.0
-#      allocate contiguous x_dipole[1:nfrags]
-#      allocate contiguous y_dipole[1:nfrags]
-#      allocate contiguous z_dipole[1:nfrags]
-#      allocate contiguous abs_dipole[1:nfrags]
-#      DO kfrag 
-#         GET dip_xmom[kfrag] 
-#         GET dip_ymom[kfrag] 
-#         GET dip_zmom[kfrag] 
-#
-#	 x_dipole[kfrag:kfrag] = dip_xmom[kfrag]
-#	 y_dipole[kfrag:kfrag] = dip_ymom[kfrag]
-#	 z_dipole[kfrag:kfrag] = dip_zmom[kfrag]
-#         
-#         esum  = 0.0 
-#         etemp = dip_xmom[kfrag]*dip_xmom[kfrag]  
-#         esum += etemp 
-#         etemp = dip_ymom[kfrag]*dip_ymom[kfrag]  
-#         esum += etemp 
-#         etemp = dip_zmom[kfrag]*dip_zmom[kfrag]  
-#         esum += etemp 
-#
-#	 abs_dipole[kfrag:kfrag] = esum
-#	 print x_dipole[kfrag:kfrag]
-#	 print y_dipole[kfrag:kfrag]
-#	 print z_dipole[kfrag:kfrag]
-#	 print abs_dipole[kfrag:kfrag]
-#
-#      ENDDO kfrag 
-#      endif
-#      server_barrier 
-
-     #print_scalar xDip_tot 
-     #print_scalar yDip_tot 
-     #print_scalar zDip_tot 
-     
-#
-#
-# -----------------------------------------------------------------------------
-#
                            ENDSIAL FRAG_2ORDER_CORR 
 #
 ###############################################################################
