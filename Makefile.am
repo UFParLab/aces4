@@ -545,6 +545,7 @@ SIOX_FILES=\
 ./src/sialx/test/block_scale_assign.siox\
 ./src/sialx/test/return_sval_test.siox\
 ./src/sialx/test/index_scalar_cast.siox\
+./src/sialx/test/contig_local3.siox\
 ./src/sialx/test/contiguous_local.siox\
 ./src/sialx/test/contiguous_local_2.siox\
 ./src/sialx/test/contiguous_local_allocate_twice_fail.siox\
@@ -660,6 +661,7 @@ EXTRA_DIST += \
 ./src/sialx/test/block_scale_assign.sialx\
 ./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/test/index_scalar_cast.sialx\
+./src/sialx/test/contig_local3.sialx\
 ./src/sialx/test/contiguous_local.sialx\
 ./src/sialx/test/contiguous_local_2.sialx\
 ./src/sialx/test/contiguous_local_allocate_twice_fail.sialx\

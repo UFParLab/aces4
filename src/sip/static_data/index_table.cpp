@@ -271,6 +271,7 @@ int IndexTable::segment_range_extent(int index_slot, int range_lower, int range_
 	const IndexTableEntry entry = entries_.at(index_slot);
 	int extent = 0;
 	SIAL_CHECK(range_upper < (entry.lower_seg_+ entry.num_segments_), "upper bound of range undefined for index", current_line());
+	SIAL_CHECK(entry.lower_seg_ <= range_lower, std::string("lower bound of range undefined for index " + entry.name_), current_line());
 	for (int j = range_lower; j <= range_upper; ++j){
 		extent += entry.segment_extent(j);
 	}

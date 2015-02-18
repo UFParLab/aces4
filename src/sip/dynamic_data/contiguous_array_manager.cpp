@@ -82,7 +82,7 @@ ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 					insert_contiguous_array(i, block);
 				} else { //is predefined, but not in setreader.  Set to zero, insert into setup_reader map so it "owns" it and deletes it.
 
-				    SIP_MASTER(check_and_warn(false, "No data for predefined static array " + name));
+				    SIP_MASTER(check_and_warn(false, "No data for predefined static array " + name);)
 					block = create_contiguous_array(i);
 					int block_rank = sip_tables_.array_rank(i);
 					std::pair<int, Block::BlockPtr> zeroed_block_pair = std::make_pair(i, block);

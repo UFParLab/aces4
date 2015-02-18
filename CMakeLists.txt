@@ -596,6 +596,7 @@ set(SIAL_FILES
     src/sialx/test/block_scale_assign.sialx;
     src/sialx/test/return_sval_test.sialx;
     src/sialx/test/index_scalar_cast.sialx;
+    src/sialx/test/contig_local3.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
