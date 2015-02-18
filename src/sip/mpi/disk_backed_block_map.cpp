@@ -114,7 +114,7 @@ void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBloc
 }
 
 ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, const BlockId& block_id){
-	allocate_block(block, block_size, block_id, true);
+	return allocate_block(block, block_size, block_id, true);
 }
 
 ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, const BlockId& block_id, bool initialize){
@@ -202,7 +202,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 				read_block_from_disk(block, block_id, block_size);
 				total_cache_misses_count_.inc();
             } else {
-            	allocate_block(block, block_size, block_id, true);
+            	block = allocate_block(block, block_size, block_id, true);
             }
         }
 	}
@@ -231,7 +231,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	    block_map_.insert_block(block_id, block);
 	} else {
 		if (!block->is_in_memory())
-			allocate_block(block, block_size, block_id, false);
+			block = allocate_block(block, block_size, block_id, false);
 	}
 
 	block->set_in_memory();
