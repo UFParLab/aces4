@@ -316,6 +316,7 @@ QM_SOURCE_FILES=\
 
 # General Super Instructions
 GENERAL_SOURCE_FILES=\
+./general/get_first_block_element.cpp\
 ./general/list_block_map.cpp\
 ./general/print_block.cpp\
 ./general/print_static_array.cpp\

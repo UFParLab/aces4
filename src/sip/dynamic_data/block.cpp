@@ -75,6 +75,18 @@ Block::~Block() {
 //	//on a block that was never used.  Print a warning.  We probably want to be able
 //	//disable this check.  The logic is a bit convoluted--sial_warn=true, means not pending.
 	//we wait if this is not the case, i.e. if this block has pending request.
+//	if (state_.pending()){//DEBUG
+//		std::cout << "trying to delete pending block" << std::endl << std::flush;
+//		{
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+//	}
 	if (!sial_warn( !state_.pending() ,"deleting block with pending request, probably due to a get for a block that is not used")){
 		state_.wait(size());
 	}

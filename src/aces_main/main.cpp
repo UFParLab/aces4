@@ -208,17 +208,17 @@ int main(int argc, char* argv[]) {
                         struct tm * timeinfo;
                         time (&rawtime);
                         timeinfo = localtime (&rawtime);
-                        std::cout << "Current local time and date:" << asctime(timeinfo));
+                        std::cout << "Current local time and date:" << asctime(timeinfo);)
 			runner.interpret();
 			runner.post_sial_program();
 			persistent_worker.save_marked_arrays(&runner);
-			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
+			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker;)
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl;
-			time_t rawtime;
-			struct tm * timeinfo;
+			//time_t rawtime;
+			//struct tm * timeinfo;
 			time (&rawtime);
 			timeinfo = localtime (&rawtime);
-			std::cout << "Current local time and date:" << asctime(timeinfo));
+			std::cout << "Current local time and date:" << asctime(timeinfo);)
 
 			sialxTimer.print_timers(lno2name);
 
