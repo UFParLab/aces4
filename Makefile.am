@@ -370,7 +370,6 @@ TEST_LDADD_VARS = \
 test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
-test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 test_interpreters_LDADD = $(TEST_LDADD_VARS)
 
@@ -393,10 +392,6 @@ copy-data-files.stamp:
 #	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
 #	test_qm_LDADD += $(PTHREAD_LIBS)
 #	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
-#	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
-#	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
-#	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
-#	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
 #endif
 
 
@@ -438,7 +433,6 @@ TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
-test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_interpreters_LDFLAGS = $(TEST_LDFLAGS_VARS)
 

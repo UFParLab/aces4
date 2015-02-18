@@ -432,7 +432,7 @@ else()
 	add_dependencies(profile_merge tensordil superinstructions)
 endif()
 
-add_dependencies(superinstructions aces4_core tensordil)
+add_dependencies(superinstructions aces4_sip tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
