@@ -51,7 +51,7 @@ predefined static fock_b[aces_defs_pb, aces_defs_pb]
 
 predefined static oed_nai[aces_defs_mu,aces_defs_mu]
 predefined static oed_kin[aces_defs_mu,aces_defs_mu]
-###predefined static oed_ovl(aces_defs_mu,aces_defs_mu)
+predefined static oed_ovl[aces_defs_mu,aces_defs_mu]
 
 predefined scalar damp #value of DAMPSCF from ZMAT
 predefined scalar cc_conv  # value of CC_CONV from ZMAT.
