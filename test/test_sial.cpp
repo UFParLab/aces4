@@ -440,7 +440,74 @@ TEST(Sip,message_number_wraparound){
 	controller.initSipTables();
 	controller.run();
 }
+/*
+ * predefined int eom_roots
+predefined int eom_subspc
+index kstate   = 1: eom_roots
+index ksub     = 1: eom_subspc
+moaindex i = baocc: eaocc
+moaindex i1= baocc: eaocc
+moaindex a = bavirt: eavirt
+moaindex a1= bavirt: eavirt
 
+served RB2_aa[ksub,a,i,a1,i1]
+served R1k2_aa[kstate,a,i,a1,i1]
+contiguous local CLRB2_aa[ksub,a,i,a1,i1]
+ */
+TEST(Sial,contig_local3){
+	std::string job("contig_local3");
+	double x = 3.456;
+	int norb = 8;
+	int eom_roots = 4;
+	int eom_subspc = 8;
+	int baocc = 1;
+	int eaocc = 3;
+	int bavirt = 4;
+	int eavirt = 8;
+	if (attr->global_rank() == 0){
+		init_setup(job.c_str());
+		set_constant("eom_roots",eom_roots);
+		set_constant("eom_subspc",8);
+		set_constant("baocc",baocc);
+		set_constant("eaocc",eaocc);
+		set_constant("bavirt",bavirt);
+		set_constant("eavirt",eavirt);
+        set_constant("norb",norb);
+		std::string tmp = job + ".siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		int segs[]  = {2,3,4,1,4,4,4,4};
+		set_moaindex_info(8,segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+	//TODO finish this
+//#ifdef HAVE_MPI
+//	if (attr->is_server_){
+//		for (size_t kstate = 1; kstate < eom_roots; ++kstate){
+//			for (size_t a = bavirt; a < eavirt ; ++a){
+//				for (size_t i = baocc; i < eaocc : ++i){
+//					for (size_t a1 = bavirt; a1 < eavirt; ++a1){
+//						for (size_t i1 = baocc; i1 < eaocc; ++i1){
+//							isFilled(kstate, controller.)
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+}
+
+//bool isFilled(double value, sip::Block::BlockPtr block){
+//	size_t size = block->size();
+//	for (size_t i = 0; i < size; ++i){
+//		ASSERT_DOUBLE_EQ(value, block->get_data()[i]);
+//	}
+//	return true;
+//}
 
 TEST(Sial,persistent_distributed_array_mpi){
 	std::string job("persistent_distributed_array_mpi");
