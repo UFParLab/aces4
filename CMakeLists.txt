@@ -28,22 +28,22 @@ endif()
 ##################
 # HAVE_TAU Option - TAU timers to be used instead of Linux / PAPI timers
 ##################
-option(HAVE_TAU "Whether to use TAU timers for SIAL programs" OFF)
+# option(HAVE_TAU "Whether to use TAU timers for SIAL programs" OFF)
 
 # Check if TAU available on system
-if (HAVE_TAU)
-    find_package(TAU REQUIRED)
-endif()
+# if (HAVE_TAU)
+#    find_package(TAU REQUIRED)
+# endif()
 
 ####################
 # HAVE_PAPI Options - PAPI Timers to be used instead of Linux Timers
 ####################
-option(HAVE_PAPI "Whether to use PAPI high resolution timers" OFF)
+# option(HAVE_PAPI "Whether to use PAPI high resolution timers" OFF)
 
 # Check if PAPI available on system
-if (HAVE_PAPI)
-    find_package(PAPI REQUIRED)
-endif()
+# if (HAVE_PAPI)
+#    find_package(PAPI REQUIRED)
+# endif()
 
 ####################
 # HAVE_CUDA Options - Whether to use CUDA accelerated super instructions
@@ -258,19 +258,19 @@ set (TOLINK_LIBRARIES
     ${LAPACK_LIBRARIES})
 
 # Append TAU include & library paths
-if (TAU_FOUND)
+#if (TAU_FOUND)
     # TAU needs these defines to compile properly
-    add_definitions(-DPROFILING_ON)
-    add_definitions(-DTAU_DOT_H_LESS_HEADERS)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TAU_INCLUDE_PATH})
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY})
-endif()
+    #    add_definitions(-DPROFILING_ON)
+    # add_definitions(-DTAU_DOT_H_LESS_HEADERS)
+    # set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TAU_INCLUDE_PATH})
+    # set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY})
+# endif()
 
 # Append PAPI include & library paths
-if (PAPI_FOUND)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PAPI_INCLUDE_PATH})
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY})
-endif()
+# if (PAPI_FOUND)
+    # set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PAPI_INCLUDE_PATH})
+    # set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY})
+# endif()
 
 # CUDA Super instructions
 if (CUDA_FOUND)

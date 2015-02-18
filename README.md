@@ -3,7 +3,7 @@ aces4
 
 Parallel Computational Chemistry Application
 
-Built in C, C++ & Fortran & Java.
+Built in C++, C, Fortran & Java.
 
 Successor to ACESIII [http://www.qtp.ufl.edu/]. 
 
@@ -17,106 +17,143 @@ Executables Built
 ```aces4``` - computational chemistry application
 ```
 Options : 
--d : .dat file, generated using acesinit. Contains initialization data
+-d : binary(.dat) initialization file, generated using acesinit. Contains initialization data
+-j : JSON file, containing initialization data. Used instead of -d
 -s : directory containing .siox files referred to in the .dat file.
 -m : approx. upper bound for memory usage. Additional usage in overhead & bookkeeping.
+-w : number of workers (defaults to ceil(2/3) of the total mpi ranks)
+-r : number of servers (defaults to floor(1/3) of the total mpi ranks)
+-h : prints usage
 ```
+
+### Abstract Interpreters
+
+```aces4_memory_ops``` - Memory Ops Interpreter. Just does memory allocations & deallocations to figure out if program will run to completion. Does no computation
+```
+Options : 
+Same as aces4
+-h : prints usage
+```
+
+```aces4_profile``` - Profile Interpreter. Does everything that aces4 does and additionally collects more performance data into sqlite3 data bases. This data is required by SIPMaP
+```
+Options : 
+Same as aces4
+-h : prints usage
+```
+
+```aces4_sipmap``` - SIPMaP Interpreter(Super Instruction Processor Modeling and Prediction). Does everything that aces4 does and additionally collects more performance data into sqlite3 data bases. This data is required by SIPMaP
+```
+Options : 
+-d : binary(.dat) initialization file, generated using acesinit. Contains initialization data
+-j : JSON file, containing initialization data. Used instead of -d
+-s : directory containing .siox files referred to in the .dat file.
+-p : the profile database. Typically generated per worker by the aces4_profile
+-w : number of workers (defaults to ceil(2/3) of the total mpi ranks) to simulate
+-r : number of servers (defaults to floor(1/3) of the total mpi ranks) to simulate
+-h : prints usage
+```
+
+
+```sqlite3``` - Executable to query sqlite3 database files. Distributed as part of the sqlite3 project.
+
+
+
+### Utilities
 
 ```print_siptables``` - dumps SipTables to stdout. SipTables store all static data contained in a compiled SIAL program and the .dat file.
 ```
 Options :
--d : .dat file, generated using acesinit. Contains initialization data
+-d : binary(.dat) initialization file, generated using acesinit. Contains initialization data
 -s : directory containing .siox files referred to in the .dat file.
+-h : prints usage
 ```
-
+```print_init_file``` - dumps .dat file to stdout. Can also convert binary (.dat) initialization file to JSON.
+```
+Options:
+-d : binary(.dat) initialization file, generated using acesinit. Contains initialization data.
+-j : JSON file, containing initialization data. Used instead of -d
+-J : prints out the JSON to standard out. Use -d <file.dat> -J > output.json to convert binary initialization data to JSON.
+-h : prints usage
+```
+```profile_merge``` - Merges profile information collected in sqlite3 database files from a profile interpreter run
+```
+Options:
+-h : prints usage
+```
 
 Prerequisites
 -------------
-```
-java
-GNU (gcc > v4.8, g++, gfortran, libblas-dev, liblapack-dev) or
-Intel compilers & Math Libraries
-```
+#### Required
+* java (to compile sialx files)
+* C++, C and Fortran Compilers
+* BLAS, LAPACK 
+* `automake, autoconf, libtool` for Autotools build system
+* `cmake` for cmake build system
+* Google tests v1.7 (if using cmake)
 
-If checking out from git:
-```
-automake
-autoconf
-libtool
-```
+#### Optional
+* MPI
+* CUDA
+* doxygen (to make documentation).
+* Google tests v1.7 (if using Autotools)
 
-You will need ```doxygen ``` to make documentation.
 
-Timer resolution can be improved with ```PAPI``` (http://icl.cs.utk.edu/papi/). 
-Can also use ```TAU``` (http://www.cs.uoregon.edu/research/tau) for detailed profile & trace information.
+Get Google Tests and unzip it into the `test/` directory.
+```wget http://googletest.googlecode.com/files/gtest-1.7.0.zip```
 
-Google tests v1.7 is required to run tests. 
-Get it from http://googletest.googlecode.com/files/gtest-1.7.0.zip. 
-Unzip it into the ```test/``` directory.
 
+### Tested Environments
+* Intel Compiler (2013) & OpenMPI(1.6.5) - ([HiperGator](http://hpc.ufl.edu/))
+* PGI Programming Environment (Version 14.7) -  ([Titan](https://www.olcf.ornl.gov/titan/))
+* GNU(4.8.1), OpenMPI(1.6.5) - (Ubuntu 14.04 Workstation)
+
+### Known Issues
+* Does not work with GNU (<4.8)
 
 To Compile & Test
------------------
+-----------------------
+* Autotools & cmake are supported.
+* Out of source builds are also supported.
 
-In the root of the project, say:
-```BASH
-./autogen.sh
-mkdir BUILD
-cd BUILD
-../configure
-make 
-```
-To run the tests (in the BUILD directory):
-```BASH
-make check
-```
-To make doxygen documentation pdf & html (in the BUILD directory):
-```BASH
-make doxygen-run
-```
+### Using the autotools build system
+* Generate the configure script by running `./autogen.sh`
+* Run configure with '''--help''' to print options supported
+* Run `configure` with approrpriate options, then `make`
+* Run tests with `make check`
+* To make doxygen documentation pdf & html : `make doxygen-run`
 
+#### Autotools configure Options
+`--with-mpi=yes/no` : Optionally builds the MPI version. Default behaviour is to build the MPI version if a MPI compiler can be found
+`--enable-development` : (SIP Developer Mode). Enable extra logging information. Useful for debugging the runtime system. Default is disabled.
+`--with-cuda=/path/to/cuda` : Enables build which accelerates super-instructions using CUDA if possible. /path/to/cuda is optional. Default is to not use CUDA.
 
-MPI Version
------------
-There are 2 versions of ACES4 - ```a single node``` and a ```MPI multinode version```.
-By default, if an MPI compiler can be detected, the mpi version will be compiled. 
-To disable this default behaviour, use the ```--with-mpi=no``` switch when configuring
-To forcefully build the multinode version, use the ```--with-mpi=yes``` switch.
+### Using the cmake build system
+* Run `cmake /path/to/aces4`, then `make`
+* Otherwise run `ccmake /path/to/aces4` to interactively choose build options
+* Run tests with `make test`
 
-
-PAPI Timers
------------
-Super instructions can be profiled with PAPI wall time timers. To enable their use, while configuring, use the ```--with-papi=PATH``` option, for instance on the UF HiperGator machine: ```../configure --with-papi=/apps/papi/5.1.0```
-
-If PAPI is not "installed" by your admin, you can download the tarball in your home directory, build it and "install" it in your home directory and point to that directory when configuring.
+#### cmake Options
+`-DHAVE_MPI=NO/YES` : Optionally builds the MPI version. Default behaviour is to build the MPI version, stops if MPI compiler cannot be found.
+`-DSIP_DEVEL=NO/YES` : (Developer Mode). Enable extra logging information. Useful for debugging the runtime system. Default is NO.
+`-DHAVE_CUDA=NO/YES` : Enables build which accelerates super-instructions using CUDA if possible. Default is NO.
 
 
-TAU Timers
-----------
-SIAL Programs & Super Instructions can be profiled & Traced with TAU. To enable them, use the --with-tau option. For instace, on the UF HiperGator machine:
-```BASH
-../configure --with-tau=/apps/tau/2.21.4/openmpi-1.6 # (for MPI)
-../configure --with-tau=/apps/tau/2.21.4/serial      # (for Serial).
-```
-If TAU is not "installed", you can download the tarball, compile (and install) it and have the ```--with-tau``` point to that directory.
+Notes
+-----
 
-Please set the Environment variable ```TAU_CALLPATH``` to ```0``` to only view time spent per superinstruction. This will hide the C++/Fortran call stack associated with a super-instruction. Setting ```TAU_PROFILE``` to ```1``` will collect profile information and setting ```TAU_TRACE``` to ```1``` will collect trace data. Documentation for TAU can be found here : ```http://www.cs.uoregon.edu/research/tau/docs.php```.
+### Single Node & MPI Version
+The single node version is single threaded.
+On the other hand, the multinode version uses MPI and requires at least 2 ranks for any job. One of them is spawned as the worker and the other as a server. Refer to the paper for more details.
 
-Note that if TAU is used, builtin aces4 profile information collection is disabled.
+### CUDA Support
+Certain super-instructions are accelerated through CUDA. 
+To enable their use, configure with the ```--with-cuda``` switch.  For instance, on the UF HiperGator machine: ```../configure --with-cuda=/opt/cuda```. Please note that on your system, you may need to load in the module first and figure out the path.  You can also just say ``` ../configure --with-cuda ``` and the configure script will attempt to find the cuda header and libraries in default locations.  It will complain if it cant, in which case, you'll need to use the ```--with-cuda=PATH``` switch.
 
-
-CUDA Support
-------------
-Certain super-instructions are accelerated through CUDA. To enable their use, configure with the ```--with-cuda``` switch. For instance, on the UF HiperGator machine: ```../configure --with-cuda=/opt/cuda```
-
-Please note that on your system, you may need to load in the module first and figure out the path. You can also just say ``` ../configure --with-cuda ``` and the configure script will attempt to find the cuda header and libraries in default locations. It will complain if it cant, in which case, you'll need to use the ```--with-cuda=PATH``` switch.
-
-
-Developer Mode (More logging)
------------------------------
-Use the ```--enable-development``` switch to configure to get extra logging.
 
 
 Tools
 -----
-Please explore the ```tool/``` directory.
+Please explore the ```tool/``` directory. Look at the README files in each directory.
+Also, look at the wiki. 
+
