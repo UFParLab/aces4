@@ -532,6 +532,7 @@ set(SIAL_FILES
     src/sialx/qm/trans_frag_defs.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
+    src/sialx/qm/tran_uhf_no4v.sialx;
     src/sialx/qm/tran_rhf_no4v_defs.sialx;
     src/sialx/qm/tran_rhf_no3v.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
@@ -542,6 +543,8 @@ set(SIAL_FILES
     src/sialx/qm/rccsdpt_aab.sialx;
     src/sialx/qm/cis_rhf.sialx;
     src/sialx/qm/cis_rhf_defs.sialx;
+    src/sialx/qm/reom_rhf_defs.sialx;
+    src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/cis_d_rhf.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx)

@@ -5,7 +5,6 @@ project(super_instructions_library)
 set(QM_SOURCE_FILES
     qm/cis_unit_guess.F;
     qm/cis_energy_numerator.F;
-    qm/cis_invert_diagonal.F;
     qm/update_cis_bvec.F;
     qm/energy_ty_denominator_rhf.F;
     qm/aoladder_contraction.F;
@@ -21,9 +20,13 @@ set(QM_SOURCE_FILES
     qm/instructions_for_testing.f;
     qm/set_ijk_aaa.F;
     qm/set_ijk_aab.F;
+    qm/utility/return_diagonal_elements.F;
+    qm/utility/invert_diagonal.F;
+    qm/utility/invert_diagonal_asym.F;
     qm/utility/eig.F;
     qm/utility/diag.F;
     qm/utility/eigen_calc.F;
+    qm/utility/gen_eigen_calc.F;
     qm/utility/form_R.F ;
     qm/utility/stripi.F;
     qm/utility/compute_diis.F;

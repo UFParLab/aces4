@@ -18,7 +18,6 @@
       index      D2  = 1: 30 
       index kstate   = 1: eom_roots
       index kstate1  = 1: eom_roots
-      index pstate   = eom_roots2: eom_subspc
       index ksub  = 1: eom_subspc
       index ksub1 = 1: eom_subspc
 #

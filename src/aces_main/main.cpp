@@ -214,8 +214,8 @@ int main(int argc, char* argv[]) {
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker;)
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl;
-			//time_t rawtime;
-			//struct tm * timeinfo;
+			time_t rawtime;
+			struct tm * timeinfo;
 			time (&rawtime);
 			timeinfo = localtime (&rawtime);
 			std::cout << "Current local time and date:" << asctime(timeinfo);)

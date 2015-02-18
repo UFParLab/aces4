@@ -1,4 +1,4 @@
-sial rccpt_rhf_defs
+sial reom_rhf_defs
 
 #
 predefined  int norb   #total number of atomic orbital segments 
@@ -20,10 +20,10 @@ predefined  int bbvirtorb
 predefined  int eavirtorb
 predefined  int ebvirtorb
 predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+predefined  scalar cc_conv
 predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
 predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
-predefined  scalar cc_conv
 
 
 #these are predefined in the index table         
@@ -33,19 +33,28 @@ aoindex aces_defs_mu = 1: norb
 
 predefined scalar scfeneg  # ???? 
 predefined scalar totenerg  #Total energy read in from JOBARC.
+predefined scalar eom_tol
+predefined int eom_roots
+predefined int eom_subspc
 
 #     PORTED 
 special compute_ubatch6 wrruu
 special compute_integral_batch w
 special energy_denominator_rhf ur 
-special return_sval rw
-special compute_diis u
-special print_static_array r
-special aoladder_contraction rru
-special compute_dipole_integrals wur
+special gen_eigen_calc uuuu
+special eigen_calc uu
+special return_diagonal_elements u
+special invert_diagonal ur
+special invert_diagonal_asym ur
+special get_my_rank u
+special anti_symm_v u
+special anti_symm_o u
+special lanti_symm_v u
+special lanti_symm_o u
+special cis_unit_guess ur
+special return_sval ru
 #     NOT PORTED 
-special get_my_rank w
 
-endsial rccpt_rhf_defs
+endsial reom_rhf_defs
 
 
