@@ -39,28 +39,9 @@ public:
 		BlockInfo& operator=(const BlockInfo& rhs);
 		bool operator==(const BlockInfo& rhs) const;
 		bool operator<(const BlockInfo& rhs) const;
+		bool array1_lt_array2(int rank, const int (&aray1)[MAX_RANK], const int (&array2)[MAX_RANK]) const; //! array1 < array2?
+		bool array1_eq_array2(int rank, const int (&array1)[MAX_RANK], const int (&array2)[MAX_RANK]) const; //! array1 == array2?
 		friend std::ostream& operator<<(std::ostream&, const ProfileTimer::BlockInfo&);
-
-	private:
-		/**
-		 * Is array1 less than array2
-		 * @param rank
-		 * @param array1
-		 * @param array2
-		 * @return
-		 */
-		bool array1_lt_array2(int rank, const int (&array1)[MAX_RANK],
-				const int (&array2)[MAX_RANK]) const;
-
-		/**
-		 * Is array1 equal to array2
-		 * @param rank
-		 * @param array1
-		 * @param array2
-		 * @return
-		 */
-		bool array1_eq_array2(int rank, const int (&array1)[MAX_RANK],
-						const int (&array2)[MAX_RANK]) const;
 	};
 
 	/** Each operation will be profiled based on opcode & list of arguments
@@ -96,12 +77,8 @@ public:
 
 	typedef std::map<Key, std::set<int> > TimerMap_t;	// Key -> Set of program counters
 
-	/**
-	 * Records occurrence of operation & operand type at given program counter
-	 * @param key
-	 * @param pc
-	 */
-	void record_line(const ProfileTimer::Key& key, int pc);
+	/** Records occurrence of operation & operand type at given program counter */
+	void record_pc(const ProfileTimer::Key& key, int pc);
 
 	/** Prints timers to an ostream */
 	void print_timers(std::ostream& out);
@@ -109,13 +86,11 @@ public:
 	/** Saves timer to underlying ProfileTimerStore */
 	void save_to_store(ProfileTimerStore& profile_timer_store);
 
-	friend class ::ProfileInterpreterTestControllerParallel;
-
 private:
 	SialxTimer& sialx_timer_;
 	TimerMap_t profile_timer_map_; 				//! Key -> Set of program counters
 
-
+	friend class ::ProfileInterpreterTestControllerParallel;
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);
 
 };

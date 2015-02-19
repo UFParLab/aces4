@@ -59,18 +59,24 @@ inline ProfileTimer::Key ProfileInterpreter::make_profile_timer_key(opcode_t opc
 }
 
 void ProfileInterpreter::pre_interpret(int pc){
-	// Profile timers
-
 	SialxInterpreter::pre_interpret(pc);
-
 	opcode_t opcode = op_table_.opcode(pc);
+	profile_timer_trace(pc, opcode);
+}
+
+void ProfileInterpreter::post_interpret(int oldpc, int newpc){
+	SialxInterpreter::post_interpret(oldpc, newpc);
+	profile_timer_trace(newpc, invalid_op);
+}
+
+void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 
 	if (pc == last_seen_pc_)
 		return;
 	else if (last_seen_pc_ >= 0){
-		profile_timer_.record_line(last_seen_key_, last_seen_pc_);
+		profile_timer_.record_pc(last_seen_key_, last_seen_pc_);
 		last_seen_pc_ = -1;
-	} else {
+	} else if (opcode != invalid_op){
 
 		switch (opcode){
 
@@ -179,11 +185,8 @@ void ProfileInterpreter::pre_interpret(int pc){
 
 		}
 		break;
-
 	}
 	}
-
-
 
 }
 

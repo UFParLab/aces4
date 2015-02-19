@@ -38,7 +38,7 @@ ProfileTimer::~ProfileTimer() {}
 //	}
 //}
 
-void ProfileTimer::record_line(const ProfileTimer::Key& key, int pc){
+void ProfileTimer::record_pc(const ProfileTimer::Key& key, int pc){
 	TimerMap_t::iterator it = profile_timer_map_.find(key);
 	if (it == profile_timer_map_.end()){
 		std::set<int> line_num_set;

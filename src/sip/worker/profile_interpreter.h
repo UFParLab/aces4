@@ -26,6 +26,9 @@ public:
 	virtual ~ProfileInterpreter();
 
 	virtual void pre_interpret(int pc);
+	virtual void post_interpret(int oldpc, int newpc);
+	void profile_timer_trace(int pc, opcode_t opcode);
+
 
 
 private:

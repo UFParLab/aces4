@@ -130,14 +130,13 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
 	//remove objects left from previous sial programs to avoid memory leaks
-	if (worker_) delete worker_;
-	if (sialx_timers_)
-		delete sialx_timers_;
+	if (worker_) { delete worker_; worker_ = NULL; }
+	if (sialx_timers_){ delete sialx_timers_; sialx_timers_ = NULL; }
 #ifdef HAVE_MPI
-	if (server_) delete server_;
-	if (server_timer_) delete server_timer_;
+	if (server_) { delete server_; server_ = NULL; }
+	if (server_timer_) { delete server_timer_; server_timer_ = NULL; }
 #endif
-	if (sip_tables_) delete sip_tables_;
+	if (sip_tables_) { delete sip_tables_; sip_tables_ = NULL; }
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
 	if (verbose_) {
 		//rank 0 prints and .siox files contents
@@ -351,7 +350,7 @@ ProfileInterpreterTestControllerParallel::ProfileInterpreterTestControllerParall
 		std::string comment, std::ostream& sial_output, bool expect_success) :
 		TestControllerParallel(job, has_dot_dat_file, verbose, comment,
 				sial_output, expect_success), profile_timer_(NULL),
-				profile_timer_store_(NULL){
+				profile_timer_store_(NULL), profile_interpreter_(NULL){
 	profile_timer_store_ = new sip::ProfileTimerStore(":memory:");
 }
 
@@ -360,6 +359,11 @@ ProfileInterpreterTestControllerParallel::~ProfileInterpreterTestControllerParal
 		delete profile_timer_;
 	if (profile_timer_store_)
 		delete profile_timer_store_;
+	if (profile_interpreter_){
+		delete profile_interpreter_;
+		profile_interpreter_ = NULL;
+		worker_ = NULL;
+	}
 }
 
 
