@@ -6,10 +6,11 @@ SIAL RCIS_RHF
 # Declare indeces
 #
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-index kiter    = 1: 6
+index kiter    = 1: cc_iter
 index kstate   = 1: eom_roots
 index kstate1  = 1: eom_roots
 index jstate   = 1: eom_roots
+index qstate   = 2: eom_roots
 index ksub     = 1: eom_subspc
 index ksub1    = 1: eom_subspc
 index ksub2    = 1: eom_subspc
@@ -546,6 +547,7 @@ scalar normr
 static Lnorm[ksub]
 static Rnorm[ksub]
 scalar overlap1
+scalar overlap2
 scalar overlapT
 scalar overlapS
 scalar overlapJK
@@ -644,6 +646,7 @@ contiguous local CLRB1_a[ksub,a,i]
 contiguous local CLLB2_aa[ksub,i,a,i1,a1]
 contiguous local CLLB2_ab[ksub,i,a,j,b]
 contiguous local CLLB1_a[ksub,i,a]
+contiguous local CIS_EE_Energy[kstate]
 int roots
 int subspc
 int kstart
@@ -1102,41 +1105,6 @@ local Lixbj[i,mu,b,j]
 local L1xbbj[mu,b,b1,j] 
 #***********************************************************
 #***********************************************************
-PROC energy_new
-#
-ecorrab = 0.0
-esumab  = 0.0
-sip_barrier
-PARDO a, b, i, j
-#
-   REQUEST Vpiqj[a,i,b,j]
-   REQUEST Vpiqj[a,j,b,i]
-#
-   REQUEST T2ab[a,i,b,j]
-   GET     t1a[a,i]
-   GET     t1a[b,j]
-   tai[a,i] = t1a[a,i]
-#
-   Taibj[a,i,b,j]  = tai[a,i]^t1a[b,j]
-   Taibj[a,i,b,j] += T2ab[a,i,b,j]
-#
-   T1aibj[a,i,b,j] = Vpiqj[a,i,b,j]
-   T2aibj[a,i,b,j] = Vpiqj[a,j,b,i]
-   T1aibj[a,i,b,j]*= 2.0
-   T1aibj[a,i,b,j]-= T2aibj[a,i,b,j]
-#
-   etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j]
-   esumab += etemp
-#
-ENDPARDO a, b, i, j
-
-sip_barrier
-#
-collective ecorrab += esumab
-eccsd = ecorrab
-print eccsd
-ENDPROC energy_new
-#
 #
 PROC READ_AMP
 #     -------------
@@ -1169,6 +1137,7 @@ ENDPROC READ_AMP
 #
 PROC form_guess
 #
+print "Using the Hamiltonian diagonal for guess"
 server_barrier
 #
 execute get_my_rank rank
@@ -1365,6 +1334,8 @@ ENDPROC form_diag
 #
 PROC form_HB
 #
+print "Forming expensive H*B"
+#
 pardo ksub,a,i
     Tkai[ksub,a,i] = 0.0
     prepare HB1_a[ksub,a,i] = Tkai[ksub,a,i]
@@ -1414,6 +1385,8 @@ ENDPROC form_HB
 #
 PROC form_BHB
 #
+print "Forming final B*HB"
+#
 pardo ksub,ksub1
     Tkk[ksub,ksub1] = 0.0
     prepare Gmat[ksub,ksub1] = Tkk[ksub,ksub1]
@@ -1447,27 +1420,27 @@ if rank == 0.0
     enddo ksub
 #
 #    print GSmat
-    execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
-    #execute eigen_calc GSmat SAlphaR
-
-    #do ksub
-    #do ksub1
-#	where ksub == ksub1
-#	etemp = GSmat[ksub,ksub1]
-#    enddo ksub1
-#    SEK[ksub] = etemp
-#    enddo ksub
-
-#    print salphaR
-    do kstate
-	SEk0[kstate] = SEk[kstate]
-    enddo kstate
 #--
 #-- In static alpha vecs index 1 is the range index 2 is the state
 #-- La[i,state] Gmat[i,j] Ra[j,state] = E[state]
 #--
-    print "R-CIS excitation energies"
-    print SEk0
+    execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
+
+#    print SEk
+#    print salphaR
+
+    do kstate
+	SEk0[kstate] = SEk[kstate]
+    enddo kstate
+    print "RHF-CIS excitation energies"
+    do kstate
+	allocate contiguous CIS_EE_Energy[kstate:kstate]
+	CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
+	print CIS_EE_Energy[kstate:kstate]
+	deallocate contiguous CIS_EE_Energy[kstate:kstate]
+    enddo kstate
+#
+#    print SEk0
 #    print SEk
 #
 endif
@@ -1478,29 +1451,29 @@ server_barrier
 #
 ENDPROC diag_G
 #
-PROC move_by_one_RK1
+PROC move_by_one_R1K1
 #
 server_barrier
 pardo a,i
     do kstate
-        request RB1_a[kstate,a,i]
+        request R1k1_a[kstate,a,i]
         prepare R0k1_a[kstate,a,i] = R1k1_a[kstate,a,i]
     enddo kstate
 endpardo a,i
 # zero partition 1
 server_barrier
+#
+ENDPROC move_by_one_R1K1
+#
+PROC form_new_R1K1
+#
+server_barrier
 pardo a,i
     do kstate
-        Tkia[kstate,i,a] = 0.0
-        prepare R1k1_a[kstate,a,i] = C1_a[kstate,a,i]
+        Tkai[kstate,a,i] = 0.0
+        prepare R1k1_a[kstate,a,i] = Tkai[kstate,a,i]
     enddo kstate
 endpardo a,i
-server_barrier
-#
-ENDPROC move_by_one_RK1
-#
-PROC form_new_RK1
-#
 server_barrier
 #
 do kstate
@@ -1517,7 +1490,7 @@ enddo kstate
 #
 server_barrier
 #
-ENDPROC form_new_RK1
+ENDPROC form_new_R1K1
 #
 PROC form_residual_R1
 #
@@ -1613,9 +1586,10 @@ do ksub
     norm1 = 0.0
     norm2 = 1.0
     collective norm1 += normS
-    if norm1 > normcrit
+#    if norm1 > normcrit
 	norm2 = (norm1)**(-0.5)
-    endif
+#    endif
+#    print norm2
     Tk[ksub] = norm2
 #
     pardo a,i
@@ -1639,9 +1613,12 @@ delete DRNai
 ENDPROC normalize_RB1
 #
 PROC GS_RB1
-#
+# -----------------------------
+# Gram-Schmidt orthogonalization 
+#   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
+#   with update done via numerically stable in place update
+# -----------------------------
 server_barrier
-# 2,nsubspace
 do qsub
 do ksub
 where ksub < qsub
@@ -1650,6 +1627,8 @@ where ksub < qsub
     normS    = 0.0
     Tk[qsub] = 1.0
     T1k[ksub] = 1.0
+#
+# form overlap and norm
 #
     pardo a,i
         request RB1_a[qsub,a,i]
@@ -1663,7 +1642,9 @@ where ksub < qsub
 
 	normT  = RB1_a[ksub,a,i]*RB1_a[ksub,a,i]
 	normS += normT
-
+#
+# store x(k) in temporary distributed
+#
 	put DRNai[a,i] = T2ai[a,i]
     endpardo a,i
     server_barrier
@@ -1672,13 +1653,11 @@ where ksub < qsub
     overlap1 = 0.0
     collective overlap1 += overlapS
     collective norm1 += normS
-    if norm1 > normcrit
-	norm2 = (norm1)**(-1.0)
-    endif
-    overlap1 *= norm2
-    overlap1 *= -1.0
-    T2k[qsub] = overlap1
+    overlap2 = overlap1/norm1
+    overlap2 *= -1.0
+    T2k[qsub] = overlap2
 
+# update x(q) inplace
     pardo a,i
 	get DRNai[a,i]
 	Tkai[qsub,a,i] = T2k[qsub]*DRNai[a,i]
@@ -1687,45 +1666,154 @@ where ksub < qsub
 #
 enddo ksub
 enddo qsub
+#
 server_barrier
 #
 ENDPROC GS_RB1
 #
 PROC update_B
 #
-call move_by_one_RK1
+print "Updating vector"
 #
-call form_new_RK1
-#
+call move_by_one_R1K1
+
+call form_new_R1K1
+
 call form_residual_R1
-#
+
 call update_RB1
-#
-pardo a ,i
-    allocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
-do ksub
-    request RB1_a[ksub,a,i]
-    CLRB1_a[ksub:ksub,a:a,i:i] = RB1_a[ksub,a,i]
-enddo ksub
-#print CLRB1_a[1:eom_subspc,a:a,i:i]
-    deallocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
-endpardo a ,i
+
 call normalize_RB1
 call GS_RB1
 call normalize_RB1
+#
+#
+# JNB debug - vector print
+# 
+#pardo a ,i
+#allocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
+#do kstate
+#request cRk1_a[kstate,a,i]
+#CLRB1_a[kstate:kstate,a:a,i:i] = cRk1_a[kstate,a,i]
+#enddo kstate
+#print CLRB1_a[1:eom_roots,a:a,i:i]
+#deallocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
+#endpardo a ,i
+# JNB debug - overlap print
+#do ksub
+#do ksub1
+#    Tkk[ksub,ksub1] = 0.0
+#    pardo a,i
+#        request RB1_a[ksub,a,i]
+#        request RB1_a[ksub1,a,i]
+#	T1kk[ksub,ksub1] = RB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
+#	Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+#    endpardo a,i
+#    S1overlap[ksub,ksub1] = Tkk[ksub,ksub1]
+#enddo ksub1
+#enddo ksub
+#print S1overlap
 
-pardo a ,i
-    allocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
-do ksub
-    request RB1_a[ksub,a,i]
-    CLRB1_a[ksub:ksub,a:a,i:i] = RB1_a[ksub,a,i]
-enddo ksub
-#    print CLRB1_a[1:eom_subspc,a:a,i:i]
-    deallocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
-endpardo a ,i
 #
 ENDPROC update_B
 #
+PROC normalize_R1k1
+#
+server_barrier
+do kstate
+    normS = 0.0
+    pardo a,i
+        request R1k1_a[kstate,a,i]
+	Tkai[kstate,a,i] = R1k1_a[kstate,a,i]
+	normT  = Tkai[kstate,a,i]*R1k1_a[kstate,a,i]
+	normS += normT
+    endpardo a,i
+#
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    collective norm1 += normS
+    norm2 = (norm1)**(-0.5)
+    Tk[kstate] = norm2
+#
+    pardo a,i
+	request R1k1_a[kstate,a,i]
+        Tai[a,i] = Tk[kstate]*R1k1_a[kstate,a,i]
+	put DRNai[a,i] = Tai[a,i]
+    endpardo a,i
+    server_barrier
+#
+    T1k[kstate] = 1.0
+    pardo a,i
+        get DRNai[a,i]
+	Tkai[kstate,a,i] = T1k[kstate]*DRNai[a,i]
+	prepare R1k1_a[kstate,a,i] = Tkai[kstate,a,i]
+    endpardo a,i
+#
+enddo kstate
+server_barrier
+delete DRNai
+#
+ENDPROC normalize_R1k1
+#
+PROC GS_R1k1
+# -----------------------------
+# Gram-Schmidt orthogonalization 
+#   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
+#   with update done via numerically stable in place update
+# -----------------------------
+server_barrier
+do qstate
+do kstate
+where kstate < qstate
+#
+    overlapS = 0.0
+    normS    = 0.0
+    Tk[qstate] = 1.0
+    T1k[kstate] = 1.0
+#
+# form overlap and norm
+#
+    pardo a,i
+        request R1k1_a[qstate,a,i]
+	request R1k1_a[kstate,a,i]
+
+	T1ai[a,i] = Tk[qstate]*R1k1_a[qstate,a,i]
+	T2ai[a,i] = T1k[kstate]*R1k1_a[kstate,a,i]
+
+	overlapT  = T1ai[a,i]*T2ai[a,i]
+	overlapS += overlapT
+
+	normT  = R1k1_a[kstate,a,i]*R1k1_a[kstate,a,i]
+	normS += normT
+#
+# store x(k) in temporary distributed
+#
+	put DRNai[a,i] = T2ai[a,i]
+    endpardo a,i
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    overlap1 = 0.0
+    collective overlap1 += overlapS
+    collective norm1 += normS
+    overlap2 = overlap1/norm1
+    overlap2 *= -1.0
+    T2k[qstate] = overlap2
+
+# update x(q) inplace
+    pardo a,i
+	get DRNai[a,i]
+	Tkai[qstate,a,i] = T2k[qstate]*DRNai[a,i]
+	prepare R1k1_a[qstate,a,i] += Tkai[qstate,a,i]
+    endpardo a,i
+#
+enddo kstate
+enddo qstate
+#
+server_barrier
+#
+ENDPROC GS_R1k1
 #------------------------------------------------------------------------
 #
 # -----------------
@@ -1737,10 +1825,12 @@ root = 0
 subspc = eom_subspc
 roots = eom_roots
 #
+#
 print " "
-print "-- Parallel R-CIS program v2"
+print "-- Parallel RHF-CIS program v2"
 print "-- J. Phys. Chem. 1992, 96, 135-149."
 print "-- Subspace collapse symmetric davidson update"
+print "-- J. Comp. Phys. 1992, 103, 382-389 | J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
 server_barrier
@@ -1782,24 +1872,33 @@ enddo kiter
 
 print " "
 print "CIS has converged"
-print "Excitation energies"
-print SEk0
+print "FINAL RHF-CIS excitation energies"
+do kstate
+    allocate contiguous CIS_EE_Energy[kstate:kstate]
+    CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
+    print CIS_EE_Energy[kstate:kstate]
+    deallocate contiguous CIS_EE_Energy[kstate:kstate]
+enddo kstate
 
-execute get_my_rank rank
-if rank == 0.0
-    do kstate
-	Tk[kstate] = SEk0[kstate]
-	put Ek[kstate] = Tk[kstate]
-    enddo kstate
-endif
+# store vector
 server_barrier
+do kstate
+pardo a,i
+    request RB1_a[kstate,a,i]
+    prepare R1k1_a[kstate,a,i] = RB1_a[kstate,a,i]
+endpardo a,i
+enddo kstate
+server_barrier
+
 #
-set_persistent ca    "ca"
-set_persistent Fock_a "fock_a"
-set_persistent Vaaii "Vaaii"
-set_persistent Viaai "Viaai"
-set_persistent RB1_a "C1_a"
-set_persistent Ek "CIS_E"
+set_persistent ca       "ca"
+set_persistent Fock_a   "fock_a"
+set_persistent Vaaii    "Vaaii"
+set_persistent Viaai    "Viaai"
+set_persistent R1k1_a   "C1_a"
+set_persistent RB1_a    "B1_a"
+set_persistent SEk0     "CIS_E"
+server_barrier
 #
 #
 ENDSIAL RCIS_RHF

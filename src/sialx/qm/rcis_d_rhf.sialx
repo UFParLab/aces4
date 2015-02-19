@@ -79,6 +79,8 @@ import "cis_rhf_defs.sialx"
       static fock_a[p,p1] 
       static Ek[kstate]
       static Ekd[kstate]
+      contiguous local CIS_D_EE_Energy[kstate]
+      int master
 #
       served ck0[kstate,a,i]
       served Cai[a,i]
@@ -156,224 +158,11 @@ import "cis_rhf_defs.sialx"
       local LDaixj[a,i,nu,j]
 ##########################################
 #
-#
-     PROC TRAN_TRAN2
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, lambda
-#
-          allocate Lxxxi[mu,nu,lambda,*]
-#     
-          DO sigma
-#
-             execute compute_integral_batch aoint[mu,nu,lambda,sigma]
-#
-             DO i   
-#
-                 T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
-                 Lxxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]
-#    
-             ENDDO i
-#    
-          ENDDO sigma
-
-          DO i
-           DO i1
-              Txxii[mu,nu,i1,i]          = Lxxxi[mu,nu,lambda,i]*ca[lambda,i1]
-              PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-           ENDDO i1
-           ENDDO i
-#
-          DO i
-           DO i1
-              Txixi[mu,i1,lambda,i]      = Lxxxi[mu,nu,lambda,i]*ca[nu,i1]
-              PREPARE Vxixi[mu,i1,lambda,i] += Txixi[mu,i1,lambda,i]
-           ENDDO i1
-           ENDDO i
-#
-          DO i
-           DO i1
-              Tixxi[i1,nu,lambda,i]      = Lxxxi[mu,nu,lambda,i]*ca[mu,i1]
-              PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
-           ENDDO i1
-           ENDDO i
-#    
-#          DO i
-#           DO a
-#              Txxai(mu,nu,a,i)          = Lxxxi(mu,nu,lambda,i)*ca(lambda,a)
-#              PREPARE Vxxai(mu,nu,a,i) += Txxai(mu,nu,a,i)
-#           ENDDO a
-#           ENDDO i
-#
-          deallocate Lxxxi[mu,nu,lambda,*]
-#
-     ENDPARDO mu, nu, lambda
-     server_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN2
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#    Perform the third N5 stage of the transformation.
-#
-     PROC TRAN_TRAN3
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vxixi[mu,i,nu,i1] 
-#
-           DO p
-#
-              Txipi[mu,i,p,i1]          = Vxixi[mu,i,nu,i1]*ca[nu,p]
-              PREPARE Vxipi[mu,i,p,i1] += Txipi[mu,i,p,i1]
-#
-           ENDDO p
-#
-     ENDPARDO mu, nu, i, i1
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vxxii[mu,nu,i,i1] 
-#
-           DO a
-#
-              Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*ca[nu,a]
-              PREPARE Vxaii[mu,a,i,i1] += Txaii[mu,a,i,i1]
-
-           ENDDO a
-#
-     ENDPARDO mu, nu, i, i1
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vixxi[i,mu,nu,i1] 
-#
-           DO a
-#
-              Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*ca[nu,a]
-              PREPARE Vixai[i,mu,a,i1] += Tixai[i,mu,a,i1]
-#
-           ENDDO a
-
-     ENDPARDO mu, nu, i, i1
-#
-#     pardo mu,nu,a,i
-#         request Vxxai(mu,nu,a,i) i
-#         do a1
-#             Txaai(mu,a1,a,i) = Vxxai(mu,nu,a,i)*Ca(nu,a1)
-#             prepare Vxaai(mu,a1,a,i) += Txaai(mu,a1,a,i)
-#         enddo a1
-#     endpardo mu,nu,a,i
-#
-#    ------------------------------------------------------------------------
-#
-     server_barrier
-#
-     ENDPROC TRAN_TRAN3
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_TRAN4
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, p, i, i1
-#
-           REQUEST             Vxipi[mu,i,p,i1] 
-           REQUEST             Vxipi[mu,i1,p,i] 
-           Txipi[mu,i,p,i1]  = Vxipi[mu,i,p,i1]
-           T1xipi[mu,i,p,i1] = Vxipi[mu,i1,p,i]
-           Txipi[mu,i,p,i1] -= T1xipi[mu,i,p,i1]
-#
-           DO p1
-#
-              Tpipi[p1,i,p,i1]          = Vxipi[mu,i,p,i1]*ca[mu,p1]
-              PREPARE Vpiqj[p1,i,p,i1] += Tpipi[p1,i,p,i1]
-#
-           ENDDO p1
-#
-           DO p1
-#
-              Tpipi[p1,i,p,i1]          = Txipi[mu,i,p,i1]*ca[mu,p1]
-              PREPARE VSpipi[p1,i,p,i1] += Tpipi[p1,i,p,i1]
-#
-           ENDDO p1
-#
-     ENDPARDO mu, p, i, i1
-#
-     PARDO mu, a, i, i1
-#
-           REQUEST Vxaii[mu,a,i,i1] 
-           REQUEST Vixai[i,mu,a,i1] 
-#
-           DO a1
-#
-              Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*ca[mu,a1]
-              PREPARE Vaaii[a1,a,i,i1] += Taaii[a1,a,i,i1]
-#
-           ENDDO a1
-#
-           DO a1
-#
-              Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*ca[mu,a1]
-              PREPARE Viaai[i,a1,a,i1] += Tiaai[i,a1,a,i1]
-#
-           ENDDO a1
-#
-     ENDPARDO mu, a, i, i1
-#
-#         pardo mu, a, a1, i
-#             request Vxaai(mu,a,a1,i) i
-#             do a2
-#                 Taaai(a2,a,a1,i) = Vxaai(mu,a,a1,i)*Ca(mu,a2)
-#                 prepare Vaaai(a2,a,a1,i) += Taaai(a2,a,a1,i)
-#             enddo a2
-#         endpardo mu, a, a1, i
-
-         server_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN4
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_UHF
-#
-#        CALL COMP_INTEGRALS # --> compute integrals and put into served array
-         CALL TRAN_TRAN2     # --> performs the first two stages of the
-                             #     two-electron integral transformation.
-         CALL TRAN_TRAN3     # --> performs the third stage
-                             #     two-electron integral transformation.
-         CALL TRAN_TRAN4     # --> performs the fourth stage of the
-                             #     two-electron integral transformation.
-#
-     ENDPROC TRAN_UHF
-#
       proc setroot
 #
-#      pardo a,i
-#          Tai(a,i) = 0.0
-#          prepare Cai(a,i) = Tai(a,i)
-#      endpardo a,i
-#      server_barrier
       Tk[kstate] = 1.0
-#      pardo a,i
-#          request ck0(kstate,a,i) i
-#          Tai(a,i) = ck0(kstate,a,i)*Tk(kstate)
-#          prepare Cai(a,i) = Tai(a,i)
-#      endpardo a,i
+      execute get_my_rank rank
+      if rank == 0.0
       do a
       do i
           request ck0[kstate,a,i] 
@@ -381,6 +170,9 @@ import "cis_rhf_defs.sialx"
           SCai[a,i] = Tai[a,i]
       enddo i
       enddo a
+      endif
+      server_barrier
+      broadcast_from master SCai
       server_barrier
       endproc setroot
 #
@@ -471,7 +263,6 @@ import "cis_rhf_defs.sialx"
 #
 # back transform CIS vector
      pardo a,i
-#         request Cai(a,i) i
          do mu
              Txi[mu,i] = SCai[a,i]*ca[mu,a]
              prepare Cai_ao[mu,i] += Txi[mu,i]
@@ -510,7 +301,6 @@ import "cis_rhf_defs.sialx"
          Taiai[a,i,b,j] = 0.0
          do i1
              request Vpiqj[i1,i,b,j] 
-#             request cai(a,i1) a
              T1aiai[a,i,b,j] = Vpiqj[i1,i,b,j]*SCai[a,i1]
              Taiai[a,i,b,j] += T1aiai[a,i,b,j]
          enddo i1
@@ -718,20 +508,17 @@ import "cis_rhf_defs.sialx"
          esum2 += etemp
      endpardo a,i,b,j
      pardo a,i
-#         request cai(a,i) i
          request Fai[a,i] 
          Tpp[a,i] = Fai[a,i]
 #
          do b
              request Faa[a,b] 
-#             request cai(b,i) i
              T1pp[a,i] = Faa[a,b]*SCai[b,i]
              Tpp[a,i] += T1pp[a,i]
          enddo b
 #
          do j
              request Fii[i,j] 
-#             request cai(a,j) a
              T1pp[a,i] = Fii[i,j]*SCai[a,j]
              Tpp[a,i] += T1pp[a,i]
          enddo j
@@ -748,12 +535,9 @@ import "cis_rhf_defs.sialx"
      ecis_d  = edoubles
      ecis_d += etriples
      Ekd[kstate] = ecis_d
-     execute get_my_rank rank
-     if rank == 0.0
-         print edoubles
-         print etriples
-         print ecis_d
-     endif #rank == 0.0
+     print edoubles
+     print etriples
+     print ecis_d
 #
      endproc cisd_energy
 # 
@@ -762,33 +546,35 @@ import "cis_rhf_defs.sialx"
 ##########################################
       sip_barrier
 #
-      execute get_my_rank rank
-      if rank == 0.0
-      println "starting CIS(D)"
-      endif
+      master = 0
+
+      print " "
+      print "-- Parallel CIS(D) program"
+      print "-- Chem. Phys. Lett. 1994, 219 21-29"
+      print "-- Written by Jason N. Byrd, 2014"
+      print " "
 #
-      restore_persistent ca "ca"
-      restore_persistent Fock_a "fock_a"
-      restore_persistent ck0 "Ck0"
-      restore_persistent Ek "CEk"
-      server_barrier
-#      call tran_uhf
-      restore_persistent     Viaai  "Viaai"
-      restore_persistent     Vaaii  "Vaaii"
-      restore_persistent     Vpiqj  "Vpiqj"
-      restore_persistent     VSpipi "VSpipi"
+      restore_persistent ca      "ca"
+      restore_persistent Fock_a  "fock_a"
+      restore_persistent ck0     "C1_a"
+      restore_persistent Ek      "CIS_E"
+      restore_persistent Viaai   "Viaai"
+      restore_persistent Vaaii   "Vaaii"
+      restore_persistent Vpiqj   "Vpiqj"
+      restore_persistent VSpipi  "VSpipi"
       server_barrier
 #
       call iguess_uhf
       call energy_new
 #
-      kroot = 1.0
       do kstate
+	  kroot = (scalar)kstate
           server_barrier
-          println " "
+          print " "
           print kroot
 #
           execute return_sval Ek[kstate] shift
+	  shift = Ek[kstate]
           server_barrier
           call setroot
           call Caibj
@@ -796,20 +582,24 @@ import "cis_rhf_defs.sialx"
           call cisd_energy
           server_barrier
 #
-          kroot += 1.0
-#
       enddo kstate
-      execute get_my_rank rank
-      if rank == 0.0
-          execute print_static_array Ekd
-      endif
-#
+      print " "
+      do kstate
+  	allocate contiguous CIS_D_EE_Energy[kstate:kstate]
+	etemp = Ekd[kstate]
+	esum2 = Ek[kstate]
+	etemp += esum2
+  	CIS_D_EE_Energy[kstate:kstate] = etemp
+	print CIS_D_EE_Energy[kstate:kstate]
+	deallocate contiguous CIS_D_EE_Energy[kstate:kstate]
+      enddo kstate
+
       server_barrier
-      set_persistent     ca    "ca" 
-      set_persistent     Fock_a "fock_a"
-      set_persistent     ck0 "Ck0"
-      set_persistent     Ek "CEk"
-#
+      set_persistent ca     "ca" 
+      set_persistent Fock_a "fock_a"
+      set_persistent ck0    "C1_a"
+      set_persistent Ek     "CIS_E"
+
       set_persistent Viaai  "Viaai"
       set_persistent Vaaii  "Vaaii"
       set_persistent Vpiqj  "Vpiqj"
