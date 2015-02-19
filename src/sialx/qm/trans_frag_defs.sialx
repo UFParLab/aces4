@@ -35,16 +35,10 @@ predefined  int max_aoseg # maximum ao segment size
 predefined  int max_alphaseg # maximum alpha segment size 
 predefined  int max_betaseg # maximum beta segment size 
 
-#these s are predefined in the array and scalar tables
 
-predefined scalar scfeneg  # ???? 
-predefined scalar totenerg  #Total energy read in from JOBARC.
 predefined scalar r_thresh  #Threshold for pair calculation 
 predefined scalar elst_thresh  #Threshold for wC calculation 
           
-#predefined static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
-#predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
-#predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
 predefined scalar damp #value of DAMPSCF from ZMAT
 predefined scalar cc_conv  # value of CC_CONV from ZMAT.

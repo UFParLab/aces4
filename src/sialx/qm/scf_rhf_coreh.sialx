@@ -38,7 +38,7 @@ import "scf_defs.sialx"
 # Converged SCF energy:
 # --------------------- 
 #
-# 1. scfeneg 
+# 1. scf_energy 
 #
 # BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 #
@@ -650,7 +650,7 @@ import "scf_defs.sialx"
 #
        ENDPARDO mu, nu  
 #
-      #execute print_scalar scfeneg
+      #execute print_scalar scf_energy
        ENDPROC OVER_HALF 
 #      ----------------- 
 #
@@ -1660,8 +1660,11 @@ import "scf_defs.sialx"
       set_persistent Fock_a "fock_a" 
 #     set_persistent energy "energy" 
 
-      scfeneg  = energy2
-      totenerg = scfeneg
+      scf_energy  = energy2
+      totenerg = scf_energy
+      print scf_energy
+
+      set_persistent scf_energy "scf_energy"
       sip_barrier
 #                         
 #

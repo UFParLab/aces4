@@ -493,9 +493,11 @@ import "rccsd_rhf_defs.sialx"
 
      print ecorraa 
 #
+     restore_persistent scf_energy "scf_energy"
      mp2_energy  = ecorraa
-     totenerg   = mp2_energy + scfeneg
+     totenerg   = mp2_energy + scf_energy
      print mp2_energy  
+     set_persistent scf_energy "scf_energy"
 
 # 
 #    ------------------------------------------------------------------------ 

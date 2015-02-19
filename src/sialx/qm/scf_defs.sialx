@@ -31,17 +31,12 @@ mobindex aces_defs_pb = bbocc: ebvirt
 aoindex aces_defs_mu = 1: norb  
 
 
-#these s are predefined in the array and scalar tables
 static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
 static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
 
-predefined scalar scfeneg  # ???? 
-predefined scalar totenerg  #Total energy read in from JOBARC.
+scalar scf_energy
+scalar totenerg 
           
-#static e(aces_defs_mu,aces_defs_p)  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
-#predefined static ea(aces_defs_mu, aces_defs_pa)  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
-#predefined static eb(aces_defs_mu, aces_defs_pb )  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
-
 predefined static e[aces_defs_mu]  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
 predefined static ea[aces_defs_mu]  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
 predefined static eb[aces_defs_mu]  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
@@ -60,15 +55,7 @@ predefined scalar scf_conv  # value of SCF_CONV from ZMAT
 predefined static fockrohf_a[aces_defs_mu,aces_defs_mu]
 predefined static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
-#predefined scalar stabvalue  #this is used only in guess_scf_uhf_finish.sial.  It is not a 
 
-#predefined scalar eom_tol
-#predefined scalar eom_roots
-
-#predefined scalar excite
-
-
-#     PORTED 
 special return_h1 w
 special return_ovl w
 special eig_sr_inv uu

@@ -439,8 +439,9 @@ SIOX_FILES=\
 ./src/sialx/qm/cis_rhf.siox\
 ./src/sialx/qm/cis_rhf_defs.siox\
 ./src/sialx/qm/rcis_rhf.siox\
+./src/sialx/qm/rcis_d_rhf.siox\
+./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
-./src/sialx/qm/cis_d_rhf.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/rccpt_rhf_defs.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
@@ -449,12 +450,11 @@ SIOX_FILES=\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
-./src/sialx/qm/rccsdpt_aaa_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
-./src/sialx/qm/rccsdpt_aab_defs.siox\
-./src/sialx/qm/rccsdpt_aab.siox\
-./src/sialx/qm/rcis_ccpt2_rhf.siox
+./src/sialx/qm/rccsdpt_aab.siox
 
+#./src/sialx/qm/rccsdpt_aaa_defs.siox\
+#./src/sialx/qm/rccsdpt_aab_defs.siox\
 #./src/sialx/qm/scf_mp2_rhf.siox\
 #./src/sialx/qm/scf_mp2_defs.siox\
 #./src/sialx/qm/rlambda_rhf.siox\
@@ -563,9 +563,9 @@ EXTRA_DIST += \
 ./src/sialx/qm/cis_rhf.sialx\
 ./src/sialx/qm/cis_rhf_defs.sialx\
 ./src/sialx/qm/rcis_rhf.sialx\
-./src/sialx/qm/reom_rhf_defs.sialx\
-./src/sialx/qm/cis_d_rhf.sialx\
+./src/sialx/qm/rcis_d_rhf.sialx\
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
+./src/sialx/qm/reom_rhf_defs.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
 ./src/sialx/qm/rccpt_rhf_defs.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\

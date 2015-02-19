@@ -1,4 +1,5 @@
-  import "cis_rhf_defs.sialx" 
+#  import "cis_rhf_defs.sialx" 
+  import "reom_rhf_defs.sialx"
                            SIAL CCSD_RHF_SV1
 #
 #-------------------------------------------------------------------------------
@@ -303,7 +304,7 @@
       scalar esum3
       scalar edoubles
       scalar etriples
-      scalar ecis_d
+      scalar ecisccpt2
       scalar kroot
 #
       static Ek[kstate]
@@ -431,7 +432,7 @@
       scalar eold 
       scalar ecrit 
       scalar ediff 
-      scalar mp2_energy
+      scalar lccd_energy
       scalar restart
 #
 # Arrays/Scalars used exclusively in DIIS procedure. 
@@ -445,10 +446,17 @@
        served e6aibj[a,i,b,j]  
 #
        served e5aiai[a,i,b,j] 
+       contiguous local CISCCPT2_EE_Energy[kstate]
+       int master
 #
 #    ------------------------------------------------------------------------ 
     PROC read_2el
 
+    restore_persistent ca "ca"
+    restore_persistent Fock_a "fock_a"
+    restore_persistent ck0 "C1_a"
+    restore_persistent Ek "CIS_E"
+    restore_persistent M2old_ab "T2old_ab"
     restore_persistent VSpipi "VSpipi"
     restore_persistent Vpiqj  "Vpiqj"
     restore_persistent Vaaii  "Vaaii"
@@ -457,212 +465,10 @@
 
     ENDPROC read_2el
 #
-     PROC TRAN_TRAN2
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, lambda
-#
-          allocate Lxxxi[mu,nu,lambda,*]
-#     
-          DO sigma
-#
-             execute compute_integral_batch aoint[mu,nu,lambda,sigma]
-#
-             DO i   
-#
-                 T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
-                 Lxxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]
-#    
-             ENDDO i
-#    
-          ENDDO sigma
-
-          DO i
-           DO i1
-              Txxii[mu,nu,i1,i]          = Lxxxi[mu,nu,lambda,i]*ca[lambda,i1]
-              PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-           ENDDO i1
-           ENDDO i
-#
-          DO i
-           DO i1
-              Txixi[mu,i1,lambda,i]      = Lxxxi[mu,nu,lambda,i]*ca[nu,i1]
-              PREPARE Vxixi[mu,i1,lambda,i] += Txixi[mu,i1,lambda,i]
-           ENDDO i1
-           ENDDO i
-#
-          DO i
-           DO i1
-              Tixxi[i1,nu,lambda,i]      = Lxxxi[mu,nu,lambda,i]*ca[mu,i1]
-              PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
-           ENDDO i1
-           ENDDO i
-#    
-##          DO i
-#           DO a
-#              Txxai(mu,nu,a,i)          = Lxxxi(mu,nu,lambda,i)*ca(lambda,a)
-#              PREPARE Vxxai(mu,nu,a,i) += Txxai(mu,nu,a,i)
-#           ENDDO a
-#           ENDDO i
-#
-          deallocate Lxxxi[mu,nu,lambda,*]
-#
-     ENDPARDO mu, nu, lambda
-     server_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN2
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#    Perform the third N5 stage of the transformation.
-#
-     PROC TRAN_TRAN3
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vxixi[mu,i,nu,i1] 
-#
-           DO p
-#
-              Txipi[mu,i,p,i1]          = Vxixi[mu,i,nu,i1]*ca[nu,p]
-              PREPARE Vxipi[mu,i,p,i1] += Txipi[mu,i,p,i1]
-#
-           ENDDO p
-#
-     ENDPARDO mu, nu, i, i1
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vxxii[mu,nu,i,i1] 
-#
-           DO a
-#
-              Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*ca[nu,a]
-              PREPARE Vxaii[mu,a,i,i1] += Txaii[mu,a,i,i1]
-
-           ENDDO a
-#
-     ENDPARDO mu, nu, i, i1
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vixxi[i,mu,nu,i1] 
-#
-           DO a
-#
-              Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*ca[nu,a]
-              PREPARE Vixai[i,mu,a,i1] += Tixai[i,mu,a,i1]
-#
-           ENDDO a
-
-     ENDPARDO mu, nu, i, i1
-#
-#     pardo mu,nu,a,i
-#         request Vxxai(mu,nu,a,i) i
-#         do a1
-##             Txaai(mu,a1,a,i) = Vxxai(mu,nu,a,i)*Ca(nu,a1)
-#             prepare Vxaai(mu,a1,a,i) += Txaai(mu,a1,a,i)
-#         enddo a1
-#     endpardo mu,nu,a,i
-#
-#    ------------------------------------------------------------------------
-#
-     server_barrier
-#
-     ENDPROC TRAN_TRAN3
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_TRAN4
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, p, i, i1
-#
-           REQUEST             Vxipi[mu,i,p,i1] 
-           REQUEST             Vxipi[mu,i1,p,i] 
-           Txipi[mu,i,p,i1]  = Vxipi[mu,i,p,i1]
-           T1xipi[mu,i,p,i1] = Vxipi[mu,i1,p,i]
-           Txipi[mu,i,p,i1] -= T1xipi[mu,i,p,i1]
-#
-           DO p1
-#
-              Tpipi[p1,i,p,i1]          = Vxipi[mu,i,p,i1]*ca[mu,p1]
-              PREPARE Vpiqj[p1,i,p,i1] += Tpipi[p1,i,p,i1]
-#
-           ENDDO p1
-#
-           DO p1
-#
-              Tpipi[p1,i,p,i1]          = Txipi[mu,i,p,i1]*ca[mu,p1]
-              PREPARE VSpipi[p1,i,p,i1] += Tpipi[p1,i,p,i1]
-#
-           ENDDO p1
-#
-     ENDPARDO mu, p, i, i1
-#
-     PARDO mu, a, i, i1
-#
-           REQUEST Vxaii[mu,a,i,i1] 
-           REQUEST Vixai[i,mu,a,i1] 
-#
-           DO a1
-#
-              Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*ca[mu,a1]
-              PREPARE Vaaii[a1,a,i,i1] += Taaii[a1,a,i,i1]
-#
-           ENDDO a1
-#
-           DO a1
-#
-              Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*ca[mu,a1]
-              PREPARE Viaai[i,a1,a,i1] += Tiaai[i,a1,a,i1]
-#
-           ENDDO a1
-#
-     ENDPARDO mu, a, i, i1
-#
-#         pardo mu, a, a1, i
-#             request Vxaai(mu,a,a1,i) i
-#             do a2
-#                 Taaai(a2,a,a1,i) = Vxaai(mu,a,a1,i)*Ca(mu,a2)
-#                 prepare Vaaai(a2,a,a1,i) += Taaai(a2,a,a1,i)
-#             enddo a2
-#         endpardo mu, a, a1, i
-
-         server_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN4
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_UHF
-#
-#        CALL COMP_INTEGRALS # --> compute integrals and put into served array
-         CALL TRAN_TRAN2     # --> performs the first two stages of the
-                             #     two-electron integral transformation.
-         CALL TRAN_TRAN3     # --> performs the third stage
-                             #     two-electron integral transformation.
-         CALL TRAN_TRAN4     # --> performs the fourth stage of the
-                             #     two-electron integral transformation.
-#
-     ENDPROC TRAN_UHF
-#
       proc setroot
 #
+      execute get_my_rank rank
+      if rank == 0.0
       Tk[kstate] = 1.0
       do a
       do i
@@ -671,6 +477,9 @@
           SCai[a,i] = Tai[a,i]
       enddo i
       enddo a
+      endif
+      server_barrier
+
       server_barrier
       endproc setroot
 #
@@ -696,6 +505,36 @@
      server_barrier
 #
     ENDPROC IGUESS_UHF
+#
+    PROC energy_start
+#
+    ecorrab = 0.0
+    esumab  = 0.0
+    server_barrier
+    pardo a,i,b,j
+#
+        request Vpiqj[a,i,b,j] 
+        request Vpiqj[a,j,b,i] 
+#
+        request M2old_ab[a,i,b,j] 
+        Taibj[a,i,b,j] = M2old_ab[a,i,b,j]
+#
+        T1aibj[a,i,b,j]  = Vpiqj[a,i,b,j]
+        T2aibj[a,i,b,j]  = Vpiqj[a,j,b,i]
+        T1aibj[a,i,b,j] *= 2.0
+        T1aibj[a,i,b,j] -= T2aibj[a,i,b,j]
+#
+        etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j]
+        esumab += etemp
+#
+    endpardo a,i,b,j
+    server_barrier
+#
+    collective ecorrab += esumab
+    ecorrT = ecorrab
+#
+    server_barrier
+    ENDPROC energy_start
 #
     PROC energy
 #
@@ -723,8 +562,7 @@
 #
     collective ecorrab += esumab
     ecorrT = ecorrab
-    ecorrT += ecis_d
-    Ekd[kstate] = ecorrT
+    ecorrT += ecisccpt2
     print ecorrT
 #
     server_barrier
@@ -988,7 +826,7 @@
      ecorr2 = 0.0
      edoubles = 0.0
      etriples = 0.0
-     ecis_d = 0.0
+     ecisccpt2 = 0.0
      server_barrier
 #
      pardo a,i,b,j
@@ -1032,14 +870,10 @@
      collective edoubles += esum2
      collective etriples += esum3
      server_barrier
-     ecis_d  = edoubles
-     ecis_d += etriples
-     execute get_my_rank rank
-     if rank == 0.0
-         print edoubles
-         print etriples
-#         print_scalar ecis_d
-     endif #rank == 0.0
+     ecisccpt2  = edoubles
+     ecisccpt2 += etriples
+     print edoubles
+     print etriples
 #
      endproc cisd_energy
 #    ------------------------------------------------------------------------ 
@@ -1422,18 +1256,10 @@
       ENDDO j1diis
          endif
       ENDDO jdiis
-     #println "finished coputing BB" 
 
       execute compute_diis BB
       temp_order = worder
-     #if worder > diis_order 
-     #   temp_order = diis_order 
-     #endif 
       server_barrier
-     #println "finished compute_diis" 
-     #DO jdiis 
-     #execute print_block BB(jdiis,jdiis) 
-     #ENDDO jdiis 
       PARDO a, i, b, j
             taibj[a,i,b,j] = 0.0
             n1 = 0.0
@@ -1599,7 +1425,8 @@ print "-- J Chem Phys 2014, 140, 234108."
 print "-- Written by Jason N. Byrd, 2014"
 print "  " 
 
-    ecrit = 0.00000001
+    master = 0
+    ecrit = cc_conv
     zero = 0.0
     one = 1.0
     two = 2.0
@@ -1613,95 +1440,90 @@ print "  "
     print diis_order
     server_barrier
 #
-    restore_persistent ca "ca"
-    restore_persistent Fock_a "fock_a"
-    restore_persistent     ck0 "Ck0"
-    restore_persistent     Ek "CEk"
-    restore_persistent M2old_ab "T2old_ab"
     call read_2el
     server_barrier
+    call energy_start
+    lccd_energy = ecorrT
+    print lccd_energy
 # second-order starting guess for the T2 amps
 #
       kroot = 1.0
       do kstate
           server_barrier
-          println " "
+          print " "
           print kroot
 #
-          execute return_sval Ek[kstate] shift
           server_barrier
           call iguess_uhf
           server_barrier
           call setroot
           call Caibj
           server_barrier
-#
+
           kroot += 1.0
 #
-    eold = 0.0
-    niter = 0.0
-    do kiter
-        niter += 1.0
-        server_barrier
+	eold = 0.0
+	niter = 0.0
+	do kiter
+	    niter += 1.0
+	    server_barrier
 #
-        call t2new_zero
+	    call t2new_zero
 #
-        call t2newab
+	    call t2newab
 #
-        call hhladder_ab # hh
-        call phladder_ab # ph
-        call AOppladder_ab # pp
-        server_barrier
+	    call hhladder_ab # hh
+	    call phladder_ab # ph
+	    call AOppladder_ab # pp
+	    server_barrier
 #
-        call updatet2
-        server_barrier
-        call make_hbar
-        call cisd_energy
-        server_barrier
-        call energy
-        server_barrier
+	    call updatet2
+	    server_barrier
+	    call make_hbar
+	    call cisd_energy
+	    server_barrier
+	    call energy
+            Ekd[kstate] = ecorrT
+	    server_barrier
 #
-        if niter >= diis_start
-            call diisn
-        endif
-        call movet2
-        server_barrier
-            ediff = eold - ecorrT
-            print ediff
-         IF ecorrT < eold
-            ediff = eold - ecorrT
-            IF ediff < ecrit
-               exit # kiter 
-            ENDIF
-         ENDIF
-#
-         IF ecorrT > eold
-            ediff = ecorrT - eold
-            IF ediff < ecrit
-               exit # kiter 
-            ENDIF
-         ENDIF
+	    if niter >= diis_start
+		call diisn
+	    endif
+	    call movet2
+	    server_barrier
+		ediff = eold - ecorrT
+		etemp = ediff**2.0
+		ediff = etemp**(0.5)
+		IF ediff < ecrit
+		   exit # kiter 
+		ENDIF
 #
 #        Reset eold --> enew 
 #        ------------------- 
 #
-         eold = ecorrT
+	     eold = ecorrT
 #
-    enddo kiter
+	enddo kiter
 #
-    call clear_diis
+	call clear_diis
 #
-    server_barrier
-    totenerg  = ecorrT
-    totenerg += scfeneg
-    print totenerg
+	server_barrier
 
       enddo kstate
 #
-      execute get_my_rank rank
-      if rank == 1.0
-      execute print_static_array Ekd
-      endif
+      print " "
+      print "CIS-CCPT(2) complete"
+      print "FINAL Excitation energies"
+      do kstate
+  	allocate contiguous CISCCPT2_EE_Energy[kstate:kstate]
+	etemp = Ekd[kstate]
+	esum2 = Ek[kstate]
+	etemp += esum2
+	etemp -= lccd_energy
+  	CISCCPT2_EE_Energy[kstate:kstate] = etemp
+	print CISCCPT2_EE_Energy[kstate:kstate]
+	deallocate contiguous CISCCPT2_EE_Energy[kstate:kstate]
+      enddo kstate
 #
       server_barrier
 #
@@ -1713,8 +1535,8 @@ print "  "
       set_persistent     Vaaii  "Vaaii"
       set_persistent     Vpiqj  "Vpiqj"
       set_persistent     VSpipi "VSpipi"
-      set_persistent     ck0 "Ck0"
-      set_persistent     Ek "CEk"
+      set_persistent     ck0 "C1_a"
+      set_persistent     Ek "CIS_E"
 #
 #    ------------------------------------------------------------------------ 
                            ENDSIAL CCSD_RHF_SV1

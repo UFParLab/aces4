@@ -1,5 +1,5 @@
 #  Copyright (c) 2003-2010 University of Florida
-  import "rccpt_rhf_defs.sialx" 
+  import "rccsd_rhf_defs.sialx" 
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -394,6 +394,7 @@
 # Declare scalars 
 # --------------- 
 #
+      scalar lccd_energy
       scalar etemp
       scalar esum
       scalar esuma
@@ -1231,6 +1232,8 @@ print " "
 #
     restore_persistent ca "ca"
     restore_persistent Fock_a "fock_a"
+    restore_persistent scf_energy "scf_energy"
+    set_persistent scf_energy "scf_energy"
     #  server_barrier
     #  call tran_uhf
     #  server_barrier
@@ -1241,7 +1244,7 @@ print " "
 # second-order energy
     call energy
     mp2_energy  = ecorrT
-    mp2_energy += scfeneg
+    mp2_energy += scf_energy
     print mp2_energy
 #
     niter = 0.0
@@ -1285,8 +1288,10 @@ print " "
 #
     server_barrier
     totenerg  = ecorrT
-    totenerg += scfeneg
-    print totenerg
+    totenerg += scf_energy
+    lccd_energy = totenerg
+    print lccd_energy
+      set_persistent totenerg "totenerg"
       set_persistent     ca    "ca" 
       set_persistent     Fock_a "fock_a"
       set_persistent     T2old_ab "T2old_ab"

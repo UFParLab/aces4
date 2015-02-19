@@ -537,18 +537,18 @@ set(SIAL_FILES
     src/sialx/qm/tran_rhf_no3v.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
     src/sialx/qm/rlccd_rhf.sialx;
-    src/sialx/qm/rccsdpt_aaa_defs.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
-    src/sialx/qm/rccsdpt_aab_defs.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
     src/sialx/qm/cis_rhf.sialx;
     src/sialx/qm/cis_rhf_defs.sialx;
-    src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rcis_rhf.sialx;
-    src/sialx/qm/cis_d_rhf.sialx;
-    src/sialx/qm/rccsd_rhf_defs.sialx;
-    src/sialx/qm/rcis_ccpt2_rhf.sialx)
+    src/sialx/qm/rcis_d_rhf.sialx;
+    src/sialx/qm/rcis_ccpt2_rhf.sialx;
+    src/sialx/qm/reom_rhf_defs.sialx;
+    src/sialx/qm/rccsd_rhf_defs.sialx)
 
+#    src/sialx/qm/rccsdpt_aaa_defs.sialx;
+#    src/sialx/qm/rccsdpt_aab_defs.sialx;
 #    src/sialx/qm/scf_mp2_rhf.sialx;
 #    src/sialx/qm/scf_mp2_defs.sialx;
 #    src/sialx/qm/rlambda_rhf.sialx;

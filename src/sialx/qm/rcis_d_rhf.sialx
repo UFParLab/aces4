@@ -1,18 +1,6 @@
-#  Copyright (c) 2003-2010 University of Florida
-import "cis_rhf_defs.sialx" 
+#import "cis_rhf_defs.sialx" 
+import "reom_rhf_defs.sialx"
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
                            SIAL CIS_D_RHF
 #
 #-------------------------------------------------------------------------------
@@ -584,6 +572,8 @@ import "cis_rhf_defs.sialx"
 #
       enddo kstate
       print " "
+      print "CIS(D) complete"
+      print "FINAL Excitation energies"
       do kstate
   	allocate contiguous CIS_D_EE_Energy[kstate:kstate]
 	etemp = Ekd[kstate]
@@ -595,14 +585,14 @@ import "cis_rhf_defs.sialx"
       enddo kstate
 
       server_barrier
-      set_persistent ca     "ca" 
-      set_persistent Fock_a "fock_a"
-      set_persistent ck0    "C1_a"
-      set_persistent Ek     "CIS_E"
-
-      set_persistent Viaai  "Viaai"
-      set_persistent Vaaii  "Vaaii"
-      set_persistent Vpiqj  "Vpiqj"
-      set_persistent VSpipi "VSpipi"
+      set_persistent ca      "ca"
+      set_persistent Fock_a  "fock_a"
+      set_persistent ck0     "C1_a"
+      set_persistent Ek      "CIS_E"
+      set_persistent Viaai   "Viaai"
+      set_persistent Vaaii   "Vaaii"
+      set_persistent Vpiqj   "Vpiqj"
+      set_persistent VSpipi  "VSpipi"
+      server_barrier
 ###########################################
                            ENDSIAL CIS_D_RHF
