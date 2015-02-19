@@ -72,11 +72,31 @@ int main(int argc, char* argv[]) {
 		if (sip_mpi_attr.is_server()){
 			sip::ServerTimer server_timer(sipTables.max_timer_slots());
 
+			sip::Timer init_server_timer("Initialize Server");
+			init_server_timer.start();
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
+			init_server_timer.pause();
+
+			sip::Timer server_run_timer("Server Run");
+			server_run_timer.start();
 			server.run();
+			server_run_timer.pause();
+
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
+
+			sip::Timer save_persistent_timer("Save Persistent Arrays");
+			save_persistent_timer.start();
 			persistent_server.save_marked_arrays(&server);
-			server_timer.print_timers(std::cout, sipTables);
+			save_persistent_timer.pause();
+
+			char server_timer_file_name[64];
+			std::sprintf(server_timer_file_name, "server.profile.%d", sip_mpi_attr.company_rank());
+			std::ofstream server_file(server_timer_file_name, std::ofstream::app);
+			//server_timer.print_timers(lno2name, server_file);
+			server_timer.print_timers(server_file, sipTables);
+			sip::Timer::print_timers(server_file);
+			sip::Counter::print_counters(server_file);
+			sip::MaxCounter::print_max_counters(server_file);
 		} else
 #endif
 
@@ -85,22 +105,55 @@ int main(int argc, char* argv[]) {
 
 			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 			sip::ProfileTimer profile_timer(sialxTimer);
-			//sialxTimer.start_program_timer();
+
+			sip::Timer initialize_worker_timer("Initialize Worker");
+			initialize_worker_timer.start();
 			sip::ProfileInterpreter runner(sipTables, profile_timer, sialxTimer, NULL, &persistent_worker);
+			initialize_worker_timer.pause();
+
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
+
+			sip::Timer interpret_timer("Interpret Program");
+			interpret_timer.start();
 			runner.interpret();
+			interpret_timer.pause();
+
+			sip::Timer post_sial_timer("Post SIAL Program");
+			post_sial_timer.start();
 			runner.post_sial_program();
+			post_sial_timer.pause();
+
+
+			sip::Timer save_persistent_timer("Save Persistent Arrays");
+			save_persistent_timer.start();
 			persistent_worker.save_marked_arrays(&runner);
+			save_persistent_timer.pause();
+
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker);
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
+
+			sip::Timer save_to_store_timer("Save To Store");
+			save_to_store_timer.start();
 			profile_timer.save_to_store(profile_timer_store); // Saves to database store.
-			profile_timer.print_timers(std::cout);
-			sialxTimer.print_timers(std::cout, sipTables);
-			//sialxTimer.stop_program_timer();
-			//sialxTimer.print_aggregate_timers(lno2name);
+			save_to_store_timer.pause();
+
+			char sialx_timer_file_name[64];
+			std::sprintf(sialx_timer_file_name, "worker.profile.%d", sip_mpi_attr.company_rank());
+			std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
+
+			sialxTimer.print_timers(worker_file, sipTables);
+			profile_timer.print_timers(worker_file);
+
+			sip::Timer::print_timers(worker_file);
+			sip::Counter::print_counters(worker_file);
+			sip::MaxCounter::print_max_counters(worker_file);
+
 
 		}// end of worker or server
-
+		// Reset counters for next program
+		sip::Counter::clear_list();
+		sip::MaxCounter::clear_list();
+		sip::Timer::clear_list();
 		///STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
 
   		barrier();
