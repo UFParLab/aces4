@@ -40,7 +40,11 @@ void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables){
 		const SialxUnitTimer& timer = *it;
 		opcode_t opcode = sip_tables.op_table().opcode(i);
 		int line_number = sip_tables.op_table().line_number(i);
-		const std::string& name = opcodeToName(opcode);
+		std::string name = opcodeToName(opcode);
+		if (opcode == execute_op){
+			int func_slot = sip_tables.op_table().arg0(i);
+			name = sip_tables.special_instruction_manager().name(func_slot);
+		}
 		double total_time = timer.get_total_time();
 		double block_wait_time = timer.get_block_wait_time();
 		std::size_t epochs = timer.get_num_epochs();

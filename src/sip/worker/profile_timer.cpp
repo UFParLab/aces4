@@ -23,33 +23,19 @@ ProfileTimer::ProfileTimer(SialxTimer& sialx_timer) : sialx_timer_(sialx_timer){
 
 ProfileTimer::~ProfileTimer() {}
 
-
-//void ProfileTimer::record_time(const ProfileTimer::Key& key, long long time, long long count){
-//	TimerMap_t::iterator it = profile_timer_map_.find(key);
-//	if (it == profile_timer_map_.end()){
-//		profile_timer_map_.insert(std::make_pair(key, ProfileTimer::ValuePair(time, count)));
-//	} else {
-//		ValuePair& vpair = it->second;
-//		std::stringstream err_ss;
-//		err_ss << "Trying to overwrite key : " << key
-//				<< ", prev [time, count] : [" << vpair.total_time << ", " << vpair.count << "]"
-//				<< ", this [time, count] : [" << time << ", " << count << "]";
-//		fail(err_ss.str());
-//	}
-//}
-
-void ProfileTimer::record_pc(const ProfileTimer::Key& key, int pc){
+void ProfileTimer::record_time(const ProfileTimer::Key& key, double time, int pc){
 	TimerMap_t::iterator it = profile_timer_map_.find(key);
 	if (it == profile_timer_map_.end()){
-		std::set<int> line_num_set;
-		line_num_set.insert(pc);
-		profile_timer_map_.insert(std::make_pair(key, line_num_set));
+		std::set<int> pc_set;
+		pc_set.insert(pc);
+		profile_timer_map_.insert(std::make_pair(key, Value(time, 1L, pc_set)));
 	} else {
-		std::set<int>& line_num_set = it->second;
-		line_num_set.insert(pc);
+		Value& val = it->second;
+		val.time += time;
+		val.count += 1L;
+		val.pc_set.insert(pc);
 	}
 }
-
 
 
 
@@ -233,22 +219,13 @@ void ProfileTimer::save_to_store(ProfileTimerStore& profile_timer_store){
 	TimerMap_t::const_iterator it = profile_timer_map_.begin();
 	for (; it!= profile_timer_map_.end(); ++it){
 		const Key &key = it->first;
-		const std::set<int>& pc_set = it->second;
-		std::set<int>::const_iterator it = pc_set.begin();
-		double total_computation_time = 0.0;
-		long total_count = 0L;
-		for (; it != pc_set.end(); ++it){
-			int pc = *it;
-			double walltime = sialx_timer_[pc].get_total_time();
-			long walltime_count = sialx_timer_[pc].get_num_epochs();
-			double blockwait =  sialx_timer_[pc].get_block_wait_time();
-			total_computation_time +=  walltime - blockwait;
-			total_count += walltime_count;	// Number of times the line was invoked.
-		}
-
-		profile_timer_store.save_to_store(key, std::make_pair(total_computation_time, total_count));
+		const Value& val = it->second;
+		double time = val.time;
+		long count = val.count;
+		profile_timer_store.save_to_store(key, std::make_pair(time, count));
 	}
 }
+
 
 void ProfileTimer::print_timers(std::ostream& out) {
 	const int CW = 18;	// Time
@@ -256,8 +233,9 @@ void ProfileTimer::print_timers(std::ostream& out) {
 	const int SW = 110;	// String
 	const int NUM_LINES_TO_PRINT = 5;
 
-	out<<"Timers"<<std::endl
-		<<std::setw(SW)<<std::left<<"Type"
+	out << "ProfileTimers for Program " << GlobalState::get_program_name() << std::endl;
+
+	out <<std::setw(SW)<<std::left<<"Type"
 		<<std::setw(LW)<<std::left<<"PCs"
 		<<std::setw(CW)<<std::left<<"AvgComputation"
 		<<std::setw(CW)<<std::left<<"TotComputation"
@@ -267,45 +245,35 @@ void ProfileTimer::print_timers(std::ostream& out) {
 	TimerMap_t::const_iterator it = profile_timer_map_.begin();
 	for (; it!= profile_timer_map_.end(); ++it){
 		const Key &kp = it->first;
-		const std::set<int>& line_num_set = it->second;
-		std::set<int>::const_iterator lineit = line_num_set.begin();
-		double total_walltime = 0L;
-		double total_blockwait = 0L;
-		double total_computation_time = 0L;
-		long total_count = 0L;
-		std::stringstream line_nums_str;
-		bool lines_printed = false;
-		int lines = 0;
-		int total_lines = line_num_set.size();
-		for (; lineit != line_num_set.end(); ++lineit, ++lines){
-			int line_number = *lineit;
-			double walltime = sialx_timer_[line_number].get_total_time();
-			double walltime_count = sialx_timer_[line_number].get_num_epochs();
-			double blockwait =  sialx_timer_[line_number].get_block_wait_time();
-			total_walltime += walltime;
-			total_blockwait += blockwait;
-			total_count += walltime_count; // Number of times the line was invoked.
-
-			if (lines < NUM_LINES_TO_PRINT && !lines_printed){
-				line_nums_str << line_number << ";";
-			} else if (!lines_printed){
-				line_nums_str << "..." << (total_lines - lines) << " more";
-				lines_printed = true;
+		const Value& val = it->second;
+		double time = val.time;
+		long count = val.count;
+		std::set<int>::const_iterator pcit = val.pc_set.begin();
+		std::stringstream pcs_str;
+		bool pcs_printed = false;
+		int pcs = 0;
+		int total_pcs = val.pc_set.size();
+		for (; pcit != val.pc_set.end(); ++pcit, ++pcs){
+			int line_number = *pcit;
+			if (pcs < NUM_LINES_TO_PRINT && !pcs_printed){
+				pcs_str << line_number << ";";
+			} else if (!pcs_printed){
+				pcs_str << "..." << (total_pcs - pcs) << " more";
+				pcs_printed = true;
 			}
 		}
-		total_computation_time =  total_walltime - total_blockwait;
 
-		if (total_count > 0){
+		if (count > 0){
 			out.precision(6); // Reset precision to 6 places.
-			double to_print_tot_time = total_computation_time;
-			double to_print_avg_time = to_print_tot_time / total_count;
-			long to_print_count = total_count;
+			double to_print_tot_time = time;
+			double to_print_avg_time = to_print_tot_time / count;
+			long to_print_count = count;
 
 			std::stringstream ss;
 			ss << it->first;
 
 			out<<std::setw(SW)<< std::left << ss.str()
-				<< std::setw(LW)<< std::left << line_nums_str.str()
+				<< std::setw(LW)<< std::left << pcs_str.str()
 				<< std::setw(CW)<< std::left << to_print_avg_time
 				<< std::setw(CW)<< std::left << to_print_tot_time
 				<< std::setw(CW)<< std::left << to_print_count

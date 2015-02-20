@@ -19,14 +19,16 @@
 namespace sip {
 /*! This really simple timer just keeps track of epochs & time. */
 struct SimpleTimer_t{
-	SimpleTimer_t() : on_(false), start_time_(0.0), value_(0.0), epochs_(0) {}
-	void start() { CHECK(!on_,"starting on timer"); start_time_ = GETTIME; on_ = true; }
-	double pause() { double elapsed = GETTIME - start_time_; value_ += elapsed; on_ = false; epochs_++; return elapsed; }
+	SimpleTimer_t() : on_(false), start_time_(0.0), value_(0.0), epochs_(0), last_recorded_(0.0) {}
+	void start() { CHECK(!on_,"starting on timer"); start_time_ = GETTIME; on_ = true; last_recorded_ = 0.0;}
+	double pause() { double elapsed = GETTIME - start_time_; value_ += elapsed; on_ = false; epochs_++; last_recorded_ = elapsed; return elapsed; }
+	double get_last_recorded_and_clear() { double tmp = last_recorded_; last_recorded_ = 0.0; return tmp; }
 
-	bool on_;
-	double start_time_;
-	double value_;
-	std::size_t epochs_;
+	double last_recorded_; 	//! The value of the previously collected elapsed time.
+	bool on_;				//! Whether the timer is on or off
+	double start_time_;		//! When the timer was started
+	double value_;			//! The total time collected at this timer
+	std::size_t epochs_;	//! Number of times this timer was switched on and off
 };
 
 /*! Measure one unit of a sialx program. This could be a PC or a Line*/
@@ -41,6 +43,10 @@ public:
 	void set_block_wait_time(double val) { block_wait_timer_.value_ = val; }
 	double get_total_time() const {return total_time_timer_.value_;}
 	double get_block_wait_time() const {return block_wait_timer_.value_; }
+
+	double get_last_recorded_total_time_and_clear() { return total_time_timer_.get_last_recorded_and_clear(); }
+	double get_last_recorded_block_wait_and_clear() { return block_wait_timer_.get_last_recorded_and_clear(); }
+
 	std::size_t get_num_epochs() const {return total_time_timer_.epochs_;}
 
 	/*! Sums up other SialxUnitTimer instance into this one, Used when merging SIPMaPTimer instances */

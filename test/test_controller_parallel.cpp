@@ -372,7 +372,7 @@ sip::ProfileTimer::Key ProfileInterpreterTestControllerParallel::key_for_pc(int 
 	sip::ProfileTimer::TimerMap_t& timer_map = profile_timer_->profile_timer_map_;
 	sip::ProfileTimer::TimerMap_t::iterator it = timer_map.begin();
 	for (; it != timer_map.end(); ++it){
-		std::set<int>& profile_pc_set = it->second;
+		std::set<int>& profile_pc_set = it->second.pc_set;
 		std::set<int>::iterator pc_it = profile_pc_set.find(pc);
 		if (pc_it != profile_pc_set.end()){
 			return it->first;

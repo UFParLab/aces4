@@ -64,21 +64,18 @@ public:
 		friend std::ostream& operator<<(std::ostream&, const ProfileTimer::Key&);
 	};
 
-//	struct ValuePair{
-//		long long total_time;
-//		long long count;
-//		ValuePair(long long tt, long long c) : total_time(tt), count(c) {}
-//	};
-//
-//	typedef std::map<Key, ValuePair> TimerMap_t;
+	struct Value {
+		double time;
+		long count;
+		std::set<int> pc_set;
+		Value(double t, long c, const std::set<int>& p):time(t), count(c), pc_set(p) {}
+	};
 
-	//void record_time(const ProfileTimer::Key& key, long long time, long long count);
+	typedef std::map<Key, Value> TimerMap_t; // Key -> (time, count, set of program counters)
 
+	/** Records time for given operation & operand type */
+	void record_time(const ProfileTimer::Key& key, double time, int pc);
 
-	typedef std::map<Key, std::set<int> > TimerMap_t;	// Key -> Set of program counters
-
-	/** Records occurrence of operation & operand type at given program counter */
-	void record_pc(const ProfileTimer::Key& key, int pc);
 
 	/** Prints timers to an ostream */
 	void print_timers(std::ostream& out);
