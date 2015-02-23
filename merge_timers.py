@@ -22,7 +22,8 @@ if len(sys.argv) > 1:
     prefix_dir = sys.argv[1]
 
 program_re = re.compile( r'(.*)\s*for\s*Program\s*(.*)', re.I) # match()
-line_re = re.compile(r'([\+\.a-zA-Z0-9_-]*)\s*', re.I)  # Use findall())
+#line_re = re.compile(r'([\+\.a-zA-Z0-9_-]*)\s*', re.I)  # Use findall())
+line_re = re.compile(r'(\S*)\s*', re.I)  # Use findall())
 
 
 # Measures and prints time of a method using decorators.
@@ -51,7 +52,6 @@ def merge_files(files, output_name, prefix_of_file, size_of_header_columns_map):
     header_column_map = {}  # "CounterTypeForProgram" => 2d table of data per rank
     header_row_map = {}     # "CounterTypeForProgram" => 1d table of data per rank - row header
     for fnum, fname in enumerate(files, start=0):
-        #print fname
         with open(fname) as f:
             lines = f.readlines()
             sialx_prog = ""     # Name of the sial program being processed
@@ -62,6 +62,8 @@ def merge_files(files, output_name, prefix_of_file, size_of_header_columns_map):
             data_table = None
             header_column = None    
             header_row = None    
+            skip_timers = False # Whether to skip including a particular type of timer
+
             # Process all lines in the file
             for line_number, l in enumerate(lines, start=0):
                 
@@ -71,12 +73,18 @@ def merge_files(files, output_name, prefix_of_file, size_of_header_columns_map):
                     profile_type = None
                     matched_program_name = False
                     line_after_program_name = False 
+                    skip_timers = False
+                    continue
+                if skip_timers:
                     continue
                 l = l.strip()
                 # Match line containing program name    
                 m_prog = program_re.match(l)
                 if m_prog is not None:
                     profile_type = m_prog.group(1).strip() # Type of profile info
+                    if size_of_header_columns_map[profile_type] < 0:
+                        skip_timers = True
+                        continue
                     sialx_prog = m_prog.group(2).strip()  # Name of sialx program
                     l = sialx_prog + ' ' + profile_type
                     data_table = data_map.get(l)
@@ -195,7 +203,8 @@ extract_column_map = {"SialxTimers":3,
                       "Timers":1, 
                       "Counters":1, 
                       "MaxCounters":1,
-                      "ServerTimers":3}
+                      "ServerTimers":3,
+                      "ProfileTimers":-1}
 # Merge worker files
 worker_files = glob.glob(prefix_dir + '/worker.profile.*')
 merge_files(worker_files, 'worker_profile.csv', 'worker.profile.', extract_column_map)

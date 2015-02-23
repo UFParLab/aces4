@@ -90,10 +90,6 @@ static void mpi_init(int *argc, char ***argv){
 #ifdef HAVE_MPI
 	/* MPI Initialization */
 	MPI_Init(argc, argv);
-	// Since this executable need not be run with servers
-	// or with 2 ranks, all ranks are made to be workers.
-	sip::AllWorkerRankDistribution all_workers_rank_dist;
-	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 #endif //HAVE_MPI
 }
 

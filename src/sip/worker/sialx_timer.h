@@ -39,8 +39,9 @@ public:
 	void start_block_wait() { block_wait_timer_.start(); }
 	double pause_block_wait() { return block_wait_timer_.pause(); }
 
-	void set_total_time(double val) { total_time_timer_.value_ = val; }
-	void set_block_wait_time(double val) { block_wait_timer_.value_ = val; }
+	void record_total_time(double val) { total_time_timer_.value_ += val; total_time_timer_.epochs_ += 1; }
+	void record_block_wait_time(double val) { block_wait_timer_.value_ += val; }
+
 	double get_total_time() const {return total_time_timer_.value_;}
 	double get_block_wait_time() const {return block_wait_timer_.value_; }
 
@@ -70,7 +71,7 @@ public:
 	SialxTimer(int max_slots);
 	SialxUnitTimer& operator[](int slot) {return list_.at(slot); }
 	SialxUnitTimer& timer(int slot) {return list_.at(slot); }
-	void print_timers(std::ostream& out, const SipTables& sip_tables);
+	void print_timers(std::ostream& out, const SipTables& sip_tables) const;
 protected:
 	SialxTimer(const SialxTimer& other);
 	int max_slots_;

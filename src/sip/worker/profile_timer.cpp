@@ -11,6 +11,7 @@
 #include "print_timers.h"
 #include "profile_timer_store.h"
 #include <utility>
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <cassert>
@@ -269,10 +270,13 @@ void ProfileTimer::print_timers(std::ostream& out) {
 			double to_print_avg_time = to_print_tot_time / count;
 			long to_print_count = count;
 
-			std::stringstream ss;
-			ss << it->first;
+			std::stringstream type_ss;
+			type_ss << it->first;
+			std::string type_string = type_ss.str();
+			std::replace(type_string.begin(), type_string.end(), ' ', '_');
 
-			out<<std::setw(SW)<< std::left << ss.str()
+
+			out<<std::setw(SW)<< std::left << type_string
 				<< std::setw(LW)<< std::left << pcs_str.str()
 				<< std::setw(CW)<< std::left << to_print_avg_time
 				<< std::setw(CW)<< std::left << to_print_tot_time

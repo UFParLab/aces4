@@ -177,11 +177,11 @@ private:
 	 * @param time
 	 */
 	void record_total_time(double time){
-		sipmap_timer_[current_pc()].set_total_time(time);
+		sipmap_timer_[current_pc()].record_total_time(time);
 	}
 
 	void record_block_wait_time(double time){
-		sipmap_timer_[current_pc()].set_block_wait_time(time);
+		sipmap_timer_[current_pc()].record_block_wait_time(time);
 	}
 	/**
 	 * Utility method to calculate the block wait time.

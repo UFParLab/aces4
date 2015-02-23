@@ -11,7 +11,7 @@
 
 namespace sip {
 
-SIPMaPTimer::SIPMaPTimer(int max_slots): SialxTimer(max_slots_) {}
+SIPMaPTimer::SIPMaPTimer(int max_slots): SialxTimer(max_slots) {}
 
 SIPMaPTimer::SIPMaPTimer(const SIPMaPTimer& other): SialxTimer(other){}
 

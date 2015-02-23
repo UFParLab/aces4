@@ -123,7 +123,7 @@ void SIPMaPInterpreter::handle_execute_op(int pc) {
 		block_selector_stack_.pop();
 	}
 	ProfileTimer::Key key = make_profile_timer_key(opcode_name, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -152,7 +152,7 @@ void SIPMaPInterpreter::handle_block_copy_op(int pc) {
 	block_selector_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_copy_op, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -168,7 +168,7 @@ void SIPMaPInterpreter::handle_block_permute_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_permute_op, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -181,7 +181,7 @@ void SIPMaPInterpreter::handle_block_fill_op(int pc) {
 	expression_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_fill_op, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -194,7 +194,7 @@ void SIPMaPInterpreter::handle_block_scale_op(int pc) {
 	expression_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_scale_op, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -209,7 +209,7 @@ void SIPMaPInterpreter::handle_block_scale_assign_op(int pc) {
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	expression_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_scale_assign_op, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -254,7 +254,7 @@ void SIPMaPInterpreter::handle_block_subtract_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_subtract_op, bs_list);
-	std::pair<long, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -404,7 +404,7 @@ SIPMaPTimer SIPMaPInterpreter::merge_sipmap_timers(
 			check(max_time - pardo_sections_info_vector.at(i).at(j).time >= 0, "The barrier time can only be positive ! BUG");
 			double barrier_time  = max_time - pardo_sections_info_vector.at(i).at(j).time;
 			if (line > 0)
-				sipmap_timers_vector.at(i).timer(line).set_total_time(barrier_time);
+				sipmap_timers_vector.at(i).timer(line).record_total_time(barrier_time);
 		}
 	}
 

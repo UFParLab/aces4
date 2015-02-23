@@ -370,7 +370,7 @@ ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
 			}
 
 			// Get total time & counts
-			long totaltime = sqlite3_column_double(get_all_rows_from_table, col_num++);
+			double totaltime = sqlite3_column_double(get_all_rows_from_table, col_num++);
 			long count = sqlite3_column_int64(get_all_rows_from_table, col_num++);
 
 			std::pair<double, long> time_count_pair = std::make_pair(totaltime, count);
@@ -415,9 +415,9 @@ void ProfileTimerStore::merge_from_other(const ProfileTimerStore& other){
 
 		// If the record was found, merge it and put it in
 		if (found_it != other_map.end()){
-			long new_total_time = it->second.first + found_it->second.first;
+			double new_total_time = it->second.first + found_it->second.first;
 			long new_count = it->second.second + found_it->second.second;
-			std::pair<long, long> new_timer_count_pair = std::make_pair(new_total_time, new_count);
+			std::pair<double, long> new_timer_count_pair = std::make_pair(new_total_time, new_count);
 			this->save_to_store(it->first, new_timer_count_pair);
 
 		} else { // Otherwise just put it in

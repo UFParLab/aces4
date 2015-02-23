@@ -13,6 +13,8 @@ int main(int argc, char* argv[]) {
     setup_signal_and_exception_handlers();
     mpi_init(&argc, &argv);
 
+    // Since this executable need not be run with servers
+    // or with 2 ranks, all ranks are made to be workers.
     sip::AllWorkerRankDistribution all_workers_rank_dist;
     sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
@@ -59,7 +61,7 @@ int main(int argc, char* argv[]) {
 
 		//interpret current program on worker
 		{
-			const sip::RemoteArrayModel::Parameters remote_array_model_parameters(10.0, 10.0); // TODO FIXME
+			const sip::RemoteArrayModel::Parameters remote_array_model_parameters(0.00000097, 1467073577.4156); // TODO FIXME
 			const sip::RemoteArrayModel remote_array_model(sipTables, remote_array_model_parameters);
 
 			std::vector<sip::SIPMaPInterpreter::PardoSectionsInfoVector_t> pardo_sections_info_vector;
@@ -80,7 +82,19 @@ int main(int argc, char* argv[]) {
 			}
 
 			sip::SIPMaPTimer merged_timer = sip::SIPMaPInterpreter::merge_sipmap_timers(pardo_sections_info_vector, sipmap_timer_vector);
+
+			// Print the summary timer
 			merged_timer.print_timers(std::cout, sipTables);
+
+			// Print each of the timers
+			int i;
+			std::vector<sip::SIPMaPTimer>::const_iterator it;
+			for (i=0, it = sipmap_timer_vector.begin(); it != sipmap_timer_vector.end(); ++it, ++i){
+				char sialx_timer_file_name[64];
+				std::sprintf(sialx_timer_file_name, "worker.profile.%d", i);
+				std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
+				it->print_timers(worker_file, sipTables);
+			}
 
 			sipmap_timer_vector.clear();
 			pardo_sections_info_vector.clear();

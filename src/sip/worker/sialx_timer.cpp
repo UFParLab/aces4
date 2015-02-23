@@ -21,7 +21,7 @@ SialxTimer::SialxTimer(const SialxTimer& other):
 }
 
 
-void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables){
+void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables) const {
 	out_ << "SialxTimers for Program " << GlobalState::get_program_name() << std::endl;
 	const int LW = 8;			// Line Number & PC Width
 	const int SW = 25;			// String
