@@ -445,7 +445,6 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
-./src/sialx/qm/rccpt_rhf_defs.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
 ./src/sialx/qm/tran_uhf_no4v.siox\
 ./src/sialx/qm/tran_rhf_no3v.siox\
@@ -459,7 +458,7 @@ SIOX_FILES=\
 #./src/sialx/qm/rccsdpt_aab_defs.siox\
 #./src/sialx/qm/scf_mp2_rhf.siox\
 #./src/sialx/qm/scf_mp2_defs.siox\
-#./src/sialx/qm/rlambda_rhf.siox\
+#./src/sialx/qm/rlambda_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -569,7 +568,6 @@ EXTRA_DIST += \
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
 ./src/sialx/qm/reom_rhf_defs.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
-./src/sialx/qm/rccpt_rhf_defs.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\
 ./src/sialx/qm/tran_uhf_no4v.sialx\
 ./src/sialx/qm/tran_rhf_no3v.sialx\
@@ -583,7 +581,7 @@ EXTRA_DIST += \
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\
-#./src/sialx/qm/rlambda_rhf.sialx\
+#./src/sialx/qm/rlambda_rhf.sialx
 
 SIALX_DIR = ${top_srcdir}/src/sialx/
 .sialx.siox: $(SIAL_COMPILER_JAR)
