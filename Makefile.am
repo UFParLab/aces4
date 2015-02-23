@@ -271,7 +271,9 @@ test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 # Add any initialization files needed by tests here.
 TEST_INIT_DATA_FILES=\
-test/ccsdpt_test.dat
+test/ccsdpt_test.dat\
+test/second_ccsdpt_test.dat\
+test/cis_test.dat
 
 
 EXTRA_DIST+= $(TEST_INIT_DATA_FILES)

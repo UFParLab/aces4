@@ -11,14 +11,14 @@ sial predef_scalars
 	z = x
 	zz = 99.99
 	
-	println z
-	println zz
+	print z
+	print zz
 	
 	e = 1.0
 	e *= 2.0
 	e *= 3.0
 	
-	println "e should be 6"
-	println e
+	print "e should be 6"
+	print e
 	
 endsial predef_scalars

@@ -16,21 +16,21 @@ sial loop_over_simple_indices
 				print i
 			enddo i
 		enddo k
-		println "finished with k"
+		print "finished with k"
 	enddo j
 	
-	println "should print cc = [-4,3]"
+	print "should print cc = [-4,3]"
 	
 	do cc
 		print cc
 	enddo cc
 	 
-	println "should print dd = [-5,-1]"
+	print "should print dd = [-5,-1]"
 	do dd
 		print dd
 	enddo dd
 	
-	println "should print e = [0,10]"
+	print "should print e = [0,10]"
 	do ee
 		print ee
 	enddo ee

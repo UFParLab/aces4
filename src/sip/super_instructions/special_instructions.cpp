@@ -36,7 +36,7 @@ extern "C"{
 //the following 3 super instructions are for testing and will be deleted at some point
 //void dadd(double, double, double*);
 //void dsub(double, double, double*);
-//void print_something();
+void print_something();
 //the following super instructions are real
 //ADD C PROTOTYPE FOR SPECIAL SUPERINSTRUCTION WRITTEN IN C OR FORTRAN HERE
 //THESE MUST BE INSIDE THE extern "C" block
@@ -397,7 +397,7 @@ void SpecialInstructionManager::init_procmap(){
     // TEST  The next few instructions are used for testing
 //	procmap_["dadd"] = (fp0)&dadd;
 //	procmap_["dsub"] = (fp0)&dsub;
-//	procmap_["print_something"] = (fp0)&print_something;
+	procmap_["print_something"] = (fp0)&print_something;
 	procmap_["fill_block_sequential"]= (fp0)&fill_block_sequential;
 	procmap_["fill_block_cyclic"]= (fp0)&fill_block_cyclic;
 //	procmap_["test_print_block"]=(fp0)&test_print_block;

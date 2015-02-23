@@ -132,7 +132,10 @@ void SialPrinterForTests::do_print_scalar(std::string name, double value, int li
 }
 void SialPrinterForTests::do_print_scalar_value(double value) {
 	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
-		out_ << value << std::flush;
+		out_.precision(14);
+		out_.setf(std::ios_base::fixed);
+		out_<< value << std::endl
+				<< std::flush;
 	}
 }
 void SialPrinterForTests::do_print_index(std::string name, int value, int line_number) {
