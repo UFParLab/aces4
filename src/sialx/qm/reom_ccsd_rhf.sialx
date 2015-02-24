@@ -318,6 +318,7 @@ static St1b[b,j]
 #
 temp AOINT[mu,lambda,nu,sigma]
 temp Txxxx[mu,nu,lambda,sigma]
+temp T1xxxx[mu,nu,lambda,sigma]
 local Lxxxj[mu,lambda,nu,j]
 local Lxxbj[mu,nu,b,j]
 local Lxabj[mu,a,b,j]
@@ -373,6 +374,7 @@ temp t1xj[sigma,j]
 distributed Mxj[sigma,j]
 temp t1xi[sigma,i]
 distributed Mxi[sigma,i]
+
 #
 # Declare HBAR arrays. 
 # -------------------- 
@@ -575,6 +577,7 @@ distributed DRNaibj[a,i,b,j]
 #
 served VCONV2AA[a,i,a1,i1]
 served VCONV2AB[a,i,b,j]
+served VCONV2BB[b,j,b1,j1]
 ##
 served VCE2AA[a,i,a1,i1]
 served VCE2AB[a,i,b,j]
@@ -839,12 +842,14 @@ local Raiai[a,i,a1,i1]
 local Rbjbj[b,j,b1,j1]
 local Raibj[a,i,b,j]
 #
-served DDaa[a,a1]
-served DDii[i,i1]
-served DDia[i,a]
+distributed DDaa[a,a1]
+distributed DDii[i,i1]
+distributed DDia[i,a]
+distributed DDjj[j,j1]
 #served DDjj[j,j1]
 served DDjb[j,b]
 distributed VCONV1A[a,i]
+distributed VCONV1B[b,j]
 static SHDiag[a,i]
 distributed Fae_a[a,a1]
 distributed Fmi_a[i1,i]
@@ -2582,10 +2587,6 @@ server_barrier
 ENDPROC HBAR_ABCI    
 #
 PROC AO4VIR
-#     ----------- 
-#
-create Mxj
-create Mxi
 #
 server_barrier
 #
@@ -2860,7 +2861,6 @@ PROC form_H
 server_barrier 
 #
 server_barrier
-allocate LHBAR_jj[*,*]
 allocate LHBAR_ii[*,*]
 allocate LHBAR_ia[*,*]
 allocate LHBAR_jb[*,*]
@@ -2874,7 +2874,6 @@ CALL HBAR_IJ
 print "Forming H_ib"
 CALL HBAR_IB
 
-delete HBAR_jj
 delete HBAR_ii
 delete HBAR_ia
 delete HBAR_jb
@@ -2883,7 +2882,6 @@ print "Forming H_ijkl"
 CALL HBAR_IJKL
 print "Forming H_jkia"
 CALL HBAR_JKIA
-server_barrier
 print "Forming H_iajk"
 CALL HBAR_IAJK
 #
@@ -2891,7 +2889,6 @@ print "Forming H_iabc"
 CALL HBAR_AIBC
 print "Forming H_ajib"
 CALL HBAR_AJIB
-server_barrier
 print "Forming H_abci"
 CALL HBAR_ABCI
 #
@@ -2919,13 +2916,453 @@ server_barrier
 #
 ENDPROC form_H
 #
+#------------------------------------------------------------------------
+#
 PROC form_diag
 #    ----------- 
 print "forming diagonals"
+server_barrier
+#
+PARDO a, a1, i, i1
+    taiai[a,i,a1,i1]            = 0.0
+    prepare VCONV2AA[a,i,a1,i1] = taiai[a,i,a1,i1]
+ENDPARDO a, a1, i, i1
+#
+PARDO a, b, i, j
+    taibj[a,i,b,j]            = 0.0 
+    prepare VCONV2AB[a,i,b,j] = taibj[a,i,b,j]
+ENDPARDO a, b, i, j
+server_barrier
+#
+PARDO mu, nu, lambda, sigma 
+#
+    execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
+#
+    DO a 
+	Txxxp[mu,nu,lambda,a] = aoint[mu,nu,lambda,sigma]*ca[sigma,a] 
+	DO a1 
+	if a == a1 
+	    Txxpp[mu,nu,a1,a] = Txxxp[mu,nu,lambda,a]*ca[lambda,a1] 
+	    PREPARE Vxxaa[mu,nu,a1,a] += Txxpp[mu,nu,a1,a] 
+	endif 
+	ENDDO a1 
+    ENDDO a 
+#
+    DO b 
+	Txxxq[mu,nu,lambda,b] = aoint[mu,nu,lambda,sigma]*ca[sigma,b] 
+	DO b1 
+	if b == b1 
+	    Txxqq[mu,nu,b1,b] = Txxxq[mu,nu,lambda,b]*ca[lambda,b1] 
+	    PREPARE Gxxbb[mu,nu,b1,b] += Txxqq[mu,nu,b1,b] 
+	endif 
+	ENDDO b1 
+    ENDDO b 
+#
+ENDPARDO mu, nu, lambda, sigma 
+#
+PARDO mu, nu, lambda, sigma 
+#
+    execute compute_integral_batch            aoint[mu,sigma,lambda,nu] 
+    txxxx[mu,nu,lambda,sigma]  = aoint[mu,sigma,lambda,nu] 
+    txxxx[mu,nu,lambda,sigma] *= -1.0  
+#
+    DO a 
+	Txxxp[mu,nu,lambda,a] = txxxx[mu,nu,lambda,sigma]*ca[sigma,a] 
+	DO a1 
+	if a == a1 
+	    Txxpp[mu,nu,a1,a] = Txxxp[mu,nu,lambda,a]*ca[lambda,a1] 
+	    PREPARE Vxxaa[mu,nu,a1,a] += Txxpp[mu,nu,a1,a] 
+	endif 
+	ENDDO a1 
+    ENDDO a 
+#
+ENDPARDO mu, nu, lambda, sigma 
 #
 server_barrier
 #
+PARDO mu, nu, a, a1 
+WHERE a == a1 
+    REQUEST Vxxaa[mu,nu,a1,a]             
+    DO a2 
+	Txppp[mu,a2,a1,a] = Vxxaa[mu,nu,a1,a]*ca[nu,a2] 
+	DO a3 
+	if a2 == a3 
+	    Tpppp[a3,a2,a1,a] = Txppp[mu,a2,a1,a]*ca[mu,a3] 
+	    PREPARE Vaaaa[a3,a2,a1,a] += Tpppp[a3,a2,a1,a] 
+	endif 
+	ENDDO a3 
+    ENDDO a2 
+ENDPARDO mu, nu, a, a1 
+#
+PARDO mu, nu, b, b1 
+WHERE b == b1 
+    REQUEST Gxxbb[mu,nu,b1,b]             
+    DO a2 
+	Txpqq[mu,a2,b1,b] = Gxxbb[mu,nu,b1,b]*ca[nu,a2] 
+	DO a3 
+	if a2 == a3 
+	    Tppqq[a3,a2,b1,b] = Txpqq[mu,a2,b1,b]*ca[mu,a3] 
+	    PREPARE Vaabb[a3,a2,b1,b] += Tppqq[a3,a2,b1,b] 
+	endif 
+	ENDDO a3 
+    ENDDO a2 
+ENDPARDO mu, nu, b, b1 
+#
+server_barrier
+#
+# -----prepare f_aa diagonal = Sdaa
+#
+PARDO a, a1, a2, a3   
+WHERE a  == a1 
+WHERE a2 == a3 
+#
+    REQUEST              Vaaaa[a,a1,a2,a3] 
+    Tpppp[a,a1,a2,a3]  = Vaaaa[a,a1,a2,a3]
+    execute return_diagonal_elements Tpppp[a,a1,a2,a3]
+    taa[a3,a1]         = 1.0
+    t1aa[a,a2]         = Tpppp[a,a1,a2,a3]*taa[a3,a1]
+#
+    PUT Faa[a,a2]     += t1aa[a,a2]
+#
+ENDPARDO a, a1, a2, a3  
+#
+PARDO a, a1, b2, b3   
+WHERE a  == a1 
+WHERE b2 == b3 
+#
+    REQUEST              Vaabb[a,a1,b2,b3] 
+    Tppqq[a,a1,b2,b3]  = Vaabb[a,a1,b2,b3]
+    execute return_diagonal_elements Tppqq[a,a1,b2,b3]
+    tba[b3,a1]         = 1.0
+    tab[a,b2]          = Tppqq[a,a1,b2,b3]*tba[b3,a1]
+#
+    PUT Fab[a,b2]     += tab[a,b2]
+#
+ENDPARDO a, a1, b2, b3  
+#
+PARDO a, a1
+WHERE a==a1 
+#
+    taa[a,a1]      = LHBAR_aa[a,a1]
+    execute return_diagonal_elements taa[a,a1]
+    put DDaa[a,a1] = taa[a,a1]
+#
+ENDPARDO a, a1
+#
+# -----prepare f_ii diagonal = Sdii
+#
+PARDO i, i1
+WHERE i==i1 
+#
+    tii[i1,i]      = LHBAR_ii[i1,i]
+    execute return_diagonal_elements tii[i1,i]
+    put DDii[i1,i] = tii[i1,i]
+#
+ENDPARDO i, i1
+#
+# -----prepare f_jj diagonal = DDjj
+#
+#PARDO j, j1
+#WHERE j==j1 
+##
+#    tjj[j1,j]      = LHBAR_ii[j1,j]
+#    execute return_diagonal_elements tjj[j1,j]
+#    put DDjj[j1,j] = tjj[j1,j]
+##
+#ENDPARDO j, j1
+#
+server_barrier
+#
+# -----prepare Hbar_aiai diagonal
+#
+PARDO a, i
+#
+    tai[a,i]=0.0
+#
+    do a1
+    do i1
+#
+	REQUEST            HBAR_AJIB_aaaa[i1,a1,a,i] 
+	Taaii[a,a1,i,i1] = HBAR_AJIB_aaaa[i1,a1,a,i]
+	execute return_diagonal_elements Taaii[a,a1,i,i1]
+	tia[i1,a1]       = 1.0
+	t1ai[a,i]        = Taaii[a,a1,i,i1]*tia[i1,a1]
+	tai[a,i]        += t1ai[a,i]
+#
+    enddo i1
+    enddo a1
+#
+    PUT VCONV1A[a,i] = tai[a,i]
+#
+ENDPARDO a, i
+#
+# -----prepare Hbar_bjbj diagonal
+#
+server_barrier
+#
+PARDO a, a1, i, i1
+#
+    get                            VCONV1A[a,i1]
+    get                            VCONV1A[a1,i]
+    tia[i1,a]                    = 1.0
+    t1ia[i,a1]                   = 1.0
+    tai[a,i1]                    = VCONV1A[a,i1]
+    t2ai[a1,i]                   = VCONV1A[a1,i]
+    t1aiai[a,i,a1,i1]            = tai[a,i1]^t1ia[i,a1]
+    t2aiai[a,i,a1,i1]            = t2ai[a1,i]^tia[i1,a]
+#
+    prepare VCONV2AA[a,i,a1,i1] += t1aiai[a,i,a1,i1]
+    prepare VCONV2AA[a,i,a1,i1] += t2aiai[a,i,a1,i1]
+#
+ENDPARDO a, a1, i, i1
+#
+server_barrier
+#
+# -------------------------------------------------------------------------------------
+# Start of correction ??? 
+# -------------------------------------------------------------------------------------
+#
+# -----prepare Hbar_aiai diagonal
+#
+PARDO a, i
+#
+    tai[a,i]=0.0
+#
+    do a1
+    do i1
+#
+	REQUEST            HBAR_AJIB_aaaa[i1,a1,a,i] 
+	Taaii[a,a1,i,i1] = HBAR_AJIB_aaaa[i1,a1,a,i]
+	execute return_diagonal_elements Taaii[a,a1,i,i1]
+	tia[i1,a1]       = 1.0
+	t1ai[a,i]        = Taaii[a,a1,i,i1]*tia[i1,a1]
+	tai[a,i]        += t1ai[a,i]
+#
+    enddo i1
+    enddo a1
+#
+    PUT VCONV1A[a,i] = tai[a,i]
+#
+ENDPARDO a, i
+#
+# -----prepare Hbar_bjbj diagonal
+#
+server_barrier
+#
+# ---------compute T(a,i)=F(a,a)-f(i,i)-v(a,i,a,i)
+#
+PARDO a, i
+#
+    tai[a,i]=0.0
+#
+    do a1
+#
+	get         DDaa[a,a1]
+	tia[i,a1] = 1.0
+	taa[a1,a] = DDaa[a,a1]
+#
+	t2ai[a,i] = tia[i,a1]*taa[a1,a]
+	tai[a,i] += t2ai[a,i]
+#
+    enddo a1
+#
+    do i1
+#
+	get          DDii[i1,i]
+	t2ia[i1,a] = 1.0
+	tii[i,i1]  = DDii[i1,i]
+#
+	t2ai[a,i]  = tii[i,i1]*t2ia[i1,a]
+	t2ai[a,i] *= -1.0
+	tai[a,i]  += t2ai[a,i]
+#
+    enddo i1
+#
+    PUT VCONV1A[a,i] += tai[a,i]
+#
+ENDPARDO a, i
+#
+# ---------compute T(b,j)=F(b,b)-f(j,j)
+#
+server_barrier
+#
+PARDO a, a1, i, i1
+#
+    get                 VCONV1A[a,i]
+    get                 VCONV1A[a1,i1]
+    tia[i,a]          = 1.0
+    t1ia[i1,a1]       = 1.0
+    tai[a,i]          = VCONV1A[a,i]
+    t2ai[a1,i1]       = VCONV1A[a1,i1]
+    t1aiai[a,i,a1,i1] = tai[a,i]^t1ia[i1,a1]
+    t2aiai[a,i,a1,i1] = t2ai[a1,i1]^tia[i,a]
+#
+    taiai[a,i,a1,i1]  = t1aiai[a,i,a1,i1]
+    taiai[a,i,a1,i1] += t2aiai[a,i,a1,i1]
+#
+    do i2
+    do i3
+#
+	request             HBAR_iiii[i,i2,i1,i3] 
+	tiiii[i,i2,i1,i3] = HBAR_iiii[i,i2,i1,i3]
+	execute return_diagonal_elements Tiiii[i,i2,i1,i3]
+	t1aiai[a,i2,a1,i3]=1.0
+	t2aiai[a,i,a1,i1] = Tiiii[i,i2,i1,i3]*t1aiai[a,i2,a1,i3]
+	taiai[a,i,a1,i1] += t2aiai[a,i,a1,i1]
+#
+    enddo i3
+    enddo i2
+#
+    get                 Faa[a,a1]
+    tii[i,i1]         = 1.0
+    t1aiai[a,i,a1,i1] = Faa[a,a1]^tii[i,i1]
+    taiai[a,i,a1,i1] += t1aiai[a,i,a1,i1]
+#
+    prepare VCONV2AA[a,i,a1,i1] += taiai[a,i,a1,i1]
+#
+ENDPARDO a, a1, i, i1
+#
+# alpha/beta contribution 
+# ----------------------- 
+#
+PARDO a, i, b, j
+#
+    get               VCONV1A[b,j]
+    get               VCONV1A[a,i]
+    t1ai[a,i]       = 1.0
+    t1bj[b,j]       = 1.0
+#
+    tbj[b,j]        = VCONV1A[b,j]
+    tai[a,i]        = VCONV1A[a,i]
+    t1aibj[a,i,b,j] = t1ai[a,i]^tbj[b,j]
+    t2aibj[a,i,b,j] = tai[a,i]^t1bj[b,j]
+#
+    taibj[a,i,b,j]  = 0.0  
+    taibj[a,i,b,j]  = t1aibj[a,i,b,j]
+    taibj[a,i,b,j] += t2aibj[a,i,b,j]
+#
+    do i1
+    do j1
+#
+	request                   HBAR_iijj[i,i1,j,j1] 
+	Tiijj[i,i1,j,j1]        = HBAR_iijj[i,i1,j,j1]
+	execute return_diagonal_elements  Tiijj[i,i1,j,j1]
+	t2aibj[a,i1,b,j1]       = 1.0
+	t1aibj[a,i,b,j]         = Tiijj[i,i1,j,j1]*t2aibj[a,i1,b,j1]
+	taibj[a,i,b,j]         += t1aibj[a,i,b,j]
+#
+    enddo j1
+    enddo i1
+#
+    get Fab[a,b]
+    tij[i,j]=1.0
+    t1aibj[a,i,b,j]=Fab[a,b]^tij[i,j]
+    taibj[a,i,b,j]+=t1aibj[a,i,b,j]
+#
+    do i1
+    do b1
+#
+	request HBAR_AJIB_iibb[i1,i,b,b1] 
+	Tiibb[i1,i,b,b1]=HBAR_AJIB_iibb[i1,i,b,b1]
+	execute return_diagonal_elements Tiibb[i1,i,b,b1]
+	t2aibj[a,i1,b1,j]=1.0
+	t1aibj[a,i,b,j]=Tiibb[i1,i,b,b1]*t2aibj[a,i1,b1,j]
+	taibj[a,i,b,j]+=t1aibj[a,i,b,j]
+#
+    enddo b1
+    enddo i1
+#
+    do j1
+    do a1
+#
+	request HBAR_AJIB_iibb[j1,j,a,a1] 
+	Tjjaa[j1,j,a,a1]=HBAR_AJIB_iibb[j1,j,a,a1]
+	execute return_diagonal_elements Tjjaa[j1,j,a,a1]
+	t2aibj[a1,i,b,j1]=1.0
+	t1aibj[a,i,b,j]=Tjjaa[j1,j,a,a1]*t2aibj[a1,i,b,j1]
+	taibj[a,i,b,j]+=t1aibj[a,i,b,j]
+#
+    enddo a1
+    enddo j1
+#
+    PREPARE VCONV2AB[a,i,b,j] = taibj[a,i,b,j]
+#
+ENDPARDO a, i, b, j
+#
+server_barrier
+
+delete Faa
+delete Fab
+
+server_barrier
+## JNB DEBUG
+print "VCONV1A"
+pardo a,i
+    get VCONV1A[a,i]
+    print VCONV1A[a,i]
+endpardo a,i
+
+print "VCONV2AA"
+pardo a,i,a1,i1
+request VCONV2AA[a,i,a1,i1]
+print VCONV2AA[a,i,a1,i1]
+endpardo a,i,a1,i1
+
+print "VCONV2AB"
+pardo a,i,b,j
+request VCONV2AB[a,i,b,j]
+print VCONV2AB[a,i,b,j]
+endpardo a,i,b,j
+server_barrier
+#
 ENDPROC form_diag
+#
+#------------------------------------------------------------------------
+#
+PROC form_guess
+#
+print "Using CIS B space vectors for initial guess"
+#
+server_barrier
+#
+pardo a,i
+    do kstate
+        T1kai[kstate,a,i] = 0.0
+        prepare R1k1_a[kstate,a,i] = T1kai[kstate,a,i]
+        prepare cRk1_a[kstate,a,i] = T1kai[kstate,a,i]
+    enddo kstate
+endpardo a,i
+#
+print "Assuming 0.0 for initial R2 vectors"
+pardo a,i,a1,i1
+    do ksub
+	Tkaiai[ksub,a,i,a1,i1] = 0.0
+	prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    enddo ksub
+    do kstate
+	Tkaiai[kstate,a,i,a1,i1] = 0.0
+	prepare R0k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+	prepare R1k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+	prepare cRk2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+    enddo kstate
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    do ksub
+	Tkaibj[ksub,a,i,b,j] = 0.0
+	prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+    enddo ksub
+    do kstate
+	Tkaibj[kstate,a,i,b,j] = 0.0
+	prepare R0k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+	prepare R1k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+	prepare cRk2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+    enddo ksub
+endpardo a,i,b,j
+#
+server_barrier
+#
+ENDPROC form_guess
 #
 #------------------------------------------------------------------------
 #
@@ -2948,8 +3385,8 @@ print " "
 server_barrier
 CALL READ_AMP
 call form_H
-#call form_diag
-#call form_guess
+call form_diag
+call form_guess
 server_barrier
 #
 ENDSIAL R_EE_EOM_CCSD_RHF
