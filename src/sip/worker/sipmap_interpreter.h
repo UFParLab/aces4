@@ -103,10 +103,10 @@ public:
 
 
 	struct PardoSectionsInfo{
-		int line;
+		int pc;
 		int section;
 		double time;
-		PardoSectionsInfo(int l, int s, int t) : line(l), section(s), time(t) {}
+		PardoSectionsInfo(int p, int s, double t) : pc(p), section(s), time(t) {}
 	};
 
 	typedef std::vector<PardoSectionsInfo> PardoSectionsInfoVector_t;

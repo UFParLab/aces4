@@ -20,8 +20,8 @@ namespace sip {
 /*! This really simple timer just keeps track of epochs & time. */
 struct SimpleTimer_t{
 	SimpleTimer_t() : on_(false), start_time_(0.0), value_(0.0), epochs_(0), last_recorded_(0.0) {}
-	void start() { CHECK(!on_,"starting on timer"); start_time_ = GETTIME; on_ = true; last_recorded_ = 0.0;}
-	double pause() { double elapsed = GETTIME - start_time_; value_ += elapsed; on_ = false; epochs_++; last_recorded_ = elapsed; return elapsed; }
+	void start() { CHECK(!on_,"starting on timer"); start_time_ = GETTIME; on_ = true; }
+	double pause() { double elapsed = GETTIME - start_time_; value_ += elapsed; on_ = false; epochs_++; last_recorded_ += elapsed; return elapsed; }
 	double get_last_recorded_and_clear() { double tmp = last_recorded_; last_recorded_ = 0.0; return tmp; }
 
 	double last_recorded_; 	//! The value of the previously collected elapsed time.

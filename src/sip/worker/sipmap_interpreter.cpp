@@ -310,7 +310,7 @@ void SIPMaPInterpreter::handle_block_load_scalar_op(int pc){
 
 #ifdef HAVE_MPI
 void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
-	pardo_section_times_.push_back(PardoSectionsInfo(line_number(), section_number_, pardo_section_time_));
+	pardo_section_times_.push_back(PardoSectionsInfo(pc, section_number_, pardo_section_time_));
 	section_number_++;
 	// Aggregate time from multiple ranks - when combining SIPMaPTimer instances.
 	pardo_section_time_ = 0.0;
@@ -389,22 +389,23 @@ SIPMaPTimer SIPMaPInterpreter::merge_sipmap_timers(
 
 		// Get maximum time for a given section_number across all workers
 		double max_time = pardo_sections_info_vector.at(0).at(j).time;
-		int line = pardo_sections_info_vector.at(0).at(j).line;
+		//std::cout << "max time at " << j << " is " << max_time << std::endl;
+		int pc = pardo_sections_info_vector.at(0).at(j).pc;
 		int section_number = pardo_sections_info_vector.at(0).at(j).section;
 		for (int i=1; i<workers; ++i){
 			const PardoSectionsInfo& ps_info = pardo_sections_info_vector.at(i).at(j);
-			check(line == ps_info.line, "Line numbers don't match across workers for a given pardo section_number info instance");
-			check(section_number == ps_info.section, "Section numbers don't match across workers for a given pardo section_number info instance");
+			CHECK(pc == ps_info.pc, "Program counters don't match across workers for a given pardo section_number info instance");
+			CHECK(section_number == ps_info.section, "Section numbers don't match across workers for a given pardo section_number info instance");
 			if (max_time < ps_info.time)
 				max_time = ps_info.time;
 		}
 
 		// Calculate all barrier times according to the max time.
 		for (int i=0; i<workers; ++i){
-			check(max_time - pardo_sections_info_vector.at(i).at(j).time >= 0, "The barrier time can only be positive ! BUG");
+			CHECK(max_time - pardo_sections_info_vector.at(i).at(j).time >= 0, "The barrier time can only be positive ! BUG");
 			double barrier_time  = max_time - pardo_sections_info_vector.at(i).at(j).time;
-			if (line > 0)
-				sipmap_timers_vector.at(i).timer(line).record_total_time(barrier_time);
+			if (pc >= 0)
+				sipmap_timers_vector.at(i).timer(pc).record_total_time(barrier_time);
 		}
 	}
 

@@ -227,7 +227,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 		msg << "S " << sip_mpi_attr_.global_rank();
 		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
-		block = allocate_block(NULL, block_size, block_id);
+		block = allocate_block(NULL, block_size, block_id, false);
 	    block_map_.insert_block(block_id, block);
 	} else {
 		if (!block->is_in_memory())

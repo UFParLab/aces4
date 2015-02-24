@@ -506,6 +506,7 @@ endif()
 #----------------------------------------------------------------------
 
 set(SIAL_FILES
+	src/sialx/sipmap/contract_to_scalar.sialx;
     src/sialx/test/empty.sialx;
     src/sialx/test/static_array_test.sialx;
     src/sialx/test/ifelse.sialx;
