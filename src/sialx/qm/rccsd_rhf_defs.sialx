@@ -24,31 +24,28 @@ predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
 predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
 predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
 
+predefined  scalar cc_conv
 
 #these are predefined in the index table         
 moaindex aces_defs_pa = baocc: eavirt  
 mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
 
-#predefined scalar eom_tol
-#predefined int eom_roots
-#predefined int eom_roots2
-#predefined int eom_subspc
 
-predefined scalar scfeneg  # ???? 
-predefined scalar totenerg  #Total energy read in from JOBARC.
+scalar scf_energy  
+scalar totenerg
 
-#     PORTED 
 special compute_ubatch6 wrruu
 special compute_integral_batch w
 special energy_denominator_rhf ur 
 special return_sval rw
 special compute_diis u
-special print_block r
 special print_static_array r
 special aoladder_contraction rru
-#     NOT PORTED 
 special get_my_rank w
+special stripi ru
+special set_ijk_aaa w
+special set_ijk_aab w
 
 endsial rccsd_rhf_defs
 

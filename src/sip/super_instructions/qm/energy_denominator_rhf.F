@@ -20,8 +20,9 @@ C in the file COPYRIGHT.
       implicit none
 
 c--------------------------------------------------------------------------
-c Usage: execute check_dconf array scalar
-c
+!> special energy_denominator_rhf ur
+!>  computes the RHF (alpha) energy denominator of an array with possible
+!>  dimensions of 2, 4 or 6.
 c--------------------------------------------------------------------------
       include 'sip_interface.f'
 
@@ -49,6 +50,8 @@ c mosegments
       integer(C_INT) offset_5, offset_6 
       integer(C_INT) start_1, start_2, start_3, start_4, start_5,start_6 
       integer(C_INT) i, i1, i2, i3, i4, one  
+
+      ierr = 0
 
 c Get the mo segment ranges  
       call predefined_int_array("moa_seg_ranges"//C_NULL_CHAR, one, 
@@ -84,13 +87,26 @@ c Find the offset index ranges
           enddo 
       endif 
 
-      call do_rhf_den4(1, extents_0(1),offset_1, 
-     *                 1, extents_0(2),offset_2, 
-     *                 1, extents_0(3),offset_3, 
-     *                 1, extents_0(4),offset_4, 
-     *                 data_0, 
-     *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1) 
+      if (rank_1 .eq. 2) then 
+         call do_rhf_den4(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    1, extents_0(3),offset_3, 
+     *                    1, extents_0(4),offset_4, 
+     *                    data_0, 
+     *                    1, extents_1(1), 1, extents_1(2),
+     *                    data_1) 
+      endif 
+
+      if (rank_1 .eq. 1) then 
+         call do_rhf_den4_1D(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    1, extents_0(3),offset_3, 
+     *                    1, extents_0(4),offset_4, 
+     *                    data_0, 
+     *                    1, extents_1(1),
+     *                    data_1) 
+      endif 
+
 
       end if  ! rank0 .eq. 4 
 
@@ -110,11 +126,21 @@ c Find the offset index ranges
           enddo 
       endif 
 
-      call do_rhf_den2(1, extents_0(1),offset_1, 
-     *                 1, extents_0(2),offset_2, 
-     *                 data_0, 
-     *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1) 
+      if (rank_1 .eq. 2) then 
+         call do_rhf_den2(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    data_0, 
+     *                    1, extents_1(1), 1, extents_1(2),
+     *                    data_1) 
+      endif 
+
+      if (rank_1 .eq. 1) then 
+         call do_rhf_den2_1d(1, extents_0(1),offset_1, 
+     *                    1, extents_0(2),offset_2, 
+     *                    data_0, 
+     *                    1, extents_1(1), 
+     *                    data_1) 
+      endif 
 
       end if  ! rank0 .eq. 2 
 
@@ -194,21 +220,181 @@ c Find the offset index ranges
 c Check for simple ineces 
 
 
-      call do_rhf_den6(start_1, extents_0(1),offset_1, 
-     *                 start_2, extents_0(2),offset_2, 
-     *                 start_3, extents_0(3),offset_3, 
-     *                 start_4, extents_0(4),offset_4, 
-     *                 start_5, extents_0(5),offset_5, 
-     *                 start_6, extents_0(6),offset_6, 
-     *                 data_0, 
-     *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1) 
+      if (rank_1 .eq. 2) then 
+         call do_rhf_den6(start_1, extents_0(1),offset_1, 
+     *                    start_2, extents_0(2),offset_2, 
+     *                    start_3, extents_0(3),offset_3, 
+     *                    start_4, extents_0(4),offset_4, 
+     *                    start_5, extents_0(5),offset_5, 
+     *                    start_6, extents_0(6),offset_6, 
+     *                    data_0, 
+     *                    1, extents_1(1), 1, extents_1(2),
+     *                    data_1) 
+      endif 
 
       end if  ! rank0 .eq. 6 
 
 
       return
       end
+
+      subroutine do_rhf_den2(a1, a2, off_1, b1, b2, off_2, 
+     *                       array, 
+     *                       m1, m2, n1, n2, fock)  
+      
+c---------------------------------------------------------------------------
+c
+c
+c---------------------------------------------------------------------------
+
+      implicit none
+      integer a, a1, a2, b, b1, b2
+      integer m1, m2, n1, n2 
+      integer off_1, off_2
+      double precision array(a1:a2,b1:b2) 
+      double precision fock(m1:m2,n1:n2) 
+      double precision val, eps, epsa, epsb   
+
+      val = 0.0 
+      do b = b1, b2 
+         epsb = fock(b+off_2,b+off_2) 
+      do a = a1, a2 
+         epsa = fock(a+off_1,a+off_1) 
+
+         eps = epsb - epsa  
+
+c        val = array(a,b,c,d) 
+         array(a,b) = array(a,b)/eps  
+c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
+      enddo 
+      enddo 
+
+      return
+      end
+
+
+      subroutine do_rhf_den2_1d(a1, a2, off_1, b1, b2, off_2, 
+     *                       array, 
+     *                       m1, m2, fock)  
+      
+c---------------------------------------------------------------------------
+c
+c
+c---------------------------------------------------------------------------
+
+      implicit none
+      integer a, a1, a2, b, b1, b2
+      integer m1, m2, n1, n2 
+      integer off_1, off_2
+      double precision array(a1:a2,b1:b2) 
+      double precision fock(m1:m2) 
+      double precision val, eps, epsa, epsb   
+
+      val = 0.0 
+      do b = b1, b2 
+         epsb = fock(b+off_2) 
+      do a = a1, a2 
+         epsa = fock(a+off_1) 
+
+         eps = epsb - epsa  
+
+c        val = array(a,b,c,d) 
+         array(a,b) = array(a,b)/eps  
+c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
+      enddo 
+      enddo 
+
+      return
+      end
+
+      subroutine do_rhf_den4(a1, a2, off_1, b1, b2, off_2, 
+     *                       c1, c2, off_3, d1, d2, off_4, 
+     *                       array, 
+     *                       m1, m2, n1, n2, fock)  
+      
+c---------------------------------------------------------------------------
+c
+c
+c---------------------------------------------------------------------------
+
+      implicit none
+      integer a, a1, a2, b, b1, b2, c, c1, c2, d, d1, d2, m1, m2, n1, n2
+      integer off_1, off_2, off_3, off_4 
+      double precision array(a1:a2,b1:b2,c1:c2,d1:d2) 
+      double precision fock(m1:m2,n1:n2) 
+      double precision val, eps, epsa, epsb, epsc, epsd   
+
+      val = 0.0 
+      do d = d1, d2 
+         epsd = fock(d+off_4,d+off_4) 
+      do c = c1, c2 
+         epsc = fock(c+off_3,c+off_3) 
+      do b = b1, b2 
+         epsb = fock(b+off_2,b+off_2) 
+      do a = a1, a2 
+         epsa = fock(a+off_1,a+off_1) 
+
+         eps = epsb + epsd - epsa - epsc 
+
+c        val = array(a,b,c,d) 
+c        write(6,*) ' ABCD :', a, b, c, d, '::',
+c    *                         a+off_1,b+off_2,c+off_3,d+off_4, eps   
+c        write(6,*) 'EPS', epsa, epsb, epsc, epsd 
+c        write(6,*) 'array', array(a,b,c,d)  
+         array(a,b,c,d) = array(a,b,c,d)/eps  
+c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
+
+      return
+      end
+
+      subroutine do_rhf_den4_1d(a1, a2, off_1, b1, b2, off_2, 
+     *                       c1, c2, off_3, d1, d2, off_4, 
+     *                       array, 
+     *                       m1, m2, fock)  
+      
+c---------------------------------------------------------------------------
+c
+c
+c---------------------------------------------------------------------------
+
+      implicit none
+      integer a, a1, a2, b, b1, b2, c, c1, c2, d, d1, d2, m1, m2, n1, n2
+      integer off_1, off_2, off_3, off_4 
+      double precision array(a1:a2,b1:b2,c1:c2,d1:d2) 
+      double precision fock(m1:m2) 
+      double precision val, eps, epsa, epsb, epsc, epsd   
+
+      val = 0.0 
+      do d = d1, d2 
+         epsd = fock(d+off_4) 
+      do c = c1, c2 
+         epsc = fock(c+off_3) 
+      do b = b1, b2 
+         epsb = fock(b+off_2) 
+      do a = a1, a2 
+         epsa = fock(a+off_1) 
+
+         eps = epsb + epsd - epsa - epsc 
+
+c        val = array(a,b,c,d) 
+c        write(6,*) ' ABCD :', a, b, c, d, '::',
+c    *                         a+off_1,b+off_2,c+off_3,d+off_4, eps   
+c        write(6,*) 'EPS', epsa, epsb, epsc, epsd 
+c        write(6,*) 'array', array(a,b,c,d), epsa, epsb, epsc, epsd, eps   
+         array(a,b,c,d) = array(a,b,c,d)/eps  
+c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d) 
+      enddo 
+      enddo 
+      enddo 
+      enddo 
+
+      return
+      end
+
 
       subroutine do_rhf_den6(a1, a2, off_1, b1, b2, off_2, 
      *                       c1, c2, off_3, d1, d2, off_4, 
@@ -254,8 +440,8 @@ c         write(6,*) ' EPS:', a, b, c, d, eps, array(a,b,c,d)
       enddo 
       enddo 
       enddo 
-10    format(4I3,3F10.8) 
 
       return
       end 
+
 

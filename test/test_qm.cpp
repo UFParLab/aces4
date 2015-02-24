@@ -22,8 +22,8 @@
 //bool VERBOSE_TEST = false;
 bool VERBOSE_TEST = true;
 
-
-TEST(Sial_QM,ccsdpt_test){
+// old ccsd(t) test.... difficult to deal with because the ZMAT source is gone
+TEST(Sial_QM,DISABLED_ccsdpt_test){
 	std::string job("ccsdpt_test");
 
 	std::stringstream output;
@@ -47,10 +47,157 @@ TEST(Sial_QM,ccsdpt_test){
 
 	if (attr->global_rank() == 0) {
 		double eaab = controller.scalar_value("eaab");
-		ASSERT_NEAR(-0.0010909776247261387949, eaab, 1e-10);
+		ASSERT_NEAR(-0.0010909774775509193, eaab, 1e-10);
 		double esaab =controller.scalar_value("esaab");
-		ASSERT_NEAR(8.5548065773238419758e-05, esaab, 1e-10);
+		ASSERT_NEAR(8.5547845910409156e-05, esaab, 1e-10);
 //		controller.print_timers(std::cout);
+	}
+
+}
+
+/* new CCSD(T) test.  ZMAT source is:
+test
+H 0.0 0.0 0.0
+F 0.0 0.0 0.917
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+spherical=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rccsdpt_aaa.siox
+SIAL_PROGRAM = rccsdpt_aab.siox
+
+*/
+TEST(Sial_QM,second_ccsdpt_test){
+	std::string job("second_ccsdpt_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-99.45975176375698, scf_energy, 1e-10);
+	}
+//
+// tran
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ccsd_correlation = controller.scalar_value("ccsd_correlation");
+		ASSERT_NEAR(-0.12588695910754, ccsd_correlation, 1e-10);
+		double ccsd_energy = controller.scalar_value("ccsd_energy");
+		ASSERT_NEAR(-99.58563872286452, ccsd_energy, 1e-10);
+	}
+//
+// ccsdpt aaa
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double eaaa = controller.scalar_value("eaaa");
+		ASSERT_NEAR(-0.00001091437340, eaaa, 1e-10);
+		double esaab =controller.scalar_value("esaaa");
+		ASSERT_NEAR(0.00000240120432, esaab, 1e-10);
+	}
+//
+// ccsdpt aab
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double eaab = controller.scalar_value("eaab");
+		ASSERT_NEAR(-0.00058787722879, eaab, 1e-10);
+		double esaab =controller.scalar_value("esaab");
+		ASSERT_NEAR(0.00003533079603, esaab, 1e-10);
+		double ccsdpt_energy = controller.scalar_value("ccsdpt_energy");
+		ASSERT_NEAR(-99.58619978246637, ccsdpt_energy, 1e-10);
+	}
+
+}
+
+/* CIS(D) test, ZMAT is:
+test
+H 0.0 0.0 0.0
+F 0.0 0.0 0.917
+
+*ACES2(BASIS=3-21G
+scf_conv=10
+cc_conv=10
+spherical=off
+excite=eomee
+estate_sym=2
+estate_tol=10
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no3v.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = rcis_d_rhf.siox
+
+*/
+TEST(Sial_QM,cis_test){
+	std::string job("cis_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-99.45975176375698, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.43427913493064, 0.43427913493252};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-10);
+		}
+	}
+//
+// CIS(D)
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * ekd = controller.static_array("ekd");
+		double expected[] = {-0.03032115569246, -0.03032115569276};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(ekd[i], expected[i], 1e-10);
+		}
 	}
 
 }

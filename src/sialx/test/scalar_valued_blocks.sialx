@@ -13,7 +13,7 @@ sial scalar_valued_blocks
 	x = (scalar)k
 	v[k] = x
 	print "v[k]="
-	println v[k]
+	print v[k]
 	enddo k
 
 	do k
@@ -22,7 +22,7 @@ sial scalar_valued_blocks
 	enddo k
 	
 	do k
-	println v[k] + v[k]
+	print v[k] + v[k]
 	enddo k
 	
 	allocate w[*,*]
@@ -36,7 +36,7 @@ sial scalar_valued_blocks
 	
 	do k
 	do j
-	println w[j,k]
+	print w[j,k]
 	enddo j
 	enddo k
 	
