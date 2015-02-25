@@ -488,7 +488,7 @@
       restore_persistent VSpipi "VSpipi"
       restore_persistent Vaaii  "Vaaii"
       restore_persistent Viaai  "Viaai"
-      restore_persistent Vaaai  "VSaaai"
+      restore_persistent Vaaai  "Vaaai"
       restore_persistent Vpiqj  "Vpiqj"
      #restore_persistent energy  "energy"
 
@@ -3006,7 +3006,7 @@
       set_persistent VSpipi "VSpipi"
       set_persistent Vaaii  "Vaaii"
       set_persistent Viaai  "Viaai"
-      set_persistent Vaaai  "VSaaai"
+      set_persistent Vaaai  "Vaaai"
       set_persistent Vpiqj  "Vpiqj"
 #
                            ENDSIAL CCSD_RHF_SV1    

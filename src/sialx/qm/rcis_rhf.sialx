@@ -1885,7 +1885,7 @@ server_barrier
 do kstate
 pardo a,i
     request RB1_a[kstate,a,i]
-    prepare R1k1_a[kstate,a,i] = RB1_a[kstate,a,i]
+    prepare R0k1_a[kstate,a,i] = RB1_a[kstate,a,i]
 endpardo a,i
 enddo kstate
 server_barrier
@@ -1895,7 +1895,7 @@ set_persistent ca       "ca"
 set_persistent Fock_a   "fock_a"
 set_persistent Vaaii    "Vaaii"
 set_persistent Viaai    "Viaai"
-set_persistent R1k1_a   "C1_a"
+set_persistent R0k1_a   "C1_a"
 set_persistent RB1_a    "B1_a"
 set_persistent SEk0     "CIS_E"
 server_barrier
