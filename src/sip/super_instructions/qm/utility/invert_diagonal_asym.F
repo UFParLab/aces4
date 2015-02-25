@@ -34,14 +34,16 @@ c--------------------------------------------------------------------------
 	  call abort_job()
       endif
 
-      if (rank_0 .eq. 3) then
-      elseif (rank_0 .eq. 5) then
+      if (rank_0 .eq. 5) then
       call do_return_inv5_as(1, extents_0(1),
      *                    1, extents_0(2),
      *                    1, extents_0(3),
      *                    1, extents_0(4),
      *                    1, extents_0(5),
      *                    data_0,data_1)
+      else
+	  write(*,*) "bad call to invert_diagonal_asym"
+	  call abort_job()
       endif
 
       return

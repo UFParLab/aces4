@@ -46,6 +46,9 @@ c--------------------------------------------------------------------------
      *                    1, extents_0(4),
      *                    1, extents_0(5),
      *                    data_0,data_1)
+      else
+	  write(*,*) "bad call to invert_diagonal"
+	  call abort_job()
       endif
 
       return

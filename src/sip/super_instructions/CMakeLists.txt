@@ -21,6 +21,8 @@ set(QM_SOURCE_FILES
     qm/set_ijk_aaa.F;
     qm/set_ijk_aab.F;
     qm/utility/return_diagonal_elements.F;
+    qm/utility/anti_symm_o.F;
+    qm/utility/anti_symm_v.F;
     qm/utility/invert_diagonal.F;
     qm/utility/invert_diagonal_asym.F;
     qm/utility/eig.F;
