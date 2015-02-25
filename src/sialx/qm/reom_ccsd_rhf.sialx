@@ -6,7 +6,7 @@ SIAL R_EE_EOM_CCSD_RHF
 # Declare indeces
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-index kiter    = 1: cc_iter
+index kiter    = 1: 10 #cc_iter
 index kstate   = 1: eom_roots
 index kstate1  = 1: eom_roots
 index jstate   = 1: eom_roots
@@ -679,11 +679,13 @@ temp Tkaiai[ksub,a,i,a1,i1]
 temp T1kaiai[ksub,a,i,a1,i1]
 temp T2kaiai[ksub,a,i,a1,i1]
 temp T3kaiai[ksub,a,i,a1,i1]
+temp T4kaiai[ksub,a,i,a1,i1]
 
 temp Tkaibj[ksub,a,i,b,j]
 temp T1kaibj[ksub,a,i,b,j]
 temp T2kaibj[ksub,a,i,b,j]
 temp T3kaibj[ksub,a,i,b,j]
+temp T4kaibj[ksub,a,i,b,j]
 
 temp Tkiaia[ksub,i,a,i1,a1]
 temp T1kiaia[ksub,i,a,i1,a1]
@@ -3330,7 +3332,7 @@ server_barrier
 pardo a,i
     do kstate
         T1kai[kstate,a,i] = 0.0
-        prepare R1k1_a[kstate,a,i] = T1kai[kstate,a,i]
+        prepare R0k1_a[kstate,a,i] = T1kai[kstate,a,i]
         prepare cRk1_a[kstate,a,i] = T1kai[kstate,a,i]
     enddo kstate
 endpardo a,i
@@ -3361,6 +3363,75 @@ pardo a,i,b,j
 	prepare cRk2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
     enddo kstate
 endpardo a,i,b,j
+
+#do ksub
+#    pardo a,i,b,j
+#	Tkaibj[ksub,a,i,b,j] = 0.0
+#	do i1
+#	    request Vpiqj[i1,i,b,j]
+#	    request RB1_a[ksub,a,i1]
+#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a,i1]*Vpiqj[i1,i,b,j]
+#	    T1kaibj[ksub,a,i,b,j] *= -1.0
+#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
+#	enddo i1
+#
+#        do a1
+#	    request Vaabj[a,a1,b,j]
+#	    request RB1_a[ksub,a1,i]
+#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a1,i]*Vaabj[a,a1,b,j]
+#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
+#        enddo a1
+#
+#	Tk[ksub] = 1.0
+#	Taibj[a,i,b,j] = Tk[ksub]*Tkaibj[ksub,a,i,b,j]
+#
+#	execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
+#
+#	T2kaibj[ksub,a,i,b,j] = Tk[ksub]*Taibj[a,i,b,j]
+#
+#	prepare RB2_ab[ksub,a,i,b,j] += T2kaibj[ksub,a,i,b,j]
+#    endpardo a,i,b,j
+#    server_barrier
+#    pardo a,i,a1,i1
+#        request RB2_ab[ksub,a,i,a1,i1]
+#        request RB2_ab[ksub,a,i1,a1,i]
+#	Tkaiai[ksub,a,i,a1,i1]  = RB2_ab[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = RB2_ab[ksub,a,i1,a1,i]
+#	Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
+#	prepare RB2_aa[ksub,a,i,a1,i1] += Tkaiai[ksub,a,i,a1,i1]
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    if ksub > roots
+#    if ksub <= 2*roots
+#	kstart = ksub - roots
+#	print kstart
+#	print " "
+#	do kstate
+#        print kstate
+#        if kstate == kstart
+#	print kstate
+#	pardo a,i,b,j
+#            allocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+#	    request RB2_ab[ksub,a,i,b,j]
+#	    CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] =  RB2_ab[ksub,a,i,b,j]
+#	    Tkaibj[kstate,a,i,b,j] = CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j]
+#	    prepare R1k2_ab[kstate,a,i,b,j] += Tkaibj[kstate,a,i,b,j]
+#            deallocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+#	endpardo a,i,b,j
+#	pardo a,i,a1,i1
+#            allocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+#	    request RB2_aa[ksub,a,i,a1,i1]
+#	    CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] =  RB2_aa[ksub,a,i,a,i1]
+#	    Tkaiai[kstate,a,i,a1,i1] = CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1]
+#	    prepare R1k2_aa[kstate,a,i,a1,i1] += Tkaiai[kstate,a,i,a1,i1]
+#            deallocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+#	endpardo a,i,a1,i1
+#        endif
+#        enddo kstate
+#    endif
+#    endif
+#    server_barrier
+#enddo ksub
 
 server_barrier
 
@@ -5040,10 +5111,10 @@ do ksub1
 enddo ksub1
 enddo ksub
 
-print GSmat
+#print GSmat
 
 execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
-print SalphaR
+#print SalphaR
 do kstate
     SEk0[kstate] = SEk[kstate]
 enddo kstate
@@ -5064,6 +5135,805 @@ ENDPROC diag_G
 
 #------------------------------------------------------------------------
 
+PROC move_by_one_RK1
+#
+server_barrier
+pardo a,i
+    do kstate
+        request R1k1_a[kstate,a,i]
+        prepare R0k1_a[kstate,a,i] = R1k1_a[kstate,a,i]
+    enddo kstate
+endpardo a,i
+server_barrier
+#
+ENDPROC move_by_one_RK1
+
+PROC move_by_one_RK2aa
+#
+server_barrier
+pardo a,i,a1,i1 
+    do kstate
+        request R1k2_aa[kstate,a,i,a1,i1]
+        prepare R0k2_aa[kstate,a,i,a1,i1] = R1k2_aa[kstate,a,i,a1,i1]
+    enddo kstate
+endpardo a,i,a1,i1
+server_barrier
+#
+ENDPROC move_by_one_RK2aa
+
+PROC move_by_one_RK2ab
+#
+server_barrier
+pardo a,i,b,j 
+    do kstate
+        request R1k2_ab[kstate,a,i,b,j]
+        prepare R0k2_ab[kstate,a,i,b,j] = R1k2_ab[kstate,a,i,b,j]
+    enddo kstate
+endpardo a,i,b,j
+server_barrier
+#
+ENDPROC move_by_one_RK2ab
+
+PROC form_new_RK1
+#
+# zero partition 1
+server_barrier
+pardo a,i
+    do kstate
+        Tkai[kstate,a,i] = 0.0
+        prepare R1k1_a[kstate,a,i] = Tkai[kstate,a,i]
+    enddo kstate
+endpardo a,i
+server_barrier
+#
+do kstate
+    pardo a,i
+    Tkai[kstate,a,i] = 0.0
+    do ksub
+        request RB1_a[ksub,a,i]
+        T1kai[kstate,a,i] = RB1_a[ksub,a,i]*SalphaR[ksub,kstate]
+        Tkai[kstate,a,i] += T1kai[kstate,a,i]
+    enddo ksub
+    prepare R1k1_a[kstate,a,i] = Tkai[kstate,a,i]
+    endpardo a,i
+enddo kstate
+#
+server_barrier
+#
+ENDPROC form_new_RK1
+
+PROC form_new_RK2aa
+#
+# zero partition 1
+server_barrier
+pardo a,i,a1,i1
+    do kstate
+        Tkaiai[kstate,a,i,a1,i1] = 0.0
+        prepare R1k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+    enddo kstate
+endpardo a,i,a1,i1
+server_barrier
+#
+do kstate
+    pardo a,i,a1,i1
+    Tkaiai[kstate,a,i,a1,i1] = 0.0
+    do ksub
+        request RB2_aa[ksub,a,i,a1,i1]
+        T1kaiai[kstate,a,i,a1,i1] = RB2_aa[ksub,a,i,a1,i1]*SalphaR[ksub,kstate]
+        Tkaiai[kstate,a,i,a1,i1] += T1kaiai[kstate,a,i,a1,i1]
+    enddo ksub
+    prepare R1k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+    endpardo a,i,a1,i1
+enddo kstate
+#
+server_barrier
+#
+ENDPROC form_new_RK2aa
+
+PROC form_new_RK2ab
+#
+# zero partition 1
+server_barrier
+pardo a,i,b,j
+    do kstate
+        Tkaibj[kstate,a,i,b,j] = 0.0
+        prepare R1k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+    enddo kstate
+endpardo a,i,b,j
+server_barrier
+#
+do kstate
+    pardo a,i,b,j
+    Tkaibj[kstate,a,i,b,j] = 0.0
+    do ksub
+        request RB2_ab[ksub,a,i,b,j]
+        T1kaibj[kstate,a,i,b,j] = RB2_ab[ksub,a,i,b,j]*SalphaR[ksub,kstate]
+        Tkaibj[kstate,a,i,b,j] += T1kaibj[kstate,a,i,b,j]
+    enddo ksub
+    prepare R1k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+    endpardo a,i,b,j
+enddo kstate
+#
+server_barrier
+#
+ENDPROC form_new_RK2ab
+
+PROC form_residual_R1
+#
+server_barrier
+pardo a,i
+
+    get VCONV1A[a,i]
+
+do kstate
+    etemp = SEk[kstate]
+    etemp *= -1.0
+    Tkai[kstate,a,i] = 0.0
+
+    do ksub
+        request HB1_a[ksub,a,i]
+        request RB1_a[ksub,a,i]
+
+# a*HB
+        T1kai[kstate,a,i] = HB1_a[ksub,a,i]*SalphaR[ksub,kstate]
+
+        Tkai[kstate,a,i] += T1kai[kstate,a,i]
+# a*E*B
+        T2kai[kstate,a,i]  = RB1_a[ksub,a,i]*SalphaR[ksub,kstate]
+        T2kai[kstate,a,i] *= etemp
+
+        Tkai[kstate,a,i] += T2kai[kstate,a,i]
+    enddo ksub
+
+    Tk[kstate] = 1.0
+    Tai[a,i]   = 1.0
+
+    T3kai[kstate,a,i] = Tk[kstate]^VCONV1A[a,i]
+    T4kai[kstate,a,i] = etemp
+    T3kai[kstate,a,i] += T4kai[kstate,a,i]
+
+    execute invert_diagonal Tkai[kstate,a,i] T3kai[kstate,a,i]
+    Tkai[kstate,a,i] *= -1.0
+    prepare cRk1_a[kstate,a,i] = Tkai[kstate,a,i]
+
+enddo kstate
+endpardo a,i
+server_barrier
+#
+ENDPROC form_residual_R1
+
+PROC form_residual_R2aa
+#
+server_barrier
+pardo a,i,a1,i1
+
+    request VCONV2AA[a,i,a1,i1]
+
+do kstate
+    etemp = SEk[kstate]
+    etemp *= -1.0
+    Tkaiai[kstate,a,i,a1,i1] = 0.0
+
+    do ksub
+        request HB2_aa[ksub,a,i,a1,i1]
+        request RB2_aa[ksub,a,i,a1,i1]
+
+# a*HB
+        T1kaiai[kstate,a,i,a1,i1] = HB2_aa[ksub,a,i,a1,i1]*SalphaR[ksub,kstate]
+
+        Tkaiai[kstate,a,i,a1,i1] += T1kaiai[kstate,a,i,a1,i1]
+# a*E*B
+        T2kaiai[kstate,a,i,a1,i1]  = RB2_aa[ksub,a,i,a1,i1]*SalphaR[ksub,kstate]
+        T2kaiai[kstate,a,i,a1,i1] *= etemp
+
+        Tkaiai[kstate,a,i,a1,i1] += T2kaiai[kstate,a,i,a1,i1]
+    enddo ksub
+
+    Tk[kstate] = 1.0
+    Taiai[a,i,a1,i1]   = 1.0
+
+    T3kaiai[kstate,a,i,a1,i1] = Tk[kstate]^VCONV2AA[a,i,a1,i1]
+    T4kaiai[kstate,a,i,a1,i1] = etemp
+    T3kaiai[kstate,a,i,a1,i1] += T4kaiai[kstate,a,i,a1,i1]
+
+    execute invert_diagonal_asym Tkaiai[kstate,a,i,a1,i1] T3kaiai[kstate,a,i,a1,i1]
+    Tkaiai[kstate,a,i,a1,i1] *= -1.0
+    prepare cRk2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+
+enddo kstate
+endpardo a,i,a1,i1
+server_barrier
+#
+ENDPROC form_residual_R2aa
+
+PROC form_residual_R2ab
+#
+server_barrier
+pardo a,i,b,j
+
+    request VCONV2AB[a,i,b,j]
+
+do kstate
+    etemp = SEk[kstate]
+    etemp *= -1.0
+    Tkaibj[kstate,a,i,b,j] = 0.0
+
+    do ksub
+        request HB2_ab[ksub,a,i,b,j]
+        request RB2_ab[ksub,a,i,b,j]
+
+# a*HB
+        T1kaibj[kstate,a,i,b,j] = HB2_ab[ksub,a,i,b,j]*SalphaR[ksub,kstate]
+
+        Tkaibj[kstate,a,i,b,j] += T1kaibj[kstate,a,i,b,j]
+# a*E*B
+        T2kaibj[kstate,a,i,b,j]  = RB2_ab[ksub,a,i,b,j]*SalphaR[ksub,kstate]
+        T2kaibj[kstate,a,i,b,j] *= etemp
+
+        Tkaibj[kstate,a,i,b,j] += T2kaibj[kstate,a,i,b,j]
+    enddo ksub
+
+    Tk[kstate] = 1.0
+    Taibj[a,i,b,j]   = 1.0
+
+    T3kaibj[kstate,a,i,b,j] = Tk[kstate]^VCONV2AB[a,i,b,j]
+    T4kaibj[kstate,a,i,b,j] = etemp
+    T3kaibj[kstate,a,i,b,j] += T4kaibj[kstate,a,i,b,j]
+
+    execute invert_diagonal Tkaibj[kstate,a,i,b,j] T3kaibj[kstate,a,i,b,j]
+    Tkaibj[kstate,a,i,b,j] *= -1.0
+    prepare cRk2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+
+enddo kstate
+endpardo a,i,b,j
+server_barrier
+#
+ENDPROC form_residual_R2ab
+
+PROC update_RB1
+#
+#print "updating RB1 vec"
+server_barrier
+pardo a,i
+    allocate contiguous CLRB1_a[1:subspc,a:a,i:i]
+    do kstate
+        request R1k1_a[kstate,a,i]
+        request R0k1_a[kstate,a,i]
+        request cRk1_a[kstate,a,i]
+
+# davidson space 1
+        kstart = kstate
+        CLRB1_a[kstart:kstart,a:a,i:i] = R0k1_a[kstate,a,i]
+# davidson space 2
+        kstart = kstate + roots
+        CLRB1_a[kstart:kstart,a:a,i:i] = R1k1_a[kstate,a,i]
+# davidson space 3
+        kstart = kstate + 2*roots
+        CLRB1_a[kstart:kstart,a:a,i:i] = cRk1_a[kstate,a,i]
+    enddo kstate
+    do ksub
+        Tkai[ksub,a,i] = CLRB1_a[ksub:ksub,a:a,i:i]
+        prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
+    enddo ksub
+
+    deallocate contiguous CLRB1_a[1:subspc,a:a,i:i]
+endpardo a,i
+server_barrier
+#
+ENDPROC update_RB1
+
+PROC update_RB2aa
+#
+#print "updating RB1 vec"
+server_barrier
+pardo a,i,a1,i1
+    allocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+    do kstate
+        request R1k2_aa[kstate,a,i,a1,i1]
+        request R0k2_aa[kstate,a,i,a1,i1]
+        request cRk2_aa[kstate,a,i,a1,i1]
+
+# davidson space 1
+        kstart = kstate
+        CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] = R0k2_aa[kstate,a,i,a1,i1]
+# davidson space 2
+        kstart = kstate + roots
+        CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] = R1k2_aa[kstate,a,i,a1,i1]
+# davidson space 3
+        kstart = kstate + 2*roots
+        CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] = cRk2_aa[kstate,a,i,a1,i1]
+    enddo kstate
+    do ksub
+        Tkaiai[ksub,a,i,a1,i1] = CLRB2_aa[ksub:ksub,a:a,i:i,a1:a1,i1:i1]
+        prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    enddo ksub
+
+    deallocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+endpardo a,i,a1,i1
+server_barrier
+#
+ENDPROC update_RB2aa
+
+PROC update_RB2ab
+#
+#print "updating RB1 vec"
+server_barrier
+pardo a,i,b,j
+    allocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+    do kstate
+        request R1k2_ab[kstate,a,i,b,j]
+        request R0k2_ab[kstate,a,i,b,j]
+        request cRk2_ab[kstate,a,i,b,j]
+
+# davidson space 1
+        kstart = kstate
+        CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] = R0k2_ab[kstate,a,i,b,j]
+# davidson space 2
+        kstart = kstate + roots
+        CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] = R1k2_ab[kstate,a,i,b,j]
+# davidson space 3
+        kstart = kstate + 2*roots
+        CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] = cRk2_ab[kstate,a,i,b,j]
+    enddo kstate
+    do ksub
+        Tkaibj[ksub,a,i,b,j] = CLRB2_ab[ksub:ksub,a:a,i:i,b:b,j:j]
+        prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+    enddo ksub
+
+    deallocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+endpardo a,i,b,j
+server_barrier
+#
+ENDPROC update_RB2ab
+
+PROC normalize_RB1
+#
+server_barrier
+do ksub
+    normS = 0.0
+    pardo a,i
+        request RB1_a[ksub,a,i]
+        Tkai[ksub,a,i] = RB1_a[ksub,a,i]
+        normT  = Tkai[ksub,a,i]*RB1_a[ksub,a,i]
+        normS += normT
+    endpardo a,i
+#
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    collective norm1 += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    norm2 = (norm1)**(-0.5)
+    Tk[ksub] = norm2
+#
+    pardo a,i
+        request RB1_a[ksub,a,i]
+        Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
+        put DRNai[a,i] = Tai[a,i]
+    endpardo a,i
+    server_barrier
+#
+    T1k[ksub] = 1.0
+    pardo a,i
+        get DRNai[a,i]
+        Tkai[ksub,a,i] = T1k[ksub]*DRNai[a,i]
+        prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
+    endpardo a,i
+#
+enddo ksub
+server_barrier
+delete DRNai
+#
+ENDPROC normalize_RB1
+
+PROC normalize_RB2aa
+#
+server_barrier
+do ksub
+    server_barrier
+    pardo a,i,a1,i1
+	Taiai[a,i,a1,i1] = 0.0
+	put DRNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+	put D2RNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    server_barrier
+    pardo a,i,a1,i1
+	request RB2_aa[ksub,a,i,a1,i1]
+	Tk[ksub] = 1.0
+	Taiai[a,i,a1,i1] = Tk[ksub]*RB2_aa[ksub,a,i,a1,i1]
+	T3aiai[a1,i,a,i1] = 0.0
+
+	if a == a1
+	    execute anti_symm_v Taiai[a,i,a1,i1]
+	endif
+	if a < a1
+	    T3aiai[a1,i,a,i1]  = Taiai[a,i,a1,i1]
+	    T3aiai[a1,i,a,i1] *= -1.0
+	endif
+
+	put DRNaiai[a,i,a1,i1] += Taiai[a,i,a1,i1]
+	put DRNaiai[a1,i,a,i1] += T3aiai[a1,i,a,i1]
+    endpardo a,i,a1,i1
+    server_barrier
+    pardo a,i,a1,i1
+	get DRNaiai[a,i,a1,i1]
+	Taiai[a,i,a1,i1] = DRNaiai[a,i,a1,i1]
+	T3aiai[a,i1,a1,i] = 0.0
+
+	if i == i1
+	    execute anti_symm_o Taiai[a,i,a1,i1]
+	endif
+	if i < i1
+	    T3aiai[a,i1,a1,i]  = Taiai[a,i,a1,i1]
+	    T3aiai[a,i1,a1,i] *= -1.0
+	endif
+
+	put D2RNaiai[a,i,a1,i1] += Taiai[a,i,a1,i1]
+	put D2RNaiai[a,i1,a1,i] += T3aiai[a,i1,a1,i]
+
+    endpardo a,i,a1,i1
+    server_barrier
+    pardo a,i,a1,i1
+	get D2RNaiai[a,i,a1,i1]
+	Tk[ksub] = 1.0
+	Tkaiai[ksub,a,i,a1,i1] = Tk[ksub]*D2RNaiai[a,i,a1,i1]
+	prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    server_barrier
+    delete DRNaiai
+    delete D2RNaiai
+####
+    normS = 0.0
+    pardo a,i,a1,i1
+        request RB2_aa[ksub,a,i,a1,i1]
+        Tkaiai[ksub,a,i,a1,i1] = RB2_aa[ksub,a,i,a1,i1]
+        normT  = Tkaiai[ksub,a,i,a1,i1]*RB2_aa[ksub,a,i,a1,i1]
+        normS += normT
+    endpardo a,i,a1,i1
+#
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    collective norm1 += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    norm2 = (norm1)**(-0.5)
+    Tk[ksub] = norm2
+#
+    pardo a,i,a1,i1
+        request RB2_aa[ksub,a,i,a1,i1]
+        Taiai[a,i,a1,i1] = Tk[ksub]*RB2_aa[ksub,a,i,a1,i1]
+        put DRNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    server_barrier
+#
+    T1k[ksub] = 1.0
+    pardo a,i,a1,i1
+        get DRNaiai[a,i,a1,i1]
+        Tkaiai[ksub,a,i,a1,i1] = T1k[ksub]*DRNaiai[a,i,a1,i1]
+        prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+#
+enddo ksub
+server_barrier
+delete DRNaiai
+#
+ENDPROC normalize_RB2aa
+
+PROC normalize_RB2ab
+#
+server_barrier
+do ksub
+    normS = 0.0
+    pardo a,i,b,j
+        request RB2_ab[ksub,a,i,b,j]
+        Tkaibj[ksub,a,i,b,j] = RB2_ab[ksub,a,i,b,j]
+        normT  = Tkaibj[ksub,a,i,b,j]*RB2_ab[ksub,a,i,b,j]
+        normS += normT
+    endpardo a,i,b,j
+#
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    collective norm1 += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    norm2 = (norm1)**(-0.5)
+    Tk[ksub] = norm2
+#
+    pardo a,i,b,j
+        request RB2_ab[ksub,a,i,b,j]
+        Taibj[a,i,b,j] = Tk[ksub]*RB2_ab[ksub,a,i,b,j]
+        put DRNaibj[a,i,b,j] = Taibj[a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+#
+    T1k[ksub] = 1.0
+    pardo a,i,b,j
+        get DRNaibj[a,i,b,j]
+        Tkaibj[ksub,a,i,b,j] = T1k[ksub]*DRNaibj[a,i,b,j]
+        prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+    endpardo a,i,b,j
+#
+enddo ksub
+server_barrier
+delete DRNaibj
+#
+ENDPROC normalize_RB2ab
+
+PROC GS_RB1
+# -----------------------------
+# Gram-Schmidt orthogonalization
+#   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
+#   with update done via numerically stable in place update
+# -----------------------------
+server_barrier
+do qsub
+do ksub
+where ksub < qsub
+#
+    overlapS = 0.0
+    normS    = 0.0
+    Tk[qsub] = 1.0
+    T1k[ksub] = 1.0
+#
+# form overlap and norm
+#
+    pardo a,i
+        request RB1_a[qsub,a,i]
+        request RB1_a[ksub,a,i]
+
+        T1ai[a,i] = Tk[qsub]*RB1_a[qsub,a,i]
+        T2ai[a,i] = T1k[ksub]*RB1_a[ksub,a,i]
+
+        overlapT  = T1ai[a,i]*T2ai[a,i]
+        overlapS += overlapT
+
+        normT  = RB1_a[ksub,a,i]*RB1_a[ksub,a,i]
+        normS += normT
+#
+# store x(k) in temporary distributed
+#
+        put DRNai[a,i] = T2ai[a,i]
+    endpardo a,i
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    overlap1 = 0.0
+    collective overlap1 += overlapS
+    collective norm1 += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    overlap2 = overlap1/norm1
+    overlap2 *= -1.0
+    T2k[qsub] = overlap2
+
+# update x(q) inplace
+    pardo a,i
+        get DRNai[a,i]
+        Tkai[qsub,a,i] = T2k[qsub]*DRNai[a,i]
+        prepare RB1_a[qsub,a,i] += Tkai[qsub,a,i]
+    endpardo a,i
+#
+enddo ksub
+enddo qsub
+#
+server_barrier
+#
+ENDPROC GS_RB1
+
+PROC GS_RB2aa
+# -----------------------------
+# Gram-Schmidt orthogonalization
+#   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
+#   with update done via numerically stable in place update
+# -----------------------------
+server_barrier
+do qsub
+do ksub
+where ksub < qsub
+#
+    overlapS = 0.0
+    normS    = 0.0
+    Tk[qsub] = 1.0
+    T1k[ksub] = 1.0
+#
+# form overlap and norm
+#
+    pardo a,i,a1,i1
+        request RB2_aa[qsub,a,i,a1,i1]
+        request RB2_aa[ksub,a,i,a1,i1]
+
+        T1aiai[a,i,a1,i1] = Tk[qsub]*RB2_aa[qsub,a,i,a1,i1]
+        T2aiai[a,i,a1,i1] = T1k[ksub]*RB2_aa[ksub,a,i,a1,i1]
+
+        overlapT  = T1aiai[a,i,a1,i1]*T2aiai[a,i,a1,i1]
+        overlapS += overlapT
+
+        normT  = RB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub,a,i,a1,i1]
+        normS += normT
+#
+# store x(k) in temporary distributed
+#
+        put DRNaiai[a,i,a1,i1] = T2aiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    overlap1 = 0.0
+    collective overlap1 += overlapS
+    collective norm1 += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    overlap2 = overlap1/norm1
+    overlap2 *= -1.0
+    T2k[qsub] = overlap2
+
+# update x(q) inplace
+    pardo a,i,a1,i1
+        get DRNaiai[a,i,a1,i1]
+        Tkaiai[qsub,a,i,a1,i1] = T2k[qsub]*DRNaiai[a,i,a1,i1]
+        prepare RB2_aa[qsub,a,i,a1,i1] += Tkaiai[qsub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+#
+enddo ksub
+enddo qsub
+#
+server_barrier
+#
+ENDPROC GS_RB2aa
+
+PROC GS_RB2ab
+# -----------------------------
+# Gram-Schmidt orthogonalization
+#   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
+#   with update done via numerically stable in place update
+# -----------------------------
+server_barrier
+do qsub
+do ksub
+where ksub < qsub
+#
+    overlapS = 0.0
+    normS    = 0.0
+    Tk[qsub] = 1.0
+    T1k[ksub] = 1.0
+#
+# form overlap and norm
+#
+    pardo a,i,b,j
+        request RB2_ab[qsub,a,i,b,j]
+        request RB2_ab[ksub,a,i,b,j]
+
+        T1aibj[a,i,b,j] = Tk[qsub]*RB2_ab[qsub,a,i,b,j]
+        T2aibj[a,i,b,j] = T1k[ksub]*RB2_ab[ksub,a,i,b,j]
+
+        overlapT  = T1aibj[a,i,b,j]*T2aibj[a,i,b,j]
+        overlapS += overlapT
+
+        normT  = RB2_ab[ksub,a,i,b,j]*RB2_ab[ksub,a,i,b,j]
+        normS += normT
+#
+# store x(k) in temporary distributed
+#
+        put DRNaibj[a,i,b,j] = T2aibj[a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+    norm1 = 0.0
+    norm2 = 1.0
+    overlap1 = 0.0
+    collective overlap1 += overlapS
+    collective norm1 += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    overlap2 = overlap1/norm1
+    overlap2 *= -1.0
+    T2k[qsub] = overlap2
+
+# update x(q) inplace
+    pardo a,i,b,j
+        get DRNaibj[a,i,b,j]
+        Tkaibj[qsub,a,i,b,j] = T2k[qsub]*DRNaibj[a,i,b,j]
+        prepare RB2_ab[qsub,a,i,b,j] += Tkaibj[qsub,a,i,b,j]
+    endpardo a,i,b,j
+#
+enddo ksub
+enddo qsub
+#
+server_barrier
+#
+ENDPROC GS_RB2ab
+
+PROC update_vecs
+#
+server_barrier
+
+call move_by_one_RK1
+call move_by_one_RK2aa
+call move_by_one_RK2ab
+
+call form_new_RK1
+call form_new_RK2aa
+call form_new_RK2ab
+
+call form_residual_R1
+call form_residual_R2aa
+call form_residual_R2ab
+
+call update_RB1
+call update_RB2aa
+call update_RB2ab
+
+### JNB debug - vector print
+pardo a ,i
+allocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
+do ksub
+request RB1_a[ksub,a,i]
+CLRB1_a[ksub:ksub,a:a,i:i] = RB1_a[ksub,a,i]
+enddo ksub
+#print CLRB1_a[1:eom_subspc,a:a,i:i]
+deallocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
+endpardo a ,i
+
+call normalize_RB1
+call normalize_RB2aa
+call normalize_RB2ab
+
+call GS_RB1
+call GS_RB2aa
+call GS_RB2ab
+
+call normalize_RB1
+call normalize_RB2aa
+call normalize_RB2ab
+
+# checked rb2_aa antisymmetric
+
+### JNB debug - overlap print
+#do ksub
+#do ksub1
+#    Tkk[ksub,ksub1] = 0.0
+#    pardo a,i
+#        request RB1_a[ksub,a,i]
+#        request RB1_a[ksub1,a,i]
+#       T1kk[ksub,ksub1] = RB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
+#       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+#    endpardo a,i
+#    S1overlap[ksub,ksub1] = Tkk[ksub,ksub1]
+#
+#    Tkk[ksub,ksub1] = 0.0
+#    pardo a,i,a1,i1
+#        request RB2_aa[ksub,a,i,a1,i1]
+#        request RB2_aa[ksub1,a,i,a1,i1]
+#       T1kk[ksub,ksub1] = RB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub1,a,i,a1,i1]
+#       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+#    endpardo a,i,a1,i1
+#    S2aaoverlap[ksub,ksub1] = Tkk[ksub,ksub1]
+#
+#    Tkk[ksub,ksub1] = 0.0
+#    pardo a,i,b,j
+#        request RB2_ab[ksub,a,i,b,j]
+#        request RB2_ab[ksub1,a,i,b,j]
+#       T1kk[ksub,ksub1] = RB2_ab[ksub,a,i,b,j]*RB2_ab[ksub1,a,i,b,j]
+#       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+#    endpardo a,i,b,j
+#    S2aboverlap[ksub,ksub1] = Tkk[ksub,ksub1]
+#enddo ksub1
+#enddo ksub
+#print S1overlap
+#print S2aaoverlap
+#print S2aboverlap
+
+server_barrier
+#
+ENDPROC update_vecs
 # -----------------
 #  MAIN
 # -----------------
@@ -5085,10 +5955,29 @@ CALL READ_AMP
 call form_H
 call form_diag
 call form_guess
-server_barrier
 
-call form_G
-call diag_G
+#call normalize_RB1
+#call normalize_RB2aa
+#call normalize_RB2ab
+#
+#call GS_RB1
+#call GS_RB2aa
+#call GS_RB2ab
+#
+#call normalize_RB1
+#call normalize_RB2aa
+#call normalize_RB2ab
+
+do kiter
+
+    print " "
+    print kiter
+
+    call form_G
+    call diag_G
+    call update_vecs
+
+enddo kiter
 
 server_barrier
 
