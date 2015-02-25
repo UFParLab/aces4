@@ -70,17 +70,16 @@ double SIPMaPInterpreter::calculate_block_wait_time(
 	double max_block_arrives_at = 0.0;
 	std::list<BlockSelector>::iterator it = bs_list.begin();
 	for (; it != bs_list.end(); ++it) {
-		if (sip_tables_.is_distributed(it->array_id_)
-				|| sip_tables_.is_served(it->array_id_)) {
+		if (sip_tables_.is_distributed(it->array_id_) || sip_tables_.is_served(it->array_id_)) {
 			BlockId block_id = data_manager_.block_id(*it);
-			std::map<BlockId, BlockRemoteOp>::iterator pending =
-					pending_blocks_map_.find(block_id);
+			std::map<BlockId, BlockRemoteOp>::iterator pending = pending_blocks_map_.find(block_id);
 			if (pending != pending_blocks_map_.end()) {
 				BlockRemoteOp& block_remote_op = pending->second;
-				double block_arrives_at = block_remote_op.time_started
-						+ block_remote_op.travel_time;
-				if (block_arrives_at > max_block_arrives_at)
+				double block_arrives_at = block_remote_op.time_started + block_remote_op.travel_time;
+				if (block_arrives_at > max_block_arrives_at) {
 					max_block_arrives_at = block_arrives_at;
+				}
+				pending_blocks_map_.erase(pending);	// Delete pending time info after processed.
 			}
 		}
 	}
@@ -309,8 +308,33 @@ void SIPMaPInterpreter::handle_block_load_scalar_op(int pc){
 
 
 #ifdef HAVE_MPI
+
+double SIPMaPInterpreter::calculate_pending_request_time() {
+	// Increment pardo section time after compensating for time spent waiting for acks
+	double max_async_ack_arrives_at = 0.0;
+	std::list<BlockRemoteOp>::iterator it = pending_acks_list_.begin();
+	for (; it != pending_acks_list_.end(); ++it) {
+		BlockRemoteOp& brop = *it;
+		double async_ack_arrives_at = brop.time_started + brop.travel_time;
+		if (async_ack_arrives_at > max_async_ack_arrives_at) {
+			max_async_ack_arrives_at = async_ack_arrives_at;
+		}
+	}
+	double pending_requests = 0.0;
+	if (pardo_section_time_ < max_async_ack_arrives_at) {
+		pending_requests = max_async_ack_arrives_at - pardo_section_time_;
+	}
+	return pending_requests;
+}
+
 void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
-	pardo_section_times_.push_back(PardoSectionsInfo(pc, section_number_, pardo_section_time_));
+
+	// Increment pardo section time after compensating for time spent waiting for acks
+	double pending_requests = calculate_pending_request_time();
+	pardo_section_time_ += pending_requests;
+
+
+	pardo_section_times_.push_back(PardoSectionsInfo(pc, section_number_, pardo_section_time_, pending_requests));
 	section_number_++;
 	// Aggregate time from multiple ranks - when combining SIPMaPTimer instances.
 	pardo_section_time_ = 0.0;
@@ -318,7 +342,9 @@ void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
 
 void SIPMaPInterpreter::do_post_sial_program(){
 	// -1 is for the line number at the end of the program.
-	pardo_section_times_.push_back(PardoSectionsInfo(-1, section_number_, pardo_section_time_));
+	double pending_requests = calculate_pending_request_time();
+	pardo_section_time_ += pending_requests;
+	pardo_section_times_.push_back(PardoSectionsInfo(-1, section_number_, pardo_section_time_, pending_requests));
 	section_number_++;
 	pardo_section_time_ = 0.0;
 
@@ -328,33 +354,56 @@ void SIPMaPInterpreter::do_post_sial_program(){
 
 void SIPMaPInterpreter::handle_get_op(int pc){
 	/** A small blocking message is sent to fetch the block needed
-	 * An async Recv is then posted for the needed block.
+	 * 	An async Recv is then posted for the needed block.
 	 */
 	BlockId id = get_block_id_from_selector_stack();
-	BlockRemoteOp brop (pardo_section_time_, remote_array_model_.time_to_get_block(id));
+	double travel_time = remote_array_model_.time_to_get_block(id);
+	double time_spent_at_get = remote_array_model_.time_to_send_small_message_to_server();
+	record_total_time(time_spent_at_get);
+	BlockRemoteOp brop (travel_time, pardo_section_time_);
 	pending_blocks_map_.insert(std::make_pair(id, brop));
+	pardo_section_time_ += time_spent_at_get;
+
 }
 
 void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
-	/** Put accumulates are blocking operations */
+	/** Put accumulates are blocking operations, receipt of acks are async */
 	BlockId id = get_block_id_from_selector_stack();
-	pardo_section_time_ += remote_array_model_.time_to_put_accumulate_block(id);
+	double time_spent_at_put = remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_send_block_to_server(id);
+	record_total_time(time_spent_at_put);
+	pardo_section_time_ += time_spent_at_put;
+	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server() + remote_array_model_.time_to_put_accumulate_block(id), pardo_section_time_));
 }
 
 void SIPMaPInterpreter::handle_put_replace_op(int pc) {
-	/** Put replaces are blocking operations */
+	/** Put replaces are blocking operations, receipt of acks are async */
 	BlockId id = get_block_id_from_selector_stack();
-	pardo_section_time_ += remote_array_model_.time_to_put_replace_block(id);
+	double time_spent_at_put = remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_send_block_to_server(id);
+	record_total_time(time_spent_at_put);
+	pardo_section_time_ += time_spent_at_put;
+	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server() + remote_array_model_.time_to_put_replace_block(id), pardo_section_time_));
 }
 
 void SIPMaPInterpreter::handle_create_op(int pc){
 	/** A no op for now */
-	pardo_section_time_ += remote_array_model_.time_to_create_array(arg0(pc));
 }
 
 void SIPMaPInterpreter::handle_delete_op(int pc){
-	/** A small blocking message is sent to the server */
-	pardo_section_time_ += remote_array_model_.time_to_delete_array(arg0(pc));
+	/** A small blocking message is sent to the server, receipt of ack is async */
+	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_delete_array(arg0(pc));
+	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
+}
+
+void SIPMaPInterpreter::handle_set_persistent_op(int pc) {
+	/** A small blocking message is sent to the server, receipt of ack is async */
+	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server();
+	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
+}
+
+void SIPMaPInterpreter::handle_restore_persistent_op(int pc){
+	/** A small blocking message is sent to the server, receipt of ack is async */
+	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server();
+	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
 }
 
 void SIPMaPInterpreter::handle_pardo_op(int &pc){
@@ -404,8 +453,11 @@ SIPMaPTimer SIPMaPInterpreter::merge_sipmap_timers(
 		for (int i=0; i<workers; ++i){
 			CHECK(max_time - pardo_sections_info_vector.at(i).at(j).time >= 0, "The barrier time can only be positive ! BUG");
 			double barrier_time  = max_time - pardo_sections_info_vector.at(i).at(j).time;
-			if (pc >= 0)
-				sipmap_timers_vector.at(i).timer(pc).record_total_time(barrier_time);
+			double pending_request_time = pardo_sections_info_vector.at(i).at(j).pending_requests;
+			if (pc >= 0){
+				sipmap_timers_vector.at(i).timer(pc).record_total_time(barrier_time + pending_request_time);
+				sipmap_timers_vector.at(i).timer(pc).record_block_wait_time(pending_request_time);
+			}
 		}
 	}
 

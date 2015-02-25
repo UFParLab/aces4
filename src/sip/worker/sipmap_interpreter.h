@@ -15,6 +15,7 @@
 
 #include <utility>
 #include <map>
+#include <list>
 #include <vector>
 
 namespace sip {
@@ -61,8 +62,6 @@ public:
 	virtual void handle_println_op(int pc) {}
 	virtual void handle_gpu_on_op(int pc) {}
 	virtual void handle_gpu_off_op(int pc) {}
-	virtual void handle_set_persistent_op(int pc) {}
-	virtual void handle_restore_persistent_op(int pc){}
 
 
 	// Counting time for these opcodes
@@ -86,6 +85,8 @@ public:
 	virtual void handle_get_op(int pc);
 	virtual void handle_put_accumulate_op(int pc);
 	virtual void handle_put_replace_op(int pc) ;
+	virtual void handle_set_persistent_op(int pc) ;
+	virtual void handle_restore_persistent_op(int pc);
 	virtual void handle_create_op(int pc);
 	virtual void handle_delete_op(int pc);
 	virtual void handle_pardo_op(int &pc);	//! Overriden to simulate 1 worker at a time
@@ -98,6 +99,8 @@ public:
 	virtual void handle_put_replace_op(int pc) {block_selector_stack_.pop(); block_selector_stack_.pop();}
 	virtual void handle_create_op(int pc) {}
 	virtual void handle_delete_op(int pc) {}
+	virtual void handle_set_persistent_op(int pc) {}
+	virtual void handle_restore_persistent_op(int pc){}
 
 #endif // HAVE_MPI
 
@@ -106,7 +109,8 @@ public:
 		int pc;
 		int section;
 		double time;
-		PardoSectionsInfo(int p, int s, double t) : pc(p), section(s), time(t) {}
+		double pending_requests;
+		PardoSectionsInfo(int p, int s, double t, double r) : pc(p), section(s), time(t), pending_requests(r) {}
 	};
 
 	typedef std::vector<PardoSectionsInfo> PardoSectionsInfoVector_t;
@@ -142,6 +146,7 @@ private:
 	};
 
 	std::map<BlockId, BlockRemoteOp> pending_blocks_map_;	//! Set of blocks in transit because of a GET/REQUEST.
+	std::list<BlockRemoteOp> pending_acks_list_;			//! List of pending acks from PUTs, PUT+, DELETEs, SET/RESTORE_PERSISTENT
 
 	/**
 	 * Captures the wall time in a pardo section (statements between 2 barriers).
@@ -191,6 +196,7 @@ private:
 	 * @return
 	 */
 	double calculate_block_wait_time(std::list<BlockSelector> bs_list);
+	double calculate_pending_request_time();
 };
 
 } /* namespace sip */
