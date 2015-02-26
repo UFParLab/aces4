@@ -156,8 +156,7 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 //	std::cout << "calling get_block_for_updating for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
-	sial_check(blk != NULL, "attempting to update non-existent block",
-			current_line());
+	sial_check(blk != NULL, "Attempting to update non-existent block " + id.str(sip_tables_), current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_update_on_host(blk);
@@ -166,9 +165,14 @@ Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 }
 
 /* gets block, creating it if it doesn't exist.  If new, initializes to zero.*/
-Block::BlockPtr BlockManager::get_block_for_accumulate(const BlockId& id,
-		bool is_scope_extent) {
-	return get_block_for_writing(id, is_scope_extent);
+Block::BlockPtr BlockManager::get_block_for_accumulate(const BlockId& id, bool is_scope_extent) {
+	Block::BlockPtr blk = block(id);
+	if (blk == NULL){
+		blk = get_block_for_writing(id, is_scope_extent);
+		blk->fill(0.0);
+	}
+	return blk;
+
 }
 
 void BlockManager::enter_scope() {
