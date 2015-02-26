@@ -150,8 +150,11 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
 					get_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	check(block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source),
-			"Incorrect block semantics !");
+	if (!block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source)){
+		std::stringstream err_ss;
+		err_ss << "Incorrect GET block semantics for " << block_id ;
+		fail(err_ss.str());
+	}
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -205,8 +208,11 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 					put_data_tag, MPI_COMM_WORLD, &status), __LINE__, __FILE__);
 	check_double_count(status, block_size);
 
-	check(block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source),
-			"Incorrect block semantics !");
+	if (!block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source)){
+		std::stringstream err_ss;
+		err_ss << "Incorrect PUT block semantics for " << block_id ;
+		fail(err_ss.str());
+	}
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -272,8 +278,11 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	MPI_Wait(&request, &status2);
 	check_double_count(status2, block_size);
 
-	check(block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source),
-			"Incorrect block semantics !");
+	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source)){
+		std::stringstream err_ss;
+		err_ss << "Incorrect PUT_ACCUMULATE block semantics for " << block_id ;
+		fail(err_ss.str());
+	}
 
 	//send ack
 	SIPMPIUtils::check_err(
