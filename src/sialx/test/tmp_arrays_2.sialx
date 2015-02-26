@@ -15,25 +15,25 @@ sial tmp_arrays_2
 			print j
 			
 			a[i,j] = 42.0
-			println "all elements of a(i,j) should be 42"
+			print "all elements of a(i,j) should be 42"
 			print a[i,j]
 			
 			b[i,j] = 55.0
-			println "all elements of b(i,j) should be 55"
+			print "all elements of b(i,j) should be 55"
 			print b[i,j]
 			
 			b[i,j] = a[i,j]
-			println "all elements of b(i,j) should be 42"
+			print "all elements of b(i,j) should be 42"
 			print b[i,j]
 			
 			execute list_block_map
 		enddo j
 		
-		println "end of loop body in do i"
+		print "end of loop body in do i"
 		#execute list_block_map
 	enddo i
 	
-	println "end of program tmp_array_2."
+	print "end of program tmp_array_2."
 	execute list_block_map
 	
 endsial tmp_arrays_2

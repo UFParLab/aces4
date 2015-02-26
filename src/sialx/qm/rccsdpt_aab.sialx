@@ -1,18 +1,6 @@
-#  Copyright (c) 2003-2010 University of Florida
- import "rccsdpt_aab_defs.sialx"
+# import "rccsdpt_aab_defs.sialx"
+  import "rccsd_rhf_defs.sialx"
 #
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
                            SIAL RCCSDPT_RHF_AAB 
 #
 #-------------------------------------------------------------------------------
@@ -155,6 +143,7 @@
 # Declare scalars
 # ---------------
 #
+      scalar ccsdpt_energy
       scalar etemp
       scalar xtemp
       scalar xtemp1
@@ -2351,13 +2340,13 @@
 # Set up the parallelization over the three virtual segments  
 # ----------------------------------------------------------  
 
-      PARDO a2, a1, a, k1
-         allocate XTaaaiii[a,a1,a2,k1,*,*]
-         allocate XRaaaiii[a,a1,a2,k1,*,*]
-
-         deallocate XTaaaiii[a,a1,a2,k1,*,*]
-         deallocate XRaaaiii[a,a1,a2,k1,*,*]
-      ENDPARDO a2, a1, a, k1
+#      PARDO a2, a1, a, k1
+#         allocate XTaaaiii[a,a1,a2,k1,*,*]
+#         allocate XRaaaiii[a,a1,a2,k1,*,*]
+#
+#         deallocate XTaaaiii[a,a1,a2,k1,*,*]
+#         deallocate XRaaaiii[a,a1,a2,k1,*,*]
+#      ENDPARDO a2, a1, a, k1
 #
 # Loop over the occupied combinations 
 # ----------------------------------- 
@@ -3002,6 +2991,10 @@
       CALL READ_BLOCKDATA  
       sip_barrier 
       CALL TRAN_UHF 
+#      restore_persistent Vpiqj  "Vpiqj"
+#      restore_persistent VSpipi "VSpipi"
+#      restore_persistent Vaaai  "Vaaai"
+#      restore_persistent VSaaai "VSaaai"
 #
 # Set the partitioning of the occupied segments 
 # --------------------------------------------- 
@@ -3111,12 +3104,20 @@
       collective eaab += esum 
       sip_barrier
 
+    restore_persistent totenerg "totenerg"
+
       eaab *= 2.0
       eSaab *= 2.0
       totenerg += eaab
       totenerg += eSaab 
+
+      ccsdpt_energy = totenerg
+
       print eaab 
       print eSaab 
+      print ccsdpt_energy
+
+    set_persistent totenerg "totenerg"
 
       sip_barrier
 #

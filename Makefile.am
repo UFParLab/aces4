@@ -375,7 +375,9 @@ test_interpreters_LDADD = $(TEST_LDADD_VARS)
 
 # Add any initialization files needed by tests here.
 TEST_INIT_DATA_FILES=\
-test/ccsdpt_test.dat
+test/ccsdpt_test.dat\
+test/second_ccsdpt_test.dat\
+test/cis_test.dat
 
 
 EXTRA_DIST+= $(TEST_INIT_DATA_FILES)
@@ -545,28 +547,35 @@ SIOX_FILES=\
 ./src/sialx/test/broadcast_static.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
-./src/sialx/qm/scf_mp2_rhf.siox\
-./src/sialx/qm/scf_mp2_defs.siox\
-./src/sialx/qm/scf_frag.siox\
-./src/sialx/qm/scf_frag_defs.siox\
-./src/sialx/qm/trans_frag_fpardo.siox\
-./src/sialx/qm/frag_2order_corr.siox\
+./src/sialx/qm/scf_frag_lowmem.siox\
+./src/sialx/qm/scf_frag_defs_lowmem.siox\
+./src/sialx/qm/frag_2order_corr_lowmem.siox\
+./src/sialx/qm/mcpt2_corr_lowmem.siox\
+./src/sialx/qm/mcpt2_singles_lowmem.siox\
+./src/sialx/qm/mcpt2_doubles_lowmem.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/cis_rhf.siox\
 ./src/sialx/qm/cis_rhf_defs.siox\
-./src/sialx/qm/cis_d_rhf.siox\
+./src/sialx/qm/rcis_rhf.siox\
+./src/sialx/qm/rcis_d_rhf.siox\
+./src/sialx/qm/rcis_ccpt2_rhf.siox\
+./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
+./src/sialx/qm/tran_uhf_no4v.siox\
 ./src/sialx/qm/tran_rhf_no3v.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
-./src/sialx/qm/rccsdpt_aaa_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
-./src/sialx/qm/rccsdpt_aab_defs.siox\
-./src/sialx/qm/rccsdpt_aab.siox\
-./src/sialx/qm/rcis_ccpt2_rhf.siox
+./src/sialx/qm/rccsdpt_aab.siox
+
+#./src/sialx/qm/rccsdpt_aaa_defs.siox\
+#./src/sialx/qm/rccsdpt_aab_defs.siox\
+#./src/sialx/qm/scf_mp2_rhf.siox\
+#./src/sialx/qm/scf_mp2_defs.siox\
+#./src/sialx/qm/rlambda_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -661,21 +670,24 @@ EXTRA_DIST += \
 ./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/test/broadcast_static.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
-./src/sialx/qm/scf_mp2_rhf.sialx\
 ./src/sialx/qm/scf_defs.sialx\
-./src/sialx/qm/scf_mp2_defs.sialx\
-./src/sialx/qm/scf_frag.sialx\
-./src/sialx/qm/scf_frag_defs.sialx\
-./src/sialx/qm/trans_frag_fpardo.sialx\
-./src/sialx/qm/frag_2order_corr.sialx\
+./src/sialx/qm/scf_frag_lowmem.sialx\
+./src/sialx/qm/scf_frag_defs_lowmem.sialx\
 ./src/sialx/qm/trans_frag_defs.sialx\
+./src/sialx/qm/frag_2order_corr_lowmem.sialx\
+./src/sialx/qm/mcpt2_corr_lowmem.sialx\
+./src/sialx/qm/mcpt2_singles_lowmem.sialx\
+./src/sialx/qm/mcpt2_doubles_lowmem.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
 ./src/sialx/qm/cis_rhf.sialx\
 ./src/sialx/qm/cis_rhf_defs.sialx\
-./src/sialx/qm/cis_d_rhf.sialx\
+./src/sialx/qm/rcis_rhf.sialx\
+./src/sialx/qm/rcis_d_rhf.sialx\
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
+./src/sialx/qm/reom_rhf_defs.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\
+./src/sialx/qm/tran_uhf_no4v.sialx\
 ./src/sialx/qm/tran_rhf_no3v.sialx\
 ./src/sialx/qm/tran_rhf_no4v_defs.sialx\
 ./src/sialx/qm/rccsd_rhf.sialx\
@@ -685,6 +697,9 @@ EXTRA_DIST += \
 ./src/sialx/qm/rccsdpt_aab_defs.sialx\
 ./src/sialx/qm/rccsdpt_aab.sialx
 
+#./src/sialx/qm/scf_mp2_rhf.sialx\
+#./src/sialx/qm/scf_mp2_defs.sialx\
+#./src/sialx/qm/rlambda_rhf.sialx
 
 SIALX_DIR = ${top_srcdir}/src/sialx/
 .sialx.siox: $(SIAL_COMPILER_JAR)

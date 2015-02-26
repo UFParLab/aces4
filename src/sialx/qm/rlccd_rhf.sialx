@@ -394,6 +394,7 @@
 # Declare scalars 
 # --------------- 
 #
+      scalar lccd_energy
       scalar etemp
       scalar esum
       scalar esuma
@@ -407,6 +408,7 @@
       scalar eold 
       scalar ecrit 
       scalar ediff 
+      scalar escr
       scalar mp2_energy
       scalar restart
 #
@@ -1207,6 +1209,13 @@
 #    ------------------------------------------------------------------------ 
 #           MAIN
 #    ------------------------------------------------------------------------ 
+
+
+print " "
+print "-- Parallel LCCD program"
+print "-- Written by Jason N. Byrd, 2015"
+print " "
+
     ecrit = 0.00000001
     zero = 0.0
     one = 1.0
@@ -1223,6 +1232,8 @@
 #
     restore_persistent ca "ca"
     restore_persistent Fock_a "fock_a"
+    restore_persistent scf_energy "scf_energy"
+    set_persistent scf_energy "scf_energy"
     #  server_barrier
     #  call tran_uhf
     #  server_barrier
@@ -1233,7 +1244,7 @@
 # second-order energy
     call energy
     mp2_energy  = ecorrT
-    mp2_energy += scfeneg
+    mp2_energy += scf_energy
     print mp2_energy
 #
     niter = 0.0
@@ -1261,21 +1272,12 @@
         endif
         call movet2
         server_barrier
-            ediff = eold - ecorrT
-            print ediff
-         IF ecorrT < eold
-            ediff = eold - ecorrT
-            IF ediff < ecrit
-               exit # kiter 
-            ENDIF
-         ENDIF
-#
-         IF ecorrT > eold
-            ediff = ecorrT - eold
-            IF ediff < ecrit
-               exit # kiter 
-            ENDIF
-         ENDIF
+	ediff = eold - ecorrT
+	escr = ediff**2.0
+	ediff = escr**0.5
+	if ediff < cc_conv
+	    exit
+	endif
 #
 #        Reset eold --> enew 
 #        ------------------- 
@@ -1286,11 +1288,10 @@
 #
     server_barrier
     totenerg  = ecorrT
-    totenerg += scfeneg
-    print totenerg
-      server_barrier
-#
-      server_barrier
+    totenerg += scf_energy
+    lccd_energy = totenerg
+    print lccd_energy
+      set_persistent totenerg "totenerg"
       set_persistent     ca    "ca" 
       set_persistent     Fock_a "fock_a"
       set_persistent     T2old_ab "T2old_ab"
@@ -1298,6 +1299,7 @@
       set_persistent     Vaaii  "Vaaii"
       set_persistent     Vpiqj  "Vpiqj"
       set_persistent     VSpipi "VSpipi"
+      server_barrier
 #
 #    ------------------------------------------------------------------------ 
                            ENDSIAL CCSD_RHF_SV1

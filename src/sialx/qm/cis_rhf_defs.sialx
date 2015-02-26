@@ -31,7 +31,6 @@ aoindex aces_defs_mu = 1: norb
 
 predefined scalar eom_tol
 predefined int eom_roots
-predefined int eom_roots2
 predefined int eom_subspc
 
 #these are predefined in the array and scalar tables
@@ -45,12 +44,11 @@ special compute_integral_batch w
 special return_sval rw
 special compute_diis u
 special get_my_rank w
-special print_block r
 special print_static_array r
 special eigen_calc uu
 special cis_unit_guess ur
 special cis_energy_numerator ur
-special cis_invert_diagonal ur
+special invert_diagonal ur
 special update_cis_bvec urrr
 special energy_denominator_rhf ur
 special energy_ty_denominator_rhf urr

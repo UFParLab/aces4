@@ -11,6 +11,8 @@
 #include "block.h"
 #include "id_block_map.h"
 
+class TestControllerParallel;
+
 namespace sip {
 
 class Interpreter;
@@ -127,6 +129,8 @@ private:
 	/** holder for arrays and scalars that have been marked as persistent */
 	ArrayIdLabelMap persistent_array_map_;
 
+	/** Stores previously saved persistent arrays. Used by tests */
+	ArrayIdLabelMap old_persistent_array_map_;
 
 	/** Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a scalar.  The value associated with the
@@ -188,6 +192,8 @@ private:
 	 */
 	void save_distributed(const std::string label, IdBlockMap<Block>::PerArrayMap* map) ;
 
+
+	friend class ::TestControllerParallel;
 
 	DISALLOW_COPY_AND_ASSIGN(WorkerPersistentArrayManager);
 

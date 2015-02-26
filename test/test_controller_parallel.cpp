@@ -183,9 +183,18 @@ double TestControllerParallel::scalar_value(const std::string& name) {
 
 double* TestControllerParallel::static_array(const std::string& name){
 	try {
-		int array_slot = worker_->array_slot(name);
-		sip::Block::BlockPtr array =  worker_->get_static(array_slot);
-		return array->get_data();
+        int array_slot = worker_->array_slot(name);
+        // If static array was marked persistent, look for it in the PersistentArrayManager
+        sip::WorkerPersistentArrayManager::ArrayIdLabelMap::iterator saved_it = wpam_->old_persistent_array_map_.find(array_slot);
+        if (saved_it != wpam_->old_persistent_array_map_.end()){
+            std::string saved_array_name = sip_tables_->string_literal(saved_it->second);
+            sip::WorkerPersistentArrayManager::LabelContiguousArrayMap::iterator block_it = wpam_->contiguous_array_map_.find(saved_array_name);
+            //CHECK(block_it != wpam_->contiguous_array_map_.end(), "Array was marked persistent but was not saved to WPAM !");
+            return block_it->second->get_data();
+        } else {
+            sip::Block::BlockPtr array =  worker_->get_static(array_slot);
+                       return array->get_data();
+        }
 	} catch (const std::exception& e) {
 	std::cerr << "FAILURE: static array" << name
 			<< " not found.  This is probably a bug in the test."

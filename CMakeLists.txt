@@ -317,6 +317,8 @@ add_subdirectory (test/gtest-1.7.0)
 enable_testing()
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 
 #----------------------------------------------------------------------
 # Build aces4 & print_siptables executable
@@ -596,29 +598,40 @@ set(SIAL_FILES
     src/sialx/test/index_scalar_cast.sialx;
     src/sialx/test/contig_local3.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
-    src/sialx/qm/scf_mp2_rhf.sialx;
     src/sialx/qm/scf_defs.sialx;
-    src/sialx/qm/scf_mp2_defs.sialx;
-    src/sialx/qm/scf_frag.sialx;
-    src/sialx/qm/scf_frag_defs.sialx;
-    src/sialx/qm/trans_frag_fpardo.sialx;
-    src/sialx/qm/frag_2order_corr.sialx;
+    src/sialx/qm/scf_frag_lowmem.sialx;
+    src/sialx/qm/scf_frag_defs_lowmem.sialx;
+    src/sialx/qm/frag_2order_corr_lowmem.sialx;
+    src/sialx/qm/mcpt2_corr_lowmem.sialx;
+    src/sialx/qm/mcpt2_singles_lowmem.sialx;
+    src/sialx/qm/mcpt2_doubles_lowmem.sialx;
     src/sialx/qm/trans_frag_defs.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
+    src/sialx/qm/tran_uhf_no4v.sialx;
     src/sialx/qm/tran_rhf_no4v_defs.sialx;
     src/sialx/qm/tran_rhf_no3v.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
     src/sialx/qm/rlccd_rhf.sialx;
-    src/sialx/qm/rccsdpt_aaa_defs.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
-    src/sialx/qm/rccsdpt_aab_defs.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
     src/sialx/qm/cis_rhf.sialx;
     src/sialx/qm/cis_rhf_defs.sialx;
-    src/sialx/qm/cis_d_rhf.sialx;
-    src/sialx/qm/rccsd_rhf_defs.sialx;
-    src/sialx/qm/rcis_ccpt2_rhf.sialx)
+    src/sialx/qm/rcis_rhf.sialx;
+    src/sialx/qm/rcis_d_rhf.sialx;
+    src/sialx/qm/rcis_ccpt2_rhf.sialx;
+    src/sialx/qm/reom_rhf_defs.sialx;
+    src/sialx/qm/rccsd_rhf_defs.sialx)
+
+#    src/sialx/qm/rccsdpt_aaa_defs.sialx;
+#    src/sialx/qm/rccsdpt_aab_defs.sialx;
+#    src/sialx/qm/scf_mp2_rhf.sialx;
+#    src/sialx/qm/scf_mp2_defs.sialx;
+#    src/sialx/qm/rlambda_rhf.sialx;
+#    src/sialx/qm/scf_frag.sialx;
+#    src/sialx/qm/scf_frag_defs.sialx;
+#    src/sialx/qm/trans_frag_fpardo.sialx;
+#    src/sialx/qm/frag_2order_corr.sialx;
 
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
