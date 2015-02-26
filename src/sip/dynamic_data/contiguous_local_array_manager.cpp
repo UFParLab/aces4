@@ -86,16 +86,17 @@ Block::BlockPtr ContiguousLocalArrayManager::create_block(const BlockId& id){
 	int array_slot = id.array_id();
 	int array_rank = sip_tables_.array_rank(array_slot);
 	const BlockShape shape(sip_tables_.contiguous_region_shape(array_rank, array_slot, id.index_values_, id.parent_id_ptr_->index_values_));
-			try {
-				Block::BlockPtr region = new Block(shape);
-				block_map_.insert_block(id, region);  //this will fail if there is overlap.
-				return region;
-			} catch (const std::out_of_range& oor){
-				std::cerr << "At line " << __LINE__ << " in file " << __FILE__ << std::endl;
-				std::cerr << *this << std::endl;
-				fail(" create_block in ContiguousLocalArrayManager failed", current_line());
-				return NULL;
-			}
+	try {
+		Block::BlockPtr region = new Block(shape);
+		region->fill(0.0);
+		block_map_.insert_block(id, region);  //this will fail if there is overlap.
+		return region;
+	} catch (const std::out_of_range& oor){
+		std::cerr << "At line " << __LINE__ << " in file " << __FILE__ << std::endl;
+		std::cerr << *this << std::endl;
+		fail(" create_block in ContiguousLocalArrayManager failed", current_line());
+		return NULL;
+	}
 }
 
 
