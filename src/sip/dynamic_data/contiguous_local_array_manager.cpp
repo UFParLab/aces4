@@ -132,7 +132,6 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block(const BlockId& id, int& r
 
     //allocate a new block and copy data from the contiguous block
     block = new Block(id_shape);
-    block->fill(0.0);
     enclosing_block->extract_slice(rank, offsets, block);
 	}
 

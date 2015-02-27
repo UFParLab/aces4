@@ -82,11 +82,9 @@ void BlockManager::allocate_local(const BlockId& id) {
 		std::vector<BlockId>::iterator it;
 		for (it = list.begin(); it != list.end(); ++it) {
 			Block* blk = get_block_for_writing(*it, false);
-			blk->fill(0.0);
 		}
 	} else {
 		Block* blk = get_block_for_writing(id, false);
-		blk->fill(0.0);
 	}
 }
 void BlockManager::deallocate_local(const BlockId& id) {
