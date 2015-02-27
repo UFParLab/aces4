@@ -55,6 +55,10 @@ c     real(C_DOUBLE) scr(5000000)
       integer, pointer :: iscr(:)
       TYPE(C_PTR) :: cscr 
       TYPE(C_PTR) :: ciscr 
+
+      real(C_DOUBLE), pointer :: scr_inte(:)
+      type(C_PTR) :: cscr_inte
+
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
       integer(C_INT) i, one, two   
@@ -71,7 +75,7 @@ c  END_NFPS
       integer, pointer :: end_nfps(:)
 c ----------------------------------------------------------------------
 
-      integer(C_INT) norb, nscr, niscr   
+      integer(C_INT) norb, nscr, niscr, nscr_inte
 c
       one = 0 ! 1
       two = 0 ! 2
@@ -191,6 +195,10 @@ c     niscr = 5000000
       call scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr]) 
 
+      nscr_inte = size_0
+      call scratch_array(nscr_inte, cscr_inte) 
+      call c_f_pointer(cscr_inte, scr_inte, [nscr_inte]) 
+
       offset_1 = 0 
       offset_2 = 0 
       offset_3 = 0 
@@ -205,8 +213,8 @@ c
      *                         1+offset_3, extents_0(3)+offset_3,
      *                         1+offset_4, extents_0(4)+offset_4,
      *                         data_0, !integrals data_0,  
+     *                         scr_inte, ! aux. integral scratch
      *                         scr, ! scratch spaces for integrals data_0,  
-c 
      *                         iscr, ! integer scratch spaces for integrals 
      *                         pcoords, ptcoords, 
      *                         ppcoeffs, pixpcoeffs, palphas, pixalphas,
@@ -217,6 +225,7 @@ c
 c  Remove scratch space  
       call delete_scratch_array(cscr) 
       call delete_scratch_array(ciscr) 
+      call delete_scratch_array(cscr_inte) 
 
 c     do i = 1, (extents_0(1)-1)*(extents_0(2)-1)*  
 c    *          (extents_0(3)-1)*(extents_0(4)-1)  
@@ -240,7 +249,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine compute_integrals(a1,a2,b1,b2,c1,c2,d1,d2,aoint, 
-     *                 scr, iscr, coords, tcoords ,coeffs, 
+     *                 integrals, scr, iscr, coords, tcoords ,coeffs, 
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend)
 c---------------------------------------------------------------------------
