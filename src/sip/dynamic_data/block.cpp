@@ -31,9 +31,8 @@ Block::Block(BlockShape shape) :
 	size_ = shape.num_elems();
 
 	//c++ feature:parens cause allocated memory to be initialized to zero
-	// but is also expensive. This is being removed in favor of having get_block_for_updating
-	// crash if the block cannot be found. The SIAL programmer is responsible for zero-ing out
-	// a block if it needs to be summed into.
+	// but is also expensive. This is being removed and the block is being zeroed out
+	// wherever it needs to be.
 	data_ = new double[size_];
 
 	gpu_data_ = NULL;

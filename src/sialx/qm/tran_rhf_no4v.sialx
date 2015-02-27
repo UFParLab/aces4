@@ -251,16 +251,11 @@ import "tran_rhf_no4v_defs.sialx"
      PARDO mu, nu, lambda
 #
           allocate Txxxi[mu,nu,lambda,*]
-	  do i
-	      Txxxi[mu,nu,lambda,i] = 0.0
-	  enddo i
 #
           DO sigma
 #
             #execute compute_ubatch6 aoint(mu,nu,lambda,sigma) zz zz zz zz  
-	     aoint[mu,nu,lambda,sigma] = 0.0
              execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
-	     print aoint[mu,nu,lambda,sigma]
 #
              DO i   
 #
@@ -298,9 +293,6 @@ import "tran_rhf_no4v_defs.sialx"
      PARDO mu, nu, i
 #
         ALLOCATE Lxxai[mu,nu,*,i]
-	do a
-	    Lxxai[mu,nu,a,i] = 0.0
-	enddo a
 #
         DO lambda
            REQUEST Vxxxi[mu,nu,lambda,i] 
@@ -380,9 +372,6 @@ import "tran_rhf_no4v_defs.sialx"
      PARDO mu, a, i
 #
         ALLOCATE Lxaai[mu,*,a,i]
-	do a1
-	    Lxaai[mu,a1,a,i] = 0.0
-	enddo a1
 
         DO nu
            REQUEST Vxxai[mu,nu,a,i]  
@@ -466,9 +455,6 @@ import "tran_rhf_no4v_defs.sialx"
      PARDO a, a1, i
 #
         ALLOCATE Laaai[*,a,a1,i]
-	do a2
-	    Laaai[a2,a,a1,i] = 0.0
-	enddo a2
 
         DO mu
            REQUEST Vxaai[mu,a,a1,i]  
@@ -549,7 +535,6 @@ import "tran_rhf_no4v_defs.sialx"
 # 
      #set_persistent Dca "ca" 
      #set_persistent FTa "fock_a" 
-
       set_persistent VSpipi "VSpipi"   
       set_persistent Vaaii  "Vaaii" 
       set_persistent Viaai  "Viaai" 

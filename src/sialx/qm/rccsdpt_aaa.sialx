@@ -325,7 +325,6 @@
           DO sigma
 #
             #execute compute_ubatch6 aoint(mu,nu,lambda,sigma) zz zz zz zz 
-             aoint[mu,nu,lambda,sigma] = 0.0
              execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
 #
              DO i   

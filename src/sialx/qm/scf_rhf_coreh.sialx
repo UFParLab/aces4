@@ -1176,20 +1176,20 @@ import "scf_defs.sialx"
 #     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
 #     ----------------------------------------------------------------------- 
 #
-#      DO mu
-#      DO nu
-#      DO lambda
-#      DO sigma
-#            IF mu == lambda
-#            IF nu == sigma
-#               aoint[mu,nu,lambda,sigma] = 0.0 
-#               execute compute_aabb_batch aoint[mu,nu,lambda,sigma] screen_array 
-#            ENDIF
-#            ENDIF
-#      ENDDO sigma
-#      ENDDO lambda
-#      ENDDO nu
-#      ENDDO mu
+      DO mu
+      DO nu
+      DO lambda
+      DO sigma
+            IF mu == lambda
+            IF nu == sigma
+               aoint[mu,nu,lambda,sigma] = 0.0 
+               execute compute_aabb_batch aoint[mu,nu,lambda,sigma] screen_array 
+            ENDIF
+            ENDIF
+      ENDDO sigma
+      ENDDO lambda
+      ENDDO nu
+      ENDDO mu
 
 #     do g51 
 #     do g52 
