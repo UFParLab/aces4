@@ -676,6 +676,9 @@
       PARDO a, a2, i
 #     
                allocate LWiaai[*,a,a2,i]
+	       do i1
+		   LWiaai[i1,a,a2,i] = 0.0
+	       enddo i1
 #     
                DO a1
 #     
@@ -714,6 +717,9 @@
       PARDO a, b, j
 #
             allocate LWaibj[a,*,b,j]
+	    do i1
+		LWaibj[a,i1,b,j] = 0.0
+	    enddo i1
 #
             DO a1
 #
@@ -793,6 +799,9 @@
       PARDO a, i, b
 #
             allocate LWjbai[*,b,a,i]
+	    do j
+		LWjbai[j,b,a,i] = 0.0
+	    enddo j
 #              
             DO b1
 #           
@@ -1438,6 +1447,7 @@
         DO mu 
         DO nu
         WHERE mu < nu 
+	   aoint[lambda,mu,sigma,nu] = 0.0
            execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
            DO i
            DO j
@@ -1468,6 +1478,7 @@
         DO nu
         WHERE mu == nu 
 #
+	   aoint[lambda,mu,sigma,nu] = 0.0
            execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
            DO i
@@ -1510,6 +1521,9 @@
         PARDO nu, i, j
 #
               allocate LDaixj[*,i,nu,j]
+	      do a
+		  LDaixj[a,i,nu,j] = 0.0
+	      enddo a
 #
               DO mu
 #
@@ -1617,6 +1631,7 @@
      PARDO mu, nu, lambda, sigma
         WHERE mu < nu 
 #
+	   aoint[lambda,mu,sigma,nu] = 0.0
            execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
            DO i
@@ -1637,6 +1652,7 @@
      PARDO mu, nu, lambda, sigma
         WHERE mu == nu 
 #
+	   aoint[lambda,mu,sigma,nu] = 0.0
            execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
            DO i
@@ -1678,6 +1694,9 @@
         PARDO nu, i, j
 #
               allocate LDaixj[*,i,nu,j]
+	      do a
+		  LDaixj[a,i,nu,j] = 0.0
+	      enddo a
 #
               DO mu
 #
