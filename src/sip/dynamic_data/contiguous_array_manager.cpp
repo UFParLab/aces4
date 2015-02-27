@@ -139,6 +139,7 @@ Block::BlockPtr ContiguousArrayManager::create_contiguous_array(int array_id) {
 	SIP_LOG(
 			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape << " and array id :" << array_id << std::endl);
 	Block::BlockPtr block_ptr = new Block(shape);
+	block_ptr->fill(0.0);
 	const std::pair<ContiguousArrayMap::iterator, bool> &ret =
 			contiguous_array_map_.insert(
 					std::pair<int, Block::BlockPtr>(array_id, block_ptr));
@@ -220,6 +221,7 @@ Block::BlockPtr ContiguousArrayManager::get_block(const BlockId& block_id, int& 
 //allocate a new block and copy data from contiguous block
 	Block::BlockPtr block = new Block(block_shape);
 	contiguous_slices_made_count_.inc();
+	block->fill(0.0);
 	contiguous->extract_slice(rank, offsets, block);
 	return block;
 }

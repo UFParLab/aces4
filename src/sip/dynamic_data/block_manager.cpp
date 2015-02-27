@@ -101,9 +101,11 @@ void BlockManager::allocate_local(const BlockId& id) {
 		for (it = list.begin(); it != list.end(); ++it) {
 			Block* blk = get_block_for_writing(*it, false);
 			local_blocks_created_count_.inc();
+			blk->fill(0.0);
 		}
 	} else {
 		Block* blk = get_block_for_writing(id, false);
+		blk->fill(0.0);
 	}
 }
 void BlockManager::deallocate_local(const BlockId& id) {
@@ -184,9 +186,14 @@ Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 }
 
 /* gets block, creating it if it doesn't exist.  If new, initializes to zero.*/
-Block::BlockPtr BlockManager::get_block_for_accumulate(const BlockId& id,
-		bool is_scope_extent) {
-	return get_block_for_writing(id, is_scope_extent);
+Block::BlockPtr BlockManager::get_block_for_accumulate(const BlockId& id, bool is_scope_extent) {
+	Block::BlockPtr blk = block(id);
+	if (blk == NULL){
+		blk = get_block_for_writing(id, is_scope_extent);
+		blk->fill(0.0);
+	}
+	return blk;
+
 }
 
 void BlockManager::enter_scope() {

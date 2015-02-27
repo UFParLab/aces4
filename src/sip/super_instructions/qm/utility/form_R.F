@@ -13,7 +13,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
 c
-      subroutine form_R(b_array, i1, i2, rank, rank2) 
+      subroutine form_R(b_array, R, rpack, v, i1, i2, rank, rank2)
       implicit none 
 c
       integer i, j, rank, rank2, i1, i2, ndim, nzero, n   
@@ -29,6 +29,11 @@ c
 
       integer maxdim
       maxdim = rank 
+c      print *, 'maxdim = ', maxdim
+c      print *, 'i2 = ', i2
+c      print *, 'i1 = ', i1
+c      print *, 'rank = ', rank
+c      print *, 'rank2 = ', rank2
 c--------------------------------------------------------------------------
 !>   Symmetrize the b_array into the R array
 c--------------------------------------------------------------------------

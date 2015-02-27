@@ -30,7 +30,11 @@ Block::Block(BlockShape shape) :
 		shape_(shape)
 {
 	size_ = shape.num_elems();
-	data_ = new double[size_](); //c++ feature:parens cause allocated memory to be initialized to zero
+
+	//c++ feature:parens cause allocated memory to be initialized to zero
+	// but is also expensive. This is being removed and the block is being zeroed out
+	// wherever it needs to be.
+	data_ = new double[size_];
 
 	gpu_data_ = NULL;
 	status_[Block::onHost] = true;
