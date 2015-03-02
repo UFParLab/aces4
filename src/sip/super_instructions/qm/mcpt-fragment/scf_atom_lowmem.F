@@ -115,7 +115,9 @@ c     mapping of atoms to shells
 !     Number of shells  
       integer (C_INT) nshells  
 
-      integer norbmax, vmax, omax, maxblk, maxhist, diis_start 
+      integer norbmax, vmax, omax, maxblk
+      integer (C_INT) maxhist
+      integer (C_INT) diis_start 
       integer one, two, i, j  
 
       TYPE(C_PTR) :: cscr
@@ -267,8 +269,8 @@ c---------------------------------------------------------------------------
          norbmax = extents_1(1) ! inda(1) 
          vmax    = extents_1(1) ! inda(1) 
          omax    = extents_1(1) ! inda(1) 
-         maxhist = 8 
-         diis_start = 3  
+         maxhist = int_constant("scf_hist"//C_NULL_CHAR)
+         diis_start = int_constant("scf_beg"//C_NULL_CHAR)
 
 c---------------------------------------------------------------------------
 c Determine 
@@ -848,7 +850,8 @@ c     double precision kin(nc1:nc2,nd1:nd2)
       integer mb_offset, nb_offset, nstart  
       integer nocc_a, nocc_b, nvirt_a, nvirt_b  
       integer nocc_a_org, nocc_b_org 
-      integer iter, max_iter 
+      integer iter
+      integer (C_INT) max_iter 
 c
 c ---------------------------------------------------------------------- 
 c Arrays used in the DIIS procedure 
@@ -903,7 +906,7 @@ c     return ! VFL
          if (m .eq. iatom(n)) then 
 c           nocc_b = nocc_b + charge(m)/2 
 c           nocc_a = nocc_a + charge(m) - nocc_b 
-            tcharge = tcharge + charge(m)  
+            tcharge = tcharge + int(charge(m))
          endif 
        enddo 
       enddo 
@@ -1100,7 +1103,7 @@ c-----------------------------------------------------------------------
 c Start the SCF iterations  
 c-----------------------------------------------------------------------
 
-      max_iter = 100  
+      max_iter = int_constant("scf_iter"//C_NULL_CHAR)
       DO iter = 1, max_iter 
 
 c-----------------------------------------------------------------------
@@ -1968,7 +1971,8 @@ c ------------------------------------------------------------------------
 c NAI (type=1) integrals first.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_nai_batch(imax, zmax, nalpha,ncoeff_pack,
+              call oed__gener_nai_batch(imax, zmax, 
+     *    	       nalpha_pack,ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 newcenters, xn,yn,zn, acharge, alpha_pack,
@@ -3427,14 +3431,17 @@ c
 
 
       subroutine check_conv(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,n_basis,flag)  
+      use, intrinsic :: ISO_C_BINDING
       implicit none 
+      include 'sip_interface.f'
 
       integer n_basis, a, b, flag  
       double precision HFD_A(n_basis,n_basis) 
       double precision HFD_B(n_basis,n_basis) 
       double precision HFDOLD_A(n_basis,n_basis) 
       double precision HFDOLD_B(n_basis,n_basis) 
-      double precision max, diffa, diffb, thresh    
+      double precision max, diffa, diffb
+      real(C_DOUBLE) scf_conv
 
       max = 0.0 
       do a = 1, n_basis 
@@ -3446,9 +3453,10 @@ c
       enddo 
       enddo 
 
-      thresh = 1.0d-6
+C      thresh = 1.0d-6
+      scf_conv = scalar_constant("scf_conv"//C_NULL_CHAR)
       flag = 0 
-      if (max .lt. thresh) flag = 1 
+      if (max .lt. scf_conv) flag = 1 
 c      write(6,*) '      Max density difference :', max 
 
 c     if (flag .eq. 0) then 
