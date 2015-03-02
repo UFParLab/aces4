@@ -622,15 +622,11 @@ import "trans_frag_defs.sialx"
       sip_barrier
 
       print "Computing wC_ao"
-      PARDO kfrag, jfrag
-      WHERE jfrag != kfrag
+      PARDO kfrag
 	 icount = (scalar)kfrag
-	 jcount = (scalar)jfrag
 
-         execute return_pairs icount jcount elst_thresh pair_flag 
-         if pair_flag == zero
 # ---------------------------------------------------------------------------- 
-#     Set wC_ao  for far away monomers
+#     zero wC_ao  
 # ---------------------------------------------------------------------------- 
 #
       DO mu
@@ -641,16 +637,16 @@ import "trans_frag_defs.sialx"
             x2[nu]     = wAO_frag[nu]
             execute return_sval x2[nu]  n
             if n == icount
+               LwC_ao[mu,nu] = 0.0 
 
-              LwC_ao[mu,nu] = 0.0 
-              PUT wC_ao[mu,nu] = LwC_ao[mu,nu]
+               PUT wC_ao[mu,nu] += LwC_ao[mu,nu]
 
-	    endif # n
+             endif # n 
       ENDDO nu
              endif # m 
       ENDDO mu
-         endif # pair flag  
-      ENDPARDO kfrag, jfrag
+      ENDPARDO kfrag
+      server_barrier
 
       PARDO kfrag, jfrag
       WHERE jfrag != kfrag
