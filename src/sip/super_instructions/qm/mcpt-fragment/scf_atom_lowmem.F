@@ -903,7 +903,7 @@ c     return ! VFL
          if (m .eq. iatom(n)) then 
 c           nocc_b = nocc_b + charge(m)/2 
 c           nocc_a = nocc_a + charge(m) - nocc_b 
-            tcharge = tcharge + charge(m)  
+            tcharge = tcharge + int(charge(m))
          endif 
        enddo 
       enddo 
@@ -1968,7 +1968,8 @@ c ------------------------------------------------------------------------
 c NAI (type=1) integrals first.   
 c ------------------------------------------------------------------------ 
 
-              call oed__gener_nai_batch(imax, zmax, nalpha,ncoeff_pack,
+              call oed__gener_nai_batch(imax, zmax, 
+     *    	       nalpha_pack,ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 newcenters, xn,yn,zn, acharge, alpha_pack,
