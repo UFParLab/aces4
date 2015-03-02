@@ -989,6 +989,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank0 = sip_tables_.array_rank(array_id0);
 	sip::Block::BlockPtr block0 = get_block_from_selector_stack(intent0,
 			block_id0, true);
+	if (intent0 == 'w') block0->fill(0.0);
 	int block0_size = block0->size();
 	segment_size_array_t& seg_sizes0 =
 			const_cast<segment_size_array_t&>(block0->shape().segment_sizes_);
@@ -1014,6 +1015,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank1 = sip_tables_.array_rank(array_id1);
 	sip::Block::BlockPtr block1 = get_block_from_selector_stack(intent1,
 			block_id1);
+	if (intent1 == 'w') block1->fill(0.0);
 	int block1_size = block1->size();
 	segment_size_array_t& seg_sizes1 =
 			const_cast<segment_size_array_t&>(block1->shape().segment_sizes_);
@@ -1040,6 +1042,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank2 = sip_tables_.array_rank(array_id2);
 	sip::Block::BlockPtr block2 = get_block_from_selector_stack(intent2,
 			block_id2);
+	if (intent2 == 'w') block2->fill(0.0);
 	int block2_size = block2->size();
 	segment_size_array_t& seg_sizes2 =
 			const_cast<segment_size_array_t&>(block2->shape().segment_sizes_);
@@ -1068,6 +1071,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank3 = sip_tables_.array_rank(array_id3);
 	sip::Block::BlockPtr block3 = get_block_from_selector_stack(intent3,
 			block_id3);
+	if (intent3 == 'w') block3->fill(0.0);
 	int block3_size = block3->size();
 	segment_size_array_t& seg_sizes3 =
 			const_cast<segment_size_array_t&>(block3->shape().segment_sizes_);
@@ -1095,6 +1099,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank4 = sip_tables_.array_rank(array_id4);
 	sip::Block::BlockPtr block4 = get_block_from_selector_stack(intent4,
 			block_id4);
+	if (intent3 == 'w') block3->fill(0.0);
 	int block4_size = block4->size();
 	segment_size_array_t& seg_sizes4 =
 			const_cast<segment_size_array_t&>(block4->shape().segment_sizes_);
@@ -1124,6 +1129,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank5 = sip_tables_.array_rank(array_id5);
 	sip::Block::BlockPtr block5 = get_block_from_selector_stack(intent5,
 			block_id5);
+	if (intent5 == 'w') block5->fill(0.0);
 	int block5_size = block5->size();
 	segment_size_array_t& seg_sizes5 =
 			const_cast<segment_size_array_t&>(block5->shape().segment_sizes_);
