@@ -273,7 +273,8 @@ test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 TEST_INIT_DATA_FILES=\
 test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
-test/cis_test.dat
+test/cis_test.dat\
+test/mcpt2_test.dat
 
 
 EXTRA_DIST+= $(TEST_INIT_DATA_FILES)
