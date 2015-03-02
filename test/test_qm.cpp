@@ -215,17 +215,17 @@ TEST(Sial_QM,mcpt2_test){
 
 	if (attr->global_rank() == 0) {
 		double e1x_at = controller.scalar_value("e1x_at");
-		ASSERT_NEAR(0.01029317952213, e1x_at, 1e-10);
+		ASSERT_NEAR(0.01029316845696, e1x_at, 1e-10);
 		double e10pol_at = controller.scalar_value("e10pol_at");
-		ASSERT_NEAR(-0.01865174651487, e10pol_at, 1e-10);
+		ASSERT_NEAR(-0.01865175583286, e10pol_at, 1e-10);
 		double singles = controller.scalar_value("singles");
-		ASSERT_NEAR(-0.00106130974824, singles, 1e-10);
+		ASSERT_NEAR(-0.00106131022528, singles, 1e-10);
 		double dimer_doubles = controller.scalar_value("dimer_doubles");
-		ASSERT_NEAR(-0.00054912671720, dimer_doubles, 1e-10);
+		ASSERT_NEAR(-0.00054912647095, dimer_doubles, 1e-10);
 		double fragment_doubles = controller.scalar_value("fragment_doubles");
-		ASSERT_NEAR(-0.25081040268267, fragment_doubles, 1e-10);
+		ASSERT_NEAR(-0.25081040375757, fragment_doubles, 1e-10);
 		double mono_lccd = controller.scalar_value("mono_lccd");
-		ASSERT_NEAR(0.25084388875931, mono_lccd, 1e-10);
+		ASSERT_NEAR(0.25084388980906, mono_lccd, 1e-10);
 	}
 
 }
