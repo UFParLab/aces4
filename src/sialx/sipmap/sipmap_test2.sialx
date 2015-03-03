@@ -1,0 +1,33 @@
+sial sipmap_test2
+
+    predefined int norb
+    special fill_block_sequential wr
+	special fill_block_cyclic wr
+	
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	aoindex k = 1:norb
+	aoindex l = 1:norb
+	
+	distributed X[i,j,k,l]
+	distributed Y[i,j,k,l]
+    scalar result
+    temp T1[i,j,k,l]
+	
+	pardo i, j, k, l
+	    execute fill_block_cyclic T1[i,j,k,l] 2.0
+	    PUT Y[i,j,k,l] = T1[i,j,k,l]
+	endpardo i, j, k, l
+    
+    sip_barrier
+    
+    pardo i, j, k, l
+    	execute fill_block_sequential T1[i,j,k,l] 2.0
+	    GET Y[i,j,k,l]
+	    result = Y[i,j,k,l] * T1[i,j,k,l]
+	    print result
+	endpardo i, j, k, l
+	
+	sip_barrier
+
+endsial sipmap_test2

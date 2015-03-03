@@ -458,6 +458,8 @@ SIAL_COMPILER_JAR=$(top_srcdir)/compiler/SialCompiler.jar
 
 SIOX_FILES=\
 ./src/sialx/sipmap/contract_to_scalar.siox\
+./src/sialx/sipmap/sipmap_test2.siox\
+./src/sialx/sipmap/sipmap_test3.siox\
 ./src/sialx/test/empty.siox\
 ./src/sialx/test/static_array_test.siox\
 ./src/sialx/test/ifelse.siox\
@@ -582,6 +584,8 @@ BUILT_SOURCES= $(SIOX_FILES)
 
 EXTRA_DIST += \
 ./src/sialx/sipmap/contract_to_scalar.sialx\
+./src/sialx/sipmap/sipmap_test2.sialx\
+./src/sialx/sipmap/sipmap_test3.sialx\
 ./src/sialx/test/empty.sialx\
 ./src/sialx/test/static_array_test.sialx\
 ./src/sialx/test/ifelse.sialx\

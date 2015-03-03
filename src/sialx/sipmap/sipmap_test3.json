@@ -1,0 +1,13 @@
+{
+   "PredefinedIntegerArrays" : null,
+   "PredefinedIntegers" : {
+      "norb" : 4
+   },
+   "PredefinedScalarArrays" : null,
+   "PredefinedScalars" : null,
+   "SegmentSizeArrays" : {
+      "aoindex" : [ 34, 35, 32, 30 ]
+   },
+   "SialConfiguration" : null,
+   "SialPrograms" : [ "sipmap_test3.siox" ]
+}

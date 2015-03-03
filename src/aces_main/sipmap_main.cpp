@@ -61,7 +61,10 @@ int main(int argc, char* argv[]) {
 
 		//interpret current program on worker
 		{
-			const sip::RemoteArrayModel::Parameters remote_array_model_parameters(0.00000097, 1467073577.4156); // TODO FIXME
+			// For SM362-01
+			const sip::RemoteArrayModel::Parameters remote_array_model_parameters(0.0000025, 904628271.847496); // TODO FIXME
+
+
 			const sip::RemoteArrayModel remote_array_model(sipTables, remote_array_model_parameters);
 
 			std::vector<sip::SIPMaPInterpreter::PardoSectionsInfoVector_t> pardo_sections_info_vector;
