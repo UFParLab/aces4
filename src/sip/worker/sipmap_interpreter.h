@@ -12,16 +12,28 @@
 #include "profile_timer.h"
 #include "profile_timer_store.h"
 #include "sipmap_timer.h"
+#include "remote_array_model.h"
 
 #include <utility>
 #include <map>
 #include <list>
 #include <vector>
+#include <iostream>
 
 namespace sip {
 class ProfileTimerStore;
 class SipTables;
-class RemoteArrayModel;
+
+
+class SIPMaPConfig {
+public:
+	SIPMaPConfig(std::istream& input_file);
+	RemoteArrayModel::Parameters& get_parameters() { return parameters_; }
+private:
+	RemoteArrayModel::Parameters parameters_;
+	std::istream& input_file_;
+};
+
 
 /**
  * SIP Modeling and Prediction (SIPMaP) interpreter.

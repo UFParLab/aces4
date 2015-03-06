@@ -22,7 +22,9 @@ public:
 	struct Parameters {
 		double t_s;			//! Startup time in seconds
 		double b;			//! Bandwidth in bytes per second
+		Parameters(): t_s(-1.0), b(-1.0){};
 		Parameters(double startup_time, double bandwidth): t_s(startup_time), b(bandwidth) {}
+		Parameters(const Parameters& other) : t_s(other.t_s), b(other.b) {}
 	};
 
 	RemoteArrayModel(const SipTables& sip_tables, const Parameters& parameters);

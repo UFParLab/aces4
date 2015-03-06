@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdexcept>
 #include <map>
+#include <istream>
 #include "config.h"
 
 #include "gtest/gtest.h"
@@ -28,6 +29,7 @@
 #include "profile_timer.h"
 #include "global_state.h"
 #include "rank_distribution.h"
+#include "sipmap_interpreter.h"
 
 
 #ifdef HAVE_MPI
@@ -1750,6 +1752,15 @@ TEST(ConfigurableRankDistribution, test9){
 			}
 		}
 	}
+}
+
+TEST(SIPMaPConfig, test1){
+	std::string json_test = " { \"Bandwidth\" : 10.99, \"Latency\" : 0.00004 } ";
+	std::istringstream json_istr(json_test);
+	sip::SIPMaPConfig sipmap_config(json_istr);
+	sip::RemoteArrayModel::Parameters& parameters = sipmap_config.get_parameters();
+	ASSERT_DOUBLE_EQ(10.99, parameters.b);
+	ASSERT_DOUBLE_EQ(0.00004, parameters.t_s);
 }
 
 

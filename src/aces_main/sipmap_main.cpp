@@ -18,7 +18,6 @@ int main(int argc, char* argv[]) {
     sip::AllWorkerRankDistribution all_workers_rank_dist;
     sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
-	std::cout<<sip_mpi_attr<<std::endl;
 
 	//INIT_GLOBAL_TIMERS(&argc, &argv);
 
@@ -61,10 +60,9 @@ int main(int argc, char* argv[]) {
 
 		//interpret current program on worker
 		{
-			// For SM362-01
-			const sip::RemoteArrayModel::Parameters remote_array_model_parameters(0.0000025, 904628271.847496); // TODO FIXME
-
-
+			std::ifstream remote_array_model_parameters_file(parameters.machine_parameters_file.c_str());
+			sip::SIPMaPConfig sipmap_config(remote_array_model_parameters_file);
+			const sip::RemoteArrayModel::Parameters remote_array_model_parameters = sipmap_config.get_parameters();
 			const sip::RemoteArrayModel remote_array_model(sipTables, remote_array_model_parameters);
 
 			std::vector<sip::SIPMaPInterpreter::PardoSectionsInfoVector_t> pardo_sections_info_vector;

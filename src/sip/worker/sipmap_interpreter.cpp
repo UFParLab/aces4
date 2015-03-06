@@ -8,10 +8,25 @@
 #include "sipmap_interpreter.h"
 #include "profile_timer_store.h"
 #include "sipmap_timer.h"
-#include "remote_array_model.h"
 #include "loop_manager.h"
+#include "json/json.h"
+
 
 namespace sip {
+
+SIPMaPConfig::SIPMaPConfig(std::istream& input_file) : input_file_(input_file){
+	Json::Value root;   // will contains the root value after parsing.
+	Json::Reader reader;
+	bool parsingSuccessful = reader.parse( input_file, root );
+	if ( !parsingSuccessful ){
+		std::stringstream err;
+		err << "Parsing of input json file failed !" << reader.getFormattedErrorMessages();
+		sip::fail (err.str());
+	}
+	parameters_.t_s = root["Latency"].asDouble();
+	parameters_.b   = root["Bandwidth"].asDouble();
+}
+
 
 SIPMaPInterpreter::SIPMaPInterpreter(int worker_rank, int num_workers,
 		const SipTables& sipTables,
