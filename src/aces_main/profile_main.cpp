@@ -77,6 +77,7 @@ int main(int argc, char* argv[]) {
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			init_server_timer.pause();
 
+	  		barrier();
 			sip::Timer server_run_timer("Server Run");
 			server_run_timer.start();
 			server.run();
@@ -113,6 +114,7 @@ int main(int argc, char* argv[]) {
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << " Started at " << sip_timestamp() << std::endl);
 
+	  		barrier();
 			sip::Timer interpret_timer("Interpret Program");
 			interpret_timer.start();
 			runner.interpret();
