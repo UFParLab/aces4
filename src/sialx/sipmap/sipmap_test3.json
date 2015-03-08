@@ -6,7 +6,7 @@
    "PredefinedScalarArrays" : null,
    "PredefinedScalars" : null,
    "SegmentSizeArrays" : {
-      "aoindex" : [ 34, 35, 32, 30 ]
+      "aoindex" : [ 45, 40, 35, 30, 25, 20 ]
    },
    "SialConfiguration" : null,
    "SialPrograms" : [ "sipmap_test3.siox" ]

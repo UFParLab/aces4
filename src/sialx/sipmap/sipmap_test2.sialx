@@ -21,6 +21,13 @@ sial sipmap_test2
     
     sip_barrier
     
+	pardo i, j, k, l
+	    execute fill_block_cyclic T1[i,j,k,l] 2.0
+	    PUT Y[i,j,k,l] += T1[i,j,k,l]
+	endpardo i, j, k, l
+    
+    sip_barrier
+    
     pardo i, j, k, l
     	execute fill_block_sequential T1[i,j,k,l] 2.0
 	    GET Y[i,j,k,l]
