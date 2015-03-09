@@ -215,6 +215,7 @@ C place eigenvalues
 
               eigval(i) = alphar(i)/beta(i)
           else
+	      write(*,*) "small beta from dggev", beta(i)
               info = 1
               return
           endif
