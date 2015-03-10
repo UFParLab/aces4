@@ -270,19 +270,30 @@ test_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 # Add any initialization files needed by tests here.
-TEST_INIT_DATA_FILES=\
+TEST_SUPPORT_FILES=\
 test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
-test/mcpt2_test.dat
+test/mcpt2_test.dat\
+test/expected_output/helloworld1.txt\
+test/expected_output/local_arrays_wild.txt\
+test/expected_output/local_arrays.txt\
+test/expected_output/loop_over_simple_indices.txt\
+test/expected_output/scalar_valued_blocks.txt\
+test/expected_output/scalars.txt\
+test/expected_output/static_array_test.txt\
+test/expected_output/static_array_test2.txt\
+test/expected_output/tmp_arrays_2.txt\
+test/expected_output/tmp_arrays.txt
 
 
-EXTRA_DIST+= $(TEST_INIT_DATA_FILES)
+EXTRA_DIST+= $(TEST_SUPPORT_FILES)
 
 check_DATA = copy-data-files.stamp
 
 copy-data-files.stamp:
 	cp $(top_srcdir)/test/*.dat .
+	cp $(top_srcdir)/test/expected_output/*.txt .
 
 
 # Pthreads are not used, to enable, uncomment these. 
