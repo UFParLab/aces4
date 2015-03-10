@@ -83,7 +83,88 @@ void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 
 		switch (opcode){
 
+		/////////////////////////////////////////////// 0 blocks
+		case do_op:
+		case enddo_op:
+		case where_op:
+		case pardo_op:
+		case endpardo_op:				// WARNING : Variable number of blocks are garbage collected
 
+		case jump_if_zero_op:
+		case stop_op:
+		case exit_op:
+		case push_block_selector_op:
+		case string_load_literal_op:
+		case int_load_literal_op:
+		case int_load_value_op:
+		case int_store_op:
+		case int_add_op:
+		case int_subtract_op:
+		case int_multiply_op:
+		case int_divide_op:
+		case int_equal_op:
+		case int_nequal_op:
+		case int_ge_op:
+		case int_le_op:
+		case int_gt_op:
+		case int_lt_op:
+		case int_neg_op:
+		case cast_to_int_op:
+		case index_load_value_op:
+		case scalar_load_value_op:
+		case scalar_store_op:
+		case scalar_add_op:
+		case scalar_subtract_op:
+		case scalar_multiply_op:
+		case scalar_divide_op:
+		case scalar_exp_op:
+		case scalar_eq_op:
+		case scalar_ne_op:
+		case scalar_ge_op:
+		case scalar_le_op:
+		case scalar_gt_op:
+		case scalar_lt_op:
+		case scalar_neg_op:
+		case scalar_sqrt_op:
+		case idup_op:
+		case iswap_op:
+		case sswap_op:
+		{
+			std::list<BlockSelector> bs_list;
+			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
+			last_seen_key_ = key;
+			last_seen_pc_ = pc;
+		}
+			break;
+
+		/////////////////////////////////////////////// 1 blocks
+		// 1 block - in instruction
+		case block_fill_op:
+		case block_scale_op:
+		case block_accumulate_scalar_op:
+		{
+			std::list<BlockSelector> bs_list;
+			bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
+			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
+
+			last_seen_key_ = key;
+			last_seen_pc_ = pc;
+		}
+		break;
+
+		// 1 block - in selector stack
+		case block_load_scalar_op:
+		case get_op:
+		{
+			std::list<BlockSelector> bs_list;
+			bs_list.push_back(BlockSelector(block_selector_stack_.top()));
+			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
+			last_seen_key_ = key;
+			last_seen_pc_ = pc;
+		}
+		break;
+
+		/////////////////////////////////////////////// 2 blocks
 		// 1 block - in selector stack
 		// 1 block - in instruction
 		case block_copy_op:
@@ -118,20 +199,7 @@ void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 		}
 		break;
 
-		// 1 block - in selector stack
-		case block_fill_op:
-		case block_scale_op:
-		case block_accumulate_scalar_op:
-		{
-			std::list<BlockSelector> bs_list;
-			bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
-			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
-
-			last_seen_key_ = key;
-			last_seen_pc_ = pc;
-		}
-		break;
-
+		/////////////////////////////////////////////// 3 blocks
 		// 2 blocks - in selector stack
 		// 1 block  - in instruction
 		case block_add_op:
@@ -152,20 +220,7 @@ void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 		}
 		break;
 
-
-		// 1 block - in selector stack
-//		case block_load_scalar_op:
-//		{
-//			std::list<BlockSelector> bs_list;
-//			bs_list.push_back(BlockSelector(block_selector_stack_.top()));
-//			ProfileTimer::Key key = make_profile_timer_key(opcode, bs_list);
-//
-//			profile_timer_.start_timer(key);
-//			last_seen_key_ = key;
-//			last_seen_pc_ = pc;
-//		}
-//		break;
-
+		/////////////////////////////////////////////// Variable number of blocks
 		// 0 - 6 blocks - in selector stack
 		case execute_op:
 		{

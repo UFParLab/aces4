@@ -59,13 +59,13 @@ public:
 
 
 	virtual void handle_broadcast_static_op(int pc) { fail("handle_broadcast_static not modeled!", line_number()); }
-	virtual void handle_allocate_op(int pc) { /* No op */ }
+	virtual void handle_allocate_op(int pc) { /* TODO Time to zero out blocks */ }
 	virtual void handle_deallocate_op(int pc) {}
 	virtual void handle_allocate_contiguous_op(int pc) { fail ("handle_allocate_contiguous_op not modeled!", line_number()); }
 	virtual void handle_deallocate_contiguous_op(int pc) { fail ("handle_deallocate_contiguous_op not modeled!", line_number()); }
 
-	virtual void handle_collective_sum_op(int pc) {  expression_stack_.pop();}
-	virtual void handle_assert_same_op(int pc) {}
+	virtual void handle_collective_sum_op(int pc) {  expression_stack_.pop(); /* TODO Time for MPI_BCast */ }
+	virtual void handle_assert_same_op(int pc) { /* TODO Time for MPI_BCast */ }
 	virtual void handle_print_string_op(int pc) { control_stack_.pop();}
 	virtual void handle_print_scalar_op(int pc) {  expression_stack_.pop();}
 	virtual void handle_print_int_op(int pc) { control_stack_.pop();}
@@ -76,8 +76,49 @@ public:
 	virtual void handle_gpu_off_op(int pc) {}
 
 
+	// Counting time for these opcodes may be relevant
+	virtual void handle_jump_if_zero_op(int pc);
+	virtual void handle_stop_op(int pc);
+	virtual void handle_exit_op(int pc);
+	virtual void handle_push_block_selector_op(int pc);
+	virtual void handle_string_load_literal_op(int pc);
+	virtual void handle_int_load_literal_op(int pc);
+	virtual void handle_int_load_value_op(int pc);
+	virtual void handle_int_store_op(int pc);
+	virtual void handle_int_add_op(int pc);
+	virtual void handle_int_subtract_op(int pc);
+	virtual void handle_int_multiply_op(int pc);
+	virtual void handle_int_divide_op(int pc);
+	virtual void handle_int_equal_op(int pc);
+	virtual void handle_int_nequal_op(int pc);
+	virtual void handle_int_le_op(int pc);
+	virtual void handle_int_gt_op(int pc);
+	virtual void handle_int_lt_op(int pc);
+	virtual void handle_int_neg_op(int pc);
+	virtual void handle_cast_to_int_op(int pc);
+	virtual void handle_index_load_value_op(int pc);
+	virtual void handle_scalar_load_value_op(int pc);
+	virtual void handle_scalar_store_op(int pc);
+	virtual void handle_scalar_add_op(int pc);
+	virtual void handle_scalar_subtract_op(int pc);
+	virtual void handle_scalar_multiply_op(int pc);
+	virtual void handle_scalar_divide_op(int pc);
+	virtual void handle_scalar_exp_op(int pc);
+	virtual void handle_scalar_eq_op(int pc);
+	virtual void handle_scalar_ne_op(int pc);
+	virtual void handle_scalar_ge_op(int pc);
+	virtual void handle_scalar_le_op(int pc);
+	virtual void handle_scalar_gt_op(int pc);
+	virtual void handle_scalar_lt_op(int pc);
+	virtual void handle_scalar_neg_op(int pc);
+	virtual void handle_scalar_sqrt_op(int pc);
+	virtual void handle_idup_op(int pc);
+	virtual void handle_iswap_op(int pc);
+	virtual void handle_sswap_op(int pc);
+
+
 	// Counting time for these opcodes
-	// is relevant
+	// is relevant & significant
 	virtual void handle_block_copy_op(int pc);
 	virtual void handle_block_permute_op(int pc);
 	virtual void handle_block_fill_op(int pc);
@@ -209,6 +250,7 @@ private:
 	 */
 	double calculate_block_wait_time(std::list<BlockSelector> bs_list);
 	double calculate_pending_request_time();
+	void record_zero_block_args_computation_time(opcode_t op);
 };
 
 } /* namespace sip */

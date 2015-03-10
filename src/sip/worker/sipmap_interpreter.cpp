@@ -78,7 +78,6 @@ inline ProfileTimer::Key SIPMaPInterpreter::make_profile_timer_key(opcode_t opco
 	return make_profile_timer_key(opcodeToName(opcode), selector_list);
 }
 
-
 double SIPMaPInterpreter::calculate_block_wait_time(
 		std::list<BlockSelector> bs_list) {
 	double block_wait_time = 0.0;
@@ -310,7 +309,6 @@ void SIPMaPInterpreter::handle_block_contract_to_scalar_op(int pc) {
 	pardo_section_time_ += computation_time + block_wait_time;
 
 }
-
 void SIPMaPInterpreter::handle_block_load_scalar_op(int pc){
 	BlockSelector &bs = block_selector_stack_.top();
 	if (sip_tables_.is_contiguous(bs.array_id_)){
@@ -321,9 +319,7 @@ void SIPMaPInterpreter::handle_block_load_scalar_op(int pc){
 	}
 }
 
-
 #ifdef HAVE_MPI
-
 double SIPMaPInterpreter::calculate_pending_request_time() {
 	// Increment pardo section time after compensating for time spent waiting for acks
 	double max_async_ack_arrives_at = 0.0;
@@ -341,7 +337,6 @@ double SIPMaPInterpreter::calculate_pending_request_time() {
 	}
 	return pending_requests;
 }
-
 void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
 
 	// Increment pardo section time after compensating for time spent waiting for acks
@@ -354,7 +349,6 @@ void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
 	// Aggregate time from multiple ranks - when combining SIPMaPTimer instances.
 	pardo_section_time_ = 0.0;
 }
-
 void SIPMaPInterpreter::do_post_sial_program(){
 	// -1 is for the line number at the end of the program.
 	double pending_requests = calculate_pending_request_time();
@@ -365,8 +359,6 @@ void SIPMaPInterpreter::do_post_sial_program(){
 
 	SialxInterpreter::do_post_sial_program();
 }
-
-
 void SIPMaPInterpreter::handle_get_op(int pc){
 	/** A small blocking message is sent to fetch the block needed
 	 * 	An async Recv is then posted for the needed block.
@@ -380,7 +372,6 @@ void SIPMaPInterpreter::handle_get_op(int pc){
 	pardo_section_time_ += time_spent_at_get;
 
 }
-
 void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
 	/** Put accumulates are blocking operations, receipt of acks are async */
 	BlockId id = get_block_id_from_selector_stack();
@@ -389,7 +380,6 @@ void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
 	pardo_section_time_ += time_spent_at_put;
 	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server() + remote_array_model_.time_to_put_accumulate_block(id), pardo_section_time_));
 }
-
 void SIPMaPInterpreter::handle_put_replace_op(int pc) {
 	/** Put replaces are blocking operations, receipt of acks are async */
 	BlockId id = get_block_id_from_selector_stack();
@@ -398,29 +388,24 @@ void SIPMaPInterpreter::handle_put_replace_op(int pc) {
 	pardo_section_time_ += time_spent_at_put;
 	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server() + remote_array_model_.time_to_put_replace_block(id), pardo_section_time_));
 }
-
 void SIPMaPInterpreter::handle_create_op(int pc){
 	/** A no op for now */
 }
-
 void SIPMaPInterpreter::handle_delete_op(int pc){
 	/** A small blocking message is sent to the server, receipt of ack is async */
 	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_delete_array(arg0(pc));
 	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
 }
-
 void SIPMaPInterpreter::handle_set_persistent_op(int pc) {
 	/** A small blocking message is sent to the server, receipt of ack is async */
 	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server();
 	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
 }
-
 void SIPMaPInterpreter::handle_restore_persistent_op(int pc){
 	/** A small blocking message is sent to the server, receipt of ack is async */
 	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server();
 	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
 }
-
 void SIPMaPInterpreter::handle_pardo_op(int &pc){
 	/** What a particular worker would do */
 	LoopManager* loop = new StaticTaskAllocParallelPardoLoop(arg1(pc),
@@ -430,6 +415,53 @@ void SIPMaPInterpreter::handle_pardo_op(int &pc){
 }
 #endif // HAVE_MPI
 
+void SIPMaPInterpreter::record_zero_block_args_computation_time(opcode_t op) {
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double) (timer_count_pair.second);
+	record_total_time(computation_time);
+	pardo_section_time_ += computation_time;
+}
+
+void SIPMaPInterpreter::handle_jump_if_zero_op(int pc)		{ SialxInterpreter::handle_jump_if_zero_op(pc); record_zero_block_args_computation_time(jump_if_zero_op);}
+void SIPMaPInterpreter::handle_stop_op(int pc)				{ SialxInterpreter::handle_stop_op(pc); record_zero_block_args_computation_time(stop_op);	}
+void SIPMaPInterpreter::handle_exit_op(int pc)				{ SialxInterpreter::handle_exit_op(pc); record_zero_block_args_computation_time(exit_op);	}
+void SIPMaPInterpreter::handle_push_block_selector_op(int pc){ SialxInterpreter::handle_push_block_selector_op(pc); record_zero_block_args_computation_time(push_block_selector_op);}
+void SIPMaPInterpreter::handle_string_load_literal_op(int pc){ SialxInterpreter::handle_string_load_literal_op(pc); record_zero_block_args_computation_time(string_load_literal_op);}
+void SIPMaPInterpreter::handle_int_load_literal_op(int pc)	{ SialxInterpreter::handle_int_load_literal_op(pc); record_zero_block_args_computation_time(int_load_literal_op);	}
+void SIPMaPInterpreter::handle_int_load_value_op(int pc)	{ SialxInterpreter::handle_int_load_value_op(pc); record_zero_block_args_computation_time(int_load_value_op);	}
+void SIPMaPInterpreter::handle_int_store_op(int pc)			{ SialxInterpreter::handle_int_store_op(pc); record_zero_block_args_computation_time(int_store_op);	}
+void SIPMaPInterpreter::handle_int_add_op(int pc)			{ SialxInterpreter::handle_int_add_op(pc); record_zero_block_args_computation_time(int_add_op);	}
+void SIPMaPInterpreter::handle_int_subtract_op(int pc)		{ SialxInterpreter::handle_int_subtract_op(pc); record_zero_block_args_computation_time(int_subtract_op);	}
+void SIPMaPInterpreter::handle_int_multiply_op(int pc)		{ SialxInterpreter::handle_int_multiply_op(pc); record_zero_block_args_computation_time(int_multiply_op);	}
+void SIPMaPInterpreter::handle_int_divide_op(int pc)		{ SialxInterpreter::handle_int_divide_op(pc); record_zero_block_args_computation_time(int_divide_op);	}
+void SIPMaPInterpreter::handle_int_equal_op(int pc)			{ SialxInterpreter::handle_int_equal_op(pc); record_zero_block_args_computation_time(int_equal_op);	}
+void SIPMaPInterpreter::handle_int_nequal_op(int pc)		{ SialxInterpreter::handle_int_nequal_op(pc); record_zero_block_args_computation_time(int_nequal_op);	}
+void SIPMaPInterpreter::handle_int_le_op(int pc)			{ SialxInterpreter::handle_int_le_op(pc); record_zero_block_args_computation_time(int_le_op);	}
+void SIPMaPInterpreter::handle_int_gt_op(int pc)			{ SialxInterpreter::handle_int_gt_op(pc); record_zero_block_args_computation_time(int_gt_op);	}
+void SIPMaPInterpreter::handle_int_lt_op(int pc)			{ SialxInterpreter::handle_int_lt_op(pc); record_zero_block_args_computation_time(int_lt_op);	}
+void SIPMaPInterpreter::handle_int_neg_op(int pc)			{ SialxInterpreter::handle_int_neg_op(pc); record_zero_block_args_computation_time(int_neg_op);	}
+void SIPMaPInterpreter::handle_cast_to_int_op(int pc)		{ SialxInterpreter::handle_cast_to_int_op(pc); record_zero_block_args_computation_time(cast_to_int_op);	}
+void SIPMaPInterpreter::handle_index_load_value_op(int pc)	{ SialxInterpreter::handle_index_load_value_op(pc); record_zero_block_args_computation_time(index_load_value_op);	}
+void SIPMaPInterpreter::handle_scalar_load_value_op(int pc)	{ SialxInterpreter::handle_scalar_load_value_op(pc); record_zero_block_args_computation_time(scalar_load_value_op);	}
+void SIPMaPInterpreter::handle_scalar_store_op(int pc)		{ SialxInterpreter::handle_scalar_store_op(pc); record_zero_block_args_computation_time(scalar_store_op);	}
+void SIPMaPInterpreter::handle_scalar_add_op(int pc)		{ SialxInterpreter::handle_scalar_add_op(pc); record_zero_block_args_computation_time(scalar_add_op);	}
+void SIPMaPInterpreter::handle_scalar_subtract_op(int pc)	{ SialxInterpreter::handle_scalar_subtract_op(pc); record_zero_block_args_computation_time(scalar_subtract_op);	}
+void SIPMaPInterpreter::handle_scalar_multiply_op(int pc)	{ SialxInterpreter::handle_scalar_multiply_op(pc); record_zero_block_args_computation_time(scalar_multiply_op);	}
+void SIPMaPInterpreter::handle_scalar_divide_op(int pc)		{ SialxInterpreter::handle_scalar_divide_op(pc); record_zero_block_args_computation_time(scalar_divide_op);	}
+void SIPMaPInterpreter::handle_scalar_exp_op(int pc)		{ SialxInterpreter::handle_scalar_exp_op(pc); record_zero_block_args_computation_time(scalar_exp_op);	}
+void SIPMaPInterpreter::handle_scalar_eq_op(int pc)			{ SialxInterpreter::handle_scalar_eq_op(pc); record_zero_block_args_computation_time(scalar_eq_op);	}
+void SIPMaPInterpreter::handle_scalar_ne_op(int pc)			{ SialxInterpreter::handle_scalar_ne_op(pc); record_zero_block_args_computation_time(scalar_ne_op);	}
+void SIPMaPInterpreter::handle_scalar_ge_op(int pc)			{ SialxInterpreter::handle_scalar_ge_op(pc); record_zero_block_args_computation_time(scalar_ge_op);	}
+void SIPMaPInterpreter::handle_scalar_le_op(int pc)			{ SialxInterpreter::handle_scalar_le_op(pc); record_zero_block_args_computation_time(scalar_le_op);	}
+void SIPMaPInterpreter::handle_scalar_gt_op(int pc)			{ SialxInterpreter::handle_scalar_gt_op(pc); record_zero_block_args_computation_time(scalar_gt_op);	}
+void SIPMaPInterpreter::handle_scalar_lt_op(int pc)			{ SialxInterpreter::handle_scalar_lt_op(pc); record_zero_block_args_computation_time(scalar_lt_op);	}
+void SIPMaPInterpreter::handle_scalar_neg_op(int pc)		{ SialxInterpreter::handle_scalar_neg_op(pc); record_zero_block_args_computation_time(scalar_neg_op);	}
+void SIPMaPInterpreter::handle_scalar_sqrt_op(int pc)		{ SialxInterpreter::handle_scalar_sqrt_op(pc); record_zero_block_args_computation_time(scalar_sqrt_op);	}
+void SIPMaPInterpreter::handle_idup_op(int pc)				{ SialxInterpreter::handle_idup_op(pc); record_zero_block_args_computation_time(idup_op);	}
+void SIPMaPInterpreter::handle_iswap_op(int pc)				{ SialxInterpreter::handle_iswap_op(pc); record_zero_block_args_computation_time(iswap_op);	}
+void SIPMaPInterpreter::handle_sswap_op(int pc)				{ SialxInterpreter::handle_sswap_op(pc); record_zero_block_args_computation_time(sswap_op);	}
 
 
 
