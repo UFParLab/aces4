@@ -11,6 +11,9 @@
 #include <mpi.h>
 namespace sip {
 
+class SialOpsParallel;
+class SIPServer;
+
 class MPIState{
 public:
 	MPIState():mpi_request_(MPI_REQUEST_NULL){
@@ -40,6 +43,7 @@ private:
 
 
 	friend class SialOpsParallel;
+    friend class SIPServer;
 	MPI_Request mpi_request_;
 	DISALLOW_COPY_AND_ASSIGN(MPIState);
 };
