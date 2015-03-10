@@ -6,7 +6,7 @@ SIAL R_EE_EOM_CCSD_RHF
 # Declare indeces
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-index kiter    = 1: 10 #cc_iter
+index kiter    = 1: 20 #cc_iter
 index kstate   = 1: eom_roots
 index kstate1  = 1: eom_roots
 index jstate   = 1: eom_roots
@@ -541,6 +541,7 @@ scalar etot10
 scalar etot11
 scalar etot12
 
+scalar scale
 scalar normT
 scalar normS
 scalar norm1
@@ -1064,6 +1065,8 @@ temp T1ixai[i,mu,a,i1]
 temp Txipi[mu,i,p1,i1] 
 temp T1xipi[mu,i,p1,i1] 
 temp T1pipi[p,i,p1,i1] 
+temp T2pipi[p,i,p1,i1] 
+temp T3pipi[p,i,p1,i1] 
 
 temp T1xxbj[mu,nu,b,j] 
 
@@ -2860,7 +2863,24 @@ ENDPROC AO4VIR
 
 PROC form_H
 #    --------- 
-server_barrier 
+# LHBAR_ii JNB verified A3
+# LHBAR_ia JNB verified A3
+# LHBAR_jb JNB verified A3
+# LHBAR_aa JNB verified A3
+# HBAR_iiii JNB verified A3
+# HBAR_iijj JNB verified A3
+# HBAR_JKIA_aaaa JNB verified A3
+# HBAR_JKIA_aabb JNB verified A3
+# HBAR_IAJK_aaaa JNB verified A3
+# HBAR_IAJK_aabb JNB verified A3
+# HBAR_AJIB_aaaa JNB verified A3
+# HBAR_AJIB_aabb JNB verified A3
+# HBAR_AJIB_iibb JNB verified A3
+# HBAR_AIBC_aaaa JNB verified A3
+# HBAR_AIBC_aabb JNB verified A3
+# HBAR_ABCI_aaaa JNB verified A3
+# HBAR_ABCI_aabb JNB verified A3
+#    --------- 
 
 server_barrier
 allocate LHBAR_ii[*,*]
@@ -2892,7 +2912,7 @@ CALL HBAR_AIBC
 print "Forming H_ajib"
 CALL HBAR_AJIB
 print "Forming H_abci"
-CALL HBAR_ABCI
+CALL HBAR_ABCI 
 
 call AO4VIR
 
@@ -2915,6 +2935,117 @@ pardo a, a1, a2, i
     prepare HBAR_ABCI_aaaa[a,a1,a2,i] = tpppp[a,a1,a2,i]
 endpardo a, a1, a2, i
 server_barrier
+
+#pardo p,i,q,j
+#request VSpipi[p,i,q,j]
+#print VSpipi[p,i,q,j]
+#endpardo p,i,q,j
+#pardo p,i,q,j
+#request Vpiqj[p,i,q,j]
+#print Vpiqj[p,i,q,j]
+#endpardo p,i,q,j
+#server_barrier
+#normS = 0.0
+#pardo p,i,q,j
+#request VSpipi[p,i,q,j]
+#request VSpipi[q,i,p,j]
+#T1pipi[p,i,q,j] = VSpipi[p,i,q,j]
+#T2pipi[p,i,q,j] = VSpipi[q,i,p,j]
+#T1pipi[p,i,q,j] += T2pipi[p,i,q,j]
+#print T1pipi[p,i,q,j]
+#T3pipi[p,i,q,j] = 1.0
+#normT  = T1pipi[p,i,q,j]*T3pipi[p,i,q,j]
+#normS += normT
+#endpardo p,i,q,j
+#server_barrier
+#norm1 = 0.0
+#collective norm1 += normS
+#print norm1
+#do i
+#do i1
+#print LHBAR_ii[i,i1]
+#enddo i1
+#enddo i
+#do i
+#do a
+#print LHBAR_ia[i,a]
+#enddo a
+#enddo i
+#do i
+#do a
+#print LHBAR_jb[i,a]
+#enddo a
+#enddo i
+#do a1
+#do a
+#print LHBAR_aa[a1,a]
+#enddo a
+#enddo a1
+#print " "
+#pardo i,i1,i2,i3
+#request HBAR_iiii[i,i1,i2,i3]
+#print HBAR_iiii[i,i1,i2,i3]
+#endpardo i,i1,i2,i3
+#print " "
+#pardo i,i1,i2,i3
+#request HBAR_iijj[i,i1,i2,i3]
+#print HBAR_iijj[i,i1,i2,i3]
+#endpardo i,i1,i2,i3
+#print " "
+#pardo i,i1,a,i2
+#request HBAR_JKIA_aaaa[i,i1,i2,a]
+#print HBAR_JKIA_aaaa[i,i1,i2,a]
+#endpardo i,i1,a,i2
+#print " "
+#pardo i,i1,a,i2
+#request HBAR_JKIA_aabb[i,i1,i2,a]
+#print HBAR_JKIA_aabb[i,i1,i2,a]
+#endpardo i,i1,a,i2
+#print " "
+#pardo i,i1,a,i2
+#request HBAR_IAJK_aaaa[i,i1,a,i2]
+#print HBAR_IAJK_aaaa[i,i1,a,i2]
+#endpardo i,i1,a,i2
+#print " "
+#pardo i,i1,a,i2
+#request HBAR_IAJK_aabb[i,i1,a,i2]
+#print HBAR_IAJK_aabb[i,i1,a,i2]
+#endpardo i,i1,a,i2
+#print " "
+#pardo i,a,a1,i1
+#request HBAR_AJIB_aaaa[i1,a1,a,i]
+#print HBAR_AJIB_aaaa[i1,a1,a,i]
+#endpardo i,a,a1,i1
+#print " "
+#pardo i,a,a1,i1
+#request HBAR_AJIB_aabb[i1,a1,a,i]
+#print HBAR_AJIB_aabb[i1,a1,a,i]
+#endpardo i,a,a1,i1
+#print " "
+#pardo i,a,a1,i1
+#request HBAR_AJIB_iibb[i1,i,a,a1] 
+#print HBAR_AJIB_iibb[i1,i,a,a1]
+#endpardo i,a,a1,i1
+#print " "
+#pardo a, a1, a2, i
+#request HBAR_AIBC_aaaa[a,a1,i,a2]
+#print HBAR_AIBC_aaaa[a,a1,i,a2]
+#endpardo a,a1,a2,i
+#print " "
+#pardo a, a1, a2, i
+#request HBAR_AIBC_aabb[a,a1,i,a2]
+#print HBAR_AIBC_aabb[a,a1,i,a2]
+#endpardo a,a1,a2,i
+#print " "
+#pardo a, a1, a2, i
+#request HBAR_ABCI_aaaa[a,a1,a2,i]
+#print HBAR_ABCI_aaaa[a,a1,a2,i]
+#endpardo a, a1, a2, i
+#print " "
+#pardo a, a1, a2, i
+#request HBAR_ABCI_aabb[a,a1,a2,i]
+#print HBAR_ABCI_aabb[a,a1,a2,i]
+#endpardo a, a1, a2, i
 
 ENDPROC form_H
 
@@ -3320,122 +3451,6 @@ server_barrier
 server_barrier
 
 ENDPROC form_diag
-
-#------------------------------------------------------------------------
-
-PROC form_guess
-
-print "Using CIS B space vectors for initial guess"
-
-server_barrier
-
-pardo a,i
-    do kstate
-        T1kai[kstate,a,i] = 0.0
-        prepare R0k1_a[kstate,a,i] = T1kai[kstate,a,i]
-        prepare cRk1_a[kstate,a,i] = T1kai[kstate,a,i]
-    enddo kstate
-endpardo a,i
-
-print "Assuming 0.0 for initial R2 vectors"
-pardo a,i,a1,i1
-    do ksub
-	Tkaiai[ksub,a,i,a1,i1] = 0.0
-	prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-    enddo ksub
-    do kstate
-	Tkaiai[kstate,a,i,a1,i1] = 0.0
-	prepare R0k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
-	prepare R1k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
-	prepare cRk2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
-    enddo kstate
-endpardo a,i,a1,i1
-
-pardo a,i,b,j
-    do ksub
-	Tkaibj[ksub,a,i,b,j] = 0.0
-	prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
-    enddo ksub
-    do kstate
-	Tkaibj[kstate,a,i,b,j] = 0.0
-	prepare R0k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
-	prepare R1k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
-	prepare cRk2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
-    enddo kstate
-endpardo a,i,b,j
-
-#do ksub
-#    pardo a,i,b,j
-#	Tkaibj[ksub,a,i,b,j] = 0.0
-#	do i1
-#	    request Vpiqj[i1,i,b,j]
-#	    request RB1_a[ksub,a,i1]
-#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a,i1]*Vpiqj[i1,i,b,j]
-#	    T1kaibj[ksub,a,i,b,j] *= -1.0
-#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
-#	enddo i1
-#
-#        do a1
-#	    request Vaabj[a,a1,b,j]
-#	    request RB1_a[ksub,a1,i]
-#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a1,i]*Vaabj[a,a1,b,j]
-#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
-#        enddo a1
-#
-#	Tk[ksub] = 1.0
-#	Taibj[a,i,b,j] = Tk[ksub]*Tkaibj[ksub,a,i,b,j]
-#
-#	execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
-#
-#	T2kaibj[ksub,a,i,b,j] = Tk[ksub]*Taibj[a,i,b,j]
-#
-#	prepare RB2_ab[ksub,a,i,b,j] += T2kaibj[ksub,a,i,b,j]
-#    endpardo a,i,b,j
-#    server_barrier
-#    pardo a,i,a1,i1
-#        request RB2_ab[ksub,a,i,a1,i1]
-#        request RB2_ab[ksub,a,i1,a1,i]
-#	Tkaiai[ksub,a,i,a1,i1]  = RB2_ab[ksub,a,i,a1,i1]
-#	T1kaiai[ksub,a,i,a1,i1] = RB2_ab[ksub,a,i1,a1,i]
-#	Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
-#	prepare RB2_aa[ksub,a,i,a1,i1] += Tkaiai[ksub,a,i,a1,i1]
-#    endpardo a,i,a1,i1
-#    server_barrier
-#    if ksub > roots
-#    if ksub <= 2*roots
-#	kstart = ksub - roots
-#	print kstart
-#	print " "
-#	do kstate
-#        print kstate
-#        if kstate == kstart
-#	print kstate
-#	pardo a,i,b,j
-#            allocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
-#	    request RB2_ab[ksub,a,i,b,j]
-#	    CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] =  RB2_ab[ksub,a,i,b,j]
-#	    Tkaibj[kstate,a,i,b,j] = CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j]
-#	    prepare R1k2_ab[kstate,a,i,b,j] += Tkaibj[kstate,a,i,b,j]
-#            deallocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
-#	endpardo a,i,b,j
-#	pardo a,i,a1,i1
-#            allocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
-#	    request RB2_aa[ksub,a,i,a1,i1]
-#	    CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] =  RB2_aa[ksub,a,i,a,i1]
-#	    Tkaiai[kstate,a,i,a1,i1] = CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1]
-#	    prepare R1k2_aa[kstate,a,i,a1,i1] += Tkaiai[kstate,a,i,a1,i1]
-#            deallocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
-#	endpardo a,i,a1,i1
-#        endif
-#        enddo kstate
-#    endif
-#    endif
-#    server_barrier
-#enddo ksub
-
-server_barrier
-
-ENDPROC form_guess
 
 #------------------------------------------------------------------------
 
@@ -5091,6 +5106,70 @@ call HB_mult
 
 call BHB_mult
 
+### JNB debug - norms
+#print " "
+#print "HB permutational symmetry"
+#print "-- P(i/i)"
+#do ksub
+#    Rnorm[ksub] = 0.0
+#    normS = 0.0
+#    pardo a,i,a1,i1
+#        request HB2_aa[ksub,a,i,a1,i1]
+#        request HB2_aa[ksub,a,i1,a1,i]
+#	T2kaiai[ksub,a,i,a1,i1] = 1.0
+#	Tkaiai[ksub,a,i,a1,i1]  = HB2_aa[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a,i1,a1,i]
+#	Tkaiai[ksub,a,i,a1,i1] += T1kaiai[ksub,a,i,a1,i1]
+#	normT  = Tkaiai[ksub,a,i,a1,i1]*T2kaiai[ksub,a,i,a1,i1]
+#	normS += normT
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    norm2 = 0.0
+#    collective norm2 += normS
+#    Rnorm[ksub] = norm2
+#enddo ksub
+#print Rnorm
+#print "-- P(a/a)"
+#do ksub
+#    Rnorm[ksub] = 0.0
+#    normS = 0.0
+#    pardo a,i,a1,i1
+#        request HB2_aa[ksub,a,i,a1,i1]
+#        request HB2_aa[ksub,a1,i,a,i1]
+#	T2kaiai[ksub,a,i,a1,i1] = 1.0
+#	Tkaiai[ksub,a,i,a1,i1]  = HB2_aa[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a1,i,a,i1]
+#	Tkaiai[ksub,a,i,a1,i1] += T1kaiai[ksub,a,i,a1,i1]
+#	normT  = Tkaiai[ksub,a,i,a1,i1]*T2kaiai[ksub,a,i,a1,i1]
+#	normS += normT
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    norm2 = 0.0
+#    collective norm2 += normS
+#    Rnorm[ksub] = norm2
+#enddo ksub
+#print Rnorm
+#print "-- P(ai/ai)"
+#do ksub
+#    Rnorm[ksub] = 0.0
+#    normS = 0.0
+#    pardo a,i,a1,i1
+#        request HB2_aa[ksub,a,i,a1,i1]
+#        request HB2_aa[ksub,a1,i1,a,i]
+#	T2kaiai[ksub,a,i,a1,i1] = 1.0
+#	Tkaiai[ksub,a,i,a1,i1]  = HB2_aa[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a1,i1,a,i]
+#	Tkaiai[ksub,a,i,a1,i1] += T1kaiai[ksub,a,i,a1,i1]
+#	normT  = Tkaiai[ksub,a,i,a1,i1]*T2kaiai[ksub,a,i,a1,i1]
+#	normS += normT
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    norm2 = 0.0
+#    collective norm2 += normS
+#    Rnorm[ksub] = norm2
+#enddo ksub
+#print Rnorm
+
 ENDPROC form_G
 
 #------------------------------------------------------------------------
@@ -5103,18 +5182,41 @@ execute get_my_rank rank
 myrank = (int)rank
 if myrank == root
 do ksub
+    do ksub1
+    where ksub == ksub1
+    etemp  = S1overlap[ksub,ksub1]
+    etemp += S2aboverlap[ksub,ksub1]
+    etemp += S2aaoverlap[ksub,ksub1]
+    scale = (etemp)**(-1.0)
+    enddo ksub1
+    print scale
 do ksub1
     request Gmat[ksub1,ksub]
     Tkk[ksub1,ksub] = Gmat[ksub1,ksub]
-    Tkk[ksub1,ksub] *= 0.5
+#    Tkk[ksub1,ksub] *= 0.5
+    Tkk[ksub1,ksub] *= scale
     GSmat[ksub1,ksub] = Tkk[ksub1,ksub]
 enddo ksub1
 enddo ksub
 
 #print GSmat
 
+    do ksub
+    do ksub1
+        SAlphaR[ksub,ksub1] = 0.0
+        SAlphaL[ksub,ksub1] = 0.0
+    enddo ksub1
+
+        SEk[ksub] = 0.0
+    enddo ksub
+
 execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
 #print SalphaR
+
+do ksub
+    Sek[ksub] *= 0.5
+enddo ksub
+
 do kstate
     SEk0[kstate] = SEk[kstate]
 enddo kstate
@@ -5343,6 +5445,16 @@ do kstate
 enddo kstate
 endpardo a,i,a1,i1
 server_barrier
+#if kiter == 1
+#    do kstate
+#    pardo a,i,a1,i1
+#        request cRk2_aa[kstate,a,i,a1,i1]
+#	Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
+#	prepare R0k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+#    endpardo a,i,a1,i1
+#    enddo kstate
+#endif
+#server_barrier
 #
 ENDPROC form_residual_R2aa
 
@@ -5386,6 +5498,16 @@ do kstate
 
 enddo kstate
 endpardo a,i,b,j
+server_barrier
+#if kiter == 1
+#    do kstate
+#    pardo a,i,b,j
+#        request cRk2_ab[kstate,a,i,b,j]
+#	Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
+#	prepare R0k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+#    endpardo a,i,b,j
+#    enddo kstate
+#endif
 server_barrier
 #
 ENDPROC form_residual_R2ab
@@ -5872,15 +5994,15 @@ call update_RB2aa
 call update_RB2ab
 
 ### JNB debug - vector print
-pardo a ,i
-allocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
-do ksub
-request RB1_a[ksub,a,i]
-CLRB1_a[ksub:ksub,a:a,i:i] = RB1_a[ksub,a,i]
-enddo ksub
-#print CLRB1_a[1:eom_subspc,a:a,i:i]
-deallocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
-endpardo a ,i
+#pardo a ,i
+#allocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
+#do ksub
+#request RB1_a[ksub,a,i]
+#CLRB1_a[ksub:ksub,a:a,i:i] = RB1_a[ksub,a,i]
+#enddo ksub
+##print CLRB1_a[1:eom_subspc,a:a,i:i]
+#deallocate contiguous CLRB1_a[1:eom_subspc,a:a,i:i]
+#endpardo a ,i
 
 call normalize_RB1
 call normalize_RB2aa
@@ -5894,46 +6016,357 @@ call normalize_RB1
 call normalize_RB2aa
 call normalize_RB2ab
 
-# checked rb2_aa antisymmetric
 
-### JNB debug - overlap print
+# this keeps track of the state by state norm that goes into DGGEV Bmat
+do ksub
+do ksub1
+    Tkk[ksub,ksub1] = 0.0
+    pardo a,i
+        request RB1_a[ksub,a,i]
+        request RB1_a[ksub1,a,i]
+       T1kk[ksub,ksub1] = RB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
+       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+    endpardo a,i
+    S1overlap[ksub,ksub1] = Tkk[ksub,ksub1]
+
+    Tkk[ksub,ksub1] = 0.0
+    pardo a,i,a1,i1
+        request RB2_aa[ksub,a,i,a1,i1]
+        request RB2_aa[ksub1,a,i,a1,i1]
+       T1kk[ksub,ksub1] = RB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub1,a,i,a1,i1]
+       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+    endpardo a,i,a1,i1
+    S2aaoverlap[ksub,ksub1] = Tkk[ksub,ksub1]
+
+    Tkk[ksub,ksub1] = 0.0
+    pardo a,i,b,j
+        request RB2_ab[ksub,a,i,b,j]
+        request RB2_ab[ksub1,a,i,b,j]
+       T1kk[ksub,ksub1] = RB2_ab[ksub,a,i,b,j]*RB2_ab[ksub1,a,i,b,j]
+       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+    endpardo a,i,b,j
+    S2aboverlap[ksub,ksub1] = Tkk[ksub,ksub1]
+enddo ksub1
+enddo ksub
+
+### JNB debug - norms
+#print " "
+#print "VECTOR permutational symmetry"
+#print "-- P(i/i)"
 #do ksub
-#do ksub1
-#    Tkk[ksub,ksub1] = 0.0
-#    pardo a,i
-#        request RB1_a[ksub,a,i]
-#        request RB1_a[ksub1,a,i]
-#       T1kk[ksub,ksub1] = RB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
-#       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
-#    endpardo a,i
-#    S1overlap[ksub,ksub1] = Tkk[ksub,ksub1]
-#
-#    Tkk[ksub,ksub1] = 0.0
+#    Rnorm[ksub] = 0.0
+#    normS = 0.0
 #    pardo a,i,a1,i1
 #        request RB2_aa[ksub,a,i,a1,i1]
-#        request RB2_aa[ksub1,a,i,a1,i1]
-#       T1kk[ksub,ksub1] = RB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub1,a,i,a1,i1]
-#       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+#        request RB2_aa[ksub,a,i1,a1,i]
+#	T2kaiai[ksub,a,i,a1,i1] = 1.0
+#	Tkaiai[ksub,a,i,a1,i1]  = RB2_aa[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = RB2_aa[ksub,a,i1,a1,i]
+#	Tkaiai[ksub,a,i,a1,i1] += T1kaiai[ksub,a,i,a1,i1]
+#	normT  = Tkaiai[ksub,a,i,a1,i1]*T2kaiai[ksub,a,i,a1,i1]
+#	normS += normT
 #    endpardo a,i,a1,i1
-#    S2aaoverlap[ksub,ksub1] = Tkk[ksub,ksub1]
-#
-#    Tkk[ksub,ksub1] = 0.0
-#    pardo a,i,b,j
-#        request RB2_ab[ksub,a,i,b,j]
-#        request RB2_ab[ksub1,a,i,b,j]
-#       T1kk[ksub,ksub1] = RB2_ab[ksub,a,i,b,j]*RB2_ab[ksub1,a,i,b,j]
-#       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
-#    endpardo a,i,b,j
-#    S2aboverlap[ksub,ksub1] = Tkk[ksub,ksub1]
-#enddo ksub1
+#    server_barrier
+#    norm2 = 0.0
+#    collective norm2 += normS
+#    Rnorm[ksub] = norm2
 #enddo ksub
-#print S1overlap
-#print S2aaoverlap
-#print S2aboverlap
+#print Rnorm
+#print "-- P(a/a)"
+#do ksub
+#    Rnorm[ksub] = 0.0
+#    normS = 0.0
+#    pardo a,i,a1,i1
+#        request RB2_aa[ksub,a,i,a1,i1]
+#        request RB2_aa[ksub,a1,i,a,i1]
+#	T2kaiai[ksub,a,i,a1,i1] = 1.0
+#	Tkaiai[ksub,a,i,a1,i1]  = RB2_aa[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = RB2_aa[ksub,a1,i,a,i1]
+#	Tkaiai[ksub,a,i,a1,i1] += T1kaiai[ksub,a,i,a1,i1]
+#	normT  = Tkaiai[ksub,a,i,a1,i1]*T2kaiai[ksub,a,i,a1,i1]
+#	normS += normT
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    norm2 = 0.0
+#    collective norm2 += normS
+#    Rnorm[ksub] = norm2
+#enddo ksub
+#print Rnorm
+#print "-- P(ai/ai)"
+#do ksub
+#    Rnorm[ksub] = 0.0
+#    normS = 0.0
+#    pardo a,i,a1,i1
+#        request RB2_aa[ksub,a,i,a1,i1]
+#        request RB2_aa[ksub,a1,i1,a,i]
+#	T2kaiai[ksub,a,i,a1,i1] = 1.0
+#	Tkaiai[ksub,a,i,a1,i1]  = RB2_aa[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = RB2_aa[ksub,a1,i1,a,i]
+#	Tkaiai[ksub,a,i,a1,i1] += T1kaiai[ksub,a,i,a1,i1]
+#	normT  = Tkaiai[ksub,a,i,a1,i1]*T2kaiai[ksub,a,i,a1,i1]
+#	normS += normT
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    norm2 = 0.0
+#    collective norm2 += normS
+#    Rnorm[ksub] = norm2
+#enddo ksub
+#print Rnorm
+
+### JNB debug - overlap print
+print " "
+print "** overlap print"
+print S1overlap
+print S2aboverlap
+print S2aaoverlap
 
 server_barrier
 #
 ENDPROC update_vecs
+
+#------------------------------------------------------------------------
+
+PROC form_guess
+
+print "Using CIS B space vectors for initial guess"
+
+server_barrier
+
+pardo a,i
+    do kstate
+        T1kai[kstate,a,i] = 0.0
+        prepare R0k1_a[kstate,a,i] = T1kai[kstate,a,i]
+        prepare cRk1_a[kstate,a,i] = T1kai[kstate,a,i]
+    enddo kstate
+endpardo a,i
+
+print "Assuming 0.0 for initial R2 vectors"
+pardo a,i,a1,i1
+    do ksub
+	Tkaiai[ksub,a,i,a1,i1] = 0.0
+	prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    enddo ksub
+    do kstate
+	Tkaiai[kstate,a,i,a1,i1] = 0.0
+	prepare R0k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+	prepare R1k2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+	prepare cRk2_aa[kstate,a,i,a1,i1] = Tkaiai[kstate,a,i,a1,i1]
+    enddo kstate
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    do ksub
+	Tkaibj[ksub,a,i,b,j] = 0.0
+	prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+    enddo ksub
+    do kstate
+	Tkaibj[kstate,a,i,b,j] = 0.0
+	prepare R0k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+	prepare R1k2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+	prepare cRk2_ab[kstate,a,i,b,j] = Tkaibj[kstate,a,i,b,j]
+    enddo kstate
+endpardo a,i,b,j
+
+### JNB debug
+### alternative guesses
+### HBAR S/D guess
+#server_barrier
+#do ksub
+#    pardo a,i,a2,i2
+#	Tkaiai[ksub,a,i,a2,i2] = 0.0
+#	do i1
+#	    request HBAR_IAJK_aaaa[i1,i,a2,i2]
+#	    request RB1_a[ksub,a,i1]
+#	    T1kaiai[ksub,a,i,a2,i2] = RB1_a[ksub,a,i1]*HBAR_IAJK_aaaa[i1,i,a2,i2]
+#	    T1kaiai[ksub,a,i,a2,i2] *= -1.0
+#	    Tkaiai[ksub,a,i,a2,i2] += T1kaiai[ksub,a,i,a2,i2]
+#	enddo i1
+#
+#        do a1
+#	    request HBAR_ABCI_aaaa[a,a1,a2,i2]
+#	    request RB1_a[ksub,a1,i]
+#	    T1kaiai[ksub,a,i,a2,i2] = RB1_a[ksub,a1,i]*HBAR_ABCI_aaaa[a,a1,a2,i2]
+#	    Tkaiai[ksub,a,i,a2,i2] += T1kaiai[ksub,a,i,a2,i2]
+#        enddo a1
+#
+#	Tk[ksub] = 1.0
+#	Taiai[a,i,a2,i2] = Tk[ksub]*Tkaiai[ksub,a,i,a2,i2]
+#
+#	execute energy_denominator_rhf Taiai[a,i,a2,i2] fock_a
+#
+#	T2kaiai[ksub,a,i,a2,i2] = Tk[ksub]*Taiai[a,i,a2,i2]
+#
+#	prepare RB2_aa[ksub,a,i,a2,i2] += T2kaiai[ksub,a,i,a2,i2]
+#    endpardo a,i,a2,i2
+#    pardo a,i,b,j
+#	Tkaibj[ksub,a,i,b,j] = 0.0
+#	do i1
+#	    request HBAR_IAJK_aabb[i1,i,b,j]
+#	    request RB1_a[ksub,a,i1]
+#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a,i1]*HBAR_IAJK_aabb[i1,i,b,j]
+#	    T1kaibj[ksub,a,i,b,j] *= -1.0
+#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
+#	enddo i1
+#
+#        do a1
+#	    request HBAR_ABCI_aabb[a,a1,b,j]
+#	    request RB1_a[ksub,a1,i]
+#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a1,i]*HBAR_ABCI_aabb[a,a1,b,j]
+#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
+#        enddo a1
+#
+#	Tk[ksub] = 1.0
+#	Taibj[a,i,b,j] = Tk[ksub]*Tkaibj[ksub,a,i,b,j]
+#
+#	execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
+#
+#	T2kaibj[ksub,a,i,b,j] = Tk[ksub]*Taibj[a,i,b,j]
+#
+#	prepare RB2_ab[ksub,a,i,b,j] += T2kaibj[ksub,a,i,b,j]
+#    endpardo a,i,b,j
+#    server_barrier
+#    if ksub <= roots
+#	do kstate
+#        if kstate == ksub
+#	kstart = kstate
+#	pardo a,i,b,j
+#            allocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+#	    request RB2_ab[ksub,a,i,b,j]
+#	    CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] =  RB2_ab[ksub,a,i,b,j]
+#	    Tkaibj[kstate,a,i,b,j] = CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j]
+#	    prepare R1k2_ab[kstate,a,i,b,j] += Tkaibj[kstate,a,i,b,j]
+#            deallocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+#	endpardo a,i,b,j
+#	pardo a,i,a1,i1
+#            allocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+#	    request RB2_aa[ksub,a,i,a1,i1]
+#	    CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] =  RB2_aa[ksub,a,i,a,i1]
+#	    Tkaiai[kstate,a,i,a1,i1] = CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1]
+#	    prepare R1k2_aa[kstate,a,i,a1,i1] += Tkaiai[kstate,a,i,a1,i1]
+#            deallocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+#	endpardo a,i,a1,i1
+#        endif
+#        enddo kstate
+#    endif
+#enddo ksub
+###### CISPT2 guess
+#do ksub
+#    pardo a,i,b,j
+#	Tkaibj[ksub,a,i,b,j] = 0.0
+#	do i1
+#	    request Vpiqj[i1,i,b,j]
+#	    request RB1_a[ksub,a,i1]
+#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a,i1]*Vpiqj[i1,i,b,j]
+#	    T1kaibj[ksub,a,i,b,j] *= -1.0
+#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
+#	enddo i1
+#
+#        do a1
+#	    request Vaabj[a,a1,b,j]
+#	    request RB1_a[ksub,a1,i]
+#	    T1kaibj[ksub,a,i,b,j] = RB1_a[ksub,a1,i]*Vaabj[a,a1,b,j]
+#	    Tkaibj[ksub,a,i,b,j] += T1kaibj[ksub,a,i,b,j]
+#        enddo a1
+#
+#	Tk[ksub] = 1.0
+#	Taibj[a,i,b,j] = Tk[ksub]*Tkaibj[ksub,a,i,b,j]
+#
+#	execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
+#
+#	T2kaibj[ksub,a,i,b,j] = Tk[ksub]*Taibj[a,i,b,j]
+#
+#	prepare RB2_ab[ksub,a,i,b,j] += T2kaibj[ksub,a,i,b,j]
+#    endpardo a,i,b,j
+#    server_barrier
+#    pardo a,i,a1,i1
+#        request RB2_ab[ksub,a,i,a1,i1]
+#        request RB2_ab[ksub,a,i1,a1,i]
+#	Tkaiai[ksub,a,i,a1,i1]  = RB2_ab[ksub,a,i,a1,i1]
+#	T1kaiai[ksub,a,i,a1,i1] = RB2_ab[ksub,a,i1,a1,i]
+#	Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
+#	prepare RB2_aa[ksub,a,i,a1,i1] += Tkaiai[ksub,a,i,a1,i1]
+#    endpardo a,i,a1,i1
+#    server_barrier
+##    if ksub > roots
+#    #if ksub <= 2*roots
+#    if ksub <= roots
+#	#kstart = ksub - roots
+#	kstart = ksub
+#	do kstate
+#        if kstate == kstart
+#	pardo a,i,b,j
+#            allocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+#	    request RB2_ab[ksub,a,i,b,j]
+#	    CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j] =  RB2_ab[ksub,a,i,b,j]
+#	    Tkaibj[kstate,a,i,b,j] = CLRB2_ab[kstart:kstart,a:a,i:i,b:b,j:j]
+#	    prepare R1k2_ab[kstate,a,i,b,j] += Tkaibj[kstate,a,i,b,j]
+#            deallocate contiguous CLRB2_ab[1:subspc,a:a,i:i,b:b,j:j]
+#	endpardo a,i,b,j
+#	pardo a,i,a1,i1
+#            allocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+#	    request RB2_aa[ksub,a,i,a1,i1]
+#	    CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1] =  RB2_aa[ksub,a,i,a,i1]
+#	    Tkaiai[kstate,a,i,a1,i1] = CLRB2_aa[kstart:kstart,a:a,i:i,a1:a1,i1:i1]
+#	    prepare R1k2_aa[kstate,a,i,a1,i1] += Tkaiai[kstate,a,i,a1,i1]
+#            deallocate contiguous CLRB2_aa[1:subspc,a:a,i:i,a1:a1,i1:i1]
+#	endpardo a,i,a1,i1
+#        endif
+#        enddo kstate
+#    endif
+##    endif
+#    server_barrier
+#enddo ksub
+
+
+call normalize_RB1
+call normalize_RB2aa
+call normalize_RB2ab
+
+call GS_RB1
+call GS_RB2aa
+call GS_RB2ab
+
+call normalize_RB1
+call normalize_RB2aa
+call normalize_RB2ab
+
+do ksub
+do ksub1
+    Tkk[ksub,ksub1] = 0.0
+    pardo a,i
+        request RB1_a[ksub,a,i]
+        request RB1_a[ksub1,a,i]
+       T1kk[ksub,ksub1] = RB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
+       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+    endpardo a,i
+    S1overlap[ksub,ksub1] = Tkk[ksub,ksub1]
+
+    Tkk[ksub,ksub1] = 0.0
+    pardo a,i,a1,i1
+        request RB2_aa[ksub,a,i,a1,i1]
+        request RB2_aa[ksub1,a,i,a1,i1]
+       T1kk[ksub,ksub1] = RB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub1,a,i,a1,i1]
+       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+    endpardo a,i,a1,i1
+    S2aaoverlap[ksub,ksub1] = Tkk[ksub,ksub1]
+
+    Tkk[ksub,ksub1] = 0.0
+    pardo a,i,b,j
+        request RB2_ab[ksub,a,i,b,j]
+        request RB2_ab[ksub1,a,i,b,j]
+       T1kk[ksub,ksub1] = RB2_ab[ksub,a,i,b,j]*RB2_ab[ksub1,a,i,b,j]
+       Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
+    endpardo a,i,b,j
+    S2aboverlap[ksub,ksub1] = Tkk[ksub,ksub1]
+enddo ksub1
+enddo ksub
+print S1overlap
+print S2aaoverlap
+print S2aboverlap
+
+server_barrier
+
+ENDPROC form_guess
 # -----------------
 #  MAIN
 # -----------------
@@ -5953,20 +6386,31 @@ print " "
 server_barrier
 CALL READ_AMP
 call form_H
+
+# VCONV1A  JNB verified A3
+# VCONV2AB JNB verified A3
+# VCONV2AA JNB verified A3
 call form_diag
+
+### JNB debug
+#pardo a,i
+#get VCONV1A[a,i]
+#print VCONV1A[a,i]
+#endpardo a,i
+#pardo a,i,a1,i1
+#request VCONV2AB[a,i,a1,i1]
+#print VCONV2AB[a,i,a1,i1]
+#endpardo a,i,a1,i1
+#pardo a,i,a1,i1
+#request VCONV2AA[a,i,a1,i1]
+#print VCONV2AA[a,i,a1,i1]
+#endpardo a,i,a1,i1
+
 call form_guess
 
-#call normalize_RB1
-#call normalize_RB2aa
-#call normalize_RB2ab
-#
-#call GS_RB1
-#call GS_RB2aa
-#call GS_RB2ab
-#
-#call normalize_RB1
-#call normalize_RB2aa
-#call normalize_RB2ab
+do kstate
+    SEkold[kstate] = 0.0
+enddo kstate
 
 do kiter
 
@@ -5976,6 +6420,26 @@ do kiter
     call form_G
     call diag_G
     call update_vecs
+
+    etemp = 0.0
+    etemp2 = 0.0
+    do kstate
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+        etemp += etemp2
+        etemp3 += 1.0
+    enddo kstate
+    rmsconv = (etemp/etemp3)**0.5
+    do kstate
+        SEkold[kstate] = SEk0[kstate]
+    enddo kstate
+    print rmsconv
+    server_barrier
+    if rmsconv < eom_tol
+        exit
+    endif
 
 enddo kiter
 
