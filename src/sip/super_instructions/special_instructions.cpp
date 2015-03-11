@@ -240,6 +240,7 @@ void anti_symm_v(
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void read_block_from_text_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 //void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
@@ -409,6 +410,7 @@ void SpecialInstructionManager::init_procmap(){
 //	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
+	procmap_["read_block_from_text_file"]=(fp0)&read_block_from_text_file;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
 	procmap_["list_block_map"]=(fp0)&list_block_map;
 	procmap_["compute_aabb_batch"]=(fp0)&compute_aabb_batch;
