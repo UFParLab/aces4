@@ -1,0 +1,18 @@
+sial read_block_test
+
+	special read_block_from_text_file w
+	
+	aoindex i = 1:1
+	aoindex j = 1:1
+	static a[i,j]
+	
+	do i
+		do j
+			execute read_block_from_text_file a[i,j]
+			print a[i,j]
+		enddo j
+	enddo i
+	
+	
+
+endsial read_block_test
