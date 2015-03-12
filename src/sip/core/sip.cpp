@@ -50,11 +50,11 @@ void sip_abort() {
 #endif
 
 #ifdef HAVE_MPI
-	throw std::logic_error("logic error");
-	//MPI_Abort(MPI_COMM_WORLD, -1);
-#else
 	//throw std::logic_error("logic error");
-	exit(EXIT_FAILURE);
+	MPI_Abort(MPI_COMM_WORLD, -1);
+#else
+	throw std::logic_error("logic error");
+	//exit(EXIT_FAILURE);
 #endif // __GNUC__
 	fflush(stdout);
 	fflush(stderr);
