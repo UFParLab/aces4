@@ -369,6 +369,9 @@ private:
 	void handle_slice_op(int pc);
 	void handle_insert_op(int pc);
 
+
+	bool interpret_where(int num_where_clauses);
+
 	void loop_start(LoopManager * loop);
 	void loop_end();
 
