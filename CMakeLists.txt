@@ -539,6 +539,7 @@ set(SIAL_FILES
     src/sialx/test/return_sval_test.sialx;
     src/sialx/test/index_scalar_cast.sialx;
     src/sialx/test/contig_local3.sialx;
+    src/sialx/test/cached_block_map_test.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
