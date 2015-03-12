@@ -40,6 +40,11 @@ void SialOpsParallel::sip_barrier(int pc) {
 	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_block_wait();
 	ack_handler_.wait_all();
 	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).pause_block_wait();
+/* At this point, all puts should have been acked, thus the blocks are no longer pending.  After clean, the pending_list_ should be empty
+ * Commented out for performance reasons.
+ */
+//	block_manager_.block_map_.clean_pending();
+//	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
 
 	//do an MPI barrier among all the workers
 	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
@@ -137,11 +142,11 @@ void SialOpsParallel::get(BlockId& block_id) {
 
 	//post an asynchronous receive and store the request in the
 	//block's state
-	MPI_Request request;
+//	MPI_Request request;
 	SIPMPIUtils::check_err(
 			MPI_Irecv(block->get_data(), block->size(), MPI_DOUBLE, server_rank,
-					get_tag, MPI_COMM_WORLD, &request));
-	block->state().mpi_request_ = request;
+					get_tag, MPI_COMM_WORLD, block->mpi_request()));
+//	block->state().set_request(request);
 }
 
 //NOTE:  I can't remember why the source block was copied.
@@ -234,10 +239,16 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 			MPI_Send(to_send, to_send_size, MPI_INT,
 					server_rank, put_tag, MPI_COMM_WORLD));
 
-	//immediately follow with the data
-	SIPMPIUtils::check_err(
-			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
-					server_rank, put_data_tag, MPI_COMM_WORLD));
+//	//immediately follow with the data
+//	SIPMPIUtils::check_err(
+//			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
+//					server_rank, put_data_tag, MPI_COMM_WORLD));
+
+//	MPI_Request request;
+		SIPMPIUtils::check_err(
+				MPI_Isend(source_block->get_data(), source_block->size(), MPI_DOUBLE,
+						server_rank, put_data_tag, MPI_COMM_WORLD, source_block->mpi_request()));
+//	source_block->state().set_request(request);
 
 	//the data message should be acked
 	ack_handler_.expect_ack_from(server_rank, put_data_tag);
@@ -329,11 +340,16 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 	SIPMPIUtils::check_err(
 			MPI_Send(to_send, to_send_size, MPI_INT,
 					server_rank, put_accumulate_tag, MPI_COMM_WORLD));
-	//immediately follow with the data
-	SIPMPIUtils::check_err(
-			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
-					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
+//	//immediately follow with the data
+//	SIPMPIUtils::check_err(
+//			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
+//					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
 
+//	MPI_Request request;
+		SIPMPIUtils::check_err(
+				MPI_Isend(source_block->get_data(), source_block->size(), MPI_DOUBLE,
+						server_rank, put_accumulate_data_tag, MPI_COMM_WORLD, source_block->mpi_request()));
+//		source_block->state().set_request(request);
 	//ack
 	ack_handler_.expect_ack_from(server_rank, put_accumulate_data_tag);
 
@@ -588,7 +604,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 		CHECK(!is_scope_extent, "sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
-	return block_manager_.get_block_for_writing(id, is_scope_extent);
+	return wait_and_check(block_manager_.get_block_for_writing(id, is_scope_extent),current_pc()); 
 }
 
 Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
@@ -596,16 +612,21 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 	CHECK_WITH_LINE(!(sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id)),
 			"attempting to update distributed or served block", current_line());
 
-	return block_manager_.get_block_for_updating(id);
+	return wait_and_check(block_manager_.get_block_for_updating(id), current_pc()); 
 }
 
+
+//The MPI_State does not store whether or not the request object was created as a result of
+// an Isend (put) or IReceive (get).  Checking the size only make sense for the latter.
+//For the time being, we will just call the version of wait that only checks the size.
+//If asynch puts turn out to be useful, we can revisit this.
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
-	if (sialx_timers_) sialx_timers_->timer(pc).start_block_wait();
-	if (b->state().pending()) {
-		    b->state().wait(b->size());
-	}
-	if (sialx_timers_) sialx_timers_->timer(pc).pause_block_wait();
-	return b;
+
+    if (sialx_timers_) sialx_timers_->timer(pc).start_block_wait();
+    //		    b->wait(b->size());
+    b->wait();
+    if (sialx_timers_) sialx_timers_->timer(pc).pause_block_wait();
+    return b;
 }
 
 #endif //HAVE_MPI

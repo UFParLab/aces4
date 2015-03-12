@@ -127,7 +127,7 @@ private:
 	 * @param line the current line number in sial code. Used to reference timer for block wait time.
 	 * @return  the input parameter--for convenience
 	 */
-	Block::BlockPtr wait_and_check(Block::BlockPtr b, int line);
+	Block::BlockPtr wait_and_check(Block::BlockPtr b, int pc);
 
 	/**
 	 * returns true if the mode associated with an array is compatible with

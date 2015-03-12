@@ -20,7 +20,6 @@
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
-#include "server_persistent_array_manager.h"
 
 #include "block.h"
 

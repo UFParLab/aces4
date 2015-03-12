@@ -55,6 +55,7 @@ ServerBlock::ServerBlock(int size, dataPtr data):
 ServerBlock::~ServerBlock(){
 	const std::size_t bytes_in_block = size_ * sizeof(double);
 	if (data_ != NULL) {
+        state_.wait();
 		if (!(allocated_bytes_ >= bytes_in_block)){
 			std::stringstream ss;
 			ss << "Allocated bytes [ " << allocated_bytes_ <<" ] less than size of block being destroyed "
@@ -85,6 +86,7 @@ ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 bool ServerBlock::free_in_memory_data() {
 	bool deleted_block = false;
 	if (data_ != NULL) {
+        state_.wait();
 		delete [] data_; data_ = NULL;
 		disk_status_[ServerBlock::IN_MEMORY] = false;
 		disk_status_[ServerBlock::DIRTY_IN_MEMORY] = false;

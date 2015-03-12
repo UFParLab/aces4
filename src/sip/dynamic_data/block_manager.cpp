@@ -267,7 +267,7 @@ Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		}
 		return block_ptr;
 	} catch (const std::out_of_range& oor){
-		std::cerr << " In BlockManager::create_block" << std::endl;
+		std::cerr << " Failed in BlockManager::create_block :"<< oor.what() << std::endl;
 		std::cerr << *this << std::endl;
 		fail(" Could not create block, out of memory", current_line());
 		return NULL;

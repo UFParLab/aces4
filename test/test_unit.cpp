@@ -18,7 +18,6 @@
 
 #include "array_constants.h"
 #include "id_block_map.h"
-#include "server_block.h"
 #include "block_id.h"
 #include "block.h"
 #include "lru_array_policy.h"
@@ -34,6 +33,7 @@
 
 #ifdef HAVE_MPI
 #include "mpi.h"
+#include "server_block.h"
 #endif
 
 #ifdef HAVE_TAU

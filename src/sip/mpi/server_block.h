@@ -12,6 +12,7 @@
 #include <new>
 #include "id_block_map.h"
 #include "sip_mpi_constants.h"
+#include "mpi_state.h"
 
 namespace sip {
 
@@ -138,6 +139,8 @@ public:
     bool free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
+    MPIState& state() { return state_; }
+
 	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
@@ -145,6 +148,7 @@ public:
 private:
     const int size_;/**< Number of elements in block */
 	dataPtr data_;	/**< Pointer to block of data */
+    MPIState state_;/**< For blocks busy in async MPI communication */
 
 	enum ServerBlockStatus {
 		IN_MEMORY		= 0,	// Block is on host
