@@ -6,7 +6,7 @@ SIAL R_EE_EOM_CCSD_RHF
 # Declare indeces
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-index kiter    = 1: 10 #cc_iter
+index kiter    = 1: 20 #cc_iter
 index kstate   = 1: eom_roots
 index kstate1  = 1: eom_roots
 index jstate   = 1: eom_roots
@@ -503,29 +503,47 @@ scalar etot12
 scalar scale
 scalar normT
 scalar normS
+scalar normS1
+scalar normS2aa
+scalar normS2ab
 scalar norm1
+scalar norm1aa
+scalar norm1ab
 scalar norm2
+scalar norm2aa
+scalar norm2ab
 scalar norml
 scalar normr
 static Lnorm[ksub]
 static Rnorm[ksub]
-scalar overlap1
-scalar overlap2
+scalar Loverlap1
+scalar Roverlap1
+scalar Loverlap2aa
+scalar Loverlap2ab
+scalar Roverlap2aa
+scalar Roverlap2ab
 scalar overlapT
-scalar overlapS
+scalar LoverlapS
+scalar LoverlapS1
+scalar LoverlapS2aa
+scalar LoverlapS2ab
+scalar RoverlapS
+scalar RoverlapS1
+scalar RoverlapS2aa
+scalar RoverlapS2ab
 scalar overlapJK
 static SBnorm[ksub]
 static S1overlap[ksub,ksub1]
 static S2aaoverlap[ksub,ksub1]
 static S2aboverlap[ksub,ksub1]
-distributed DLNia[i,a]
 distributed DRNai[a,i]
-distributed DLNiaia[i,a,i1,a1]
-distributed D2LNiaia[i,a,i1,a1]
+distributed DLNai[a,i]
 distributed DRNaiai[a,i,a1,i1]
 distributed D2RNaiai[a,i,a1,i1]
-distributed DLNiajb[i,a,j,b]
+distributed DLNaiai[a,i,a1,i1]
 distributed DRNaibj[a,i,b,j]
+distributed D2RNaibj[a,i,b,j]
+distributed DLNaibj[a,i,b,j]
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -5076,19 +5094,25 @@ if myrank == root
     enddo ksub1
     enddo ksub
 
-    print GSmat
+#    print GSmat
 
     execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
 
-    print SAlphaL
-    print SAlphaR
+#    print SAlphaL
+#    print SAlphaR
 
     do kstate
 	SEk0[kstate] = SEk[kstate]
     enddo kstate
-#print "-- EOM-CCSD excited state energies --"
-    print SEk0
-    print SEk
+print "-- EOM-CCSD excited state energies --"
+#    print SEk0
+#    print SEk
+do kstate
+    allocate contiguous EOM_EE_Energy[kstate:kstate]
+    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
+    print EOM_EE_Energy[kstate:kstate]
+    deallocate contiguous EOM_EE_Energy[kstate:kstate]
+enddo kstate
 
 endif
 broadcast_from root SAlphaL
@@ -5580,27 +5604,27 @@ do ksub
 do ksub1
     Tkk[ksub,ksub1] = 0.0
     pardo a,i
-        request RB1_a[ksub,a,i]
+        request LB1_a[ksub,a,i]
         request RB1_a[ksub1,a,i]
-       T1kk[ksub,ksub1] = RB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
+       T1kk[ksub,ksub1] = LB1_a[ksub,a,i]*RB1_a[ksub1,a,i]
        Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
     endpardo a,i
     S1overlap[ksub,ksub1] = Tkk[ksub,ksub1]
 
     Tkk[ksub,ksub1] = 0.0
     pardo a,i,a1,i1
-        request RB2_aa[ksub,a,i,a1,i1]
+        request LB2_aa[ksub,a,i,a1,i1]
         request RB2_aa[ksub1,a,i,a1,i1]
-       T1kk[ksub,ksub1] = RB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub1,a,i,a1,i1]
+       T1kk[ksub,ksub1] = LB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub1,a,i,a1,i1]
        Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
     endpardo a,i,a1,i1
     S2aaoverlap[ksub,ksub1] = Tkk[ksub,ksub1]
 
     Tkk[ksub,ksub1] = 0.0
     pardo a,i,b,j
-        request RB2_ab[ksub,a,i,b,j]
+        request LB2_ab[ksub,a,i,b,j]
         request RB2_ab[ksub1,a,i,b,j]
-       T1kk[ksub,ksub1] = RB2_ab[ksub,a,i,b,j]*RB2_ab[ksub1,a,i,b,j]
+       T1kk[ksub,ksub1] = LB2_ab[ksub,a,i,b,j]*RB2_ab[ksub1,a,i,b,j]
        Tkk[ksub,ksub1] += T1kk[ksub,ksub1]
     endpardo a,i,b,j
     S2aboverlap[ksub,ksub1] = Tkk[ksub,ksub1]
@@ -5611,6 +5635,344 @@ ENDPROC allnorm
 
 PROC all_GS
 #
+#---------------------------------------------------------------
+# we do Left | Right biorthogonalization.
+# when coded this paper was open
+#ROCKY MOUNTAIN JOURNAL OF MATHEMATICS Volume 44, Number 4, 2014
+#INTRODUCTION TO A GRAM-SCHMIDT-TYPE BIORTHOGONALIZATION METHOD
+#L. KOHAUPT
+# modification to the scheme by having L and R scaled by 1/norm**0.5 
+#  this is done for numerical stability concerns due to imballanced 
+#  weighting of L and R within the above algorithm
+#---------------------------------------------------------------
+#
+do ksub
+where ksub == 1
+#######################
+# get k=k'=1 overlap
+    normS   = 0.0
+    Tk[ksub] = 1.0
+    pardo a,i
+	request RB1_a[ksub,a,i]
+	request LB1_a[ksub,a,i]
+	normT  = LB1_a[ksub,a,i]*RB1_a[ksub,a,i]
+	normT *= 2.0
+	normS += normT
+#
+	Tai[a,i] = Tk[ksub]*LB1_a[ksub,a,i]
+	put DLNai[a,i] = Tai[a,i]
+	Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
+	put DRNai[a,i] = Tai[a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+	request RB2_aa[ksub,a,i,a1,i1]
+	request LB2_aa[ksub,a,i,a1,i1]
+	normT  = LB2_aa[ksub,a,i,a1,i1]*RB2_aa[ksub,a,i,a1,i1]
+	normT *= 0.5
+	normS += normT
+#
+	Taiai[a,i,a1,i1] = Tk[ksub]*LB2_aa[ksub,a,i,a1,i1]
+	put DLNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+	Taiai[a,i,a1,i1] = Tk[ksub]*RB2_aa[ksub,a,i,a1,i1]
+	put DRNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+	request RB2_ab[ksub,a,i,b,j]
+	request LB2_ab[ksub,a,i,b,j]
+	normT  = LB2_ab[ksub,a,i,b,j]*RB2_ab[ksub,a,i,b,j]
+	normS += normT
+#
+	Taibj[a,i,b,j] = Tk[ksub]*LB2_ab[ksub,a,i,b,j]
+	put DLNaibj[a,i,b,j] = Taibj[a,i,b,j]
+	Taibj[a,i,b,j] = Tk[ksub]*RB2_ab[ksub,a,i,b,j]
+	put DRNaibj[a,i,b,j] = Taibj[a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+    norm1   = 0.0
+    collective norm1   += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    etemp = 1.0
+    if norm1 < 0.0
+	etemp = -1.0
+    endif
+#######################
+    norm2 = (etemp*norm1)**(-0.5)
+    pardo a,i
+        Tk[ksub] = norm2
+        get DRNai[a,i]
+        Tkai[ksub,a,i] = Tk[ksub]*DRNai[a,i]
+        prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+        Tk[ksub] = norm2
+        get DRNaiai[a,i,a1,i1]
+        Tkaiai[ksub,a,i,a1,i1] = Tk[ksub]*DRNaiai[a,i,a1,i1]
+        prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        Tk[ksub] = norm2
+        get DRNaibj[a,i,b,j]
+        Tkaibj[ksub,a,i,b,j] = Tk[ksub]*DRNaibj[a,i,b,j]
+        prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+    endpardo a,i,b,j
+#
+    norm2 *= etemp
+#
+    pardo a,i
+        Tk[ksub] = norm2
+        get DLNai[a,i]
+        Tkai[ksub,a,i] = Tk[ksub]*DLNai[a,i]
+        prepare LB1_a[ksub,a,i] = Tkai[ksub,a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+        Tk[ksub] = norm2
+        get DLNaiai[a,i,a1,i1]
+        Tkaiai[ksub,a,i,a1,i1] = Tk[ksub]*DLNaiai[a,i,a1,i1]
+        prepare LB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        Tk[ksub] = norm2
+        get DLNaibj[a,i,b,j]
+        Tkaibj[ksub,a,i,b,j] = Tk[ksub]*DLNaibj[a,i,b,j]
+        prepare LB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+    endpardo a,i,b,j
+enddo ksub
+    server_barrier
+
+# loop over "k+1"
+do qsub
+
+#######################
+# make copy of Ak+1
+    Tk[qsub] = 1.0
+    pardo a,i
+	request LB1_a[qsub,a,i]
+	Tai[a,i] = Tk[qsub]*LB1_a[qsub,a,i]
+	put DLNai[a,i] = Tai[a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+	request LB2_aa[qsub,a,i,a1,i1]
+	Taiai[a,i,a1,i1] = Tk[qsub]*LB2_aa[qsub,a,i,a1,i1]
+	put DLNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+	request LB2_ab[qsub,a,i,b,j]
+	Taibj[a,i,b,j] = Tk[qsub]*LB2_ab[qsub,a,i,b,j]
+	put DLNaibj[a,i,b,j] = Taibj[a,i,b,j]
+    endpardo a,i,b,j
+# make copy of Fk+1
+    pardo a,i
+	request RB1_a[qsub,a,i]
+	Tai[a,i] = Tk[qsub]*RB1_a[qsub,a,i]
+	put DRNai[a,i] = Tai[a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+	request RB2_aa[qsub,a,i,a1,i1]
+	Taiai[a,i,a1,i1] = Tk[qsub]*RB2_aa[qsub,a,i,a1,i1]
+	put DRNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+	request RB2_ab[qsub,a,i,b,j]
+	Taibj[a,i,b,j] = Tk[qsub]*RB2_ab[qsub,a,i,b,j]
+	put DRNaibj[a,i,b,j] = Taibj[a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+
+    do ksub
+    where ksub < qsub
+#######################
+# form (Ak+1,Gk) = Loverlap1
+	Tk[ksub] = 1.0
+        LoverlapS   = 0.0
+	pardo a,i
+	    get DLNai[a,i]
+	    request RB1_a[ksub,a,i]
+	    Tai[a,i]    = Tk[ksub]*RB1_a[ksub,a,i]
+	    overlapT    = DLNai[a,i]*Tai[a,i]
+	    overlapT   *= 2.0
+	    LoverlapS  += overlapT
+	endpardo a,i
+	pardo a,i,a1,i1
+	    get DLNaiai[a,i,a1,i1]
+	    request RB2_aa[ksub,a,i,a1,i1]
+	    Taiai[a,i,a1,i1] = Tk[ksub]*RB2_aa[ksub,a,i,a1,i1]
+	    overlapT         = DLNaiai[a,i,a1,i1]*Taiai[a,i,a1,i1]
+	    overlapT        *= 0.5
+	    LoverlapS       += overlapT
+	endpardo a,i,a1,i1
+	pardo a,i,b,j
+	    get DLNaibj[a,i,b,j]
+	    request RB2_ab[ksub,a,i,b,j]
+	    Taibj[a,i,b,j] = Tk[ksub]*RB2_ab[ksub,a,i,b,j]
+	    overlapT       = DLNaibj[a,i,b,j]*Taibj[a,i,b,j]
+	    LoverlapS     += overlapT
+	endpardo a,i,b,j
+#######################
+# form (Ck,Fk+1)
+	Tk[ksub] = 1.0
+        RoverlapS   = 0.0
+	pardo a,i
+	    get DRNai[a,i]
+	    request LB1_a[ksub,a,i]
+	    Tai[a,i]    = Tk[ksub]*LB1_a[ksub,a,i]
+	    overlapT    = DRNai[a,i]*Tai[a,i]
+	    overlapT   *= 2.0
+	    RoverlapS  += overlapT
+	endpardo a,i
+	pardo a,i,a1,i1
+	    get DRNaiai[a,i,a1,i1]
+	    request LB2_aa[ksub,a,i,a1,i1]
+	    Taiai[a,i,a1,i1] = Tk[ksub]*LB2_aa[ksub,a,i,a1,i1]
+	    overlapT         = DRNaiai[a,i,a1,i1]*Taiai[a,i,a1,i1]
+	    overlapT        *= 0.5
+	    RoverlapS       += overlapT
+	endpardo a,i,a1,i1
+	pardo a,i,b,j
+	    get DRNaibj[a,i,b,j]
+	    request LB2_ab[ksub,a,i,b,j]
+	    Taibj[a,i,b,j] = Tk[ksub]*LB2_ab[ksub,a,i,b,j]
+	    overlapT       = DRNaibj[a,i,b,j]*Taibj[a,i,b,j]
+	    RoverlapS     += overlapT
+	endpardo a,i,b,j
+	server_barrier
+	Loverlap1   = 0.0
+	Roverlap1   = 0.0
+	collective Loverlap1   += LoverlapS
+	collective Roverlap1   += RoverlapS
+#######################
+# do in place sum Bk+1 -= Loverlap1 * Ck
+	Tkk[qsub,ksub] = -1.0*Loverlap1
+	pardo a,i
+	    request LB1_a[ksub,a,i]
+	    Tkai[qsub,a,i] = Tkk[qsub,ksub]*LB1_a[ksub,a,i]
+	    prepare LB1_a[qsub,a,i] += Tkai[qsub,a,i]
+	endpardo a,i
+	pardo a,i,a1,i1
+	    request LB2_aa[ksub,a,i,a1,i1]
+	    Tkaiai[qsub,a,i,a1,i1] = Tkk[qsub,ksub]*LB2_aa[ksub,a,i,a1,i1]
+	    prepare LB2_aa[qsub,a,i,a1,i1] += Tkaiai[qsub,a,i,a1,i1]
+	endpardo a,i,a1,i1
+	pardo a,i,b,j
+	    request LB2_ab[ksub,a,i,b,j]
+	    Tkaibj[qsub,a,i,b,j] = Tkk[qsub,ksub]*LB2_ab[ksub,a,i,b,j]
+	    prepare LB2_ab[qsub,a,i,b,j] += Tkaibj[qsub,a,i,b,j]
+	endpardo a,i,b,j
+#######################
+# do in place sum Gk+1 -= Roverlap1 * Gk
+	Tkk[qsub,ksub] = -1.0*Roverlap1
+	pardo a,i
+	    request RB1_a[ksub,a,i]
+	    Tkai[qsub,a,i] = Tkk[qsub,ksub]*RB1_a[ksub,a,i]
+	    prepare RB1_a[qsub,a,i] += Tkai[qsub,a,i]
+	endpardo a,i
+	pardo a,i,a1,i1
+	    request RB2_aa[ksub,a,i,a1,i1]
+	    Tkaiai[qsub,a,i,a1,i1] = Tkk[qsub,ksub]*RB2_aa[ksub,a,i,a1,i1]
+	    prepare RB2_aa[qsub,a,i,a1,i1] += Tkaiai[qsub,a,i,a1,i1]
+	endpardo a,i,a1,i1
+	pardo a,i,b,j
+	    request RB2_ab[ksub,a,i,b,j]
+	    Tkaibj[qsub,a,i,b,j] = Tkk[qsub,ksub]*RB2_ab[ksub,a,i,b,j]
+	    prepare RB2_ab[qsub,a,i,b,j] += Tkaibj[qsub,a,i,b,j]
+	endpardo a,i,b,j
+    enddo ksub
+    server_barrier
+
+#######################
+# scale Ck+1 = 1/(Bk+1,Fk+1)
+#######################
+    normS   = 0.0
+    Tk[qsub] = 1.0
+    pardo a,i
+	request RB1_a[qsub,a,i]
+	request LB1_a[qsub,a,i]
+	normT  = LB1_a[qsub,a,i]*RB1_a[qsub,a,i]
+	normT *= 2.0
+	normS += normT
+#
+	Tai[a,i] = Tk[qsub]*LB1_a[qsub,a,i]
+	put DLNai[a,i] = Tai[a,i]
+	Tai[a,i] = Tk[qsub]*RB1_a[qsub,a,i]
+	put DRNai[a,i] = Tai[a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+	request RB2_aa[qsub,a,i,a1,i1]
+	request LB2_aa[qsub,a,i,a1,i1]
+	normT  = LB2_aa[qsub,a,i,a1,i1]*RB2_aa[qsub,a,i,a1,i1]
+	normT *= 0.5
+	normS += normT
+#
+	Taiai[a,i,a1,i1] = Tk[qsub]*LB2_aa[qsub,a,i,a1,i1]
+	put DLNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+	Taiai[a,i,a1,i1] = Tk[qsub]*RB2_aa[qsub,a,i,a1,i1]
+	put DRNaiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+	request RB2_ab[qsub,a,i,b,j]
+	request LB2_ab[qsub,a,i,b,j]
+	normT  = LB2_ab[qsub,a,i,b,j]*RB2_ab[qsub,a,i,b,j]
+	normS += normT
+#
+	Taibj[a,i,b,j] = Tk[qsub]*LB2_ab[qsub,a,i,b,j]
+	put DLNaibj[a,i,b,j] = Taibj[a,i,b,j]
+	Taibj[a,i,b,j] = Tk[qsub]*RB2_ab[qsub,a,i,b,j]
+	put DRNaibj[a,i,b,j] = Taibj[a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+    norm1   = 0.0
+    collective norm1   += normS
+    if norm1 == 0.0
+	norm1 = 1.0
+    endif
+    etemp = 1.0
+    if norm1 < 0.0
+	etemp = -1.0
+    endif
+#######################
+    norm2 = (etemp*norm1)**(-0.5)
+    pardo a,i
+        Tk[qsub] = norm2
+        get DRNai[a,i]
+        Tkai[qsub,a,i] = Tk[qsub]*DRNai[a,i]
+        prepare RB1_a[qsub,a,i] = Tkai[qsub,a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+        Tk[qsub] = norm2
+        get DRNaiai[a,i,a1,i1]
+        Tkaiai[qsub,a,i,a1,i1] = Tk[qsub]*DRNaiai[a,i,a1,i1]
+        prepare RB2_aa[qsub,a,i,a1,i1] = Tkaiai[qsub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        Tk[qsub] = norm2
+        get DRNaibj[a,i,b,j]
+        Tkaibj[qsub,a,i,b,j] = Tk[qsub]*DRNaibj[a,i,b,j]
+        prepare RB2_ab[qsub,a,i,b,j] = Tkaibj[qsub,a,i,b,j]
+    endpardo a,i,b,j
+#
+    norm2 *= etemp
+#
+    pardo a,i
+        Tk[qsub] = norm2
+        get DLNai[a,i]
+        Tkai[qsub,a,i] = Tk[qsub]*DLNai[a,i]
+        prepare LB1_a[qsub,a,i] = Tkai[qsub,a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+        Tk[qsub] = norm2
+        get DLNaiai[a,i,a1,i1]
+        Tkaiai[qsub,a,i,a1,i1] = Tk[qsub]*DLNaiai[a,i,a1,i1]
+        prepare LB2_aa[qsub,a,i,a1,i1] = Tkaiai[qsub,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        Tk[qsub] = norm2
+        get DLNaibj[a,i,b,j]
+        Tkaibj[qsub,a,i,b,j] = Tk[qsub]*DLNaibj[a,i,b,j]
+        prepare LB2_ab[qsub,a,i,b,j] = Tkaibj[qsub,a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+enddo qsub
 #
 ENDPROC all_GS
 
@@ -5651,8 +6013,6 @@ call update_LB2aa
 
 call update_RB2ab
 call update_LB2ab
-server_barrier
-
 
 server_barrier
 #
@@ -5681,8 +6041,53 @@ iguess=0
 print "Assuming 0.0 for initial R2 vectors"
 call form_guess
 
-call form_G
-call diag_G
+do kstate
+    SEkold[kstate] = 0.0
+enddo kstate
+
+do kiter
+    print " "
+    print kiter
+
+    call form_G
+    call diag_G
+    call update_vecs
+    call all_GS
+    etemp = 0.0
+    etemp2 = 0.0
+    do kstate
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+        etemp += etemp2
+        etemp3 += 1.0
+    enddo kstate
+    rmsconv = (etemp/etemp3)**0.5
+    do kstate
+        SEkold[kstate] = SEk0[kstate]
+    enddo kstate
+    print rmsconv
+    if rmsconv < eom_tol
+        exit
+    endif
+    server_barrier
+#call allnorm
+#print S1overlap
+#print S2aaoverlap
+#print S2aboverlap
+
+enddo kiter
+
+print " "
+print "EOM-CCSD has converged"
+print "FINAL excitation energies"
+do kstate
+    allocate contiguous EOM_EE_Energy[kstate:kstate]
+    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
+    print EOM_EE_Energy[kstate:kstate]
+    deallocate contiguous EOM_EE_Energy[kstate:kstate]
+enddo kstate
 
 server_barrier
 #

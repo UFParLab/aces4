@@ -446,6 +446,7 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_d_rhf.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/reom_ccsd_rhf.siox\
+./src/sialx/qm/lr_eom_ccsd_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\

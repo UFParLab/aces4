@@ -1334,7 +1334,7 @@ ENDPROC form_diag
 #
 PROC form_HB
 #
-print "Forming expensive H*B"
+print "Forming H*B"
 #
 pardo ksub,a,i
     Tkai[ksub,a,i] = 0.0
@@ -1424,7 +1424,15 @@ if rank == 0.0
 #-- In static alpha vecs index 1 is the range index 2 is the state
 #-- La[i,state] Gmat[i,j] Ra[j,state] = E[state]
 #--
-    execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
+#    execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
+    execute eigen_calc GSmat SalphaR
+
+    do ksub
+    do ksub1
+	where ksub == ksub1
+	SEk[ksub] = GSmat[ksub,ksub1]
+    enddo ksub1
+    enddo ksub
 
 #    print SEk
 #    print salphaR
@@ -1432,7 +1440,7 @@ if rank == 0.0
     do kstate
 	SEk0[kstate] = SEk[kstate]
     enddo kstate
-    print "RHF-CIS excitation energies"
+    print "-- RHF-CIS excitation energies --"
     do kstate
 	allocate contiguous CIS_EE_Energy[kstate:kstate]
 	CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
@@ -1842,6 +1850,7 @@ server_barrier
 #
 #
 do kiter
+    print " " 
     print kiter
     call form_HB
     call form_BHB
