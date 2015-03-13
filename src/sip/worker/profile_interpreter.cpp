@@ -90,9 +90,25 @@ void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 		case pardo_op:
 		case endpardo_op:				// WARNING : Variable number of blocks are garbage collected
 
+		case allocate_op:
+		case deallocate_op:
+		case allocate_contiguous_op:
+		case deallocate_contiguous_op:
+		case create_op:
+		case delete_op:
+		case print_string_op:
+		case print_scalar_op:
+		case print_int_op:
+		case print_index_op:
+		case print_block_op:
+		case println_op:
+		case set_persistent_op:
+		case restore_persistent_op:
+		case goto_op:
 		case jump_if_zero_op:
 		case stop_op:
 		case exit_op:
+		case call_op:
 		case push_block_selector_op:
 		case string_load_literal_op:
 		case int_load_literal_op:
@@ -184,6 +200,8 @@ void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 		// 2 blocks - in selector stack
 		case block_permute_op:
 		case block_contract_to_scalar_op:
+		case put_accumulate_op:
+		case put_replace_op:
 		{
 			std::list<BlockSelector> bs_list;
 			BlockSelector lhs_bs = block_selector_stack_.top();
