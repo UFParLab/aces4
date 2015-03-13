@@ -163,9 +163,14 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case pardo_op: { //TODO refactor to get rid of the ifdefs
 			int num_indices = arg1();
 #ifdef HAVE_MPI
-			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
-					index_selectors(), data_manager_, sip_tables_,
-					SIPMPIAttr::get_instance());
+//			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
+//					index_selectors(), data_manager_, sip_tables_,
+//					SIPMPIAttr::get_instance());
+			int num_where_clauses = arg2();
+			std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush;
+			LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(
+					num_indices, index_selectors(), data_manager_, sip_tables_,
+					SIPMPIAttr::get_instance(), num_where_clauses, this);
 #else
 			LoopManager* loop = new SequentialPardoLoop(num_indices,
 					index_selectors(), data_manager_, sip_tables_);
@@ -1591,8 +1596,6 @@ void Interpreter::loop_start(LoopManager * loop) {
 	control_stack_.push(enddo_pc);
 	if (loop->update()) { //there is at least one iteration of loop
 		loop_manager_stack_.push(loop);
-//		control_stack_.push(loop_body_pc); //push pc of first instruction of loop body (including where)
-//		control_stack_.push(enddo_pc); //used by where clauses
 		data_manager_.enter_scope();
 	} else {
 		loop->finalize();
@@ -1604,48 +1607,23 @@ void Interpreter::loop_start(LoopManager * loop) {
 }
 
 
-//void Interpreter::loop_start(LoopManager * loop) {
-//	int enddo_pc = arg0();
-//	pc++;
-////	if (loop->update()) { //there is at least one iteration of loop
-//		loop_manager_stack_.push(loop);
-//		control_stack_.push(pc ); //push pc of first instruction of loop body (including where)
-//		control_stack_.push(enddo_pc); //used by where clauses
-//		data_manager_.enter_scope();
-//		loop->update();
-//		//DEBUG
-//		std::cout << "loop_start after update, pc= " << pc << std::endl << std::flush;
-//
-////	} else {
-////		loop->finalize();
-////		delete loop;
-////		pc = enddo_pc + 1; //jump to statement following enddo
-////	}
-//}
 void Interpreter::loop_end() {
 	int own_pc = pc;  //save pc of enddo instruction
 	int own_pc_from_stack = control_stack_.top();
 	control_stack_.pop(); //remove own location
 	pc = control_stack_.top();
-//	std::cout << "loop end: own_pc, own_pc_from_stack, pc " << own_pc << ",";
-//	std::cout << own_pc_from_stack << ", " << pc << std::endl << std::flush;
 	control_stack_.push(own_pc_from_stack);
 	data_manager_.leave_scope();
 	bool more_iterations = loop_manager_stack_.top()->update();
 	if (more_iterations) {
 		data_manager_.enter_scope();
-		//DEBUG
-	//	std::cout << "loop_end pc " << pc << std::endl << std::flush;
-	//	control_stack_.push(own_pc); //add own location for where clause in next iteration
 	} else {
 		LoopManager* loop = loop_manager_stack_.top();
 		loop->finalize();
 		loop_manager_stack_.pop(); //remove loop from stack
-//		std::cout << "terminating loop end, control_stack_.size= " << control_stack_.size()<< std::endl << std::flush;
 		int loop_end_pc = control_stack_.top();
 		control_stack_.pop(); //pop pc of loop_end
 		control_stack_.pop(); //pop pc of first instruction in body
-//		std::cout << "deleting loop " << std::endl << std::flush;
 		delete loop;
 		pc = loop_end_pc + 1; //address of instruction following the loop
 	}

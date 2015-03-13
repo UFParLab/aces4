@@ -198,6 +198,9 @@ public:
 		else
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
+	int get_pc(){
+		return pc;
+	}
 
 	/** For testing.
 	 * Determine whether any data is left in the interpreter's data structures.
@@ -468,6 +471,7 @@ private:
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
+	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

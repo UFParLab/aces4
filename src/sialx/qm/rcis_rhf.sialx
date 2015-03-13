@@ -1447,6 +1447,9 @@ endif
 server_barrier
 broadcast_from root SAlphaR 
 broadcast_from root SEk
+    do kstate
+	SEk0[kstate] = SEk[kstate]
+    enddo kstate
 server_barrier
 #
 ENDPROC diag_G

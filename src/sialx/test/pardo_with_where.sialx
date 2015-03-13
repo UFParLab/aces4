@@ -1,12 +1,14 @@
 sial pardo_with_where
 
+special enable_all_rank_print
 predefined int norb
 
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
       aoindex lambda = 1: norb
       aoindex sigma  = 1: norb
-
+sip_barrier
+execute enable_all_rank_print
 pardo mu, nu, lambda, sigma
                  WHERE mu      < nu
                  WHERE lambda  < sigma

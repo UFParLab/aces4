@@ -337,145 +337,143 @@ std::ostream& operator<<(std::ostream& os,
 	return os;
 }
 
-<<<<<<< HEAD
-||||||| parent of 8711d49... Initial implementation of where-clause aware pardo loop scheduling
-
-
-//**************
-BalancedTaskAllocParallelPardoLoop::BalancedTaskAllocParallelPardoLoop(int num_indices,
-		const int (&index_id)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
-		SIPMPIAttr & sip_mpi_attr, int num_where_clauses, Interpreter* interpreter) :
-		data_manager_(data_manager), sip_tables_(sip_tables),
-		num_indices_(num_indices), first_time_(true), iteration_(0),
-		sip_mpi_attr_(sip_mpi_attr), num_where_clauses_(num_where_clauses),
-		interpreter_(interpreter)
-		{
-
-	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
-	for (int i = 0; i < num_indices; ++i) {
-		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
-		upper_bound_[i] = lower_seg_[i] + sip_tables_.num_segments(index_id_[i]);
-		sip::check(lower_seg_[i] < upper_bound_[i],	"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range", Interpreter::global_interpreter->line_number());
-	}
-}
-
-BalancedTaskAllocParallelPardoLoop::~BalancedTaskAllocParallelPardoLoop() {}
-
-inline bool BalancedTaskAllocParallelPardoLoop::increment_indices() {
-	bool more = false; 	// More iterations?
-	int current_value;
-	for (int i = 0; i < num_indices_; ++i) {
-		current_value = data_manager_.index_value(index_id_[i]);
-		++current_value;
-		if (current_value < upper_bound_[i]) {
-			//increment current index and return
-			data_manager_.set_index_value(index_id_[i], current_value);
-			more = true;
-			break;
-		} else {
-			//wrap around and handle next index
-			data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
-		}
-	} //if here, then all indices are at their max value
-	return more;
-}
-
-inline bool BalancedTaskAllocParallelPardoLoop::initialize_indices() {
-	//initialize values of all indices
-	bool more_iterations = true;
-	for (int i = 0; i < num_indices_; ++i) {
-		if (lower_seg_[i] >= upper_bound_[i]){
-			more_iterations = false; //this loop has an empty range in at least one dimension.
-			return more_iterations;
-		}
-
-		sip::check(
-				data_manager_.index_value(index_id_[i])
-						== DataManager::undefined_index_value,
-				"SIAL or SIP error, index "
-						+ sip_tables_.index_name(index_id_[i])
-						+ " already has value before loop",
-				Interpreter::global_interpreter->line_number());
-		data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
-	}
-	more_iterations = true;
-	return more_iterations;
-}
-
-bool BalancedTaskAllocParallelPardoLoop::do_update() {
-
-	if (to_exit_)
-		return false;
-
-	int company_rank = sip_mpi_attr_.company_rank();
-	int num_workers = sip_mpi_attr_.num_workers();
-
-	if (first_time_) {
-		first_time_ = false;
-		bool more_iters = initialize_indices();
-		//******START HERE**********************/
-		while (more_iters && iteration_ % num_workers != company_rank){
-			more_iters = increment_indices();
-			bool where_clauses_value = true;
-			for (int i = 0;  where_clauses_value && i < num_where_clauses_ ; i++){
-				where_clauses_value =where_clauses_value && interpreter_->interpret_where();
-			}
-			if (where_clauses_value) iteration_++;
-		}
-		return more_iters;
-	} else {
-		iteration_++;
-		bool more_iters = increment_indices();
-		while (more_iters && iteration_ % num_workers != company_rank){
-			more_iters = increment_indices();
-			bool where_clauses_value = true;
-			for (int i = 0;  where_clauses_value && i < num_where_clauses_ ; i++){
-				where_clauses_value =where_clauses_value && interpreter_->interpret_where();
-			}
-			if (where_clauses_value) iteration_++;
-		}
-		return more_iters;
-	}
-}
-
-
-void BalancedTaskAllocParallelPardoLoop::do_finalize() {
-	for (int i = 0; i < num_indices_; ++i) {
-		data_manager_.set_index_undefined(index_id_[i]);
-	}
-}
-
-std::string BalancedTaskAllocParallelPardoLoop::to_string() const {
-	std::stringstream ss;
-	ss << "Balanced Task Allocation Parallel Pardo Loop:  num_indices="<<num_indices_<< std::endl;
-	ss << "index_ids_=[";
-	for (int i = 0; i < num_indices_; ++i) {
-		ss << (i == 0 ? "" : ",")
-				<< sip_tables_.index_name(index_id_[i]);
-	}
-	ss << "] lower_seg_=[";
-	for (int i = 0; i < num_indices_; ++i) {
-		ss << (i == 0 ? "" : ",") << lower_seg_[i];
-	}
-	ss << "] upper_bound_=[";
-	for (int i = 0; i < num_indices_; ++i) {
-		ss << (i == 0 ? "" : ",") << upper_bound_[i];
-	}
-	ss << "] current= [";
-	for (int i = 0; i < num_indices_; ++i) {
-		ss << (i == 0 ? "" : ",")
-				<< data_manager_.index_value_to_string(
-						index_id_[i]);
-	}
-	ss << "]";
-	return ss.str();
-}
-
-std::ostream& operator<<(std::ostream& os, const BalancedTaskAllocParallelPardoLoop &obj) {
-	os << obj.to_string();
-	return os;
-}
-=======
+//
+//
+////**************
+//BalancedTaskAllocParallelPardoLoop::BalancedTaskAllocParallelPardoLoop(int num_indices,
+//		const int (&index_id)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
+//		SIPMPIAttr & sip_mpi_attr, int num_where_clauses, Interpreter* interpreter) :
+//		data_manager_(data_manager), sip_tables_(sip_tables),
+//		num_indices_(num_indices), first_time_(true), iteration_(0),
+//		sip_mpi_attr_(sip_mpi_attr), num_where_clauses_(num_where_clauses),
+//		interpreter_(interpreter)
+//		{
+//
+//	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
+//	for (int i = 0; i < num_indices; ++i) {
+//		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
+//		upper_bound_[i] = lower_seg_[i] + sip_tables_.num_segments(index_id_[i]);
+//		sip::check(lower_seg_[i] < upper_bound_[i],	"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range", Interpreter::global_interpreter->line_number());
+//	}
+//}
+//
+//BalancedTaskAllocParallelPardoLoop::~BalancedTaskAllocParallelPardoLoop() {}
+//
+//inline bool BalancedTaskAllocParallelPardoLoop::increment_indices() {
+//	bool more = false; 	// More iterations?
+//	int current_value;
+//	for (int i = 0; i < num_indices_; ++i) {
+//		current_value = data_manager_.index_value(index_id_[i]);
+//		++current_value;
+//		if (current_value < upper_bound_[i]) {
+//			//increment current index and return
+//			data_manager_.set_index_value(index_id_[i], current_value);
+//			more = true;
+//			break;
+//		} else {
+//			//wrap around and handle next index
+//			data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
+//		}
+//	} //if here, then all indices are at their max value
+//	return more;
+//}
+//
+//inline bool BalancedTaskAllocParallelPardoLoop::initialize_indices() {
+//	//initialize values of all indices
+//	bool more_iterations = true;
+//	for (int i = 0; i < num_indices_; ++i) {
+//		if (lower_seg_[i] >= upper_bound_[i]){
+//			more_iterations = false; //this loop has an empty range in at least one dimension.
+//			return more_iterations;
+//		}
+//
+//		sip::check(
+//				data_manager_.index_value(index_id_[i])
+//						== DataManager::undefined_index_value,
+//				"SIAL or SIP error, index "
+//						+ sip_tables_.index_name(index_id_[i])
+//						+ " already has value before loop",
+//				Interpreter::global_interpreter->line_number());
+//		data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
+//	}
+//	more_iterations = true;
+//	return more_iterations;
+//}
+//
+//bool BalancedTaskAllocParallelPardoLoop::do_update() {
+//
+//	if (to_exit_)
+//		return false;
+//
+//	int company_rank = sip_mpi_attr_.company_rank();
+//	int num_workers = sip_mpi_attr_.num_workers();
+//
+//	if (first_time_) {
+//		first_time_ = false;
+//		bool more_iters = initialize_indices();
+//		//******START HERE**********************/
+//		while (more_iters && iteration_ % num_workers != company_rank){
+//			more_iters = increment_indices();
+//			bool where_clauses_value = true;
+//			for (int i = 0;  where_clauses_value && i < num_where_clauses_ ; i++){
+//				where_clauses_value =where_clauses_value && interpreter_->interpret_where();
+//			}
+//			if (where_clauses_value) iteration_++;
+//		}
+//		return more_iters;
+//	} else {
+//		iteration_++;
+//		bool more_iters = increment_indices();
+//		while (more_iters && iteration_ % num_workers != company_rank){
+//			more_iters = increment_indices();
+//			bool where_clauses_value = true;
+//			for (int i = 0;  where_clauses_value && i < num_where_clauses_ ; i++){
+//				where_clauses_value =where_clauses_value && interpreter_->interpret_where();
+//			}
+//			if (where_clauses_value) iteration_++;
+//		}
+//		return more_iters;
+//	}
+//}
+//
+//
+//void BalancedTaskAllocParallelPardoLoop::do_finalize() {
+//	for (int i = 0; i < num_indices_; ++i) {
+//		data_manager_.set_index_undefined(index_id_[i]);
+//	}
+//}
+//
+//std::string BalancedTaskAllocParallelPardoLoop::to_string() const {
+//	std::stringstream ss;
+//	ss << "Balanced Task Allocation Parallel Pardo Loop:  num_indices="<<num_indices_<< std::endl;
+//	ss << "index_ids_=[";
+//	for (int i = 0; i < num_indices_; ++i) {
+//		ss << (i == 0 ? "" : ",")
+//				<< sip_tables_.index_name(index_id_[i]);
+//	}
+//	ss << "] lower_seg_=[";
+//	for (int i = 0; i < num_indices_; ++i) {
+//		ss << (i == 0 ? "" : ",") << lower_seg_[i];
+//	}
+//	ss << "] upper_bound_=[";
+//	for (int i = 0; i < num_indices_; ++i) {
+//		ss << (i == 0 ? "" : ",") << upper_bound_[i];
+//	}
+//	ss << "] current= [";
+//	for (int i = 0; i < num_indices_; ++i) {
+//		ss << (i == 0 ? "" : ",")
+//				<< data_manager_.index_value_to_string(
+//						index_id_[i]);
+//	}
+//	ss << "]";
+//	return ss.str();
+//}
+//
+//std::ostream& operator<<(std::ostream& os, const BalancedTaskAllocParallelPardoLoop &obj) {
+//	os << obj.to_string();
+//	return os;
+//}
+//=======
 //**************
 BalancedTaskAllocParallelPardoLoop::BalancedTaskAllocParallelPardoLoop(
 		int num_indices, const int (&index_id)[MAX_RANK],
@@ -530,7 +528,6 @@ inline bool BalancedTaskAllocParallelPardoLoop::initialize_indices() {
 			more_iterations = false; //this loop has an empty range in at least one dimension.
 			return more_iterations;
 		}
-
 		sip::check(
 				data_manager_.index_value(index_id_[i])
 						== DataManager::undefined_index_value,
@@ -548,9 +545,6 @@ bool BalancedTaskAllocParallelPardoLoop::do_update() {
 
 	if (to_exit_)
 		return false;
-
-//	int company_rank = sip_mpi_attr_.company_rank();
-//	int num_workers = sip_mpi_attr_.num_workers();
 	bool more_iters;
 	if (first_time_) {
 		first_time_ = false;
@@ -562,29 +556,21 @@ bool BalancedTaskAllocParallelPardoLoop::do_update() {
 	while(more_iters){
 		bool where_clauses_value = interpreter_->interpret_where(num_where_clauses_);
 		//if true, the pc will be after the last where clause
-//		std::cout << "where_clauses_value, pc in do_update ";
-//		std::cout << where_clauses_value << ", "<< interpreter_->pc << " [";
-//		for (int i = 0; i < num_indices_; ++i) {
-//			std::cout << data_manager_.index_value(index_id_[i]) << ",";
-//		}
-//		std::cout << "]" << std::endl << std::flush;
-
+		//otherwise it is undefined
 		if(where_clauses_value){
 			iteration_++;
 			if ((iteration_-1) % num_workers_ == company_rank_){
-				std::cout << "rank " << company_rank_ << " executing iteration";
-				std::cout <<  " [";
-				for (int i = 0; i < num_indices_; ++i) {
-					std::cout << data_manager_.index_value(index_id_[i]) << ",";
-				}
-				std::cout << "]" << std::endl << std::flush;
-
+//				std::cout << "rank " << company_rank_ << " executing iteration";
+//				std::cout <<  " [";
+//				for (int i = 0; i < num_indices_; ++i) {
+//					std::cout << data_manager_.index_value(index_id_[i]) << ",";
+//				}
+//				std::cout << "]" << std::endl << std::flush;
 				return true;
 			}
 		}
 		more_iters = increment_indices();
 	}
-//	std::cout << "returning more_iters (should be false)= " << more_iters << std::endl << std::flush;
 	return more_iters; //this should be false here
 }
 
@@ -624,7 +610,7 @@ std::ostream& operator<<(std::ostream& os,
 	os << obj.to_string();
 	return os;
 }
->>>>>>> 8711d49... Initial implementation of where-clause aware pardo loop scheduling
+
 #endif
 
 } /* namespace sip */
