@@ -324,12 +324,13 @@ double SIPMaPInterpreter::calculate_pending_request_time() {
 	// Increment pardo section time after compensating for time spent waiting for acks
 	double max_async_ack_arrives_at = 0.0;
 	std::list<BlockRemoteOp>::iterator it = pending_acks_list_.begin();
-	for (; it != pending_acks_list_.end(); ++it) {
+	for (; it != pending_acks_list_.end();) {
 		BlockRemoteOp& brop = *it;
 		double async_ack_arrives_at = brop.time_started + brop.travel_time;
 		if (async_ack_arrives_at > max_async_ack_arrives_at) {
 			max_async_ack_arrives_at = async_ack_arrives_at;
 		}
+		pending_acks_list_.erase(it++);
 	}
 	double pending_requests = 0.0;
 	if (pardo_section_time_ < max_async_ack_arrives_at) {
@@ -342,7 +343,6 @@ void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
 	// Increment pardo section time after compensating for time spent waiting for acks
 	double pending_requests = calculate_pending_request_time();
 	pardo_section_time_ += pending_requests;
-
 
 	pardo_section_times_.push_back(PardoSectionsInfo(pc, section_number_, pardo_section_time_, pending_requests));
 	section_number_++;
