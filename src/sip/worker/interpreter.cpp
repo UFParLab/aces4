@@ -167,7 +167,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 //					index_selectors(), data_manager_, sip_tables_,
 //					SIPMPIAttr::get_instance());
 			int num_where_clauses = arg2();
-			std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush;
+			SIP_LOG(std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush);
 			LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(
 					num_indices, index_selectors(), data_manager_, sip_tables_,
 					SIPMPIAttr::get_instance(), num_where_clauses, this);
