@@ -429,6 +429,8 @@ SIOX_FILES=\
 ./src/sialx/test/block_scale_assign.siox\
 ./src/sialx/test/return_sval_test.siox\
 ./src/sialx/test/broadcast_static.siox\
+./src/sialx/test/read_block_test.siox\
+./src/sialx/test/pardo_with_where.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -552,6 +554,8 @@ EXTRA_DIST += \
 ./src/sialx/test/block_scale_assign.sialx\
 ./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/test/broadcast_static.sialx\
+./src/sialx/test/read_block_test.sialx\
+./src/sialx/test/pardo_with_where.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
