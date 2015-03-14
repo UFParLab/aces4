@@ -46,6 +46,7 @@ namespace sip {
 
 class LoopManager;
 class SialPrinter;
+class BalancedTaskAllocParallelPardoLoop;
 
 /**
  * Interprets Sialx code.
@@ -93,6 +94,10 @@ public:
 	virtual SialPrinter* get_printer(){
 		return printer_;
 	}
+
+
+    /** Called by BalancedTaskAllocParallelPardoLoop to correctly schedule tasks */
+    bool interpret_where(int num_where_clauses);
 
 
 	virtual double scalar_value_impl(const std::string& name) {
@@ -664,6 +669,7 @@ protected:
 
 	friend class DoLoop;
 	friend class SequentialPardoLoop;
+	friend class BalancedTaskAllocParallelPardoLoop;
 	friend class Tracer;
 	friend class ::TestControllerParallel;
 	friend class ::TestController;

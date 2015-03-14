@@ -19,17 +19,20 @@ public:
 		worker_(worker),
 		sip_tables_(sip_table),
 		out_(out),
-		show_int_table_(true),
-		show_control_stack_(true),
+		show_int_table_(false),
+		show_control_stack_(false),
+		show_expression_stack_(false),
 		opcode_histogram_(last_op),
-		pc_histogram_(sip_tables_.op_table_.entries_.size())
+		pc_histogram_(sip_tables_.op_table_.entries_.size()),
+		rank(SIPMPIAttr::get_instance().global_rank())
     {}
 	~Tracer(){}
 
 	void setShowIntTable(bool show){show_int_table_ = show;}
 
 	void trace(int pc, opcode_t opcode){
-//		out_ << "%%%%%%%%%%%%%%%%%%%\n" << sip_tables_.op_table_.entries_[pc];
+//		out_ << "%%%%%%%%%%%%%%%%%%%\n";
+//		out_ << "rank: "<<rank << "  "<<sip_tables_.op_table_.entries_[pc];
 //		out_ << std::endl;
 //		if(show_int_table_){
 //		out_ << "________IntTable\n" << sip_tables_.int_table_ ;
@@ -78,6 +81,7 @@ private:
 	                                     //can be used to evaluate test coverage of the sial interpreter.
 	std::vector<int> pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
 	                                     //can be used to find dead code in a sial program.
+	int rank;
 
 	DISALLOW_COPY_AND_ASSIGN(Tracer);
 };

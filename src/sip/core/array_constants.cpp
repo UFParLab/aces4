@@ -36,6 +36,7 @@ IndexType_t map_index_type(std::string name){
 	// std::cout<< "WARNING:  Undefined index name, defaulting to aoindex "<< name;
     //return aoindex;
 	fail("Trying to get invalid index type : " + name);
+	return aoindex; //unreachable--included to avoid compiler warning
 }
 
 std::string index_type_name(IndexType_t t){
@@ -43,6 +44,7 @@ std::string index_type_name(IndexType_t t){
 	INDEX_TYPES_T
 #undef INDEX_TYPE_T
 	fail("Name of invalid IndexType_t requested");
+	return std::string(""); //unreachable--included to avoid compiler warning
 }
 
 
