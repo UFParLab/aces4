@@ -562,9 +562,26 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 }
 
+TEST(Sial,pardo_with_where){
+std::string job("pardo_with_where");
+int norb = 4;
+int segs[] = {2,3,2,2};
+if (attr->global_rank() == 0) {
+	init_setup(job.c_str());
+	set_constant("norb", norb);
+	std::string tmp = job + ".siox";
+	const char* nm = tmp.c_str();
+	add_sial_program(nm);
+	set_aoindex_info(4, segs);
+	finalize_setup();
+}
+std::stringstream output;
 
+TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+controller.initSipTables();
+controller.run();
 
-
+}
 
 
 
