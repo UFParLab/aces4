@@ -465,13 +465,12 @@ std::ostream& operator<<(std::ostream& os,
 BalancedTaskAllocParallelPardoLoop::BalancedTaskAllocParallelPardoLoop(
 		int num_indices, const int (&index_id)[MAX_RANK],
 		DataManager & data_manager, const SipTables & sip_tables,
-		SIPMPIAttr & sip_mpi_attr, int num_where_clauses,
-		SialxInterpreter* interpreter) :
+		int num_where_clauses, SialxInterpreter* interpreter, int company_rank,
+		int num_workers) :
 		data_manager_(data_manager), sip_tables_(sip_tables), num_indices_(
-				num_indices), first_time_(true), iteration_(0), sip_mpi_attr_(
-				sip_mpi_attr), num_where_clauses_(num_where_clauses), company_rank_(
-				sip_mpi_attr.company_rank()), num_workers_(
-				sip_mpi_attr_.num_workers()), interpreter_(interpreter) {
+				num_indices), first_time_(true), iteration_(0), num_where_clauses_(
+				num_where_clauses), company_rank_(company_rank), num_workers_(
+				num_workers), interpreter_(interpreter) {
 
 	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
 	for (int i = 0; i < num_indices; ++i) {

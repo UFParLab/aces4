@@ -408,9 +408,14 @@ void SIPMaPInterpreter::handle_restore_persistent_op(int pc){
 }
 void SIPMaPInterpreter::handle_pardo_op(int &pc){
 	/** What a particular worker would do */
-	LoopManager* loop = new StaticTaskAllocParallelPardoLoop(arg1(pc),
-					index_selectors(pc), data_manager_, sip_tables_,
-					worker_rank_, num_workers_);
+//	LoopManager* loop = new StaticTaskAllocParallelPardoLoop(arg1(pc),
+//					index_selectors(pc), data_manager_, sip_tables_,
+//					worker_rank_, num_workers_);
+	int num_where_clauses = arg2(pc);
+	int num_indices = arg1(pc);
+	LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(num_indices,
+				index_selectors(pc), data_manager_, sip_tables_, num_where_clauses,
+				this, worker_rank_, num_workers_);
 	loop_start(pc, loop);
 }
 #endif // HAVE_MPI

@@ -14,8 +14,6 @@
 #include "array_constants.h"
 #include "data_manager.h"
 
-#include "sip_mpi_attr.h"
-
 namespace sip {
 
 class SialxInterpreter;
@@ -143,9 +141,9 @@ private:
 class BalancedTaskAllocParallelPardoLoop: public LoopManager {
 public:
 	BalancedTaskAllocParallelPardoLoop(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, SialxInterpreter* interpreter);
+			const int (&index_id)[MAX_RANK], DataManager & data_manager,
+			const SipTables & sip_tables, int num_where_clauses,
+			SialxInterpreter* interpreter, int company_rank, int num_workers);
 	virtual ~BalancedTaskAllocParallelPardoLoop();
 	friend std::ostream& operator<<(std::ostream&,
 			const BalancedTaskAllocParallelPardoLoop &);
@@ -163,7 +161,6 @@ private:
 
 	DataManager & data_manager_;
 	const SipTables & sip_tables_;
-	SIPMPIAttr & sip_mpi_attr_;
 	int company_rank_;
 	int num_workers_;
 	SialxInterpreter* interpreter_;
