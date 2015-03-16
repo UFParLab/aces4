@@ -15,6 +15,7 @@ aces4_memory_ops \
 print_siptables \
 print_init_file \
 profile_merge \
+server_parameters_profile \
 sqlite3
 
 # Dmitry's Tensor Library
@@ -206,7 +207,6 @@ aces4_sipmap_SOURCES= \
     ./src/aces_main/sipmap_main.cpp\
     ./src/aces_main/sipmap_helper_methods.h
 
-
 aces4_memory_ops_SOURCES=\
  	$(ACES_SOURCEFILES) \
     ./src/aces_main/memory_ops_main.cpp\
@@ -223,6 +223,10 @@ print_init_file_SOURCES=\
 profile_merge_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/profile_merge.cpp
+	
+server_parameters_profile_SOURCES=\
+	$(ACES_SOURCEFILES)\
+	./src/util/server_parameters_profile.cpp	
 
 aces4_LDADD = \
 	libtensordil.a \
@@ -267,6 +271,13 @@ print_init_file_LDADD=\
 	$(AM_LDADD_LIBS)
 	
 profile_merge_LDADD=\
+	libtensordil.a \
+	libsqlite3.a \
+	libjsoncpp.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+
+server_parameters_profile_LDADD=\
 	libtensordil.a \
 	libsqlite3.a \
 	libjsoncpp.a \
