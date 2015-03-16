@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 		{
 			std::ifstream remote_array_model_parameters_file(parameters.machine_parameters_file.c_str());
 			sip::SIPMaPConfig sipmap_config(remote_array_model_parameters_file);
-			const sip::RemoteArrayModel::Parameters remote_array_model_parameters = sipmap_config.get_parameters();
+			const sip::RemoteArrayModel::Parameters remote_array_model_parameters(sipmap_config.get_parameters());
 			const sip::RemoteArrayModel remote_array_model(sipTables, remote_array_model_parameters);
 
 			std::vector<sip::SIPMaPInterpreter::PardoSectionsInfoVector_t> pardo_sections_info_vector;

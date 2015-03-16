@@ -1,5 +1,7 @@
 {
-	"Latency" : 0.0000009,
-	"Bandwidth" : 5916437345.46121
+	"InterconnectAlpha" : 0.0000009,
+	"InterconnectBeta" : 5916437345.46121,
+	"DAXPYAlpha" : 0,
+	"DAXPYBeta" : 1148171910.09959
 }
 	

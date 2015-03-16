@@ -23,8 +23,10 @@ SIPMaPConfig::SIPMaPConfig(std::istream& input_file) : input_file_(input_file){
 		err << "Parsing of input json file failed !" << reader.getFormattedErrorMessages();
 		sip::fail (err.str());
 	}
-	parameters_.t_s = root["Latency"].asDouble();
-	parameters_.b   = root["Bandwidth"].asDouble();
+	parameters_.interconnect_alpha 	= root["InterconnectAlpha"].asDouble();
+	parameters_.interconnect_beta   = root["InterconnectBeta"].asDouble();
+	parameters_.daxpy_alpha			= root["DAXPYAlpha"].asDouble();
+	parameters_.daxpy_beta			= root["DAXPYBeta"].asDouble();
 }
 
 
@@ -366,6 +368,7 @@ void SIPMaPInterpreter::handle_get_op(int pc){
 
 	// Record computation time (time for bookkeeping and to send small message)
 	std::list<BlockSelector> bs_list;
+	bs_list.push_back(block_selector_stack_.top());
 	ProfileTimer::Key key = make_profile_timer_key(get_op, bs_list);
 	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
@@ -386,17 +389,23 @@ void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
 
 	// Record computation time (time for bookkeeping and to send small message & asynchronously big message)
 	std::list<BlockSelector> bs_list;
+	BlockSelector & first = block_selector_stack_.top();
+	bs_list.push_back(first);
+	block_selector_stack_.pop();
+	bs_list.push_back(block_selector_stack_.top());
+	block_selector_stack_.push(first);
 	ProfileTimer::Key key = make_profile_timer_key(put_accumulate_op, bs_list);
 	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
 	// Get time to process at server and for ack to travel
-	BlockId id = get_block_id_from_selector_stack();
+	BlockId id = get_block_id_from_selector_stack();						// Remove 1st block selector from stack
 	double time_to_get_ack_from_server =
 			remote_array_model_.time_to_send_block_to_server(id)			// time to actually send block
 					+ remote_array_model_.time_to_put_accumulate_block(id)	// time to accumulate block at server
 					+ remote_array_model_.time_to_get_ack_from_server();	// time to get back ack from server
+	BlockId id2 = get_block_id_from_selector_stack();						// Remove 2nd block selector from stack
 	pardo_section_time_ += computation_time;
 	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
@@ -408,17 +417,23 @@ void SIPMaPInterpreter::handle_put_replace_op(int pc) {
 
 	// Record computation time (time for bookkeeping and to send small message & asynchronously big message)
 	std::list<BlockSelector> bs_list;
+	BlockSelector & first = block_selector_stack_.top();
+	bs_list.push_back(first);
+	block_selector_stack_.pop();
+	bs_list.push_back(block_selector_stack_.top());
+	block_selector_stack_.push(first);
 	ProfileTimer::Key key = make_profile_timer_key(put_replace_op, bs_list);
 	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
 	/** Put replaces are blocking operations, receipt of acks are async */
-	BlockId id = get_block_id_from_selector_stack();
+	BlockId id = get_block_id_from_selector_stack();						// Remove 1st block selector from stack
 	double time_to_get_ack_from_server =
 			remote_array_model_.time_to_send_block_to_server(id)			// time to actually send block
 					+ remote_array_model_.time_to_put_replace_block(id)		// time to replace block at server
 					+ remote_array_model_.time_to_get_ack_from_server();	// time to get back ack from server
+	BlockId id2 = get_block_id_from_selector_stack();						// Remove 2nd block selector from stack
 	pardo_section_time_ += computation_time;
 	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }

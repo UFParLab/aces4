@@ -20,21 +20,25 @@ class RemoteArrayModel {
 public:
 
 	struct Parameters {
-		double t_s;			//! Startup time in seconds
-		double b;			//! Bandwidth in bytes per second
-		Parameters(): t_s(-1.0), b(-1.0){};
-		Parameters(double startup_time, double bandwidth): t_s(startup_time), b(bandwidth) {}
-		Parameters(const Parameters& other) : t_s(other.t_s), b(other.b) {}
+		double interconnect_alpha;		//! Startup time in seconds (time = alpha + beta*block_size)
+		double interconnect_beta;		//! Bandwidth in bytes per second
+		double daxpy_alpha;				//! DAXPY Time = alpha + beta * block_size
+		double daxpy_beta;
+		Parameters(): interconnect_alpha(-1.0), interconnect_beta(-1.0), daxpy_alpha(-1.0), daxpy_beta(-1.0) {};
+		Parameters(const Parameters& other) :
+				interconnect_alpha(other.interconnect_alpha), interconnect_beta(other.interconnect_beta),
+				daxpy_alpha(other.daxpy_alpha), daxpy_beta(other.daxpy_beta){
+		}
 	};
 
 	RemoteArrayModel(const SipTables& sip_tables, const Parameters& parameters);
 	~RemoteArrayModel();
 
 	/** @return Time it takes to send a small message to the server	 */
-	double time_to_send_small_message_to_server() const { return parameters_.t_s; }
+	double time_to_send_small_message_to_server() const { return parameters_.interconnect_alpha; }
 
 	/** @return Time it takes to send the ack from the server to the worker */
-	double time_to_get_ack_from_server() const { return parameters_.t_s; }
+	double time_to_get_ack_from_server() const { return parameters_.interconnect_alpha; }
 
 	/** @return Time to send a block synchronously to the server */
 	double time_to_send_block_to_server(const BlockId& block_id) const;

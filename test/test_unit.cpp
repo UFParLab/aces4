@@ -1759,8 +1759,8 @@ TEST(SIPMaPConfig, test1){
 	std::istringstream json_istr(json_test);
 	sip::SIPMaPConfig sipmap_config(json_istr);
 	sip::RemoteArrayModel::Parameters& parameters = sipmap_config.get_parameters();
-	ASSERT_DOUBLE_EQ(10.99, parameters.b);
-	ASSERT_DOUBLE_EQ(0.00004, parameters.t_s);
+	ASSERT_DOUBLE_EQ(10.99, parameters.interconnect_beta);
+	ASSERT_DOUBLE_EQ(0.00004, parameters.interconnect_alpha);
 }
 
 

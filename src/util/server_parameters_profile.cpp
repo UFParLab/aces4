@@ -3,7 +3,7 @@
 #include "sip.h"
 
 #define MAX_SIZE 128*128*128*128
-#define START_AT 16
+#define START_AT 1
 #define REPEAT 10
 
 int main(int argc, char **argv){
@@ -22,6 +22,10 @@ int main(int argc, char **argv){
 			double d_one = 1.0;
 			int size__ = i;
 			sip_blas_daxpy(size__, d_one, to_add, i_one, data_, i_one);
+
+			//for (int k=0; k<size__; ++k)
+			//	data_[k] += to_add[k];
+
 			double end_time = GETTIME;
 			total_time += end_time - start_time;
 		}
