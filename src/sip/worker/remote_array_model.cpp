@@ -41,7 +41,7 @@ double RemoteArrayModel::time_to_put_accumulate_block(const BlockId& block_id) c
 	// TODO add time for disk reads/caching (account for caching at worker.)
 	std::size_t block_size = sip_tables_.block_size(block_id) * sizeof(double); // in bytes
 	double time = parameters_.daxpy_alpha + block_size / (double) parameters_.daxpy_beta;
-	return 0.0;
+	return time;
 }
 
 } /* namespace sip */
