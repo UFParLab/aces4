@@ -362,49 +362,116 @@ void SIPMaPInterpreter::do_post_sial_program(){
 void SIPMaPInterpreter::handle_get_op(int pc){
 	/** A small blocking message is sent to fetch the block needed
 	 * 	An async Recv is then posted for the needed block.
-	 */
+	 * 	Other bookkeeping activities also take place. */
+
+	// Record computation time (time for bookkeeping and to send small message)
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(get_op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
+	record_total_time(computation_time);
+
+	// Get time to process at server and for block to travel
 	BlockId id = get_block_id_from_selector_stack();
 	double travel_time = remote_array_model_.time_to_get_block(id);
-	double time_spent_at_get = remote_array_model_.time_to_send_small_message_to_server();
-	record_total_time(time_spent_at_get);
+	pardo_section_time_ += computation_time;
 	BlockRemoteOp brop (travel_time, pardo_section_time_);
 	pending_blocks_map_.insert(std::make_pair(id, brop));
-	pardo_section_time_ += time_spent_at_get;
-
 }
 void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
-	/** Put accumulates are blocking operations, receipt of acks are async */
+	/** A small blocking message is sent to inform the server of the incoming block.
+	 * The block itself is sent asynchronously. An async recv is posted for the ack.
+	 * Other bookkeeping  activities also take place.
+	 * On the server, an accumulate operation happens on the block */
+
+	// Record computation time (time for bookkeeping and to send small message & asynchronously big message)
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(put_accumulate_op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
+	record_total_time(computation_time);
+
+	// Get time to process at server and for ack to travel
 	BlockId id = get_block_id_from_selector_stack();
-	double time_spent_at_put = remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_send_block_to_server(id);
-	record_total_time(time_spent_at_put);
-	pardo_section_time_ += time_spent_at_put;
-	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server() + remote_array_model_.time_to_put_accumulate_block(id), pardo_section_time_));
+	double time_to_get_ack_from_server =
+			remote_array_model_.time_to_send_block_to_server(id)			// time to actually send block
+					+ remote_array_model_.time_to_put_accumulate_block(id)	// time to accumulate block at server
+					+ remote_array_model_.time_to_get_ack_from_server();	// time to get back ack from server
+	pardo_section_time_ += computation_time;
+	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
 void SIPMaPInterpreter::handle_put_replace_op(int pc) {
+
+	/** A small blocking message is sent to inform the server of the incoming block.
+	 * The block itself is sent asynchronously. An async recv is posted for the ack.
+	 * Other bookkeeping  activities also take place. */
+
+	// Record computation time (time for bookkeeping and to send small message & asynchronously big message)
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(put_replace_op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
+	record_total_time(computation_time);
+
 	/** Put replaces are blocking operations, receipt of acks are async */
 	BlockId id = get_block_id_from_selector_stack();
-	double time_spent_at_put = remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_send_block_to_server(id);
-	record_total_time(time_spent_at_put);
-	pardo_section_time_ += time_spent_at_put;
-	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server() + remote_array_model_.time_to_put_replace_block(id), pardo_section_time_));
+	double time_to_get_ack_from_server =
+			remote_array_model_.time_to_send_block_to_server(id)			// time to actually send block
+					+ remote_array_model_.time_to_put_replace_block(id)		// time to replace block at server
+					+ remote_array_model_.time_to_get_ack_from_server();	// time to get back ack from server
+	pardo_section_time_ += computation_time;
+	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
 void SIPMaPInterpreter::handle_create_op(int pc){
 	/** A no op for now */
 }
 void SIPMaPInterpreter::handle_delete_op(int pc){
-	/** A small blocking message is sent to the server, receipt of ack is async */
-	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server() + remote_array_model_.time_to_delete_array(arg0(pc));
-	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
+	/** A small blocking message is sent to the server, receipt of ack is async, some bookkeeping. */
+
+	// Record computation time (time for bookkeeping and to send small message)
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(delete_op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
+	record_total_time(computation_time);
+
+	pardo_section_time_ += computation_time;
+	double time_to_get_ack_from_server =
+			remote_array_model_.time_to_delete_array(arg0(pc))
+					+ remote_array_model_.time_to_get_ack_from_server();
+	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
 void SIPMaPInterpreter::handle_set_persistent_op(int pc) {
-	/** A small blocking message is sent to the server, receipt of ack is async */
-	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server();
-	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
+	/** A small blocking message is sent to the server, receipt of ack is async, some bookkeeping. */
+
+	// Record computation time (time for bookkeeping and to send small message)
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(set_persistent_op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
+	record_total_time(computation_time);
+
+	pardo_section_time_ += computation_time;
+	double time_to_get_ack_from_server =
+				remote_array_model_.time_to_set_persistent(arg1(pc))
+						+ remote_array_model_.time_to_get_ack_from_server();
+	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
 void SIPMaPInterpreter::handle_restore_persistent_op(int pc){
-	/** A small blocking message is sent to the server, receipt of ack is async */
-	pardo_section_time_ += remote_array_model_.time_to_send_small_message_to_server();
-	pending_acks_list_.push_back(BlockRemoteOp(remote_array_model_.time_to_get_ack_from_server(), pardo_section_time_));
+	/** A small blocking message is sent to the server, receipt of ack is async, some bookkeeping. */
+
+	// Record computation time (time for bookkeeping and to send small message)
+	std::list<BlockSelector> bs_list;
+	ProfileTimer::Key key = make_profile_timer_key(restore_persistent_op, bs_list);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
+	record_total_time(computation_time);
+
+	pardo_section_time_ += computation_time;
+	double time_to_get_ack_from_server =
+				remote_array_model_.time_to_set_persistent(arg1(pc))
+						+ remote_array_model_.time_to_get_ack_from_server();
+	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
 void SIPMaPInterpreter::handle_pardo_op(int &pc){
 	/** What a particular worker would do */

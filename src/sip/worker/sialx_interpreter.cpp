@@ -23,6 +23,7 @@
 #include "config.h"
 #include "sial_math.h"
 #include "sip_c_blas.h"
+#include "sip_mpi_attr.h"
 
 
 // For CUDA Super Instructions
