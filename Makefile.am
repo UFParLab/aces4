@@ -441,8 +441,6 @@ SIOX_FILES=\
 ./src/sialx/qm/mcpt2_doubles_lowmem.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
-./src/sialx/qm/cis_rhf.siox\
-./src/sialx/qm/cis_rhf_defs.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
@@ -456,12 +454,6 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab.siox
-
-#./src/sialx/qm/rccsdpt_aaa_defs.siox\
-#./src/sialx/qm/rccsdpt_aab_defs.siox\
-#./src/sialx/qm/scf_mp2_rhf.siox\
-#./src/sialx/qm/scf_mp2_defs.siox\
-#./src/sialx/qm/rlambda_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 

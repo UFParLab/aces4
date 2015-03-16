@@ -1272,9 +1272,12 @@ print " "
         endif
         call movet2
         server_barrier
+	assert_same ecorrT
+	assert_same eold
 	ediff = eold - ecorrT
 	escr = ediff**2.0
 	ediff = escr**0.5
+	assert_same ediff
 	if ediff < cc_conv
 	    exit
 	endif
