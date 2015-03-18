@@ -102,11 +102,11 @@ case $ax_cv_c_compiler_vendor in
 		AC_LANG([C])
 		AC_LANG([C++])
 		AC_LANG([Fortran])
-	        AX_APPEND_COMPILE_FLAGS([-finit-local-zero])
-	        AX_APPEND_COMPILE_FLAGS([-Wuninitialized])
+        AX_APPEND_COMPILE_FLAGS([-finit-local-zero])
+	    AX_APPEND_COMPILE_FLAGS([-Wuninitialized])
 		AC_LANG([Fortran 77])
-	        AX_APPEND_COMPILE_FLAGS([-finit-local-zero])
-	        AX_APPEND_COMPILE_FLAGS([-Wuninitialized])
+	    AX_APPEND_COMPILE_FLAGS([-finit-local-zero])
+	    AX_APPEND_COMPILE_FLAGS([-Wuninitialized])
 	;;
 	intel)
 		AC_LANG([C])
@@ -158,22 +158,29 @@ AC_CHECK_FUNCS([dup2 fchdir getcwd getpagesize gettimeofday memset mkdir munmap 
 # snippets of code.
 # I am just doing what works on the UF HiperGator - NJ
 
-#newac=m4_version_compare(m4_defn([AC_AUTOCONF_VERSION]), [2.63])
-#if test ${newac} -gt 0 ; then
-#    AC_MSG_NOTICE([Will use stock OpenMP macro])
-#    AC_LANG([Fortran])
-#    AC_OPENMP
-#    AC_LANG([Fortran 77])
-#    AC_OPENMP
-#    #Archiver Required in Automake > 1.12
-#    AM_PROG_AR
-#else
-#    AC_MSG_NOTICE([Will use third party OpenMP macro])
-#    AC_LANG([Fortran])
-#    AX_OPENMP
-#    AC_LANG([Fortran 77])
-#    AX_OPENMP
-#fi
+newac=m4_version_compare(m4_defn([AC_AUTOCONF_VERSION]), [2.63])
+if test ${newac} -gt 0 ; then
+    AC_MSG_NOTICE([Will use stock OpenMP macro])
+    AC_LANG([Fortran])
+    AC_OPENMP
+    AC_LANG([Fortran 77])
+    AC_LANG([C])
+    AC_OPENMP
+    AC_LANG([C++])
+    AC_OPENMP
+    #Archiver Required in Automake > 1.12
+    AM_PROG_AR
+else
+    AC_MSG_NOTICE([Will use third party OpenMP macro])
+    AC_LANG([Fortran])
+    AX_OPENMP
+    AC_LANG([Fortran 77])
+    AX_OPENMP
+    AC_LANG([C])
+    AX_OPENMP
+    AC_LANG([C++])
+    AX_OPENMP
+fi
 
 
 #AX_COMPARE_VERSION([m4_defn([AC_AUTOCONF_VERSION])], [gt], [2.69],
@@ -190,7 +197,7 @@ AC_CHECK_FUNCS([dup2 fchdir getcwd getpagesize gettimeofday memset mkdir munmap 
 #    AC_LANG([Fortran 77])
 #    AX_OPENMP])
 
-AC_MSG_NOTICE([Not using OpenMP])
+#AC_MSG_NOTICE([Not using OpenMP])
 # These don't work on UF HiperGator and are commented out
 #AC_LANG([Fortran])
 #AC_OPENMP([AX_APPEND_COMPILE_FLAGS([-D_OPENMP])], [])
@@ -200,8 +207,6 @@ AC_MSG_NOTICE([Not using OpenMP])
 #AC_OPENMP
 #AC_LANG([C++])
 #AC_OPENMP
-
-
 
 
 

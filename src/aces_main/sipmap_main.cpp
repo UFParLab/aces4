@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
 #pragma omp parallel for ordered schedule(static)
 			for (int worker_rank=0; worker_rank<num_workers; ++worker_rank){
-				std::cout<<"threads="<<omp_get_num_threads()<<std::endl;
+				std::cout << "threads = "<< omp_get_num_threads() << std::endl;
 				sip::ProfileTimerStore in_memory_timer_store(":memory:");
 #pragma omp ordered
 				{

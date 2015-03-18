@@ -69,9 +69,12 @@ public:
 
 	const static int MAX_BLOCK_OPERANDS;
 
+	typedef std::map<ProfileTimer::Key, std::pair<double, long> > ProfileStoreCache_t;
+
 private:
 	std::string db_location_;
 	sqlite3* db_;
+	mutable ProfileStoreCache_t profile_store_cache_;	/*! Caches info to avoid repeated database lookups */
 
 	/**
 	 * Utility function to print the sqlite3 error and throw an exception.

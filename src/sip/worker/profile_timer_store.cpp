@@ -259,6 +259,10 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 
 std::pair<double, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands) const {
 
+	ProfileStoreCache_t::const_iterator it = profile_store_cache_.find(opcode_operands);
+	if (it != profile_store_cache_.end())
+		return it->second;
+
 	// TODO Upgrade to bound prepared statements - http://www.sqlite.org/c3ref/bind_blob.html
 	// Specially needed in this routine, since it will be called by the modeling interpreter.
 
@@ -324,7 +328,11 @@ std::pair<double, long> ProfileTimerStore::get_from_store(const ProfileTimer::Ke
 	if (rc != SQLITE_OK)
 		sip_sqlite3_error(rc);
 
-	return std::make_pair(totaltime, count);
+	std::pair<double, long> to_return = std::make_pair(totaltime, count);
+	std::pair<ProfileTimer::Key, std::pair<double, long> > key_val_pair = std::make_pair(opcode_operands, to_return);
+	profile_store_cache_.insert(key_val_pair);
+
+	return to_return;
 }
 
 
