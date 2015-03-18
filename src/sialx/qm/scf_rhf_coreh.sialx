@@ -208,6 +208,7 @@ import "scf_defs.sialx"
 # Declare scalars 
 # --------------- 
 #
+      scalar num_lindep
       scalar e_a     
       scalar e_b     
       scalar escf_a 
@@ -627,7 +628,10 @@ import "scf_defs.sialx"
        ENDDO nu 
        ENDDO mu 
        sip_barrier 
-       execute eig_sr_inv oed_ovl x1   
+       execute eigen_calc_sqr_inv oed_ovl x1 num_lindep
+       print "number of dropped linear dependencies"
+       print num_lindep
+       print " "
 #
        DO mu 
        DO nu 

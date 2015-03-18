@@ -889,6 +889,13 @@ c     integer watom_frag(nfrags, *)
       double precision charge(ncenters) 
       double precision etemp 
 
+      TYPE(C_PTR) :: cscr1, cscr2, cscr3
+      integer(c_int) :: nscr1, nscr2, nscr3
+      real(c_double), pointer :: scr1(:)
+      real(c_double), pointer :: scr2(:)
+      real(c_double), pointer :: scr3(:)
+      integer nlindep
+
 C      write(6,*) ' N_APF = ', natoms_frag(current_frag) 
 C      write(6,*) ' IATOM = ', (iatom(m), 
 C     *                         m = 1, natoms_frag(current_frag) )
@@ -981,8 +988,25 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 c Construct U*S**(-1/2)  
 c-----------------------------------------------------------------------
+      nscr1 = 10*n_basis
+      nscr2 = n_basis*n_basis
+      nscr3 = n_basis
 
-      call diag(aovl,sos,m,n_basis,0,1,1) 
+      call scratch_array(nscr1,cscr1)
+      call scratch_array(nscr2,cscr2)
+      call scratch_array(nscr3,cscr3)
+
+      call c_f_pointer(cscr1, scr1, [nscr1])
+      call c_f_pointer(cscr2, scr2, [nscr2])
+      call c_f_pointer(cscr3, scr3, [nscr3])
+
+C      nlindep = query_int_constant("lindep_tol"//C_NULL_CHAR)
+      call eig_sqr_inv(aovl,sos,n_basis,
+     *                 scr1,nscr1,scr2,scr3,ierr,nlindep)
+      if (ierr .ne. 0) call abort_job()
+      write(*,*) "   Dropping ",nlindep," linear dependencies"
+
+C      call diag(aovl,sos,m,n_basis,0,1,1) 
       do m = 1, n_basis  
       do n = 1, n_basis  
          temp = 0.0 
@@ -1003,8 +1027,12 @@ c-----------------------------------------------------------------------
 c Diagonalize the transposed Fock matrix  
 c-----------------------------------------------------------------------
 
-       call diag(FTa,ca,m,n_basis,0,0,0) 
-       call diag(FTb,cb,m,n_basis,0,0,0) 
+C       call diag(FTa,ca,m,n_basis,0,0,0) 
+C       call diag(FTb,cb,m,n_basis,0,0,0) 
+       call dsyev_wrapper(FTa,ca,n_basis,scr1,nscr1,scr2,scr3,ierr)
+       if (ierr .ne. 0) call abort_job()
+       call dsyev_wrapper(FTb,cb,n_basis,scr1,nscr1,scr2,scr3,ierr)
+       if (ierr .ne. 0) call abort_job()
 
        if (nocc_a .eq. nocc_b) then 
           do n = 1, n_basis
@@ -1303,8 +1331,12 @@ c-----------------------------------------------------------------------
 c       Diagonalize the new Transposed Fock Matrix   
 c-----------------------------------------------------------------------
 
-        call diag(FTa,ca,m,n_basis,0,0,0) 
-        call diag(FTb,cb,m,n_basis,0,0,0) 
+C        call diag(FTa,ca,m,n_basis,0,0,0) 
+C        call diag(FTb,cb,m,n_basis,0,0,0) 
+        call dsyev_wrapper(FTa,ca,n_basis,scr1,nscr1,scr2,scr3,ierr)
+        if (ierr .ne. 0) call abort_job()
+        call dsyev_wrapper(FTb,cb,n_basis,scr1,nscr1,scr2,scr3,ierr)
+        if (ierr .ne. 0) call abort_job()
 
         if (nocc_a .eq. nocc_b) then 
            do n = 1, n_basis
@@ -1570,6 +1602,10 @@ c    *          FTb(m+nocc_b,n+nocc_b)
 c        endif 
 c     enddo 
 c     enddo 
+
+      call delete_scratch_array(cscr1)
+      call delete_scratch_array(cscr2)
+      call delete_scratch_array(cscr3)
 
       return 
 
@@ -3846,3 +3882,4 @@ C
 
       return
       end
+

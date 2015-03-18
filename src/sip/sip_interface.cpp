@@ -45,6 +45,21 @@ void set_scalar_value(const char * name, double value) {
 }
 
 /**
+ * query existance of double constant from initialization data
+ * @param cname [in]  Name of the constant
+ * @return 0 for exists
+ */
+int query_scalar_constant(const char*cname) {
+    try {
+	sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_scalar(
+			std::string(cname));
+	return 1;
+    } catch(const std::out_of_range& oor) {
+	return 0;
+    }
+}
+
+/**
  * Get a double constant from initialization data
  * @param cname [in]  Name of the constant
  * @return Value of the constant
@@ -52,6 +67,21 @@ void set_scalar_value(const char * name, double value) {
 double scalar_constant(const char*cname) {
 	return sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_scalar(
 			std::string(cname));
+}
+
+/**
+ * query integer constant from initialization data
+ * @param cname [in]  Name of the constant
+ * @return 0 for exists
+ */
+int query_int_constant(const char*cname) {
+    try {
+	sip::Interpreter::global_interpreter->sip_tables().setup_reader().predefined_int(
+			std::string(cname));
+	return 1;
+    } catch(const std::out_of_range& oor) {
+	return 0;
+    }
 }
 
 /**
