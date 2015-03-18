@@ -42,14 +42,29 @@ void SialOpsParallel::sip_barrier() {
  */
 //	block_manager_.block_map_.clean_pending();
 //	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
-
-	//do an MPI barrier among all the workers
 	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
 	int num_workers;
 	MPI_Comm_size(worker_comm, &num_workers);
+
+
 	if (num_workers > 1) {
 		SIPMPIUtils::check_err(MPI_Barrier(worker_comm));
 	}
+	//DEBUG  this code checks that the barrier is from the same op_table entry at each worker.
+	//If not, it prints a warning
+//	int pc = Interpreter::global_interpreter->get_pc();
+//	int pcs[num_workers];
+//	int lines[num_workers];
+//	int myline = current_line();
+//	SIPMPIUtils::check_err(MPI_Gather(&pc, 1, MPI_INT, pcs, 1, MPI_INT, 0, worker_comm));
+//	SIPMPIUtils::check_err(MPI_Gather(&myline, 1, MPI_INT, lines, 1, MPI_INT, 0, worker_comm));
+//	if (sip_mpi_attr_.is_company_master()){
+//		for (int i = 0; i < num_workers; ++i){
+//			if (pcs[i]!=pc){
+//				std::cout << "inconsistent pc.  master pc = " << pc << " at line " << myline;
+//				std::cout << " rank " << i <<   " pc  = " << pcs[i] << " at line " << lines[i] << std::endl << std::flush;
+//		}}
+//	}
 
 	//update the local sip_barrier state;
 	//increment section number, reset msg number
@@ -62,9 +77,7 @@ void SialOpsParallel::sip_barrier() {
 			block_manager_.delete_per_array_map_and_blocks(i);
 	}
 	reset_mode();
-
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
-
 }
 
 /** Currently this is a no-op.  Map, and blocks are created lazily when needed */

@@ -1465,6 +1465,8 @@ print "  "
 	eold = 0.0
 	niter = 0.0
 	do kiter
+	    print " "
+	    print kiter
 	    niter += 1.0
 	    server_barrier
 #
@@ -1491,17 +1493,20 @@ print "  "
 	    endif
 	    call movet2
 	    server_barrier
-		ediff = eold - ecorrT
-		etemp = ediff**2.0
-		ediff = etemp**(0.5)
-		IF ediff < ecrit
-		   exit # kiter 
-		ENDIF
+	    assert_same ecorrT
+	    assert_same eold
+	    ediff = eold - ecorrT
+	    etemp = ediff**2.0
+	    ediff = etemp**(0.5)
+	    assert_same ediff
+	    IF ediff < ecrit
+	       exit # kiter 
+	    ENDIF
 #
 #        Reset eold --> enew 
 #        ------------------- 
 #
-	     eold = ecorrT
+	    eold = ecorrT
 #
 	enddo kiter
 #

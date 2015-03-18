@@ -86,6 +86,8 @@ void sip_abort(std::string m) {
 	else
 		std::cerr << "server rank " << sip::SIPMPIAttr::get_instance().global_rank() << ": " << m << std::endl<< std::flush;
 
+	fflush(stdout);
+	fflush(stderr);
 	usleep(1000000); //give output time to appear before aborting
 	MPI_Abort(MPI_COMM_WORLD, -1);
 #else

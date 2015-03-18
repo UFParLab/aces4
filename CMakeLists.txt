@@ -540,6 +540,8 @@ set(SIAL_FILES
     src/sialx/test/index_scalar_cast.sialx;
     src/sialx/test/contig_local3.sialx;
     src/sialx/test/cached_block_map_test.sialx;
+    src/sialx/test/pardo_with_where.sialx;
+    src/sialx/test/read_block_test.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
@@ -558,24 +560,11 @@ set(SIAL_FILES
     src/sialx/qm/rlccd_rhf.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
-    src/sialx/qm/cis_rhf.sialx;
-    src/sialx/qm/cis_rhf_defs.sialx;
     src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/rcis_d_rhf.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx)
-
-#    src/sialx/qm/rccsdpt_aaa_defs.sialx;
-#    src/sialx/qm/rccsdpt_aab_defs.sialx;
-#    src/sialx/qm/scf_mp2_rhf.sialx;
-#    src/sialx/qm/scf_mp2_defs.sialx;
-#    src/sialx/qm/rlambda_rhf.sialx;
-#    src/sialx/qm/scf_frag.sialx;
-#    src/sialx/qm/scf_frag_defs.sialx;
-#    src/sialx/qm/trans_frag_fpardo.sialx;
-#    src/sialx/qm/frag_2order_corr.sialx;
-
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
