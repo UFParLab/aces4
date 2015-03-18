@@ -563,31 +563,32 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 
 TEST(Sial,cached_block_map_test) {
-	std::string job("cached_block_map_test");
-	int norb = 2;
-	int segs[] = { 50, 50, 50, 50, 50 };
-	if (attr->global_rank() == 0) {
-		init_setup(job.c_str());
-		set_constant("norb", norb);
-		std::string tmp = job + ".siox";
-		const char* nm = tmp.c_str();
-		add_sial_program(nm);
-		set_aoindex_info(5, segs);
-		finalize_setup();
-	}
-	std::stringstream output;
+    std::string job("cached_block_map_test");
+    int norb = 4;
+    int iterations = 3;
+    int segs[] = { 26, 26, 26, 26 };
+    if (attr->global_rank() == 0) {
+        init_setup(job.c_str());
+        set_constant("norb", norb);
+        set_constant("iterations", iterations);
+        std::string tmp = job + ".siox";
+        const char* nm = tmp.c_str();
+        add_sial_program(nm);
+        set_aoindex_info(4, segs);
+        finalize_setup();
+    }
+    std::stringstream output;
 
-	std::size_t limit_size = 10 * 1024 * 1024; // 100 MB
-	sip::GlobalState::set_max_data_memory_usage(limit_size);
-	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-	controller.initSipTables();
-	controller.run();
-	if (attr->is_worker()) {
-		EXPECT_TRUE(controller.worker_->all_stacks_empty());
-	}
-	sip::GlobalState::reinitialize();
+    std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
+    sip::GlobalState::set_max_data_memory_usage(limit_size);
+    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    controller.initSipTables();
+    controller.run();
+    if (attr->is_worker()) {
+        EXPECT_TRUE(controller.worker_->all_stacks_empty());
+    }
+    sip::GlobalState::reinitialize();
 }
-
 
 
 

@@ -109,8 +109,9 @@ public:
 
 	/**
 	 * Deletes no-longer-pending blocks in the pending_delete_ list
+     * @return true if any blocks were cleared
 	 */
-	void clean_pending();
+	bool test_and_clean_pending();
     /**
      * Waits for pending-delete  blocks and deletes them.
      * Postcondition of this method is that the pending_delete_ list is empty.

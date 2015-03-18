@@ -1,16 +1,69 @@
 sial cached_block_map_test
-	special list_block_map
-	predefined int norb
-	aoindex i = 1:norb
-	aoindex j = 1:norb
-	aoindex k = 1:norb
-	aoindex l = 1:norb
-	distributed b[i, j, k, l]
-	temp t[i, j, k, l]
-	
-	pardo i, j, k, l
-		t[i,j,k,l] = 42.0
-		put b[i,j,k,l] = t[i,j,k,l]
-	endpardo i,j,k,l
-	
+    special list_block_map
+    predefined int norb
+    predefined int iterations
+    aoindex i = 1:norb
+    aoindex j = 1:norb
+    aoindex k = 1:norb
+    aoindex l = 1:norb
+    index iter = 1:iterations
+    distributed b[i, j, k, l]
+    distributed c[i, j, k, l]
+    temp t[i, j, k, l]
+    
+    do iter
+    
+        pardo i, j, k, l
+            t[i,j,k,l] = 42.0
+            put b[i,j,k,l] = t[i,j,k,l]
+        endpardo i,j,k,l
+        
+        print "done putting b"
+        
+        pardo i, j, k, l
+            t[i,j,k,l] = 51.0
+            put c[i,j,k,l] = t[i,j,k,l]
+        endpardo i,j,k,l
+        
+        print "done putting c"
+        print "listing block map before barrier"
+        execute list_block_map
+        
+        sip_barrier ############################
+        
+        print "listing block map after barrier"
+        execute list_block_map
+        
+        pardo i, j, k, l
+            get b[i, j, k, l]
+        endpardo i,j,k,l
+        
+        print "done getting b"
+        
+        pardo i, j, k, l
+            get c[i, j, k, l]
+        endpardo i,j,k,l
+        
+        print "done getting c"
+        
+        sip_barrier ############################
+        
+        print "listing block map after barrier"
+        execute list_block_map
+        
+        pardo i, j, k, l
+            get b[i, j, k, l]
+            put c[i,j,k,l] += b[i,j,k,l]
+        endpardo i,j,k,l
+        
+        print "done getting b and summing into c"
+        
+        print "listing block map after summing into c"
+        execute list_block_map
+        
+        sip_barrier ############################
+    
+    enddo iter
+    
+    
 endsial cached_block_map_test

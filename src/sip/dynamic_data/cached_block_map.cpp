@@ -38,36 +38,48 @@ Block* CachedBlockMap::block(const BlockId& block_id){
 }
 
 void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
-	while (max_allocatable_bytes_ - (allocated_bytes_ + pending_delete_bytes_) <= bytes_in_block) {
-		clean_pending();
-		bool any_blocks_for_removal = policy_.any_blocks_for_removal();
-		if (!any_blocks_for_removal){
-			if (!wait_and_clean_any_pending()){
+    while (max_allocatable_bytes_ - (allocated_bytes_ + pending_delete_bytes_) <= bytes_in_block) {
+        /** While not enough space is available, check to see if blocks in communication (pending block)
+         * have been freed up. If so, check if space has been freed up (continue).
+         * If not, check if there is any block to clear from the lru cache.
+         * If no blocks in the LRU cache, wait on any pending block. If there are no pending blocks,
+         * we have run out of space - Crash !
+         */
+        bool cleared_some_pending = test_and_clean_pending();
+        if (cleared_some_pending)
+            continue;
+        bool any_blocks_for_removal = policy_.any_blocks_for_removal();
+        if (!any_blocks_for_removal){
+            bool cleared_any_pending = wait_and_clean_any_pending();
+            if (!cleared_any_pending){
                 throw std::out_of_range("No blocks to remove from cache or pending deletes");
             }
-		} else {
-			BlockId block_id = policy_.get_next_block_for_removal();
-			Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
-			allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
-			delete tmp_block_ptr;
-		}
-	}
+        } else {
+            BlockId block_id = policy_.get_next_block_for_removal();
+            Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
+            allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
+            delete tmp_block_ptr;
+        }
+    }
 }
 
-void CachedBlockMap::clean_pending(){
+bool CachedBlockMap::test_and_clean_pending(){
 // Cleaning pending blocks is relevant only for the MPI version
+    bool cleared_any_pending = false;
 #ifdef HAVE_MPI
-	std::list<Block*>::iterator it;
-	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+    std::list<Block*>::iterator it;
+    for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
         Block* bptr = *it;
-		if (bptr->test()){
-			pending_delete_bytes_ -= bptr->size() * sizeof(double);
-			delete *it;
-			pending_delete_.erase(it++);
-		}
-		else ++it;
-	}
+        if (bptr->test()){
+            pending_delete_bytes_ -= bptr->size() * sizeof(double);
+            delete *it;
+            pending_delete_.erase(it++);
+            cleared_any_pending = true;
+        }
+        else ++it;
+    }
 #endif // HAVE_MPI
+    return cleared_any_pending;
 }
 
 void CachedBlockMap::wait_and_clean_pending(){
