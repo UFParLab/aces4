@@ -47,7 +47,7 @@ void set_scalar_value(const char * name, double value) {
 /**
  * query existance of double constant from initialization data
  * @param cname [in]  Name of the constant
- * @return 0 for exists
+ * @return 1 for exists
  */
 int query_scalar_constant(const char*cname) {
     try {
@@ -72,7 +72,7 @@ double scalar_constant(const char*cname) {
 /**
  * query integer constant from initialization data
  * @param cname [in]  Name of the constant
- * @return 0 for exists
+ * @return 1 for exists
  */
 int query_int_constant(const char*cname) {
     try {
