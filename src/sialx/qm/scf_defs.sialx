@@ -63,7 +63,7 @@ static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 special return_h1 w
 special return_ovl w
-special eig_sr_inv uu
+special eigen_calc_sqr_inv uuu
 special eigen_calc uu
 special compute_diis u 
 special check_dconf rw
