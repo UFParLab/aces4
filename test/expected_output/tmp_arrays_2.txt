@@ -24,6 +24,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -56,6 +57,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -91,6 +93,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -123,6 +126,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -155,6 +159,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -190,6 +195,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -222,6 +228,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -254,6 +261,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -289,6 +297,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 
@@ -302,6 +311,7 @@ Block Map :
 
 Cache : 
 
+Pending Deletes :0
 
 temp_block_list_stack_:
 

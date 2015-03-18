@@ -6,6 +6,7 @@
  */
 
 #include "sipmap_helper_methods.h"
+#include <omp.h>
 
 
 int main(int argc, char* argv[]) {
@@ -68,8 +69,9 @@ int main(int argc, char* argv[]) {
 			std::vector<sip::SIPMaPInterpreter::PardoSectionsInfoVector_t> pardo_sections_info_vector;
 			std::vector<sip::SIPMaPTimer> sipmap_timer_vector;
 
-#pragma omp for ordered schedule(static)
+#pragma omp parallel for ordered schedule(static)
 			for (int worker_rank=0; worker_rank<num_workers; ++worker_rank){
+				std::cout<<"threads="<<omp_get_num_threads()<<std::endl;
 				sip::ProfileTimerStore in_memory_timer_store(":memory:");
 #pragma omp ordered
 				{

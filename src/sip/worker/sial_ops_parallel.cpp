@@ -39,6 +39,7 @@ void SialOpsParallel::sip_barrier(int pc) {
 	//wait for all expected acks,
 	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_block_wait();
 	ack_handler_.wait_all();
+	block_manager_.block_map_.wait_and_clean_pending();
 	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).pause_block_wait();
 /* At this point, all puts should have been acked, thus the blocks are no longer pending.  After clean, the pending_list_ should be empty
  * Commented out for performance reasons.

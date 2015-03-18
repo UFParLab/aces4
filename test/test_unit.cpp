@@ -1755,12 +1755,15 @@ TEST(ConfigurableRankDistribution, test9){
 }
 
 TEST(SIPMaPConfig, test1){
-	std::string json_test = " { \"Bandwidth\" : 10.99, \"Latency\" : 0.00004 } ";
+	std::string json_test = " { \"InterconnectBeta\" : 10.99, \"InterconnectAlpha\" : 0.00004, \"DAXPYAlpha\": 0.001, \"DAXPYBeta\":535049102.26895 } ";
 	std::istringstream json_istr(json_test);
 	sip::SIPMaPConfig sipmap_config(json_istr);
 	sip::RemoteArrayModel::Parameters& parameters = sipmap_config.get_parameters();
 	ASSERT_DOUBLE_EQ(10.99, parameters.interconnect_beta);
 	ASSERT_DOUBLE_EQ(0.00004, parameters.interconnect_alpha);
+	ASSERT_DOUBLE_EQ(0.001, parameters.daxpy_alpha);
+	ASSERT_DOUBLE_EQ(535049102.26895, parameters.daxpy_beta);
+
 }
 
 
