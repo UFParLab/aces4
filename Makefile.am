@@ -274,7 +274,8 @@ TEST_INIT_DATA_FILES=\
 test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
-test/mcpt2_test.dat
+test/mcpt2_test.dat\
+test/lindep_test.dat
 
 
 EXTRA_DIST+= $(TEST_INIT_DATA_FILES)
@@ -429,6 +430,8 @@ SIOX_FILES=\
 ./src/sialx/test/block_scale_assign.siox\
 ./src/sialx/test/return_sval_test.siox\
 ./src/sialx/test/broadcast_static.siox\
+./src/sialx/test/read_block_test.siox\
+./src/sialx/test/pardo_with_where.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -439,8 +442,6 @@ SIOX_FILES=\
 ./src/sialx/qm/mcpt2_doubles_lowmem.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
-./src/sialx/qm/cis_rhf.siox\
-./src/sialx/qm/cis_rhf_defs.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
@@ -454,12 +455,6 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab.siox
-
-#./src/sialx/qm/rccsdpt_aaa_defs.siox\
-#./src/sialx/qm/rccsdpt_aab_defs.siox\
-#./src/sialx/qm/scf_mp2_rhf.siox\
-#./src/sialx/qm/scf_mp2_defs.siox\
-#./src/sialx/qm/rlambda_rhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -552,6 +547,8 @@ EXTRA_DIST += \
 ./src/sialx/test/block_scale_assign.sialx\
 ./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/test/broadcast_static.sialx\
+./src/sialx/test/read_block_test.sialx\
+./src/sialx/test/pardo_with_where.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\

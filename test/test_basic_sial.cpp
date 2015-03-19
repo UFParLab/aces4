@@ -1447,6 +1447,48 @@ TEST(BasicSial,index_scalar_cast){
 	EXPECT_EQ(norb, count);
 	EXPECT_EQ(1, count2);
 }
+
+
+TEST(BasicSial,read_block_test){
+	std::string job("read_block_test");
+	std::stringstream output;
+	int norb = 2;
+	{
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		int segs[] = { 2, 2};
+		set_aoindex_info(2, segs);
+		finalize_setup();
+	}
+
+	std::ofstream block_txt_file("a[1.1].txt");
+	/** Format of input file
+	 *    1   1       -0.00036238793298
+	 *    1   2        0.00000000048448
+	 *    2   1       -0.00000000046882
+	 *    2   2       -0.00009462368414
+	 */
+	std::string blk_data = "   1   1       -0.00036238793298\n	1   2 0.00000000048448\n	2   1       -0.00000000046882\n	2   2 -0.00009462368414\n";
+	block_txt_file << blk_data;
+	block_txt_file.close();
+
+	barrier();
+
+	TestController controller(job, true, true, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+
+	double *data = controller.static_array("a");
+	EXPECT_DOUBLE_EQ(data[0], -0.00036238793298);
+	EXPECT_DOUBLE_EQ(data[1], -0.00000000046882);
+	EXPECT_DOUBLE_EQ(data[2], 0.00000000048448);
+	EXPECT_DOUBLE_EQ(data[3], -0.00009462368414);
+
+}
+
 //****************************************************************************************************************
 
 void bt_sighandler(int signum) {

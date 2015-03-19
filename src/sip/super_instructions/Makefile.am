@@ -40,19 +40,15 @@ QM_SOURCE_FILES=\
 ./qm/set_ijk_aaa.F\
 ./qm/set_ijk_aab.F\
 ./qm/cis_unit_guess.F\
-./qm/cis_energy_numerator.F\
-./qm/update_cis_bvec.F\
 ./qm/energy_ty_denominator_rhf.F\
 ./qm/utility/invert_diagonal.F\
 ./qm/utility/invert_diagonal_asym.F\
 ./qm/utility/return_diagonal_elements.F\
-./qm/utility/eig.F\
-./qm/utility/diag.F\
 ./qm/utility/eigen_calc.F\
+./qm/utility/eigen_calc_sqr_inv.F\
 ./qm/utility/gen_eigen_calc.F\
 ./qm/utility/form_R.F \
 ./qm/utility/compute_diis.F\
-./qm/utility/eig_sr_inv.F\
 ./qm/utility/stripi.F\
 ./qm/utility/return_sval.F\
 ./qm/mcpt-fragment/set_frag.F\
@@ -330,6 +326,7 @@ GENERAL_SOURCE_FILES=\
 ./general/enable_debug_print.cpp\
 ./general/enable_all_rank_print.cpp\
 ./general/disable_all_rank_print.cpp\
+./general/read_block_from_text_file.cpp\
 ./general/abort_job.F
 
 
