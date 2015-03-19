@@ -138,7 +138,7 @@ void SIPMaPInterpreter::handle_execute_op(int pc) {
 		block_selector_stack_.pop();
 	}
 	ProfileTimer::Key key = make_profile_timer_key(opcode_name, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -167,7 +167,7 @@ void SIPMaPInterpreter::handle_block_copy_op(int pc) {
 	block_selector_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_copy_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -183,7 +183,7 @@ void SIPMaPInterpreter::handle_block_permute_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_permute_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -196,7 +196,7 @@ void SIPMaPInterpreter::handle_block_fill_op(int pc) {
 	expression_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_fill_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -209,7 +209,7 @@ void SIPMaPInterpreter::handle_block_scale_op(int pc) {
 	expression_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_scale_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -224,7 +224,7 @@ void SIPMaPInterpreter::handle_block_scale_assign_op(int pc) {
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	expression_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_scale_assign_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -237,7 +237,7 @@ void SIPMaPInterpreter::handle_block_accumulate_scalar_op(int pc) {
 	expression_stack_.pop();
 	bs_list.push_back(BlockSelector(arg0(pc), arg1(pc), index_selectors(pc)));
 	ProfileTimer::Key key = make_profile_timer_key(block_accumulate_scalar_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -253,7 +253,7 @@ void SIPMaPInterpreter::handle_block_add_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_add_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -269,7 +269,7 @@ void SIPMaPInterpreter::handle_block_subtract_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_subtract_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -285,7 +285,7 @@ void SIPMaPInterpreter::handle_block_contract_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.pop();
 	ProfileTimer::Key key = make_profile_timer_key(block_contract_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -302,7 +302,7 @@ void SIPMaPInterpreter::handle_block_contract_to_scalar_op(int pc) {
 	block_selector_stack_.pop();
 	expression_stack_.push(0.0);
 	ProfileTimer::Key key = make_profile_timer_key(block_contract_to_scalar_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	double block_wait_time = calculate_block_wait_time(bs_list);
@@ -370,7 +370,7 @@ void SIPMaPInterpreter::handle_get_op(int pc){
 	std::list<BlockSelector> bs_list;
 	bs_list.push_back(block_selector_stack_.top());
 	ProfileTimer::Key key = make_profile_timer_key(get_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
@@ -395,7 +395,7 @@ void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.push(first);
 	ProfileTimer::Key key = make_profile_timer_key(put_accumulate_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
@@ -423,7 +423,7 @@ void SIPMaPInterpreter::handle_put_replace_op(int pc) {
 	bs_list.push_back(block_selector_stack_.top());
 	block_selector_stack_.push(first);
 	ProfileTimer::Key key = make_profile_timer_key(put_replace_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
@@ -446,7 +446,7 @@ void SIPMaPInterpreter::handle_delete_op(int pc){
 	// Record computation time (time for bookkeeping and to send small message)
 	std::list<BlockSelector> bs_list;
 	ProfileTimer::Key key = make_profile_timer_key(delete_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
@@ -462,7 +462,7 @@ void SIPMaPInterpreter::handle_set_persistent_op(int pc) {
 	// Record computation time (time for bookkeeping and to send small message)
 	std::list<BlockSelector> bs_list;
 	ProfileTimer::Key key = make_profile_timer_key(set_persistent_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
@@ -478,7 +478,7 @@ void SIPMaPInterpreter::handle_restore_persistent_op(int pc){
 	// Record computation time (time for bookkeeping and to send small message)
 	std::list<BlockSelector> bs_list;
 	ProfileTimer::Key key = make_profile_timer_key(restore_persistent_op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
 
@@ -505,7 +505,7 @@ void SIPMaPInterpreter::handle_pardo_op(int &pc){
 void SIPMaPInterpreter::record_zero_block_args_computation_time(opcode_t op) {
 	std::list<BlockSelector> bs_list;
 	ProfileTimer::Key key = make_profile_timer_key(op, bs_list);
-	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_store(key);
+	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double) (timer_count_pair.second);
 	record_total_time(computation_time);
 	pardo_section_time_ += computation_time;

@@ -257,9 +257,9 @@ void ProfileTimerStore::save_to_store(const ProfileTimer::Key& opcode_operands, 
 
 }
 
-std::pair<double, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands) const {
+std::pair<double, long> ProfileTimerStore::get_from_store(const ProfileTimer::Key& opcode_operands) {
 
-	ProfileStoreCache_t::const_iterator it = profile_store_cache_.find(opcode_operands);
+	ProfileStoreMap_t::const_iterator it = profile_store_cache_.find(opcode_operands);
 	if (it != profile_store_cache_.end())
 		return it->second;
 
@@ -335,6 +335,24 @@ std::pair<double, long> ProfileTimerStore::get_from_store(const ProfileTimer::Ke
 	return to_return;
 }
 
+std::pair<double, long> ProfileTimerStore::get_from_cache(const ProfileTimer::Key& opcode_operands) const{
+
+	ProfileStoreMap_t::const_iterator it = profile_store_cache_.find(opcode_operands);
+	if (it != profile_store_cache_.end())
+		return it->second;
+	else{
+		std::stringstream err_ss;
+		err_ss << "Key " << opcode_operands << " not found in cache" << std::endl;
+		throw std::out_of_range(err_ss.str());
+	}
+}
+
+void ProfileTimerStore::read_all_data_into_cache(){
+	ProfileStoreMap_t m = read_all_data();
+	profile_store_cache_.clear();
+	profile_store_cache_.insert(m.begin(), m.end());
+}
+
 
 ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
 	std::map<ProfileTimer::Key, std::pair<double, long> > all_rows_map;
@@ -397,6 +415,7 @@ ProfileTimerStore::ProfileStoreMap_t ProfileTimerStore::read_all_data() const{
 		if (rc != SQLITE_OK)
 			sip_sqlite3_error(rc);
 	}
+
 	return all_rows_map;
 }
 

@@ -38,7 +38,20 @@ public:
 	 * @param opcode_operands
 	 * @return
 	 */
-	std::pair<double, long> get_from_store(const ProfileTimer::Key& opcode_operands) const;
+	std::pair<double, long> get_from_store(const ProfileTimer::Key& opcode_operands);
+
+	/**
+	 * Reads all data from the underlying sqlite3 table into the profile_store_cache_ map.
+	 * Clears the cache before reading in new values.
+	 */
+	void read_all_data_into_cache();
+
+	/**
+	 * Retrieves values from profile_store_cache_.
+	 * @param opcode_operands
+	 * @return
+	 */
+	std::pair<double, long> get_from_cache(const ProfileTimer::Key& opcode_operands) const;
 
 
 	typedef std::map<sip::ProfileTimer::Key, std::pair<double, long> > ProfileStoreMap_t;
@@ -46,7 +59,7 @@ public:
 
 
 	/**
-	 * Reads all data into an in memory list and returns it.
+	 * Reads all data into an in memory list and returns it. Also caches it in profile_store_cache_.
 	 * CAUTION : Use this function cautiously since it reads the entire database into memory.
 	 * @return
 	 */
@@ -69,12 +82,11 @@ public:
 
 	const static int MAX_BLOCK_OPERANDS;
 
-	typedef std::map<ProfileTimer::Key, std::pair<double, long> > ProfileStoreCache_t;
 
 private:
 	std::string db_location_;
 	sqlite3* db_;
-	mutable ProfileStoreCache_t profile_store_cache_;	/*! Caches info to avoid repeated database lookups */
+	ProfileStoreMap_t profile_store_cache_;	/*! Caches info to avoid repeated database lookups */
 
 	/**
 	 * Utility function to print the sqlite3 error and throw an exception.

@@ -330,6 +330,14 @@ AM_CPPFLAGS = \
     $(PAPI_INCLUDE)\
     $(TAU_CPP)
 
+AM_CXXFLAGS=\
+	$(OPENMP_CXXFLAGS)
+AM_CFLAGS=\
+	$(OPENMP_CFLAGS)
+AM_FCFLAGS=\
+	$(OPENMP_FCFLAGS)
+AM_FFLAGS=\
+	$(OPENMP_FFLAGS)
 
 
 #######################################################################
@@ -370,7 +378,7 @@ test_interpreters_SOURCES = \
 TEST_LDADD_VARS = \
 	test/libgtest.la \
 	test/libgtest_main.la \
-	test/libtestcontrollers.a\
+	test/libtestcontrollers.la\
 	libtensordil.a \
 	libsqlite3.a \
 	libjsoncpp.a \
@@ -421,8 +429,8 @@ copy-data-files.stamp:
 
 
 # Test Controller Libraries
-check_LTLIBRARIES = test/libtestcontrollers.a
-nodist_test_libtestcontrollers_a_SOURCES = \
+check_LTLIBRARIES = test/libtestcontrollers.la
+nodist_test_libtestcontrollers_la_SOURCES = \
 	test/test_controller.h\
     test/test_controller.cpp\
     test/test_controller_parallel.h\

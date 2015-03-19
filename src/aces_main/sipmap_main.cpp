@@ -6,7 +6,7 @@
  */
 
 #include "sipmap_helper_methods.h"
-#include <omp.h>
+//#include <omp.h>
 
 
 int main(int argc, char* argv[]) {
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader::SialProgList::const_iterator it;
 
 	// Sets the database name from the parameters.
-	const sip::ProfileTimerStore profile_timer_store(parameters.profiledb.c_str());
+	sip::ProfileTimerStore profile_timer_store(parameters.profiledb.c_str());
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::cout << it->c_str() << std::endl;
@@ -69,23 +69,20 @@ int main(int argc, char* argv[]) {
 			std::vector<sip::SIPMaPInterpreter::PardoSectionsInfoVector_t> pardo_sections_info_vector;
 			std::vector<sip::SIPMaPTimer> sipmap_timer_vector;
 
+			profile_timer_store.read_all_data_into_cache();
+
 #pragma omp parallel for ordered schedule(static)
 			for (int worker_rank=0; worker_rank<num_workers; ++worker_rank){
-				std::cout << "threads = "<< omp_get_num_threads() << std::endl;
-				sip::ProfileTimerStore in_memory_timer_store(":memory:");
-#pragma omp ordered
-				{
-					in_memory_timer_store.merge_from_other(profile_timer_store);
-				}
+				//std::cout << "threads = "<< omp_get_num_threads() << std::endl;
 
 				sip::SIPMaPTimer sipmap_timer(sipTables.max_timer_slots());
-				sip::SIPMaPInterpreter runner(worker_rank, num_workers, sipTables, remote_array_model, in_memory_timer_store, sipmap_timer);
+				sip::SIPMaPInterpreter runner(worker_rank, num_workers, sipTables, remote_array_model, profile_timer_store, sipmap_timer);
 				SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 				runner.interpret();
 				runner.post_sial_program();
 				SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 				sip::SIPMaPInterpreter::PardoSectionsInfoVector_t& pardo_sections_info = runner.get_pardo_section_times();
-#pragma omp ordered
+#pragma omp critical
 				{
 					pardo_sections_info_vector.push_back(pardo_sections_info);
 					sipmap_timer_vector.push_back(sipmap_timer);
@@ -98,9 +95,8 @@ int main(int argc, char* argv[]) {
 			merged_timer.print_timers(std::cout, sipTables);
 
 			// Print each of the timers
-			int i;
-			std::vector<sip::SIPMaPTimer>::const_iterator it;
-			for (i=0, it = sipmap_timer_vector.begin(); it != sipmap_timer_vector.end(); ++it, ++i){
+			std::vector<sip::SIPMaPTimer>::const_iterator it = sipmap_timer_vector.begin();
+			for (int i=0; it != sipmap_timer_vector.end(); ++it, ++i){
 				char sialx_timer_file_name[64];
 				std::sprintf(sialx_timer_file_name, "worker.profile.%d", i);
 				std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);
@@ -114,6 +110,11 @@ int main(int argc, char* argv[]) {
 
 
 		//STOP_TAU_SIALX_PROGRAM_DYNAMIC_PHASE();
+  		barrier();
+
+		sip::Counter::clear_list();
+		sip::MaxCounter::clear_list();
+		sip::Timer::clear_list();
 
   		barrier();
 	} //end of loop over programs

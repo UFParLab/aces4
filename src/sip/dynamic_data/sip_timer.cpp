@@ -19,6 +19,7 @@ std::vector<Timer*> Timer::list_;
 Timer::Timer(const std::string name) :
 		name_(name), on_(false), epochs_(0),
 		start_time_(0.0), value_(0.0) {
+#pragma omp critical
 	list_.push_back(this);
 }
 
@@ -26,6 +27,7 @@ Timer::Timer(const std::string name, bool register_timer) :
 		name_(name), on_(false), epochs_(0),
 		start_time_(0.0), value_(0.0) {
 	if (register_timer)
+#pragma omp critical
 		list_.push_back(this);
 }
 
