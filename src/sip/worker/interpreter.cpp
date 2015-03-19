@@ -251,6 +251,33 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			++pc;
 		}
 			break;
+		case put_initialize_op: { //put a[...] = 0.0
+			std::cout << "entered put_initialize_op " <<std::endl<< std::flush;
+			BlockId lhs_id = get_block_id_from_selector_stack();
+			std::cout << "got block id " <<std::endl<< std::flush;
+			double rhs_value = expression_stack_.top();
+			expression_stack_.pop();
+			std::cout << "put_initialize_op " << lhs_id << "," << rhs_value << std::endl << std::flush;
+			sial_ops_.put_initialize(lhs_id, rhs_value);
+			++pc;
+		}
+		break;
+		case put_increment_op: { //put a[...] = 0.0
+			sip::BlockId  lhs_id = get_block_id_from_selector_stack();
+			double rhs_value = expression_stack_.top();
+			expression_stack_.pop();
+			sial_ops_.put_increment(lhs_id, rhs_value);
+			++pc;
+		}
+		break;
+		case put_scale_op: { //put a[...] = 0.0
+			sip::BlockId lhs_id = get_block_id_from_selector_stack();
+			double rhs_value = expression_stack_.top();
+			expression_stack_.pop();
+			sial_ops_.put_scale(lhs_id, rhs_value);
+			++pc;
+		}
+		break;
 		case create_op: {
 			sial_ops_.create_distributed(arg0());
 			++pc;

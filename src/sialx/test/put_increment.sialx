@@ -15,10 +15,10 @@ scalar x
 print "starting loop"
 pardo i
 do j
-t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
-#x = (scalar)((i-1)*norb + (j-1)) + 1.0
-put a[i,j] = t[i,j]
-#put a[i,j] = x
+#t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+x = (scalar)((i-1)*norb + (j-1)) + 1.0
+#put a[i,j] = t[i,j]
+put a[i,j] = x
 print i
 #print t[i,j]
 print x
