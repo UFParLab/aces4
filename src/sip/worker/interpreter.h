@@ -296,6 +296,13 @@ private:
 	 */
 	int pc; //technically, this should be pc_, but I'm going to leave it this way for convenience
 
+	/**
+	 * Valid for when BalancedTaskAllocParallelPardoLoop is used.
+	 * In a pardo section, the iteration is counted across all pardos. This variable is passed to
+	 * the BalancedTaskAllocParallelPardoLoop instance.
+	 */
+	long iteration_;
+
 	/** contains a stack of pointers to LoopManager objects.
 	 * A LoopManager is created and pushed onto the stack when a loop is entered,
 	 * and popped when a loop is exited.  The LoopManager is the
