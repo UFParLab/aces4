@@ -79,7 +79,7 @@ void SialOpsSequential::put_initialize(const BlockId& target_id, double value){
 	target_block->fill(value);
 }
 void SialOpsSequential::put_increment(const BlockId& target_id, double value){
-	Block::BlockPtr target_block = block_manager_.get_block_for_updating(target_id);
+	Block::BlockPtr target_block = block_manager_.get_block_for_accumulate(target_id);
 	target_block->increment_elements(value);
 }
 void SialOpsSequential::put_scale(const BlockId& target_id, double value){
