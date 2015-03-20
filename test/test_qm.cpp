@@ -231,6 +231,45 @@ TEST(Sial_QM,mcpt2_test){
 
 }
 
+/* linear dependence test
+test
+C            .000000     .000000     .762209
+C            .000000     .000000    -.762209
+H            .000000    1.018957    1.157229
+H           -.882443    -.509479    1.157229
+H            .882443    -.509479    1.157229
+H            .000000   -1.018957   -1.157229
+H           -.882443     .509479   -1.157229
+H            .882443     .509479   -1.157229
+
+*ACES2(BASIS=3-21++G
+SCF_MAXCYC=1
+lindep_tol=3
+spherical=off
+CALC=scf)
+
+*SIP
+MAXMEM=3000
+SIAL_PROGRAM = scf_rhf_coreh.siox
+
+*/
+TEST(Sial_QM,lindep_test){
+	std::string job("lindep_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-64.24332859583458, scf_energy, 1e-10);
+	}
+}
+
 //****************************************************************************************************************
 
 int main(int argc, char **argv) {

@@ -40,96 +40,144 @@ void print_something();
 //the following super instructions are real
 //ADD C PROTOTYPE FOR SPECIAL SUPERINSTRUCTION WRITTEN IN C OR FORTRAN HERE
 //THESE MUST BE INSIDE THE extern "C" block
-void get_scratch_array_dummy(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int &ierr);
-void get_and_print_int_array_dummy(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int &ierr);
-void get_and_print_scalar_array_dummy(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int &ierr);
-void fill_block_sequential(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-void fill_block_cyclic(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-void compute_aabb_batch(int& array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
-void return_h1(int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
-void return_ovl(int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+void get_scratch_array_dummy(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int &ierr);
+
+void get_and_print_int_array_dummy(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int &ierr);
+
+void get_and_print_scalar_array_dummy(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int &ierr);
+
+void fill_block_sequential(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void fill_block_cyclic(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void compute_aabb_batch(
+        int& array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_h1(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_ovl(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
 void scf_atom_lowmem(
-int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
-int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
-int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3,
-int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4,
-int & array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5,
-int& ierr);
+	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
+	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
+	int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3,
+	int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4,
+	int & array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * block_data_5,
+	int& ierr);
 
 void place_scratch(
-int & array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0,
-int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
-int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
-int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3,
-int& ierr);
+	int & array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0,
+	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
+	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
+	int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3,
+	int& ierr);
 
 void return_pairs(
-int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
-int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
-int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
-int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
-int& ierr);
+	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+	int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+	int & array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * block_data_4, 
+	int& ierr);
 
 void compute_pair_nn(
-int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
-int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
-int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
-int& ierr);
+        int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2, 
+        int & array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * block_data_3, 
+        int& ierr);
 
 void return_h1frag(
-int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
-int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
-int& ierr);
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
 
-void compute_int_scratchmem(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+void compute_int_scratchmem(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
-	int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
+	int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
 
-void compute_int_scratchmem_lowmem(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void compute_int_scratchmem_lowmem(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
-void energy_denominator_rhf(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void energy_denominator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
-void energy_numerator_rhf(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void energy_numerator_rhf(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
-void return_vpq(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void return_vpq(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
-void return_diagonal(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void return_diagonal(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
-void eig_sr_inv(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-
-void eigen_calc(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-
-void gen_eigen_calc(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+void eigen_calc_sqr_inv(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,int& ierr);
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
 
-void set_flags2(int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+void eigen_calc(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
-void return_sval(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-
-void compute_diis(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
-
-void check_dconf(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-
-void compute_ubatch2(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+void gen_eigen_calc(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
         int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
-        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+	int& ierr);
+
+void set_flags2(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
+void return_sval(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void compute_diis(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
+
+void check_dconf(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void compute_ubatch2(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, 
+	int& ierr);
 
 void compute_ubatch1(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
@@ -163,72 +211,77 @@ void compute_ubatch8(int& array_slot_0, int& rank_0, int * index_values_0, int& 
         int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
 
 void compute_integral_batch(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void compute_xyz_batch(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
 
 void compute_dipole_integrals(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
 
 void aoladder_contraction(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, 
+	int& ierr);
 
 void compute_nn_repulsion(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void set_frag(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void frag_index_range(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
 
-void stripi(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void stripi(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void set_ijk_aaa(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void set_ijk_aab(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
- void cis_unit_guess(
-         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
-//        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3, int& ierr);
-
- void cis_energy_numerator(
-         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void cis_unit_guess(
+	int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
 
 void invert_diagonal(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void invert_diagonal_asym(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
-
-void update_cis_bvec(
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
-        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4, int& ierr);
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
 
 void energy_ty_denominator_rhf(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, int& ierr);
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
 
 void return_diagonal_elements(
-        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
 }
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
@@ -427,7 +480,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["energy_numerator_rhf"]=(fp0)&energy_numerator_rhf;
 	procmap_["return_vpq"]=(fp0)&return_vpq;
 	procmap_["return_diagonal"]=(fp0)&return_diagonal;
-	procmap_["eig_sr_inv"]=(fp0)&eig_sr_inv;
+	procmap_["eigen_calc_sqr_inv"]=(fp0)&eigen_calc_sqr_inv;
 	procmap_["eigen_calc"]=(fp0)&eigen_calc;
 	procmap_["gen_eigen_calc"]=(fp0)&gen_eigen_calc;
     procmap_["set_flags2"]=(fp0)&set_flags2;
@@ -454,10 +507,8 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["set_ijk_aab"]=(fp0)&set_ijk_aab;
     procmap_["swap_blocks"]=(fp0)&swap_blocks;
     procmap_["cis_unit_guess"]=(fp0)&cis_unit_guess;
-    procmap_["cis_energy_numerator"]=(fp0)&cis_energy_numerator;
     procmap_["invert_diagonal"]=(fp0)&invert_diagonal;
     procmap_["invert_diagonal_asym"]=(fp0)&invert_diagonal_asym;
-    procmap_["update_cis_bvec"]=(fp0)&update_cis_bvec;
     procmap_["energy_ty_denominator_rhf"]=(fp0)&energy_ty_denominator_rhf;
     procmap_["return_diagonal_elements"]=(fp0)&return_diagonal_elements;
     procmap_["enable_debug_print"]=(fp0)&enable_debug_print;

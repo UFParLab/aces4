@@ -497,7 +497,7 @@ void SIPMaPInterpreter::handle_pardo_op(int &pc){
 	int num_indices = arg1(pc);
 	LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(num_indices,
 				index_selectors(pc), data_manager_, sip_tables_, num_where_clauses,
-				this, worker_rank_, num_workers_);
+				this, worker_rank_, num_workers_, iteration_);
 	loop_start(pc, loop);
 }
 #endif // HAVE_MPI

@@ -324,6 +324,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DI
 configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/helloworld1.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays_wild.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -334,8 +335,6 @@ configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test.txt ${
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays_2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
-
-
 
 #----------------------------------------------------------------------
 # Build aces4 & print_siptables executable
@@ -627,6 +626,7 @@ set(SIAL_FILES
     src/sialx/test/contig_local3.sialx;
     src/sialx/test/cached_block_map_test.sialx;
     src/sialx/test/pardo_with_where.sialx;
+    src/sialx/test/pardo_load_balance_test.sialx;
     src/sialx/test/read_block_test.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
@@ -646,24 +646,11 @@ set(SIAL_FILES
     src/sialx/qm/rlccd_rhf.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
-    src/sialx/qm/cis_rhf.sialx;
-    src/sialx/qm/cis_rhf_defs.sialx;
     src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/rcis_d_rhf.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx)
-
-#    src/sialx/qm/rccsdpt_aaa_defs.sialx;
-#    src/sialx/qm/rccsdpt_aab_defs.sialx;
-#    src/sialx/qm/scf_mp2_rhf.sialx;
-#    src/sialx/qm/scf_mp2_defs.sialx;
-#    src/sialx/qm/rlambda_rhf.sialx;
-#    src/sialx/qm/scf_frag.sialx;
-#    src/sialx/qm/scf_frag_defs.sialx;
-#    src/sialx/qm/trans_frag_fpardo.sialx;
-#    src/sialx/qm/frag_2order_corr.sialx;
-
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})

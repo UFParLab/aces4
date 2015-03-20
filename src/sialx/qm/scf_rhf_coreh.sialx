@@ -208,6 +208,7 @@ import "scf_defs.sialx"
 # Declare scalars 
 # --------------- 
 #
+      scalar num_lindep
       scalar e_a     
       scalar e_b     
       scalar escf_a 
@@ -605,6 +606,7 @@ import "scf_defs.sialx"
        energy += repulsion 
 #
        #print_scalar esum  
+        assert_same energy
         print energy 
 #
        ENDPROC HF_ENERGY   
@@ -626,7 +628,10 @@ import "scf_defs.sialx"
        ENDDO nu 
        ENDDO mu 
        sip_barrier 
-       execute eig_sr_inv oed_ovl x1   
+       execute eigen_calc_sqr_inv oed_ovl x1 num_lindep
+       print "number of dropped linear dependencies"
+       print num_lindep
+       print " "
 #
        DO mu 
        DO nu 
@@ -1178,6 +1183,21 @@ import "scf_defs.sialx"
 #     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
 #     ----------------------------------------------------------------------- 
 #
+#### JNB fix later.
+#      DO mu
+#      DO nu
+#      DO lambda
+#      DO sigma
+#            IF mu == lambda
+#            IF nu == sigma
+#               aoint[mu,nu,lambda,sigma] = 0.0 
+#               execute compute_aabb_batch aoint[mu,nu,lambda,sigma] screen_array 
+#            ENDIF
+#            ENDIF
+#      ENDDO sigma
+#      ENDDO lambda
+#      ENDDO nu
+#      ENDDO mu
 
 #     do g51 
 #     do g52 
@@ -1388,6 +1408,8 @@ import "scf_defs.sialx"
 # ---------------- 
 #
       DO kiter 
+         print " "
+	 print kiter
          diis_count += 1.0 
 #
 #        Create 1-particle arrays 
@@ -1536,6 +1558,7 @@ import "scf_defs.sialx"
          ENDDO nu 
          ENDDO mu 
          print done 
+	 assert_same done
 #
 #        Check on convergence using density difference. 
 #        ---------------------------------------------- 

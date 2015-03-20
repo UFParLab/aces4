@@ -113,7 +113,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value="--with-tau=/home/njindal/tau-2.23.1b  CFLAGS=&quot;-O0 -g&quot; CXXFLAGS=&quot;-O0 -g&quot; FCFLAGS=&quot;-O0 -g&quot; FFLAGS=&quot;-O0 -g&quot; "/>
+<option id="user" value=""/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>

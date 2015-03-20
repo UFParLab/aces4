@@ -590,6 +590,30 @@ TEST(Sial,cached_block_map_test) {
 	sip::GlobalState::reinitialize();
 }
 
+TEST(Sial,pardo_load_balance_test){
+    // This test needs to be run with more than 1 worker.
+    // It is NOT AUTOMATED
+    // PLEASE EXAMINE THE OUTPUT MANUALLY
+    std::string job("pardo_load_balance_test");
+    int norb = 4;
+    int segs[] = {2,3,2,2};
+    if (attr->global_rank() == 0) {
+        init_setup(job.c_str());
+        set_constant("norb", norb);
+        std::string tmp = job + ".siox";
+        const char* nm = tmp.c_str();
+        add_sial_program(nm);
+        set_aoindex_info(4, segs);
+        finalize_setup();
+    }
+    std::stringstream output;
+
+    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    controller.initSipTables();
+    controller.run();
+
+}
+
 
 
 TEST(Sial,pardo_with_where){

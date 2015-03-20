@@ -448,6 +448,7 @@
 #
       scalar ccsd_correlation
       scalar ccsd_energy
+      scalar mp2_correlation
       scalar etemp
       scalar esum
       scalar esuma
@@ -461,7 +462,6 @@
       scalar eold 
       scalar ecrit 
       scalar ediff 
-      scalar mp2_energy
 #
 # Arrays/Scalars used exclusively in DIIS procedure. 
 # -------------------------------------------------- 
@@ -2879,11 +2879,15 @@
 # Calculate the second-order energy 
 # --------------------------------- 
       CALL ENERGY_NEW 
+      mp2_correlation = ecorrT
+      print mp2_correlation
 
 # Start iterations
 # ---------------- 
       niter = 0.0 
       DO KITER 
+         print " "
+	 print kiter
          niter += 1.0 
 
          SERVER_BARRIER  
@@ -2970,19 +2974,14 @@
 #        Check on convergence 
 #        -------------------- 
 #
-         IF ecorrT < eold 
-            ediff = eold - ecorrT 
-            IF ediff < ecrit 
-               exit # kiter 
-            ENDIF
-         ENDIF   
-#
-         IF ecorrT > eold 
-            ediff = ecorrT - eold  
-            IF ediff < ecrit 
-               exit # kiter 
-            ENDIF
-         ENDIF   
+	 assert_same ecorrT
+	 assert_same eold
+	 etemp = (eold - ecorrT)**(2.0)
+	 ediff = (etemp)**(0.5)
+	 assert_same ediff
+ 	 IF ediff < ecrit 
+	    exit # kiter 
+	 ENDIF
 #
 #        Reset eold --> enew 
 #        ------------------- 

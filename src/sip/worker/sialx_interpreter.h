@@ -335,6 +335,12 @@ protected:
 	 */
 	SialPrinter* printer_;
 
+	/**
+	 * Valid for when BalancedTaskAllocParallelPardoLoop is used.
+	 * In a pardo section, the iteration is counted across all pardos. This variable is passed to
+	 * the BalancedTaskAllocParallelPardoLoop instance.
+	 */
+	long iteration_;
 
 	const OpTable & op_table_;  /*! owned by sipTables_, pointer copied for convenience */
 	SialxTimer* sialx_timers_; /*! Data structure to hold timers. Owned by calling program. Maybe NULL */

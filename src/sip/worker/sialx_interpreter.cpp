@@ -60,6 +60,7 @@ void SialxInterpreter::_init(const SipTables& sip_tables) {
 	global_interpreter = this;
 	gpu_enabled_ = false;
 	timer_pc_ = -1;
+	iteration_ = 0;
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 
 	// Populate the map from line number to pc
@@ -143,7 +144,7 @@ void SialxInterpreter::handle_pardo_op(int &pc) {
 	SIP_LOG(std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush);
 	LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(num_indices,
 			index_selectors(pc), data_manager_, sip_tables_, num_where_clauses,
-			this, sip_mpi_attr.company_rank(), sip_mpi_attr.company_size());
+			this, sip_mpi_attr.company_rank(), sip_mpi_attr.company_size(), iteration_);
 
 #else
 	LoopManager* loop = new SequentialPardoLoop(num_indices,
@@ -169,6 +170,7 @@ void SialxInterpreter::handle_execute_op(int pc) {
 }
 
 void SialxInterpreter::handle_sip_barrier_op(int pc) {
+	iteration_ = 0;
 	sial_ops_.sip_barrier(pc);
 }
 
