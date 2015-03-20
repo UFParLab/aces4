@@ -38,29 +38,37 @@ public:
 	double pause_total_time() { return total_time_timer_.pause(); }
 	void start_block_wait() { block_wait_timer_.start(); }
 	double pause_block_wait() { return block_wait_timer_.pause(); }
+	void start_communication_time() { communication_timer_.start(); }
+	double pause_communication_time() { return communication_timer_.pause(); }
 
 	void record_total_time(double val) { total_time_timer_.value_ += val; total_time_timer_.epochs_ += 1; }
 	void record_block_wait_time(double val) { block_wait_timer_.value_ += val; }
 
 	double get_total_time() const {return total_time_timer_.value_;}
 	double get_block_wait_time() const {return block_wait_timer_.value_; }
+	double get_communication_time() const { return communication_timer_.value_; }
 
 	double get_last_recorded_total_time_and_clear() { return total_time_timer_.get_last_recorded_and_clear(); }
 	double get_last_recorded_block_wait_and_clear() { return block_wait_timer_.get_last_recorded_and_clear(); }
+	double get_last_recorded_communication_time_and_clear() { return communication_timer_.get_last_recorded_and_clear(); }
+
 
 	std::size_t get_num_epochs() const {return total_time_timer_.epochs_;}
 
 	/*! Sums up other SialxUnitTimer instance into this one, Used when merging SIPMaPTimer instances */
 	void accumulate_other(const SialxUnitTimer& other){
-		total_time_timer_.value_ += total_time_timer_.value_;
-		total_time_timer_.epochs_ += total_time_timer_.epochs_;
-		block_wait_timer_.value_ += block_wait_timer_.value_;
-		block_wait_timer_.epochs_ += block_wait_timer_.epochs_;
+		total_time_timer_.value_ += other.total_time_timer_.value_;
+		total_time_timer_.epochs_ += other.total_time_timer_.epochs_;
+		block_wait_timer_.value_ += other.block_wait_timer_.value_;
+		block_wait_timer_.epochs_ += other.block_wait_timer_.epochs_;
+		communication_timer_.value_ += other.communication_timer_.value_;
+		communication_timer_.epochs_ += other.communication_timer_.epochs_;
 	}
 
 private:
 	SimpleTimer_t total_time_timer_;	/*! timer to measure total time (for a sialx PC or line) */
 	SimpleTimer_t block_wait_timer_;	/*! timer to measure block wait time */
+	SimpleTimer_t communication_timer_;	/*! timer to measure any time spent in MPI Communication */
 };
 
 /*! Encapsulates a vector of sial unit timers.

@@ -175,7 +175,7 @@ void SialxInterpreter::handle_sip_barrier_op(int pc) {
 void SialxInterpreter::handle_broadcast_static_op(int pc) {
 	std::cout << "calling broadcast_static with args " << arg0(pc) << ", " << control_stack_.top() << std::endl;
 	Block::BlockPtr block = get_static(arg0(pc));
-	sial_ops_.broadcast_static(block, control_stack_.top());
+	sial_ops_.broadcast_static(block, control_stack_.top(), pc);
 
 	control_stack_.pop();
 }
@@ -216,29 +216,29 @@ void SialxInterpreter::handle_deallocate_contiguous_op(int pc) {
 void SialxInterpreter::handle_get_op(int pc) {
 	//TODO  check this.  Have compiler put block info in instruction?
 	sip::BlockId id = get_block_id_from_selector_stack();
-	sial_ops_.get(id);
+	sial_ops_.get(id, pc);
 }
 
 void SialxInterpreter::handle_put_accumulate_op(int pc) {
 	//put a[..] += b[..]  TODO check documentation
 	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
 	sip::BlockId lhs_id = get_block_id_from_selector_stack();
-	sial_ops_.put_accumulate(lhs_id, rhs_block);
+	sial_ops_.put_accumulate(lhs_id, rhs_block, pc);
 }
 
 void SialxInterpreter::handle_put_replace_op(int pc) {
 	//put a[...] = b[...]
 	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
 	sip::BlockId lhs_id = get_block_id_from_selector_stack();
-	sial_ops_.put_replace(lhs_id, rhs_block);
+	sial_ops_.put_replace(lhs_id, rhs_block, pc);
 }
 
 void SialxInterpreter::handle_create_op(int pc) {
-	sial_ops_.create_distributed(arg0(pc));
+	sial_ops_.create_distributed(arg0(pc), pc);
 }
 
 void SialxInterpreter::handle_delete_op(int pc) {
-	sial_ops_.delete_distributed(arg0(pc));
+	sial_ops_.delete_distributed(arg0(pc), pc);
 }
 
 void SialxInterpreter::handle_string_load_literal_op(int pc) {
@@ -515,11 +515,11 @@ void SialxInterpreter::handle_cast_to_scalar_op(int pc) {
 void SialxInterpreter::handle_collective_sum_op(int pc) {
 	double rhs_value = expression_stack_.top();
 	expression_stack_.pop();
-	sial_ops_.collective_sum(rhs_value, arg0(pc));
+	sial_ops_.collective_sum(rhs_value, arg0(pc), pc);
 }
 
 void SialxInterpreter::handle_assert_same_op(int pc) {
-	sial_ops_.assert_same(arg0(pc));
+	sial_ops_.assert_same(arg0(pc), pc);
 }
 
 void SialxInterpreter::handle_block_copy_op(int pc) {
@@ -736,13 +736,13 @@ void SialxInterpreter::handle_set_persistent_op(int pc) {
 	int array_slot = arg1(pc);
 	int string_slot = arg0(pc);
 	;
-	sial_ops_.set_persistent(this, array_slot, string_slot);
+	sial_ops_.set_persistent(this, array_slot, string_slot, pc);
 }
 
 void SialxInterpreter::handle_restore_persistent_op(int pc) {
 	int array_slot = arg1(pc);
 	int string_slot = arg0(pc);
-	sial_ops_.restore_persistent(this, array_slot, string_slot);
+	sial_ops_.restore_persistent(this, array_slot, string_slot, pc);
 }
 
 void SialxInterpreter::handle_idup_op(int pc) {
@@ -898,7 +898,7 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 } //interpret
 
 void SialxInterpreter::do_post_sial_program() {
-	sial_ops_.end_program(pc_);
+	sial_ops_.end_program(-1);
 }
 
 void SialxInterpreter::timer_trace(int pc, opcode_t opcode, int line) {

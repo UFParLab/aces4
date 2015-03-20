@@ -30,25 +30,25 @@ public:
 	void sip_barrier(int pc);
 
 	/** SIAL operations on arrays */
-	void create_distributed(int array_id);
-	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
-	void delete_distributed(int array_id);
-	void get(BlockId&);
-	void put_replace(BlockId&, const Block::BlockPtr);
-	void put_accumulate(BlockId&, const Block::BlockPtr);
+	void create_distributed(int array_id, int pc);
+	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map, int pc);
+	void delete_distributed(int array_id, int pc);
+	void get(BlockId&, int);
+	void put_replace(BlockId&, const Block::BlockPtr, int);
+	void put_accumulate(BlockId&, const Block::BlockPtr, int);
 
-	void destroy_served(int array_id);
-	void request(BlockId&);
-	void prequest(BlockId&, BlockId&);
-	void prepare(BlockId&, Block::BlockPtr);
-	void prepare_accumulate(BlockId&, Block::BlockPtr);
+	void destroy_served(int array_id, int);
+	void request(BlockId&, int);
+	void prequest(BlockId&, BlockId&, int);
+	void prepare(BlockId&, Block::BlockPtr, int);
+	void prepare_accumulate(BlockId&, Block::BlockPtr, int);
 
-	void collective_sum(double rhs_value, int dest_array_slot);
-	bool assert_same(int source_array_slot){return true;}
-	void broadcast_static(Block::BlockPtr, int source_worker){}  //nop for single process version
+	void collective_sum(double rhs_value, int dest_array_slot, int pc);
+	bool assert_same(int source_array_slot, int pc){return true;}
+	void broadcast_static(Block::BlockPtr, int source_worker, int pc){}  //nop for single process version
 
-	void set_persistent(Interpreter*, int array_id, int string_slot);
-	void restore_persistent(Interpreter*, int array_id, int string_slot);
+	void set_persistent(Interpreter*, int array_id, int string_slot, int pc);
+	void restore_persistent(Interpreter*, int array_id, int string_slot, int pc);
 
 	void end_program(int pc);
 

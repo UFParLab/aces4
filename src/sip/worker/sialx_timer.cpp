@@ -32,6 +32,7 @@ void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables) c
 		<<std::setw(SW)<<std::left<<"Name"
 		<<std::setw(CW)<<std::left<<"Time"
 		<<std::setw(CW)<<std::left<<"BlkWtTime"
+		<<std::setw(CW)<<std::left<<"CommTime"
 		<<std::setw(CW)<<std::left<<"Epochs"
 		<<std::endl;
 
@@ -47,12 +48,14 @@ void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables) c
 		}
 		double total_time = timer.get_total_time();
 		double block_wait_time = timer.get_block_wait_time();
+		double communication_time = timer.get_communication_time();
 		std::size_t epochs = timer.get_num_epochs();
 		out_<< std::setw(LW)<< std::left << i		// PC
 			<< std::setw(LW)<< std::left << line_number
 			<< std::setw(SW)<< std::left << name
 			<< std::setw(CW)<< std::left << total_time
 			<< std::setw(CW)<< std::left << block_wait_time
+			<< std::setw(CW)<< std::left << communication_time
 			<< std::setw(CW)<< std::left << epochs
 			<< std::endl;
 	}

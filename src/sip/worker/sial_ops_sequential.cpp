@@ -36,10 +36,10 @@ void SialOpsSequential::sip_barrier(int pc) {
 /** Currently this is a no-op in both parallel and sequential implementations
  *   Map, and blocks are created lazily when needed
  */
-void SialOpsSequential::create_distributed(int array_id) {
+void SialOpsSequential::create_distributed(int array_id, int pc) {
 }
 
-void SialOpsSequential::delete_distributed(int array_id) {
+void SialOpsSequential::delete_distributed(int array_id, int pc) {
 	/* Removes all the blocks associated with this array from the block map.
 	 * In this implementation, removing it from the map will cause its destructor to
 	 * be called, which will delete the data. Because of this, we must be very
@@ -49,7 +49,7 @@ void SialOpsSequential::delete_distributed(int array_id) {
 	block_manager_.delete_per_array_map_and_blocks(array_id);
 }
 
-void SialOpsSequential::get(BlockId& block_id) {
+void SialOpsSequential::get(BlockId& block_id, int pc) {
 	get_block_for_reading(block_id, 0);  //second argument is only used in parallel version.
 }
 
@@ -62,40 +62,40 @@ void SialOpsSequential::get(BlockId& block_id) {
  * @param source_ptr
  */
 void SialOpsSequential::put_replace(BlockId& target_id,
-		const Block::BlockPtr source_block) {
+		const Block::BlockPtr source_block, int pc) {
 	Block::BlockPtr target_block = get_block_for_writing(target_id, false);
 	target_block->copy_data_(source_block);
 }
 
 void SialOpsSequential::put_accumulate(BlockId& target_id,
-		const Block::BlockPtr source_block) {
+		const Block::BlockPtr source_block, int pc) {
 	// Accumulate locally
 	Block::BlockPtr target_block = block_manager_.get_block_for_accumulate(target_id, false);
 	target_block->accumulate_data(source_block);
 }
 
-void SialOpsSequential::destroy_served(int array_id) {
-	delete_distributed(array_id);
+void SialOpsSequential::destroy_served(int array_id, int pc) {
+	delete_distributed(array_id, pc);
 }
 
-void SialOpsSequential::request(BlockId& block_id) {
-	get(block_id);
+void SialOpsSequential::request(BlockId& block_id, int pc) {
+	get(block_id, pc);
 }
-void SialOpsSequential::prequest(BlockId&, BlockId&) {
+void SialOpsSequential::prequest(BlockId&, BlockId&, int pc) {
 	fail("PREQUEST not supported !");
 }
-void SialOpsSequential::prepare(BlockId& lhs_id, Block::BlockPtr source_ptr) {
-	put_replace(lhs_id, source_ptr);
+void SialOpsSequential::prepare(BlockId& lhs_id, Block::BlockPtr source_ptr, int pc) {
+	put_replace(lhs_id, source_ptr, pc);
 }
 void SialOpsSequential::prepare_accumulate(BlockId& lhs_id,
-		Block::BlockPtr source_ptr) {
-	put_accumulate(lhs_id, source_ptr);
+		Block::BlockPtr source_ptr, int pc) {
+	put_accumulate(lhs_id, source_ptr, pc);
 }
 
 
 
 
-void SialOpsSequential::collective_sum(double rhs_value, int dest_array_slot) {
+void SialOpsSequential::collective_sum(double rhs_value, int dest_array_slot, int pc) {
        double lhs_value = data_manager_.scalar_value(dest_array_slot);
        data_manager_.set_scalar_value(dest_array_slot, lhs_value + rhs_value);
 }
@@ -103,12 +103,12 @@ void SialOpsSequential::collective_sum(double rhs_value, int dest_array_slot) {
 
 
 void SialOpsSequential::set_persistent(Interpreter* interpreter,
-		int array_id, int string_slot) {
+		int array_id, int string_slot, int pc) {
 	if (persistent_array_manager_)
 		persistent_array_manager_->set_persistent(interpreter, array_id, string_slot);
 }
 
-void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_id, int string_slot) {
+void SialOpsSequential::restore_persistent(Interpreter* interpreter, int array_id, int string_slot, int pc) {
 	if (persistent_array_manager_)
 		persistent_array_manager_->restore_persistent(interpreter, array_id, string_slot);
 }

@@ -75,8 +75,8 @@ void ProfileInterpreter::profile_timer_trace(int pc, opcode_t opcode){
 		return;
 	else if (last_seen_pc_ >= 0){
 		double total_time = sialx_timer_[last_seen_pc_].get_last_recorded_total_time_and_clear();
-		double block_wait_time = sialx_timer_[last_seen_pc_].get_last_recorded_block_wait_and_clear();
-		double computation_time = total_time - block_wait_time;
+		double communication_time = sialx_timer_[last_seen_pc_].get_last_recorded_communication_time_and_clear();
+		double computation_time = total_time - communication_time;
 		profile_timer_.record_time(last_seen_key_, computation_time, last_seen_pc_);
 		last_seen_pc_ = -1;
 	} else if (opcode != invalid_op){
