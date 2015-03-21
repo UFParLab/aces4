@@ -432,6 +432,7 @@ SIOX_FILES=\
 ./src/sialx/test/broadcast_static.siox\
 ./src/sialx/test/read_block_test.siox\
 ./src/sialx/test/pardo_with_where.siox\
+./src/sialx/test/pardo_load_balance_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -549,6 +550,7 @@ EXTRA_DIST += \
 ./src/sialx/test/broadcast_static.sialx\
 ./src/sialx/test/read_block_test.sialx\
 ./src/sialx/test/pardo_with_where.sialx\
+./src/sialx/test/pardo_load_balance_test.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\

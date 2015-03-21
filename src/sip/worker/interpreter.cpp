@@ -72,10 +72,9 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	global_interpreter = this;
 	gpu_enabled_ = false;
 	tracer_ = new Tracer(this, sip_tables, std::cout);
-	if (printer_ == NULL)
-		printer_ = new SialPrinterForTests(std::cout,
-				sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
-	timer_line_ = 0;
+	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+	timer_line_=0;
+	iteration_=0;
 #ifdef HAVE_CUDA
 	int devid;
 	int rank = 0;
@@ -172,7 +171,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 					std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush);
 			LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(
 					num_indices, index_selectors(), data_manager_, sip_tables_,
-					SIPMPIAttr::get_instance(), num_where_clauses, this);
+					SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
 #else
 			LoopManager* loop = new SequentialPardoLoop(num_indices,
 					index_selectors(), data_manager_, sip_tables_);
@@ -186,6 +185,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case sip_barrier_op: {
 			sial_ops_.sip_barrier();
+			iteration_ = 0;
 			++pc;
 		}
 			break;
