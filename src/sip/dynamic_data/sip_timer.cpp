@@ -15,12 +15,14 @@
 namespace sip {
 
 std::vector<Timer*> Timer::list_;
+bool Timer::register_by_default_ = true;
+
 
 Timer::Timer(const std::string name) :
 		name_(name), on_(false), epochs_(0),
 		start_time_(0.0), value_(0.0) {
-#pragma omp critical
-	list_.push_back(this);
+	if (register_by_default_)
+		list_.push_back(this);
 }
 
 Timer::Timer(const std::string name, bool register_timer) :

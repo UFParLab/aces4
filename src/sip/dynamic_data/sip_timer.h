@@ -45,6 +45,8 @@ public:
 	static void print_timers(std::ostream& out);
 	static void clear_list(){list_.clear();}
 
+	static void set_register_by_default(bool v) { register_by_default_ = v;}
+
 private:
 	bool on_;					/*! if timer is turned on */
 	double start_time_;			/*! time when timer was started */
@@ -53,7 +55,7 @@ private:
 	std::size_t epochs_;		/*! number of times, timer was switched on & off */
 
 	static std::vector<Timer*> list_;
-
+	static bool register_by_default_;
 };
 
 } /* namespace sip */

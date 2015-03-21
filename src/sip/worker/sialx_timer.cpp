@@ -36,6 +36,11 @@ void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables) c
 		<<std::setw(CW)<<std::left<<"Epochs"
 		<<std::endl;
 
+	double sum_of_total_time = 0.0;
+	double sum_of_blkwt_time = 0.0;
+	double sum_of_comm_time = 0.0;
+	double sum_of_epochs = 0.0;
+
 	std::vector<SialxUnitTimer>::const_iterator it = list_.begin();
 	for (int i=0; it != list_.end(); ++it, ++i){
 		const SialxUnitTimer& timer = *it;
@@ -47,9 +52,13 @@ void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables) c
 			name = sip_tables.special_instruction_manager().name(func_slot);
 		}
 		double total_time = timer.get_total_time();
+		sum_of_total_time += total_time;
 		double block_wait_time = timer.get_block_wait_time();
+		sum_of_blkwt_time += block_wait_time;
 		double communication_time = timer.get_communication_time();
+		sum_of_comm_time += communication_time;
 		std::size_t epochs = timer.get_num_epochs();
+		sum_of_epochs += epochs;
 		out_<< std::setw(LW)<< std::left << i		// PC
 			<< std::setw(LW)<< std::left << line_number
 			<< std::setw(SW)<< std::left << name
@@ -59,6 +68,14 @@ void SialxTimer::print_timers(std::ostream& out_, const SipTables& sip_tables) c
 			<< std::setw(CW)<< std::left << epochs
 			<< std::endl;
 	}
+	out_<< std::setw(LW)<< std::left << -1		// PC
+		<< std::setw(LW)<< std::left << -1
+		<< std::setw(SW)<< std::left << "Totals"
+		<< std::setw(CW)<< std::left << sum_of_total_time
+		<< std::setw(CW)<< std::left << sum_of_blkwt_time
+		<< std::setw(CW)<< std::left << sum_of_comm_time
+		<< std::setw(CW)<< std::left << sum_of_epochs
+		<< std::endl;
 
 	out_ << std::endl;
 }

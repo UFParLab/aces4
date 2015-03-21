@@ -30,13 +30,14 @@ public:
 
 	static void print_counters(std::ostream& out);
 	static void clear_list(){list_.clear();}
+	static void set_register_by_default(bool v) { register_by_default_ = v;}
 
 private:
 	std::size_t counter_;
 	const std::string name_;
 
 	static std::vector<Counter*> list_;
-
+	static bool register_by_default_;
 };
 
 class MaxCounter {
@@ -54,6 +55,8 @@ public:
 
 	static void print_max_counters(std::ostream& out);
 	static void clear_list(){list_.clear();}
+	static void set_register_by_default(bool v) { register_by_default_ = v;}
+
 
 private:
 	std::size_t counter_;
@@ -61,6 +64,7 @@ private:
 	const std::string name_;
 
 	static std::vector<MaxCounter*> list_;
+	static bool register_by_default_;
 
 };
 

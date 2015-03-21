@@ -34,13 +34,6 @@
 namespace sip {
 
 SialxInterpreter::SialxInterpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
-		SialPrinter* printer) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
-				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
-				NULL), sial_ops_(data_manager_, NULL, sialx_timer, sipTables){
-	_init(sipTables);
-}
-SialxInterpreter::SialxInterpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
 		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(

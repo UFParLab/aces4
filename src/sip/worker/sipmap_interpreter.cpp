@@ -147,9 +147,9 @@ void SIPMaPInterpreter::handle_execute_op(int pc) {
 	pardo_section_time_ += computation_time + block_wait_time;
 
 	if (all_write && all_scalar_or_static){
-		std::cout << "Executing Super Instruction "
+		SIP_LOG(std::cout << "Executing Super Instruction "
 				<< sip_tables_.special_instruction_manager().name(func_slot)
-				<< " at line " << line_number() << std::endl;
+				<< " at line " << line_number() << std::endl);
 		// Push back blocks on stack and execute the super instruction.
 		while (!bs_list.empty()){
 			BlockSelector bs = bs_list.back();

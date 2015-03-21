@@ -39,6 +39,16 @@ int main(int argc, char* argv[]) {
 	// Sets the database name from the parameters.
 	sip::ProfileTimerStore profile_timer_store(parameters.profiledb.c_str());
 
+	/*
+	 * SIPMaP uses threads. It makes sense to disable registration
+	 * counters, maxcounters and timers.
+	 * Registration writes to a non-thread safe static vector.
+	 * At the end of the program, registered timers can be printed out.
+	 */
+	sip::Counter::set_register_by_default(false);
+	sip::MaxCounter::set_register_by_default(false);
+	sip::Timer::set_register_by_default(false);
+
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::cout << it->c_str() << std::endl;
 		std::string sialfpath;
@@ -70,6 +80,7 @@ int main(int argc, char* argv[]) {
 			std::vector<sip::SIPMaPTimer> sipmap_timer_vector;
 
 			profile_timer_store.read_all_data_into_cache();
+			SIP_MASTER(std::cout << "Now Modeling "<< sialfpath << std::endl);
 
 #pragma omp parallel for ordered schedule(static)
 			for (int worker_rank=0; worker_rank<num_workers; ++worker_rank){
@@ -77,22 +88,22 @@ int main(int argc, char* argv[]) {
 
 				sip::SIPMaPTimer sipmap_timer(sipTables.max_timer_slots());
 				sip::SIPMaPInterpreter runner(worker_rank, num_workers, sipTables, remote_array_model, profile_timer_store, sipmap_timer);
-				SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl);
 				runner.interpret();
 				runner.post_sial_program();
-				SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl);
 				sip::SIPMaPInterpreter::PardoSectionsInfoVector_t& pardo_sections_info = runner.get_pardo_section_times();
 #pragma omp critical
 				{
 					pardo_sections_info_vector.push_back(pardo_sections_info);
 					sipmap_timer_vector.push_back(sipmap_timer);
+					//std::cout << omp_get_thread_num() << " modeled worker "<< worker_rank << std::endl << std::flush;
+					std::cout << "Done for Worker "<< worker_rank << std::endl << std::flush;
 				}
 			}
 
 			sip::SIPMaPTimer merged_timer = sip::SIPMaPInterpreter::merge_sipmap_timers(pardo_sections_info_vector, sipmap_timer_vector);
 
 			// Print the summary timer
-			merged_timer.print_timers(std::cout, sipTables);
+			// merged_timer.print_timers(std::cout, sipTables);
 
 			// Print each of the timers
 			std::vector<sip::SIPMaPTimer>::const_iterator it = sipmap_timer_vector.begin();

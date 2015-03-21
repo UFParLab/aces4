@@ -15,10 +15,13 @@ namespace sip {
 // Static Variables
 std::vector<Counter*>  Counter::list_;
 std::vector<MaxCounter*>  MaxCounter::list_;
+bool Counter::register_by_default_ = true;
+bool MaxCounter::register_by_default_ = true;
+
 
 Counter::Counter(const std::string& name) : name_(name), counter_(0) {
-#pragma omp critical
-	list_.push_back(this);
+	if (register_by_default_)
+		list_.push_back(this);
 }
 Counter::Counter(const std::string& name, bool register_counter) : name_(name), counter_(0) {
 	if (register_counter)
@@ -33,8 +36,8 @@ MaxCounter::MaxCounter(const std::string& name,  bool register_counter) :name_(n
 }
 
 MaxCounter::MaxCounter(const std::string& name) :name_(name), counter_(0), max_(0) {
-#pragma omp critical
-	list_.push_back(this);
+	if (register_by_default_)
+		list_.push_back(this);
 }
 
 void Counter::print_counters(std::ostream& out_){

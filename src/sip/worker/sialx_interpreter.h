@@ -56,7 +56,6 @@ public:
 
 
 	SialxInterpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	SialxInterpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
 	virtual ~SialxInterpreter();
 
 
