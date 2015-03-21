@@ -97,8 +97,6 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="jsoncpp"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="sqlite3"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="test"/>
 					</sourceEntries>
@@ -196,8 +194,6 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="jsoncpp"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="sqlite3"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="test"/>
 					</sourceEntries>
@@ -324,8 +320,6 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="jsoncpp"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="sqlite3"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="test"/>
 					</sourceEntries>
