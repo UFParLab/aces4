@@ -1076,8 +1076,7 @@ import "scf_defs.sialx"
            if n1 <= temp_order # worder 
               GET            Fa[mu,nu,d1] 
               t1xx[mu,nu]  = Fa[mu,nu,d1] 
-              #execute return_sval BB[d1,d1] etemp
-              etemp = BB[d1,d1]
+              execute return_sval BB[d1,d1] etemp 
              #etemp        = BB(d1,d1)        
               t1xx[mu,nu] *= etemp   
               txx[mu,nu]  += t1xx[mu,nu] 
@@ -1094,8 +1093,7 @@ import "scf_defs.sialx"
            if n1 <= temp_order # worder 
               GET            Fb[mu,nu,d1] 
               t1xx[mu,nu]  = Fb[mu,nu,d1] 
-              #execute return_sval BB[d1,d1] etemp
-              etemp = BB[d1,d1]
+              execute return_sval BB[d1,d1] etemp 
              #etemp        = BB(d1,d1)        
               t1xx[mu,nu] *= etemp   
               txx[mu,nu]  += t1xx[mu,nu] 

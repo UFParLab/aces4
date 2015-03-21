@@ -2619,8 +2619,7 @@
                       if kcount == one 
                          REQUEST           Eaibj[a,i,b,j,d2]   
                          t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2] 
-                         #execute return_sval BB[d2,d2] etemp
-                         etemp = BB[d2,d2] 
+                         execute return_sval BB[d2,d2] etemp 
                         #etemp        = BB(d1,d1)        
                          t3aibj[a,i,b,j] += t2aibj[a,i,b,j] 
                          t3aibj[a,i,b,j] *= etemp   
@@ -2639,8 +2638,7 @@
                   t2aibj[a,i,b,j] = D0aibj[a,i,b,j] 
                   REQUEST           Eaibj[a,i,b,j,d2]   
                   t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2] 
-                  #execute return_sval BB[d2,d2] etemp
-                  etemp = BB[d2,d2]
+                  execute return_sval BB[d2,d2] etemp 
                  #etemp        = BB(d1,d1)        
                   t3aibj[a,i,b,j] += t2aibj[a,i,b,j] 
                   t3aibj[a,i,b,j] *= etemp   
@@ -2664,12 +2662,11 @@
                n2 += 1.0  
             if n2 <= worder 
                kcount  = n2 
-               kcount -= n1
+               kcount -= n1 
                if kcount == one 
                   GET         Eai[a,i,d2] 
                   t3ai[a,i] = Eai[a,i,d2] 
-                  #execute return_sval BB[d2,d2] etemp
-                  etemp = BB[d2,d2] 
+                  execute return_sval BB[d2,d2] etemp 
                  #etemp        = BB(d1,d1)        
                   t3ai[a,i] += t2ai[a,i] 
                   t3ai[a,i] *= etemp   
@@ -2688,9 +2685,7 @@
                   t2ai[a,i] = D0ai[a,i] 
                   GET         Eai[a,i,d2] 
                   t3ai[a,i] = Eai[a,i,d2] 
-                  #execute return_sval BB[d2,d2] etemp
-                  etemp = BB[d2,d2]
-                  #print etemp 
+                  execute return_sval BB[d2,d2] etemp 
                  #etemp        = BB(d1,d1)        
                   t3ai[a,i] += t2ai[a,i] 
                   t3ai[a,i] *= etemp   
