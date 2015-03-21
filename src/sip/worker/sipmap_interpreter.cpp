@@ -106,8 +106,11 @@ double SIPMaPInterpreter::calculate_block_wait_time(
 }
 
 void SIPMaPInterpreter::handle_execute_op(int pc) {
+
 	int num_args = arg1(pc) ;
 	int func_slot = arg0(pc);
+
+	try {
 
 	// Do the super instruction if the number of args is > 1
 	// and if the parameters are only written to (all 'w')
@@ -157,6 +160,14 @@ void SIPMaPInterpreter::handle_execute_op(int pc) {
 			bs_list.pop_back();
 		}
 		SialxInterpreter::handle_execute_op(pc);
+	}
+
+	} catch (const std::out_of_range& oor){
+		std::string opcode_name = sip_tables_.special_instruction_manager().name(func_slot);
+		std::cerr << "****************************************************************" << std::endl;
+		std::cerr << "SUPER INSTRUCTION " << opcode_name << " NOT FOUND, SKIPPING !!!" << std::endl;
+		std::cerr << oor.what() << std::endl;
+		std::cerr << "****************************************************************" << std::endl;
 	}
 
 }

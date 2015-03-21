@@ -163,7 +163,6 @@ void SialxInterpreter::handle_execute_op(int pc) {
 }
 
 void SialxInterpreter::handle_sip_barrier_op(int pc) {
-	iteration_ = 0;
 	sial_ops_.sip_barrier(pc);
 }
 
@@ -802,7 +801,7 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 
 		// Opcodes that don't modify the program counter
 		case execute_op: 				handle_execute_op(pc_);					++pc_; break;
-		case sip_barrier_op: 			handle_sip_barrier_op(pc_);				++pc_; break;
+		case sip_barrier_op: 			handle_sip_barrier_op(pc_);				iteration_ = 0;++pc_; break;
 		case broadcast_static_op: 		handle_broadcast_static_op(pc_);		++pc_; break;
 		case push_block_selector_op: 	handle_push_block_selector_op(pc_);		++pc_; break;
 		case allocate_op: 				handle_allocate_op(pc_);				++pc_; break;
