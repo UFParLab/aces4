@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
 			profile_timer_store.read_all_data_into_cache();
 			SIP_MASTER(std::cout << "Now Modeling "<< sialfpath << std::endl);
 
-#pragma omp parallel for ordered schedule(static)
+#pragma omp parallel for schedule(static)
 			for (int worker_rank=0; worker_rank<num_workers; ++worker_rank){
 				//std::cout << "threads = "<< omp_get_num_threads() << std::endl;
 
