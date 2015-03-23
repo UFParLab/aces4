@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
 			SIP_MASTER(std::cout << "Now Modeling "<< sialfpath << std::endl);
 
 #pragma omp parallel for schedule(static)
-			for (int worker_rank=0; worker_rank<num_workers; ++worker_rank){
+			for (int worker_rank=0; worker_rank<num_workers; worker_rank += gap){
 				//std::cout << "threads = "<< omp_get_num_threads() << std::endl;
 
 				sip::SIPMaPTimer sipmap_timer(sipTables.max_timer_slots());
