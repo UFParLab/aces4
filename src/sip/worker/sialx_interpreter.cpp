@@ -50,7 +50,6 @@ void SialxInterpreter::_init(const SipTables& sip_tables) {
 	int num_indices = sip_tables.index_table_.entries_.size();
 	//op_table_ = sipTables.op_table_;
 	pc_ = 0;
-	global_interpreter = this;
 	gpu_enabled_ = false;
 	timer_pc_ = -1;
 	iteration_ = 0;
@@ -107,7 +106,7 @@ void SialxInterpreter::handle_do_op(int &pc) {
 	loop_start(pc, loop);
 }
 
-void SialxInterpreter::handle_loop_end(int &pc) {
+void SialxInterpreter::handle_enddo_op(int &pc) {
 	loop_end(pc);
 }
 
@@ -612,7 +611,6 @@ void SialxInterpreter::handle_block_scale_assign_op(int pc) {
 	Block::BlockPtr lhs_block = get_block_from_instruction(pc, 'w', true);
 	Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
 	double factor = expression_stack_.top();
-	std::cout << current_line() << ":  factor = " << factor << std::endl;
 	lhs_block->scale_and_copy(rhs_block, factor);
 	expression_stack_.pop();
 }
@@ -774,7 +772,7 @@ void SialxInterpreter::pre_interpret(int pc) {
 	SIP_LOG(opcode_t opcode = op_table_.opcode(pc_);
 			std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " " << pc << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
 	opcode_t opcode = op_table_.opcode(pc_);
-	timer_trace(pc, opcode, current_line());
+	timer_trace(pc, opcode, line_number());
 }
 
 void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
@@ -793,7 +791,7 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 		case call_op: 					handle_call_op(pc_);					break;
 		case return_op: 				handle_return_op(pc_);					break;
 		case do_op: 					handle_do_op(pc_);						break;
-		case enddo_op: 					handle_loop_end(pc_);					break;
+		case enddo_op: 					handle_enddo_op(pc_);					break;
 		case exit_op: 					handle_exit_op(pc_);					break;
 		case where_op: 					handle_where_op(pc_);					break;
 		case pardo_op: 					handle_pardo_op(pc_);					break;
@@ -1764,7 +1762,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
 						id, write_back_list_) :
-				sial_ops_.get_block_for_writing(id, is_scope_extent);
+				sial_ops_.get_block_for_writing(id, pc_, is_scope_extent);
 	}
 		break;
 	case 'u': {
@@ -1772,7 +1770,7 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_updating(
 						id, write_back_list_) :
-				sial_ops_.get_block_for_updating(id);
+				sial_ops_.get_block_for_updating(id, pc_);
 	}
 		break;
 	default:

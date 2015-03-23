@@ -500,6 +500,7 @@ void SIPMaPInterpreter::handle_restore_persistent_op(int pc){
 	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
 void SIPMaPInterpreter::handle_pardo_op(int &pc){
+	record_zero_block_args_computation_time(pardo_op);
 	/** What a particular worker would do */
 //	LoopManager* loop = new StaticTaskAllocParallelPardoLoop(arg1(pc),
 //					index_selectors(pc), data_manager_, sip_tables_,
@@ -522,44 +523,46 @@ void SIPMaPInterpreter::record_zero_block_args_computation_time(opcode_t op) {
 	pardo_section_time_ += computation_time;
 }
 
-void SIPMaPInterpreter::handle_jump_if_zero_op(int &pc)		{ SialxInterpreter::handle_jump_if_zero_op(pc); record_zero_block_args_computation_time(jump_if_zero_op);}
-void SIPMaPInterpreter::handle_stop_op(int &pc)				{ SialxInterpreter::handle_stop_op(pc); record_zero_block_args_computation_time(stop_op);	}
-void SIPMaPInterpreter::handle_exit_op(int &pc)				{ SialxInterpreter::handle_exit_op(pc); record_zero_block_args_computation_time(exit_op);	}
-void SIPMaPInterpreter::handle_push_block_selector_op(int pc){ SialxInterpreter::handle_push_block_selector_op(pc); record_zero_block_args_computation_time(push_block_selector_op);}
-void SIPMaPInterpreter::handle_string_load_literal_op(int pc){ SialxInterpreter::handle_string_load_literal_op(pc); record_zero_block_args_computation_time(string_load_literal_op);}
-void SIPMaPInterpreter::handle_int_load_literal_op(int pc)	{ SialxInterpreter::handle_int_load_literal_op(pc); record_zero_block_args_computation_time(int_load_literal_op);	}
-void SIPMaPInterpreter::handle_int_load_value_op(int pc)	{ SialxInterpreter::handle_int_load_value_op(pc); record_zero_block_args_computation_time(int_load_value_op);	}
-void SIPMaPInterpreter::handle_int_store_op(int pc)			{ SialxInterpreter::handle_int_store_op(pc); record_zero_block_args_computation_time(int_store_op);	}
-void SIPMaPInterpreter::handle_int_add_op(int pc)			{ SialxInterpreter::handle_int_add_op(pc); record_zero_block_args_computation_time(int_add_op);	}
-void SIPMaPInterpreter::handle_int_subtract_op(int pc)		{ SialxInterpreter::handle_int_subtract_op(pc); record_zero_block_args_computation_time(int_subtract_op);	}
-void SIPMaPInterpreter::handle_int_multiply_op(int pc)		{ SialxInterpreter::handle_int_multiply_op(pc); record_zero_block_args_computation_time(int_multiply_op);	}
-void SIPMaPInterpreter::handle_int_divide_op(int pc)		{ SialxInterpreter::handle_int_divide_op(pc); record_zero_block_args_computation_time(int_divide_op);	}
-void SIPMaPInterpreter::handle_int_equal_op(int pc)			{ SialxInterpreter::handle_int_equal_op(pc); record_zero_block_args_computation_time(int_equal_op);	}
-void SIPMaPInterpreter::handle_int_nequal_op(int pc)		{ SialxInterpreter::handle_int_nequal_op(pc); record_zero_block_args_computation_time(int_nequal_op);	}
-void SIPMaPInterpreter::handle_int_le_op(int pc)			{ SialxInterpreter::handle_int_le_op(pc); record_zero_block_args_computation_time(int_le_op);	}
-void SIPMaPInterpreter::handle_int_gt_op(int pc)			{ SialxInterpreter::handle_int_gt_op(pc); record_zero_block_args_computation_time(int_gt_op);	}
-void SIPMaPInterpreter::handle_int_lt_op(int pc)			{ SialxInterpreter::handle_int_lt_op(pc); record_zero_block_args_computation_time(int_lt_op);	}
-void SIPMaPInterpreter::handle_int_neg_op(int pc)			{ SialxInterpreter::handle_int_neg_op(pc); record_zero_block_args_computation_time(int_neg_op);	}
-void SIPMaPInterpreter::handle_cast_to_int_op(int pc)		{ SialxInterpreter::handle_cast_to_int_op(pc); record_zero_block_args_computation_time(cast_to_int_op);	}
-void SIPMaPInterpreter::handle_index_load_value_op(int pc)	{ SialxInterpreter::handle_index_load_value_op(pc); record_zero_block_args_computation_time(index_load_value_op);	}
-void SIPMaPInterpreter::handle_scalar_load_value_op(int pc)	{ SialxInterpreter::handle_scalar_load_value_op(pc); record_zero_block_args_computation_time(scalar_load_value_op);	}
-void SIPMaPInterpreter::handle_scalar_store_op(int pc)		{ SialxInterpreter::handle_scalar_store_op(pc); record_zero_block_args_computation_time(scalar_store_op);	}
-void SIPMaPInterpreter::handle_scalar_add_op(int pc)		{ SialxInterpreter::handle_scalar_add_op(pc); record_zero_block_args_computation_time(scalar_add_op);	}
-void SIPMaPInterpreter::handle_scalar_subtract_op(int pc)	{ SialxInterpreter::handle_scalar_subtract_op(pc); record_zero_block_args_computation_time(scalar_subtract_op);	}
-void SIPMaPInterpreter::handle_scalar_multiply_op(int pc)	{ SialxInterpreter::handle_scalar_multiply_op(pc); record_zero_block_args_computation_time(scalar_multiply_op);	}
-void SIPMaPInterpreter::handle_scalar_divide_op(int pc)		{ SialxInterpreter::handle_scalar_divide_op(pc); record_zero_block_args_computation_time(scalar_divide_op);	}
-void SIPMaPInterpreter::handle_scalar_exp_op(int pc)		{ SialxInterpreter::handle_scalar_exp_op(pc); record_zero_block_args_computation_time(scalar_exp_op);	}
-void SIPMaPInterpreter::handle_scalar_eq_op(int pc)			{ SialxInterpreter::handle_scalar_eq_op(pc); record_zero_block_args_computation_time(scalar_eq_op);	}
-void SIPMaPInterpreter::handle_scalar_ne_op(int pc)			{ SialxInterpreter::handle_scalar_ne_op(pc); record_zero_block_args_computation_time(scalar_ne_op);	}
-void SIPMaPInterpreter::handle_scalar_ge_op(int pc)			{ SialxInterpreter::handle_scalar_ge_op(pc); record_zero_block_args_computation_time(scalar_ge_op);	}
-void SIPMaPInterpreter::handle_scalar_le_op(int pc)			{ SialxInterpreter::handle_scalar_le_op(pc); record_zero_block_args_computation_time(scalar_le_op);	}
-void SIPMaPInterpreter::handle_scalar_gt_op(int pc)			{ SialxInterpreter::handle_scalar_gt_op(pc); record_zero_block_args_computation_time(scalar_gt_op);	}
-void SIPMaPInterpreter::handle_scalar_lt_op(int pc)			{ SialxInterpreter::handle_scalar_lt_op(pc); record_zero_block_args_computation_time(scalar_lt_op);	}
-void SIPMaPInterpreter::handle_scalar_neg_op(int pc)		{ SialxInterpreter::handle_scalar_neg_op(pc); record_zero_block_args_computation_time(scalar_neg_op);	}
-void SIPMaPInterpreter::handle_scalar_sqrt_op(int pc)		{ SialxInterpreter::handle_scalar_sqrt_op(pc); record_zero_block_args_computation_time(scalar_sqrt_op);	}
-void SIPMaPInterpreter::handle_idup_op(int pc)				{ SialxInterpreter::handle_idup_op(pc); record_zero_block_args_computation_time(idup_op);	}
-void SIPMaPInterpreter::handle_iswap_op(int pc)				{ SialxInterpreter::handle_iswap_op(pc); record_zero_block_args_computation_time(iswap_op);	}
-void SIPMaPInterpreter::handle_sswap_op(int pc)				{ SialxInterpreter::handle_sswap_op(pc); record_zero_block_args_computation_time(sswap_op);	}
+void SIPMaPInterpreter::handle_do_op(int &pc)				{ record_zero_block_args_computation_time(do_op); 			SialxInterpreter::handle_do_op(pc); }
+void SIPMaPInterpreter::handle_enddo_op(int &pc)			{ record_zero_block_args_computation_time(enddo_op); 		SialxInterpreter::handle_enddo_op(pc); }
+void SIPMaPInterpreter::handle_jump_if_zero_op(int &pc)		{ record_zero_block_args_computation_time(jump_if_zero_op); SialxInterpreter::handle_jump_if_zero_op(pc); }
+void SIPMaPInterpreter::handle_stop_op(int &pc)				{ record_zero_block_args_computation_time(stop_op); 		SialxInterpreter::handle_stop_op(pc); }
+void SIPMaPInterpreter::handle_exit_op(int &pc)				{ record_zero_block_args_computation_time(exit_op);			SialxInterpreter::handle_exit_op(pc); }
+void SIPMaPInterpreter::handle_push_block_selector_op(int pc){ record_zero_block_args_computation_time(push_block_selector_op); SialxInterpreter::handle_push_block_selector_op(pc); }
+void SIPMaPInterpreter::handle_string_load_literal_op(int pc){ record_zero_block_args_computation_time(string_load_literal_op);	SialxInterpreter::handle_string_load_literal_op(pc);}
+void SIPMaPInterpreter::handle_int_load_literal_op(int pc)	{ record_zero_block_args_computation_time(int_load_literal_op);	SialxInterpreter::handle_int_load_literal_op(pc); }
+void SIPMaPInterpreter::handle_int_load_value_op(int pc)	{ record_zero_block_args_computation_time(int_load_value_op); 	SialxInterpreter::handle_int_load_value_op(pc); }
+void SIPMaPInterpreter::handle_int_store_op(int pc)			{ record_zero_block_args_computation_time(int_store_op);	SialxInterpreter::handle_int_store_op(pc);}
+void SIPMaPInterpreter::handle_int_add_op(int pc)			{ record_zero_block_args_computation_time(int_add_op); 		SialxInterpreter::handle_int_add_op(pc);	}
+void SIPMaPInterpreter::handle_int_subtract_op(int pc)		{ record_zero_block_args_computation_time(int_subtract_op);	SialxInterpreter::handle_int_subtract_op(pc); }
+void SIPMaPInterpreter::handle_int_multiply_op(int pc)		{ record_zero_block_args_computation_time(int_multiply_op);	SialxInterpreter::handle_int_multiply_op(pc);	}
+void SIPMaPInterpreter::handle_int_divide_op(int pc)		{ record_zero_block_args_computation_time(int_divide_op); 	SialxInterpreter::handle_int_divide_op(pc); 	}
+void SIPMaPInterpreter::handle_int_equal_op(int pc)			{ record_zero_block_args_computation_time(int_equal_op); 	SialxInterpreter::handle_int_equal_op(pc); 	}
+void SIPMaPInterpreter::handle_int_nequal_op(int pc)		{ record_zero_block_args_computation_time(int_nequal_op); 	SialxInterpreter::handle_int_nequal_op(pc); 	}
+void SIPMaPInterpreter::handle_int_le_op(int pc)			{ record_zero_block_args_computation_time(int_le_op);		SialxInterpreter::handle_int_le_op(pc);}
+void SIPMaPInterpreter::handle_int_gt_op(int pc)			{ record_zero_block_args_computation_time(int_gt_op);		SialxInterpreter::handle_int_gt_op(pc);	}
+void SIPMaPInterpreter::handle_int_lt_op(int pc)			{ record_zero_block_args_computation_time(int_lt_op); 		SialxInterpreter::handle_int_lt_op(pc); 	}
+void SIPMaPInterpreter::handle_int_neg_op(int pc)			{ record_zero_block_args_computation_time(int_neg_op);		SialxInterpreter::handle_int_neg_op(pc); 	}
+void SIPMaPInterpreter::handle_cast_to_int_op(int pc)		{ record_zero_block_args_computation_time(cast_to_int_op);	SialxInterpreter::handle_cast_to_int_op(pc);}
+void SIPMaPInterpreter::handle_index_load_value_op(int pc)	{ record_zero_block_args_computation_time(index_load_value_op);	SialxInterpreter::handle_index_load_value_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_load_value_op(int pc)	{ record_zero_block_args_computation_time(scalar_load_value_op);SialxInterpreter::handle_scalar_load_value_op(pc); 	}
+void SIPMaPInterpreter::handle_scalar_store_op(int pc)		{ record_zero_block_args_computation_time(scalar_store_op);	SialxInterpreter::handle_scalar_store_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_add_op(int pc)		{ record_zero_block_args_computation_time(scalar_add_op); 	SialxInterpreter::handle_scalar_add_op(pc); 	}
+void SIPMaPInterpreter::handle_scalar_subtract_op(int pc)	{ record_zero_block_args_computation_time(scalar_subtract_op);	SialxInterpreter::handle_scalar_subtract_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_multiply_op(int pc)	{ record_zero_block_args_computation_time(scalar_multiply_op);	SialxInterpreter::handle_scalar_multiply_op(pc);}
+void SIPMaPInterpreter::handle_scalar_divide_op(int pc)		{ record_zero_block_args_computation_time(scalar_divide_op);SialxInterpreter::handle_scalar_divide_op(pc); 	}
+void SIPMaPInterpreter::handle_scalar_exp_op(int pc)		{ record_zero_block_args_computation_time(scalar_exp_op);	SialxInterpreter::handle_scalar_exp_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_eq_op(int pc)			{ record_zero_block_args_computation_time(scalar_eq_op);	SialxInterpreter::handle_scalar_eq_op(pc); 	}
+void SIPMaPInterpreter::handle_scalar_ne_op(int pc)			{ record_zero_block_args_computation_time(scalar_ne_op);	SialxInterpreter::handle_scalar_ne_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_ge_op(int pc)			{ record_zero_block_args_computation_time(scalar_ge_op);	SialxInterpreter::handle_scalar_ge_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_le_op(int pc)			{ record_zero_block_args_computation_time(scalar_le_op);	SialxInterpreter::handle_scalar_le_op(pc);}
+void SIPMaPInterpreter::handle_scalar_gt_op(int pc)			{ record_zero_block_args_computation_time(scalar_gt_op);	SialxInterpreter::handle_scalar_gt_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_lt_op(int pc)			{ record_zero_block_args_computation_time(scalar_lt_op);	SialxInterpreter::handle_scalar_lt_op(pc);	}
+void SIPMaPInterpreter::handle_scalar_neg_op(int pc)		{ record_zero_block_args_computation_time(scalar_neg_op);	SialxInterpreter::handle_scalar_neg_op(pc); }
+void SIPMaPInterpreter::handle_scalar_sqrt_op(int pc)		{ record_zero_block_args_computation_time(scalar_sqrt_op);	SialxInterpreter::handle_scalar_sqrt_op(pc); }
+void SIPMaPInterpreter::handle_idup_op(int pc)				{ record_zero_block_args_computation_time(idup_op);			SialxInterpreter::handle_idup_op(pc); }
+void SIPMaPInterpreter::handle_iswap_op(int pc)				{  record_zero_block_args_computation_time(iswap_op);		SialxInterpreter::handle_iswap_op(pc);}
+void SIPMaPInterpreter::handle_sswap_op(int pc)				{  record_zero_block_args_computation_time(sswap_op);		SialxInterpreter::handle_sswap_op(pc);	}
 
 
 

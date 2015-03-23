@@ -11,6 +11,11 @@
 #include "block.h"
 #include "id_block_map.h"
 #include "setup_reader.h"
+#include <vector>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace sip {
 
@@ -21,7 +26,6 @@ class SialPrinter;
  */
 class Interpreter {
 public:
-	virtual ~Interpreter(){  global_interpreter = NULL; }
 
 	/** main interpret function */
 	void interpret() { do_interpret(); }
@@ -45,14 +49,6 @@ public:
 
 	/** Allows superinstructions to use the same ostream as sial. */
 	SialPrinter* printer() { return get_printer(); }
-
-	/** Static pointer to the current Interpreter.  This is
-	 * initialized in the Interpreter constructor and reset to NULL
-	 * in its destructor.  There should be at most on Interpreter instance
-	 * at any given time.
-	 */
-	static Interpreter* global_interpreter;
-
 
 	std::string string_literal(int slot) { return string_literal_impl(slot); }
 
@@ -125,8 +121,51 @@ public:
 	 */
 	virtual Block* get_static(int array_id) = 0;
 
+#ifdef _OPENMP
+	virtual ~Interpreter(){
+		int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+		global_interpreters_.at(this_thread) = NULL;
+	}
+	static Interpreter* global_interpreter() {
+		int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+		if (global_interpreters_.empty())
+			return NULL;
+		return global_interpreters_.at(this_thread);
+	}
+#else
+	virtual ~Interpreter(){  global_interpreters_.at(0) = NULL; global_interpreters_.clear(); }
+	static Interpreter* global_interpreter() {
+		if (global_interpreters_.empty())
+					return NULL;
+		return global_interpreters_.at(0);
+	}
+#endif
+
 protected:
-	Interpreter() { global_interpreter = this; }
+
+	/** Static pointer to the current Interpreter.  This is
+	 * initialized in the Interpreter constructor and reset to NULL
+	 * in its destructor.  There should be at most on Interpreter instance
+	 * at any given time.
+	 */
+	static std::vector<Interpreter*> global_interpreters_;
+#ifdef _OPENMP
+	static bool done_once;
+	Interpreter() {
+	    int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+#pragma omp critical
+	    {
+	    	if (!done_once){
+	    		done_once = true;
+	    		global_interpreters_.resize(num_threads, NULL);
+	    	}
+	    	global_interpreters_.at(this_thread) = this;
+	    }
+	}
+#else
+	Interpreter() { global_interpreters_.push_back(this); }
+#endif
+
 
 	virtual SialPrinter* get_printer() = 0;
 	virtual int get_line_number() = 0;

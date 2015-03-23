@@ -31,7 +31,7 @@ extern "C" {
  * @return
  */
 double scalar_value(const char * name) {
-	return sip::Interpreter::global_interpreter->scalar_value(std::string(name));
+	return sip::Interpreter::global_interpreter()->scalar_value(std::string(name));
 }
 
 /**
@@ -40,7 +40,7 @@ double scalar_value(const char * name) {
  * @param value
  */
 void set_scalar_value(const char * name, double value) {
-	sip::Interpreter::global_interpreter->set_scalar_value(std::string(name),
+	sip::Interpreter::global_interpreter()->set_scalar_value(std::string(name),
 			value);
 }
 
@@ -51,7 +51,7 @@ void set_scalar_value(const char * name, double value) {
  */
 int query_scalar_constant(const char*cname) {
     try {
-    	sip::Interpreter::global_interpreter->predefined_scalar(std::string(cname));
+    	sip::Interpreter::global_interpreter()->predefined_scalar(std::string(cname));
     	return 1;
     } catch(const std::out_of_range& oor) {
     	return 0;
@@ -64,7 +64,7 @@ int query_scalar_constant(const char*cname) {
  * @return Value of the constant
  */
 double scalar_constant(const char*cname) {
-	return sip::Interpreter::global_interpreter->predefined_scalar(std::string(cname));
+	return sip::Interpreter::global_interpreter()->predefined_scalar(std::string(cname));
 }
 
 /**
@@ -74,7 +74,7 @@ double scalar_constant(const char*cname) {
  */
 int query_int_constant(const char*cname) {
     try {
-    	sip::Interpreter::global_interpreter->predefined_int(std::string(cname));
+    	sip::Interpreter::global_interpreter()->predefined_int(std::string(cname));
     	return 1;
     } catch(const std::out_of_range& oor) {
     	return 0;
@@ -87,7 +87,7 @@ int query_int_constant(const char*cname) {
  * @return Value of the constant
  */
 int int_constant(const char*cname) {
-	return sip::Interpreter::global_interpreter->predefined_int(std::string(cname));
+	return sip::Interpreter::global_interpreter()->predefined_int(std::string(cname));
 }
 
 /**
@@ -102,12 +102,12 @@ int int_constant(const char*cname) {
 void predefined_scalar_array(const char*aname, int& num_dims, int **dims, double **values) {
 	try {
 //		std::pair<int, std::pair<int *, double *> > a =
-//				sip::Interpreter::global_interpreter->sip_tables().setup_reader().predef_arr_.at(
+//				sip::Interpreter::global_interpreter()->sip_tables().setup_reader().predef_arr_.at(
 //						std::string(aname));
 //		num_dims = a.first;
 //		*dims = a.second.first;
 //		*values = a.second.second;
-		setup::PredefContigArray rankblock = sip::Interpreter::global_interpreter->predefined_contiguous_array(std::string(aname));
+		setup::PredefContigArray rankblock = sip::Interpreter::global_interpreter()->predefined_contiguous_array(std::string(aname));
 		num_dims = rankblock.first;
 		sip::Block::BlockPtr block = rankblock.second;
 		*dims = const_cast<sip::segment_size_array_t&>(block->shape().segment_sizes_);
@@ -155,7 +155,7 @@ void predefined_int_array(const char*aname, int& num_dims, int **dims,
 		int **values) {
 	try {
 		setup::PredefIntArray a =
-				sip::Interpreter::global_interpreter->predefined_integer_array(std::string(aname));
+				sip::Interpreter::global_interpreter()->predefined_integer_array(std::string(aname));
 		//std::cout << "aname= " << aname << ", a=" << a.first << std::endl;
 		num_dims = a.rank;
 		*dims = a.dims;
@@ -178,6 +178,10 @@ void predefined_int_array(const char*aname, int& num_dims, int **dims,
 	}
 }
 
+/**
+ * Do not use either current_line() or current_pc() in the SIP other than to print error messages.
+ * It interferes with the OpenMP Enabled SIPMaP Interpreter.
+ */
 int current_line() { return sip::get_line_number(); }
 
 int current_pc() { return sip::get_current_pc(); }
@@ -192,16 +196,16 @@ int current_pc() { return sip::get_current_pc(); }
 
 namespace sip {
 std::string index_name_value(int slot) {
-	return sip::Interpreter::global_interpreter->index_value_to_string(slot);
+	return sip::Interpreter::global_interpreter()->index_value_to_string(slot);
 }
 std::string array_name_value(int array_table_slot) {
-	return sip::Interpreter::global_interpreter->array_name(array_table_slot);
+	return sip::Interpreter::global_interpreter()->array_name(array_table_slot);
 }
 int get_line_number() {
 #ifdef HAVE_MPI
 	sip::SIPMPIAttr &mpiattr = sip::SIPMPIAttr::get_instance();
 	if (mpiattr.is_worker()){
-		sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
+		sip::Interpreter *interpreter = sip::Interpreter::global_interpreter();
 		if (interpreter != NULL)
 			return interpreter->line_number();
 		else
@@ -215,8 +219,8 @@ int get_line_number() {
 	}
 
 #else	// HAVE_MPI
-	if (sip::Interpreter::global_interpreter != NULL) {
-		return sip::Interpreter::global_interpreter->line_number();
+	if (sip::Interpreter::global_interpreter() != NULL) {
+		return sip::Interpreter::global_interpreter()->line_number();
 	} else
 		return 0;
 #endif	// HAVE_MPI
@@ -226,7 +230,7 @@ int get_current_pc(){
 #ifdef HAVE_MPI
 	sip::SIPMPIAttr &mpiattr = sip::SIPMPIAttr::get_instance();
 	if (mpiattr.is_worker()){
-		sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
+		sip::Interpreter *interpreter = sip::Interpreter::global_interpreter();
 		if (interpreter != NULL)
 			return interpreter->current_pc();
 		else
@@ -240,8 +244,8 @@ int get_current_pc(){
 	}
 
 #else	// HAVE_MPI
-	if (sip::Interpreter::global_interpreter != NULL) {
-		return sip::Interpreter::global_interpreter->line_number();
+	if (sip::Interpreter::global_interpreter() != NULL) {
+		return sip::Interpreter::global_interpreter()->line_number();
 	} else
 		return 0;
 #endif	// HAVE_MPI

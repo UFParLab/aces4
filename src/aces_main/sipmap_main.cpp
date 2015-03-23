@@ -6,7 +6,10 @@
  */
 
 #include "sipmap_helper_methods.h"
+
+//#ifdef _OPENMP
 //#include <omp.h>
+//#endif // _OPENMP
 
 
 int main(int argc, char* argv[]) {
@@ -68,6 +71,9 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 		//sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
+
+		// Calculate number of workers to simulate based on -x parameter
+		int gap = static_cast<int>(100 / parameters.percentage_of_workers);
 
 		//interpret current program on worker
 		{

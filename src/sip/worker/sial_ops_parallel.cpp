@@ -106,7 +106,6 @@ void SialOpsParallel::delete_distributed(int array_id, int pc) {
 	for (std::vector<int>::const_iterator it = server_ranks.begin(); it != server_ranks.end(); ++it){
 		int server_rank = *it;
 		if (server_rank >= 0) {
-			int pc = current_pc();
 			int to_send[3] = { array_id, pc, barrier_support_.section_number() };
 			SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 			int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
@@ -148,7 +147,7 @@ void SialOpsParallel::get(BlockId& block_id, int pc) {
     int to_send[to_send_size]; // BlockId & line number
     int *serialized_block_id = block_id.to_mpi_array();
     std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_pc();
+    to_send[line_num_offset] = pc;
     to_send[section_num_offset] = barrier_support_.section_number();
 
 	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_communication_time();
@@ -622,7 +621,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int pc
 	return block_manager_.get_block_for_reading(id);
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
+Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id, int pc,
 		bool is_scope_extent) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
@@ -630,15 +629,15 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 		CHECK(!is_scope_extent, "sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
-	return wait_and_check(block_manager_.get_block_for_writing(id, is_scope_extent),current_pc()); 
+	return wait_and_check(block_manager_.get_block_for_writing(id, is_scope_extent), pc);
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
+Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id, int pc) {
 	int array_id = id.array_id();
 	CHECK_WITH_LINE(!(sip_tables_.is_distributed(array_id) || sip_tables_.is_served(array_id)),
 			"attempting to update distributed or served block", current_line());
 
-	return wait_and_check(block_manager_.get_block_for_updating(id), current_pc()); 
+	return wait_and_check(block_manager_.get_block_for_updating(id), pc);
 }
 
 

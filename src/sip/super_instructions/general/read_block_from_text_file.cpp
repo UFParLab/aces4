@@ -18,7 +18,7 @@
  */
 void read_block_from_text_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr){
 
-	std::string array_name(sip::Interpreter::global_interpreter->array_name(array_slot));
+	std::string array_name(sip::Interpreter::global_interpreter()->array_name(array_slot));
 	std::stringstream block_name_ss;
 	block_name_ss<< array_name << "[" << index_values[0];
 	for (int i=1; i<rank; ++i)

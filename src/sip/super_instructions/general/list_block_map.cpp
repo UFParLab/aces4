@@ -22,9 +22,9 @@
 // Super instruction built specifically for tests
 // Use only with SialxInterpreter.
 void list_block_map(){
-	std::ostream& out = sip::Interpreter::global_interpreter->printer()->get_ostream();
+	std::ostream& out = sip::Interpreter::global_interpreter()->printer()->get_ostream();
 	out <<"LISTING CURRENT BLOCKS" << std::endl;
-	out <<  static_cast<sip::SialxInterpreter*>(sip::Interpreter::global_interpreter)->data_manager().block_manager();
+	out <<  static_cast<sip::SialxInterpreter*>(sip::Interpreter::global_interpreter())->data_manager().block_manager();
 	out << std::endl;
 //   std::cout <<"LISTING CURRENT BLOCKS" << std::endl;
 //   std::cout <<  sip::Interpreter::global_interpreter->data_manager_.block_manager_;

@@ -77,6 +77,8 @@ public:
 
 
 	// Counting time for these opcodes may be relevant
+	virtual void handle_do_op(int &pc);
+	virtual void handle_enddo_op(int &pc);
 	virtual void handle_jump_if_zero_op(int &pc);
 	virtual void handle_stop_op(int &pc);
 	virtual void handle_exit_op(int &pc);

@@ -143,6 +143,7 @@ struct Aces4Parameters{
 	int num_workers;
 	int num_servers;
 	std::string machine_parameters_file;
+	double percentage_of_workers;
 	Aces4Parameters(){
 		init_binary_file = "data.dat";	// Default initialization file is data.dat
 		sialx_file_dir = ".";			// Default directory for compiled sialx files is "."
@@ -155,6 +156,7 @@ struct Aces4Parameters{
 		num_workers = -1;
 		num_servers = -1;
 		machine_parameters_file = "";
+		percentage_of_workers = 100.0;
 	}
 };
 
@@ -172,6 +174,7 @@ static void print_usage(const std::string& program_name) {
 	std::cerr << "\t -w : number of Workers to simulate  " << std::endl;
 	std::cerr << "\t -r : number of seRvers to simulate  " << std::endl;
 	std::cerr << "\t -a : mAchine parameters file  " << std::endl;
+	std::cerr << "\t -x : approXimate percentage of workers to simulate  (default 100%)" << std::endl;
 	std::cerr << "\tDefaults: " << std::endl;
 	std::cerr << "\t\tdata file - \"data.dat\""<< std::endl;
 	std::cerr << "\t\tsialx directory - \".\"" << std::endl;
@@ -207,8 +210,9 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 	// p: profile database, default is "profile.db"
 	// w : number of workers
 	// r : number of servers
+	// x : approXimate number of workers (in %) to simulate
 	// h & ? are for help. They require no arguments
-	const char* optString = "a:d:j:s:p:w:r:h?";
+	const char* optString = "a:d:j:s:p:w:r:x:h?";
 	int c;
 
 	bool workers_specified = false;
@@ -257,6 +261,10 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 			servers_specified = true;
 		}
 			break;
+		case 'x' : {
+			parameters.percentage_of_workers = read_from_optarg<double>();
+		}
+			break;
 		case 'h':
 		case '?':
 		default:
@@ -288,6 +296,12 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
 	if (!workers_specified || !servers_specified) {
 		std::cerr << "Must specify the number of workers & servers" << std::endl;
 		print_usage( argv[0]);
+		exit(1);
+	}
+
+	if (parameters.percentage_of_workers <= 0 || parameters.percentage_of_workers > 100.0){
+		std::cerr << "Must specify a percentage of the workers to approximate (0<X<=100)" << std::endl;
+		print_usage(argv[0]);
 		exit(1);
 	}
 

@@ -570,7 +570,7 @@ protected:
 	virtual void handle_stop_op(int &pc);
 	virtual void handle_return_op(int &pc);
 	virtual void handle_do_op(int &pc);
-	virtual void handle_loop_end(int &pc);
+	virtual void handle_enddo_op(int &pc);
 	virtual void handle_exit_op(int &pc);
 	virtual void handle_where_op(int &pc);
 	virtual void handle_pardo_op(int &pc);

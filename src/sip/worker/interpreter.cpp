@@ -10,6 +10,7 @@
 
 namespace sip {
 
-Interpreter* Interpreter::global_interpreter = NULL;
+std::vector<Interpreter*> Interpreter::global_interpreters_;
+bool Interpreter::done_once = false;
 
 } /* namespace sip */

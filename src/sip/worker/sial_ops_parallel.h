@@ -83,10 +83,10 @@ public:
 	 */
 	Block::BlockPtr get_block_for_reading(const BlockId& id, int pc);
 
-	Block::BlockPtr get_block_for_writing(const BlockId& id,
+	Block::BlockPtr get_block_for_writing(const BlockId& id, int pc,
 			bool is_scope_extent = false);
 
-	Block::BlockPtr get_block_for_updating(const BlockId& id);
+	Block::BlockPtr get_block_for_updating(const BlockId& id, int pc);
 
 private:
 

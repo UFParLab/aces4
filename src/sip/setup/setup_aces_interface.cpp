@@ -25,7 +25,7 @@ extern "C" {
 
 void get_predefined_array(const char*aname, int& num_dims, int *dims, double *values){
 	try{
-	std::pair<int, std::pair<int *, double *> > a =  sip::Interpreter::global_interpreter->sip_tables_.setup_reader_.predef_arr_.at(std::string(aname));
+	std::pair<int, std::pair<int *, double *> > a =  sip::Interpreter::global_interpreter()->sip_tables_.setup_reader_.predef_arr_.at(std::string(aname));
 	num_dims = a.first;
 	dims = a.second.first;
 	values = a.second.second;
