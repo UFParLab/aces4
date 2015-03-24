@@ -231,8 +231,8 @@ TEST(Sial,put_test) {
 
 }
 
-TEST(Sial,put_increment) {
-	std::string job("put_increment");
+TEST(Sial,put_initialize) {
+	std::string job("put_initialize");
 	int norb = 3;
 	int segs[] = { 2, 3, 2 };
 	if (attr->global_rank() == 0) {
