@@ -1,0 +1,68 @@
+sial rlccd_expensive_part
+
+	special return_sval rw
+	predefined  int norb   #total number of atomic orbital segments beta)
+	predefined  int baocc  # begin of occupied orbital segment range (alpha)
+	predefined  int eaocc  # end occupied orbital segment range (alpha)
+	predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+
+	index kiter    = 1: cc_iter   
+	aoindex mu     = 1: norb 
+	aoindex nu     = 1: norb
+	aoindex lambda = 1: norb
+	aoindex sigma  = 1: norb
+	moaindex i = baocc: eaocc
+	moaindex j = baocc: eaocc
+	
+	served TAO_ab[lambda,i,sigma,j]
+	served T2AO_ab[lambda,i,sigma,j]
+	temp Yab[lambda,i,mu,j]
+	temp Y1ab[lambda,i,mu,j]
+	temp t[lambda,i,mu,j]
+	scalar dummy
+	
+	
+	PARDO lambda, sigma, i, j
+		Yab[lambda,i,sigma,j] = 0.0
+		PREPARE TAO_ab[lambda,i,sigma,j] += Yab[lambda,i,sigma,j]
+	ENDPARDO lambda, sigma, i, j
+	
+    server_barrier   
+
+	DO KITER
+
+		PARDO mu, nu, lambda, sigma
+		  WHERE mu < nu 
+		     DO i
+			     DO j
+			        REQUEST                       TAO_ab[lambda,i,sigma,j]
+			        # execute return_sval TAO_ab[lambda,i,sigma,j] dummy
+			        t[lambda,i,sigma,j] = TAO_ab[lambda,i,sigma,j]
+			        Yab[mu,i,nu,j]              = 1.0
+			        Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
+			        PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+			        PREPARE T2AO_ab[nu,j,mu,i] += Y1ab[nu,j,mu,i]
+			      ENDDO j
+		     ENDDO i
+		ENDPARDO mu, nu, lambda, sigma
+		
+		PARDO mu, nu, lambda, sigma
+		  WHERE mu == nu 
+		     DO i
+			     DO j
+			        REQUEST                       TAO_ab[lambda,i,sigma,j]
+			        # execute return_sval TAO_ab[lambda,i,sigma,j] dummy
+			        t[lambda,i,sigma,j] = TAO_ab[lambda,i,sigma,j]
+			        Yab[mu,i,nu,j]              = 1.0
+			        PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+			     ENDDO j
+		     ENDDO i
+		ENDPARDO mu, nu, lambda, sigma
+		
+		server_barrier  
+	
+	ENDDO KITER
+	
+
+
+endsial rlccd_expensive_part

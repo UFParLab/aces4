@@ -539,6 +539,7 @@ set(SIAL_FILES
 	src/sialx/sipmap/contract_to_scalar.sialx;
 	src/sialx/sipmap/sipmap_test2.sialx;
 	src/sialx/sipmap/sipmap_test3.sialx;
+	src/sialx/sipmap/rlccd_expensive_part.sialx;
     src/sialx/test/empty.sialx;
     src/sialx/test/static_array_test.sialx;
     src/sialx/test/ifelse.sialx;
