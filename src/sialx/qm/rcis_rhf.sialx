@@ -1601,6 +1601,7 @@ do ksub
 #    print norm2
     Tk[ksub] = norm2
 #
+    server_barrier
     pardo a,i
 	request RB1_a[ksub,a,i]
         Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
@@ -1639,6 +1640,7 @@ where ksub < qsub
 #
 # form overlap and norm
 #
+    server_barrier
     pardo a,i
         request RB1_a[qsub,a,i]
 	request RB1_a[ksub,a,i]

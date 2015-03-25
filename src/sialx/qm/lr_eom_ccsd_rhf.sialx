@@ -1203,7 +1203,8 @@ PARDO a, a1
 	tpp[a,a1] -= t1pp[a,a1] 
     ENDDO i 
 
-    LHBAR_aa[a,a1] += tpp[a,a1] 
+    put HBAR_aa[a,a1] += tpp[a,a1] 
+    #LHBAR_aa[a,a1] += tpp[a,a1] 
 
 ENDPARDO a, a1 
 
@@ -1212,7 +1213,8 @@ PARDO a, a1, a2, i
     request VSaaai[a1,a,a2,i]   
     t1pp[a,a1]         = VSaaai[a1,a,a2,i]*St1a[a2,i] 
 
-    LHBAR_aa[a,a1]                 += t1pp[a,a1] 
+    put HBAR_aa[a,a1]                 += t1pp[a,a1] 
+    #LHBAR_aa[a,a1]                 += t1pp[a,a1] 
 
     DO i1  
 	t3iaai[i1,a2,a,i]         = VSaaai[a1,a,a2,i]*St1a[a1,i1]
@@ -1227,7 +1229,8 @@ PARDO a, a1, b, j
     t1pp[a,a1]         = Vaabj[a1,a,b,j]*St1b[b,j] 
     tppqq[a,a1,j,b]    = Vaabj[a1,a,b,j]
 
-    LHBAR_aa[a,a1]                += t1pp[a,a1] 
+    #LHBAR_aa[a,a1]                += t1pp[a,a1] 
+    put HBAR_aa[a,a1]                += t1pp[a,a1] 
     prepare HBAR_AIBC_aabb[a,a1,j,b] += tppqq[a,a1,j,b] 
 
 ENDPARDO a, a1, b, j  
@@ -1247,7 +1250,8 @@ PARDO a, i1, a2, i
 	request VSpipi[a2,i1,a1,i]    
 	t1pp[a,a1]         = tpppp[a,i,a2,i1]*VSpipi[a2,i1,a1,i] 
 	t1pp[a,a1]        *= -0.5  
-	LHBAR_aa[a,a1] += t1pp[a,a1] 
+	#LHBAR_aa[a,a1] += t1pp[a,a1] 
+	put HBAR_aa[a,a1] += t1pp[a,a1] 
     ENDDO a1 
 
 ENDPARDO a, i1, a2, i  
@@ -1264,7 +1268,8 @@ PARDO a, i, b, j
 	request Vpiqj[a1,i,b,j]    
 	t1pp[a,a1]         = tppqq[a,i,b,j]*Vpiqj[a1,i,b,j] 
 	t1pp[a,a1]        *= -1.0  
-	LHBAR_aa[a,a1] += t1pp[a,a1] 
+	#LHBAR_aa[a,a1] += t1pp[a,a1] 
+	put HBAR_aa[a,a1] += t1pp[a,a1] 
 
     ENDDO a1  
 
@@ -1279,12 +1284,12 @@ ENDPARDO a, i, b, j
 #     beta-beta spin component done. 
 #     ------------------------------ 
 
-server_barrier 
-DO a 
-DO a1 
-PUT HBAR_aa[a,a1] += LHBAR_aa[a,a1] 
-ENDDO a1 
-ENDDO a 
+#server_barrier 
+#DO a 
+#DO a1 
+#PUT HBAR_aa[a,a1] += LHBAR_aa[a,a1] 
+#ENDDO a1 
+#ENDDO a 
 server_barrier 
 DO a 
 DO a1 
@@ -1365,7 +1370,8 @@ PARDO i, i1
     ENDDO b 
     ENDDO a 
 
-    LHBAR_ii[i1,i] = tpp[i1,i] 
+    put HBAR_ii[i1,i] = tpp[i1,i] 
+    #LHBAR_ii[i1,i] = tpp[i1,i] 
 
 ENDPARDO i, i1 
 
@@ -1438,21 +1444,22 @@ PARDO j, j1
     ENDDO b 
     ENDDO a 
 
-    LHBAR_jj[j1,j] = tqq[j1,j] 
+    put HBAR_jj[j1,j] = tqq[j1,j] 
+    #LHBAR_jj[j1,j] = tqq[j1,j] 
 
 ENDPARDO j, j1 
 
-server_barrier 
-DO i 
-DO i1 
-PUT HBAR_ii[i,i1] += LHBAR_ii[i,i1] 
-ENDDO i1 
-ENDDO i 
-DO j 
-DO j1 
-PUT HBAR_jj[j,j1] += LHBAR_jj[j,j1] 
-ENDDO j1 
-ENDDO j 
+#server_barrier 
+#DO i 
+#DO i1 
+#PUT HBAR_ii[i,i1] += LHBAR_ii[i,i1] 
+#ENDDO i1 
+#ENDDO i 
+#DO j 
+#DO j1 
+#PUT HBAR_jj[j,j1] += LHBAR_jj[j,j1] 
+#ENDDO j1 
+#ENDDO j 
 server_barrier 
 DO i 
 DO i1 
@@ -2869,6 +2876,22 @@ allocate LHBAR_ii[*,*]
 allocate LHBAR_ia[*,*]
 allocate LHBAR_jb[*,*]
 allocate LHBAR_aa[*,*]
+pardo i,i1
+    Tii[i,i1] = 0.0
+    put HBAR_ii[i,i1] = Tii[i,i1]
+endpardo i,i1
+pardo i,a
+    Tia[i,a] = 0.0
+    put HBAR_ia[i,a] = Tia[i,a]
+endpardo i,a
+pardo j,b
+    Tjb[j,b] = 0.0
+    put HBAR_jb[j,b] = Tjb[j,b]
+endpardo j,b
+pardo a,a1
+    Taa[a,a1] = 0.0
+    put HBAR_aa[a,a1] = Taa[a,a1]
+endpardo a,a1
 server_barrier
 
 print "Forming H_ab"
@@ -2893,6 +2916,7 @@ print "Forming H_iabc"
 CALL HBAR_AIBC
 print "Forming H_ajib"
 CALL HBAR_AJIB
+server_barrier ## keep this barrier
 print "Forming H_abci"
 CALL HBAR_ABCI 
 
@@ -5144,18 +5168,9 @@ if myrank == root
     print "-- EOM-CCSD excited state energies --"
 
     do kstate
-	if kstate==1
-	    etemp=0.328506568942336
-	endif
-	if kstate==2
-	    etemp=0.411933989302607
-	endif
 	allocate contiguous EOM_EE_Energy[kstate:kstate]
-	etemp1 = SEk0[kstate]
-	etemp -= etemp1
 	EOM_EE_Energy[kstate:kstate] = SEk0[kstate]
 	print EOM_EE_Energy[kstate:kstate]
-	print etemp
 	deallocate contiguous EOM_EE_Energy[kstate:kstate]
     enddo kstate
 
@@ -5674,9 +5689,6 @@ where ksub == 1
     server_barrier
     norm1   = 0.0
     collective norm1   += normS
-    if norm1 == 0.0
-	norm1 = 1.0
-    endif
     etemp = 1.0
     if norm1 < 0.0
 	etemp = -1.0
@@ -5735,7 +5747,6 @@ server_barrier
 
 # loop over "k+1"
 do qsub
-
 #######################
 # make copy of Ak+1
     Tk[qsub] = 1.0
@@ -5918,9 +5929,6 @@ do qsub
     server_barrier
     norm1   = 0.0
     collective norm1   += normS
-    if norm1 == 0.0
-	norm1 = 1.0
-    endif
     etemp = 1.0
     if norm1 < 0.0
 	etemp = -1.0

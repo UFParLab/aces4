@@ -274,6 +274,7 @@ TEST_INIT_DATA_FILES=\
 test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
+test/eom_test.dat\
 test/mcpt2_test.dat\
 test/lindep_test.dat
 
