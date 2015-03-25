@@ -75,6 +75,7 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	tracer_ = new Tracer(this, sip_tables, std::cout);
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 	timer_line_=0;
+	iteration_=0;
 #ifdef HAVE_CUDA
 	int devid;
 	int rank = 0;
@@ -163,9 +164,14 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		case pardo_op: { //TODO refactor to get rid of the ifdefs
 			int num_indices = arg1();
 #ifdef HAVE_MPI
-			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
-					index_selectors(), data_manager_, sip_tables_,
-					SIPMPIAttr::get_instance());
+//			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
+//					index_selectors(), data_manager_, sip_tables_,
+//					SIPMPIAttr::get_instance());
+			int num_where_clauses = arg2();
+			SIP_LOG(std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush);
+			LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(
+					num_indices, index_selectors(), data_manager_, sip_tables_,
+					SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
 #else
 			LoopManager* loop = new SequentialPardoLoop(num_indices,
 					index_selectors(), data_manager_, sip_tables_);
@@ -179,6 +185,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case sip_barrier_op: {
 			sial_ops_.sip_barrier();
+			iteration_ = 0;
 			++pc;
 		}
 			break;
@@ -1444,39 +1451,183 @@ void Interpreter::handle_contraction(int drank, const index_selector_t& dselecte
 
 
 
+bool Interpreter::interpret_where(int num_where_clauses){
+//	std::cout << "entering interpret_where " << std::endl << std::flush; //DEBUG
+//	std::cout << "control_stack_.size() = " << control_stack_.size()<< std::endl << std::flush; //DEBUG
+	//get address of top of loop and restore control stack
+	int loop_end_pc = control_stack_.top();
+//	std::cout << "before control_stack_.pop() " << std::endl << std::flush; //DEBUG
+	control_stack_.pop();
+//	std::cout << "before control_stack_.top() " << std::endl << std::flush; //DEBUG
+	int loop_body_pc = control_stack_.top();
+	control_stack_.push(loop_end_pc);
+	pc = loop_body_pc;
+
+//	std::cout << "before for loop " << std::endl << std::flush; //DEBUG
+	//for each where expression (until one is false)
+	for (int i = num_where_clauses; i > 0; --i){
+
+	//evaluate the where expression and leave the value on top of the control stack
+	opcode_t opcode = op_table_.opcode(pc);
+	while (opcode != where_op){
+	switch (opcode) {
+	case int_load_literal_op: {
+		control_stack_.push(arg0());
+		++pc;
+	}
+		break;
+	case index_load_value_op: {
+		control_stack_.push(index_value(arg0()));
+		++pc;
+	}
+		break;
+	case int_equal_op: {
+		int i1 = control_stack_.top();
+		control_stack_.pop();
+		int i0 = control_stack_.top();
+		control_stack_.pop();
+		control_stack_.push(i0 == i1);
+		++pc;
+	}
+		break;
+	case int_nequal_op: {
+		int i1 = control_stack_.top();
+		control_stack_.pop();
+		int i0 = control_stack_.top();
+		control_stack_.pop();
+		control_stack_.push(i0 != i1);
+		++pc;
+	}
+		break;
+	case int_ge_op: {
+		int i1 = control_stack_.top();
+		control_stack_.pop();
+		int i0 = control_stack_.top();
+		control_stack_.pop();
+		control_stack_.push(i0 >= i1);
+		++pc;
+	}
+		break;
+	case int_le_op: {
+		int i1 = control_stack_.top();
+		control_stack_.pop();
+		int i0 = control_stack_.top();
+		control_stack_.pop();
+		control_stack_.push(i0 <= i1);
+		++pc;
+	}
+		break;
+	case int_gt_op: {
+		int i1 = control_stack_.top();
+		control_stack_.pop();
+		int i0 = control_stack_.top();
+		control_stack_.pop();
+		control_stack_.push(i0 > i1);
+		++pc;
+	}
+		break;
+	case int_lt_op: {
+		int i1 = control_stack_.top();
+		control_stack_.pop();
+		int i0 = control_stack_.top();
+		control_stack_.pop();
+		control_stack_.push(i0 < i1);
+		++pc;
+	}
+		break;
+	case push_block_selector_op: {
+		block_selector_stack_.push(
+				sip::BlockSelector(arg0(), arg1(), index_selectors()));
+		++pc;
+	}
+		break;
+	case cast_to_int_op: {
+		double e = expression_stack_.top();
+		expression_stack_.pop();
+		int int_val = sial_math::cast_double_to_int(e);
+		control_stack_.push(int_val);
+		++pc;
+	}
+		break;
+	case scalar_load_value_op: {
+		expression_stack_.push(scalar_value(arg0()));
+		++pc;
+	}
+		break;
+	case block_load_scalar_op: {
+		//This instruction pushes the value of a block with all simple indices onto the instruction stack.
+		//If this is a frequent occurrance, we should introduce a new block type for this
+		sip::Block::BlockPtr block = get_block_from_selector_stack('r',true);
+		expression_stack_.push(block->get_data()[0]);
+		++pc;
+	}
+		break;
+	default: 		fail("unexpected opcode, " + opcodeToName(opcode) + ", in where evaluation ", current_line());
+	}
+	opcode = op_table_.opcode(pc);
+	}
+
+	//the current instruction is a where
+	check(opcode == where_op, "expected where_op, actual " + opcodeToName(opcode), line_number());
+
+	//get the value of the expression
+//	std::cout << "handling where (should be >=3): control_stack_.size() = " << control_stack_.size()<< std::endl << std::flush; //DEBUG
+	int where_clause_value = control_stack_.top();
+	control_stack_.pop();
+
+	//if false, we are done
+	if (!where_clause_value){
+		return false;
+	}
+	else { //otherwise increment pc and go back to evaluate the next where clause
+		++pc;
+	}
+	}
+	//all the where clauses are true and pc is the next instruction after the where clauses.
+	return true;
+	}
+
 
 
 
 void Interpreter::loop_start(LoopManager * loop) {
 	int enddo_pc = arg0();
+	int loop_body_pc = pc+1;
+	pc = loop_body_pc;
+	control_stack_.push(loop_body_pc);
+	control_stack_.push(enddo_pc);
 	if (loop->update()) { //there is at least one iteration of loop
 		loop_manager_stack_.push(loop);
-		control_stack_.push(pc + 1); //push pc of first instruction of loop body (including where)
-		control_stack_.push(enddo_pc); //used by where clauses
 		data_manager_.enter_scope();
-		++pc;
 	} else {
 		loop->finalize();
 		delete loop;
+		control_stack_.pop();
+		control_stack_.pop();
 		pc = enddo_pc + 1; //jump to statement following enddo
 	}
 }
+
+
 void Interpreter::loop_end() {
-	int own_pc = pc;
+	int own_pc = pc;  //save pc of enddo instruction
+	int own_pc_from_stack = control_stack_.top();
 	control_stack_.pop(); //remove own location
+	pc = control_stack_.top();
+	control_stack_.push(own_pc_from_stack);
 	data_manager_.leave_scope();
 	bool more_iterations = loop_manager_stack_.top()->update();
 	if (more_iterations) {
 		data_manager_.enter_scope();
-		pc = control_stack_.top(); //get the place to jump back to
-		control_stack_.push(own_pc); //add own location for where clause in next iteration
 	} else {
 		LoopManager* loop = loop_manager_stack_.top();
 		loop->finalize();
 		loop_manager_stack_.pop(); //remove loop from stack
-		control_stack_.pop(); //pop address of first instruction in body
+		int loop_end_pc = control_stack_.top();
+		control_stack_.pop(); //pop pc of loop_end
+		control_stack_.pop(); //pop pc of first instruction in body
 		delete loop;
-		++pc;
+		pc = loop_end_pc + 1; //address of instruction following the loop
 	}
 }
 

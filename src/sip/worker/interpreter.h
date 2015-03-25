@@ -198,6 +198,9 @@ public:
 		else
 			return -1;// Past the end of the program. Probably being called by a test.
 	}
+	int get_pc(){
+		return pc;
+	}
 
 	/** For testing.
 	 * Determine whether any data is left in the interpreter's data structures.
@@ -293,6 +296,13 @@ private:
 	 */
 	int pc; //technically, this should be pc_, but I'm going to leave it this way for convenience
 
+	/**
+	 * Valid for when BalancedTaskAllocParallelPardoLoop is used.
+	 * In a pardo section, the iteration is counted across all pardos. This variable is passed to
+	 * the BalancedTaskAllocParallelPardoLoop instance.
+	 */
+	long iteration_;
+
 	/** contains a stack of pointers to LoopManager objects.
 	 * A LoopManager is created and pushed onto the stack when a loop is entered,
 	 * and popped when a loop is exited.  The LoopManager is the
@@ -368,6 +378,9 @@ private:
 //	void handle_self_multiply_op(int pc);
 	void handle_slice_op(int pc);
 	void handle_insert_op(int pc);
+
+
+	bool interpret_where(int num_where_clauses);
 
 	void loop_start(LoopManager * loop);
 	void loop_end();
@@ -465,6 +478,7 @@ private:
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
+	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

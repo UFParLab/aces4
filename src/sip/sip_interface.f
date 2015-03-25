@@ -50,6 +50,20 @@ c      end interface
 
 
       interface
+      integer(C_INT) function query_int_constant(cname) bind(C)
+          use, intrinsic :: ISO_C_BINDING
+      character, dimension(*), intent(in):: cname
+      end function query_int_constant
+      end interface
+
+      interface
+      integer(C_INT) function query_scalar_constant(cname) bind(C)
+          use, intrinsic :: ISO_C_BINDING
+      character, dimension(*), intent(in):: cname
+      end function query_scalar_constant
+      end interface
+
+      interface
       integer(C_INT) function int_constant(cname) bind(C)
           use, intrinsic :: ISO_C_BINDING
       character, dimension(*), intent(in):: cname

@@ -1455,6 +1455,7 @@ endif
 server_barrier
 broadcast_from root SAlphaR 
 broadcast_from root SEk
+broadcast_from root SEk0
 server_barrier
 #
 ENDPROC diag_G
@@ -1850,7 +1851,7 @@ server_barrier
 #
 #
 do kiter
-    print " " 
+    print " "
     print kiter
     call form_HB
     call form_BHB
@@ -1873,6 +1874,7 @@ do kiter
     enddo kstate
     print rmsconv
     server_barrier
+    assert_same rmsconv
     if rmsconv < eom_tol
 	exit
     endif

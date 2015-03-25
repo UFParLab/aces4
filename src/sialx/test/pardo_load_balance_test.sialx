@@ -1,0 +1,45 @@
+sial pardo_load_balance_test
+
+    special enable_all_rank_print
+    special get_my_rank w
+    aoindex mu     = 1:1
+    scalar rank
+    
+    sip_barrier
+    
+    execute enable_all_rank_print
+    
+    pardo mu
+    	execute get_my_rank rank
+    	print rank
+    endpardo mu
+    
+    pardo mu
+        execute get_my_rank rank
+    	print rank
+    endpardo mu
+    
+    pardo mu
+        execute get_my_rank rank
+    	print rank
+    endpardo mu
+    
+    pardo mu
+        execute get_my_rank rank
+    	print rank
+    endpardo mu
+    
+    sip_barrier
+    
+     pardo mu
+    	execute get_my_rank rank
+    	print rank
+    endpardo mu
+    
+    pardo mu
+        execute get_my_rank rank
+    	print rank
+    endpardo mu
+
+
+endsial pardo_load_balance_test
