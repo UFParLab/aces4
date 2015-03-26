@@ -63,7 +63,7 @@ void SialOpsSequential::get(BlockId& block_id, int pc) {
  */
 void SialOpsSequential::put_replace(BlockId& target_id,
 		const Block::BlockPtr source_block, int pc) {
-	Block::BlockPtr target_block = get_block_for_writing(target_id, false);
+	Block::BlockPtr target_block = get_block_for_writing(target_id, pc, false);
 	target_block->copy_data_(source_block);
 }
 
@@ -130,16 +130,16 @@ void SialOpsSequential::end_program(int pc) {
  * @param id
  * @return
  */
-Block::BlockPtr SialOpsSequential::get_block_for_reading(const BlockId& id, int unused_sial_line_number) {
+Block::BlockPtr SialOpsSequential::get_block_for_reading(const BlockId& id, int pc) {
 	return block_manager_.get_block_for_reading(id);
 }
 
-Block::BlockPtr SialOpsSequential::get_block_for_writing(const BlockId& id,
+Block::BlockPtr SialOpsSequential::get_block_for_writing(const BlockId& id, int pc,
 		bool is_scope_extent) {
 	return block_manager_.get_block_for_writing(id, is_scope_extent);
 }
 
-Block::BlockPtr SialOpsSequential::get_block_for_updating(const BlockId& id) {
+Block::BlockPtr SialOpsSequential::get_block_for_updating(const BlockId& id, int pc) {
 	return block_manager_.get_block_for_updating(id);
 }
 

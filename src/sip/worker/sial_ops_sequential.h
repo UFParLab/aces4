@@ -68,12 +68,12 @@ public:
 	 * @param id
 	 * @return
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId& id, int unused_sial_line_number);
+	Block::BlockPtr get_block_for_reading(const BlockId& id, int pc);
 
-	Block::BlockPtr get_block_for_writing(const BlockId& id,
+	Block::BlockPtr get_block_for_writing(const BlockId& id, int pc,
 			bool is_scope_extent);
 
-	Block::BlockPtr get_block_for_updating(const BlockId& id);
+	Block::BlockPtr get_block_for_updating(const BlockId& id, int pc);
 
 private:
 

@@ -55,38 +55,38 @@ ConfigurableRankDistribution::ConfigurableRankDistribution(int num_workers, int 
 	if (num_workers >= num_servers){	// More workers than server
 		// At least have 1 server in each group of workers & servers.
 		int num_workers_to_servers = num_workers / num_servers;
-		int num_groups = num_processes / (num_workers_to_servers + 1);
+        int num_groups = num_servers;
 		int remaining_workers = num_workers % num_servers;
 		int count = 0;
 		for (int i=0; i<num_groups; ++i){
 			for (int j=0; j<num_workers_to_servers; ++j){
-				is_server_vector_[count++] = false;	// Worker
+				is_server_vector_.at(count++) = false;	// Worker
 			}
 			if (i < remaining_workers){
-				is_server_vector_[count++] = false;	// Worker
+				is_server_vector_.at(count++) = false;	// Worker
 			}
-			is_server_vector_[count++] = true;		// Server
+			is_server_vector_.at(count++) = true;		// Server
 		}
 	} else {	// More servers than workers
 		// At least 1 worker in each group of workers & servers
 		int num_servers_to_workers = num_servers / num_workers;
-		int num_groups = num_processes / (num_servers_to_workers + 1);
+        int num_groups = num_workers;
 		int remaining_servers = num_servers % num_workers;
 		int count = 0;
 		for (int i=0; i<num_groups; ++i){
-			is_server_vector_[count++] = false;
+			is_server_vector_.at(count++) = false;
 			for (int j=0; j<num_servers_to_workers; ++j){
-				is_server_vector_[count++] = true;
+				is_server_vector_.at(count++) = true;
 			}
 			if (i < remaining_servers){
-				is_server_vector_[count++] = true;
+				is_server_vector_.at(count++) = true;
 			}
 		}
 	}
 }
 
 bool ConfigurableRankDistribution::is_server(int rank){
-	return is_server_vector_[rank];
+	return is_server_vector_.at(rank);
 }
 
 std::vector<int> ConfigurableRankDistribution::local_servers_to_communicate(int rank){
@@ -95,11 +95,11 @@ std::vector<int> ConfigurableRankDistribution::local_servers_to_communicate(int 
 	if (is_local_worker_to_communicate(rank)){
 		int i=1;
 		// Skip till server is encountered or size is reached.
-		while ((rank+i) < size && is_server_vector_[rank+i] == false){
+		while ((rank+i) < size && is_server_vector_.at(rank+i) == false){
 			i++;
 		}
 		// Skip till next worker is encountered or size is reached.
-		while ((rank+i) < size && is_server_vector_[rank+i] == true){
+		while ((rank+i) < size && is_server_vector_.at(rank+i) == true){
 			servers.push_back(rank + i);
 			i++;
 		}
