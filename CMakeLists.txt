@@ -499,6 +499,7 @@ set(SIAL_FILES
     src/sialx/test/persistent_distributed_array_test2.sialx;
     src/sialx/test/put_test_mpi.sialx;
     src/sialx/test/put_initialize.sialx;
+    src/sialx/test/put_increment.sialx;
     src/sialx/test/put_accumulate_mpi.sialx;
     src/sialx/test/delete_mpi.sialx;
     src/sialx/test/get_mpi.sialx;

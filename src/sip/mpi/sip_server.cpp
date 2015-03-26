@@ -90,7 +90,7 @@ void SIPServer::run() {
 		}
 			break;
 		case SIPMPIConstants::PUT_SCALE:{
-			handle_PUT_INCREMENT(mpi_source, mpi_tag);
+			handle_PUT_SCALE(mpi_source, mpi_tag);
 		}
 			break;
 		case SIPMPIConstants::DELETE:{
@@ -174,8 +174,9 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source)){
 		std::stringstream err_ss;
-		err_ss << "Incorrect GET block semantics for " << block_id ;
-		fail(err_ss.str());
+		err_ss << "Incorrect GET block semantics for " << block_id << " at line " << last_seen_line_
+				<< "from worker " << mpi_source << ".  Probably a missing sip_barrier";
+		sial_check(false,err_ss.str());
 	}
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
@@ -235,7 +236,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source)){
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT block semantics (data race) for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source << ". Probably a missing sip_barrier";
-		fail(err_ss.str());
+		sial_check(false,err_ss.str());
 	}
 
 	//send ack
@@ -305,8 +306,9 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source)){
 		std::stringstream err_ss;
-		err_ss << "Incorrect PUT_ACCUMULATE block semantics for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source;;
-		fail(err_ss.str());
+		err_ss << "Incorrect PUT_ACCUMULATE block semantics for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source
+				<< ". Probably a missing sip_barrier";
+		sial_check(false,err_ss.str());
 	}
 
 	//send ack
@@ -373,7 +375,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag){
 
 
 
-	std::cout << "put_initialize message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "put_initialize message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
 	ServerBlock* block =
 			disk_backed_block_map_.get_block_for_writing(message.id_);
 	last_seen_line_ = message.line_;
@@ -392,7 +394,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag){
 
 	block->fill_data(block_size, message.value_);
 
-	std::cout << *block << std::endl << std::flush;
+//	std::cout << *block << std::endl << std::flush;
 
 }
 void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag){
@@ -405,7 +407,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag){
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_increment_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	std::cout << "put_increment message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "put_increment message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
 	ServerBlock* block =
 			disk_backed_block_map_.get_block_for_accumulate(message.id_);
 	last_seen_line_ = message.line_;
@@ -432,7 +434,7 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag){
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_scale_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	std::cout << "put_scale message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "put_scale message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
 	ServerBlock* block =
 			disk_backed_block_map_.get_block_for_accumulate(message.id_);
 	last_seen_line_ = message.line_;

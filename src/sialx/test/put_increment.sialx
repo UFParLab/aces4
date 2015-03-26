@@ -1,4 +1,4 @@
-sial put_test
+sial put_increment
 predefined int norb
 aoindex i = 1:norb
 aoindex j = 1:norb
@@ -6,38 +6,33 @@ index k = 1:9
 distributed a[i,j]
 temp t[i,j]
 local result[k]
-
+special enable_all_rank_print
 
 scalar x
 
+execute enable_all_rank_print
 
-
-print "starting loop"
+print "starting put loop in put+increment"
+print norb
 pardo i
 do j
-#t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
 x = (scalar)((i-1)*norb + (j-1)) + 1.0
-#put a[i,j] = t[i,j]
-put a[i,j] = x
+put a[i,j] += x
+put a[i,j] *= -1.0
 print i
-#print t[i,j]
+print j
 print x
 enddo j
 endpardo i
 
 sip_barrier
+print "starting get loop"
 
 do i
 do j
 get a[i,j]
-x = a[i,j] * a[i,j]
-do k
-where k == ((i-1)*norb + (j-1)) + 1
-result[k] = x
-print k
-println result[k]
-enddo k
+print a[i,j]
 enddo j
 enddo i
 
-endsial put_test
+endsial put_increment

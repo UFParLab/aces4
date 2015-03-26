@@ -744,7 +744,7 @@ void SialOpsParallel::initialize_mpi_type(){
      id_displacements[2] -= id_displacements[0];
      id_displacements[1] -= id_displacements[0];
      id_displacements[0] = 0;
-     std::cout << "WORKER id_displacements = " << id_displacements[0] << "," << id_displacements[1] << "," << id_displacements[2] << std::endl << std::flush;
+//     std::cout << "WORKER id_displacements = " << id_displacements[0] << "," << id_displacements[1] << "," << id_displacements[2] << std::endl << std::flush;
      MPI_Type_create_struct(3,id_counts, id_displacements, id_types, &block_id_type_);
      /*check that it has the correct extent*/
      MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
