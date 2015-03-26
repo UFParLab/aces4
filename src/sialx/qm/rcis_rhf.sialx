@@ -1747,6 +1747,7 @@ do kstate
     norm2 = (norm1)**(-0.5)
     Tk[kstate] = norm2
 #
+    server_barrier
     pardo a,i
 	request R1k1_a[kstate,a,i]
         Tai[a,i] = Tk[kstate]*R1k1_a[kstate,a,i]

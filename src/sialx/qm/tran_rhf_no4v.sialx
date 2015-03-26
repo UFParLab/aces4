@@ -471,9 +471,9 @@ import "tran_rhf_no4v_defs.sialx"
         DO a2
            T1aaai[a1,a,a2,i]          = Laaai[a2,a,a1,i]
            PREPARE Vaaai[a2,a,a1,i]   = Laaai[a2,a,a1,i]
-#           PREPARE VSaaai[a2,a,a1,i] += Laaai[a2,a,a1,i]
-#           T1aaai(a1,a,a2,i)         *= -1.0
-#           PREPARE VSaaai(a1,a,a2,i) += T1aaai(a1,a,a2,i)
+           PREPARE VSaaai[a2,a,a1,i] += Laaai[a2,a,a1,i]
+           T1aaai[a1,a,a2,i]         *= -1.0
+           PREPARE VSaaai[a1,a,a2,i] += T1aaai[a1,a,a2,i]
         ENDDO a2
 
         DEALLOCATE Laaai[*,a,a1,i] 
@@ -541,7 +541,7 @@ import "tran_rhf_no4v_defs.sialx"
       set_persistent Vaaii  "Vaaii" 
       set_persistent Viaai  "Viaai" 
       set_persistent Vaaai  "Vaaai" 
-#      set_persistent VSaaai "VSaaai" 
+      set_persistent VSaaai "VSaaai" 
       set_persistent Vpiqj  "Vpiqj" 
      print "done setting persistent arrays" 
   
