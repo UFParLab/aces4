@@ -82,6 +82,7 @@ ServerBlock::dataPtr ServerBlock::scale_data(size_t size, double factor) {
 	for (int i = 0; i < size; ++i) {
 		data_[i] *= factor;
 	}
+//	std::cout << "at server, in scale_data, first element of block is " << data_[0] << std::endl<< std::flush;
 	return data_;
 }
 

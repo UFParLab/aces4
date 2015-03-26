@@ -34,6 +34,8 @@ do kstate
    enddo kstate
 endpardo a,i,a1,i1
 
+sip_barrier
+
 pardo a,i,a1,i1
 allocate contiguous CLRB2_aa[1:eom_subspc,a:a,i:i,a1:a1,i1:i1]
 do kstate
