@@ -143,7 +143,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
 	//DEBUG
-	if(block_id.array_id_==137){std::cout << "get block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(block_id.array_id_==137){std::cout << "get block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	size_t block_size = sip_tables_.block_size(block_id);
 
@@ -209,7 +209,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
 	//DEBUG
-	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
@@ -275,7 +275,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
 	//DEGBUG
-	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 	//get the block size
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
@@ -373,7 +373,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag){
 
 
 
-	std::cout << "put_initialize message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "put_initialize message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
 	ServerBlock* block =
 			disk_backed_block_map_.get_block_for_writing(message.id_);
 	last_seen_line_ = message.line_;
@@ -392,7 +392,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag){
 
 	block->fill_data(block_size, message.value_);
 
-	std::cout << *block << std::endl << std::flush;
+//	std::cout << *block << std::endl << std::flush;
 
 }
 void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag){
@@ -405,7 +405,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag){
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_increment_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	std::cout << "put_increment message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "put_increment message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
 	ServerBlock* block =
 			disk_backed_block_map_.get_block_for_accumulate(message.id_);
 	last_seen_line_ = message.line_;
@@ -432,7 +432,7 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag){
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_scale_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	std::cout << "put_scale message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "put_scale message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
 	ServerBlock* block =
 			disk_backed_block_map_.get_block_for_accumulate(message.id_);
 	last_seen_line_ = message.line_;
