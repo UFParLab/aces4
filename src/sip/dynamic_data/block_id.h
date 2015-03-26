@@ -10,6 +10,7 @@
 #include <utility>   // for std::rel_ops.  Allows relational ops for BlockId to be derived from == and <
 #include "sip.h"
 
+
 using namespace std::rel_ops;
 
 namespace sip {
@@ -234,6 +235,9 @@ private:
 	friend class SipTables;
 	friend class DataDistribution;
 	friend class ContiguousLocalArrayManager;
+#ifdef HAVE_MPI
+	friend class SialOpsParallel;
+#endif
 
 };
 

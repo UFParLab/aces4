@@ -1633,6 +1633,7 @@ do qsub
 do ksub
 where ksub < qsub
 #
+server_barrier
     overlapS = 0.0
     normS    = 0.0
     Tk[qsub] = 1.0
