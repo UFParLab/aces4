@@ -172,6 +172,11 @@ std::ostream& operator<<(std::ostream& os, const SIPMPIAttr& obj){
 	os << ", company size : " << obj.company_size();
 	os << ", is master? : " << obj.is_company_master() ;
     os << ", server_master : " << obj.server_master();
+    os << ", my_servers : {" ;
+    if(obj.my_servers_.size() > 0)
+        os << obj.my_servers_[0];
+    for (int i=1; i<obj.my_servers_.size(); ++i) os << "," << obj.my_servers_[i];
+    os << "}";
     os << ", worker master : " << obj.worker_master() << "]";
     os << std::endl;
 	return os;

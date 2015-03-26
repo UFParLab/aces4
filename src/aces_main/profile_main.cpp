@@ -46,7 +46,6 @@ int main(int argc, char* argv[]) {
 	sip::ProfileTimerStore profile_timer_store(":memory:");
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
-		std::cout << it->c_str() << std::endl;
 		std::string sialfpath;
 		sialfpath.append(parameters.sialx_file_dir);
 		sialfpath.append("/");
