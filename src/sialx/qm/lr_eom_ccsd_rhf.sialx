@@ -6036,8 +6036,6 @@ if myrank == root
     enddo ksub1
     enddo ksub
 
-    print GSmat
-
     execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
 
     do kstate
@@ -6922,7 +6920,8 @@ roots = eom_roots
 print " "
 print "-- Parallel left-right EE-EOM-CCSD program"
 print "-- Subspace collapse non-symmetric davidson update"
-print "-- J. Comp. Phys. 1992, 103, 382-389 | J. Comp. Chem. 2001, 22, 1574-1589"
+print "-- J. Comp. Phys. 1992, 103, 382-389 | J Chem Phys 2009, 130, 124122."
+print "-- J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
 server_barrier
