@@ -245,9 +245,7 @@ C place eigenvalues
       small = 1.d-8
       do i = 1,nn
 	  if (alphai(i) .gt. small) then
-	      write(*,*) "large complex component from DGEEV", alphai(i)
-	      info = 1
-	      return
+      write(*,*) "WARNING complex component from DGEEV",i,alphai(i)
 	  endif
 	  eigval(i) = alphar(i)
       enddo

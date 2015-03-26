@@ -6037,8 +6037,6 @@ if myrank == root
     enddo ksub
 
     print GSmat
-    print SAlphaL
-    print SAlphaR
 
     execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
 
@@ -6573,8 +6571,9 @@ where ksub == 1
     if norm1 < 0.0
 	etemp = -1.0
     endif
+    norm1 *= etemp
 #######################
-    norm2 = (etemp*norm1)**(-0.5)
+    norm2 = (norm1)**(-0.5)
     pardo a,i
         Tk[ksub] = norm2
         get DRNai[a,i]
@@ -6813,8 +6812,12 @@ do qsub
     if norm1 < 0.0
 	etemp = -1.0
     endif
+    norm1 *= etemp
+    norm2 = (norm1)**(-0.5)
+    if norm1 < (10.0)**(-12.0)
+	norm2 = 1.0
+    endif
 #######################
-    norm2 = (etemp*norm1)**(-0.5)
     pardo a,i
         Tk[qsub] = norm2
         get DRNai[a,i]
