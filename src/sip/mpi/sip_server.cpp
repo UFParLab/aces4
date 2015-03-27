@@ -115,12 +115,11 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	last_seen_pc_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
+	server_timer_[last_seen_pc_].start_total_time();
 
 	int section = recv_buffer[section_num_offset];
 	bool section_number_changed = state_.check_section_number_invariant(section);
 	handle_section_number_change(section_number_changed);
-
-	server_timer_[last_seen_pc_].start_total_time();
 
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId::mpi_block_id_t buffer;
@@ -183,11 +182,11 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	last_seen_pc_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
 
+	server_timer_[last_seen_pc_].start_total_time();
+
 	int section = recv_buffer[section_num_offset];
 	bool section_number_changed = state_.check_section_number_invariant(section);
 	handle_section_number_change(section_number_changed);
-
-	server_timer_[last_seen_pc_].start_total_time();
 
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId::mpi_block_id_t buffer;
@@ -246,12 +245,11 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	last_seen_pc_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
 
+	server_timer_[last_seen_pc_].start_total_time();
+
 	int section = recv_buffer[section_num_offset];
 	bool section_number_changed = state_.check_section_number_invariant(section);
 	handle_section_number_change(section_number_changed);
-
-	server_timer_[last_seen_pc_].start_total_time();
-
 
 	//construct a BlockId object from the message contents and retrieve the block.
 	BlockId::mpi_block_id_t buffer;
@@ -323,10 +321,10 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	last_seen_worker_ = mpi_source;
 	int section = recv_buffer[2];
 
+	server_timer_[last_seen_pc_].start_total_time();
+
 	bool section_number_changed = state_.check_section_number_invariant(section);
 	handle_section_number_change(section_number_changed);
-
-	server_timer_[last_seen_pc_].start_total_time();
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 			<< " : deleting array " << sip_tables_.array_name(array_id) << ", id = " << array_id
@@ -388,14 +386,12 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 
 	last_seen_pc_ = buffer[2];
 	last_seen_worker_ = mpi_source;
-
 	int section = buffer[3];
+
+	server_timer_[last_seen_pc_].start_total_time();
 
 	bool section_number_changed = state_.check_section_number_invariant(section);
 	handle_section_number_change(section_number_changed);
-
-
-	server_timer_[last_seen_pc_].start_total_time();
 
 	//send ack
 	SIPMPIUtils::check_err(
