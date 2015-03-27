@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 
 			// Print each of the timers
 			std::vector<sip::SIPMaPTimer>::const_iterator it = sipmap_timer_vector.begin();
-			for (int i=0; it != sipmap_timer_vector.end(); ++it, ++i){
+			for (int i=0; it != sipmap_timer_vector.end(); ++it, i += gap){
 				char sialx_timer_file_name[64];
 				std::sprintf(sialx_timer_file_name, "worker.profile.%d", i);
 				std::ofstream worker_file(sialx_timer_file_name, std::ofstream::app);

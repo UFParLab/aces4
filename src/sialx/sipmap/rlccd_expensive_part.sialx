@@ -21,7 +21,6 @@ sial rlccd_expensive_part
 	temp t[lambda,i,mu,j]
 	scalar dummy
 	
-	
 	PARDO lambda, sigma, i, j
 		Yab[lambda,i,sigma,j] = 0.0
 		PREPARE TAO_ab[lambda,i,sigma,j] += Yab[lambda,i,sigma,j]
@@ -36,7 +35,6 @@ sial rlccd_expensive_part
 		     DO i
 			     DO j
 			        REQUEST                       TAO_ab[lambda,i,sigma,j]
-			        # execute return_sval TAO_ab[lambda,i,sigma,j] dummy
 			        t[lambda,i,sigma,j] = TAO_ab[lambda,i,sigma,j]
 			        Yab[mu,i,nu,j]              = 1.0
 			        Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
@@ -58,11 +56,6 @@ sial rlccd_expensive_part
 			     ENDDO j
 		     ENDDO i
 		ENDPARDO mu, nu, lambda, sigma
-		
 		server_barrier  
-	
 	ENDDO KITER
-	
-
-
 endsial rlccd_expensive_part

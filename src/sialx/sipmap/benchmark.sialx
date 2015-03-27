@@ -1,0 +1,51 @@
+sial benchmark
+    
+    special get_first_block_element rw
+	predefined  int norb   #total nmber of atomic orbital segments beta)
+	predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+
+	index kiter    = 1: cc_iter   
+	aoindex m     = 1: norb 
+	aoindex n     = 1: norb
+	aoindex l = 1: norb
+	aoindex s  = 1: norb
+	moaindex i = 1:norb
+	moaindex j = 1:norb
+	
+	distributed d[m,n,l,s]
+	distributed d2[m,n,l,s]
+	temp t[m,n,l,s]
+	scalar dummy
+
+    do kiter
+
+        print "doing puts"
+    
+        # Test Puts
+        pardo m, n, l, s
+            t[m, n, l, s] = 1.0
+            put d[m, n, l, s] = t[m, n, l, s]
+        endpardo m, n, l, s
+
+        sip_barrier
+
+        print "done puts, doing put accumulates"
+        # Test Put Accumulates
+        pardo m, n, l, s
+            t[m, n, l, s] = 1.0
+            put d2[m, n, l, s] += t[m, n, l, s]
+        endpardo m, n, l, s
+    
+        sip_barrier
+
+        print "done put accumulates, doing gets"
+    
+        pardo m, n, l, s
+            get d[m, n, l, s]
+            execute get_first_block_element d[m, n, l, s] dummy
+        endpardo m, n, l, s
+
+    enddo kiter
+
+endsial benchmark
+

@@ -492,6 +492,7 @@ SIOX_FILES=\
 ./src/sialx/sipmap/sipmap_test2.siox\
 ./src/sialx/sipmap/sipmap_test3.siox\
 ./src/sialx/sipmap/rlccd_expensive_part.siox\
+./src/sialx/sipmap/benchmark.siox\
 ./src/sialx/test/empty.siox\
 ./src/sialx/test/static_array_test.siox\
 ./src/sialx/test/ifelse.siox\
@@ -615,6 +616,7 @@ EXTRA_DIST += \
 ./src/sialx/sipmap/sipmap_test2.sialx\
 ./src/sialx/sipmap/sipmap_test3.sialx\
 ./src/sialx/sipmap/rlccd_expensive_part.sialx\
+./src/sialx/sipmap/benchmark.sialx\
 ./src/sialx/test/empty.sialx\
 ./src/sialx/test/static_array_test.sialx\
 ./src/sialx/test/ifelse.sialx\
