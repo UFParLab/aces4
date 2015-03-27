@@ -359,7 +359,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 
 	//delete the block and map for the indicated array
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
-	if(array_id==137){std::cout << "delete " << array_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(array_id==137){std::cout << "delete " << array_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
