@@ -186,6 +186,7 @@ private:
 
 	int section_number_;									//! Section number being interpreted.
 	std::vector<PardoSectionsInfo> pardo_section_times_;	//! [out] Set of times per pardo section.
+	std::set<BlockId> cached_blocks_map_;					//! Set of cached blocks in the current pardo section. An overestimate
 
 	const int worker_rank_;							//! Worker rank for which the interpreter is being run
 	const int num_workers_;							//! Total number of workers

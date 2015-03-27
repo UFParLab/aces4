@@ -361,6 +361,8 @@ void SIPMaPInterpreter::handle_sip_barrier_op(int pc){
 	section_number_++;
 	// Aggregate time from multiple ranks - when combining SIPMaPTimer instances.
 	pardo_section_time_ = 0.0;
+
+	cached_blocks_map_.clear();
 }
 void SIPMaPInterpreter::do_post_sial_program(){
 	// -1 is for the line number at the end of the program.
@@ -384,13 +386,20 @@ void SIPMaPInterpreter::handle_get_op(int pc){
 	std::pair<double, long> timer_count_pair = profile_timer_store_.get_from_cache(key);
 	double computation_time = timer_count_pair.first / (double)timer_count_pair.second;
 	record_total_time(computation_time);
+	pardo_section_time_ += computation_time;
 
 	// Get time to process at server and for block to travel
 	BlockId id = get_block_id_from_selector_stack();
-	double travel_time = remote_array_model_.time_to_get_block(id);
-	pardo_section_time_ += computation_time;
-	BlockRemoteOp brop (travel_time, pardo_section_time_);
-	pending_blocks_map_.insert(std::make_pair(id, brop));
+	std::set<BlockId>::iterator found_it = cached_blocks_map_.find(id);
+	if (found_it == cached_blocks_map_.end()) {
+		double travel_time = remote_array_model_.time_to_get_block(id);
+		BlockRemoteOp brop (travel_time, pardo_section_time_);
+		pending_blocks_map_.insert(std::make_pair(id, brop));
+		cached_blocks_map_.insert(id);
+	} else {
+		BlockRemoteOp brop (0.0, pardo_section_time_);
+		pending_blocks_map_.insert(std::make_pair(id, brop));
+	}
 }
 void SIPMaPInterpreter::handle_put_accumulate_op(int pc){
 	/** A small blocking message is sent to inform the server of the incoming block.
