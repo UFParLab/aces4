@@ -97,8 +97,6 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
     set(ACES_MPI_FILES
         src/sip/mpi/sip_mpi_utils.h;
         src/sip/mpi/sip_mpi_utils.cpp;
-        src/sip/mpi/sip_mpi_constants.h;
-        src/sip/mpi/sip_mpi_constants.cpp;
         src/sip/mpi/barrier_support.h;
         src/sip/mpi/async_acks.h;
         src/sip/mpi/async_acks.cpp;
@@ -170,7 +168,11 @@ set(ACES_DATA_FILES
 	src/sip/dynamic_data/sip_counter.h;
 	src/sip/dynamic_data/sip_counter.cpp;
     src/sip/dynamic_data/contiguous_local_array_manager.h;
-    src/sip/dynamic_data/contiguous_local_array_manager.cpp;)
+    src/sip/dynamic_data/contiguous_local_array_manager.cpp;
+    src/sip/dynamic_data/sip_mpi_constants.h;
+    src/sip/dynamic_data/sip_mpi_constants.cpp;
+    src/sip/dynamic_data/distributed_block_consistency.h;
+   	src/sip/dynamic_data/distributed_block_consistency.cpp;)
 #need only header files for templates--these include .cpp
 
 set(ACES_WORKER_FILES

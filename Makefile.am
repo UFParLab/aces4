@@ -105,7 +105,12 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/sip_timer.h\
 ./src/sip/dynamic_data/sip_timer.cpp\
 ./src/sip/dynamic_data/sip_counter.h\
-./src/sip/dynamic_data/sip_counter.cpp
+./src/sip/dynamic_data/sip_counter.cpp\
+./src/sip/dynamic_data/sip_mpi_constants.h\
+./src/sip/dynamic_data/sip_mpi_constants.cpp\
+./src/sip/dynamic_data/distributed_block_consistency.h\
+./src/sip/dynamic_data/distributed_block_consistency.cpp
+
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -159,8 +164,6 @@ if WORKING_MPI
 ACES_SOURCEFILES +=\
 ./src/sip/mpi/sip_mpi_utils.h\
 ./src/sip/mpi/sip_mpi_utils.cpp\
-./src/sip/mpi/sip_mpi_constants.h\
-./src/sip/mpi/sip_mpi_constants.cpp\
 ./src/sip/mpi/barrier_support.h\
 ./src/sip/mpi/async_acks.h\
 ./src/sip/mpi/async_acks.cpp\
