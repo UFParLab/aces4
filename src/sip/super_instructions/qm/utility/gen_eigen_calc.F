@@ -242,7 +242,7 @@ C hard clear everything but amat
      *      Lvec,nn, Rvec,nn, work,nw, INFO)
 
 C place eigenvalues
-      small = 1.d-8
+      small = 1.d0
       do i = 1,nn
 	  if (alphai(i) .gt. small) then
       write(*,*) "WARNING complex component from DGEEV",i,alphai(i)
