@@ -3995,6 +3995,8 @@ PARDO a, i
 
     do a1
     do i1
+	where a==a1
+	where i==i1
 
 	request HBAR_AJIB_aaaa[i1,a1,a,i] 
 	Taaii[a,a1,i,i1] = HBAR_AJIB_aaaa[i1,a1,a,i]
@@ -4041,6 +4043,8 @@ PARDO a, i
 
     do a1
     do i1
+	where a==a1
+	where i==i1
 
 	request HBAR_AJIB_aaaa[i1,a1,a,i] 
 	Taaii[a,a1,i,i1] = HBAR_AJIB_aaaa[i1,a1,a,i]
@@ -4067,6 +4071,7 @@ PARDO a, i
     tai[a,i]=0.0
 
     do a1
+	where a==a1
 
 	get         DDaa[a,a1]
 	tia[i,a1] = 1.0
@@ -4078,6 +4083,7 @@ PARDO a, i
     enddo a1
 
     do i1
+	where i==i1
 
 	get          DDii[i1,i]
 	t2ia[i1,a] = 1.0
@@ -4113,6 +4119,8 @@ PARDO a, a1, i, i1
 
     do i2
     do i3
+	where  i==i2
+	where i1==i3
 
 	request             HBAR_iiii[i,i2,i1,i3] 
 	tiiii[i,i2,i1,i3] = HBAR_iiii[i,i2,i1,i3]
@@ -4154,6 +4162,8 @@ PARDO a, i, b, j
 
     do i1
     do j1
+	where i==i1
+	where j==j1
 
 	request                   HBAR_iijj[i,i1,j,j1] 
 	Tiijj[i,i1,j,j1]        = HBAR_iijj[i,i1,j,j1]
@@ -4172,6 +4182,8 @@ PARDO a, i, b, j
 
     do i1
     do b1
+	where i==i1
+	where b==b1
 
 	request HBAR_AJIB_iibb[i1,i,b,b1] 
 	Tiibb[i1,i,b,b1]=HBAR_AJIB_iibb[i1,i,b,b1]
@@ -4185,6 +4197,8 @@ PARDO a, i, b, j
 
     do j1
     do a1
+	where j==j1
+	where a==a1
 
 	request HBAR_AJIB_iibb[j1,j,a,a1] 
 	Tjjaa[j1,j,a,a1]=HBAR_AJIB_iibb[j1,j,a,a1]
@@ -4210,109 +4224,6 @@ server_barrier
 ENDPROC form_diag
 
 #------------------------------------------------------------------------
-
-PROC form_guess
-
-server_barrier
-
-pardo a,i,ksub
-    request RB1_a[ksub,a,i]
-    Tkai[ksub,a,i]  = RB1_a[ksub,a,i]
-    Tkai[ksub,a,i] *= 0.5
-    prepare LB1_a[ksub,a,i] = Tkai[ksub,a,i]
-endpardo a,i,ksub
-
-pardo a,i,kstate
-    request R1k1_a[kstate,a,i]
-    Tkai[kstate,a,i]  = R1k1_a[kstate,a,i]
-    Tkai[kstate,a,i] *= 0.5
-    prepare L1k1_a[kstate,a,i] = Tkai[kstate,a,i]
-endpardo a,i,kstate
-
-
-pardo a,i,kstate
-    prepare R0k1_a[kstate,a,i] = 0.0
-endpardo a,i,kstate
-
-pardo a,i,kstate
-    prepare cRk1_a[kstate,a,i] = 0.0
-endpardo a,i,kstate
-
-pardo a,i,kstate
-    prepare L0k1_a[kstate,a,i] = 0.0
-endpardo a,i,kstate
-
-pardo a,i,kstate
-    prepare cLk1_a[kstate,a,i] = 0.0
-endpardo a,i,kstate
-
-pardo a,i,a1,i1,ksub
-    prepare RB2_aa[ksub,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,ksub
-
-pardo a,i,a1,i1,ksub
-    prepare LB2_aa[ksub,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,ksub
-
-pardo a,i,a1,i1,kstate
-    prepare R0k2_aa[kstate,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,kstate
-
-pardo a,i,a1,i1,kstate
-    prepare R1k2_aa[kstate,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,kstate
-
-pardo a,i,a1,i1,kstate
-    prepare cRk2_aa[kstate,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,kstate
-
-pardo a,i,a1,i1,kstate
-    prepare L0k2_aa[kstate,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,kstate
-
-pardo a,i,a1,i1,kstate
-    prepare L1k2_aa[kstate,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,kstate
-
-pardo a,i,a1,i1,kstate
-    prepare cLk2_aa[kstate,a,i,a1,i1] = 0.0
-endpardo a,i,a1,i1,kstate
-
-pardo a,i,b,j,ksub
-    prepare RB2_ab[ksub,a,i,b,j] = 0.0
-endpardo a,i,b,j,ksub
-
-pardo a,i,b,j,ksub
-    prepare LB2_ab[ksub,a,i,b,j] = 0.0
-endpardo a,i,b,j,ksub
-
-pardo a,i,b,j,kstate
-    prepare R0k2_ab[kstate,a,i,b,j] = 0.0
-endpardo a,i,b,j,kstate
-
-pardo a,i,b,j,kstate
-    prepare R1k2_ab[kstate,a,i,b,j] = 0.0
-endpardo a,i,b,j,kstate
-
-pardo a,i,b,j,kstate
-    prepare cRk2_ab[kstate,a,i,b,j] = 0.0
-endpardo a,i,b,j,kstate
-
-pardo a,i,b,j,kstate
-    prepare L0k2_ab[kstate,a,i,b,j] = 0.0
-endpardo a,i,b,j,kstate
-
-pardo a,i,b,j,kstate
-    prepare L1k2_ab[kstate,a,i,b,j] = 0.0
-endpardo a,i,b,j,kstate
-
-pardo a,i,b,j,kstate
-    prepare cLk2_ab[kstate,a,i,b,j] = 0.0
-endpardo a,i,b,j,kstate
-
-server_barrier
-
-ENDPROC form_guess
 
 #------------------------------------------------------------------------
 
@@ -6527,9 +6438,9 @@ where ksub == 1
     endif
     norm1 *= etemp
     norm2 = (norm1)**(-0.5)
-    if norm1 < (10.0)**(-12.0)
-	norm2 = 1.0
-    endif
+#    if norm1 < (10.0)**(-12.0)
+#	norm2 = 1.0
+#    endif
 #######################
     pardo a,i
         prepare RB1_a[ksub,a,i] *= norm2
@@ -6737,9 +6648,9 @@ do qsub
     endif
     norm1 *= etemp
     norm2 = (norm1)**(-0.5)
-    if norm1 < (10.0)**(-12.0)
-	norm2 = 1.0
-    endif
+#    if norm1 < (10.0)**(-12.0)
+#	norm2 = 1.0
+#    endif
 #######################
     pardo a,i
         prepare RB1_a[qsub,a,i] *= norm2
@@ -6809,6 +6720,109 @@ call update_LB2ab
 server_barrier
 #
 ENDPROC update_vecs
+
+PROC form_guess
+
+server_barrier
+
+pardo a,i,ksub
+    request RB1_a[ksub,a,i]
+    Tkai[ksub,a,i]  = RB1_a[ksub,a,i]
+    Tkai[ksub,a,i] *= 0.5
+    prepare LB1_a[ksub,a,i] = Tkai[ksub,a,i]
+endpardo a,i,ksub
+
+pardo a,i,kstate
+    request R1k1_a[kstate,a,i]
+    Tkai[kstate,a,i]  = R1k1_a[kstate,a,i]
+    Tkai[kstate,a,i] *= 0.5
+    prepare L1k1_a[kstate,a,i] = Tkai[kstate,a,i]
+endpardo a,i,kstate
+
+
+pardo a,i,kstate
+    prepare R0k1_a[kstate,a,i] = 0.0
+endpardo a,i,kstate
+
+pardo a,i,kstate
+    prepare cRk1_a[kstate,a,i] = 0.0
+endpardo a,i,kstate
+
+pardo a,i,kstate
+    prepare L0k1_a[kstate,a,i] = 0.0
+endpardo a,i,kstate
+
+pardo a,i,kstate
+    prepare cLk1_a[kstate,a,i] = 0.0
+endpardo a,i,kstate
+
+pardo a,i,a1,i1,ksub
+    prepare RB2_aa[ksub,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,ksub
+
+pardo a,i,a1,i1,ksub
+    prepare LB2_aa[ksub,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,ksub
+
+pardo a,i,a1,i1,kstate
+    prepare R0k2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,kstate
+
+pardo a,i,a1,i1,kstate
+    prepare R1k2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,kstate
+
+pardo a,i,a1,i1,kstate
+    prepare cRk2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,kstate
+
+pardo a,i,a1,i1,kstate
+    prepare L0k2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,kstate
+
+pardo a,i,a1,i1,kstate
+    prepare L1k2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,kstate
+
+pardo a,i,a1,i1,kstate
+    prepare cLk2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1,kstate
+
+pardo a,i,b,j,ksub
+    prepare RB2_ab[ksub,a,i,b,j] = 0.0
+endpardo a,i,b,j,ksub
+
+pardo a,i,b,j,ksub
+    prepare LB2_ab[ksub,a,i,b,j] = 0.0
+endpardo a,i,b,j,ksub
+
+pardo a,i,b,j,kstate
+    prepare R0k2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j,kstate
+
+pardo a,i,b,j,kstate
+    prepare R1k2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j,kstate
+
+pardo a,i,b,j,kstate
+    prepare cRk2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j,kstate
+
+pardo a,i,b,j,kstate
+    prepare L0k2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j,kstate
+
+pardo a,i,b,j,kstate
+    prepare L1k2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j,kstate
+
+pardo a,i,b,j,kstate
+    prepare cLk2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j,kstate
+
+server_barrier
+
+ENDPROC form_guess
 # -----------------
 #  MAIN
 # -----------------

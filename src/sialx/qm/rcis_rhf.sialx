@@ -1162,6 +1162,7 @@ if rank == 0.0
 #
 endif
 #
+server_barrier
 pardo a,i
 do kstate
     request RB1_a[kstate,a,i]

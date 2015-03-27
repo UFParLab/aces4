@@ -32,7 +32,8 @@ c--------------------------------------------------------------------------
       elseif (rank_0 .eq. 4) then
           if (extents_0(1) .ne. extents_0(2) .or.
      *        extents_0(3) .ne. extents_0(4)) then
-              write(*,*) "T_pqrs doublets are not square"
+              write(*,*) "T_pqrs doublets are not square",
+     *        extents_0(1),extents_0(2),extents_0(3),extents_0(4)
 	      call abort_job()
 	  endif
 	  n1 = extents_0(1)
