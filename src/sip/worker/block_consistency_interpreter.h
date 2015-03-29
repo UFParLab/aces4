@@ -14,13 +14,22 @@
 namespace sip {
 class SipTables;
 
+typedef std::map<BlockId, DistributedBlockConsistency> BlockIdConsistencyMap;
+typedef std::map<int, BlockIdConsistencyMap> ArrayBlockConsistencyMap;
+typedef std::map<int, bool> ArrayIdDeletedMap;
+struct PardoSectionConsistencyInfo{
+	ArrayBlockConsistencyMap blocks_consistency_map_;
+	ArrayIdDeletedMap array_id_deleted_map;
+};
+typedef std::map<int, PardoSectionConsistencyInfo> BarrierBlockConsistencyMap; // pc of barrier -> info
+
 /**
  * Interprets a program and plays back block GET, PUT, PUT+ and Barriers
  * to make sure program has correct block semantics.
  */
 class BlockConsistencyInterpreter: public SialxInterpreter {
 public:
-	BlockConsistencyInterpreter(int num_workers, const SipTables& sipTables);
+	BlockConsistencyInterpreter(int worker_rank, int num_workers, const SipTables& sipTables, BarrierBlockConsistencyMap&);
 	virtual ~BlockConsistencyInterpreter();
 
 
@@ -67,19 +76,14 @@ public:
 	virtual void handle_put_replace_op(int pc) ;
 	virtual void handle_delete_op(int pc);
 
-	typedef std::map<BlockId, DistributedBlockConsistency> ArrayBlockConsistencyMap;
-	typedef std::map<int, ArrayBlockConsistencyMap> BlockConsistencyMap;
-	typedef std::map<int, bool> MarkedDeletedArrayMap;
 private:
+	const int worker_rank_;
 	const int num_workers_;
 	const SipTables& sip_tables_;
 
-	int current_worker_;
-	int pc_of_previous_barrier_;
-	int pc_of_next_barrier_;
+	int last_seen_barrier_pc_;
 
-	BlockConsistencyMap blocks_consistency_map_;
-	MarkedDeletedArrayMap arrays_marked_for_deletion_;
+	BarrierBlockConsistencyMap& barrier_block_consistency_map_;
 
 };
 

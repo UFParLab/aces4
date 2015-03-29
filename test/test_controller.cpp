@@ -18,8 +18,6 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
-#include "block_consistency_interpreter.h"
-
 #include "worker_persistent_array_manager.h"
 
 #include "block.h"
@@ -266,28 +264,31 @@ void BlockConsistencyTestController::runWorker(){
 	// Clear previous worker_ to avoid leak
 	if (worker_ != NULL)
 		delete worker_;
-	worker_ = new sip::BlockConsistencyInterpreter(num_workers_, *sip_tables_);
-	if (verbose_)
-		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
-				<< " STARTING" << std::endl << std::flush;
-	if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
-		try {
+	for (int worker_rank=0; worker_rank<num_workers_; worker_rank += 1){
+		worker_ = new sip::BlockConsistencyInterpreter(worker_rank, num_workers_, *sip_tables_, barrier_block_consistency_map_);
+		if (verbose_)
+			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
+					<< " STARTING" << std::endl << std::flush;
+		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
+			try {
+				worker_->interpret();
+			} catch (const std::exception& e) {
+				std::cerr << "exception thrown in worker: " << e.what();
+				ADD_FAILURE();
+			}
+		} else {
 			worker_->interpret();
-		} catch (const std::exception& e) {
-			std::cerr << "exception thrown in worker: " << e.what();
-			ADD_FAILURE();
 		}
-	} else {
-		worker_->interpret();
-	}
 
-	if (verbose_) {
-		if (std::cout != sial_output_)
-			std::cout << sial_output_.rdbuf();
-		std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
-				<< job_ << " TERMINATED" << std::endl << std::flush;
+		if (verbose_) {
+			if (std::cout != sial_output_)
+				std::cout << sial_output_.rdbuf();
+			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
+					<< job_ << " TERMINATED" << std::endl << std::flush;
+		}
+		worker_->post_sial_program();
 	}
-	worker_->post_sial_program();
+	barrier_block_consistency_map_.clear();
 
 }
 

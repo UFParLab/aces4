@@ -31,6 +31,17 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader::SialProgList &progs = setup_reader->sial_prog_list();
 	setup::SetupReader::SialProgList::const_iterator it;
 
+	/*
+	 * It makes sense to disable registration counters, maxcounters and timers.
+	 * Registration writes to a non-thread safe static vector.
+	 * At the end of the program, registered timers can be printed out.
+	 */
+	sip::Counter::set_register_by_default(false);
+	sip::MaxCounter::set_register_by_default(false);
+	sip::Timer::set_register_by_default(false);
+
+	int gap = static_cast<int>(100 / parameters.percentage_of_workers);
+
 	for (it = progs.begin(); it != progs.end(); ++it) {
 		std::cout << it->c_str() << std::endl;
 		std::string sialfpath;
@@ -47,15 +58,16 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "SIP TABLES" << '\n' << sipTables << std::endl);
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
-		sip::BlockConsistencyInterpreter runner(num_workers, sipTables);
-		runner.interpret();
-		runner.post_sial_program();
+		sip::BarrierBlockConsistencyMap barrier_block_consistency_map_;
 
-		sip::Counter::clear_list();
-		sip::MaxCounter::clear_list();
-		sip::Timer::clear_list();
+		for (int worker_rank=0; worker_rank<num_workers; worker_rank += gap){
 
-  		barrier();
+			sip::BlockConsistencyInterpreter runner(worker_rank, num_workers, sipTables, barrier_block_consistency_map_);
+			runner.interpret();
+			runner.post_sial_program();
+			barrier();
+		}
+
 	} //end of loop over programs
 
 	delete setup_reader;

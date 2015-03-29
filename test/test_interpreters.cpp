@@ -49,121 +49,129 @@ bool VERBOSE_TEST = true;
 
 
 TEST(ProfileInterpreter, test1){
-
-	std::string job("contraction_small_test");
-	int norb = 1;
 	if (attr->global_rank() == 0){
-		init_setup(job.c_str());
-		set_constant("norb",norb);
-		std::string tmp = job + ".siox";
-		const char* nm= tmp.c_str();
-		add_sial_program(nm);
-		int segs[]  = {40};
-		set_aoindex_info(1,segs);
-		finalize_setup();
-	}
-	barrier();
-	std::stringstream output;
-	ProfileInterpreterTestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-	controller.initSipTables();
-	controller.run();
+		std::string job("contraction_small_test");
+		int norb = 1;
+		{
+			init_setup(job.c_str());
+			set_constant("norb",norb);
+			std::string tmp = job + ".siox";
+			const char* nm= tmp.c_str();
+			add_sial_program(nm);
+			int segs[]  = {40};
+			set_aoindex_info(1,segs);
+			finalize_setup();
+		}
+		std::stringstream output;
+		ProfileInterpreterTestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+		controller.initSipTables();
+		controller.run();
 
-	sip::ProfileTimer::Key key = controller.key_for_pc(16);	// PC for Contraction line.
-	std::pair<double, long> time_count_pair = controller.profile_timer_store_->get_from_store(key);
-	ASSERT_EQ(time_count_pair.second, 1);
-	ASSERT_GT(time_count_pair.first, 0.0);
+		sip::ProfileTimer::Key key = controller.key_for_pc(16);	// PC for Contraction line.
+		std::pair<double, long> time_count_pair = controller.profile_timer_store_->get_from_store(key);
+		ASSERT_EQ(time_count_pair.second, 1);
+		ASSERT_GT(time_count_pair.first, 0.0);
+	}
 
 }
 
 TEST(BlockConsistencyInterpreter, test1){
 
 	if (attr->global_rank() == 0){
-		std::string job("test1");
-		int norb = 2;
-		int num_workers = 2;
-		{
-			init_setup(job.c_str());
-			set_constant("norb",norb);
-			std::string tmp = job + ".siox";
-			const char* nm= tmp.c_str();
-			add_sial_program(nm);
-			int segs[]  = {40, 40};
-			set_aoindex_info(2,segs);
-			finalize_setup();
+		for (int i=2; i<6; ++i){
+			std::string job("test1");
+			int norb = 2;
+			int num_workers = i;
+			{
+				init_setup(job.c_str());
+				set_constant("norb",norb);
+				std::string tmp = job + ".siox";
+				const char* nm= tmp.c_str();
+				add_sial_program(nm);
+				int segs[]  = {40, 40};
+				set_aoindex_info(2,segs);
+				finalize_setup();
+			}
+			std::stringstream output;
+			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			controller.initSipTables();
+			ASSERT_THROW(controller.runWorker(), std::logic_error);
 		}
-		std::stringstream output;
-		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
-		controller.initSipTables();
-		ASSERT_THROW(controller.runWorker(), std::logic_error);
 	}
 }
 
 TEST(BlockConsistencyInterpreter, test2){
 
 	if (attr->global_rank() == 0){
-		std::string job("test2");
-		int norb = 2;
-		int num_workers = 2;
-		{
-			init_setup(job.c_str());
-			set_constant("norb",norb);
-			std::string tmp = job + ".siox";
-			const char* nm= tmp.c_str();
-			add_sial_program(nm);
-			int segs[]  = {40, 40};
-			set_aoindex_info(2,segs);
-			finalize_setup();
+		for (int i=2; i<6; ++i){
+			std::string job("test2");
+			int norb = 2;
+			int num_workers = i;
+			{
+				init_setup(job.c_str());
+				set_constant("norb",norb);
+				std::string tmp = job + ".siox";
+				const char* nm= tmp.c_str();
+				add_sial_program(nm);
+				int segs[]  = {40, 40};
+				set_aoindex_info(2,segs);
+				finalize_setup();
+			}
+			std::stringstream output;
+			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			controller.initSipTables();
+			ASSERT_THROW(controller.runWorker(), std::logic_error);
 		}
-		std::stringstream output;
-		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
-		controller.initSipTables();
-		ASSERT_THROW(controller.runWorker(), std::logic_error);
 	}
 }
 
 TEST(BlockConsistencyInterpreter, test3){
 
 	if (attr->global_rank() == 0){
-		std::string job("test3");
-		int norb = 2;
-		int num_workers = 2;
-		{
-			init_setup(job.c_str());
-			set_constant("norb",norb);
-			std::string tmp = job + ".siox";
-			const char* nm= tmp.c_str();
-			add_sial_program(nm);
-			int segs[]  = {40, 40};
-			set_aoindex_info(2,segs);
-			finalize_setup();
+		for (int i=2; i<6; ++i){
+			std::string job("test3");
+			int norb = 2;
+			int num_workers = i;
+			{
+				init_setup(job.c_str());
+				set_constant("norb",norb);
+				std::string tmp = job + ".siox";
+				const char* nm= tmp.c_str();
+				add_sial_program(nm);
+				int segs[]  = {40, 40};
+				set_aoindex_info(2,segs);
+				finalize_setup();
+			}
+			std::stringstream output;
+			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			controller.initSipTables();
+			ASSERT_THROW(controller.runWorker(), std::logic_error);
 		}
-		std::stringstream output;
-		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
-		controller.initSipTables();
-		ASSERT_THROW(controller.runWorker(), std::logic_error);
 	}
 }
 
 TEST(BlockConsistencyInterpreter, test4){
 
 	if (attr->global_rank() == 0){
-		std::string job("test4");
-		int norb = 2;
-		int num_workers = 2;
-		{
-			init_setup(job.c_str());
-			set_constant("norb",norb);
-			std::string tmp = job + ".siox";
-			const char* nm= tmp.c_str();
-			add_sial_program(nm);
-			int segs[]  = {40, 40};
-			set_aoindex_info(2,segs);
-			finalize_setup();
+		for (int i=2; i<6; ++i){
+			std::string job("test4");
+			int norb = 2;
+			int num_workers = i;
+			{
+				init_setup(job.c_str());
+				set_constant("norb",norb);
+				std::string tmp = job + ".siox";
+				const char* nm= tmp.c_str();
+				add_sial_program(nm);
+				int segs[]  = {40, 40};
+				set_aoindex_info(2,segs);
+				finalize_setup();
+			}
+			std::stringstream output;
+			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			controller.initSipTables();
+			controller.runWorker();
 		}
-		std::stringstream output;
-		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
-		controller.initSipTables();
-		controller.runWorker();
 	}
 }
 
@@ -191,20 +199,11 @@ int main(int argc, char **argv) {
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
-	barrier();
-
-	//INIT_GLOBAL_TIMERS(&argc, &argv);
-
 	check_expected_datasizes();
 
 	printf("Running main() from %s\n",__FILE__);
 	testing::InitGoogleTest(&argc, argv);
-	barrier();
 	int result = RUN_ALL_TESTS();
-
-	//FINALIZE_GLOBAL_TIMERS();
-
-	barrier();
 
 #ifdef HAVE_MPI
 	MPI_Finalize();

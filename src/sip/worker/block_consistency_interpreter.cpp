@@ -10,10 +10,12 @@
 
 namespace sip {
 
-BlockConsistencyInterpreter::BlockConsistencyInterpreter(int num_workers, const SipTables& sipTables):
-		SialxInterpreter(sipTables, NULL, NULL, NULL),
-		num_workers_(num_workers), sip_tables_(sipTables), current_worker_(0),
-		pc_of_previous_barrier_(-1), pc_of_next_barrier_(-1){
+BlockConsistencyInterpreter::BlockConsistencyInterpreter(int worker_rank,
+		int num_workers, const SipTables& sipTables,  BarrierBlockConsistencyMap& barrier_block_consistency_map) :
+		SialxInterpreter(sipTables, NULL, NULL, NULL), worker_rank_(
+				worker_rank), num_workers_(num_workers), sip_tables_(sipTables),
+				barrier_block_consistency_map_(barrier_block_consistency_map),
+				last_seen_barrier_pc_(0){
 }
 
 BlockConsistencyInterpreter::~BlockConsistencyInterpreter() {}
@@ -27,81 +29,84 @@ void BlockConsistencyInterpreter::handle_pardo_op(int &pc){
 	int num_indices = arg1(pc);
 	LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(num_indices,
 				index_selectors(pc), data_manager_, sip_tables_, num_where_clauses,
-				this, current_worker_, num_workers_, iteration_);
+				this, worker_rank_, num_workers_, iteration_);
 	loop_start(pc, loop);
 }
 
-void BlockConsistencyInterpreter::handle_sip_barrier_op(int pc){
-	std::cout << "At barrier, Current Worker " << current_worker_ << ", pc_of_last_barrier_ = " << pc_of_previous_barrier_ << ", pc = " << pc << std::endl;
-	if (current_worker_ >= 0 && current_worker_ < num_workers_){
-		pc_of_next_barrier_ = pc;
-		current_worker_ += 1;
-		pc_ = pc_of_previous_barrier_ + 1;
-	}
+void BlockConsistencyInterpreter::handle_sip_barrier_op(int pc) { last_seen_barrier_pc_++; }
 
-	if (current_worker_ == num_workers_){
-		current_worker_ = 0;
-		blocks_consistency_map_.clear();
-		arrays_marked_for_deletion_.clear();
-		pc_of_previous_barrier_ = pc;
-		pc_ = pc_of_next_barrier_;
-	}
-}
-
-void BlockConsistencyInterpreter::handle_program_end(int& pc){
-	std::cout << " Current Worker " << current_worker_ << ", pc_of_last_barrier_ = " << pc_of_previous_barrier_ << ", pc = " << pc << std::endl;
-	if (current_worker_ >= 0 && current_worker_ < num_workers_){
-		pc_of_next_barrier_ = pc;
-		current_worker_ += 1;
-		pc_ = pc_of_previous_barrier_ + 1;
-	}
-
-	if (current_worker_ == num_workers_){
-		current_worker_ = 0;
-		blocks_consistency_map_.clear();
-		arrays_marked_for_deletion_.clear();
-		pc_of_previous_barrier_ = pc;
-		pc_ = pc_of_next_barrier_;
-	}
-}
+void BlockConsistencyInterpreter::handle_program_end(int& pc){}
 
 void BlockConsistencyInterpreter::handle_get_op(int pc) {
+	PardoSectionConsistencyInfo& pardo_sections_info = barrier_block_consistency_map_[last_seen_barrier_pc_];
+	ArrayIdDeletedMap& array_id_deleted_map = pardo_sections_info.array_id_deleted_map;
+	ArrayBlockConsistencyMap& blocks_consistency_map_ =  pardo_sections_info.blocks_consistency_map_;
 	BlockId id = get_block_id_from_selector_stack();
 	int array_id = id.array_id();
-	ArrayBlockConsistencyMap& array_consistency_map = blocks_consistency_map_[array_id];
+	if (array_id_deleted_map[array_id]){
+		std::stringstream err_ss;
+		err_ss << "From worker " << worker_rank_
+				<< " ,trying to GET block "<< id
+				<< " of array " << sip_tables_.array_name(array_id)
+				<< " which has been deleted at line " << line_number();
+		fail_with_exception(err_ss.str(), line_number());
+	}
+	BlockIdConsistencyMap& array_consistency_map = blocks_consistency_map_[array_id];
 	DistributedBlockConsistency& distributed_block_consistency_map = array_consistency_map[id];
-	bool consistent = distributed_block_consistency_map.update_and_check_consistency(SIPMPIConstants::GET, current_worker_);
+	bool consistent = distributed_block_consistency_map.update_and_check_consistency(SIPMPIConstants::GET, worker_rank_);
 	if (!consistent){
 		std::stringstream err_ss;
-		err_ss << "Incorrect GET Block Semantics for " << id << " from worker " << current_worker_ << " at line " << line_number();
+		err_ss << "Incorrect GET Block Semantics for " << id << " from worker " << worker_rank_ << " at line " << line_number();
 		fail_with_exception(err_ss.str(), line_number());
 	}
 }
 
 void BlockConsistencyInterpreter::handle_put_accumulate_op(int pc) {
+	PardoSectionConsistencyInfo& pardo_sections_info = barrier_block_consistency_map_[last_seen_barrier_pc_];
+	ArrayIdDeletedMap& array_id_deleted_map = pardo_sections_info.array_id_deleted_map;
+	ArrayBlockConsistencyMap& blocks_consistency_map_ =  pardo_sections_info.blocks_consistency_map_;
 	BlockId rhs_id = get_block_id_from_selector_stack();
 	BlockId lhs_id = get_block_id_from_selector_stack();
 	int array_id = lhs_id.array_id();
-	ArrayBlockConsistencyMap& array_consistency_map = blocks_consistency_map_[array_id];
+	if (array_id_deleted_map[array_id]){
+		std::stringstream err_ss;
+		err_ss << "From worker " << worker_rank_
+				<< " ,trying to PUT_ACCUMULATE block "<< lhs_id
+				<< " of array " << sip_tables_.array_name(array_id)
+				<< " which has been deleted at line " << line_number();
+		fail_with_exception(err_ss.str(), line_number());
+	}
+	BlockIdConsistencyMap& array_consistency_map = blocks_consistency_map_[array_id];
 	DistributedBlockConsistency& distributed_block_consistency_map = array_consistency_map[lhs_id];
-	bool consistent = distributed_block_consistency_map.update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, current_worker_);
+	bool consistent = distributed_block_consistency_map.update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, worker_rank_);
 	if (!consistent){
 		std::stringstream err_ss;
-		err_ss << "Incorrect PUT_ACCUMULATE Block Semantics for " << lhs_id << " from worker " << current_worker_ << " at line " << line_number();
+		err_ss << "Incorrect PUT_ACCUMULATE Block Semantics for " << lhs_id << " from worker " << worker_rank_ << " at line " << line_number();
 		fail_with_exception(err_ss.str(), line_number());
 	}
 }
 
 void BlockConsistencyInterpreter::handle_put_replace_op(int pc) {
+	PardoSectionConsistencyInfo& pardo_sections_info = barrier_block_consistency_map_[last_seen_barrier_pc_];
+	ArrayIdDeletedMap& array_id_deleted_map = pardo_sections_info.array_id_deleted_map;
+	ArrayBlockConsistencyMap& blocks_consistency_map_ =  pardo_sections_info.blocks_consistency_map_;
 	BlockId rhs_id = get_block_id_from_selector_stack();
 	BlockId lhs_id = get_block_id_from_selector_stack();
 	int array_id = lhs_id.array_id();
-	ArrayBlockConsistencyMap& array_consistency_map = blocks_consistency_map_[array_id];
+	if (array_id_deleted_map[array_id]){
+		std::stringstream err_ss;
+		err_ss << "From worker " << worker_rank_
+				<< " ,trying to PUT block "<< lhs_id
+				<< " of array " << sip_tables_.array_name(array_id)
+				<< " which has been deleted at line " << line_number();
+		fail_with_exception(err_ss.str(), line_number());
+	}
+	BlockIdConsistencyMap& array_consistency_map = blocks_consistency_map_[array_id];
 	DistributedBlockConsistency& distributed_block_consistency_map = array_consistency_map[lhs_id];
-	bool consistent = distributed_block_consistency_map.update_and_check_consistency(SIPMPIConstants::PUT, current_worker_);
+	bool consistent = distributed_block_consistency_map.update_and_check_consistency(SIPMPIConstants::PUT, worker_rank_);
 	if (!consistent){
 		std::stringstream err_ss;
-		err_ss << "Incorrect PUT Block Semantics for " << lhs_id << " from worker " << current_worker_ << " at line " << line_number();
+		err_ss << "Incorrect PUT Block Semantics for " << lhs_id << " from worker " << worker_rank_ << " at line " << line_number();
 		fail_with_exception(err_ss.str(), line_number());
 	}
 
@@ -109,7 +114,9 @@ void BlockConsistencyInterpreter::handle_put_replace_op(int pc) {
 
 void BlockConsistencyInterpreter::handle_delete_op(int pc){
 	int array_id = arg0(pc);
-	arrays_marked_for_deletion_[array_id] = true;
+	PardoSectionConsistencyInfo& pardo_sections_info = barrier_block_consistency_map_[last_seen_barrier_pc_];
+	ArrayIdDeletedMap& array_id_deleted_map = pardo_sections_info.array_id_deleted_map;
+	array_id_deleted_map[array_id] = true;
 }
 
 
@@ -159,9 +166,6 @@ void BlockConsistencyInterpreter::handle_execute_op(int pc) {
 		}
 		SialxInterpreter::handle_execute_op(pc);
 	}
-
-
-
 }
 
 

@@ -4,8 +4,10 @@
 
 #include <string>
 #include <iostream>
+#include <map>
 #include "setup_reader.h"
 #include "test_constants.h"
+#include "block_consistency_interpreter.h"
 
 
 
@@ -69,6 +71,7 @@ public:
 	}
 private:
 	const int num_workers_;
+	sip::BarrierBlockConsistencyMap barrier_block_consistency_map_;
 
 };
 
