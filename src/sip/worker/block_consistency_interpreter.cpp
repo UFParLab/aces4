@@ -164,7 +164,15 @@ void BlockConsistencyInterpreter::handle_execute_op(int pc) {
 			block_selector_stack_.push(bs);
 			bs_list.pop_back();
 		}
-		SialxInterpreter::handle_execute_op(pc);
+		if (opcode_name == "get_my_rank"){
+			sip::BlockId block_id0;
+			sip::Block::BlockPtr block0 = get_block_from_selector_stack('w', block_id0, true);
+			double* data = block0->get_data();
+			data[0] = worker_rank_;
+		} else {
+			SialxInterpreter::handle_execute_op(pc);
+		}
+
 	}
 }
 
