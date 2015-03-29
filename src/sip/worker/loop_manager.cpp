@@ -203,7 +203,6 @@ std::string SequentialPardoLoop::to_string() const {
 }
 ;
 
-#ifdef HAVE_MPI
 StaticTaskAllocParallelPardoLoop::StaticTaskAllocParallelPardoLoop(int num_indices,
 		const int (&index_id)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
 		int company_rank, int num_workers) :
@@ -451,7 +450,5 @@ std::ostream& operator<<(std::ostream& os, const BalancedTaskAllocParallelPardoL
 	os << obj.to_string();
 	return os;
 }
-
-#endif
 
 } /* namespace sip */

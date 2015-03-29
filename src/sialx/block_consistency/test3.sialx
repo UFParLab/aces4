@@ -1,0 +1,28 @@
+sial test3
+    
+# SHOULD FAIL !
+
+	predefined  int norb   #total nmber of atomic orbital segments beta)
+	aoindex m     = 1: norb 
+	aoindex n     = 1: norb
+	aoindex l = 1: norb
+	aoindex s  = 1: norb
+	
+	distributed d[m,n,l,s]
+	distributed d2[m,n,l,s]
+	temp t[m,n,l,s]
+	scalar dummy
+	
+    # Test Puts
+    pardo m, n, l, s
+        t[m, n, l, s] = 1.0
+        put d[m, n, l, s] = t[m, n, l, s]
+    endpardo m, n, l, s
+    
+    pardo s, l, m, n
+        get d[m, n, l, s]
+        t[m, n, l, s] = d[m, n, l, s]
+    endpardo s, l, m, n
+
+
+endsial test3

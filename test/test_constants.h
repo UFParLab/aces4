@@ -12,6 +12,7 @@
 
 extern const std::string dir_name;
 extern const std::string qm_dir_name;
+extern const std::string block_consistency_dir_name;
 extern const std::string expected_output_dir_name;
 
 extern sip::SIPMPIAttr *attr;

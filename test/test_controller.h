@@ -24,18 +24,18 @@ class TestController {
 public:
 	TestController(std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
 			bool expect_success=true);
-	~TestController();
-	sip::IntTable* int_table();
+	virtual ~TestController();
+	virtual void initSipTables(const std::string& sial_dir_name = dir_name);
+	virtual void runWorker();
 
-	void initSipTables(const std::string& sial_dir_name = dir_name);
 	void run();
 
 /** These methods can be called to retrieve values computed during the sial program. */
+	sip::IntTable* int_table();
 	int int_value(const std::string& name);
 	double scalar_value(const std::string& name);
 	double* local_block(const std::string& name, const std::vector<int>indices);
 	double* static_array(const std::string& name);
-	void runWorker();
 	int num_workers();
 	std::string expectedOutput();
 
@@ -55,6 +55,20 @@ public:
 	int prog_number_;
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
+
+};
+
+class BlockConsistencyTestController : public TestController{
+public:
+	BlockConsistencyTestController (int num_workers, std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
+			bool expect_success=true);
+	virtual ~BlockConsistencyTestController() {}
+	virtual void runWorker();
+	virtual void initSipTables(const std::string& sial_dir_name = block_consistency_dir_name){
+		TestController::initSipTables(sial_dir_name);
+	}
+private:
+	const int num_workers_;
 
 };
 

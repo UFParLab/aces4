@@ -777,6 +777,8 @@ void SialxInterpreter::pre_interpret(int pc) {
 
 void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 	pc_ = pc_start;
+
+restart:
 	while (pc_ < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc_);
 
@@ -886,6 +888,14 @@ void SialxInterpreter::do_interpret(int pc_start, int pc_end) {
 		post_interpret(old_pc, pc_);
 
 	}// while
+
+
+	// If the end of program causes the value of pc to change to something
+	// between pc_start and pc_end, go through the interpretation again.
+	// Needed by BlockConsistencyInterpreter.
+	handle_program_end(pc_);
+	if (pc_ >= pc_start && pc_ < pc_end)
+		goto restart;
 
 } //interpret
 

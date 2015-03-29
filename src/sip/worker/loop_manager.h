@@ -104,7 +104,6 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(SequentialPardoLoop);
 };
 
-#ifdef HAVE_MPI
 class StaticTaskAllocParallelPardoLoop: public LoopManager {
 public:
 	StaticTaskAllocParallelPardoLoop(int num_indices, const int (&index_ids)[MAX_RANK], DataManager & data_manager, const SipTables & sip_tables,
@@ -134,7 +133,6 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(StaticTaskAllocParallelPardoLoop);
 
 };
-
 
 
 
@@ -172,7 +170,6 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(BalancedTaskAllocParallelPardoLoop);
 
 };
-#endif
 
 } /* namespace sip */
 #endif /* LOOP_MANAGER_H_ */

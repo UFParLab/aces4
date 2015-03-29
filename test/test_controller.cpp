@@ -18,6 +18,7 @@
 #include "data_manager.h"
 #include "global_state.h"
 #include "sial_printer.h"
+#include "block_consistency_interpreter.h"
 
 #include "worker_persistent_array_manager.h"
 
@@ -253,6 +254,42 @@ std::string TestController::expectedOutput() {
 	return buffer.str();
 }
 
+
+BlockConsistencyTestController::BlockConsistencyTestController(int num_workers,
+		std::string job, bool has_dot_dat_file, bool verbose,
+		std::string comment, std::ostream& sial_output, bool expect_success) :
+		num_workers_(num_workers), TestController(job, has_dot_dat_file, verbose,
+				comment, sial_output, expect_success) {
+}
+
+void BlockConsistencyTestController::runWorker(){
+	// Clear previous worker_ to avoid leak
+	if (worker_ != NULL)
+		delete worker_;
+	worker_ = new sip::BlockConsistencyInterpreter(num_workers_, *sip_tables_);
+	if (verbose_)
+		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
+				<< " STARTING" << std::endl << std::flush;
+	if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
+		try {
+			worker_->interpret();
+		} catch (const std::exception& e) {
+			std::cerr << "exception thrown in worker: " << e.what();
+			ADD_FAILURE();
+		}
+	} else {
+		worker_->interpret();
+	}
+
+	if (verbose_) {
+		if (std::cout != sial_output_)
+			std::cout << sial_output_.rdbuf();
+		std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
+				<< job_ << " TERMINATED" << std::endl << std::flush;
+	}
+	worker_->post_sial_program();
+
+}
 
 
 

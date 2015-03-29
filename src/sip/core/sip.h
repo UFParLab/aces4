@@ -118,6 +118,7 @@ bool check_and_warn(bool, const char*, int line = 0);
 /*! fails with message */
 void fail(const std::string&, int line = 0);
 void fail(const char*, int line = 0);
+void fail_with_exception(const std::string&, int line = 0);
 
 /*! prints warning message to std::cerr */
 void warn(const char* message, int line=0);

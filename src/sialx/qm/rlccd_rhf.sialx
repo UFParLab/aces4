@@ -1279,7 +1279,7 @@ print " "
 	ediff = escr**0.5
 	assert_same ediff
 	if ediff < cc_conv
-	    exit
+	    println "" #exit
 	endif
 #
 #        Reset eold --> enew 

@@ -183,6 +183,17 @@ void fail(const char* message, int line){
 	//throw std::logic_error("logic error");
 }
 
+void fail_with_exception(const std::string& message, int line){
+	std::stringstream s;
+	s << "FATAL ERROR: " << message;
+	if (line > 0){
+		std::string prog = GlobalState::get_program_name();
+		int length = prog.size()-std::string(".siox").size();
+		s << " at "<< prog.substr(0,length) << ":" << line;
+	}
+	s << std::endl << std::flush;
+	throw std::logic_error(s.str().c_str());
+}
 
 
 void input_check(bool condition, const std::string& m, int line){

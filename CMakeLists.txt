@@ -190,6 +190,9 @@ set(ACES_WORKER_FILES
    	src/sip/worker/remote_array_model.cpp;
    	src/sip/worker/memory_ops_interpreter.cpp;
    	src/sip/worker/memory_ops_interpreter.h;
+   	src/sip/worker/block_consistency_interpreter.cpp;
+   	src/sip/worker/block_consistency_interpreter.h;
+   	src/sip/worker/memory_ops_interpreter.h;
     src/sip/worker/sialx_timer.cpp;
     src/sip/worker/sialx_timer.h;
     src/sip/worker/profile_timer.cpp;
@@ -390,6 +393,9 @@ add_executable(aces4_sipmap src/aces_main/sipmap_main.cpp src/aces_main/sipmap_h
 # memory ops executable
 add_executable(aces4_memory_ops src/aces_main/memory_ops_main.cpp src/aces_main/main_helper_methods.h)
 
+# block consistency executable
+add_executable(aces4_block_consistency src/aces_main/block_consistency_main.cpp src/aces_main/block_consistency_helper_methods.h)
+
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
@@ -418,6 +424,9 @@ set_target_properties(aces4_sipmap PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(aces4_memory_ops PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4_memory_ops PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(aces4_block_consistency PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(aces4_block_consistency PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
@@ -437,6 +446,7 @@ target_link_libraries(aces4 ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_sipmap ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_memory_ops ${TOLINK_LIBRARIES})
+target_link_libraries(aces4_block_consistency ${TOLINK_LIBRARIES})
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES})
 target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
 target_link_libraries(profile_merge ${TOLINK_LIBRARIES}) 
@@ -449,6 +459,7 @@ if(HAVE_CUDA)
 	add_dependencies(aces4_profile tensordil superinstructions cudasuperinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions cudasuperinstructions)
 	add_dependencies(aces4_memory_ops tensordil superinstructions cudasuperinstructions)
+	add_dependencies(aces4_block_consistency tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
 	add_dependencies(profile_merge tensordil superinstructions cudasuperinstructions)
@@ -458,6 +469,7 @@ else()
 	add_dependencies(aces4_profile tensordil superinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions)
 	add_dependencies(aces4_memory_ops tensordil superinstructions)
+	add_dependencies(aces4_block_consistency tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
 	add_dependencies(profile_merge tensordil superinstructions)
@@ -538,6 +550,10 @@ endif()
 #----------------------------------------------------------------------
 
 set(SIAL_FILES
+	src/sialx/block_consistency/test1.sialx;
+	src/sialx/block_consistency/test2.sialx;
+	src/sialx/block_consistency/test3.sialx;
+	src/sialx/block_consistency/test4.sialx;
 	src/sialx/sipmap/contract_to_scalar.sialx;
 	src/sialx/sipmap/sipmap_test2.sialx;
 	src/sialx/sipmap/sipmap_test3.sialx;

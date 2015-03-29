@@ -12,6 +12,7 @@ aces4 \
 aces4_profile \
 aces4_sipmap \
 aces4_memory_ops \
+aces4_block_consistency \
 print_siptables \
 print_init_file \
 profile_merge \
@@ -128,6 +129,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/remote_array_model.cpp\
 ./src/sip/worker/memory_ops_interpreter.cpp\
 ./src/sip/worker/memory_ops_interpreter.h\
+./src/sip/worker/block_consistency_interpreter.cpp\
+./src/sip/worker/block_consistency_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/profile_timer.h\
@@ -215,6 +218,11 @@ aces4_memory_ops_SOURCES=\
     ./src/aces_main/memory_ops_main.cpp\
     ./src/aces_main/main_helper_methods.h
 
+aces4_block_consistency_SOURCES=\
+	$(ACES_SOURCEFILES) \
+    ./src/aces_main/block_consistency_main.cpp\
+    ./src/aces_main/block_consistency_helper_methods.h
+
 print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
@@ -253,6 +261,13 @@ aces4_sipmap_LDADD = \
 	$(AM_LDADD_LIBS)
 
 aces4_memory_ops_LDADD = \
+	libtensordil.a \
+	libsqlite3.a \
+	libjsoncpp.a \
+	src/sip/super_instructions/libinstr.la\
+	$(AM_LDADD_LIBS)
+	
+aces4_block_consistency_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
 	libjsoncpp.a \
@@ -306,6 +321,12 @@ aces4_sipmap_LDFLAGS = \
 	$(OPENMP_CXXFLAGS)
 	
 aces4_memory_ops_LDFLAGS = \
+	$(OPENMP_FFLAGS)\
+	$(OPENMP_FCFLAGS)\
+	$(OPENMP_CFLAGS)\
+	$(OPENMP_CXXFLAGS)	
+	
+aces4_block_consistency_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
 	$(OPENMP_CFLAGS)\
@@ -491,6 +512,10 @@ SUBDIRS = src/sip/super_instructions
 SIAL_COMPILER_JAR=$(top_srcdir)/compiler/SialCompiler.jar
 
 SIOX_FILES=\
+./src/sialx/block_consistency/test1.siox\
+./src/sialx/block_consistency/test2.siox\
+./src/sialx/block_consistency/test3.siox\
+./src/sialx/block_consistency/test4.siox\
 ./src/sialx/sipmap/contract_to_scalar.siox\
 ./src/sialx/sipmap/sipmap_test2.siox\
 ./src/sialx/sipmap/sipmap_test3.siox\
@@ -615,6 +640,10 @@ SIOX_FILES=\
 BUILT_SOURCES= $(SIOX_FILES)
 
 EXTRA_DIST += \
+./src/sialx/block_consistency/test1.sialx\
+./src/sialx/block_consistency/test2.sialx\
+./src/sialx/block_consistency/test3.sialx\
+./src/sialx/block_consistency/test4.sialx\
 ./src/sialx/sipmap/contract_to_scalar.sialx\
 ./src/sialx/sipmap/sipmap_test2.sialx\
 ./src/sialx/sipmap/sipmap_test3.sialx\

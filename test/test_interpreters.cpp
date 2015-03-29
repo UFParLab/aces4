@@ -31,6 +31,7 @@
 #include "worker_persistent_array_manager.h"
 #include "block.h"
 #include "rank_distribution.h"
+#include "block_consistency_interpreter.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -61,6 +62,7 @@ TEST(ProfileInterpreter, test1){
 		set_aoindex_info(1,segs);
 		finalize_setup();
 	}
+	barrier();
 	std::stringstream output;
 	ProfileInterpreterTestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
@@ -73,6 +75,97 @@ TEST(ProfileInterpreter, test1){
 
 }
 
+TEST(BlockConsistencyInterpreter, test1){
+
+	if (attr->global_rank() == 0){
+		std::string job("test1");
+		int norb = 2;
+		int num_workers = 2;
+		{
+			init_setup(job.c_str());
+			set_constant("norb",norb);
+			std::string tmp = job + ".siox";
+			const char* nm= tmp.c_str();
+			add_sial_program(nm);
+			int segs[]  = {40, 40};
+			set_aoindex_info(2,segs);
+			finalize_setup();
+		}
+		std::stringstream output;
+		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+		controller.initSipTables();
+		ASSERT_THROW(controller.runWorker(), std::logic_error);
+	}
+}
+
+TEST(BlockConsistencyInterpreter, test2){
+
+	if (attr->global_rank() == 0){
+		std::string job("test2");
+		int norb = 2;
+		int num_workers = 2;
+		{
+			init_setup(job.c_str());
+			set_constant("norb",norb);
+			std::string tmp = job + ".siox";
+			const char* nm= tmp.c_str();
+			add_sial_program(nm);
+			int segs[]  = {40, 40};
+			set_aoindex_info(2,segs);
+			finalize_setup();
+		}
+		std::stringstream output;
+		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+		controller.initSipTables();
+		ASSERT_THROW(controller.runWorker(), std::logic_error);
+	}
+}
+
+TEST(BlockConsistencyInterpreter, test3){
+
+	if (attr->global_rank() == 0){
+		std::string job("test3");
+		int norb = 2;
+		int num_workers = 2;
+		{
+			init_setup(job.c_str());
+			set_constant("norb",norb);
+			std::string tmp = job + ".siox";
+			const char* nm= tmp.c_str();
+			add_sial_program(nm);
+			int segs[]  = {40, 40};
+			set_aoindex_info(2,segs);
+			finalize_setup();
+		}
+		std::stringstream output;
+		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+		controller.initSipTables();
+		ASSERT_THROW(controller.runWorker(), std::logic_error);
+	}
+}
+
+TEST(BlockConsistencyInterpreter, test4){
+
+	if (attr->global_rank() == 0){
+		std::string job("test4");
+		int norb = 2;
+		int num_workers = 2;
+		{
+			init_setup(job.c_str());
+			set_constant("norb",norb);
+			std::string tmp = job + ".siox";
+			const char* nm= tmp.c_str();
+			add_sial_program(nm);
+			int segs[]  = {40, 40};
+			set_aoindex_info(2,segs);
+			finalize_setup();
+		}
+		std::stringstream output;
+		BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+		controller.initSipTables();
+		controller.runWorker();
+	}
+}
 
 
 //****************************************************************************************************************
@@ -86,11 +179,11 @@ int main(int argc, char **argv) {
 	int num_procs;
 	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
 
-	if (num_procs < 2) {
-		std::cerr << "Please run this test with at least 2 mpi ranks"
-				<< std::endl;
-		return -1;
-	}
+//	if (num_procs < 2) {
+//		std::cerr << "Please run this test with at least 2 mpi ranks"
+//				<< std::endl;
+//		return -1;
+//	}
 	sip::AllWorkerRankDistribution all_workers_rank_dist;
 	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIUtils::set_error_handler();

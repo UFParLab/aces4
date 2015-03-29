@@ -318,14 +318,13 @@ public:
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
 
-
 private:
-	int pc_; 			/*! the "program counter". Actually, the current location in the op_table_.	 */
-	int timer_pc_; 		/** Auxillary field needed by timers. initialize to value < 0 **/
+	int timer_pc_; 		/** Auxillary field needed by Sialx timers. initialize to value < 0 **/
 
 protected:
-	const SipTables& sip_tables_; /*! static data */
-	DataManager data_manager_;    /*! dynamic data */
+	int pc_; 						/*! the "program counter". Actually, the current location in the op_table_.	 */
+	const SipTables& sip_tables_; 	/*! static data */
+	DataManager data_manager_;    	/*! dynamic data */
 
 	/** Object that manages and formats output from SIAL print statements.
 	 * A subclass with desired properties is passed to the constructor.
@@ -651,6 +650,7 @@ protected:
 	virtual void handle_iswap_op(int pc);
 	virtual void handle_sswap_op(int pc);
 
+	virtual void handle_program_end(int &pc) {}
 
 	/**
 	 * Steps to be performed after interpreting opcode at old_pc.
