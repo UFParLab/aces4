@@ -1,0 +1,4771 @@
+#  Copyright (c) 2003-2010 University of Florida
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  The GNU General Public License is included in this distribution
+#  in the file COPYRIGHT.
+#
+                           SIAL SCF_RHF
+#
+# ----------------------------------------------------------------------------
+#
+# The sial program SCF_RHF performs a RHF based SCF calculation. See section
+# MAIN program for additional comments.
+#
+# Fock matrix final arrays:
+# ------------------------- 
+#
+# 1. Fpq_a  
+# 2. Fpq_b  
+#
+# Transformation coefficients final arrays:
+# ----------------------------------------- 
+#
+# 1. Ca  
+# 2. Cb  
+#
+# Converged SCF energy:
+# --------------------- 
+#
+# 1. scfeneg 
+#
+# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+#
+# Declare indices 
+# --------------- 
+#
+      index   kiter  = 1, scf_iter  
+      index   kbeg   = 1, scf_beg
+      index   korder = 1, scf_hist
+      index   katom  = 1, Natoms
+      index   jatom  = 1, Natoms
+      index   NbfnsA = 1, eavirtorb #norb
+      index   NbfnsB = 1, ebvirtorb #norb
+      index   kptr1  = 1, 2
+      index   kptr2  = 1, 2
+      index   kone   = 1, 1
+      index   kdiis  = 1, 10 
+      index   d1     = 1, 10 
+      index   d2     = 1, 10 
+      index   d3     = 1, 10 
+      index   d4     = 1, 10 
+      index   iiter1 = 1, 1
+      index   jjter1 = 1, 1
+      index   jjter2 = 2, 2
+      index   ithree = 1, 3
+#
+      aoindex mu     = 1, norb
+      aoindex nu     = 1, norb
+      aoindex lambda = 1, norb
+      aoindex sigma  = 1, norb
+#
+      moaindex i = baocc, eaocc
+      moaindex i1= baocc, eaocc
+      moaindex i2= baocc, eaocc
+      moaindex i3= baocc, eaocc
+#
+      moaindex a = bavirt, eavirt
+      moaindex a1= bavirt, eavirt
+      moaindex a2= bavirt, eavirt
+      moaindex a3= bavirt, eavirt
+#
+      moaindex j = baocc, eaocc
+      moaindex j1= baocc, eaocc
+      moaindex j2= baocc, eaocc
+      moaindex j3= baocc, eaocc
+#
+      moaindex b = bavirt, eavirt
+      moaindex b1= bavirt, eavirt
+      moaindex b2= bavirt, eavirt
+      moaindex b3= bavirt, eavirt
+#
+      moaindex p = baocc, eavirt
+      moaindex p1= baocc, eavirt
+      moaindex p2= baocc, eavirt
+      moaindex p3= baocc, eavirt
+#
+      moaindex q = baocc, eavirt
+      moaindex q1= baocc, eavirt
+      moaindex q2= baocc, eavirt
+      moaindex q3= baocc, eavirt
+# 
+# Declare one-particle density arrays 
+# ----------------------------------- 
+#
+      distributed Dhfa(mu,nu) 
+      distributed Dhfb(mu,nu) 
+      distributed IDhfa(mu,nu) 
+      distributed IDhfb(mu,nu) 
+#
+      distributed Fpq_a(mu,nu) 
+      distributed Fpq_b(mu,nu) 
+      distributed FTpq_a(mu,nu) 
+      distributed FTpq_b(mu,nu) 
+      distributed CBT_a(mu,p) 
+      distributed CBT_b(mu,q) 
+
+      distributed Pnew_a(mu,nu)
+      distributed Pnew_b(mu,nu)
+      distributed Pold_a(mu,nu)
+      distributed Pold_b(mu,nu)
+
+      static dflags11(iiter1,jjter1)
+      static dflags12(iiter1,jjter2)
+#
+# Declare temporary arrays 
+# ------------------------ 
+#
+      temp Ixi(mu,i) 
+      temp I1xi(mu,i) 
+      temp Ixj(mu,j) 
+      temp I1xj(mu,j) 
+      temp Tpq(mu,nu) 
+      temp T1pq(mu,nu) 
+      temp Txi(mu,i) 
+      temp Txi_t(mu,i) 
+      temp T1xi(mu,i) 
+      temp Txj(mu,j) 
+      temp Txj_t(mu,j) 
+      temp T1xj(mu,j) 
+      temp Txx(mu,nu) 
+      temp TAxx(mu,nu) 
+      temp TBxx(mu,nu) 
+      temp T1xx(mu,nu) 
+      temp T2xx(mu,nu) 
+      temp T3xx(mu,nu) 
+      temp T4xx(mu,nu) 
+      temp T5xx(mu,nu) 
+      temp T6xx(mu,nu) 
+      temp T7xx(mu,nu) 
+      temp T8xx(mu,nu) 
+      temp T9xx(mu,nu) 
+      temp T10xx(mu,nu) 
+      temp T11xx(mu,nu) 
+      temp T12xx(mu,nu) 
+      temp T13xx(mu,nu) 
+      temp T14xx(mu,nu) 
+      temp T15xx(mu,nu) 
+      temp T16xx(mu,nu) 
+      temp T17xx(mu,nu) 
+      temp T18xx(mu,nu) 
+      temp T19xx(mu,nu) 
+      temp T20xx(mu,nu) 
+      temp T21xx(mu,nu) 
+      temp T22xx(mu,nu) 
+      temp Tii(i,i1) 
+      temp T1ii(i,i1) 
+      temp Tjj(j,j1) 
+      temp T1jj(j,j1) 
+      temp Txp(mu,p) 
+      temp T1xp(mu,p) 
+      temp Tpp(p,p1) 
+      temp T1pp(p,p1) 
+      temp Txq(mu,q) 
+      temp T1xq(mu,q) 
+      temp Tqq(q,q1) 
+      temp T1qq(q,q1) 
+#
+# Declare served arrays 
+# --------------------- 
+#
+      temp aoint(mu,nu,lambda,sigma)
+#
+# Declare static arrays 
+# --------------------- 
+#
+      static FSpq_a(mu,nu) 
+      static FSpq_b(mu,nu) 
+      static atom(katom,jatom)
+      distributed Qxx(mu,nu) 
+      distributed FTa(p,p1) 
+      distributed FTb(q,q1) 
+      static X1(mu,nu) 
+      local LDHFa(mu,nu) 
+      local LDHFb(mu,nu) 
+      local LFpq_b(mu,nu) 
+      local LFpq_a(mu,nu) 
+      static pinf(kiter,kptr1)
+      temp tpinf(kiter,kptr1)
+      temp tatom(katom,jatom)
+#
+# Arrays used in DIIS procedure 
+# ----------------------------- 
+#  
+      distributed FFai(a,i) 
+      distributed FFbj(b,j) 
+
+      scalar init_guess
+      scalar Shifta
+      scalar Shiftb
+      scalar damping
+      scalar can_damp
+      scalar dynamic_damp
+
+# Variables for dynamic damping
+
+      DISTRIBUTED FpqA_NEW(mu,nu)
+      DISTRIBUTED FpqB_NEW(mu,nu)
+      DISTRIBUTED Dhfa_Prev(mu,nu)
+      DISTRIBUTED Dhfb_Prev(mu,nu)
+      DISTRIBUTED FpqA_Prev(mu,nu)
+      DISTRIBUTED FpqB_Prev(mu,nu)
+      DISTRIBUTED Fpqa_DMP(mu,nu)
+      DISTRIBUTED Fpqb_DMP(mu,nu)
+      DISTRIBUTED Dpqa_DMP(mu,nu)
+      DISTRIBUTED Dpqb_DMP(mu,nu)
+      DISTRIBUTED Fpqa_MO(p,p1)
+      DISTRIBUTED Fpqb_MO(q,q1)
+      DISTRIBUTED SCa(mu,p)
+      DISTRIBUTED SCb(mu,q)
+      DISTRIBUTED OVLP_INV(mu,nu)
+      DISTRIBUTED OCA(mu,p)
+      DISTRIBUTED BCA(mu,p)
+      STATIC Spp(p,p1)
+      STATIC OVLP(mu,nu)
+      STATIC CA_Prev(mu,p)
+      STATIC CB_Prev(mu,q)
+      STATIC CA_TEMP(mu,p)
+      STATIC CB_TEMP(mu,q)
+      STATIC ORB_OVLP_A(p,i)
+      STATIC ORB_OVLP_B(q,j)
+      DISTRIBUTED OVLP_TMP_A(p,i)
+      DISTRIBUTED OVLP_TMP_B(q,j)
+      DISTRIBUTED INTM_A(nu,i)
+      DISTRIBUTED INTM_B(nu,j)
+      STATIC Fpqa_MO_VSHIFT(p,p1)
+      STATIC Fpqb_MO_VSHIFT(q,q1)
+      STATIC A_OCC_NUMS(NbfnsA)
+      STATIC B_OCC_NUMS(NbfnsB)
+      STATIC DAMP_PARMS(Ithree)
+#bgn_debug
+     distributed OVC_T(p,mu)
+     distributed OVC(p,p1)
+     distributed fpqa_dbg(mu,nu)
+     distributed fpqb_dbg(mu,nu)
+     temp tpx(p,mu)
+     temp tpxt(p,mu)
+     temp Tppt(p,p1)
+     temp Tpp1(p,p1)
+#end_debug
+      Temp TXX_a(mu,nu)
+      Temp TXX_b(mu,nu)
+      Temp ToccA(nbfnsA)
+      Temp Tf12(iiter1,jjter2)
+
+      temp tai(a,i) 
+      temp t1ai(a,i) 
+      temp tbj(b,j) 
+      temp t1bj(b,j) 
+      temp Tpi(p,i)
+      temp Tqj(q,j)
+#
+# Scalars used in DIIS procedure 
+# ------------------------------ 
+#
+       scalar b11
+       scalar b12
+       scalar b13
+       scalar b14
+       scalar b15
+       scalar b16
+       scalar b17
+       scalar b18
+       scalar b19
+       scalar b110 
+#
+       scalar b22
+       scalar b23
+       scalar b24
+       scalar b25
+       scalar b26
+       scalar b27
+       scalar b28
+       scalar b29
+       scalar b210 
+#
+       scalar b33
+       scalar b34
+       scalar b35
+       scalar b36
+       scalar b37
+       scalar b38
+       scalar b39
+       scalar b310 
+#
+       scalar b44
+       scalar b45
+       scalar b46
+       scalar b47
+       scalar b48
+       scalar b49
+       scalar b410 
+#
+       scalar b55
+       scalar b56
+       scalar b57
+       scalar b58
+       scalar b59
+       scalar b510 
+#
+       scalar b66 
+       scalar b67 
+       scalar b68 
+       scalar b69 
+       scalar b610  
+#
+       scalar b77 
+       scalar b78 
+       scalar b79 
+       scalar b710  
+#
+       scalar b88 
+       scalar b89 
+       scalar b810  
+#
+       scalar b99 
+       scalar b910  
+#
+       scalar b1010 
+#
+       scalar c1
+       scalar c2
+       scalar c3
+       scalar c4
+       scalar c5
+       scalar c6
+       scalar c7
+       scalar c8
+       scalar c9
+       scalar c10 
+#
+       scalar Tb11
+       scalar Tb12
+       scalar Tb13
+       scalar Tb14
+       scalar Tb15
+       scalar Tb16
+       scalar Tb17
+       scalar Tb18
+       scalar Tb19
+       scalar Tb110 
+#
+       scalar Tb21
+       scalar Tb22
+       scalar Tb23
+       scalar Tb24
+       scalar Tb25
+       scalar Tb26
+       scalar Tb27
+       scalar Tb28
+       scalar Tb29
+       scalar Tb210 
+#
+       scalar Tb31
+       scalar Tb32
+       scalar Tb33
+       scalar Tb34
+       scalar Tb35
+       scalar Tb36
+       scalar Tb37
+       scalar Tb38
+       scalar Tb39
+       scalar Tb310 
+#
+       scalar Tb41
+       scalar Tb42
+       scalar Tb43
+       scalar Tb44
+       scalar Tb45
+       scalar Tb46
+       scalar Tb47
+       scalar Tb48
+       scalar Tb49
+       scalar Tb410 
+#
+       scalar Tb51
+       scalar Tb52
+       scalar Tb53
+       scalar Tb54
+       scalar Tb55
+       scalar Tb56
+       scalar Tb57
+       scalar Tb58
+       scalar Tb59
+       scalar Tb510 
+#
+       scalar Tb61 
+       scalar Tb62 
+       scalar Tb63 
+       scalar Tb64 
+       scalar Tb65 
+       scalar Tb66 
+       scalar Tb67 
+       scalar Tb68 
+       scalar Tb69 
+       scalar Tb610  
+#
+       scalar Tb71 
+       scalar Tb72 
+       scalar Tb73 
+       scalar Tb74 
+       scalar Tb75 
+       scalar Tb76 
+       scalar Tb77 
+       scalar Tb78 
+       scalar Tb79 
+       scalar Tb710  
+#
+       scalar Tb81 
+       scalar Tb82 
+       scalar Tb83 
+       scalar Tb84 
+       scalar Tb85 
+       scalar Tb86 
+       scalar Tb87 
+       scalar Tb88 
+       scalar Tb89 
+       scalar Tb810  
+#
+       scalar Tb91 
+       scalar Tb92 
+       scalar Tb93 
+       scalar Tb94 
+       scalar Tb95 
+       scalar Tb96 
+       scalar Tb97 
+       scalar Tb98 
+       scalar Tb99 
+       scalar Tb910  
+#
+       scalar Tb101 
+       scalar Tb102 
+       scalar Tb103 
+       scalar Tb104 
+       scalar Tb105 
+       scalar Tb106 
+       scalar Tb107 
+       scalar Tb108 
+       scalar Tb109 
+       scalar Tb1010 
+#
+# Declare scalars 
+# --------------- 
+#
+      scalar e_a     
+      scalar e_b     
+      scalar escf_a 
+      scalar escf_b 
+      scalar etemp 
+      scalar esum 
+      scalar esum1
+      scalar energy 
+      scalar energy1 
+      scalar energy2 
+      scalar ecrit 
+      scalar ediff  
+#     scalar damp 
+      scalar damp1 
+      scalar done 
+      scalar donea 
+      scalar doneb 
+   
+      scalar zero 
+      scalar mone 
+      scalar one
+      scalar onehalf
+      scalar two
+      scalar three
+      scalar four
+      scalar ncount1 
+      scalar rank 
+      scalar coreh
+      scalar atomic
+      scalar invtwopt2 
+#VR
+      scalar scf
+      scalar scf_ener
+#
+# Parameters needed for DIIS 
+
+      scalar diis_start  
+      scalar diis_orginal_start
+      scalar start_history 
+      scalar diis_end   
+      scalar diis_order   
+      scalar diis_max_order # same as kdiis   
+      scalar diis_count 
+      scalar worder  
+      scalar iter_count
+      scalar prnt_count
+      scalar target
+      scalar n1 
+      scalar n2 
+
+      scalar esuma
+      scalar esumb
+      scalar tmp
+      scalar e1m_tmp
+      scalar e1p_tmp
+      scalar e2m11_tmp
+      scalar e2p11_tmp
+      scalar e2p12_tmp
+      scalar e1m
+      scalar e1p
+      scalar e211m
+      scalar e211p
+      scalar e212
+      scalar damp_denom
+      scalar damp_numra
+      scalar X
+      scalar MX
+      scalar DONE_damp
+      scalar Max_D_diff
+      scalar damp_thres
+      scalar occ_num
+      scalar david_dynamic
+      scalar karls_dynamic
+      scalar constant_damping 
+      scalar e0
+      scalar e1
+      scalar e2
+      scalar de
+      scalar dep
+      scalar des
+      scalar deps
+      scalar deavg
+      scalar deavg_old
+      scalar icount
+      scalar damp_factor
+      scalar kill_damp
+      scalar lock_orbs 
+      scalar lock_occs 
+      scalar level_shift
+#
+      distributed Fa(mu,nu,kdiis) 
+      distributed Fb(mu,nu,kdiis) 
+      distributed Fbj(b,j,kdiis) 
+      distributed Fai(a,i,kdiis) 
+      temp tpqx(mu,nu,d2)   
+      temp taix(a,i,d2)   
+      temp tbjx(b,j,d2)   
+      temp tdd(d1,d2) 
+      temp t1dd(d1,d2) 
+      temp Ixp(mu,p)
+      temp Jxq(mu,q)
+      temp Ixx(mu,nu)
+      local BB(kdiis,kdiis) 
+#
+# ---------------------------------------------------------------------------- 
+#
+# -----------------------------------------------------------------------------
+#
+      PROC HFDENS
+#     -----------
+
+      DO p
+      DO nu
+         Txp(nu,p)     = CA(nu,p)
+         CA_TEMP(nu,p) = Txp(nu,p)
+      ENDDO nu
+      ENDDO p
+   
+      EXECUTE MULT_ARRAY_BYC CA_TEMP A_OCC_NUMS
+      execute sip_barrier 
+
+# This is a temporary measure to avoid multilying two static
+#  arrays. There should be a fix at a lower level.
+#
+      DO p
+      DO nu
+         Txp(nu,p)     = CA_TEMP(nu,p)
+         T1xp(nu,p)    = CA(nu,p)
+         PUT OCA(nu,p) = Txp(nu,p)
+         PUT BCA(nu,p) = T1xp(nu,p)
+      ENDDO nu
+      ENDDO p
+
+      execute sip_barrier 
+#
+#     The HF density is computed. Davidson damping is incorporated thus
+#     knowledge of the previous iteration is needed. 
+#     ----------------------------------------------------------------- 
+#
+      PARDO mu, nu 
+#
+#           alpha component first 
+#           --------------------- 
+#
+            Tpq(mu,nu) = 0.0
+
+            DO p
+               GET  OCA(nu,p)
+               GET  BCA(mu,p)
+               Txp(nu,p)   = OCA(nu,p)  
+               T1xp(mu,p)  = BCA(mu,p)
+               T1pq(mu,nu) = Txp(nu,p)*T1xp(mu,p)
+               Tpq(mu,nu) += T1pq(mu,nu) 
+#
+            ENDDO p
+#
+            PUT Dhfa(mu,nu) = Tpq(mu,nu)
+            PUT Dhfb(mu,nu) = Tpq(mu,nu)
+#
+      ENDPARDO mu, nu 
+#
+      ENDPROC HFDENS
+#     --------------
+#
+# ---------------------------------------------------------------------------- 
+#
+# -----------------------------------------------------------------------------
+#
+      PROC HFIDENS
+#     ------------
+#
+#     Procedure which computes the HF density without Davidson damping. 
+#     ----------------------------------------------------------------- 
+#
+      DO p
+      DO nu
+         Txp(nu,p)     = CA(nu,p)
+         CA_TEMP(nu,p) = Txp(nu,p)
+      ENDDO nu
+      ENDDO p
+
+      EXECUTE MULT_ARRAY_BYC CA_TEMP A_OCC_NUMS
+      execute sip_barrier 
+
+      DO p
+      DO nu
+         Txp(nu,p)     = CA_TEMP(nu,p)
+         T1xp(nu,p)    = CA(nu,p)
+         PUT OCA(nu,p) = Txp(nu,p)
+         PUT BCA(nu,p) = T1xp(nu,p)
+      ENDDO nu
+      ENDDO p
+
+      execute sip_barrier 
+
+      PARDO mu, nu
+#
+#           alpha component
+#           ---------------
+#
+
+            Tpq(mu,nu) = 0.0
+#
+            DO p
+               GET OCA(nu,p)
+               GET BCA(mu,p)
+               Txp(nu,p)   = OCA(nu,p)
+               T1xp(mu,p)  = BCA(mu,p) 
+               T1pq(mu,nu) = Txp(nu,p) * T1xp(mu,p)
+               Tpq(mu,nu) += T1pq(mu,nu)
+
+            ENDDO p
+#
+            PUT Dhfa(mu,nu) = Tpq(mu,nu)
+            PUT Dhfb(mu,nu) = Tpq(mu,nu)
+#
+      ENDPARDO mu, nu 
+#
+      ENDPROC HFIDENS
+#     ---------------
+#bgn_debug
+      PROC CHECK_FOCK
+#     ---------------
+       create Fpqa_dbg
+       create Fpqb_dbg
+       execute sip_barrier 
+       DO mu
+       DO nu    
+         Txx(mu,nu)        = Fockrohf_a(mu,nu)
+         PUT Fpqa_dbg(mu,nu) += Txx(mu,nu)
+       ENDDO nu
+       ENDDO mu
+       DO mu
+       DO nu
+          Txx(mu,nu)        = Fockrohf_b(mu,nu)
+          PUT Fpqb_dbg(mu,nu) += Txx(mu,nu)
+       ENDDO nu
+       ENDDO mu
+       execute sip_barrier
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO mu
+       DO nu
+          get Fpqa_dbg(mu,nu)
+          get Fpqb_dbg(mu,nu)
+#          execute dump_amp Fpqa_dbg(mu,nu)
+          etemp  = Fpqa_dbg(mu,nu) * Fpqa_dbg(mu,nu)
+          esuma += etemp
+          etemp  = Fpqb_dbg(mu,nu) * Fpqb_dbg(mu,nu)
+          esumb += etemp
+       ENDDO nu
+       ENDDO mu
+       execute print_scalar esuma
+       execute print_scalar esumb
+       endif
+       delete Fpqa_dbg
+       delete Fpqb_dbg
+      ENDPROC CHECK_FOCK
+#     ---------------
+#
+# ---------------------------------------------------------------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC FOCK_MATRIX  
+#      ----------------- 
+#
+#      The complete Fock matrix is constructed. Eight fold symmetry of the
+#      two-electron integrals is incorporated. 
+#      ------------------------------------------------------------------
+#
+#      Put the density into local arrays 
+#      --------------------------------- 
+#
+       allocate LDHFa(*,*) 
+       allocate LDHFb(*,*) 
+       allocate LFpq_b(*,*) 
+       allocate LFpq_a(*,*) 
+       DO mu 
+       DO nu 
+          GET            DHFa(mu,nu) 
+          GET            DHFb(mu,nu) 
+          LDHFa(mu,nu) = DHFa(mu,nu) 
+          LDHFb(mu,nu) = DHFb(mu,nu) 
+          LFpq_a(mu,nu) = 0.0 
+          LFpq_b(mu,nu) = 0.0 
+       ENDDO nu 
+       ENDDO mu 
+#
+#      Initialize the Fock matrix to the bare 1-electron hamiltonian.
+#      -------------------------------------------------------------- 
+#
+       execute sip_barrier
+#
+       if rank == 0.0 
+          DO mu   
+          DO nu   
+#
+             txx(mu,nu) = 0.0 
+             execute return_h1 txx  
+#
+             PUT Fpq_a(mu,nu) += Txx(mu,nu) 
+             PUT Fpq_b(mu,nu) += Txx(mu,nu) 
+#
+          ENDDO nu   
+          ENDDO mu    
+       endif 
+
+       execute sip_barrier
+       execute load_balance_off
+       execute sip_barrier
+#
+#      Add contributions containing two-particle integral contributions.
+#      -----------------------------------------------------------------
+#
+############# CLASS 6  ############
+##  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
+##                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
+##
+        PARDO mu, nu, lambda, sigma
+##
+                 WHERE mu      < nu
+                 WHERE lambda  < sigma
+                 WHERE mu     < lambda
+                 WHERE nu     != sigma
+                 WHERE nu     != lambda
+                 WHERE mu     != sigma
+##
+                    compute_integrals       aoint(mu,nu,lambda,sigma)
+##
+                    T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                    T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+                    T4xx(mu,nu)           = LDHFa(mu,nu)
+                    T4xx(mu,nu)          += LDHFb(mu,nu)
+##
+                    T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+                    T2xx(mu,nu)          *= 2.0
+                    LFpq_a(mu,nu)        += T2xx(mu,nu)
+                    LFpq_b(mu,nu)        += T2xx(mu,nu)
+                    T3xx(nu,mu)           = T2xx(mu,nu)
+                    LFpq_a(nu,mu)        += T3xx(nu,mu)
+                    LFpq_b(nu,mu)        += T3xx(nu,mu)
+##
+                    T5xx(lambda,sigma)    = aoint(mu,nu,lambda,sigma)*T4xx(mu,nu)
+                    T5xx(lambda,sigma)   *= 2.0
+                    LFpq_a(lambda,sigma) += T5xx(lambda,sigma)
+                    LFpq_b(lambda,sigma) += T5xx(lambda,sigma)
+                    T6xx(sigma,lambda)    = T5xx(lambda,sigma)
+                    LFpq_a(sigma,lambda) += T6xx(sigma,lambda)
+                    LFpq_b(sigma,lambda) += T6xx(sigma,lambda)
+##
+                    T7xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                    LFpq_a(mu,lambda)    -= T7xx(mu,lambda)
+                    T8xx(lambda,mu)       = T7xx(mu,lambda)
+                    LFpq_a(lambda,mu)    -= T8xx(lambda,mu)
+##
+                    T9xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(nu,lambda)
+                    LFpq_a(mu,sigma)     -= T9xx(mu,sigma)
+                    T10xx(sigma,mu)       = T9xx(mu,sigma)
+                    LFpq_a(sigma,mu)     -= T10xx(sigma,mu)
+##
+                    T11xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFa(mu,sigma)
+                    LFpq_a(nu,lambda)    -= T11xx(nu,lambda)
+                    T12xx(lambda,nu)      = T11xx(nu,lambda)
+                    LFpq_a(lambda,nu)    -= T12xx(lambda,nu)
+##
+                    T13xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFa(mu,lambda)
+                    LFpq_a(nu,sigma)     -= T13xx(nu,sigma)
+                    T14xx(sigma,nu)       = T13xx(nu,sigma)
+                    LFpq_a(sigma,nu)     -= T14xx(sigma,nu)
+##
+                    T15xx(mu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                    LFpq_b(mu,lambda)    -= T15xx(mu,lambda)
+                    T16xx(lambda,mu)      = T15xx(mu,lambda)
+                    LFpq_b(lambda,mu)    -= T16xx(lambda,mu)
+##
+                    T17xx(mu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,lambda)
+                    LFpq_b(mu,sigma)     -= T17xx(mu,sigma)
+                    T18xx(sigma,mu)       = T17xx(mu,sigma)
+                    LFpq_b(sigma,mu)     -= T18xx(sigma,mu)
+##
+                    T19xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(mu,sigma)
+                    LFpq_b(nu,lambda)    -= T19xx(nu,lambda)
+                    T20xx(lambda,nu)      = T19xx(nu,lambda)
+                    LFpq_b(lambda,nu)    -= T20xx(lambda,nu)
+
+                    T21xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(mu,lambda)
+                    LFpq_b(nu,sigma)     -= T21xx(nu,sigma)
+                    T22xx(sigma,nu)       = T21xx(nu,sigma)
+                    LFpq_b(sigma,nu)     -= T22xx(sigma,nu)
+##
+        ENDPARDO mu, nu, lambda, sigma
+##
+#
+############ CLASS 3  ############
+#  Do two-center part (mu mu |mu nu)->(mu nu |mu mu ),(mu mu|nu mu),(nu mu|mu mu)
+#  Do three-center part (mu mu |nu lambda)->(mu mu |lambda nu ),(nu lambda|mu mu),(lambda nu|mu mu)
+#
+       PARDO mu, nu, sigma 
+#
+          WHERE mu == nu
+#
+             T3xx(mu,nu)    = LDHFa(mu,nu)
+             T3xx(mu,nu)   += LDHFb(mu,nu)
+#
+             DO lambda  
+#
+                      WHERE lambda  < sigma
+#
+                         compute_integrals       aoint(mu,nu,lambda,sigma)
+#
+                         T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                         T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+#
+                         T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+                         T2xx(mu,nu)          *= 2.0
+#
+                         T4xx(lambda,sigma)    = aoint(mu,nu,lambda,sigma)*T3xx(mu,nu)
+                         T5xx(sigma,lambda)    = T4xx(lambda,sigma)
+#
+                         T6xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                        #T6xx(mu,lambda)      *= -1.0
+                         T7xx(lambda,mu)       = T6xx(mu,lambda)
+#
+                         T8xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(nu,lambda)
+                        #T8xx(mu,sigma)       *= -1.0
+                         T9xx(sigma,mu)        = T8xx(mu,sigma)
+#
+                         T10xx(mu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                        #T10xx(mu,lambda)     *= -1.0
+                         T11xx(lambda,mu)      = T10xx(mu,lambda)
+#
+                         T12xx(mu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,lambda)
+                        #T12xx(mu,sigma)      *= -1.0
+                         T13xx(sigma,mu)       = T12xx(mu,sigma)
+#
+                         LFpq_a(mu,nu)        += T2xx(mu,nu)
+                         LFpq_b(mu,nu)        += T2xx(mu,nu)
+#
+                         LFpq_a(lambda,sigma) += T4xx(lambda,sigma)
+                         LFpq_b(lambda,sigma) += T4xx(lambda,sigma)
+#
+                         LFpq_a(sigma,lambda) += T5xx(sigma,lambda)
+                         LFpq_b(sigma,lambda) += T5xx(sigma,lambda)
+#
+                         LFpq_a(mu,lambda)    -= T6xx(mu,lambda)
+                         LFpq_a(lambda,mu)    -= T7xx(lambda,mu)
+#
+                         LFpq_a(mu,sigma)     -= T8xx(mu,sigma)
+                         LFpq_a(sigma,mu)     -= T9xx(sigma,mu)
+#
+                         LFpq_b(mu,lambda)    -= T10xx(mu,lambda)
+                         LFpq_b(lambda,mu)    -= T11xx(lambda,mu)
+#
+                         LFpq_b(mu,sigma)     -= T12xx(mu,sigma)
+                         LFpq_b(sigma,mu)     -= T13xx(sigma,mu)
+#
+                ENDDO lambda 
+#
+       ENDPARDO mu, nu, sigma 
+#
+############ CLASS 5  ############
+###################  CLASS A ##############
+#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
+#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#
+       PARDO mu, nu, sigma  
+                WHERE nu < sigma
+                WHERE mu < nu
+                   T4xx(mu,nu)  = LDHFa(mu,nu)
+                   T4xx(mu,nu) += LDHFb(mu,nu)
+             DO lambda 
+                WHERE mu==lambda
+                WHERE lambda < sigma
+#
+                   compute_integrals       aoint(mu,nu,lambda,sigma)
+#
+                   T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                   T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+#
+                   T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+                   T2xx(mu,nu)          *= 2.0
+                   T3xx(nu,mu)           = T2xx(mu,nu)
+#
+                   T5xx(lambda,sigma)    = aoint(mu,nu,lambda,sigma)*T4xx(mu,nu)
+                   T5xx(lambda,sigma)   *= 2.0
+                   T6xx(sigma,lambda)    = T5xx(lambda,sigma)
+#
+#
+                   T7xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                   T7xx(mu,lambda)      *= -1.0
+                   T8xx(lambda,mu)       = T7xx(mu,lambda)
+#
+                   T9xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(nu,lambda)
+                   T9xx(mu,sigma)       *= -1.0
+                   T10xx(sigma,mu)       = T9xx(mu,sigma)
+#
+                   T11xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFa(mu,sigma)
+                   T11xx(nu,lambda)     *= -1.0
+                   T12xx(lambda,nu)      = T11xx(nu,lambda)
+#
+                   T13xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFa(mu,lambda)
+                   T13xx(nu,sigma)      *= -1.0
+                   T14xx(sigma,nu)       = T13xx(nu,sigma)
+#
+                   T15xx(mu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                   T15xx(mu,lambda)     *= -1.0
+                   T16xx(lambda,mu)      = T15xx(mu,lambda)
+#
+                   T17xx(mu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,lambda)
+                   T17xx(mu,sigma)      *= -1.0
+                   T18xx(sigma,mu)       = T17xx(mu,sigma)
+#
+                   T19xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(mu,sigma)
+                   T19xx(nu,lambda)     *= -1.0
+                   T20xx(lambda,nu)      = T19xx(nu,lambda)
+#
+                   T21xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(mu,lambda)
+                   T21xx(nu,sigma)      *= -1.0
+                   T22xx(sigma,nu)       = T21xx(nu,sigma)
+#
+                   LFpq_a(mu,nu)        += T2xx(mu,nu)
+                   LFpq_b(mu,nu)        += T2xx(mu,nu)
+                   LFpq_a(nu,mu)        += T3xx(nu,mu)
+                   LFpq_b(nu,mu)        += T3xx(nu,mu)
+                   LFpq_a(lambda,sigma) += T5xx(lambda,sigma)
+                   LFpq_b(lambda,sigma) += T5xx(lambda,sigma)
+                   LFpq_a(sigma,lambda) += T6xx(sigma,lambda)
+                   LFpq_b(sigma,lambda) += T6xx(sigma,lambda)
+                   LFpq_a(mu,lambda)    += T7xx(mu,lambda)
+                   LFpq_a(lambda,mu)    += T8xx(lambda,mu)
+                   LFpq_a(mu,sigma)     += T9xx(mu,sigma)
+                   LFpq_a(sigma,mu)     += T10xx(sigma,mu)
+                   LFpq_a(nu,lambda)    += T11xx(nu,lambda)
+                   LFpq_a(lambda,nu)    += T12xx(lambda,nu)
+                   LFpq_a(nu,sigma)     += T13xx(nu,sigma)
+                   LFpq_a(sigma,nu)     += T14xx(sigma,nu)
+                   LFpq_b(mu,lambda)    += T15xx(mu,lambda)
+                   LFpq_b(lambda,mu)    += T16xx(lambda,mu)
+                   LFpq_b(mu,sigma)     += T17xx(mu,sigma)
+                   LFpq_b(sigma,mu)     += T18xx(sigma,mu)
+                   LFpq_b(nu,lambda)    += T19xx(nu,lambda)
+                   LFpq_b(lambda,nu)    += T20xx(lambda,nu)
+                   LFpq_b(nu,sigma)     += T21xx(nu,sigma)
+                   LFpq_b(sigma,nu)     += T22xx(sigma,nu)
+#
+             ENDDO lambda  
+#
+       ENDPARDO mu, nu, sigma  
+#
+###################  CLASS B ##############
+#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
+#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+# 
+      PARDO mu, nu, lambda
+                WHERE nu == lambda
+                WHERE mu < nu
+                   T4xx(mu,nu)  = LDHFa(mu,nu)
+                   T4xx(mu,nu) += LDHFb(mu,nu)
+            DO sigma 
+                WHERE lambda < sigma
+                WHERE mu < sigma
+#
+                   compute_integrals       aoint(mu,nu,lambda,sigma)
+#
+                   T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                   T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+#
+                   T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+                   T2xx(mu,nu)          *= 2.0
+                   T3xx(nu,mu)           = T2xx(mu,nu)
+#
+                   T5xx(lambda,sigma)    = aoint(mu,nu,lambda,sigma)*T4xx(mu,nu)
+                   T5xx(lambda,sigma)   *= 2.0
+                   T6xx(sigma,lambda)    = T5xx(lambda,sigma)
+#
+                   T7xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                   T7xx(mu,lambda)      *= -1.0
+                   T8xx(lambda,mu)       = T7xx(mu,lambda)
+#
+                   T9xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(nu,lambda)
+                   T9xx(mu,sigma)       *= -1.0
+                   T10xx(sigma,mu)       = T9xx(mu,sigma)
+#
+                   T11xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFa(mu,sigma)
+                   T11xx(nu,lambda)     *= -1.0
+                   T12xx(lambda,nu)      = T11xx(nu,lambda)
+#
+                   T13xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFa(mu,lambda)
+                   T13xx(nu,sigma)      *= -1.0
+                   T14xx(sigma,nu)       = T13xx(nu,sigma)
+#
+                   T15xx(mu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                   T15xx(mu,lambda)     *= -1.0
+                   T16xx(lambda,mu)      = T15xx(mu,lambda)
+#
+                   T17xx(mu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,lambda)
+                   T17xx(mu,sigma)      *= -1.0
+                   T18xx(sigma,mu)       = T17xx(mu,sigma)
+#
+                   T19xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(mu,sigma)
+                   T19xx(nu,lambda)     *= -1.0
+                   T20xx(lambda,nu)      = T19xx(nu,lambda)
+#
+                   T21xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(mu,lambda)
+                   T21xx(nu,sigma)      *= -1.0
+                   T22xx(sigma,nu)       = T21xx(nu,sigma)
+
+                   LFpq_a(mu,nu)        += T2xx(mu,nu)
+                   LFpq_b(mu,nu)        += T2xx(mu,nu)
+                   LFpq_a(nu,mu)        += T3xx(nu,mu)
+                   LFpq_b(nu,mu)        += T3xx(nu,mu)
+                   LFpq_a(lambda,sigma) += T5xx(lambda,sigma)
+                   LFpq_b(lambda,sigma) += T5xx(lambda,sigma)
+                   LFpq_a(sigma,lambda) += T6xx(sigma,lambda)
+                   LFpq_b(sigma,lambda) += T6xx(sigma,lambda)
+                   LFpq_a(mu,lambda)    += T7xx(mu,lambda)
+                   LFpq_a(lambda,mu)    += T8xx(lambda,mu)
+                   LFpq_a(mu,sigma)     += T9xx(mu,sigma)
+                   LFpq_a(sigma,mu)     += T10xx(sigma,mu)
+                   LFpq_a(nu,lambda)    += T11xx(nu,lambda)
+                   LFpq_a(lambda,nu)    += T12xx(lambda,nu)
+                   LFpq_a(nu,sigma)     += T13xx(nu,sigma)
+                   LFpq_a(sigma,nu)     += T14xx(sigma,nu)
+                   LFpq_b(mu,lambda)    += T15xx(mu,lambda)
+                   LFpq_b(lambda,mu)    += T16xx(lambda,mu)
+                   LFpq_b(mu,sigma)     += T17xx(mu,sigma)
+                   LFpq_b(sigma,mu)     += T18xx(sigma,mu)
+                   LFpq_b(nu,lambda)    += T19xx(nu,lambda)
+                   LFpq_b(lambda,nu)    += T20xx(lambda,nu)
+                   LFpq_b(nu,sigma)     += T21xx(nu,sigma)
+                   LFpq_b(sigma,nu)     += T22xx(sigma,nu)
+#
+             ENDDO sigma 
+#
+       ENDPARDO mu, nu, lambda
+# 
+###################  CLASS C ##############
+#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
+#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#
+       PARDO mu, nu, sigma
+                WHERE nu == sigma
+                WHERE mu < nu
+                   T4xx(mu,nu)    = LDHFa(mu,nu)
+                   T4xx(mu,nu)   += LDHFb(mu,nu)
+             DO lambda
+                WHERE lambda < sigma
+                WHERE mu < lambda
+#
+                   compute_integrals       aoint(mu,nu,lambda,sigma)
+#
+                   T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                   T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+#
+                   T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+                   T2xx(mu,nu)          *= 2.0
+                   T3xx(nu,mu)           = T2xx(mu,nu)
+#
+                   T5xx(lambda,sigma)    = aoint(mu,nu,lambda,sigma)*T4xx(mu,nu)
+                   T5xx(lambda,sigma)   *= 2.0
+                   T6xx(sigma,lambda)    = T5xx(lambda,sigma)
+#
+                   T7xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                   T7xx(mu,lambda)      *= -1.0
+                   T8xx(lambda,mu)       = T7xx(mu,lambda)
+#
+                   T9xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(nu,lambda)
+                   T9xx(mu,sigma)       *= -1.0
+                   T10xx(sigma,mu)       = T9xx(mu,sigma)
+#
+                   T11xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFa(mu,sigma)
+                   T11xx(nu,lambda)     *= -1.0
+                   T12xx(lambda,nu)      = T11xx(nu,lambda)
+#
+                   T13xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFa(mu,lambda)
+                   T13xx(nu,sigma)      *= -1.0
+                   T14xx(sigma,nu)       = T13xx(nu,sigma)
+#
+                   T15xx(mu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                   T15xx(mu,lambda)     *= -1.0
+                   T16xx(lambda,mu)      = T15xx(mu,lambda)
+#
+                   T17xx(mu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,lambda)
+                   T17xx(mu,sigma)      *= -1.0
+                   T18xx(sigma,mu)       = T17xx(mu,sigma)
+#
+                   T19xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(mu,sigma)
+                   T19xx(nu,lambda)     *= -1.0
+                   T20xx(lambda,nu)      = T19xx(nu,lambda)
+#
+                   T21xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(mu,lambda)
+                   T21xx(nu,sigma)      *= -1.0
+                   T22xx(sigma,nu)       = T21xx(nu,sigma)
+
+                   LFpq_a(nu,mu)        += T3xx(nu,mu)
+                   LFpq_a(mu,nu)        += T2xx(mu,nu)
+                   LFpq_b(mu,nu)        += T2xx(mu,nu)
+                   LFpq_b(nu,mu)        += T3xx(nu,mu)
+                   LFpq_a(lambda,sigma) += T5xx(lambda,sigma)
+                   LFpq_b(lambda,sigma) += T5xx(lambda,sigma)
+                   LFpq_a(sigma,lambda) += T6xx(sigma,lambda)
+                   LFpq_b(sigma,lambda) += T6xx(sigma,lambda)
+                   LFpq_a(mu,lambda)    += T7xx(mu,lambda)
+                   LFpq_a(lambda,mu)    += T8xx(lambda,mu)
+                   LFpq_a(mu,sigma)     += T9xx(mu,sigma)
+                   LFpq_a(sigma,mu)     += T10xx(sigma,mu)
+                   LFpq_a(nu,lambda)    += T11xx(nu,lambda)
+                   LFpq_a(lambda,nu)    += T12xx(lambda,nu)
+                   LFpq_a(nu,sigma)     += T13xx(nu,sigma)
+                   LFpq_a(sigma,nu)     += T14xx(sigma,nu)
+                   LFpq_b(mu,lambda)    += T15xx(mu,lambda)
+                   LFpq_b(lambda,mu)    += T16xx(lambda,mu)
+                   LFpq_b(mu,sigma)     += T17xx(mu,sigma)
+                   LFpq_b(sigma,mu)     += T18xx(sigma,mu)
+                   LFpq_b(nu,lambda)    += T19xx(nu,lambda)
+                   LFpq_b(lambda,nu)    += T20xx(lambda,nu)
+                   LFpq_b(nu,sigma)     += T21xx(nu,sigma)
+                   LFpq_b(sigma,nu)     += T22xx(sigma,nu)
+#
+             ENDDO lambda
+#
+       ENDPARDO mu, nu, sigma
+#
+############ CLASS 1  ############
+#  Do one-center part (mu mu |mu mu)
+#
+       PARDO mu, sigma, nu
+                WHERE nu == mu
+                WHERE sigma == mu
+                DO lambda
+                   WHERE lambda == mu 
+#          
+                            compute_integrals     aoint(mu,nu,lambda,sigma)
+#
+                            T1xx(lambda,sigma)  = LDHFa(lambda,sigma)
+                            T1xx(lambda,sigma) += LDHFb(lambda,sigma)
+                            T2xx(mu,nu)         = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+#
+                            T3xx(mu,lambda)     = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                            T3xx(mu,lambda)    *= -1.0
+#
+                            T4xx(mu,lambda)     = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                            T4xx(mu,lambda)    *= -1.0
+#
+                            LFpq_a(mu,nu)      += T2xx(mu,nu)
+                            LFpq_b(mu,nu)      += T2xx(mu,nu)
+                            LFpq_a(mu,lambda)  += T3xx(mu,lambda)
+                            LFpq_b(mu,lambda)  += T4xx(mu,lambda)
+#
+                ENDDO lambda
+       ENDPARDO mu, sigma, nu
+#
+############ CLASS 2  ############
+#  Do two-center part (mu mu |nu nu)->(nu nu |mu mu )
+#
+       PARDO mu, nu, sigma
+#
+             WHERE mu == nu
+#
+                T3xx(mu,nu)  = LDHFa(mu,nu)
+                T3xx(mu,nu) += LDHFb(mu,nu)
+#
+                DO lambda
+                   WHERE mu     < lambda
+                   WHERE lambda == sigma
+#
+                      compute_integrals aoint(mu,nu,lambda,sigma)
+#
+                      T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                      T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+#
+                      T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+#
+                      T4xx(lambda,sigma)    = aoint(mu,nu,lambda,sigma)*T3xx(mu,nu)
+#
+                      T5xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                      T5xx(mu,lambda)      *= -1.0
+                      T6xx(lambda,mu)       = T5xx(mu,lambda)
+#
+                      T7xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                      T7xx(mu,lambda)      *= -1.0
+                      T8xx(lambda,mu)       = T7xx(mu,lambda)
+#
+                      LFpq_a(mu,nu)        += T2xx(mu,nu)
+                      LFpq_b(mu,nu)        += T2xx(mu,nu)
+                      LFpq_a(lambda,sigma) += T4xx(lambda,sigma)
+                      LFpq_b(lambda,sigma) += T4xx(lambda,sigma)
+                      LFpq_a(mu,lambda)    += T5xx(mu,lambda)
+                      LFpq_a(lambda,mu)    += T6xx(lambda,mu)
+                      LFpq_b(mu,lambda)    += T7xx(mu,lambda)
+                      LFpq_b(lambda,mu)    += T8xx(lambda,mu)
+#
+             ENDDO lambda
+#
+       ENDPARDO mu, nu, sigma 
+#
+############ END CLASS 2  ############
+#
+############ CLASS 4  ############
+#  Do two-center part (mu nu |mu nu)->(mu nu |nu mu ),(nu mu|mu nu),(nu mu|nu mu)
+#
+       PARDO mu, nu, sigma
+                WHERE mu < nu
+                WHERE nu == sigma
+             DO lambda
+#
+                WHERE mu == lambda
+                WHERE lambda < sigma 
+#
+                   compute_integrals       aoint(mu,nu,lambda,sigma)
+#
+                   T1xx(lambda,sigma)    = LDHFa(lambda,sigma)
+                   T1xx(lambda,sigma)   += LDHFb(lambda,sigma)
+#
+                   T2xx(mu,nu)           = aoint(mu,nu,lambda,sigma)*T1xx(lambda,sigma)
+                   T2xx(mu,nu)          *= 2.0
+                   T3xx(nu,mu)           = T2xx(mu,nu)
+#
+                   T4xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(nu,sigma)
+                   T4xx(mu,lambda)      *= -1.0
+#
+                   T5xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(nu,lambda)
+                   T5xx(mu,sigma)       *= -1.0
+#
+                   T6xx(nu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFa(mu,sigma)
+                   T6xx(nu,lambda)      *= -1.0
+#
+                   T7xx(nu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFa(mu,lambda)
+                   T7xx(nu,sigma)       *= -1.0
+#
+                   T8xx(mu,lambda)       = aoint(mu,nu,lambda,sigma)*LDHFb(nu,sigma)
+                   T8xx(mu,lambda)      *= -1.0
+#
+                   T9xx(mu,sigma)        = aoint(mu,nu,lambda,sigma)*LDHFb(nu,lambda)
+                   T9xx(mu,sigma)       *= -1.0
+#
+                   T10xx(nu,lambda)      = aoint(mu,nu,lambda,sigma)*LDHFb(mu,sigma)
+                   T10xx(nu,lambda)     *= -1.0
+#
+                   T11xx(nu,sigma)       = aoint(mu,nu,lambda,sigma)*LDHFb(mu,lambda)
+                   T11xx(nu,sigma)      *= -1.0
+#
+                   LFpq_a(mu,nu)        += T2xx(mu,nu)
+                   LFpq_b(mu,nu)        += T2xx(mu,nu)
+                   LFpq_a(nu,mu)        += T3xx(nu,mu)
+                   LFpq_b(nu,mu)        += T3xx(nu,mu)
+                   LFpq_a(mu,lambda)    += T4xx(mu,lambda)
+                   LFpq_a(mu,sigma)     += T5xx(mu,sigma)
+                   LFpq_a(nu,lambda)    += T6xx(nu,lambda)
+                   LFpq_a(nu,sigma)     += T7xx(nu,sigma)
+                   LFpq_b(mu,lambda)    += T8xx(mu,lambda)
+                   LFpq_b(mu,sigma)     += T9xx(mu,sigma)
+                   LFpq_b(nu,lambda)    += T10xx(nu,lambda)
+                   LFpq_b(nu,sigma)     += T11xx(nu,sigma)
+#
+             ENDDO lambda
+#
+       ENDPARDO mu, nu, sigma 
+#
+       execute sip_barrier
+       execute load_balance_on
+#
+       DO mu   
+       DO nu   
+#
+          PUT Fpq_a(mu,nu) += LFpq_a(mu,nu) 
+          PUT Fpq_b(mu,nu) += LFpq_b(mu,nu) 
+#
+       ENDDO nu   
+       ENDDO mu    
+#
+       deallocate LDHFa(*,*) 
+       deallocate LDHFb(*,*) 
+       deallocate LFpq_a(*,*) 
+       deallocate LFpq_b(*,*) 
+#
+       ENDPROC FOCK_MATRIX  
+#      ------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC FOCK_MATRIX_FAST   
+#      --------------------- 
+#
+#      The complete Fock matrix is constructed. Eight fold symmetry of the
+#      two-electron integrals is incorporated. 
+#      ------------------------------------------------------------------
+#
+#      Put the density into local arrays 
+#      --------------------------------- 
+#
+#      Initialize the Fock matrix to the bare 1-electron hamiltonian.
+#      -------------------------------------------------------------- 
+#
+       execute sip_barrier
+       DO mu
+       DO nu
+#
+          Txx(mu,nu)        = 0.0
+          Fockrohf_a(mu,nu) = Txx(mu,nu)
+          Fockrohf_b(mu,nu) = Txx(mu,nu)
+       ENDDO nu
+       ENDDO mu 
+
+       execute sip_barrier
+#
+#      Add contributions containing two-particle integral contributions.
+#      -----------------------------------------------------------------
+#
+############# CLASS 6  ############
+##  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
+##                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
+##
+        PARDO mu, nu, lambda, sigma
+##
+                 WHERE mu      < nu
+                 WHERE lambda  < sigma
+                 WHERE mu     < lambda
+                 WHERE nu     != sigma
+                 WHERE nu     != lambda
+                 WHERE mu     != sigma
+##
+                    execute compute_ubatch1 aoint(mu,nu,lambda,sigma)
+##
+        ENDPARDO mu, nu, lambda, sigma
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+##
+#
+############ CLASS 3  ############
+#  Do two-center part (mu mu |mu nu)->(mu nu |mu mu ),(mu mu|nu mu),(nu mu|mu mu)
+#  Do three-center part (mu mu |nu lambda)->(mu mu |lambda nu ),(nu lambda|mu mu),(lambda nu|mu mu)
+#
+       PARDO mu, nu, lambda, sigma 
+#
+          WHERE mu == nu
+          WHERE lambda  < sigma
+#
+                execute compute_ubatch2 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma 
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+#
+############ CLASS 5  ############
+###################  CLASS A ##############
+#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
+#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#
+#
+       PARDO mu, nu, lambda, sigma
+                WHERE nu < sigma
+                WHERE mu < nu
+                WHERE lambda < sigma
+                WHERE mu==lambda
+#
+                   execute compute_ubatch4 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+
+###################  CLASS B ##############
+#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
+#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+# 
+      PARDO mu, nu, lambda, sigma 
+                WHERE mu < nu
+                WHERE lambda < sigma
+                WHERE mu < sigma
+                WHERE nu == lambda
+#
+                   execute compute_ubatch4 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+#
+# 
+###################  CLASS C ##############
+#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
+#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#
+       PARDO mu, nu, lambda, sigma
+                WHERE mu < nu
+                WHERE lambda < sigma
+                WHERE mu < lambda
+                WHERE nu == sigma
+#
+                   execute compute_ubatch4 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+#
+############ CLASS 4  ############
+#  Do two-center part (mu nu |mu nu)->(mu nu |nu mu ),(nu mu|mu nu),(nu mu|nu mu)
+#
+       PARDO mu, nu, lambda, sigma
+                WHERE mu < nu
+                WHERE lambda < sigma 
+                WHERE nu == sigma
+                WHERE mu == lambda
+#
+                   execute compute_ubatch8 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+#
+############ CLASS 2  ############
+#  Do two-center part (mu mu |nu nu)->(nu nu |mu mu )
+#
+       PARDO mu, nu, lambda, sigma
+#
+             WHERE mu < lambda
+             WHERE mu == nu
+             WHERE lambda == sigma
+#
+                   execute compute_ubatch7 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma 
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+#
+############ END CLASS 2  ############
+#
+############ CLASS 1  ############
+#  Do one-center part (mu mu |mu mu)
+#
+       PARDO mu, nu, lambda, sigma
+             WHERE nu == mu
+             WHERE sigma == mu
+             WHERE lambda == mu 
+#
+                   execute compute_ubatch6 aoint(mu,nu,lambda,sigma)
+#
+       ENDPARDO mu, nu, lambda, sigma
+#bgn_debug
+#        CALL CHECK_FOCK
+#end_debug
+#
+       execute sip_barrier
+#      
+       DO mu
+       DO nu
+#         
+          Txx(mu,nu)        = Fockrohf_a(mu,nu)
+          PUT Fpq_a(mu,nu) += Txx(mu,nu)
+#      
+       ENDDO nu
+       ENDDO mu 
+#      
+       DO mu
+       DO nu
+#         
+          Txx(mu,nu)        = Fockrohf_b(mu,nu)
+          PUT Fpq_b(mu,nu) += Txx(mu,nu)
+#      
+       ENDDO nu
+       ENDDO mu 
+#
+#      DO mu   
+#      DO nu   
+#
+#         PUT Fpq_a(mu,nu) += LFpq_a(mu,nu) 
+#         PUT Fpq_b(mu,nu) += LFpq_b(mu,nu) 
+#
+#      ENDDO nu   
+#      ENDDO mu    
+#
+       execute sip_barrier
+#bgn_debug
+#       if rank==0.0
+#       esuma = 0.0
+#       esumb = 0.0
+#       DO mu
+#       DO nu
+#          get Fpq_a(mu,nu)
+#          get Fpq_b(mu,nu)
+#          execute dump_amp Fpq_a(mu,nu)
+#          etemp  = Fpq_a(mu,nu) * Fpq_a(mu,nu)
+#          esuma += etemp
+#          etemp  = Fpq_b(mu,nu) * Fpq_b(mu,nu)
+#          esumb += etemp
+#       ENDDO nu
+#       ENDDO mu
+#       execute print_scalar esuma
+#       execute print_scalar esumb
+#       endif
+#end_debug
+
+       if rank == 0.0 
+       DO mu    
+       DO nu   
+#
+            Txx(mu,nu) = 0.0 
+            execute return_h1 txx 
+#
+             PUT Fpq_a(mu,nu) += Txx(mu,nu) 
+             PUT Fpq_b(mu,nu) += Txx(mu,nu) 
+#
+       ENDDO nu   
+       ENDDO mu    
+       endif 
+
+
+#bgn_debug
+       execute sip_barrier 
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO mu
+       DO nu
+          get Fpq_a(mu,nu)
+          get Fpq_b(mu,nu)
+#          execute dump_amp Fpq_a(mu,nu)
+          etemp  = Fpq_a(mu,nu) * Fpq_a(mu,nu)
+          esuma += etemp
+          etemp  = Fpq_b(mu,nu) * Fpq_b(mu,nu)
+          esumb += etemp
+       ENDDO nu
+       ENDDO mu
+       execute print_scalar esuma
+       execute print_scalar esumb
+       endif
+#end_debug
+#
+       ENDPROC FOCK_MATRIX_FAST   
+#      ------------------------ 
+#
+# ---------------------------------------------------------------------------- 
+#
+#
+       PROC HF_ENERGY  
+#      -------------- 
+#
+#      The HF energy is computed from the HF density (DHFa(b)) and the 
+#      Fock matrix (Fpq_a(b)). 
+#      --------------------------------------------------------------- 
+#
+       energy = 0.0
+       esum = 0.0 
+
+       if rank == 0.0 
+
+          DO mu  
+          DO nu 
+#
+             GET Fpq_a(mu,nu)
+             GET Fpq_b(mu,nu)
+             GET DHFa(mu,nu)  
+             GET DHFb(mu,nu) 
+#
+             Txx(mu,nu)   = 0.0 
+             execute return_h1 txx  
+#
+             T1xx(mu,nu)  = Txx(mu,nu) 
+             T1xx(mu,nu) += Fpq_a(mu,nu) 
+#
+             etemp        = T1xx(mu,nu)*DHFa(mu,nu)  
+             esum        += etemp 
+#
+             T1xx(mu,nu)  = Txx(mu,nu) 
+             T1xx(mu,nu) += Fpq_b(mu,nu) 
+#
+             etemp        = T1xx(mu,nu)*DHFb(mu,nu)  
+             esum        += etemp 
+#
+          ENDDO nu 
+          ENDDO mu 
+
+       endif 
+
+
+       execute sip_barrier 
+
+       esum *= 0.5 
+       collective energy += esum 
+       energy += scfeneg 
+       execute sip_barrier 
+#
+       execute print_scalar energy 
+#
+       ENDPROC HF_ENERGY   
+#      ----------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC OVER_HALF 
+#      -------------- 
+#
+#      Diagonalize the overlap matrix, invert and take the square
+#      root of the diagonal elements. 
+#      -------------------------------------------------------------- 
+#
+#
+# Save the overlap matrix for future purposes.
+#
+       DO mu
+       DO nu
+             Txx(mu,nu)  = Oed_ovl(mu,nu)
+             OVLP(mu,nu) = Txx(mu,nu)
+       ENDDO nu
+       ENDDO mu
+
+       execute eig_sr_inv oed_ovl x1   
+
+       DO mu
+       DO nu
+         txx(mu,nu) = x1(mu,nu)
+         PUT OVLP_INV(mu,nu) = txx(mu,nu)
+       ENDDO nu
+       ENDDO mu
+       execute sip_barrier
+   
+#bgn_debug
+       esuma=0.0
+       esumb=0.0
+       execute sum_2d_array oed_ovl esuma
+       execute sum_2d_array x1 esumb
+       execute print_scalar esuma
+       execute print_scalar esumb
+
+#      do mu
+#      do nu
+#         etemp = oed_ovl(mu,nu) * oed_ovl(mu,nu)
+#         esuma += etemp
+#         etemp =  x1(mu,nu) * x1(mu,nu)
+#         esumb += etemp
+#         txx(mu,nu) = x1(mu,nu)
+#         PUT OVLP_INV(mu,nu) = txx(mu,nu)
+#      enddo nu
+#      enddo mu
+#      execute print_scalar esuma
+#      execute print_scalar esumb
+#      execute sip_barrier 
+#end_debug
+
+#      Form the Q-matrix --> U s**{-1/2) 
+#      --------------------------------- 
+#
+       PARDO mu, nu  
+#
+          Txx(mu,nu) = 0.0 
+#
+          DO lambda 
+
+             GET OVLP_INV(mu,lambda)
+
+             T2xx(mu,lambda) = OVLP_INV(mu,lambda)
+             T3XX(lambda,nu) = oed_ovl(lambda,nu)
+
+             T1xx(mu,nu)     = T2xx(mu,lambda) * T3XX(lambda,nu)
+             Txx(mu,nu)     += T1xx(mu,nu) 
+
+          ENDDO lambda  
+#
+          PUT Qxx(mu,nu) = Txx(mu,nu)  
+#
+       ENDPARDO mu, nu  
+#
+#bgn_debug
+#      execute sip_barrier
+#      esum=0.0
+#      if rank==0.0
+#      do mu
+#      do nu
+#         get  Qxx(mu,nu)
+#         etemp = Qxx(mu,nu) * Qxx(mu,nu)
+#         esum += etemp
+#      enddo nu
+#      enddo mu
+#      endif
+#      execute print_scalar esum
+#end_debug
+      #execute print_scalar scfeneg
+
+       ENDPROC OVER_HALF 
+#      ----------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC FOCK_TRANSPOSE 
+#      ------------------- 
+#
+#      Form the transposed Fock matrix --> Q+ F Q 
+#      ------------------------------------------ 
+#
+
+#bgn_debug
+      esuma = 0.0
+      DO mu
+      DO nu 
+         GET qxx(MU,NU)
+         etemp = qxx(MU,NU) * qxx(MU,NU)
+         esuma += etemp
+      ENDDO nu 
+      ENDDO mu
+      execute print_scalar esuma 
+#end_debug
+
+       PARDO mu, sigma   
+#
+             TAxx(mu,sigma) = 0.0 
+             TBxx(mu,sigma) = 0.0 
+#
+             DO lambda 
+#
+                GET Fpq_a(lambda,sigma) 
+                GET Fpq_b(lambda,sigma) 
+                GET Qxx(lambda,mu) 
+                 
+                TXX(lambda,mu)  = Qxx(lambda,mu)
+#
+                T1xx(mu,sigma)  = TXX(lambda,mu) *Fpq_a(lambda,sigma)  
+                TAxx(mu,sigma) += T1xx(mu,sigma) 
+#
+                T1xx(mu,sigma)  = Txx(lambda,mu)* Fpq_b(lambda,sigma)  
+                TBxx(mu,sigma) += T1xx(mu,sigma) 
+#
+             ENDDO lambda 
+#
+             DO nu 
+#
+                GET Qxx(sigma,nu) 
+                T3XX(sigma,nu)  = Qxx(sigma,nu)
+#
+                T1xx(mu,nu) =        TAxx(mu,sigma)*T3xx(sigma,nu) 
+                PUT FTpq_a(mu,nu) += T1xx(mu,nu) 
+#
+                T2xx(mu,nu)        = TBxx(mu,sigma)*T3xx(sigma,nu) 
+                PUT FTpq_b(mu,nu) += T2xx(mu,nu) 
+#
+             ENDDO nu 
+#
+       ENDPARDO mu, sigma   
+#
+       ENDPROC FOCK_TRANSPOSE 
+#      ---------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC FOCK_DIAG  
+#      -------------- 
+#
+#      First put the transposed Fock arrays into static arrays 
+#      ------------------------------------------------------- 
+#
+       DO mu   
+       DO nu  
+#
+          GET             FTpq_a(mu,nu) 
+          GET             FTpq_b(mu,nu)
+          Txx(mu,nu)    = FTpq_a(mu,nu)
+#
+          FSpq_a(mu,nu) =  Txx(mu,nu)
+#          FSpq_b(mu,nu) = FTpq_b(mu,nu)
+#
+       ENDDO nu  
+       ENDDO mu   
+
+       execute eigen_calc FSpq_a ca
+#bgn_debug
+       esuma=0.0
+       execute sum_2d_array ca esuma
+       execute print_scalar esuma 
+#end_debug
+
+       ENDPROC FOCK_DIAG 
+#      ----------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC C_BTRAN 
+#      ------------ 
+#
+#      Transform the coefficient array back to the original basis 
+#      ---------------------------------------------------------- 
+#
+       PARDO mu, p  
+#
+          Txp(mu,p) = 0.0 
+#
+          DO nu 
+#
+             GET          Qxx(mu,nu) 
+             Txx(mu,nu) = Qxx(mu,nu)
+#
+             T1xp(mu,p) = Txx(mu,nu)*ca(nu,p)   
+             Txp(mu,p) += T1xp(mu,p) 
+#
+          ENDDO nu 
+#
+          PUT CBT_a(mu,p) = Txp(mu,p) 
+#
+       ENDPARDO mu, p  
+#
+       PARDO mu, q
+# 
+          Txq(mu,q) = 0.0 
+#
+          DO nu 
+#
+             GET          Qxx(mu,nu) 
+             TXX(mu,nu) =  Qxx(mu,nu)
+#
+             T1xq(mu,q) = Txx(mu,nu)*ca(nu,q)   
+             Txq(mu,q) += T1xq(mu,q) 
+#
+          ENDDO nu 
+#
+          PUT CBT_b(mu,q) = Txq(mu,q) 
+#
+       ENDPARDO mu, q
+       execute sip_barrier 
+#
+#      Put the transformed coefficients into static arrays 
+#      --------------------------------------------------- 
+#
+       DO mu 
+       DO p 
+          GET        CBT_a(mu,p) 
+          Txp(mu,p) = CBT_a(mu,p)
+          ca(mu,p)  = Txp(mu,p)
+       ENDDO p 
+       ENDDO mu  
+#
+       ENDPROC C_BTRAN 
+#      --------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+      PROC MAKE_OCCUPATION
+#     --------------------
+
+# Compute the overlap between the previous occupied orbitals and
+# the current orbitals
+
+      CREATE INTM_A
+      CREATE OVLP_TMP_A
+      execute sip_barrier
+
+      PARDO nu,i
+        Txi(nu,i) = 0.0
+        DO mu
+           Txi_t(nu,i)      = OVLP(nu,mu) * CA_Prev(mu,i)
+#bgn_debug
+#           Txi_t(nu,i)      = OVLP(nu,mu) * CA(mu,i)
+#end_debug
+           Txi(nu,i)       += Txi_t(nu,i)
+        ENDDO mu
+           PUT INTM_A(nu,i) = Txi(nu,i)
+      ENDPARDO nu, i
+      execute sip_barrier
+
+      PARDO p,i
+         DO nu
+            GET INTM_A(nu,i)
+            Txi(nu,i)            = INTM_A(nu,i)
+            Tpi(p,i)             = Txi(nu,i) * CA(nu,p)
+            PUT OVLP_TMP_A(p,i) +=  Tpi(p,i)
+        ENDDO nu
+      ENDPARDO p,i
+
+      DO p
+      DO i
+         GET OVLP_TMP_A(p,i)
+         Tpi(p,i) = OVLP_TMP_A(p,i)
+         ORB_OVLP_A(p,i) = Tpi(p,i)
+      ENDDO i
+      ENDDO p
+      execute sip_barrier
+
+      EXECUTE  RETURN_OCCUPATION ORB_OVLP_A  A_OCC_NUMS
+
+#bgn_debug
+#      execute get_my_rank rank
+#      if rank == 0.0
+#      DO p
+#      DO p1
+#         execute dump_amp  ORB_OVLP_A(p,p1)
+#      ENDDO p1
+#      ENDDO p
+#end_debug
+
+      DELETE INTM_A
+      DELETE OVLP_TMP_A
+
+      ENDPROC MAKE_OCCUPATION
+#     ------------------------
+
+      PROC IGUESS
+#     -----------
+
+      IF COREH == 1.0
+
+# Generate the core-Hamiltonian guess
+
+         PARDO mu, nu
+            Txx(mu,nu) = 0.0
+            execute return_h1 Txx
+            PUT Fpq_a(mu,nu) = Txx(mu,nu)
+            PUT Fpq_b(mu,nu) = Txx(mu,nu)
+         ENDPARDO mu, nu
+         execute sip_barrier
+#bgn_debug
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO mu
+       DO nu
+          get Fpq_a(mu,nu)
+          get Fpq_b(mu,nu)
+          etemp  = Fpq_a(mu,nu) * Fpq_a(mu,nu)
+          esuma += etemp
+          etemp  = Fpq_b(mu,nu) * Fpq_b(mu,nu)
+          esumb += etemp
+       ENDDO nu
+       ENDDO mu
+       execute print_scalar esuma
+       execute print_scalar esumb
+       endif
+#end_debug
+
+         CALL OVER_HALF
+         execute sip_barrier
+         CALL FOCK_TRANSPOSE
+         execute sip_barrier
+         CALL FOCK_DIAG
+         execute sip_barrier
+         CALL C_BTRAN
+         execute sip_barrier
+         EXECUTE GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+         execute sip_barrier 
+         CALL HFIDENS
+         execute sip_barrier
+
+#bgn_debug
+      esuma = 0.0
+      do mu
+      do p
+         tmp = Ca(mu,p) * Ca(mu,p)
+         esuma += tmp
+      enddo p
+      enddo mu
+      execute print_scalar esuma
+      esuma = 0.0
+      esumb = 0.0
+      do mu
+      do nu
+         get DHFa(mu,nu)
+         get DHFb(mu,nu)
+         tmp = DHFa(mu,nu) * DHFa(mu,nu)
+         esuma += tmp
+         tmp = DHFb(mu,nu) * DHFb(mu,nu)
+         esumb += tmp
+      enddo nu
+      enddo mu
+      execute print_scalar esuma
+      execute print_scalar esumb
+
+#bgn_debug
+# Check the orthonaormality of NEW Vectors C^tSC =1
+#      create OVC_T
+#      create OVC
+#      execute sip_barrier
+#      do mu
+#      do p
+#         Tpx(p,mu) = 0.0
+#         Do nu
+#            Tpxt(p,mu) = Ca(nu,p) * OVLP(nu,mu)
+#            Tpx(p,mu) += Tpxt(p,mu)
+#         enddo nu
+#         PUT OVC_T(p,mu) = Tpx(p,mu)
+#      enddo p
+#      enddo mu
+#      execute sip_barrier
+#
+#      do p
+#      do p1
+#         Tpp1(p,p1) = 0.0
+#         do mu
+#            GET OVC_T(p,mu)
+#            Tppt(p,p1)  = OVC_T(p,mu) * Ca(mu,p1)
+#            Tpp1(p,p1) +=  Tppt(p,p1)
+#         enddo mu
+#        PUT OVC(p,p1) =  Tpp1(p,p1)
+#      enddo p1
+#      enddo p
+#      execute sip_barrier
+#      esum = 0.0
+#     if rank==0.0
+#     do p
+#     do p1
+#        get  OVC(p,p1)
+#        etemp = OVC(p,p1) * OVC(p,p1)
+#        esum += etemp
+#     enddo p1
+#     enddo p
+#     execute print_scalar esum
+#     endif
+##end_debug
+#   
+      ENDIF 
+
+      IF ATOMIC == 1.0
+
+         execute print_scalar four
+
+         IF NATOMS > 3
+            etemp = 0.0
+            DO katom
+            DO jatom
+               IF katom == jatom
+                  etemp             = etemp + 1.0
+                  atom(katom,jatom) = etemp
+               endif
+            ENDDO jatom
+            ENDDO katom
+
+            PARDO mu, nu
+               Txx(mu,nu)        = 0.0
+               Fockrohf_a(mu,nu) = Txx(mu,nu)
+               Fockrohf_b(mu,nu) = Txx(mu,nu)
+            ENDPARDO mu, nu
+
+            execute sip_barrier
+
+               PARDO katom
+               DO jatom
+                  IF katom == jatom
+
+                     tatom(katom,jatom) = atom(katom,jatom)
+                     execute return_sval tatom etemp
+                     execute print_scalar etemp
+                     execute scf_atom etemp
+                  ENDIF
+               ENDDO jatom
+               ENDPARDO katom
+
+         ENDIF
+
+         execute sip_barrier
+         DO mu
+         DO nu
+            txx(mu,nu) = Fockrohf_a(mu,nu)
+            IF Natoms <= 3
+               txx(mu,nu) = 0.0
+            ENDIF
+            PUT IDHFA(mu,nu) += txx(mu,nu)
+         ENDDO nu
+         ENDDO mu
+
+         DO mu
+         DO nu
+            txx(mu,nu) = Fockrohf_b(mu,nu)
+            IF Natoms <= 3
+               txx(mu,nu) = 0.0
+            ENDIF
+            PUT IDHFB(mu,nu) += txx(mu,nu)
+         ENDDO nu
+         ENDDO mu
+         execute sip_barrier
+
+#bgn_debug
+      esuma = 0.0
+      esumb = 0.0
+      DO mu
+      DO nu
+            get IDHFA(mu,nu)
+            get IDHFB(mu,nu)
+            tmp = IDHFA(mu,nu) * IDHFA(mu,nu)
+            esuma += tmp
+            tmp = IDHFB(mu,nu) * IDHFB(mu,nu)
+            esumb += tmp
+      ENDDO nu
+      ENDDO mu
+      execute print_scalar esuma
+      execute print_scalar esumb
+#end_debug
+#
+# The density at this point is not idempotent. All the atoms that
+# have even number of electrons, we have RHF type orbitals and
+# odd number of electrons have UHF type orbitals. At the moment
+# the density is block diagonal. Build a Fock matrix for the entire
+# molecule and diagonalize it.
+#  
+# Alpha and Beta denisties of atomic guess are UHF. Just use
+# the average of the two for RHF starting point
+
+         PARDO mu, nu
+            GET               IDHFa(mu,nu)
+            GET               IDHFb(mu,nu)
+            txx(mu,nu)      = IDHFa(mu,nu)
+            txx(mu,nu)     += IDHFb(mu,nu)
+            txx(mu,nu)     *= 0.5
+            PUT DHFa(mu,nu) = txx(mu,nu)
+            PUT DHFb(mu,nu) = txx(mu,nu)
+        ENDPARDO mu, nu
+
+         CALL OVER_HALF
+         execute sip_barrier
+
+         DO mu
+         DO nu
+            GET              DHFa(mu,nu)
+            GET              DHFb(mu,nu)
+            oed_ovl(mu,nu) = DHFa(mu,nu) # 13
+            oed_kin(mu,nu) = DHFb(mu,nu) # 12
+         ENDDO nu
+         ENDDO mu
+
+         CALL FOCK_MATRIX_FAST
+         execute sip_barrier
+#
+#     Construct S^(-1/2) F S^(-1/2)
+#     -----------------------------
+#
+         CALL FOCK_TRANSPOSE
+         execute sip_barrier
+         CALL FOCK_DIAG
+#
+#     Back transform the coefficient array
+#     ------------------------------------
+#
+         CALL C_BTRAN
+         execute sip_barrier
+
+#     Compute the new HF density
+#     ----------------------
+#
+         EXECUTE GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+         CALL HFIDENS
+         execute sip_barrier
+
+#     This energy is not suppose to be all that great
+#     -----------------------------------------------
+         CALL HF_ENERGY
+
+      ENDIF
+
+      ENDPROC IGUESS
+#     --------------
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC STORE_FOCK_DENS_VEC_OLD
+#      ----------------------------
+
+       PARDO mu, nu
+
+             GET Fpq_a(mu,nu)
+             GET Fpq_b(mu,nu)
+
+             GET DHFa(mu,nu)
+             GET DHFb(mu,nu)
+
+             PUT Fpqa_prev(mu,nu) = Fpq_a(mu,nu)
+             PUT Fpqb_prev(mu,nu) = Fpq_b(mu,nu)
+
+             PUT DHFa_Prev(mu,nu) = DHFa(mu,nu)
+             PUT DHFb_Prev(mu,nu) = DHFb(mu,nu)
+
+       ENDPARDO mu, nu
+
+       DO mu
+       DO i
+          Txi(mu,i) = Ca(mu,i)
+          CA_Prev(mu,i)    = Txi(mu,i)
+       ENDDO i
+       ENDDO mu
+
+       execute sip_barrier
+
+       ENDPROC STORE_FOCK_DENS_VEC_OLD
+#      -------------------------------
+#
+# ---------------------------------------------------------------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC SETUP_DIIS 
+#      --------------- 
+#
+       execute diis_setup Tb11
+       execute diis_setup Tb12
+       execute diis_setup Tb13
+       execute diis_setup Tb14
+       execute diis_setup Tb15
+       execute diis_setup Tb16
+       execute diis_setup Tb17
+       execute diis_setup Tb18
+       execute diis_setup Tb19
+       execute diis_setup Tb110 
+
+       execute diis_setup Tb22
+       execute diis_setup Tb23
+       execute diis_setup Tb24
+       execute diis_setup Tb25
+       execute diis_setup Tb26
+       execute diis_setup Tb27
+       execute diis_setup Tb28
+       execute diis_setup Tb29
+       execute diis_setup Tb210 
+
+       execute diis_setup Tb33
+       execute diis_setup Tb34
+       execute diis_setup Tb35
+       execute diis_setup Tb36
+       execute diis_setup Tb37
+       execute diis_setup Tb38
+       execute diis_setup Tb39
+       execute diis_setup Tb310 
+
+       execute diis_setup Tb44
+       execute diis_setup Tb45
+       execute diis_setup Tb46
+       execute diis_setup Tb47
+       execute diis_setup Tb48
+       execute diis_setup Tb49
+       execute diis_setup Tb410 
+
+       execute diis_setup Tb55
+       execute diis_setup Tb56
+       execute diis_setup Tb57
+       execute diis_setup Tb58
+       execute diis_setup Tb59
+       execute diis_setup Tb510 
+
+       execute diis_setup Tb66
+       execute diis_setup Tb67
+       execute diis_setup Tb68
+       execute diis_setup Tb69
+       execute diis_setup Tb610 
+
+       execute diis_setup Tb77
+       execute diis_setup Tb78
+       execute diis_setup Tb79
+       execute diis_setup Tb710 
+
+       execute diis_setup Tb88
+       execute diis_setup Tb89
+       execute diis_setup Tb810 
+
+       execute diis_setup Tb99
+       execute diis_setup Tb910 
+
+       execute diis_setup Tb1010 
+#
+       ENDPROC SETUP_DIIS 
+#      ------------------ 
+#
+# ---------------------------------------------------------------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC GEN_6HISTORY  
+#      ------------------  
+#
+       DELETE FFai
+       DELETE FFbj
+       CREATE FFai
+       CREATE FFbj
+       execute sip_barrier 
+#  
+       PARDO mu, nu  
+             GET Fpq_a(mu,nu)  
+             GET Fpq_b(mu,nu)  
+             DO i 
+                txi(mu,i) = Fpq_a(mu,nu)*ca(nu,i) 
+                DO a 
+                   tai(a,i)      = txi(mu,i)*ca(mu,a) 
+                   PUT FFai(a,i) += tai(a,i) 
+                ENDDO a 
+             ENDDO i 
+#
+             DO j 
+                txj(mu,j) = Fpq_b(mu,nu)*ca(nu,j) 
+                DO b 
+                   tbj(b,j)      = txj(mu,j)*ca(mu,b) 
+                   PUT FFbj(b,j) += tbj(b,j) 
+                ENDDO b 
+             ENDDO j 
+       ENDPARDO mu, nu  
+       execute sip_barrier 
+#
+# diis_start = Iteration that start diis (based on the key-word SCF_EXPSTART
+# default is 8).
+# diis_order = Size of the DIIS extrapolation (based on the key-word
+# SCF_EXPORDER, default is 6). These are input choices and should not
+# be changed.
+#
+       IF ITER_COUNT >= DIIS_START
+          TARGET  = DIIS_ORDER
+          N1 = 0.0
+
+       DO d1
+          n1 += 1.0
+          if n1 == TARGET
+#
+                execute print_scalar N1
+                PARDO mu, nu
+                   GET              Fpq_a(mu,nu)
+                   GET              Fpq_b(mu,nu)
+                   txx(mu,nu)     = Fpq_a(mu,nu)
+                   PUT Fa(mu,nu,d1) = txx(mu,nu)
+                   txx(mu,nu)     = Fpq_b(mu,nu)
+                   PUT Fb(mu,nu,d1) = txx(mu,nu)
+                ENDPARDO mu, nu
+                PARDO a, i
+                   GET FFai(a,i)
+                   PUT Fai(a,i,d1) = FFai(a,i)
+                ENDPARDO a, i
+                PARDO b, j
+                   GET FFbj(b,j)
+                   PUT Fbj(b,j,d1) = FFbj(b,j)
+                ENDPARDO b, j
+                exit
+
+          endif # d1 = kiter
+
+       ENDDO d1
+
+       ELSE
+
+       IF ITER_COUNT >= START_HISTORY
+          TARGET   = ITER_COUNT
+          TARGET  -= START_HISTORY
+          TARGET  += 1.0
+          N1       = 0.0
+          execute print_scalar target
+
+       DO d1
+          n1 += 1.0
+          if n1 == TARGET
+
+                execute print_scalar n1
+                PARDO mu, nu
+                   GET              Fpq_a(mu,nu)
+                   GET              Fpq_b(mu,nu)
+                   txx(mu,nu)     = Fpq_a(mu,nu)
+                   PUT Fa(mu,nu,d1) = txx(mu,nu)
+                   txx(mu,nu)     = Fpq_b(mu,nu)
+                   PUT Fb(mu,nu,d1) = txx(mu,nu)
+                ENDPARDO mu, nu
+                PARDO a, i
+                   GET FFai(a,i)
+                   PUT Fai(a,i,d1) = FFai(a,i)
+                ENDPARDO a, i
+                PARDO b, j
+                   GET FFbj(b,j)
+                   PUT Fbj(b,j,d1) = FFbj(b,j)
+                ENDPARDO b, j
+                exit
+
+          endif # d1 = kiter
+       ENDDO d1
+
+       ENDIF
+
+       ENDIF
+
+       execute sip_barrier 
+#
+       ENDPROC GEN_6HISTORY  
+#      ---------------------  
+#
+# ---------------------------------------------------------------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC ZERO_SCALAR 
+#      ---------------- 
+#
+       b11 = 0.0
+       b12 = 0.0
+       b13 = 0.0
+       b14 = 0.0
+       b15 = 0.0
+       b16 = 0.0
+       b17 = 0.0
+       b18 = 0.0
+       b19 = 0.0
+       b110 = 0.0
+#
+       b22 = 0.0
+       b23 = 0.0
+       b24 = 0.0
+       b25 = 0.0
+       b26 = 0.0
+       b27 = 0.0
+       b28 = 0.0
+       b29 = 0.0
+       b210 = 0.0
+#
+       b33 = 0.0
+       b34 = 0.0
+       b35 = 0.0
+       b36 = 0.0
+       b37 = 0.0
+       b38 = 0.0
+       b39 = 0.0
+       b310 = 0.0
+#
+       b44 = 0.0
+       b45 = 0.0
+       b46 = 0.0
+       b47 = 0.0
+       b48 = 0.0
+       b49 = 0.0
+       b410 = 0.0
+#
+       b55 = 0.0
+       b56 = 0.0
+       b57 = 0.0
+       b58 = 0.0
+       b59 = 0.0
+       b510 = 0.0
+#
+       b66 = 0.0
+       b67 = 0.0
+       b68 = 0.0
+       b69 = 0.0
+       b610 = 0.0
+#
+       b77 = 0.0
+       b78 = 0.0
+       b79 = 0.0
+       b710 = 0.0
+#
+       b88 = 0.0
+       b89 = 0.0
+       b810 = 0.0
+#
+       b99 = 0.0
+       b910 = 0.0
+#
+       b1010 = 0.0
+#
+       Tb11 = 0.0
+       Tb12 = 0.0
+       Tb13 = 0.0
+       Tb14 = 0.0
+       Tb15 = 0.0
+       Tb16 = 0.0
+       Tb17 = 0.0
+       Tb18 = 0.0
+       Tb19 = 0.0
+       Tb110 = 0.0
+#
+       Tb22 = 0.0
+       Tb23 = 0.0
+       Tb24 = 0.0
+       Tb25 = 0.0
+       Tb26 = 0.0
+       Tb27 = 0.0
+       Tb28 = 0.0 
+       Tb29 = 0.0
+       Tb210 = 0.0
+#
+       Tb33 = 0.0
+       Tb34 = 0.0
+       Tb35 = 0.0
+       Tb36 = 0.0
+       Tb37 = 0.0
+       Tb38 = 0.0
+       Tb39 = 0.0
+       Tb310 = 0.0
+#
+       Tb44 = 0.0
+       Tb45 = 0.0
+       Tb46 = 0.0
+       Tb47 = 0.0
+       Tb48 = 0.0
+       Tb49 = 0.0
+       Tb410 = 0.0
+#
+       Tb55 = 0.0
+       Tb56 = 0.0
+       Tb57 = 0.0
+       Tb58 = 0.0
+       Tb59 = 0.0
+       Tb510 = 0.0
+#
+       Tb66 = 0.0
+       Tb67 = 0.0
+       Tb68 = 0.0
+       Tb69 = 0.0
+       Tb610 = 0.0
+#
+       Tb77 = 0.0
+       Tb78 = 0.0
+       Tb79 = 0.0
+       Tb710 = 0.0
+#
+       Tb88 = 0.0
+       Tb89 = 0.0
+       Tb810 = 0.0
+#
+       Tb99 = 0.0
+       Tb910 = 0.0
+#
+       Tb1010 = 0.0
+#
+       c1 = 0.0 
+       c2 = 0.0 
+       c3 = 0.0 
+       c4 = 0.0 
+       c5 = 0.0 
+       c6 = 0.0 
+       c7 = 0.0 
+       c8 = 0.0 
+       c9 = 0.0 
+       c10 = 0.0 
+#
+       ENDPROC ZERO_SCALAR 
+#      ------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC MOVE6    
+#      ----------  
+#
+#      Move histories 
+#      -------------- 
+#
+       PARDO mu, nu 
+          n1 = 0.0 
+          DO d1 
+             n1 += 1.0 
+             GET          Fa(mu,nu,d1) 
+             tpq(mu,nu) = Fa(mu,nu,d1) 
+             n2 = 0.0 
+          DO d2 
+             n2 += 1.0 
+             etemp = n1 
+             etemp-= n2 
+             if etemp == 1.0 
+                tpqx(mu,nu,d2)   = tpq(mu,nu) 
+                PUT Fa(mu,nu,d2) = tpqx(mu,nu,d2) 
+             endif 
+          ENDDO d2 
+          ENDDO d1 
+       ENDPARDO mu, nu 
+#
+       PARDO a, i 
+          n1 = 0.0 
+          DO d1 
+             n1 += 1.0 
+             GET        Fai(a,i,d1) 
+             tai(a,i) = Fai(a,i,d1) 
+             n2 = 0.0 
+          DO d2 
+             n2 += 1.0 
+             etemp = n1 
+             etemp-= n2 
+             if etemp == 1.0 
+                taix(a,i,d2)   = tai(a,i) 
+                PUT Fai(a,i,d2) = taix(a,i,d2) 
+             endif 
+          ENDDO d2 
+          ENDDO d1 
+       ENDPARDO a,i  
+#
+       PARDO mu, nu 
+          n1 = 0.0 
+          DO d1 
+             n1 += 1.0 
+             GET          Fb(mu,nu,d1) 
+             tpq(mu,nu) = Fb(mu,nu,d1) 
+             n2 = 0.0 
+          DO d2 
+             n2 += 1.0 
+             etemp = n1 
+             etemp-= n2 
+             if etemp == 1.0 
+                tpqx(mu,nu,d2)   = tpq(mu,nu) 
+                PUT Fb(mu,nu,d2) = tpqx(mu,nu,d2) 
+             endif 
+          ENDDO d2 
+          ENDDO d1 
+       ENDPARDO mu, nu 
+#
+       PARDO b, j 
+          n1 = 0.0 
+          DO d1 
+             n1 += 1.0 
+             GET        Fbj(b,j,d1) 
+             tbj(b,j) = Fbj(b,j,d1) 
+             n2 = 0.0 
+          DO d2 
+             n2 += 1.0 
+             etemp = n1 
+             etemp-= n2 
+             if etemp == 1.0 
+                tbjx(b,j,d2)   = tbj(b,j) 
+                PUT Fbj(b,j,d2) = tbjx(b,j,d2) 
+             endif 
+          ENDDO d2 
+          ENDDO d1 
+       ENDPARDO b,j  
+                
+       execute sip_barrier 
+#
+       ENDPROC MOVE6    
+#      -------------  
+#
+# ---------------------------------------------------------------------------- 
+#
+       PROC DIISN   
+#      ----------  
+#
+# The DIIS expansion coefficients are computed using the 5 previous iterations.
+#
+#      Zero out scalars.
+#      -----------------
+#
+       CALL ZERO_SCALAR 
+#
+       execute sip_barrier 
+#
+#      Determine the 'B-matrix'. 
+#      ------------------------- 
+#
+#      Contributions from Fai histories. 
+#      --------------------------------- 
+#
+       WORDER = DIIS_ORDER
+
+       n1 = 0.0 
+       DO d1 
+          n1+= 1.0 
+       if n1 <= worder 
+          n2 = 0.0 
+       DO d2 
+          n2+= 1.0 
+       if n2 <= worder 
+          tdd(d1,d2) = 0.0 
+         #execute sip_barrier 
+          DO a  
+          DO i 
+             GET           Fai(a,i,d1) 
+             GET           Fai(a,i,d2) 
+             tai(a,i)    = Fai(a,i,d1) 
+             t1ai(a,i)   = Fai(a,i,d2) 
+             etemp       = tai(a,i)*t1ai(a,i) 
+             t1dd(d1,d2) = etemp 
+             tdd(d1,d2) += t1dd(d1,d2)  
+          ENDDO i 
+          ENDDO a  
+          DO b  
+          DO j 
+             GET           Fbj(b,j,d1) 
+             GET           Fbj(b,j,d2) 
+             tbj(b,j)    = Fbj(b,j,d1) 
+             t1bj(b,j)   = Fbj(b,j,d2) 
+             etemp       = tbj(b,j)*t1bj(b,j) 
+             t1dd(d1,d2) = etemp 
+             tdd(d1,d2) += t1dd(d1,d2)  
+          ENDDO j 
+          ENDDO b  
+         #execute sip_barrier 
+          BB(d1,d2) = tdd(d1,d2) 
+
+          if d1 == 1 
+             if d2 == 1 
+                execute return_sval BB Tb11
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb12
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb13
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb14
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb15
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb16
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb17
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb18
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb19
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb110 
+             endif 
+          endif 
+
+
+          if d1 == 2 
+             if d2 == 1 
+                execute return_sval BB Tb21
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb22
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb23
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb24
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb25
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb26
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb27
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb28
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb29
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb210 
+             endif 
+          endif 
+
+
+          if d1 == 3 
+             if d2 == 1 
+                execute return_sval BB Tb31
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb32
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb33
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb34
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb35
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb36
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb37
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb38
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb39
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb310 
+             endif 
+          endif 
+
+
+          if d1 == 4 
+             if d2 == 1 
+                execute return_sval BB Tb41
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb42
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb43
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb44
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb45
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb46
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb47
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb48
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb49
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb410 
+             endif 
+          endif 
+
+
+          if d1 == 5 
+             if d2 == 1 
+                execute return_sval BB Tb51
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb52
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb53
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb54
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb55
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb56
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb57
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb58
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb59
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb510 
+             endif 
+          endif 
+
+
+          if d1 == 6 
+             if d2 == 1 
+                execute return_sval BB Tb61
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb62
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb63
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb64
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb65
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb66
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb67
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb68
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb69
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb610 
+             endif 
+          endif 
+
+
+          if d1 == 7 
+             if d2 == 1 
+                execute return_sval BB Tb71
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb72
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb73
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb74
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb75
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb76
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb77
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb78
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb79
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb710 
+             endif 
+          endif 
+
+
+          if d1 == 8 
+             if d2 == 1 
+                execute return_sval BB Tb81
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb82
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb83
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb84
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb85
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb86
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb87
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb88
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb89
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb810 
+             endif 
+          endif 
+
+
+          if d1 == 9 
+             if d2 == 1 
+                execute return_sval BB Tb91
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb92
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb93
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb94
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb95
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb96
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb97
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb98
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb99
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb910 
+             endif 
+          endif 
+
+
+          if d1 == 10 
+             if d2 == 1 
+                execute return_sval BB Tb101
+             endif 
+             if d2 == 2 
+                execute return_sval BB Tb102
+             endif 
+             if d2 == 3 
+                execute return_sval BB Tb103
+             endif 
+             if d2 == 4 
+                execute return_sval BB Tb104
+             endif 
+             if d2 == 5 
+                execute return_sval BB Tb105
+             endif 
+             if d2 == 6 
+                execute return_sval BB Tb106
+             endif 
+             if d2 == 7 
+                execute return_sval BB Tb107
+             endif 
+             if d2 == 8 
+                execute return_sval BB Tb108
+             endif 
+             if d2 == 9 
+                execute return_sval BB Tb109
+             endif 
+             if d2 == 10  
+                execute return_sval BB Tb1010 
+             endif 
+          endif 
+
+       endif 
+       ENDDO d2 
+       endif 
+       ENDDO d1 
+#
+#      Now the unique elements of the 'B-matrix' have been computed and the array filled out.
+#      --------------------------------------------------------------------------------------
+#
+#      Put the elements of the 'B-matrix', which have been computed as scalars into the
+#      R-matrix.
+#      --------------------------------------------------------------------------------
+#
+      #execute print_scalar Tb11 
+      #execute print_scalar Tb12 
+      #execute print_scalar Tb22 
+      #execute print_scalar Tb13 
+      #execute print_scalar Tb23 
+      #execute print_scalar Tb33 
+
+       CALL SETUP_DIIS 
+#
+       execute compute_diis # --> New instruction
+       execute print_scalar Tb11 
+       execute print_scalar Tb22 
+       execute print_scalar Tb33 
+       execute print_scalar Tb44 
+       execute print_scalar Tb55 
+       execute print_scalar Tb66 
+       execute print_scalar Tb77 
+       execute print_scalar Tb88 
+       execute print_scalar Tb99 
+#
+       c1 = Tb11
+       c2 = Tb22
+       c3 = Tb33
+       c4 = Tb44
+       c5 = Tb55
+       c6 = Tb66
+       c7 = Tb77
+       c8 = Tb88
+       c9 = Tb99
+       c10 = Tb1010
+#
+       execute sip_barrier
+#
+#      Done computing the c-vector.
+#      ----------------------------
+#
+#      Form the update Density matrix using the c-vector. 
+#      -----------------------------------------------
+#
+       PARDO mu, nu 
+#
+           txx(mu,nu) = 0.0 
+#
+           n1 = 0.0 
+           DO d1   
+              n1 += 1.0 
+           if n1 <= worder 
+              GET            Fa(mu,nu,d1) 
+              t1xx(mu,nu)  = Fa(mu,nu,d1) 
+              if d1 == 1 
+                 etemp = c1 
+              endif 
+              if d1 == 2 
+                 etemp = c2 
+              endif 
+              if d1 == 3 
+                 etemp = c3 
+              endif 
+              if d1 == 4 
+                 etemp = c4 
+              endif 
+              if d1 == 5 
+                 etemp = c5 
+              endif 
+              if d1 == 6 
+                 etemp = c6 
+              endif 
+              if d1 == 7 
+                 etemp = c7 
+              endif 
+              if d1 == 8 
+                 etemp = c8 
+              endif 
+              if d1 == 9 
+                 etemp = c9 
+              endif 
+              if d1 == 10  
+                 etemp = c10
+              endif 
+              t1xx(mu,nu) *= etemp   
+              txx(mu,nu)  += t1xx(mu,nu) 
+           endif 
+           ENDDO d1   
+#
+           PUT Fpq_a(mu,nu) = txx(mu,nu) 
+#
+           txx(mu,nu) = 0.0 
+#
+           n1 = 0.0 
+           DO d1   
+              n1 += 1.0 
+           if n1 <= worder 
+              GET            Fb(mu,nu,d1) 
+              t1xx(mu,nu)  = Fb(mu,nu,d1) 
+              if d1 == 1 
+                 etemp = c1 
+              endif 
+              if d1 == 2 
+                 etemp = c2 
+              endif 
+              if d1 == 3 
+                 etemp = c3 
+              endif 
+              if d1 == 4 
+                 etemp = c4 
+              endif 
+              if d1 == 5 
+                 etemp = c5 
+              endif 
+              if d1 == 6 
+                 etemp = c6 
+              endif 
+              if d1 == 7 
+                 etemp = c7 
+              endif 
+              if d1 == 8 
+                 etemp = c8 
+              endif 
+              if d1 == 9 
+                 etemp = c9 
+              endif 
+              if d1 == 10  
+                 etemp = c10
+              endif 
+              t1xx(mu,nu) *= etemp   
+              txx(mu,nu)  += t1xx(mu,nu) 
+           endif 
+           ENDDO d1   
+#
+           PUT Fpq_b(mu,nu) = txx(mu,nu) 
+#
+       ENDPARDO mu, nu 
+#
+       execute sip_barrier 
+#
+       ENDPROC DIISN   
+#      -------------  
+
+      PROC CREATE_PMATRIX
+#     -------------------
+
+        PARDO mu,nu
+
+#   previous iteration
+#
+             GET FpqA_Prev(mu,nu)
+             GET FpqB_Prev(mu,nu)
+
+#  current iteration
+#
+             GET Fpq_a(mu,nu)
+             GET Fpq_b(mu,nu)
+
+             Txx(mu,nu)   = 0.0
+             execute return_h1 txx
+#
+             T1xx(mu,nu)  = Txx(mu,nu)
+#
+             Txx(mu,nu)  =FpqA_Prev(mu,nu)
+             Txx(mu,nu) -=T1xx(mu,nu)
+             PUT Pold_a(mu,nu) = Txx(mu,nu)
+
+             Txx(mu,nu)  =FpqB_Prev(mu,nu)
+             Txx(mu,nu) -=T1xx(mu,nu)
+             PUT Pold_b(mu,nu) = Txx(mu,nu)
+
+             Txx(mu,nu)  =Fpq_a(mu,nu)
+             Txx(mu,nu) -=T1xx(mu,nu)
+             PUT Pnew_a(mu,nu) = Txx(mu,nu)
+
+             Txx(mu,nu)  =Fpq_a(mu,nu)
+             Txx(mu,nu) -=T1xx(mu,nu)
+             PUT Pnew_b(mu,nu) = Txx(mu,nu)
+
+         ENDPARDO mu,nu
+
+         execute sip_barrier
+#bgn_debug
+     esuma = 0.0
+     esumb = 0.0
+     DO mu
+     Do nu
+     GET FpqA_Prev(mu,nu)
+     GET Fpq_a(mu,nu)
+     tmp = Fpqa_Prev(mu,nu) * FpqA_Prev(mu,nu)
+     esuma += tmp
+     tmp = Fpq_a(mu,nu) * Fpq_a(mu,nu)
+     esumb += tmp
+     ENDDO nu
+     ENDDO mu
+     execute print_scalar esuma
+     execute print_scalar esumb
+     esuma = 0.0
+     esumb = 0.0
+     DO mu
+     Do nu
+     GET POLD_a(mu,nu)
+     GET POLD_b(mu,nu)
+     tmp = POLD_a(mu,nu) * POLD_a(mu,nu)
+     esuma += tmp
+     tmp =   POLD_b(mu,nu) *  POLD_b(mu,nu)
+     esumb += tmp
+     ENDDO nu
+     ENDDO mu
+     execute print_scalar esuma
+     execute print_scalar esumb
+     esuma = 0.0
+     esumb = 0.0
+     DO mu
+     Do nu
+     GET PNEW_a(mu,nu)
+     GET PNEW_b(mu,nu)
+     tmp = PNEW_a(mu,nu) * PNEW_a(mu,nu)
+     esuma += tmp
+     tmp =   PNEW_b(mu,nu) *  PNEW_b(mu,nu)
+     esumb += tmp
+     ENDDO nu
+     ENDDO mu
+     execute print_scalar esuma
+     execute print_scalar esumb
+     esuma=0.0
+     esumb=0.0
+#end_debug
+
+      ENDPROC CREATE_PMATRIX
+#     ----------------------
+
+       PROC KARLS_DAMP_FACTOR
+#      ----------------------
+
+#      initialise the variables at the start of each iteration
+
+       etemp   =0.0
+       e1m_tmp =0.0
+       e1p_tmp =0.0
+       e2m11_tmp  =0.0
+       e2p11_tmp  =0.0
+       e2p12_tmp  =0.0
+
+       e1m  =0.0
+       e1p  =0.0
+       e211m  =0.0
+       e211p  =0.0
+       e212   =0.0
+
+       scf_ener=0.0
+       scf=0.0
+
+       PARDO mu, nu
+
+# The Density and the Fock matrix of previous iteration
+
+           GET DHFA_Prev(mu,nu)
+           GET DHFB_Prev(mu,nu)
+           GET Pold_a(mu,nu)
+           GET Pold_b(mu,nu)
+
+
+# The Density and the Fock matrix of current iteration
+
+           GET DHFa(mu,nu)
+           GET DHFb(mu,nu)
+           GET Pnew_a(mu,nu)
+           GET Pnew_b(mu,nu)
+#
+           Txx(mu,nu)   = 0.0
+           execute return_h1 txx
+
+           T1xx(mu,nu)  = Txx(mu,nu)
+
+           etemp        = T1xx(mu,nu)*DHFa_Prev(mu,nu)
+           e1m_tmp      += etemp
+           etemp        = T1xx(mu,nu)*DHFb_Prev(mu,nu)
+           e1m_tmp      += etemp
+
+           etemp        = T1xx(mu,nu)*DHFa(mu,nu)
+           e1p_tmp      += etemp
+           etemp        = T1xx(mu,nu)*DHFb(mu,nu)
+           e1p_tmp      += etemp
+
+           T1xx(mu,nu)  = Pold_a(mu,nu)
+           etemp        = T1xx(mu,nu)*DHFa_Prev(mu,nu)
+           e2m11_tmp   += etemp
+           T1xx(mu,nu)  = Pold_b(mu,nu)
+           etemp        = T1xx(mu,nu)*DHFb_Prev(mu,nu)
+           e2m11_tmp   += etemp
+           e2m11_tmp   *= 0.5
+
+           T1xx(mu,nu)  = Pnew_a(mu,nu)
+           etemp        = T1xx(mu,nu)*DHFa(mu,nu)
+           e2p11_tmp   += etemp
+           T1xx(mu,nu)  = Pnew_b(mu,nu)
+           etemp        = T1xx(mu,nu)*DHFb(mu,nu)
+           e2p11_tmp   += etemp
+           e2p11_tmp   *= 0.5
+
+           T1xx(mu,nu)  = Pold_a(mu,nu)
+           etemp        = T1xx(mu,nu)*DHFa(mu,nu)
+           e2p12_tmp   += etemp
+           T1xx(mu,nu)  = Pold_b(mu,nu)
+           etemp        = T1xx(mu,nu)*DHFb(mu,nu)
+           e2p12_tmp   += etemp
+           e2p12_tmp   *= 0.5
+
+           ENDPARDO mu, nu
+#bgn_debug
+#
+#VR  calculate current HF energy to cross-check
+#
+          PARDO mu, nu
+          GET Fpq_a(mu,nu)
+          GET Fpq_b(mu,nu)
+          GET DHFa(mu,nu)
+          GET DHFb(mu,nu)
+          execute return_h1 txx
+
+          T1xx(mu,nu)  =Txx(mu,nu)
+          T1xx(mu,nu) +=Fpq_a(mu,nu)
+
+          etemp     =T1xx(mu,nu)*DHFa(mu,nu)
+          scf_ener +=etemp
+
+          T1xx(mu,nu)  =Txx(mu,nu)
+          T1xx(mu,nu) +=Fpq_b(mu,nu)
+
+          etemp     =T1xx(mu,nu)*DHFb(mu,nu)
+          scf_ener +=etemp
+#eVR
+#bgn_debug
+           ENDPARDO mu, nu
+
+      execute sip_barrier
+
+      collective e1m   += e1m_tmp
+      collective e1p   += e1p_tmp
+      collective e211m += e2m11_tmp
+      collective e211p += e2p11_tmp
+      collective e212  += e2p12_tmp
+
+#bgn_debug
+#VR
+      scf_ener         *=0.5
+      collective scf   += scf_ener
+      scf += scf_ener
+
+      scf += scfeneg
+#eVR
+#bgn_debug
+
+      execute sip_barrier
+
+      execute print_scalar e1m
+      execute print_scalar e1p
+
+      execute print_scalar e211m
+      execute print_scalar e211p
+      execute print_scalar e212
+
+      execute print_scalar scf
+
+      e211m *= 2.0
+
+      damp_numra  = e1p
+      damp_numra -= e1m
+      damp_numra += e212
+      damp_numra -= e211m
+
+      e211p *= 2.0
+      e212  *= 4.0
+
+      damp_denom  = e212
+      damp_denom -= e211m
+      damp_denom -= e211p
+      damp_denom  = 1.0/damp_denom
+
+      X   = damp_numra
+      X  *= damp_denom
+
+#bgn_debug
+      execute print_scalar damp_numra
+      execute print_scalar damp_denom
+      execute print_scalar x
+#end_debug
+
+      IF X < 1.0
+         IF X > 0.0
+           MX  = 1.0
+           MX -= X
+         ELSE
+           X   =1.0
+          MX   =0.0
+         ENDIF
+      ELSE
+       X   = 1.0
+       MX  = 0.0
+
+      ENDIF
+
+#bgn_debug
+#      X = 1.0
+#      MX = 0.0
+      execute print_scalar x
+      execute print_scalar mx
+#end_debug
+
+      ENDPROC KARLS_DAMP_FACTOR
+#    --------------------------
+
+      PROC APPLY_CONSTANT_DAMP
+#     ------------------------
+#
+#  Apply constant damping, Damp factor is computed using a
+#  simple formula (1/1+constant) where the constant is user
+#  choosen 
+#
+      DAMP_DENOM  = 1.0
+      DAMP_DENOM += DAMP_FACTOR
+      DAMP_FACTOR  = 1.0/DAMP_DENOM
+#bgn_debug
+     execute print_scalar damp_factor 
+#end_debug
+#
+      PARDO mu, nu
+
+         TXX_a(mu,nu) = 0.0
+         TXX_b(mu,nu) = 0.0
+
+         GET DHFa_Prev(mu,nu)
+         GET DHFb_Prev(mu,nu)
+
+         GET DHFa(mu,nu)
+         GET DHFb(mu,nu)
+
+         Txx(mu,nu)    = DHFa(mu,nu)
+         TXX_a(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = DHFa_prev(mu,nu)
+         T1xx(mu,nu)  *= DAMP_FACTOR
+         TXX_a(mu,nu) += T1xx(mu,nu)
+
+         Txx(mu,nu)    = DHFb(mu,nu)
+         TXX_a(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = DHFb_prev(mu,nu)
+         T1xx(mu,nu)  *= DAMP_FACTOR
+         TXX_b(mu,nu) += T1xx(mu,nu)
+
+         PUT Dpqa_DMP(mu,nu) = TXX_a(mu,nu)
+         PUT Dpqb_DMP(mu,nu) = TXX_b(mu,nu)
+
+      ENDPARDO mu, nu
+      execute sip_barrier
+
+# Copy the Damped density to current density arrays.
+
+      PARDO mu, nu
+
+         GET Dpqa_DMP(mu,nu)
+         GET Dpqb_DMP(mu,nu)
+
+         Txx(mu,nu) = Dpqa_DMP(mu,nu)
+         PUT DHFa(mu,nu) = Txx(mu,nu)
+
+         Txx(mu,nu) = Dpqb_DMP(mu,nu)
+         PUT DHFb(mu,nu) = Txx(mu,nu)
+
+      ENDPARDO mu, nu
+
+      execute sip_barrier
+
+      ENDPROC APPLY_CONSTANT_DAMP
+#     ------------------------
+
+     PROC APPLY_DAVID_DAMP
+#    ---------------------
+
+#  Finally, the davidson damp the Fock matrices
+
+      DAMP_DENOM = DAMP_FACTOR
+      DAMP_DENOM += 1.0
+      DAMP_DENOM  = 1.0/DAMP_DENOM
+
+      PARDO mu, nu
+
+         TXX_a(mu,nu) = 0.0
+         TXX_b(mu,nu) = 0.0
+
+         GET Fpqa_Prev(mu,nu)
+         GET Fpqb_Prev(mu,nu)
+
+         GET Fpq_a(mu,nu)
+         GET Fpq_b(mu,nu)
+
+         Txx(mu,nu)    = Fpq_a(mu,nu)
+         TXX_a(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = Fpqa_prev(mu,nu)
+         T1xx(mu,nu)  *= DAMP_FACTOR
+         TXX_a(mu,nu) += T1xx(mu,nu)
+         TXX_a(mu,nu) *= DAMP_DENOM
+
+         PUT Fpqa_DMP(mu,nu) = TXX_a(mu,nu)
+
+      ENDPARDO mu, nu
+      execute sip_barrier
+
+# Copy the Fock matrices to current Fock matrix arrays.
+
+      PARDO mu, nu
+
+         GET Fpqa_DMP(mu,nu)
+
+         Txx(mu,nu) = Fpqa_DMP(mu,nu)
+         PUT Fpq_a(mu,nu) = Txx(mu,nu)
+         PUT Fpq_b(mu,nu) = Txx(mu,nu)
+
+      ENDPARDO mu, nu
+
+      execute sip_barrier
+
+     ENDPROC APPLY_DAVID_DAMP
+#    ------------------------
+
+     PROC APPLY_KARLS_DAMP_FOCK
+#    --------------------------
+
+#  Finally, the damped Fock matrices
+
+      PARDO mu, nu
+
+         TXX_a(mu,nu) = 0.0
+         TXX_b(mu,nu) = 0.0
+
+         GET Fpqa_Prev(mu,nu)
+         GET Fpqb_Prev(mu,nu)
+
+         GET Fpq_a(mu,nu)
+         GET Fpq_b(mu,nu)
+
+         Txx(mu,nu)    = Fpq_a(mu,nu)
+         Txx(mu,nu)   *= X
+         TXX_a(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = Fpqa_prev(mu,nu)
+         T1xx(mu,nu)  *= MX
+         TXX_a(mu,nu) += T1xx(mu,nu)
+
+         Txx(mu,nu)    = Fpq_b(mu,nu)
+         Txx(mu,nu)   *= X
+         TXX_b(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = Fpqb_prev(mu,nu)
+         T1xx(mu,nu)  *= MX
+         TXX_b(mu,nu) += T1xx(mu,nu)
+
+         PUT Fpqa_DMP(mu,nu) = TXX_a(mu,nu)
+         PUT Fpqb_DMP(mu,nu) = TXX_b(mu,nu)
+
+      ENDPARDO mu, nu
+      execute sip_barrier
+
+# Copy the Fock matrices to current Fock matrix arrays.
+
+      PARDO mu, nu
+
+         GET Fpqa_DMP(mu,nu)
+         GET Fpqb_DMP(mu,nu)
+
+         Txx(mu,nu) = Fpqa_DMP(mu,nu)
+         PUT Fpq_a(mu,nu) = Txx(mu,nu)
+
+         Txx(mu,nu) = Fpqb_DMP(mu,nu)
+         PUT Fpq_b(mu,nu) = Txx(mu,nu)
+
+      ENDPARDO mu, nu
+
+      execute sip_barrier
+
+     ENDPROC APPLY_KARLS_DAMP_FOCK
+#    ----------------------------
+
+     PROC APPLY_KARLS_DAMP_DENS
+#    -------------------------
+
+#  Finally, the damp density matrices
+
+      PARDO mu, nu
+
+         TXX_a(mu,nu) = 0.0
+         TXX_b(mu,nu) = 0.0
+
+         GET DHFa_Prev(mu,nu)
+         GET DHFb_Prev(mu,nu)
+
+         GET DHFa(mu,nu)
+         GET DHFb(mu,nu)
+
+         Txx(mu,nu)    = DHFa(mu,nu)
+         Txx(mu,nu)   *= X
+         TXX_a(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = DHFa_prev(mu,nu)
+         T1xx(mu,nu)  *= MX
+         TXX_a(mu,nu) += T1xx(mu,nu)
+
+         Txx(mu,nu)    = DHFb(mu,nu)
+         Txx(mu,nu)   *= X
+         TXX_a(mu,nu)  = Txx(mu,nu)
+
+         T1xx(mu,nu)   = DHFb_prev(mu,nu)
+         T1xx(mu,nu)  *= MX
+         TXX_b(mu,nu) += T1xx(mu,nu)
+
+         PUT Dpqa_DMP(mu,nu) = TXX_a(mu,nu)
+         PUT Dpqb_DMP(mu,nu) = TXX_b(mu,nu)
+
+      ENDPARDO mu, nu
+      execute sip_barrier
+
+# Copy the Damped density to current density arrays.
+
+      PARDO mu, nu
+
+         GET Dpqa_DMP(mu,nu)
+         GET Dpqb_DMP(mu,nu)
+
+         Txx(mu,nu) = Dpqa_DMP(mu,nu)
+         PUT DHFa(mu,nu) = Txx(mu,nu)
+
+         Txx(mu,nu) = Dpqb_DMP(mu,nu)
+         PUT DHFb(mu,nu) = Txx(mu,nu)
+
+      ENDPARDO mu, nu
+
+      execute sip_barrier
+
+     ENDPROC APPLY_KARLS_DAMP_DENS
+#    -----------------------------
+
+     PROC BUILT_MO_FOCK
+#    ------------------
+
+       CREATE Fpqa_MO
+       CREATE Fpqb_MO
+
+       execute sip_barrier
+
+       PARDO mu, nu
+            GET Fpq_a(mu,nu)
+            do p
+               Txp(nu,p) = Fpq_a(mu,nu)*Ca(mu,p)
+                do p1
+                   Tpp(p,p1)  = Txp(nu,p)*Ca(nu,p1)
+                   PUT Fpqa_MO(p,p1) += Tpp(p,p1)
+               enddo p1
+            enddo p
+       ENDPARDO mu,nu
+
+       PARDO mu, nu
+            GET Fpq_b(mu,nu)
+            do q
+               Txq(mu,q) = Fpq_b(mu,nu)*Ca(nu,q)
+                do q1
+                   Tqq(q,q1)  = Txq(mu,q)*Ca(mu,q1)
+                   PUT Fpqb_MO(q,q1) += Tqq(q,q1)
+               enddo q1
+            enddo q
+       ENDPARDO mu,nu
+       execute sip_barrier
+
+       DO p
+          DO p1
+            GET Fpqa_MO(p,p1)
+            Tpp(p,p1) = Fpqa_MO(p,p1)
+            Fpqa_MO_VSHIFT(p,p1) = Tpp(p,p1)
+          ENDDO p1
+       ENDDO p
+
+       execute print_scalar four
+       DO q
+          DO q1
+            GET Fpqb_MO(q,q1)
+            Tqq(q,q1) = Fpqb_MO(q,q1)
+            Fpqb_MO_VSHIFT(q,q1) = Tqq(q,q1)
+          ENDDO q1
+       ENDDO q
+       execute sip_barrier
+#bgn_debug
+     esuma = 0.0
+     do p
+     do p1
+        tmp = Fpqa_MO_VSHIFT(p,p1) * Fpqa_MO_VSHIFT(p,p1)
+        esuma += tmp
+     enddo p1
+     enddo p
+     execute print_scalar esuma
+#end_debug
+     ENDPROC BUILT_MO_FOCK
+#    ---------------------
+#
+     PROC BUILT_AO_FOCK
+#    ---------------------
+#
+
+       PARDO mu, nu
+             GET Fpq_a(mu,nu)
+             Txx(mu,nu) = 0.0
+             PUT Fpq_a(mu,nu) = Txx(mu,nu)
+       ENDPARDO mu,nu
+       PARDO mu, nu
+             GET Fpq_b(mu,nu)
+             Txx(mu,nu) = 0.0
+             PUT Fpq_b(mu,nu) = Txx(mu,nu)
+       ENDPARDO mu,nu
+
+       CREATE SCa
+       CREATE SCb
+
+       execute sip_barrier
+
+       PARDO mu, nu
+             DO p
+                Txp(mu,p)      = OVLP(mu,nu) * Ca(nu,p)
+                PUT SCa(mu,p) += Txp(mu,p)
+             ENDDO p
+       ENDPARDO mu, nu
+
+       PARDO mu, nu
+             DO q
+                Txq(mu,q)      = OVLP(mu,nu) * Ca(nu,q)
+                PUT SCb(mu,q) += Txq(mu,q)
+             ENDDO q
+       ENDPARDO mu, nu
+       execute sip_barrier
+
+#bgn_debug
+#     esuma = 0.0
+#     do q
+#     do q1
+#        get Fpqb_MO(q,q1)
+#        tmp = Fpqb_MO(q,q1) * Fpqb_MO(q,q1)
+#        esuma += tmp
+#     enddo q1
+#     enddo q
+#     execute print_scalar esuma
+#     esuma = 0.0
+#     do mu
+#     do q
+#        get Cb(mu,q)
+#        tmp = Cb(mu,q) * Cb(mu,q)
+#        esuma += tmp
+#     enddo q
+#     enddo mu
+#     execute print_scalar esuma
+#
+#       do p
+#       do p1
+#          Tpp(p,p1) = 0.0
+#          Spp(p,p1) = Tpp(p,p1)
+#       enddo p1
+#       enddo p
+#       do mu
+#       do p
+#          get SCa(mu,p)
+#          Txp(mu,p) = SCa(mu,p)
+#          Do p1
+#               Tpp(p1,p)  = Txp(mu,p) * Ca(mu,p1)
+#               Spp(p1,p) += Tpp(p1,p)
+#          ENDDO p1
+#        enddo p
+#        enddo mu
+#        do p
+#        do p1
+#           execute dump_amp Spp(p,p1)
+#        enddo p1
+#        enddo p
+#end_debug
+
+       PARDO p, p1
+#            GET Fpqa_MO(p,p1)
+            DO mu
+
+               GET SCa(mu,p)
+               Txp(mu,p)   = SCa(mu,p)
+               Ixp(mu,p1)  = Fpqa_MO_VSHIFT(p,p1) * Txp(mu,p)
+
+               DO nu
+                  GET SCa(nu,p1)
+                  Txp(nu,p1)   = SCa(nu,p1)
+                  Ixx(mu,nu)   = Ixp(mu,p1) * Txp(nu,p1)
+
+                  PUT Fpq_a(mu,nu) += Ixx(mu,nu)
+               ENDDO nu
+            ENDDO mu
+      ENDPARDO p, p1
+
+      PARDO q, q1
+#            GET Fpqb_MO(q,q1)
+            DO mu
+               GET SCb(mu,q)
+               Txq(mu,q)   = SCb(mu,q)
+               Jxq(mu,q1)  = Fpqb_MO_VSHIFT(q,q1) * Txq(mu,q)
+
+               DO nu
+
+                  GET SCb(nu,q1)
+                  Txq(nu,q1)   = SCb(nu,q1)
+                  Ixx(mu,nu)   = Jxq(mu,q1) * Txq(nu,q1)
+
+                  PUT Fpq_b(mu,nu) += Ixx(mu,nu)
+               ENDDO nu
+            ENDDO mu
+      ENDPARDO q, q1
+
+      execute sip_barrier
+##bgn_debug
+     esuma = 0.0
+     esumb = 0.0
+     do mu
+     do nu
+        get Fpq_a(mu,nu)
+        get Fpq_b(mu,nu)
+        tmp = Fpq_a(mu,nu) * Fpq_a(mu,nu)
+        esuma += tmp
+        tmp = Fpq_b(mu,nu) * Fpq_b(mu,nu)
+        esumb += tmp
+     enddo nu
+     enddo mu
+     execute print_scalar esuma
+     execute print_scalar esumb
+#end_debug
+
+      DELETE Fpqa_MO
+      DELETE Fpqb_MO
+      DELETE SCa
+      DELETE SCb
+
+     ENDPROC BUILT_AO_FOCK
+#    ---------------------
+#
+############################################################################## 
+#
+#                         START OF MAIN PROGRAM 
+#
+############################################################################## 
+#
+#     Define a few constants 
+#     ---------------------- 
+#
+      ecrit  = scf_conv # Energy tolerance  
+      execute get_my_rank rank
+#
+      zero = 0.0 
+      mone = -1.0 
+      one = 1.0 
+      two = 2.0 
+      three = 3.0 
+      four = 4.0 
+      onehalf = 0.5
+      invtwopt2 = 1.0/2.20
+      iter_count = 0.0
+      prnt_count = 0.0
+      diis_end = 150.0
+      diis_order = 8.0
+      diis_max_order = 10.0
+      DONE_DAMP = 1.0
+
+      diis_start         = 0.0
+      diis_orginal_start = 0.0
+      do kbeg
+         diis_start += 1.0
+      ENDDO kbeg
+      diis_orginal_start = diis_start 
+
+      diis_order = 0.0
+      do korder
+         diis_order += 1.0
+      ENDDO korder
+
+      if diis_order > 9.0
+         diis_order = 9.0
+      endif
+
+      START_HISTORY  = DIIS_START
+      START_HISTORY -= DIIS_ORDER
+      START_HISTORY += 1.0
+
+      IF START_HISTORY <= 0.0
+        START_HISTORY = 2.0
+        DIIS_START    = DIIS_ORDER
+        DIIS_START   += 1.0
+      ENDIF
+
+      Init_guess  = Guess
+      Shifta      = lshft_a1
+      Shifta     *= 0.01
+      Shiftb      = lshft_b1
+      Shiftb     *= 0.01
+      damping     = damp_type
+      damp_thres  = damp_tol
+      damp_thres *= 0.01
+      kill_damp   = damp_end
+      lock_orbs   = lock_orbitals
+      lock_occs   = lock_orbocc 
+
+#bgn_debug
+      execute print_scalar diis_start
+      execute print_scalar diis_order
+      execute print_scalar init_guess
+      execute print_scalar Shifta
+      execute print_scalar Shiftb
+      execute print_scalar damping
+      execute print_scalar damp_thres
+      execute print_scalar kill_damp
+      execute print_scalar lock_orbs
+      execute print_scalar lock_occs
+#end_debg
+
+# Set the damp type and GUESS based on user input.
+
+      If init_guess == 0.0
+          ATOMIC = 1.0
+      Endif
+
+      If init_guess == 1.0
+          COREH = 1.0
+      Endif
+
+      If init_guess == 9.0
+          ATOMIC = 1.0
+      Endif
+
+      IF NATOMS <= 3
+         COREH  = 1.0
+         ATOMIC = 0.0
+      ENDIF
+#
+# The davidson damping is based on private communication from
+# E. R. Davidson and Karls_dynamic is based on CPL, 67,348,1979.
+
+      If Damping == 1.0
+         David_dynamic = 1.0
+         damp_factor  = damp_thres
+         damp_factor += 0.01
+      endif 
+
+      If Damping == 2.0
+         constant_damping = 1.0
+         damp_factor      = damp
+      Endif
+
+      If Damping == 3.0
+         Karls_dynamic = 1.0
+      Endif
+ 
+      level_shift = 0.0
+      If Shifta > 0.0
+         level_shift = 1.0
+      Endif 
+      If Shiftb > 0.0
+         level_shift = 1.0
+      Endif 
+#
+#     Create the distributed arrays assigned for various purposes.
+#     ---------------------------------------------------------- 
+#
+      CREATE Fpq_a  
+      CREATE Fpq_b  
+      CREATE IDHFa   
+      CREATE IDHFb   
+      CREATE DHFa   
+      CREATE DHFb   
+      CREATE DHFa_Prev
+      CREATE DHFb_Prev
+      CREATE Fpqa_DMP
+      CREATE Fpqb_DMP
+      CREATE Dpqa_DMP
+      CREATE Dpqb_DMP
+      CREATE Fpqa_Prev
+      CREATE Fpqb_Prev
+      CREATE FTpq_a
+      CREATE FTpq_b
+      CREATE CBT_a
+      CREATE CBT_b
+      CREATE PNEW_A
+      CREATE PNEW_B
+      CREATE POLD_A
+      CREATE POLD_B
+
+#
+#     DIIS vectors 
+#     ------------ 
+#
+      allocate BB(*,*) 
+      create Fa 
+      create Fb 
+      create Fai  
+      create Fbj  
+      CREATE FFai
+      CREATE FFbj
+#
+#     Orthonormalizing transformation coefficient
+#     ------------------------------------------- 
+#
+      CREATE Qxx 
+      CREATE OVLP_INV
+      CREATE OCA
+      CREATE BCA
+      execute sip_barrier 
+#
+# Initialize the static arrays of SCF vectors and occupation numbers
+# ------------------------------------------------------------------
+#
+      DO mu
+      DO p
+         Txp(mu,p) = 0.0
+          ca(mu,p) = Txp(mu,p)
+          CA_Prev(mu,p) = Txp(mu,p)
+          CA_TEMP(mu,p) = Txp(mu,p)
+      ENDDO p
+      ENDDO mu
+      DO p
+      DO i
+         Tpi(p,i) = 0
+         ORB_OVLP_A(p,i) = Tpi(p,i)
+      ENDDO i
+      ENDDO p
+
+      DO q
+      DO j
+         Tqj(q,j) = 0.0
+         ORB_OVLP_B(q,j) = Tqj(q,j)
+      ENDDO j
+      ENDDO q
+
+      DO q
+      DO j
+         Tqj(q,j) = 0.0
+         ORB_OVLP_B(q,j) = Tqj(q,j)
+      ENDDO j
+      ENDDO q
+
+      DO p
+      DO p1
+         Tpp(p,p1) = 0.0
+         Fpqa_MO_VSHIFT(p,p1) = Tpp(p,p1)
+      ENDDO p1
+      ENDDO p
+
+      DO q
+      DO q1
+         Tqq(q,q1) = 0.0
+         Fpqb_MO_VSHIFT(q,q1) = Tqq(q,q1)
+      ENDDO q1
+      ENDDO q
+    
+      DO IITER1
+      DO JJTER2
+         dflags12(iiter1,jjter2) = 0.0
+      ENDDO JJTER2
+      ENDDO IITER1
+
+      DO KITER
+      DO KPTR1
+         tpinf(kiter,kptr1) = 0
+         tpinf(kiter,kptr1) = tpinf(kiter,kptr1)
+      ENDDO KPTR1
+      ENDDO KITER
+
+      DO katom
+      DO jatom
+         atom(katom,jatom) = 0.0
+      ENDDO jatom
+      ENDDO katom
+
+      DO MU
+      DO NU
+         txx(mu,nu) = 0.0
+         x1(mu,nu)  = txx(mu,nu)
+         FSpq_a(mu,nu) = txx(mu,nu)
+         FSpq_b(mu,nu) = txx(mu,nu)
+      ENDDO NU
+      ENDDO MU
+
+      DO nbfnsA
+          A_OCC_NUMS (nbfnsA) = 0.0
+      ENDDO nbfnsA
+      execute sip_barrier 
+
+#
+#     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
+#     ----------------------------------------------------------------------- 
+#
+      DO mu
+      DO nu
+      DO lambda
+      DO sigma
+            IF mu == lambda
+            IF nu == sigma
+               execute compute_aabb_batch aoint(mu,nu,lambda,sigma)
+            ENDIF
+            ENDIF
+      ENDDO sigma
+      ENDDO lambda
+      ENDDO nu
+      ENDDO mu
+
+#     Construct the initial guess of the density matrix
+#     -----------------------------------------------
+#   
+      CALL IGUESS
+#
+# Delete the distributed arrays used in initial guess routines
+#
+      DELETE IDHFa
+      DELETE IDHFb
+      DELETE FTpq_a
+      DELETE FTpq_b
+      DELETE CBT_a
+      DELETE CBT_b
+      DELETE Fpq_a
+      DELETE Fpq_b
+      DELETE OVLP_INV
+#bgn_debug
+#     DO mu
+#     Do nu
+#        if mu == nu
+#           Txx(mu,nu) = 1.0
+#           PUT dhfa(mu,nu) = txx(mu,nu)
+#           PUT dhfb(mu,nu) = txx(mu,nu)
+#         endif
+#     enddo nu
+#     enddo mu
+#     execute sip_barrier
+#     EXECUTE GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+#     CALL OVER_HALF
+#     execute sip_barrier
+#     create Fpq_a
+#     create Fpq_b
+#     execute sip_barrier
+#     CALL STORE_FOCK_DENS_VEC_OLD
+#     delete Fpq_a
+#     delete Fpq_b
+#     DELETE OVLP_INV
+#end_debug
+
+# Start iterations 
+# ---------------- 
+#
+      DO kiter 
+         iter_count += 1.0
+         prnt_count += 1.0
+         execute print_scalar iter_count
+#
+#        Create 1-particle arrays 
+#        ------------------------ 
+#
+         CREATE Fpq_a 
+         CREATE Fpq_b 
+         CREATE CBT_a 
+         CREATE CBT_b 
+         CREATE FTpq_a  
+         CREATE FTpq_b  
+         execute sip_barrier
+#
+#        Construct the new Fock matrix 
+#        -----------------------------
+
+         DO mu
+         DO nu
+            GET              DHFa(mu,nu)
+            GET              DHFb(mu,nu)
+            oed_ovl(mu,nu) = DHFa(mu,nu) # 13
+            oed_kin(mu,nu) = DHFb(mu,nu) # 12
+         ENDDO nu
+         ENDDO mu
+
+         DO iiter1
+         DO jjter2
+             execute set_flags2 dflags12(iiter1,jjter2)
+         ENDDO jjter2
+         ENDDO iiter1 
+#
+         CALL FOCK_MATRIX_FAST 
+         execute sip_barrier 
+#
+         CALL HF_ENERGY 
+
+# Store the current Fock and density matrix of the first iteration
+# (as F_prev) and D_prev). I am taking the Guess density, fock matrix
+# and the energy as the first iteration of the SCF equations.
+
+         IF ITER_COUNT == 1.0
+            E0  = ENERGY
+            CALL STORE_FOCK_DENS_VEC_OLD
+         ENDIF
+
+# DO the dynamic damping (CPL, 67, 348, 1979). Test the density difference
+# is above a predermined threshold and the number of iterations less than a
+# preset values. Then only do the dynamic damping. After the denisty
+# difference is below the threshold, start DIIS.
+
+         MAX_D_Diff = 0.0
+
+         IF DONEA >= DONEB
+            MAX_D_Diff = DONEA
+         ELSE
+            MAX_D_Diff = DONEB
+         ENDIF
+#bgn_debug
+         execute print_scalar MAX_D_DIFF
+#end_debug
+
+# The level shifting if demanded.
+           
+         IF ITER_COUNT > 1.0
+
+            IF LEVEL_SHIFT > 0.0
+
+               CAN_DAMP = 0.0
+               IF ITER_COUNT < KILL_DAMP
+                  IF MAX_D_DIFF > DAMP_THRES
+                     CALL BUILT_MO_FOCK
+                     EXECUTE LEVEL_SHIFT  FPQA_MO_VSHIFT  Shifta
+                     EXECUTE LEVEL_SHIFT  FPQB_MO_VSHIFT  Shiftb
+                     CALL BUILT_AO_FOCK
+                     CAN_DAMP = 1.0
+                  ENDIF
+               ENDIF
+#bgn_debug
+         execute print_scalar can_damp
+#end_debug
+#
+# Start DIIS only when level shifting is done (and stop level-shifting
+# at that point.
+
+               IF CAN_DAMP == 0.0
+                  LEVEL_SHIFT = 0.0
+                  DIIS_START   += DIIS_ORDER
+               ENDIF
+         ENDIF
+#
+# Damping techniquies other than level shifting 
+
+         CAN_DAMP = 0.0
+
+         IF CONSTANT_DAMPING == 1.0
+
+            IF ITER_COUNT > 2.0
+#
+# Constant damp factor is computed in the APPLY_CONSTANT_DAMP 
+# procedure.
+               IF MAX_D_DIFF > DAMP_THRES
+                  CALL APPLY_CONSTANT_DAMP
+                  CAN_DAMP = 1.0
+               ENDIF
+
+               IF CAN_DAMP == 0.0
+                  CONSTANT_DAMPING  = 0.0
+                  DIIS_START       += DIIS_ORDER
+               ENDIF 
+
+               IF ITER_COUNT  >  KILL_DAMP
+                  CONSTANT_DAMPING  = 0.0
+                  DIIS_START       += DIIS_ORDER
+               ENDIF
+
+            ENDIF 
+         ENDIF 
+
+         IF DAVID_DYNAMIC == 1.0
+
+             IF ITER_COUNT == 2.0
+
+                  E1    = E0
+                  E0    = ENERGY
+                  DE    = E0 
+                  DE   -= E1
+                  DEP   = 0.0
+                  DES   = DE
+                  DES  *= DE
+                  EXECUTE SQUARE_ROOT DES ONEHALF
+                  DEAVG_OLD  = DES
+                  DEAVG_OLD *= 0.20
+
+               ELSE
+
+                  E2    = E1
+                  E1    = E0
+                  E0    = ENERGY
+                  DE    = E0 
+                  DE   -= E1
+                  DEP   = E1 
+                  DEP  -= E2
+#bgn_debug
+                  execute print_scalar e0
+                  execute print_scalar e1
+                  execute print_scalar e2
+                  execute print_scalar de
+                  execute print_scalar dep
+#end_debug
+
+                  DES   = DE
+                  DES  *= DE
+                  DEPS  = DEP
+                  DEPS *= DEP
+
+                  EXECUTE SQUARE_ROOT DES ONEHALF 
+                  EXECUTE SQUARE_ROOT DEPS ONEHALF 
+
+                  DEAVG  = DES
+                  DEAVG += DEPS
+                  DEAVG += DEAVG_OLD  
+                  DEAVG *= INVTWOPT2 
+                  DEAVG_OLD  = DEAVG
+                  DEAVG_OLD *= 0.20
+                 
+                  ICOUNT = 0.0
+                  DO ITHREE
+                     ICOUNT += 1.0
+                     IF ICOUNT == 1.0
+                        DAMP_PARMS(ITHREE) = DE
+                     ENDIF
+                     IF ICOUNT == 2.0
+                        DAMP_PARMS(ITHREE) = DEP
+                     ENDIF
+                     IF ICOUNT == 3.0
+                        DAMP_PARMS(ITHREE) = DEAVG
+                     ENDIF
+                  ENDDO ITHREE
+
+                 EXECUTE DAVID_DAMP_FACTOR DAMP_PARMS DAMP_FACTOR
+                 EXECUTE SIP_BARRIER 
+#bgn_debug                
+                 execute print_scalar damp_factor 
+                 execute print_scalar damp_thres 
+#end_debug
+                 IF DAMP_FACTOR >= DAMP_THRES
+                       CAN_DAMP = 1.0
+                       CALL APPLY_DAVID_DAMP
+                 ELSE
+                     IF DES >= 0.05
+                        CAN_DAMP      = 1.0
+                        CALL APPLY_DAVID_DAMP
+                     ELSE
+                        DAVID_DYNAMIC = 0.0
+		        CAN_DAMP      = 0.0
+                        DIIS_START   += DIIS_ORDER
+                     ENDIF 
+                 ENDIF  
+
+                 IF ITER_COUNT  >  KILL_DAMP
+                    DAVID_DYNAMIC = 0.0
+                    CAN_DAMP      = 0.0
+                    DIIS_START   += DIIS_ORDER
+                 ENDIF
+
+               ENDIF
+              ENDIF
+#
+           IF KARLS_DYNAMIC == 1.0
+
+              IF MAX_D_DIFF >= DAMP_THRES
+#bgn_debug
+                 execute print_scalar MAX_D_DIFF
+                 execute print_scalar DAMP_THRES
+#end_debug
+                  CALL CREATE_PMATRIX
+                  CALL KARLS_DAMP_FACTOR
+
+# If MX > 0; there is damping. When it is zero there is no contribution
+# from the previous density. If the damping is done and we are less than
+# five iterations, continiue damping. If it is greater than 5, turn off
+# damping regardless of the density difference.
+
+                  IF MX > 0.0
+                     CAN_DAMP      = 1.0
+#                    CALL APPLY_KARLS_DAMP_FOCK
+                     CALL APPLY_KARLS_DAMP_DENS
+                   ENDIF
+
+                   IF ITER_COUNT > KILL_DAMP
+                      KARLS_DYNAMIC = 0.0
+	              CAN_DAMP      = 0.0
+                      DIIS_START   += DIIS_ORDER
+                   ENDIF
+
+              ELSE
+
+                   IF ITER_COUNT > KILL_DAMP
+                      KARLS_DYNAMIC = 0.0
+	              CAN_DAMP      = 0.0
+                      DIIS_START   += DIIS_ORDER
+                   ENDIF
+
+              ENDIF 
+           ENDIF
+
+# The following ENDIF is for the ITER_COUNT > 0 loop.
+
+       ENDIF
+#
+# Set up the DIIS start when the dynamic damping stops. As soon as
+# the damping stops start the DIIS. There is no turning back to
+# damping after DIIS starts.
+#
+#        Compute the DIIS when dynamic damping is finished.
+#        -------------------------------------------------
+
+         IF CAN_DAMP > 0.0
+            IF ITER_COUNT >= diis_start
+               DIIS_START += 1.0
+            ENDIF
+         ENDIF 
+
+#bgn_debug
+         execute print_scalar diis_start
+         execute print_scalar iter_count
+         execute print_scalar diis_end
+#end_debug
+
+         IF ITER_COUNT > 1.0
+            CALL GEN_6HISTORY
+         ENDIF 
+         execute sip_barrier
+
+         IF ITER_COUNT >= DIIS_START
+         IF ITER_COUNT <= DIIS_END
+
+#bgn_debug
+         execute print_scalar DIIS_ORDER
+#end_debug
+
+            CALL DIISN
+
+#         ENDIF 
+#         ENDIF 
+#
+# After accumulating diss_order histories from diss_start, begin to
+# drop the last one.
+#
+         ETEMP  = START_HISTORY
+         ETEMP += DIIS_ORDER
+
+         IF ITER_COUNT >= ETEMP
+
+            CALL MOVE6
+
+         ENDIF
+
+         ENDIF 
+         ENDIF 
+
+         execute sip_barrier
+#
+#        Transpose the new Fock matrix 
+#        -----------------------------
+#
+         CALL FOCK_TRANSPOSE 
+         execute sip_barrier
+#
+#        Diagonalize the transposed Fock matrix 
+#        -------------------------------------- 
+#
+         CALL FOCK_DIAG 
+         execute sip_barrier
+#
+#        Back transform the coefficient array 
+#        ------------------------------------ 
+#
+         CALL C_BTRAN 
+         execute sip_barrier
+
+         IF LOCK_OCCS == 1.0
+            EXECUTE GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+         ENDIF
+
+         IF LOCK_ORBS == 1.0
+            IF ITER_COUNT >= DIIS_START
+
+               DO nbfnsA
+                   A_OCC_NUMS (nbfnsA) = 0.0
+               ENDDO nbfnsA
+#
+               CALL MAKE_OCCUPATION
+            ENDIF
+         ENDIF
+
+         DONE = 0.0
+#
+#        Compute HF density
+#        -----------------
+         CALL HFDENS
+         execute sip_barrier
+
+#bgn_debug
+         esuma= 0.0
+         DO mu
+         DO nu
+         GET           DHFa(mu,nu)
+         etemp = DHFa(mu,nu) * DHFa(mu,nu)
+         esuma += etemp
+         ENDDO nu
+         ENDDO mu
+         execute print_scalar esuma
+#end_debug
+   
+#
+#        Check on convergence --> largest HF density difference. 
+#        ------------------------------------------------------- 
+#
+         DO mu 
+         DO nu 
+#
+#           Alpha component 
+#           --------------- 
+#
+            GET           DHFa_Prev(mu,nu) 
+            GET           DHFa(mu,nu) 
+#
+            Txx(mu,nu)  = DHFa(mu,nu) 
+            Txx(mu,nu) -= DHFa_Prev(mu,nu) 
+            execute check_dconf Txx donea  
+            if donea > done 
+               done = donea 
+            endif 
+#
+#           Beta component 
+#           -------------- 
+#
+            GET           DHFb_Prev(mu,nu) 
+            GET           DHFb(mu,nu) 
+#
+            Txx(mu,nu)  = DHFb(mu,nu) 
+            Txx(mu,nu) -= DHFb_Prev(mu,nu) 
+            execute check_dconf Txx doneb  
+            if doneb > done 
+               done = doneb 
+            endif 
+#
+         ENDDO nu 
+         ENDDO mu 
+#
+         execute sip_barrier
+#
+#bgn_debug
+          execute print_scalar done 
+#end_debug
+
+         ncount1 = 0.0
+         DO kptr1
+            ncount1 = ncount1 + 1.0
+            if ncount1 == one
+               tpinf(kiter,kptr1) = energy
+               pinf(kiter,kptr1)  = tpinf(kiter,kptr1)
+            endif
+         ENDDO kptr1
+
+            ncount1 = 0.0
+         DO kptr1
+            ncount1 = ncount1 + 1.0
+            if ncount1 == two
+               tpinf(kiter,kptr1) = done
+               pinf(kiter,kptr1)  = tpinf(kiter,kptr1)
+            endif
+         ENDDO kptr1
+         execute print_rel_info one pinf
+
+         CALL STORE_FOCK_DENS_VEC_OLD
+#
+#        Check on convergence using density difference. 
+#        ---------------------------------------------- 
+#
+         IF kiter > 1 
+            IF done < ecrit 
+               DELETE FTpq_a  
+               DELETE FTpq_b  
+               DELETE CBT_a 
+               DELETE CBT_b 
+               exit 
+            ENDIF 
+         ENDIF 
+#
+#        Delete one-particle arrays to be used in the next iteration. 
+#        ------------------------------------------------------------ 
+#
+         if kiter < scf_iter
+            DELETE Fpq_a 
+            DELETE Fpq_b 
+         endif
+
+         DELETE FTpq_a  
+         DELETE FTpq_b  
+         DELETE CBT_a 
+         DELETE CBT_b 
+
+# Dump the eigenvectors 10 iteration intervals.
+
+         if kiter >= scf_iter
+            one = -1.0
+            execute print_rel_info one pinf
+         endif
+
+         if prnt_count > 10.0
+            if rank == 0.0
+               DO mu
+               DO p
+                  txp(mu,p) = ca(mu,p)
+               ENDDO p
+               ENDDO mu
+               execute print_rel_info zero ca
+               prnt_count= 0.0
+            endif 
+          endif 
+      ENDDO kiter 
+#
+#     Release unneeded memory blocks.
+#
+      execute sip_barrier
+      DELETE DHFA
+      DELETE DHFB
+
+      CREATE FTa 
+      CREATE FTb 
+      execute sip_barrier 
+      PARDO mu, nu 
+            GET Fpq_a(mu,nu) 
+            DO p 
+               Txp(mu,p) = Fpq_a(mu,nu)*ca(nu,p) 
+               DO p1 
+                  Tpp(p1,p) = Txp(mu,p)*ca(mu,p1) 
+                  PUT FTa(p1,p) += Tpp(p1,p) 
+               ENDDO p1  
+            ENDDO p 
+      ENDPARDO mu, nu  
+#     
+      PARDO mu, nu 
+            GET Fpq_b(mu,nu) 
+            DO q 
+               Txq(mu,q) = Fpq_b(mu,nu)*ca(nu,q) 
+               DO q1 
+                  Tqq(q1,q) = Txq(mu,q)*ca(mu,q1) 
+                  PUT FTb(q1,q) += Tqq(q1,q) 
+               ENDDO q1  
+            ENDDO q 
+      ENDPARDO mu, nu  
+      execute sip_barrier 
+#
+#     Put the final Fock arrays into predefined arrays 
+#     ------------------------------------------------ 
+#
+      DO p
+      DO p1
+         GET FTa(p,p1)
+         Fock_a(p,p1) = FTa(p,p1)
+      ENDDO p1
+      ENDDO p
+
+      execute sip_barrier
+
+      execute print_rel_info two pinf
+      execute print_rel_info three Fock_a
+     #execute print_rel_info four Fock_b
+      if rank == 0.0
+         DO mu
+         DO p
+            txp(mu,p) = ca(mu,p)
+            execute dump_amp txp(mu,p)
+         ENDDO p
+         ENDDO mu
+      execute print_rel_info zero ca
+     #execute print_rel_info mone ca
+      endif
+
+
+      scfeneg  = energy2
+      totenerg = scfeneg
+      execute sip_barrier
+#                         
+                           ENDSIAL SCF_RHF
+#
+###############################################################################
+#
