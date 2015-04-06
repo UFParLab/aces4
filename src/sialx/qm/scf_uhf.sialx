@@ -105,7 +105,7 @@
       distributed Dhfa[mu,nu]
       distributed Dhfb[mu,nu]
       distributed IDhfa[mu,nu]
-      distributed IDhfb{mu,nu]
+      distributed IDhfb[mu,nu]
       distributed Dhfa_old[mu,nu]
       distributed Dhfb_old[mu,nu]
       distributed Fpq_a[mu,nu] 
