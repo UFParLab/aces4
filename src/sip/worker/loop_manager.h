@@ -40,6 +40,12 @@ public:
 		do_set_to_exit();
 	}
 
+	bool prefetch_enabled(){
+		return is_prefetch_enabled();
+	}
+
+	int index_id(){ return do_index_id();}
+
 	friend std::ostream& operator<<(std::ostream&, const LoopManager &);
 protected:
 	bool to_exit_;
@@ -47,7 +53,13 @@ protected:
 private:
 	virtual bool do_update() = 0;
 	virtual void do_finalize() = 0;
-	virtual void do_set_to_exit();DISALLOW_COPY_AND_ASSIGN(LoopManager);
+	virtual void do_set_to_exit();
+	virtual bool is_prefetch_enabled(){return false;}
+	virtual int do_index_id(){return -100;}
+	     //only should be used for prefetch_enabled do loops.
+	     //this value should cause an exception at some point.
+
+	DISALLOW_COPY_AND_ASSIGN(LoopManager);
 };
 
 class DoLoop: public LoopManager {
@@ -56,6 +68,7 @@ public:
 			const SipTables & sip_tables);
 	virtual ~DoLoop();
 	friend std::ostream& operator<<(std::ostream&, const DoLoop &);
+	int index_id(){ return index_id_;}
 protected:
 	bool first_time_;
 	int index_id_;
@@ -175,6 +188,30 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(BalancedTaskAllocParallelPardoLoop);
 
 };
+
+
+class PrefetchEnabledDoLoop: public DoLoop {
+public:
+	typedef std::map<int, int> PCToIndexMap;
+	PrefetchEnabledDoLoop(int index_id, DataManager & data_manager,
+			const SipTables & sip_tables);
+	int prefetch_index(int pc);
+	virtual ~PrefetchEnabledDoLoop();
+	friend std::ostream& operator<<(std::ostream&, const PrefetchEnabledDoLoop &);
+protected:
+	PCToIndexMap prefetch_index_map_;
+
+	virtual std::string to_string() const;
+private:
+	virtual bool do_update();
+	virtual void do_finalize();
+	virtual int do_prefetch_index(int pc);
+	virtual bool is_prefetch_enabled(){return true;}
+	virtual int do_index_id(){return index_id_;}
+
+	DISALLOW_COPY_AND_ASSIGN(PrefetchEnabledDoLoop);
+};
+
 #endif
 
 } /* namespace sip */

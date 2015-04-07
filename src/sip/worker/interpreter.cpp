@@ -136,8 +136,12 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case do_op: {
+//			int index_slot = index_selectors()[0];
+//			LoopManager* loop = new DoLoop(index_slot, data_manager_,
+//					sip_tables_);
+//			loop_start(loop);
 			int index_slot = index_selectors()[0];
-			LoopManager* loop = new DoLoop(index_slot, data_manager_,
+			PrefetchEnabledDoLoop* loop = new PrefetchEnabledDoLoop(index_slot, data_manager_,
 					sip_tables_);
 			loop_start(loop);
 		}
@@ -238,8 +242,27 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case get_op: { //TODO  check this.  Have compiler put block info in instruction?
+			sip::BlockSelector selector = block_selector_stack_.top();//added for prefetch
 			sip::BlockId id = get_block_id_from_selector_stack();
+//			std::cout << " getting " << id << "at line " << current_line() << std::endl;
 			sial_ops_.get(id);
+			LoopManager* loopManager = loop_manager_stack_.top();
+			if (loopManager->prefetch_enabled()){
+//				std::cout << "prefetch_enabled" << std::endl << std::flush;
+				int index_id = loopManager->index_id();
+				//find corresponding index in block selector
+				int loc = selector.index_loc(index_id);
+//				std::cout << "selector, index_id, loc   " << selector << ","<< index_id << "," << loc << std::endl << std::flush;
+				if (loc >= 0){
+					BlockId prefetch_id = id;
+					int prefetch_value = static_cast<PrefetchEnabledDoLoop*>(loopManager)->prefetch_index(pc);
+					if (prefetch_value > 0) {
+						prefetch_id.set_index_value(loc, prefetch_value);
+//					std::cout << " prefetching " << prefetch_id  << "at line " << current_line() << std::endl << std::flush;
+					sial_ops_.get(prefetch_id);
+					}
+				}
+			}
 			++pc;
 		}
 			break;
@@ -1659,11 +1682,12 @@ void Interpreter::loop_end() {
 	control_stack_.pop(); //remove own location
 	pc = control_stack_.top();
 	control_stack_.push(own_pc_from_stack);
-	data_manager_.leave_scope();
+//	data_manager_.leave_scope();
 	bool more_iterations = loop_manager_stack_.top()->update();
 	if (more_iterations) {
-		data_manager_.enter_scope();
+//		data_manager_.enter_scope();
 	} else {
+		data_manager_.leave_scope(); //PREFETCHING:  do this here instead of in each iteration
 		LoopManager* loop = loop_manager_stack_.top();
 		loop->finalize();
 		loop_manager_stack_.pop(); //remove loop from stack
@@ -1672,7 +1696,7 @@ void Interpreter::loop_end() {
 		control_stack_.pop(); //pop pc of first instruction in body
 		delete loop;
 		pc = loop_end_pc + 1; //address of instruction following the loop
-	}
+		}
 }
 
 Block::BlockPtr Interpreter::get_block_from_instruction(char intent,

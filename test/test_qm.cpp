@@ -75,7 +75,7 @@ SIAL_PROGRAM = rccsdpt_aaa.siox
 SIAL_PROGRAM = rccsdpt_aab.siox
 
 */
-TEST(Sial_QM,second_ccsdpt_test){
+TEST(Sial_QM,DISABLED_second_ccsdpt_test){
 	std::string job("second_ccsdpt_test");
 
 	std::stringstream output;
@@ -202,7 +202,7 @@ TEST(Sial_QM,cis_test){
 
 }
 
-TEST(Sial_QM,mcpt2_test){
+TEST(Sial_QM,DISABLED_mcpt2_test){
 	std::string job("mcpt2_test");
 
 	std::stringstream output;

@@ -107,7 +107,7 @@ void SialOpsParallel::delete_distributed(int array_id) {
 }
 
 //TODO optimize this.  Can reduce searches in block map.
-void SialOpsParallel::get(BlockId& block_id) {
+void SialOpsParallel::get(BlockId block_id) {
 
 	//check for "data race"
 	check_and_set_mode(block_id, READ);
@@ -383,8 +383,8 @@ void SialOpsParallel::put_initialize(BlockId& target_id, double value){
     		barrier_support_.section_number(),
     		target_id};
     message.id_.parent_id_ptr_ = NULL;
-	std::cout << "WORKER: message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
-    std::cout << "message.value_=" << message.value_ << std::endl << std::flush;
+//	std::cout << "WORKER: message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//    std::cout << "message.value_=" << message.value_ << std::endl << std::flush;
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_initialize_tag, MPI_COMM_WORLD));
 	ack_handler_.expect_ack_from(server_rank, put_initialize_tag);
@@ -448,19 +448,19 @@ void SialOpsParallel::destroy_served(int array_id) {
 	delete_distributed(array_id);
 }
 
-void SialOpsParallel::request(BlockId& block_id) {
-	get(block_id);
-}
-void SialOpsParallel::prequest(BlockId&, BlockId&) {
-	fail("PREQUEST Not supported !");
-}
-void SialOpsParallel::prepare(BlockId& lhs_id, Block::BlockPtr source_ptr) {
-	put_replace(lhs_id, source_ptr);
-}
-void SialOpsParallel::prepare_accumulate(BlockId& lhs_id,
-		Block::BlockPtr source_ptr) {
-	put_accumulate(lhs_id, source_ptr);
-}
+//void SialOpsParallel::request(BlockId block_id) {
+//	get(block_id);
+//}
+//void SialOpsParallel::prequest(BlockId&, BlockId&) {
+//	fail("PREQUEST Not supported !");
+//}
+//void SialOpsParallel::prepare(BlockId& lhs_id, Block::BlockPtr source_ptr) {
+//	put_replace(lhs_id, source_ptr);
+//}
+//void SialOpsParallel::prepare_accumulate(BlockId& lhs_id,
+//		Block::BlockPtr source_ptr) {
+//	put_accumulate(lhs_id, source_ptr);
+//}
 
 void SialOpsParallel::collective_sum(double rhs_value,
 		int dest_array_slot) {
@@ -750,7 +750,7 @@ void SialOpsParallel::initialize_mpi_type(){
      MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
      if(id_extent != sizeof(id)){
 
-     std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
+//     std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
     	 MPI_Datatype id_type_old = block_id_type_;
     	 MPI_Type_create_resized(id_type_old, 0, sizeof(id), &block_id_type_);
     	 MPI_Type_free(&id_type_old);
@@ -775,7 +775,7 @@ void SialOpsParallel::initialize_mpi_type(){
     MPI_Type_create_struct(4,counts, displacements, types, &mpi_put_scalar_op_type_);
     MPI_Type_get_extent(mpi_put_scalar_op_type_, &s_lower, &s_extent);
     if (s_extent != sizeof(tmp_struct)){
-        std::cout << "WORKER: s_extent, sizeof = " << id_extent << "," << sizeof(Put_scalar_op_message_t) << std::endl << std::flush;
+//        std::cout << "WORKER: s_extent, sizeof = " << id_extent << "," << sizeof(Put_scalar_op_message_t) << std::endl << std::flush;
        	 MPI_Datatype type_old = mpi_put_scalar_op_type_;
        	 MPI_Type_create_resized(type_old, 0, sizeof(Put_scalar_op_message_t), &mpi_put_scalar_op_type_);
        	 MPI_Type_free(&type_old);

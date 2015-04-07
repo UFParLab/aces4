@@ -22,6 +22,13 @@ BlockSelector::BlockSelector(int rank, int array_id,
 	}
 }
 
+int BlockSelector::index_loc(int index_id){
+	for (int k = 0; k < rank_; k++){
+		if( index_ids_[k] == index_id) return k;
+	}
+	return -1;
+}
+
 bool BlockSelector::operator==(const BlockSelector& rhs) const {
 	if (rank_ != rhs.rank_) return false;
 	for (int i = 0; i < MAX_RANK; ++i) {

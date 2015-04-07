@@ -175,6 +175,18 @@ public:
 	 */
 	int index_values (int i) const {return index_values_[i];}
 
+	/**
+	 * updates the given index with the given value
+	 * Used in prefetching.
+	 *
+	 * @param i
+	 * @param value
+	 */
+
+	void set_index_value(int i, int value){
+		index_values_[i] = value;
+	}
+
 	int upper_index_values (int i) const {return parent_id_ptr_->index_values_[i];}
 
 	/**Indicates whether this block or region overlap the given one

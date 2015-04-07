@@ -2,6 +2,7 @@ sial get_mpi
 	special list_block_map
 	special print_block r
 	special get_my_rank w
+	special enable_all_rank_print
 	predefined int norb
 	aoindex i = 1:norb
 	aoindex j = 1:norb
@@ -20,21 +21,27 @@ sial get_mpi
 	print i
 	print j
 		a[i,j] = 42.0
+		print a[i,j]
 		put b[i,j] = a[i,j]
 		put c[i,j] += a[i,j]
 		put c[i,j] += a[i,j]
 	endpardo i, j
 	sip_barrier
 	
-	do i
+	
+	
+	execute enable_all_rank_print
+	#do i
+	pardo i
 	   do j
 	      get b[i,j]
 	      get c[i,j]
 	      a[i,j] = b[i,j] + c[i,j]
 	      print a[i,j]
 	   enddo j
-	enddo i
-	
+	#enddo i
+	endpardo i
+
 	sip_barrier
 	execute get_my_rank rank
 	print rank

@@ -47,7 +47,7 @@ public:
 	void create_distributed(int array_id);
 	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
 	void delete_distributed(int array_id);
-	void get(BlockId&);
+	void get(BlockId);
 	void put_replace(BlockId&, const Block::BlockPtr);
 	void put_accumulate(BlockId&, const Block::BlockPtr);
 	void put_initialize(BlockId&, double value);
@@ -55,10 +55,10 @@ public:
 	void put_scale(BlockId&, double value);
 
 	void destroy_served(int array_id);
-	void request(BlockId&);
-	void prequest(BlockId&, BlockId&);
-	void prepare(BlockId&, Block::BlockPtr);
-	void prepare_accumulate(BlockId&, Block::BlockPtr);
+//	void request(BlockId);
+//	void prequest(BlockId&, BlockId&);
+//	void prepare(BlockId&, Block::BlockPtr);
+//	void prepare_accumulate(BlockId&, Block::BlockPtr);
 
 	void collective_sum(double rhs_value, int dest_array_slot);
 	bool assert_same(int source_array_slot);

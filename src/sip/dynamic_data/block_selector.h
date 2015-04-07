@@ -31,6 +31,10 @@ public:
 	int rank_;
 	int array_id_;
 	index_selector_t index_ids_;
+
+	//given an index_id, checks if this selector contains that id.
+	//If so, the position is returned.  If not, -1 is returned.
+	int index_loc(int index_id);
 	bool operator==(const BlockSelector& rhs) const;
 	friend std::ostream& operator<<(std::ostream&, const BlockSelector &);
 };

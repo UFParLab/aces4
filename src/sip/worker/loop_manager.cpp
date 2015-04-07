@@ -73,6 +73,8 @@ void DoLoop::do_finalize() {
 	data_manager_.set_index_undefined(index_id_);
 }
 
+
+
 std::string DoLoop::to_string() const {
 	std::stringstream ss;
 	ss << "index_id_=" << sip_tables_.index_name(index_id_);
@@ -486,6 +488,92 @@ std::ostream& operator<<(std::ostream& os,
 		const BalancedTaskAllocParallelPardoLoop &obj) {
 	os << obj.to_string();
 	return os;
+}
+
+
+PrefetchEnabledDoLoop::PrefetchEnabledDoLoop(int index_id, DataManager & data_manager,
+		const SipTables & sip_tables) : DoLoop(index_id, data_manager, sip_tables)
+//		data_manager_(data_manager), sip_tables_(sip_tables), index_id_(
+//				index_id), first_time_(true)
+{
+	lower_seg_ = sip_tables_.lower_seg(index_id);
+	upper_bound_ = lower_seg_ + sip_tables_.num_segments(index_id);
+//	sip::check_and_warn(lower_seg_ < upper_bound_,
+//			std::string("doloop has empty range"),
+//			Interpreter::global_interpreter->line_number());
+}
+
+PrefetchEnabledDoLoop::~PrefetchEnabledDoLoop() {
+}
+
+bool PrefetchEnabledDoLoop::do_update() {
+//	std::cout << "DEBUG DoLoop:update:46 \n" << this->to_string() << std::endl;
+	if (to_exit_)
+		return false;
+	int current_value;
+	if (first_time_) {  //initialize index to lower value
+		first_time_ = false;
+		sip::check(
+				data_manager_.index_value(index_id_)
+						== DataManager::undefined_index_value,
+				"SIAL or SIP error, index " + sip_tables_.index_name(index_id_)
+						+ " already has value before loop",
+				Interpreter::global_interpreter->line_number());
+		current_value = lower_seg_;
+	} else { //not the first time through loop.  Get the current value and try to increment it
+		current_value = data_manager_.index_value(index_id_);
+		++current_value;
+	}
+	if (current_value < upper_bound_) {
+		data_manager_.set_index_value(index_id_, current_value);
+		return true;
+	}
+	//If here on first time through, the range is empty. This leaves index undefined, which is required behavior.
+	return false;
+}
+void PrefetchEnabledDoLoop::do_finalize() {
+	data_manager_.set_index_undefined(index_id_);
+}
+
+int PrefetchEnabledDoLoop::prefetch_index(int pc){
+	return do_prefetch_index(pc);
+}
+
+int PrefetchEnabledDoLoop::do_prefetch_index(int pc){
+	int& prefetch_int_ptr = prefetch_index_map_[pc];
+	//the above gets a pointer the the value at pc.
+	//if nothing there, it inserts (pc,0) into the map.
+	int prefetch_value = prefetch_int_ptr;
+	int current_value =  data_manager_.index_value(index_id_);
+	if (prefetch_value < current_value){
+		prefetch_value = current_value;
+	}
+	prefetch_value++;
+	if (prefetch_value < upper_bound_){
+		prefetch_int_ptr = prefetch_value;
+//		std::cout << "current_value, prefetch_value, prefetch_int_ref  " << current_value << "," << prefetch_value << ","
+//				<< prefetch_int_ptr << std::endl << std::flush;
+		return prefetch_value;
+	}
+	return -current_value;
+}
+
+std::string PrefetchEnabledDoLoop::to_string() const {
+	std::stringstream ss;
+	ss << "index_id_=" << sip_tables_.index_name(index_id_);
+	ss << ", lower_seg_=" << lower_seg_;
+	ss << ", upper_bound_=" << upper_bound_;
+	ss << ", current= " << data_manager_.index_value_to_string(index_id_);
+
+	PCToIndexMap::const_iterator it;
+	ss << "prefetch index values: (pc, index)" << std::endl;
+	for (it = prefetch_index_map_.begin(); it != prefetch_index_map_.end(); ++it){
+		int pc = it->first;
+		int value = it->second;
+		ss << std::endl;
+		ss << "(" << pc << "," << value << ")" << std::endl;
+	}
+	return ss.str();
 }
 
 #endif
