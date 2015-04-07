@@ -347,6 +347,7 @@ SIOX_FILES=\
 ./src/sialx/test/static_array_test.siox\
 ./src/sialx/test/ifelse.siox\
 ./src/sialx/test/put_test.siox\
+./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/index_decs.siox\
 ./src/sialx/test/predef_scalars.siox\
 ./src/sialx/test/print_block_test.siox\
@@ -466,6 +467,7 @@ EXTRA_DIST += \
 ./src/sialx/test/static_array_test.sialx\
 ./src/sialx/test/ifelse.sialx\
 ./src/sialx/test/put_test.sialx\
+./src/sialx/test/put_initialize.sialx\
 ./src/sialx/test/index_decs.sialx\
 ./src/sialx/test/predef_scalars.sialx\
 ./src/sialx/test/print_block_test.sialx\
