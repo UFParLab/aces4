@@ -4076,6 +4076,7 @@ PARDO a, i
 	get         DDaa[a,a1]
 	tia[i,a1] = 1.0
 	taa[a1,a] = DDaa[a,a1]
+	execute return_diagonal_elements taa[a1,a]
 
 	t2ai[a,i] = tia[i,a1]*taa[a1,a]
 	tai[a,i] += t2ai[a,i]
@@ -4088,6 +4089,7 @@ PARDO a, i
 	get          DDii[i1,i]
 	t2ia[i1,a] = 1.0
 	tii[i,i1]  = DDii[i1,i]
+	execute return_diagonal_elements Tii[i,i1]
 
 	t2ai[a,i]  = tii[i,i1]*t2ia[i1,a]
 	t2ai[a,i] *= -1.0
@@ -6110,9 +6112,10 @@ do kstate
     Tai[a,i]   = 1.0
 
     T3kai[kstate,a,i] = Tk[kstate]^VCONV1A[a,i]
+
     T4kai[kstate,a,i] = etemp
     T3kai[kstate,a,i] += T4kai[kstate,a,i]
-
+    
     execute invert_diagonal Tkai[kstate,a,i] T3kai[kstate,a,i]
     Tkai[kstate,a,i] *= -1.0
     prepare cRk1_a[kstate,a,i] = Tkai[kstate,a,i]

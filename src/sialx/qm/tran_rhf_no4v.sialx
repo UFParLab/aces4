@@ -249,6 +249,7 @@ import "tran_rhf_no4v_defs.sialx"
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 1"
      PARDO mu, nu, lambda
 #
           allocate Txxxi[mu,nu,lambda,*]
@@ -271,26 +272,95 @@ import "tran_rhf_no4v_defs.sialx"
              T1xxxi[mu,nu,lambda,i]         = Txxxi[mu,nu,lambda,i] 
              PREPARE Vxxxi[mu,nu,lambda,i]  = T1xxxi[mu,nu,lambda,i]
 
-           DO i1
+#           DO i1
 #
-              Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*ca[lambda,i1]
-              PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-              Txixi[mu,i1,lambda,i]      = Txxxi[mu,nu,lambda,i]*ca[nu,i1]
-              PREPARE Vxixi[mu,i1,lambda,i] += Txixi[mu,i1,lambda,i]
-              Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*ca[mu,i1]
-              PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
+#              Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*ca[lambda,i1]
+#              PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
+#              Txixi[mu,i1,lambda,i]      = Txxxi[mu,nu,lambda,i]*ca[nu,i1]
+#              PREPARE Vxixi[mu,i1,lambda,i] += Txixi[mu,i1,lambda,i]
+#              Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*ca[mu,i1]
+#              PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
 #
-           ENDDO i1
+#           ENDDO i1
            ENDDO i
 #
           deallocate Txxxi[mu,nu,lambda,*]
 #
      ENDPARDO mu, nu, lambda 
      server_barrier
-     print " Done first"
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 2a"
+     PARDO mu, nu, i
+#
+        ALLOCATE Lxxii[mu,nu,*,i]
+#
+        DO lambda
+           REQUEST Vxxxi[mu,nu,lambda,i] 
+
+           DO i1
+              Txxii[mu,nu,i1,i] = Vxxxi[mu,nu,lambda,i]*ca[lambda,i1]
+              Lxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
+           ENDDO i1
+
+        ENDDO lambda
+#
+        DO i1
+           PREPARE Vxxii[mu,nu,i1,i] = Lxxii[mu,nu,i1,i]
+        ENDDO i1
+
+        DEALLOCATE Lxxii[mu,nu,*,i]
+#
+     ENDPARDO mu, nu, i
+#
+print "Starting tran 2b"
+     PARDO mu, lambda, i
+#
+        ALLOCATE Lxixi[mu,*,lambda,i]
+#
+        DO nu
+           REQUEST Vxxxi[mu,nu,lambda,i] 
+
+           DO i1
+              Txixi[mu,i1,lambda,i] = Vxxxi[mu,nu,lambda,i]*ca[nu,i1]
+              Lxixi[mu,i1,lambda,i] += Txixi[mu,i1,lambda,i]
+           ENDDO i1
+
+        ENDDO nu
+#
+        DO i1
+           PREPARE Vxixi[mu,i1,lambda,i] = Lxixi[mu,i1,lambda,i]
+        ENDDO i1
+
+        DEALLOCATE Lxixi[mu,*,lambda,i]
+#
+     ENDPARDO mu, lambda, i
+
+print "Starting tran 2c"
+     pardo nu,lambda,i
+
+         allocate Lixxi[*,nu,lambda,i]
+
+	 do mu
+	     request Vxxxi[mu,nu,lambda,i]
+
+	     do i1
+		 Tixxi[i1,nu,lambda,i] = Vxxxi[mu,nu,lambda,i]*ca[mu,i1]
+		 Lixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
+	     enddo i1
+
+	 enddo mu
+
+	 do i1
+	     prepare Vixxi[i1,nu,lambda,i] = Lixxi[i1,nu,lambda,i]
+	 enddo i1
+
+         deallocate Lixxi[*,nu,lambda,i]
+
+     endpardo nu,lambda,i
+#
+print "Starting tran 2d"
      PARDO mu, nu, i
 #
         ALLOCATE Lxxai[mu,nu,*,i]
@@ -332,6 +402,7 @@ import "tran_rhf_no4v_defs.sialx"
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 3a"
      PARDO mu, nu, i, i1
 #
            REQUEST Vxixi[mu,i,nu,i1]  
@@ -342,8 +413,8 @@ import "tran_rhf_no4v_defs.sialx"
            ENDDO p 
 #
      ENDPARDO mu, nu, i, i1
-     print "done tran3 a " 
 #
+print "Starting tran 3b"
      PARDO mu, nu, i, i1
 
            REQUEST Vxxii[mu,nu,i,i1]  
@@ -354,8 +425,8 @@ import "tran_rhf_no4v_defs.sialx"
            ENDDO a
 #
      ENDPARDO mu, nu, i, i1
-     print "done tran3 b " 
 #
+print "Starting tran 3c"
      PARDO mu, nu, i, i1
 #
            REQUEST Vixxi[i,mu,nu,i1]  
@@ -366,10 +437,10 @@ import "tran_rhf_no4v_defs.sialx"
            ENDDO a
 #
      ENDPARDO mu, nu, i, i1
-     print "done tran3 c " 
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 3d"
      PARDO mu, a, i
 #
         ALLOCATE Lxaai[mu,*,a,i]
@@ -391,7 +462,6 @@ import "tran_rhf_no4v_defs.sialx"
 
         DEALLOCATE Lxaai[mu,*,a,i]
      ENDPARDO mu, a, i
-     print "done tran3 d " 
 #
 #    ------------------------------------------------------------------------
 #
@@ -408,6 +478,7 @@ import "tran_rhf_no4v_defs.sialx"
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 4:VSpiqj|VSpipi"
      PARDO mu, p, i, i1
 #
            REQUEST             Vxipi[mu,i,p,i1]  
@@ -432,6 +503,7 @@ import "tran_rhf_no4v_defs.sialx"
 #
      ENDPARDO mu, p, i, i1
 #
+print "Starting tran 4:Vaaii|Viaai"
      PARDO mu, a, i, i1
 #
            REQUEST Vxaii[mu,a,i,i1]  
@@ -453,6 +525,7 @@ import "tran_rhf_no4v_defs.sialx"
 #
      ENDPARDO mu, a, i, i1
 # 
+print "Starting tran 4:Vaaai|VSaaai"
      PARDO a, a1, i
 #
         ALLOCATE Laaai[*,a,a1,i]

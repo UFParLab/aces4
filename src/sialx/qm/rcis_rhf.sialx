@@ -1599,23 +1599,28 @@ do ksub
 #    if norm1 > normcrit
 	norm2 = (norm1)**(-0.5)
 #    endif
+
+     pardo a,i
+         prepare RB1_a[ksub,a,i] *= norm2
+     endpardo a,i
+
 #    print norm2
-    Tk[ksub] = norm2
+#    Tk[ksub] = norm2
 #
-    server_barrier
-    pardo a,i
-	request RB1_a[ksub,a,i]
-        Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
-	put DRNai[a,i] = Tai[a,i]
-    endpardo a,i
-    server_barrier
-#
-    T1k[ksub] = 1.0
-    pardo a,i
-        get DRNai[a,i]
-	Tkai[ksub,a,i] = T1k[ksub]*DRNai[a,i]
-	prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
-    endpardo a,i
+#    server_barrier
+#    pardo a,i
+#	request RB1_a[ksub,a,i]
+#        Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
+#	put DRNai[a,i] = Tai[a,i]
+#    endpardo a,i
+#    server_barrier
+##
+#    T1k[ksub] = 1.0
+#    pardo a,i
+#        get DRNai[a,i]
+#	Tkai[ksub,a,i] = T1k[ksub]*DRNai[a,i]
+#	prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
+#    endpardo a,i
 #
 enddo ksub
 server_barrier
@@ -1668,14 +1673,21 @@ server_barrier
     collective norm1 += normS
     overlap2 = overlap1/norm1
     overlap2 *= -1.0
-    T2k[qsub] = overlap2
+    Tkk[qsub,ksub] = overlap2
+#    T2k[qsub] = overlap2
 
 # update x(q) inplace
     pardo a,i
-	get DRNai[a,i]
-	Tkai[qsub,a,i] = T2k[qsub]*DRNai[a,i]
+        request RB1_a[ksub,a,i]
+	Tkai[qsub,a,i] = Tkk[qsub,ksub]*RB1_a[ksub,a,i]
 	prepare RB1_a[qsub,a,i] += Tkai[qsub,a,i]
     endpardo a,i
+
+#    pardo a,i
+#	get DRNai[a,i]
+#	Tkai[qsub,a,i] = T2k[qsub]*DRNai[a,i]
+#	prepare RB1_a[qsub,a,i] += Tkai[qsub,a,i]
+#    endpardo a,i
 #
 enddo ksub
 enddo qsub
