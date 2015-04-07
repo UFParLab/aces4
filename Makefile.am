@@ -274,6 +274,7 @@ TEST_INIT_DATA_FILES=\
 test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
+test/eom_test.dat\
 test/mcpt2_test.dat\
 test/lindep_test.dat
 
@@ -346,6 +347,7 @@ SIOX_FILES=\
 ./src/sialx/test/static_array_test.siox\
 ./src/sialx/test/ifelse.siox\
 ./src/sialx/test/put_test.siox\
+./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/index_decs.siox\
 ./src/sialx/test/predef_scalars.siox\
 ./src/sialx/test/print_block_test.siox\
@@ -446,6 +448,7 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
+./src/sialx/qm/lr_eom_ccsd_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
@@ -464,6 +467,7 @@ EXTRA_DIST += \
 ./src/sialx/test/static_array_test.sialx\
 ./src/sialx/test/ifelse.sialx\
 ./src/sialx/test/put_test.sialx\
+./src/sialx/test/put_initialize.sialx\
 ./src/sialx/test/index_decs.sialx\
 ./src/sialx/test/predef_scalars.sialx\
 ./src/sialx/test/print_block_test.sialx\

@@ -36,6 +36,9 @@ public:
 	void get(BlockId&);
 	void put_replace(BlockId&, const Block::BlockPtr);
 	void put_accumulate(BlockId&, const Block::BlockPtr);
+	void put_initialize(const BlockId&, double value);
+	void put_increment(const BlockId&, double value);
+	void put_scale(const BlockId&, double value);
 
 	void destroy_served(int array_id);
 	void request(BlockId&);

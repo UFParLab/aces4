@@ -291,6 +291,7 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
 configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 
@@ -498,6 +499,8 @@ set(SIAL_FILES
     src/sialx/test/persistent_distributed_array_test1.sialx;
     src/sialx/test/persistent_distributed_array_test2.sialx;
     src/sialx/test/put_test_mpi.sialx;
+    src/sialx/test/put_initialize.sialx;
+    src/sialx/test/put_increment.sialx;
     src/sialx/test/put_accumulate_mpi.sialx;
     src/sialx/test/delete_mpi.sialx;
     src/sialx/test/get_mpi.sialx;
@@ -549,6 +552,7 @@ set(SIAL_FILES
     src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/rcis_d_rhf.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
+    src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx)
 

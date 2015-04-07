@@ -20,6 +20,7 @@
 # Declare indeces 
 # --------------- 
 #
+special list_block_map
       index kiter    = 1: cc_iter   
       index   kbeg   = 1: scf_beg # Change to cc_beg 
       index   korder = 1: scf_hist # Change to cc_hist 
@@ -488,7 +489,7 @@
       restore_persistent VSpipi "VSpipi"
       restore_persistent Vaaii  "Vaaii"
       restore_persistent Viaai  "Viaai"
-      restore_persistent Vaaai  "VSaaai"
+      restore_persistent Vaaai  "Vaaai"
       restore_persistent Vpiqj  "Vpiqj"
      #restore_persistent energy  "energy"
 
@@ -2502,7 +2503,7 @@
       PROC DIISN 
 #     ---------- 
 
-      create DIST_BB 
+#      create DIST_BB 
       worder = niter 
       if niter >= diis_order 
          worder = diis_order 
@@ -2795,7 +2796,7 @@
 
       endif 
       server_barrier
-      delete DIST_BB 
+#      delete DIST_BB 
 
       ENDPROC DIISN 
 #     ------------- 
@@ -2855,10 +2856,11 @@
       SERVER_BARRIER  
 # 
 # zero out the diis vectors 
-     #PARDO jdiis, j1diis 
+     PARDO jdiis, j1diis 
      #         tbb(jdiis,j1diis)         = 0.0  
      #         PUT DIST_BB(jdiis,j1diis) = tbb(jdiis,j1diis)  
-     #ENDPARDO jdiis, j1diis 
+     PUT DIST_BB[jdiis,j1diis] = 0.0
+     ENDPARDO jdiis, j1diis 
 
       PARDO a, i, b, j 
             REQUEST                     T2old_ab[a,i,b,j]  
@@ -3005,7 +3007,7 @@
       set_persistent VSpipi "VSpipi"
       set_persistent Vaaii  "Vaaii"
       set_persistent Viaai  "Viaai"
-      set_persistent Vaaai  "VSaaai"
+      set_persistent Vaaai  "Vaaai"
       set_persistent Vpiqj  "Vpiqj"
 #
                            ENDSIAL CCSD_RHF_SV1    

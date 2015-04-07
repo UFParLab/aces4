@@ -1,4 +1,4 @@
-sial put_test
+sial put_initialize
 predefined int norb
 aoindex i = 1:norb
 aoindex j = 1:norb
@@ -10,16 +10,17 @@ local result[k]
 
 scalar x
 
-
+#sip_barrier
 
 print "starting loop"
 pardo i
 do j
-t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
-#x = (scalar)((i-1)*norb + (j-1)) + 1.0
-put a[i,j] = t[i,j]
-#put a[i,j] = x
+#t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+x = (scalar)((i-1)*norb + (j-1)) + 1.0
+#put a[i,j] = t[i,j]
+put a[i,j] = x
 print i
+print j
 #print t[i,j]
 print x
 enddo j
@@ -40,4 +41,4 @@ enddo k
 enddo j
 enddo i
 
-endsial put_test
+endsial put_initialize

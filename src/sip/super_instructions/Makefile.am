@@ -44,6 +44,8 @@ QM_SOURCE_FILES=\
 ./qm/utility/invert_diagonal.F\
 ./qm/utility/invert_diagonal_asym.F\
 ./qm/utility/return_diagonal_elements.F\
+./qm/utility/anti_symm_o.F\
+./qm/utility/anti_symm_v.F\
 ./qm/utility/eigen_calc.F\
 ./qm/utility/eigen_calc_sqr_inv.F\
 ./qm/utility/gen_eigen_calc.F\

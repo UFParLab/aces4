@@ -51,10 +51,11 @@ special invert_diagonal_asym ur
 special get_my_rank u
 special anti_symm_v u
 special anti_symm_o u
-special lanti_symm_v u
-special lanti_symm_o u
+#special lanti_symm_v u
+#special lanti_symm_o u
 special cis_unit_guess ur
 special return_sval ru
+special read_block_from_text_file w
 #     NOT PORTED 
 
 endsial reom_rhf_defs
