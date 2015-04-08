@@ -347,7 +347,6 @@ SIOX_FILES=\
 ./src/sialx/test/static_array_test.siox\
 ./src/sialx/test/ifelse.siox\
 ./src/sialx/test/put_test.siox\
-./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/index_decs.siox\
 ./src/sialx/test/predef_scalars.siox\
 ./src/sialx/test/print_block_test.siox\
@@ -400,6 +399,8 @@ SIOX_FILES=\
 ./src/sialx/test/persistent_distributed_array_test2.siox\
 ./src/sialx/test/put_test_mpi.siox\
 ./src/sialx/test/put_accumulate_mpi.siox\
+./src/sialx/test/put_initialize.siox\
+./src/sialx/test/put_increment.siox\
 ./src/sialx/test/delete_mpi.siox\
 ./src/sialx/test/get_mpi.siox\
 ./src/sialx/test/persistent_distributed_array_mpi1.siox\
@@ -467,7 +468,6 @@ EXTRA_DIST += \
 ./src/sialx/test/static_array_test.sialx\
 ./src/sialx/test/ifelse.sialx\
 ./src/sialx/test/put_test.sialx\
-./src/sialx/test/put_initialize.sialx\
 ./src/sialx/test/index_decs.sialx\
 ./src/sialx/test/predef_scalars.sialx\
 ./src/sialx/test/print_block_test.sialx\
@@ -520,6 +520,7 @@ EXTRA_DIST += \
 ./src/sialx/test/persistent_distributed_array_test2.sialx\
 ./src/sialx/test/put_test_mpi.sialx\
 ./src/sialx/test/put_accumulate_mpi.sialx\
+./src/sialx/test/put_increment.sialx\
 ./src/sialx/test/delete_mpi.sialx\
 ./src/sialx/test/get_mpi.sialx\
 ./src/sialx/test/persistent_distributed_array_mpi1.sialx\
