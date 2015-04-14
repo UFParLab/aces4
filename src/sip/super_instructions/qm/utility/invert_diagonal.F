@@ -38,36 +38,50 @@ c--------------------------------------------------------------------------
       call do_return_inv3(1, extents_0(1),
      *                    1, extents_0(2),
      *                    1, extents_0(3),
-     *                    data_0,data_1)
+     *                    data_0,data_1,ierr)
       elseif (rank_0 .eq. 5) then
       call do_return_inv5(1, extents_0(1),
      *                    1, extents_0(2),
      *                    1, extents_0(3),
      *                    1, extents_0(4),
      *                    1, extents_0(5),
-     *                    data_0,data_1)
+     *                    data_0,data_1,ierr)
+      else
+	  write(*,*) "bad call to invert_diagonal"
+	  call abort_job()
+      endif
+
+      if (ierr .eq. 1) then
+	  call abort_job()
       endif
 
       return
       end
 
-      subroutine do_return_inv3( a1, a2, b1, b2, c1, c2, array1,array2)
+      subroutine do_return_inv3( a1, a2, b1, b2, c1, c2,
+     *                           array1,array2,ierr)
       implicit none
-      integer a, a1, a2, b, b1, b2, c, c1, c2, d, d1, d2, m1, m2, n1, n2
+      integer ierr
+      integer a, a1, a2
+      integer b, b1, b2
+      integer c, c1, c2 
       double precision array1(a1:a2,b1:b2,c1:c2) 
       double precision array2(a1:a2,b1:b2,c1:c2) 
-      double precision val
+      double precision val, div
 
       val = 0.0 
 
       do c = c1,c2
       do b = b1,b2
       do a = a1,a2
-          if(array2(a,b,c) .gt. 1.d-12) then
-              val = array1(a,b,c)/array2(a,b,c)
-          else
-              val = 0.d0
+          div = array2(a,b,c)
+	  if (div .eq. 0.d0) then
+	      write(*,*) "--ZERO denominator in invert diagonal"
+	      write(*,100) a,b,c,div
+	      ierr = 1
+	      return
           endif
+	  val = array1(a,b,c)/div
           array1(a,b,c) = val
 C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
@@ -79,8 +93,9 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       end
 
       subroutine do_return_inv5(a1,a2,b1,b2,c1,c2,d1,d2,e1,e2, 
-     *                          array1,array2)
+     *                          array1,array2,ierr)
       implicit none
+      integer ierr
       integer a, a1, a2
       integer b, b1, b2
       integer c, c1, c2 
@@ -88,7 +103,7 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       integer e, e1, e2
       double precision array1(a1:a2,b1:b2,c1:c2,d1:d2,e1:e2) 
       double precision array2(a1:a2,b1:b2,c1:c2,d1:d2,e1:e2) 
-      double precision val
+      double precision val, div
 
       val = 0.0 
 
@@ -97,11 +112,14 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       do c = c1,c2
       do b = b1,b2
       do a = a1,a2
-          if(array2(a,b,c,d,e) .gt. 1.d-12) then
-              val = array1(a,b,c,d,e)/array2(a,b,c,d,e)
-          else
-              val = 0.d0
+          div = array2(a,b,c,d,e)
+	  if (div .eq. 0.d0) then
+	      write(*,*) "--ZERO denominator in invert diagonal"
+	      write(*,100) a,b,c,d,e,div
+	      ierr = 1
+	      return
           endif
+          val = array1(a,b,c,d,e)/div
           array1(a,b,c,d,e) = val
 C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
@@ -109,7 +127,7 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
       enddo 
       enddo 
-  100 format(3I3,24E14.6)
+  100 format(5I3,24E14.6)
 
       return
       end

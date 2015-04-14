@@ -17,6 +17,8 @@ sial get_mpi
 	
 	println "Sending blocks"	
 	pardo i, j
+	print i
+	print j
 		a[i,j] = 42.0
 		put b[i,j] = a[i,j]
 		put c[i,j] += a[i,j]

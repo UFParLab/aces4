@@ -158,6 +158,9 @@ Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 //	std::cout << "calling get_block_for_updating for " << id << current_line()<<std::endl << std::flush;
 	Block::BlockPtr blk = block(id);
+	if (blk==NULL){
+		std::cout << *this;
+	}
 	sial_check(blk != NULL, "Attempting to update non-existent block " + id.str(sip_tables_), current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.

@@ -4,8 +4,6 @@ project(super_instructions_library)
 # Quantum Methods
 set(QM_SOURCE_FILES
     qm/cis_unit_guess.F;
-    qm/cis_energy_numerator.F;
-    qm/update_cis_bvec.F;
     qm/energy_ty_denominator_rhf.F;
     qm/aoladder_contraction.F;
     qm/int_gen_parms.hf;
@@ -21,16 +19,16 @@ set(QM_SOURCE_FILES
     qm/set_ijk_aaa.F;
     qm/set_ijk_aab.F;
     qm/utility/return_diagonal_elements.F;
+    qm/utility/anti_symm_o.F;
+    qm/utility/anti_symm_v.F;
     qm/utility/invert_diagonal.F;
     qm/utility/invert_diagonal_asym.F;
-    qm/utility/eig.F;
-    qm/utility/diag.F;
     qm/utility/eigen_calc.F;
+    qm/utility/eigen_calc_sqr_inv.F;
     qm/utility/gen_eigen_calc.F;
     qm/utility/form_R.F ;
     qm/utility/stripi.F;
     qm/utility/compute_diis.F;
-    qm/utility/eig_sr_inv.F;
     qm/utility/return_sval.F;
     qm/mcpt-fragment/set_frag.F;
     qm/mcpt-fragment/scf_atom_lowmem.F;

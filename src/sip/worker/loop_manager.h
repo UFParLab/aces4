@@ -146,7 +146,7 @@ public:
 	BalancedTaskAllocParallelPardoLoop(int num_indices,
 			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
 			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter);
+			int num_where_clauses, Interpreter* interpreter, long& iteration);
 	virtual ~BalancedTaskAllocParallelPardoLoop();
 	friend std::ostream& operator<<(std::ostream&,
 			const BalancedTaskAllocParallelPardoLoop &);
@@ -156,7 +156,7 @@ private:
 	virtual void do_finalize();
 	bool first_time_;
 	int num_indices_;
-	long iteration_;
+	long& iteration_;
 	index_selector_t index_id_;
 	index_value_array_t lower_seg_;
 	index_value_array_t upper_bound_;

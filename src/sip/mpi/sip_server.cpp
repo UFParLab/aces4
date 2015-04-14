@@ -8,6 +8,7 @@
 #include "sip.h"
 #include "sip_mpi_utils.h"
 #include <sstream>
+#include "sial_ops_parallel.h"
 
 namespace sip {
 
@@ -22,6 +23,7 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 				sip_mpi_attr), persistent_array_manager_(persistent_array_manager),
 				terminated_(false), server_timer_(server_timer),
 				last_seen_line_(0), last_seen_worker_(0){
+	initialize_mpi_type();
 	SIPServer::global_sipserver = this;
 }
 
@@ -62,31 +64,50 @@ void SIPServer::run() {
 		//case SIPMPIData::CREATE:
 		//	// NO OP - Create blocks on the fly.
 		//	break;
-		case SIPMPIConstants::GET:
+		case SIPMPIConstants::GET:{
 			handle_GET(mpi_source, mpi_tag);
+		}
 			break;
-		case SIPMPIConstants::PUT:
+		case SIPMPIConstants::PUT:{
 			int put_data_tag;
 			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA, transaction_number);
 			handle_PUT(mpi_source, mpi_tag, put_data_tag);
+		}
 			break;
-		case SIPMPIConstants::PUT_ACCUMULATE:
+		case SIPMPIConstants::PUT_ACCUMULATE:{
 			int put_accumulate_data_tag;
 			put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
 					SIPMPIConstants::PUT_ACCUMULATE_DATA, transaction_number);
 			handle_PUT_ACCUMULATE(mpi_source, mpi_tag, put_accumulate_data_tag);
+		}
 			break;
-		case SIPMPIConstants::DELETE:
+		case SIPMPIConstants::PUT_INITIALIZE:{
+			handle_PUT_INITIALIZE(mpi_source, mpi_tag);
+		}
+			break;
+		case SIPMPIConstants::PUT_INCREMENT:{
+			handle_PUT_INCREMENT(mpi_source, mpi_tag);
+		}
+			break;
+		case SIPMPIConstants::PUT_SCALE:{
+			handle_PUT_SCALE(mpi_source, mpi_tag);
+		}
+			break;
+		case SIPMPIConstants::DELETE:{
 			handle_DELETE(mpi_source, mpi_tag);
+		}
 			break;
-		case SIPMPIConstants::SET_PERSISTENT:
+		case SIPMPIConstants::SET_PERSISTENT:{
 			handle_SET_PERSISTENT(mpi_source, mpi_tag);
+		}
 			break;
-		case SIPMPIConstants::RESTORE_PERSISTENT:
+		case SIPMPIConstants::RESTORE_PERSISTENT:{
 			handle_RESTORE_PERSISTENT(mpi_source, mpi_tag);
+		}
 			break;
-		case SIPMPIConstants::END_PROGRAM:
+		case SIPMPIConstants::END_PROGRAM:{
 			handle_END_PROGRAM(mpi_source, mpi_tag);
+		}
 			break;
 		default:
 			fail("Received unexpected message in SIP Server !");
@@ -121,12 +142,13 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	BlockId::mpi_block_id_t buffer;
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
-
+	//DEBUG
+//	if(block_id.array_id_==137){std::cout << "get block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	size_t block_size = sip_tables_.block_size(block_id);
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id);
+	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id, last_seen_line_);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
@@ -154,8 +176,9 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source)){
 		std::stringstream err_ss;
-		err_ss << "Incorrect GET block semantics for " << block_id ;
-		fail(err_ss.str());
+		err_ss << "Incorrect GET block semantics for " << block_id << " at line " << last_seen_line_
+				<< "from worker " << mpi_source << ".  Probably a missing sip_barrier";
+		sial_check(false,err_ss.str());
 	}
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
@@ -188,6 +211,8 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	BlockId::mpi_block_id_t buffer;
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
+	//DEBUG
+//	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
@@ -212,8 +237,8 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source)){
 		std::stringstream err_ss;
-		err_ss << "Incorrect PUT block semantics for " << block_id ;
-		fail(err_ss.str());
+		err_ss << "Incorrect PUT block semantics (data race) for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source << ". Probably a missing sip_barrier";
+		sial_check(false,err_ss.str());
 	}
 
 	//send ack
@@ -252,7 +277,8 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	BlockId::mpi_block_id_t buffer;
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
-
+	//DEGBUG
+//	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 	//get the block size
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
@@ -272,7 +298,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-	ServerBlock* block = disk_backed_block_map_.get_block_for_updating(block_id);
+	ServerBlock* block = disk_backed_block_map_.get_block_for_accumulate(block_id);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 
@@ -282,8 +308,9 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source)){
 		std::stringstream err_ss;
-		err_ss << "Incorrect PUT_ACCUMULATE block semantics for " << block_id ;
-		fail(err_ss.str());
+		err_ss << "Incorrect PUT_ACCUMULATE block semantics for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source
+				<< ". Probably a missing sip_barrier";
+		sial_check(false,err_ss.str());
 	}
 
 	//send ack
@@ -334,10 +361,95 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 
 	//delete the block and map for the indicated array
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
+//	if(array_id==137){std::cout << "delete " << array_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
 
+}
+
+void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag){
+	SialOpsParallel::Put_scalar_op_message_t message;
+	MPI_Status status;
+	MPI_Recv(&message, 1, mpi_put_scalar_op_type_, mpi_source, put_initialize_tag,
+			MPI_COMM_WORLD, &status);
+
+
+
+
+//	std::cout << "put_initialize message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+	ServerBlock* block =
+			disk_backed_block_map_.get_block_for_writing(message.id_);
+	last_seen_line_ = message.line_;
+	last_seen_worker_ = mpi_source;
+	int section = message.section_;
+
+	bool section_number_changed = state_.check_section_number_invariant(section);
+	handle_section_number_change(section_number_changed);
+
+	//send ack
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_initialize_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+	//get the block size
+	int block_size;
+	block_size = sip_tables_.block_size(message.id_);
+
+	block->fill_data(block_size, message.value_);
+
+//	std::cout << *block << std::endl << std::flush;
+
+}
+void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag){
+	SialOpsParallel::Put_scalar_op_message_t message;
+	MPI_Status status;
+	MPI_Recv(&message, 1, mpi_put_scalar_op_type_, mpi_source, put_increment_tag,
+			MPI_COMM_WORLD, &status);
+
+	//send ack
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_increment_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
+//	std::cout << "put_increment message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+	ServerBlock* block =
+			disk_backed_block_map_.get_block_for_accumulate(message.id_);
+	last_seen_line_ = message.line_;
+	last_seen_worker_ = mpi_source;
+
+	bool section_number_changed = state_.check_section_number_invariant(message.section_);
+	handle_section_number_change(section_number_changed);
+
+	//get the block size
+	int block_size;
+	block_size = sip_tables_.block_size(message.id_);
+
+	block->increment_data(block_size, message.value_);
+
+}
+
+void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag){
+	SialOpsParallel::Put_scalar_op_message_t message;
+	MPI_Status status;
+	MPI_Recv(&message, 1, mpi_put_scalar_op_type_, mpi_source, put_scale_tag,
+			MPI_COMM_WORLD, &status);
+
+	//send ack
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_scale_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
+//	std::cout << "put_scale message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+	ServerBlock* block =
+			disk_backed_block_map_.get_block_for_accumulate(message.id_);
+	last_seen_line_ = message.line_;
+	last_seen_worker_ = mpi_source;
+
+	bool section_number_changed = state_.check_section_number_invariant(message.section_);
+	handle_section_number_change(section_number_changed);
+
+	//get the block size
+	int block_size;
+	block_size = sip_tables_.block_size(message.id_);
+
+	block->scale_data(block_size, message.value_);
 }
 
 void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
@@ -490,5 +602,101 @@ std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
 int SIPServer::last_seen_line(){
 	return last_seen_line_;
 }
+
+
+//TODO refactor to avoid code duplication in sip_server and sial_ops_parallel
+//TODO use MPI features to define the datatype in a more portable way
+void SIPServer::initialize_mpi_type(){
+
+	/*
+	    //TODO change line to pc
+		struct Put_scalar_op_message_t{
+		    double value_;
+		    int line_;
+		    int section_;
+			BlockId id_;
+		};
+
+		MPI_Datatype mpi_put_scalar_op_type;
+		MPI_Datatype block_id_type;
+		void initialize_mpi_type();
+	 *
+	 */
+
+
+	    MPI_Aint  displacements[4], s_lower, s_extent;
+	    MPI_Datatype  types[4];
+
+	    Put_scalar_op_message_t tmp_struct;
+
+	    /* create type for BlockId, skip the parent_id_ptr */
+	     BlockId id;
+	     MPI_Aint id_displacements[3], id_lb, id_extent;
+	     MPI_Datatype id_types[3];
+	     MPI_Get_address(&id.array_id_, &id_displacements[0]);
+	     MPI_Get_address(&id.index_values_, &id_displacements[1]);
+	     MPI_Get_address(&id.parent_id_ptr_, &id_displacements[2]);
+	     id_types[0] = MPI_INT;
+	     id_types[1] = MPI_INT;
+	     id_types[2] = MPI_BYTE;
+	     int id_counts[3]={1,MAX_RANK, sizeof(BlockId*)};
+	     //convert addresses to displacement from beginning
+	     id_displacements[2] -= id_displacements[0];
+	     id_displacements[1] -= id_displacements[0];
+	     id_displacements[0] = 0;
+	     MPI_Type_create_struct(3,id_counts, id_displacements, id_types, &block_id_type_);
+	     /*check that it has the correct extent*/
+	     MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
+	     if(id_extent != sizeof(BlockId)){
+
+	     std::cout << "id_extent, sizeof = " << id_extent << "," << sizeof(BlockId) << std::endl << std::flush;
+	    	 MPI_Datatype id_type_old = block_id_type_;
+	    	 MPI_Type_create_resized(id_type_old, 0, sizeof(BlockId), &block_id_type_);
+	    	 MPI_Type_free(&id_type_old);
+	     }
+	     MPI_Type_commit(&block_id_type_);
+
+	    /* Now get type  for the initialize whole struct */
+	    MPI_Get_address(&tmp_struct.value_, &displacements[0]);
+	    MPI_Get_address(&tmp_struct.line_, &displacements[1]);
+	    MPI_Get_address(&tmp_struct.section_, &displacements[2]);
+	    MPI_Get_address(&tmp_struct.id_, &displacements[3]);
+	    types[0] = MPI_DOUBLE;
+	    types[1] = MPI_INT;
+	    types[2] = MPI_INT;
+	    types[3] = block_id_type_;
+	    int counts[4] = {1,1,1,1};
+	    //convert addresses to displacement from beginning
+	    displacements[3] -= displacements[0];
+	    displacements[2] -= displacements[0];
+	    displacements[1] -= displacements[0];
+	    displacements[0] = 0;
+	    MPI_Type_create_struct(4,counts, displacements, types, &mpi_put_scalar_op_type_);
+	    MPI_Type_get_extent(mpi_put_scalar_op_type_, &s_lower, &s_extent);
+	    if (s_extent != sizeof(Put_scalar_op_message_t)){
+	        std::cout << "s_extent, sizeof = " << id_extent << "," << sizeof(Put_scalar_op_message_t) << std::endl << std::flush;
+	       	 MPI_Datatype type_old = mpi_put_scalar_op_type_;
+	       	 MPI_Type_create_resized(type_old, 0, sizeof(Put_scalar_op_message_t), &mpi_put_scalar_op_type_);
+	       	 MPI_Type_free(&type_old);
+	    }
+	    MPI_Type_commit(&mpi_put_scalar_op_type_);
+
+//    MPI_Aint offsets[3];
+//    MPI_Aint int_size = sizeof(int);
+//
+//    offsets[0] = 0;  //block_id
+//     offsets[1] = int_size * BlockId::MPI_BLOCK_ID_COUNT + /*padding*/ int_size;  //line, section
+//     offsets[2] = offsets[1] + 2* int_size + /*padding*/ 2*int_size; //value
+//
+//
+//
+//
+//
+//	int counts[] = {BlockId::MPI_BLOCK_ID_COUNT, 2, 1};
+//	MPI_Datatype types[] = {MPI_INT, MPI_INT, MPI_DOUBLE};
+//
+//	SIPMPIUtils::check_err(MPI_Type_create_struct(3, counts, offsets, types, &mpi_put_scalar_op_type));
+//	SIPMPIUtils::check_err(MPI_Type_commit(&mpi_put_scalar_op_type));
+};
 
 } /* namespace sip */

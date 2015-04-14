@@ -28,9 +28,10 @@ public:
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
-	ServerBlock* get_block_for_reading(const BlockId& block_id);
+	ServerBlock* get_block_for_reading(const BlockId& block_id, int line);
 	ServerBlock* get_block_for_writing(const BlockId& block_id);
 	ServerBlock* get_block_for_updating(const BlockId& block_id);
+	ServerBlock* get_block_for_accumulate(const BlockId& block_id);
 
 	// Get entire arrays for save, restore operations
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id);

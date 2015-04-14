@@ -1162,6 +1162,7 @@ if rank == 0.0
 #
 endif
 #
+server_barrier
 pardo a,i
 do kstate
     request RB1_a[kstate,a,i]
@@ -1334,7 +1335,7 @@ ENDPROC form_diag
 #
 PROC form_HB
 #
-print "Forming expensive H*B"
+print "Forming H*B"
 #
 pardo ksub,a,i
     Tkai[ksub,a,i] = 0.0
@@ -1424,7 +1425,15 @@ if rank == 0.0
 #-- In static alpha vecs index 1 is the range index 2 is the state
 #-- La[i,state] Gmat[i,j] Ra[j,state] = E[state]
 #--
-    execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
+#    execute gen_eigen_calc GSmat SAlphaL SAlphaR SEk
+    execute eigen_calc GSmat SalphaR
+
+    do ksub
+    do ksub1
+	where ksub == ksub1
+	SEk[ksub] = GSmat[ksub,ksub1]
+    enddo ksub1
+    enddo ksub
 
 #    print SEk
 #    print salphaR
@@ -1432,7 +1441,7 @@ if rank == 0.0
     do kstate
 	SEk0[kstate] = SEk[kstate]
     enddo kstate
-    print "RHF-CIS excitation energies"
+    print "-- RHF-CIS excitation energies --"
     do kstate
 	allocate contiguous CIS_EE_Energy[kstate:kstate]
 	CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
@@ -1590,22 +1599,28 @@ do ksub
 #    if norm1 > normcrit
 	norm2 = (norm1)**(-0.5)
 #    endif
+
+     pardo a,i
+         prepare RB1_a[ksub,a,i] *= norm2
+     endpardo a,i
+
 #    print norm2
-    Tk[ksub] = norm2
+#    Tk[ksub] = norm2
 #
-    pardo a,i
-	request RB1_a[ksub,a,i]
-        Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
-	put DRNai[a,i] = Tai[a,i]
-    endpardo a,i
-    server_barrier
-#
-    T1k[ksub] = 1.0
-    pardo a,i
-        get DRNai[a,i]
-	Tkai[ksub,a,i] = T1k[ksub]*DRNai[a,i]
-	prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
-    endpardo a,i
+#    server_barrier
+#    pardo a,i
+#	request RB1_a[ksub,a,i]
+#        Tai[a,i] = Tk[ksub]*RB1_a[ksub,a,i]
+#	put DRNai[a,i] = Tai[a,i]
+#    endpardo a,i
+#    server_barrier
+##
+#    T1k[ksub] = 1.0
+#    pardo a,i
+#        get DRNai[a,i]
+#	Tkai[ksub,a,i] = T1k[ksub]*DRNai[a,i]
+#	prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
+#    endpardo a,i
 #
 enddo ksub
 server_barrier
@@ -1624,6 +1639,7 @@ do qsub
 do ksub
 where ksub < qsub
 #
+server_barrier
     overlapS = 0.0
     normS    = 0.0
     Tk[qsub] = 1.0
@@ -1631,6 +1647,7 @@ where ksub < qsub
 #
 # form overlap and norm
 #
+    server_barrier
     pardo a,i
         request RB1_a[qsub,a,i]
 	request RB1_a[ksub,a,i]
@@ -1656,14 +1673,21 @@ where ksub < qsub
     collective norm1 += normS
     overlap2 = overlap1/norm1
     overlap2 *= -1.0
-    T2k[qsub] = overlap2
+    Tkk[qsub,ksub] = overlap2
+#    T2k[qsub] = overlap2
 
 # update x(q) inplace
     pardo a,i
-	get DRNai[a,i]
-	Tkai[qsub,a,i] = T2k[qsub]*DRNai[a,i]
+        request RB1_a[ksub,a,i]
+	Tkai[qsub,a,i] = Tkk[qsub,ksub]*RB1_a[ksub,a,i]
 	prepare RB1_a[qsub,a,i] += Tkai[qsub,a,i]
     endpardo a,i
+
+#    pardo a,i
+#	get DRNai[a,i]
+#	Tkai[qsub,a,i] = T2k[qsub]*DRNai[a,i]
+#	prepare RB1_a[qsub,a,i] += Tkai[qsub,a,i]
+#    endpardo a,i
 #
 enddo ksub
 enddo qsub
@@ -1737,6 +1761,7 @@ do kstate
     norm2 = (norm1)**(-0.5)
     Tk[kstate] = norm2
 #
+    server_barrier
     pardo a,i
 	request R1k1_a[kstate,a,i]
         Tai[a,i] = Tk[kstate]*R1k1_a[kstate,a,i]
@@ -1888,7 +1913,7 @@ server_barrier
 do kstate
 pardo a,i
     request RB1_a[kstate,a,i]
-    prepare R1k1_a[kstate,a,i] = RB1_a[kstate,a,i]
+    prepare R0k1_a[kstate,a,i] = RB1_a[kstate,a,i]
 endpardo a,i
 enddo kstate
 server_barrier
@@ -1898,7 +1923,7 @@ set_persistent ca       "ca"
 set_persistent Fock_a   "fock_a"
 set_persistent Vaaii    "Vaaii"
 set_persistent Viaai    "Viaai"
-set_persistent R1k1_a   "C1_a"
+set_persistent R0k1_a   "C1_a"
 set_persistent RB1_a    "B1_a"
 set_persistent SEk0     "CIS_E"
 server_barrier

@@ -202,6 +202,88 @@ TEST(Sial_QM,cis_test){
 
 }
 
+/* eom-ccsd test, ZMAT is:
+test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=8
+cc_conv=8
+spherical=off
+excite=eomee
+estate_sym=2
+estate_tol=7
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_uhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = lr_eom_ccsd_rhf.siox 
+*/
+TEST(Sial_QM,eom_test){
+	std::string job("eom_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274034, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ccsd_energy = controller.scalar_value("ccsd_energy");
+		ASSERT_NEAR(-75.71251002928709, ccsd_energy, 1e-10);
+	}
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.36275490375537, 0.43493738840536};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-10);
+		}
+	}
+//
+// eom
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.32850656893104, 0.41193399028059};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-8);
+		}
+	}
+
+}
+
+
 TEST(Sial_QM,mcpt2_test){
 	std::string job("mcpt2_test");
 
@@ -228,6 +310,45 @@ TEST(Sial_QM,mcpt2_test){
 		ASSERT_NEAR(0.25084388980906, mono_lccd, 1e-10);
 	}
 
+}
+
+/* linear dependence test
+test
+C            .000000     .000000     .762209
+C            .000000     .000000    -.762209
+H            .000000    1.018957    1.157229
+H           -.882443    -.509479    1.157229
+H            .882443    -.509479    1.157229
+H            .000000   -1.018957   -1.157229
+H           -.882443     .509479   -1.157229
+H            .882443     .509479   -1.157229
+
+*ACES2(BASIS=3-21++G
+SCF_MAXCYC=1
+lindep_tol=3
+spherical=off
+CALC=scf)
+
+*SIP
+MAXMEM=3000
+SIAL_PROGRAM = scf_rhf_coreh.siox
+
+*/
+TEST(Sial_QM,lindep_test){
+	std::string job("lindep_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-64.24332859583458, scf_energy, 1e-10);
+	}
 }
 
 //****************************************************************************************************************

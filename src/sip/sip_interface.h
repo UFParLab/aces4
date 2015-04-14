@@ -21,6 +21,8 @@ void delete_scratch_array(double **array);
 void integer_scratch_array(int& num_elements, int **array);
 void delete_integer_scratch_array(int **array);
 
+int query_int_constant(const char*cname);
+int query_scalar_constant(const char*cname);
 int int_constant(const char*cname);
 double scalar_constant(const char*cname);
 void set_scalar_value(const char * name, double value);
