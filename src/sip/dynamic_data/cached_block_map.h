@@ -100,26 +100,53 @@ public:
 	void free_up_bytes_in_cache(std::size_t block_size);
 
 	/**
-	 * Returns total number of blocks in the active map + cached mape.  Used for testing.
+	 * Returns total number of blocks in the active map + cached map.  Used for testing.
 	 * @return
 	 */
 	std::size_t total_blocks(){
 		return block_map_.total_blocks() + cache_.total_blocks();
 	}
 
+	/**
+	 * Deletes no-longer-pending blocks in the pending_delete_ list
+     * @return true if any blocks were cleared
+	 */
+	bool test_and_clean_pending();
+    /**
+     * Waits for pending-delete  blocks and deletes them.
+     * Postcondition of this method is that the pending_delete_ list is empty.
+     */
+
+	void wait_and_clean_pending();
+
+	/**
+	 * Waits for any pending-delete blocks and deletes them.
+     * @return true if memory used by a block was freed up.
+	 */
+    bool wait_and_clean_any_pending();
+
+
 private:
 
-	/* A block must be in only one of the two maps : block_map_ or cache_ */
+	/* A block can be in at most one data structure:  block_map_, cache_, or pending_delete_*/
 
 	IdBlockMap<Block> block_map_; 	/*! Backing IdBlockMap */
 	IdBlockMap<Block> cache_;		/*! Backing Cache */
 	LRUArrayPolicy<Block> policy_;	/*! The block replacement Policy */
+	std::list<Block*> pending_delete_; /*! A list of blocks that would have been deleted when leaving a scope except they had a pending MPI_Request*/
 
 	/** Maximum number of bytes before deleting blocks from the cache_ */
 	std::size_t max_allocatable_bytes_;
 
 	/** Allocated bytes in blocks */
 	std::size_t allocated_bytes_;
+
+	/** Bytes in blocks that can be deleted when a pending mpi request is resolved.  (These are often temp blocks used as the source for put) */
+	std::size_t pending_delete_bytes_;
+
+	friend class TestControllerParallel;
+
+	DISALLOW_COPY_AND_ASSIGN(CachedBlockMap);
 };
 
 } /* namespace sip */

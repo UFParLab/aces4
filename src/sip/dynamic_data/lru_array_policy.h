@@ -11,7 +11,10 @@
 #include "sip_interface.h"
 #include "id_block_map.h"
 #include "block_id.h"
+
+#ifdef HAVE_MPI
 #include "server_block.h"
+#endif 
 
 #include <list>
 #include <stdexcept>
@@ -53,10 +56,27 @@ public:
     	lru_list_.remove(array_id);
     }
 
+    /*! Any blocks available to remove? */
+    bool any_blocks_for_removal() {
+    	/** Mimicks the functionality of get_next_block_for_removal(), returns boolean */
+    	if(lru_list_.empty())
+    		return false;
+		while (!lru_list_.empty()) {
+			int to_remove_array = lru_list_.back();
+			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* array_map = block_map_.per_array_map(to_remove_array);
+			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::iterator it = array_map->begin();
+
+			if (it == array_map->end())
+				lru_list_.pop_back();
+			else
+				return true;
+		}
+		return false;
+    }
+
     /*! Get the next block for removal */
 	BlockId get_next_block_for_removal(){
-		/** Return an arbitrary block from the least recently used array
-		 */
+		/** Return an arbitrary block from the least recently used array  */
 		if(lru_list_.empty())
 			throw std::out_of_range("No blocks have been touched, yet block requested for flushing");
 		while (!lru_list_.empty()) {
@@ -93,8 +113,10 @@ private:
 
 };
 
+#ifdef HAVE_MPI
 // Template Specialization for ServerBlocks. Implementation in disk_backed_block_map.cpp
 template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal();
+#endif // HAVE_MPI
 
 } /* namespace sip */
 

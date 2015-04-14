@@ -12,11 +12,14 @@ namespace sip {
 CachedBlockMap::CachedBlockMap(int num_arrays)
 	: block_map_(num_arrays), cache_(num_arrays), policy_(cache_),
 	  max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
-	  allocated_bytes_(0){
+	  allocated_bytes_(0), pending_delete_bytes_(0){
 }
 
 CachedBlockMap::~CachedBlockMap() {
-	/** Just calls the destructors of the backing structures. */
+/** waits for blocks pending delete to be deleted*/
+	wait_and_clean_pending();
+	check_and_warn(pending_delete_bytes_==0, "pending_delete_bytes != 0 after wait_and_clean_pending in ~CachedBlockMap");
+	check_and_warn(pending_delete_.size()==0, "pending_delete_ not empty in ~CachedBlockMap");
 }
 
 Block* CachedBlockMap::block(const BlockId& block_id){
@@ -35,11 +38,82 @@ Block* CachedBlockMap::block(const BlockId& block_id){
 }
 
 void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
-	while (max_allocatable_bytes_ - allocated_bytes_ <= bytes_in_block) {
-		BlockId block_id = policy_.get_next_block_for_removal();
-		Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
-		allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
+    while (max_allocatable_bytes_ - (allocated_bytes_ + pending_delete_bytes_) <= bytes_in_block) {
+        /** While not enough space is available, check to see if blocks in communication (pending block)
+         * have been freed up. If so, check if space has been freed up (continue).
+         * If not, check if there is any block to clear from the lru cache.
+         * If no blocks in the LRU cache, wait on any pending block. If there are no pending blocks,
+         * we have run out of space - Crash !
+         */
+        bool cleared_some_pending = test_and_clean_pending();
+        if (cleared_some_pending)
+            continue;
+        bool any_blocks_for_removal = policy_.any_blocks_for_removal();
+        if (!any_blocks_for_removal){
+            bool cleared_any_pending = wait_and_clean_any_pending();
+            if (!cleared_any_pending){
+                throw std::out_of_range("No blocks to remove from cache or pending deletes");
+            }
+        } else {
+            BlockId block_id = policy_.get_next_block_for_removal();
+            Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
+            allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
+            delete tmp_block_ptr;
+        }
+    }
+}
+
+bool CachedBlockMap::test_and_clean_pending(){
+// Cleaning pending blocks is relevant only for the MPI version
+    bool cleared_any_pending = false;
+#ifdef HAVE_MPI
+    std::list<Block*>::iterator it;
+    for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+        Block* bptr = *it;
+        if (bptr->test()){
+            pending_delete_bytes_ -= bptr->size() * sizeof(double);
+            delete *it;
+            pending_delete_.erase(it++);
+            cleared_any_pending = true;
+        }
+        else ++it;
+    }
+#endif // HAVE_MPI
+    return cleared_any_pending;
+}
+
+void CachedBlockMap::wait_and_clean_pending(){
+// Cleaning of pending blocks only relevant for the MPI version
+#ifdef HAVE_MPI
+	std::list<Block*>::iterator it;
+	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+		Block* bptr = *it;
+		bptr->wait();
+		pending_delete_bytes_ -= bptr->size() * sizeof(double);
+		delete *it;
+		pending_delete_.erase(it++);
 	}
+#endif // HAVE_MPI
+}
+
+
+//int CachedBlockMap::pending_list_size(){
+//	return pending_delete_.size();
+//}
+
+bool CachedBlockMap::wait_and_clean_any_pending() {
+#ifdef HAVE_MPI
+	std::list<Block*>::iterator it = pending_delete_.begin();
+	if (it != pending_delete_.end()){
+		Block* bptr = *it;
+		bptr->wait();
+		pending_delete_bytes_ -= bptr->size() * sizeof(double);
+		delete *it;
+		pending_delete_.erase(it);
+        return true;
+	}
+#endif
+    return false;
 }
 
 void CachedBlockMap::insert_block(const BlockId& block_id, Block* block_ptr){
@@ -68,7 +142,15 @@ void CachedBlockMap::cached_delete_block(const BlockId& block_id){
 void CachedBlockMap::delete_block(const BlockId& block_id){
 	Block* tmp_block_ptr = block_map_.get_and_remove_block(block_id);
 	allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
-	delete tmp_block_ptr;
+#ifdef HAVE_MPI
+	if (!tmp_block_ptr->test()){
+		pending_delete_bytes_ += tmp_block_ptr->size() * sizeof(double);
+		pending_delete_.push_back(tmp_block_ptr);
+	} else 
+	    delete tmp_block_ptr;
+#else // HAVE_MPI
+    delete tmp_block_ptr;
+#endif // HAVE_MPI
 
 }
 
