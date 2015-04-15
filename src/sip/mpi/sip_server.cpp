@@ -69,16 +69,24 @@ void SIPServer::run() {
 		}
 			break;
 		case SIPMPIConstants::PUT:{
+			handle_PUT(mpi_source, mpi_tag);
+		}
+			break;
+		case SIPMPIConstants::PUT_DATA:{
 			int put_data_tag;
 			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA, transaction_number);
-			handle_PUT(mpi_source, mpi_tag, put_data_tag);
+			handle_PUT_DATA(mpi_source, put_data_tag);
 		}
 			break;
 		case SIPMPIConstants::PUT_ACCUMULATE:{
+			handle_PUT_ACCUMULATE(mpi_source, mpi_tag);
+		}
+			break;
+		case SIPMPIConstants::PUT_ACCUMULATE_DATA:{
 			int put_accumulate_data_tag;
 			put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
 					SIPMPIConstants::PUT_ACCUMULATE_DATA, transaction_number);
-			handle_PUT_ACCUMULATE(mpi_source, mpi_tag, put_accumulate_data_tag);
+			handle_PUT_ACCUMULATE_DATA(mpi_source, put_accumulate_data_tag);
 		}
 			break;
 		case SIPMPIConstants::PUT_INITIALIZE:{
@@ -183,7 +191,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 }
 
-void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
+void SIPServer::handle_PUT(int mpi_source, int put_tag) {
 	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 2;
 	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
 	const int section_num_offset = line_num_offset + 1;
@@ -212,6 +220,24 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	//DEBUG
 //	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
+
+
+	expecting_blockid_map_[mpi_source] = block_id;
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
+}
+
+void SIPServer::handle_PUT_DATA(int mpi_source, int put_data_tag){
+
+	std::map<int, BlockId>::iterator foundit = expecting_blockid_map_.find(mpi_source);
+	if(foundit == expecting_blockid_map_.end()){
+		std::stringstream err_ss;
+		err_ss << "Could not find block id in expecting block id map for rank " << mpi_source;
+		fail(err_ss.str());
+	}
+	BlockId& block_id = foundit->second;
+	MPI_Status status;
+
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
@@ -225,7 +251,6 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-
 
 	//receive data
 	SIPMPIUtils::check_err(
@@ -243,12 +268,9 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_data_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
-
 }
 
-void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
-		int put_accumulate_data_tag) {
+void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag) {
 	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 2;
 	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
 	const int section_num_offset = line_num_offset + 1;
@@ -275,9 +297,25 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	BlockId::mpi_block_id_t buffer;
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
-	//DEGBUG
-//	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
-	//get the block size
+
+	expecting_blockid_map_[mpi_source] = block_id;
+
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
+}
+
+void SIPServer::handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_data_tag){
+
+	std::map<int, BlockId>::iterator foundit = expecting_blockid_map_.find(mpi_source);
+	if(foundit == expecting_blockid_map_.end()){
+		std::stringstream err_ss;
+		err_ss << "Could not find block id in expecting block id map for rank " << mpi_source;
+		fail(err_ss.str());
+	}
+	BlockId& block_id = foundit->second;
+
+
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
@@ -322,9 +360,9 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	//delete the temporary buffer
 	delete[] temp;
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
-
 }
+
+
 
 void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	SIP_LOG(
