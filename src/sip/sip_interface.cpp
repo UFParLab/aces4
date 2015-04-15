@@ -16,10 +16,13 @@
 #include "block.h"
 #include <stdexcept>
 
-#ifdef HAVE_MPI
 #include "sip_mpi_attr.h"
+
+#ifdef HAVE_MPI
 #include "sip_server.h"
 #endif // HAVE_MPI
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -194,6 +197,10 @@ int current_line() {
 	return sip::get_line_number();
 }
 
+int mpi_rank(){
+	return  sip::get_mpi_rank();
+}
+
 //NOT YET IMPLEMENTED
 //void get_config_info(const char* sialfile, const char* key, const char* value);
 
@@ -231,6 +238,11 @@ int get_line_number() {
 	} else
 		return 0;
 #endif	// HAVE_MPI
+}
+
+int get_mpi_rank(){
+	SIPMPIAttr& attr = SIPMPIAttr::get_instance();
+	return attr.global_rank();
 }
 
 }

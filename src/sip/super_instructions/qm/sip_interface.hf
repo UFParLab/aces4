@@ -11,5 +11,13 @@
       use, intrinsic :: ISO_C_BINDING
       end function current_line
       end interface
+      
+      interface
+      integer (C_INT) function mpi_rank() bind(C)
+        use, intrinsic :: ISO_C_BINDING
+      end function mpi_rank
+      end interface
+      
+      
    
     
