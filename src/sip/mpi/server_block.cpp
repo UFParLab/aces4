@@ -16,17 +16,29 @@
 
 #include "lru_array_policy.h"
 
+#include "TAU.h"
+
 namespace sip {
 
 const std::size_t ServerBlock::field_members_size_ = sizeof(int) + sizeof(int) + sizeof(dataPtr);
 std::size_t ServerBlock::allocated_bytes_ = 0;
 
-ServerBlock::ServerBlock(int size, bool initialize):
-		size_(size), consistency_status_(std::make_pair(NONE, OPEN)){
+ServerBlock::ServerBlock(int size, bool initialize)
+        : size_(size)
+        , consistency_status_(std::make_pair(NONE, OPEN))
+        , isOnMPI(false)
+        , MPI_operation_type(MPI_NONE)
+        , mpi_request()
+        {
+    
 	if (initialize){
+        TAU_START("double allocate true");
 		data_ = new double[size_]();
+        TAU_STOP("double allocate true");
     } else {
+        TAU_START("double allocate");
 		data_ = new double[size_];
+        TAU_STOP("double allocate");
     }
 
 	disk_status_[ServerBlock::IN_MEMORY] = true;
@@ -39,8 +51,15 @@ ServerBlock::ServerBlock(int size, bool initialize):
 	allocated_bytes_ += size_ * sizeof(double);
 }
 
-ServerBlock::ServerBlock(int size, dataPtr data):
-		size_(size), data_(data), consistency_status_(std::make_pair(NONE, OPEN)) {
+ServerBlock::ServerBlock(int size, dataPtr data)
+        : size_(size)
+        , data_(data)
+        , consistency_status_(std::make_pair(NONE, OPEN)) 
+        , isOnMPI(false)
+        , MPI_operation_type(MPI_NONE)
+        , mpi_request()
+        {
+        
 	disk_status_[ServerBlock::IN_MEMORY] = (data_ == NULL) ? false : true;
 	disk_status_[ServerBlock::ON_DISK] = false;
 	disk_status_[ServerBlock::DIRTY_IN_MEMORY] = false;
@@ -73,28 +92,16 @@ ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	}
 	return data_;
 }
-ServerBlock::dataPtr ServerBlock::fill_data(size_t size, double value) {
-	std::fill(data_+0, data_+size, value);
-	return data_;
-}
 
-ServerBlock::dataPtr ServerBlock::scale_data(size_t size, double factor) {
-	for (int i = 0; i < size; ++i) {
-		data_[i] *= factor;
-	}
-//	std::cout << "at server, in scale_data, first element of block is " << data_[0] << std::endl<< std::flush;
-	return data_;
-}
-
-ServerBlock::dataPtr ServerBlock::increment_data(size_t size, double delta) {
-	for (int i = 0; i < size; ++i) {
-		data_[i] += delta;
-	}
-	return data_;
-}
 
 void ServerBlock::free_in_memory_data() {
 	if (data_ != NULL) {
+        if (isOnMPI)
+        {
+            MPI_Wait(&mpi_request, MPI_STATUS_IGNORE);
+            isOnMPI = false;
+        }
+    
 		delete [] data_; data_ = NULL;
 		disk_status_[ServerBlock::IN_MEMORY] = false;
 		disk_status_[ServerBlock::DIRTY_IN_MEMORY] = false;
@@ -144,7 +151,6 @@ void ServerBlock::reset_consistency_status (){
 
 
 bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker){
-
 	/**
 	 * Block Consistency Rules
 	 *
@@ -162,10 +168,8 @@ bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t op
 	int prev_worker = consistency_status_.second;
 
 	// Check if block already in inconsistent state.
-	if (mode == INVALID_MODE || prev_worker == INVALID_WORKER){
-		std::cout << "block in inconsistent state on entry to update and check "<< std::endl << std::flush;
+	if (mode == INVALID_MODE || prev_worker == INVALID_WORKER)
 		return false;
-	}
 
 
 	ServerBlockMode new_mode = INVALID_MODE;
@@ -178,9 +182,9 @@ bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t op
 		 */
 		if (OPEN == prev_worker){
 			switch(operation){
-			case SIPMPIConstants::GET : new_mode = READ; new_worker = worker; break;
-			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE	:		new_mode = WRITE; 		new_worker = worker; break;
-			case SIPMPIConstants::PUT_ACCUMULATE :	case SIPMPIConstants::PUT_INCREMENT: case SIPMPIConstants::PUT_SCALE: new_mode = ACCUMULATE; 	new_worker = worker; break;
+			case SIPMPIConstants::GET : 			new_mode = READ; 		new_worker = worker; break;
+			case SIPMPIConstants::PUT : 			new_mode = WRITE; 		new_worker = worker; break;
+			case SIPMPIConstants::PUT_ACCUMULATE :	new_mode = ACCUMULATE; 	new_worker = worker; break;
 			default : goto consistency_error;
 			}
 		} else {
@@ -198,13 +202,13 @@ bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t op
 		} else if (MULTIPLE_WORKER == prev_worker){
 			switch(operation){
 			case SIPMPIConstants::GET :				new_mode = READ; new_worker = MULTIPLE_WORKER; break;
-			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE: case SIPMPIConstants::PUT_ACCUMULATE : case SIPMPIConstants::PUT_INCREMENT: case SIPMPIConstants::PUT_SCALE:{	goto consistency_error; } break;
+			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_ACCUMULATE : {	goto consistency_error; } break;
 			default : goto consistency_error;
 			}
 		} else { 	// Single worker
 			switch(operation){
 			case SIPMPIConstants::GET :	new_mode = READ; new_worker = (worker == prev_worker ? worker : MULTIPLE_WORKER); break;
-			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_ACCUMULATE : case SIPMPIConstants::PUT_SCALE:{
+			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_ACCUMULATE :{
 				if (worker != prev_worker)
 					goto consistency_error;
 				new_mode = SINGLE_WORKER;
@@ -235,21 +239,21 @@ bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t op
 		if (OPEN == prev_worker){
 			goto consistency_error;
 		} else if (MULTIPLE_WORKER == prev_worker){
-			if (SIPMPIConstants::PUT_ACCUMULATE == operation || SIPMPIConstants::PUT_INCREMENT == operation || SIPMPIConstants::PUT_SCALE == operation){
+			if (SIPMPIConstants::PUT_ACCUMULATE == operation){
 				new_mode = ACCUMULATE; new_worker = MULTIPLE_WORKER;
 			} else {
 				goto consistency_error;
 			}
 		} else { // Single worker
 			switch(operation){
-			case SIPMPIConstants::GET : case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE: {
+			case SIPMPIConstants::GET : case SIPMPIConstants::PUT : {
 				if (prev_worker != worker)
 					goto consistency_error;
 				new_worker = worker;
 				new_mode = SINGLE_WORKER;
 			}
 			break;
-			case SIPMPIConstants::PUT_ACCUMULATE :	case SIPMPIConstants::PUT_SCALE : case SIPMPIConstants::PUT_INCREMENT : {
+			case SIPMPIConstants::PUT_ACCUMULATE :	{
 				new_mode = ACCUMULATE;
 				new_worker = (worker == prev_worker ? worker : MULTIPLE_WORKER);
 			}
@@ -279,7 +283,6 @@ bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t op
 	return true;
 
 consistency_error:
-std::cout << "Inconsistent block at server " << consistency_status_.first << "," << consistency_status_.second << std::endl << std::flush;
 	SIP_LOG(std::cout << "Inconsistent block at server ")
 	consistency_status_.first = INVALID_MODE;
 	consistency_status_.second = INVALID_WORKER;

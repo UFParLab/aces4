@@ -14,13 +14,10 @@
 #include "barrier_support.h"
 #include "server_persistent_array_manager.h"
 #include "disk_backed_block_map.h"
+#include "server_interpreter.h"
 #include "server_timer.h"
 
-
-
 namespace sip {
-
-
 
 /** SIPServer manages distributed/served arrays.
  *
@@ -45,12 +42,8 @@ namespace sip {
  * GET: server receives GET from worker, replies with requested block.  It is a fatal error for a worker to request a block that doesn't exist
  * PUT: server receives PUT from worker with block id, server receives matching PUT_DATA from worker.  replies with PUT_DATA_ACK.
  * PUT_ACCUMULATE: server receives PUT_ACCUMLATE from worker with block id, server receives matching PUT_ACCUMULATE_DATA from worker.  replies with PUT_ACCUMULATE_DATA_ACK.
- * PUT_INITIALIZE: server receives PUT_INITIALIZE from  worker with block id and double value and replies with ack containing same tag.  Server initializes each element of the
- *     block to the value. If the block does not exist, it is created.
- * PUT_INCREMENT: server receives PUT_INCREMENT from worker with block id and double value and replies with ack containing the same tag.  Server increments each element
- *     of the block with the given value.
- * PUT_SCALE:  server receives PUT_SCALE from worker with block id and double value and replies with ack containing the same tag.  Server multiplies each element
- *     of the block with the given value.
+ * RESTORE_PERSISTENT:
+ * SET_PERSISTENT:
  * DELETE:
  *
  * TODO:  In the current implementation, on receipt of a PUT or PUT_ACCUMULATE, the server waits for the
@@ -162,8 +155,9 @@ private:
 	 */
 	DiskBackedBlockMap disk_backed_block_map_;
 
-
-	/**
+    ServerInterpreter server_interpreter_;
+	
+    /**
 	 * Get
 	 *
 	 * invoked by server loop.
@@ -176,7 +170,7 @@ private:
 	 *
 	 *
 	 */
-	void handle_GET(int mpi_source, int tag);
+	void handle_GET(int mpi_source, int tag, int mpi_count);
 
 	/**
 	 * Put
@@ -215,11 +209,7 @@ private:
 	 * @param [in] put_accumulate_tag
 	 * @param [in] put_accumulate_data_tag
 	 */
-	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag);
-
-	void handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag);
-	void handle_PUT_INCREMENT(int mpi_source, int put_increment_tag);
-	void handle_PUT_SCALE(int mpi_source, int put_scale_tag);
+	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag, int mpi_count);
 
 	/**
 	 * delete
@@ -298,18 +288,6 @@ private:
 
 
 	void handle_section_number_change(bool section_number_changed);
-
-
-	struct Put_scalar_op_message_t{
-	    double value_;
-	    int line_;
-	    int section_;
-		BlockId id_;
-	};
-
-	MPI_Datatype mpi_put_scalar_op_type_;
-	MPI_Datatype block_id_type_;
-	void initialize_mpi_type();
 
 
     friend ServerPersistentArrayManager;

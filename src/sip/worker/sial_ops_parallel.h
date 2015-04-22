@@ -8,6 +8,7 @@
 
 #include <mpi.h>
 #include "sip.h"
+#include <vector>
 //#include "sip_tables.h"
 #include "barrier_support.h"
 #include "async_acks.h"
@@ -24,13 +25,8 @@ class WorkerPersistentArrayManager;
 class DataManager;
 class SipTables;
 
-
-
 class SialOpsParallel {
 public:
-
-
-
 	//PersistentArrayManager is pointer so it won't be
 	//deleted in the destructor--it has a lifespan
 	//beyond SIAL programs.
@@ -47,18 +43,15 @@ public:
 	void create_distributed(int array_id);
 	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
 	void delete_distributed(int array_id);
-	void get(BlockId&);
+	void get(BlockId&, std::vector<int>&);
 	void put_replace(BlockId&, const Block::BlockPtr);
-	void put_accumulate(BlockId&, const Block::BlockPtr);
-	void put_initialize(BlockId&, double value);
-	void put_increment(BlockId&, double value);
-	void put_scale(BlockId&, double value);
+	void put_accumulate(BlockId&, const Block::BlockPtr, std::vector<int>&);
 
 	void destroy_served(int array_id);
-	void request(BlockId&);
+	void request(BlockId&, std::vector<int>&);
 	void prequest(BlockId&, BlockId&);
 	void prepare(BlockId&, Block::BlockPtr);
-	void prepare_accumulate(BlockId&, Block::BlockPtr);
+	void prepare_accumulate(BlockId&, Block::BlockPtr, std::vector<int>&);
 
 	void collective_sum(double rhs_value, int dest_array_slot);
 	bool assert_same(int source_array_slot);
@@ -94,25 +87,6 @@ public:
 			bool is_scope_extent = false);
 
 	Block::BlockPtr get_block_for_updating(const BlockId& id);
-
-
-
-	/** mpi related types and variable */
-	//TODOD is this the right place for this?
-    const static int id_line_section_size;
-
-
-    //TODO change line to pc
-	struct Put_scalar_op_message_t{
-	    double value_;
-	    int line_;
-	    int section_;
-		BlockId id_;
-	};
-
-	MPI_Datatype mpi_put_scalar_op_type_;
-    MPI_Datatype block_id_type_;
-	void initialize_mpi_type();
 
 private:
 
@@ -181,8 +155,6 @@ private:
 	void reset_mode();
 
 	bool nearlyEqual(double a, double  b, double epsilon);
-
-
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

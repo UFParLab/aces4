@@ -51,20 +51,20 @@ template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(){
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables, 
                                        const SIPMPIAttr& sip_mpi_attr, 
                                        const DataDistribution& data_distribution,
-                                       ServerTimer& server_timer/*, 
-                                       ServerInterpreter& server_interpreter*/)
+                                       ServerTimer& server_timer, 
+                                       ServerInterpreter& server_interpreter)
                                        : sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr)
                                        , data_distribution_(data_distribution), block_map_(sip_tables.num_arrays())
                                        , disk_backed_arrays_io_(sip_tables, sip_mpi_attr, data_distribution)
                                        , policy_(block_map_), server_timer_(server_timer) 
-                                       //, server_interpreter_(server_interpreter)
+                                       , server_interpreter_(server_interpreter)
                                        , max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage())
                                        , block_access_counter(0), data_volume_counter(0)
                                        , disk_volume_counter(0), disk_read_counter(0)
                                        , disk_write_counter(0), total_stay_in_memory_counter(0)
                                        , max_allocated_bytes(0), max_block_size(0) {
     
-    //create_blocks_bucket();
+    create_blocks_bucket();
     
 }
 

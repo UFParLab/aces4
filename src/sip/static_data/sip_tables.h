@@ -195,6 +195,7 @@ private:
 	friend class Interpreter;
 	friend class DataManager;
 	friend class ContiguousArrayManager;
+	friend class ServerInterpreter;
 	friend class DiskBackedArraysIO;
 	friend class ::TestController;
 	friend class Tracer;

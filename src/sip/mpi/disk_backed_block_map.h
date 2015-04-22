@@ -14,7 +14,7 @@
 #include "lru_array_policy.h"
 #include "server_timer.h"
 
-//#include "server_interpreter.h"
+#include "server_interpreter.h"
 
 #include <set>
 
@@ -36,7 +36,7 @@ class ServerInterpreter;
 class DiskBackedBlockMap {
 public:
 	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&, 
-                       ServerTimer&/*, ServerInterpreter&*/);
+                       ServerTimer&, ServerInterpreter&);
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
@@ -121,12 +121,12 @@ private:
 	IdBlockMap<ServerBlock> block_map_;			/*! interface to memory block map */
     LRUArrayPolicy<ServerBlock> policy_;		/*! block replacement policy */
 
-	//ServerInterpreter &server_interpreter_;
+	ServerInterpreter &server_interpreter_;
     
     /** Maximum number of bytes before spilling over to disk */
 	std::size_t max_allocatable_bytes_;
 
-	//friend ServerInterpreter;
+	friend ServerInterpreter;
 	friend DiskBackedArraysIO;
 };
 

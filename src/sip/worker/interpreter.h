@@ -20,6 +20,7 @@
 
 #include <string>
 #include <stack>
+#include <vector>
 #include <sstream>
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
@@ -251,6 +252,9 @@ private:
 	 */
 	SialPrinter* printer_;
 
+    std::stack<int> loop_stack_;
+    std::vector<int> loop_indices_;
+
 	/**
 	 * Called by constructor
 	 * @param
@@ -294,14 +298,14 @@ private:
 
 	/** the "program counter". Actually, the current location in the op_table_.
 	 */
-	int pc; //technically, this should be pc_, but I'm going to leave it this way for convenience
+    int pc; //technically, this should be pc_, but I'm going to leave it this way for convenience
 
-	/**
-	 * Valid for when BalancedTaskAllocParallelPardoLoop is used.
-	 * In a pardo section, the iteration is counted across all pardos. This variable is passed to
-	 * the BalancedTaskAllocParallelPardoLoop instance.
-	 */
-	long iteration_;
+	/**		
+	 * Valid for when BalancedTaskAllocParallelPardoLoop is used.		
+	 * In a pardo section, the iteration is counted across all pardos. This variable is passed to		
+	 * the BalancedTaskAllocParallelPardoLoop instance.		
+	 */		
+	long iteration_;		
 
 	/** contains a stack of pointers to LoopManager objects.
 	 * A LoopManager is created and pushed onto the stack when a loop is entered,
@@ -462,6 +466,8 @@ private:
 	sip::Block::BlockPtr get_block(char intent, sip::BlockSelector&,
 			sip::BlockId&, bool contiguous_allowed = true);
 
+    void gather_loop_indices();
+    
 	// GPU
 	sip::Block::BlockPtr get_gpu_block(char intent, sip::BlockId&,
 			bool contiguous_allowed = true);
