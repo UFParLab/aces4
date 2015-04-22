@@ -60,8 +60,7 @@ void SIPServer::run() {
                 }
                 if (more_blocks_to_prefetch) {
                     more_blocks_to_prefetch = server_interpreter_.prefetch_block();
-                }
-                if (more_blocks_to_write) {
+                } else if (more_blocks_to_write) {
                     more_blocks_to_write = server_interpreter_.write_block();
                 }
             } else {
