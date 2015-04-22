@@ -251,7 +251,7 @@ bool DiskBackedBlockMap::is_block_in_memory(const BlockId &block_id) {
 bool DiskBackedBlockMap::is_block_dirty(const BlockId &block_id) {
     ServerBlock* block = block_map_.block(block_id);
     
-    return block == NULL || block->is_dirty();
+    return block != NULL && block->is_dirty();
 }
 
 bool DiskBackedBlockMap::prefetch_block(const BlockId &block_id) {

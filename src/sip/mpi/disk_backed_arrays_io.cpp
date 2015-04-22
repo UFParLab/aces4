@@ -256,7 +256,7 @@ void DiskBackedArraysIO::delete_array(const int array_id, IdBlockMap<ServerBlock
 
     /** Zero out blocks on disk that this server owns
      */
-    
+    /*
     MPI_File my_file = mpi_file_arr_[array_id];
     IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
     for (it = per_array_map->begin(); it != per_array_map->end(); it ++){
@@ -275,6 +275,50 @@ void DiskBackedArraysIO::delete_array(const int array_id, IdBlockMap<ServerBlock
 
         delete [] zero_block;
     }
+    */
+    
+    int server_rank        = sip_mpi_attr_.company_rank();
+    int server_number      = sip_mpi_attr_.num_servers();
+    const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
+    
+    MPI_File mpi_file = mpi_file_arr_[array_id];
+    
+    unsigned long long file_block_size = array_file_block_size_[array_id];
+    double *writing_buffer = new double[file_block_size]();
+    
+    unsigned long long file_block_offset = 0, next_file_block_offset = 0;
+    int file_block_index = 0;
+    
+    file_block_offset = data_start_offset_[array_id] + server_rank * file_block_size * sizeof(double);
+    next_file_block_offset =  file_block_offset + server_number * file_block_size * sizeof(double);
+    
+    while (file_block_index < file_blocks_num_[array_id]) {
+        MPI_Status status;
+        MPI_Offset writing_offset = file_block_offset;
+        
+        SIPMPIUtils::check_err(
+                MPI_File_write_at_all(mpi_file, writing_offset, writing_buffer, file_block_size, MPI_DOUBLE, &status),
+                __LINE__,__FILE__);
+        file_block_offset = next_file_block_offset;
+        next_file_block_offset = file_block_offset + server_number * file_block_size * sizeof(double);
+        file_block_index ++;
+    }
+    
+    delete [] writing_buffer;
+    
+    for (int i = 0; i < block_bit_map_size_[array_id]; i ++) {
+        block_bit_map_[array_id][i] = 0;
+    }
+    
+    MPI_Status status;
+        SIPMPIUtils::check_err(
+                MPI_File_write_at_all(mpi_file, 
+                block_bit_map_offset_[array_id],
+                block_bit_map_[array_id],
+                block_bit_map_size_[array_id],
+                MPI_INT, &status),
+                __LINE__,__FILE__);
+    
 }
 
 void DiskBackedArraysIO::save_persistent_array(const int array_id, const std::string& array_label,

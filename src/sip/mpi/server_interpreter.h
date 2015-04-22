@@ -181,6 +181,8 @@ private:
     std::set<BlockId> unused_blocks;
     std::set<BlockId> dirty_blocks;
     
+    std::set<BlockId> pending_dirty_blocks;
+    
     std::vector<LoopBlock> loop_blocks;
 
     std::map<int, int> worker_position;

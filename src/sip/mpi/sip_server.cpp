@@ -44,12 +44,13 @@ void SIPServer::run() {
         //        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
         //                &status), __LINE__, __FILE__);
         
+        bool more_blocks_to_prefetch = true, more_blocks_to_write = true;
+        
         while (1) {
             int flag;
-            bool more_blocks_to_prefetch = true;
             
             // Check to see if a request has arrived from any worker.
-            if (!false && more_blocks_to_prefetch) {
+            if (!false && (more_blocks_to_prefetch || more_blocks_to_write)) {
                 SIPMPIUtils::check_err(
                         MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status), 
                         __LINE__, __FILE__);
@@ -59,6 +60,9 @@ void SIPServer::run() {
                 }
                 if (more_blocks_to_prefetch) {
                     more_blocks_to_prefetch = server_interpreter_.prefetch_block();
+                }
+                if (more_blocks_to_write) {
+                    more_blocks_to_write = server_interpreter_.write_block();
                 }
             } else {
                 SIPMPIUtils::check_err(

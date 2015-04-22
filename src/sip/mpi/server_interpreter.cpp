@@ -261,6 +261,7 @@ void ServerInterpreter::handle_block_request(BlockId &block_id, int worker_rank,
         }
     }
     if (block_reference[block_id] == 0) {
+        pending_dirty_blocks.erase(block_id);
         if (block_map_.is_block_dirty(block_id)) {
             dirty_blocks.insert(block_id);
         } else {
@@ -271,6 +272,7 @@ void ServerInterpreter::handle_block_request(BlockId &block_id, int worker_rank,
 
 void ServerInterpreter::handle_put_block_request(BlockId &block_id, int worker_rank, int line_number) {
     if (block_reference[block_id] == 0) {
+        pending_dirty_blocks.erase(block_id);
         if (block_map_.is_block_dirty(block_id)) {
             dirty_blocks.insert(block_id);
         } else {
@@ -339,6 +341,8 @@ void ServerInterpreter::add_new_worker_iteration(int loop_index, LoopBlock &loop
         
         if (!block_map_.is_block_in_memory(*iter)) {
             worker_iteration.prefetch_blocks.insert(*iter);
+        } else if (!block_map_.is_block_dirty(*iter)) {
+            pending_dirty_blocks.insert(*iter);
         }
     }
 }
@@ -355,6 +359,7 @@ void ServerInterpreter::remove_worker_iteration(std::list<WorkerIteration> &work
             } else {
                  unused_blocks.insert(*iter);
             }
+            pending_dirty_blocks.erase(*iter);
         }
     }
     
@@ -417,6 +422,17 @@ bool ServerInterpreter::write_block() {
         
         dirty_blocks.erase(*iter);
         unused_blocks.insert(*iter);
+        
+        if (sign) {
+            return true;
+        }
+    }
+    
+    while (pending_dirty_blocks.begin() != pending_dirty_blocks.end()) {
+        std::set<BlockId>::iterator iter = pending_dirty_blocks.begin();
+        bool sign = block_map_.write_block(*iter);
+        
+        pending_dirty_blocks.erase(*iter);
         
         if (sign) {
             return true;
