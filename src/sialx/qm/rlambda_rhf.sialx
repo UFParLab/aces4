@@ -13,6 +13,7 @@ import "rccsd_rhf_defs.sialx"
       index   kptr1  = 1: 2
       index   kptr2  = 1: 2
       index   kone   = 1: 1
+      index   ixyz   = 1: 3
 
 #
       aoindex mu     = 1: norb
@@ -244,6 +245,7 @@ import "rccsd_rhf_defs.sialx"
 #
       temp Taa[a,a1] 
       temp T1aa[a,a1] 
+      temp T2aa[a,a1] 
       temp Tbb[b,b1] 
       temp T1bb[b,b1] 
       temp Tae_a[a,a1] 
@@ -264,6 +266,7 @@ import "rccsd_rhf_defs.sialx"
 #
       temp Tii[i,i1] 
       temp T1ii[i,i1] 
+      temp T2ii[i,i1] 
       temp Tjj[j,j1] 
       temp T1jj[j,j1] 
       temp Tmi_a[i,i1] 
@@ -396,6 +399,17 @@ import "rccsd_rhf_defs.sialx"
 # Declare served arrays 
 # --------------------- 
 #
+      temp   DAOINT[mu,nu]
+      temp Txx[mu,nu]
+      temp Txx1[mu,nu]
+      temp T1xx[mu,nu]
+      temp Tpq[p,q]
+      static Dipole[ixyz]
+      static NucDip[ixyz]
+      static Dip02[ixyz]
+      served Dxx_scf[mu,nu]
+      scalar dsum
+      scalar AbsDip
       temp AOINT[mu,nu,lambda,sigma] 
       static pinf[kiter,kptr1]
       temp tpinf[kiter,kptr1]
@@ -583,6 +597,16 @@ import "rccsd_rhf_defs.sialx"
       scalar niter
       int Iorder
 #
+#    ------------------------------------------------------------------------
+#     1-RDM arrays
+      distributed Dab_a[a,a1]
+      distributed Dij_a[i,i1]
+      distributed Dai_a[a,i]
+      distributed Dia_a[i,a]
+      served G1_a[p,p1]
+      served G1ao_a[mu,nu]
+      local LG1_a[p,mu]
+      temp Tpx[p,nu]
 #
 #    ------------------------------------------------------------------------
 #
@@ -4015,6 +4039,256 @@ import "rccsd_rhf_defs.sialx"
       server_barrier
 
      ENDPROC DIISN
+
+    PROC form_Dscf
+
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+	prepare Dxx_scf[mu,nu] = Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+	do i
+	    Txx1[mu,nu] = Ca[mu,i]*Ca[nu,i]
+	    Txx[mu,nu] += Txx1[mu,nu]
+	enddo i
+	Txx[mu,nu] *= -2.0
+	prepare Dxx_scf[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+
+    do ixyz
+	ncount2 = (scalar)ixyz
+	dsum = 0.0
+	esum = 0.0
+	pardo mu,nu
+	    request Dxx_scf[mu,nu]
+	    ncount1 = 0.0
+	    execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+	    NucDip[ixyz] = ncount1
+	    Txx[mu,nu] = Dxx_scf[mu,nu]
+	    etemp = Txx[mu,nu]*DAOINT[mu,nu]
+	    esum += etemp
+	endpardo mu,nu
+	server_barrier
+	collective dsum += esum
+	server_barrier
+	dsum += NucDip[ixyz]
+	dipole[ixyz] = dsum
+
+    enddo ixyz
+
+    server_barrier
+
+    ENDPROC form_Dscf
+
+      PROC DABA 
+#     --------- 
+#
+      PARDO a, a1, i  
+#
+            GET t1a_old[a,i] 
+            GET l1a_old[i,a1] 
+#
+            Taa[a,a1]        = t1a_old[a,i]*l1a_old[i,a1] 
+            Taa[a,a1]       *= 0.5 
+            T1aa[a1,a]       = Taa[a,a1]  
+            PUT Dab_a[a,a1] += Taa[a,a1] 
+            PUT Dab_a[a1,a] += T1aa[a1,a] 
+#
+            DO a2 
+            DO i1 
+#
+               REQUEST T2old_aa[a,i,a2,i1]   
+               REQUEST L2old_aa[i,a1,i1,a2]   
+#
+               Taa[a,a1]        = T2old_aa[a,i,a2,i1]*L2old_aa[i,a1,i1,a2]
+               Taa[a,a1]       *= 0.25 
+               T1aa[a1,a]       = Taa[a,a1]  
+               PUT Dab_a[a,a1] += Taa[a,a1] 
+               PUT Dab_a[a1,a] += T1aa[a1,a] 
+#
+            ENDDO i1 
+            ENDDO a2 
+#
+            DO b 
+            DO j 
+#
+               REQUEST T2old_ab[a,i,b,j]   
+               REQUEST L2old_ab[i,a1,j,b]   
+#
+               Taa[a,a1]        = T2old_ab[a,i,b,j]*L2old_ab[i,a1,j,b]
+               Taa[a,a1]       *= 0.5 
+               T1aa[a1,a]       = Taa[a,a1]  
+               PUT Dab_a[a,a1] += Taa[a,a1] 
+               PUT Dab_a[a1,a] += T1aa[a1,a] 
+#
+            ENDDO j 
+            ENDDO b 
+#
+      ENDPARDO a, a1, i  
+#
+      ENDPROC DABA 
+
+      PROC DIJA 
+#     --------- 
+#
+      PARDO a, a1, i2 
+#
+            DO i 
+#
+               REQUEST T2old_aa[a,i,a1,i2]   
+#
+               DO i1 
+#
+                  REQUEST L2old_aa[i1,a,i2,a1]   
+#
+                  Tii[i,i1]        = T2old_aa[a,i,a1,i2]*L2old_aa[i1,a,i2,a1] 
+                  Tii[i,i1]       *= -0.25   
+                  T1ii[i1,i]       = Tii[i,i1] 
+                  PUT Dij_a[i,i1] += Tii[i,i1] 
+                  PUT Dij_a[i1,i] += T1ii[i1,i] 
+#
+               ENDDO i1 
+#
+            ENDDO i 
+#
+      ENDPARDO a, a1, i2 
+#
+      PARDO a, b, j 
+#
+            DO i 
+#
+               REQUEST T2old_ab[a,i,b,j]  
+#
+               DO i1 
+#
+                  REQUEST L2old_ab[i1,a,j,b]   
+#
+                  Tii[i,i1]        = T2old_ab[a,i,b,j]*L2old_ab[i1,a,j,b] 
+                  Tii[i,i1]       *= -0.5   
+                  T1ii[i1,i]       = Tii[i,i1] 
+                  PUT Dij_a[i,i1] += Tii[i,i1] 
+                  PUT Dij_a[i1,i] += T1ii[i1,i] 
+#
+               ENDDO i1 
+#
+            ENDDO i 
+#
+      ENDPARDO a, b, j 
+#
+      PARDO a, i, i1  
+#
+            GET t1a_old[a,i] 
+            GET l1a_old[i1,a] 
+#
+            Tii[i,i1]        = l1a_old[i1,a]*t1a_old[a,i] 
+            Tii[i,i1]       *= -0.5   
+            T1ii[i1,i]       = Tii[i,i1] 
+            PUT Dij_a[i,i1] += Tii[i,i1] 
+            PUT Dij_a[i1,i] += T1ii[i1,i] 
+#
+      ENDPARDO a, i, i1  
+#
+      ENDPROC DIJA 
+
+      PROC DIAA
+#####
+      pardo i,a
+          get L1a_old[i,a]
+	  Tia[i,a] = L1a_old[i,a]
+	  Tia[i,a] *= 2.0
+	  put Dia_a[i,a] = Tia[i,a]
+      endpardo i,a
+#####
+      ENDPROC DIAA
+
+      PROC DAIA
+#####
+      pardo a,i
+          get T1a_old[a,i]
+	  Tai[a,i] = T1a_old[a,i]
+	  Tai[a,i] *= 2.0
+	  put Dai_a[a,i] = Tai[a,i]
+      endpardo a,i
+#####
+      ENDPROC DAIA
+      
+      PROC form_G1
+
+	call form_Dscf
+	print " "
+	print "SCF dipole moments"
+	print dipole
+
+	pardo p,p1
+	    prepare G1_a[p,p1] = 0.0
+	endpardo p,p1
+	  server_barrier
+
+          call DABA
+          call DIJA
+	  call DIAA
+	  call DAIA
+	  server_barrier
+
+	  pardo i,i1
+	      get Dij_a[i,i1]
+	      prepare G1_a[i,i1] = Dij_a[i,i1]
+	  endpardo i,i1
+	  pardo a,a1
+	      get Dab_a[a,a1]
+	      prepare G1_a[a,a1] = Dab_a[a,a1]
+	  endpardo a,a1
+	  pardo i,a
+	      get Dia_a[i,a]
+	      prepare G1_a[i,a] = Dia_a[i,a]
+	  endpardo i,a
+	  pardo i,a
+	      get Dai_a[a,i]
+	      prepare G1_a[a,i] = Dai_a[a,i]
+	  endpardo i,a
+	  server_barrier
+	  print "CCSD 1-RDM"
+	pardo p,p1
+	    request G1_a[p,p1]
+	    print G1_a[p,p1]
+	endpardo p,p1
+	pardo mu,nu
+	    prepare G1ao_a[mu,nu] = 0.0
+	endpardo mu,nu
+	  server_barrier
+	pardo mu,nu,p,p1
+	    request G1_a[p,p1]
+	    Tpx[p,nu] = G1_a[p,p1]*ca[nu,p1]
+	    Txx[mu,nu] = Tpx[p,nu]*ca[mu,p]
+	    prepare G1ao_a[mu,nu] += Txx[mu,nu]
+	endpardo mu,nu,p,p1
+	  server_barrier
+
+	do ixyz
+	    ncount2 = (scalar)ixyz
+	    esum = 0.0
+	    dsum = 0.0
+	    pardo mu,nu
+		request G1ao_a[mu,nu]
+		ncount1 = 0.0
+		execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+		Txx[mu,nu] = G1ao_a[mu,nu]
+		etemp = Txx[mu,nu]*DAOINT[mu,nu]
+		esum += etemp
+	    endpardo mu,nu
+	    server_barrier
+	    collective dsum += esum
+	    server_barrier
+	    dipole[ixyz] -= dsum
+            print dipole
+
+	enddo ixyz
+	server_barrier
+
+      ENDPROC form_G1
 #
 # ------------------------------------------------------------------------------- 
 #
@@ -4199,8 +4473,13 @@ import "rccsd_rhf_defs.sialx"
 #
       ENDDO kiter
       server_barrier
-      restore_persistent scf_energy "scf_energy"
-      server_barrier
+
+#
+      print " "
+      print "Computing CCSD 1-RDM"
+#
+    call form_G1
+
 #
 # Write amplitudes to file
 # ------------------------
@@ -4210,8 +4489,6 @@ import "rccsd_rhf_defs.sialx"
       set_persistent t1a_old "t1a_old"
       set_persistent T2old_aa "T2old_aa"
       set_persistent T2old_ab "T2old_ab"
-      set_persistent scf_energy "scf_energy"
-      set_persistent totenerg "totenerg"
       set_persistent VSpipi "VSpipi"
       set_persistent Vaaii  "Vaaii"
       set_persistent Viaai  "Viaai"

@@ -395,6 +395,7 @@
 # --------------- 
 #
       scalar lccd_energy
+      scalar lccd_correlation
       scalar etemp
       scalar esum
       scalar esuma
@@ -409,7 +410,7 @@
       scalar ecrit 
       scalar ediff 
       scalar escr
-      scalar mp2_energy
+      scalar mp2_correlation
       scalar restart
 #
 # Arrays/Scalars used exclusively in DIIS procedure. 
@@ -684,7 +685,6 @@
 #
     collective ecorrab += esumab
     ecorrT = ecorrab
-    print ecorrT
 #
     server_barrier
     ENDPROC energy
@@ -1243,13 +1243,13 @@ print " "
     call iguess_uhf
 # second-order energy
     call energy
-    mp2_energy  = ecorrT
-    mp2_energy += scf_energy
-    print mp2_energy
+    mp2_correlation  = ecorrT
+    print mp2_correlation
 #
-    niter = 0.0
     do kiter
-        niter += 1.0
+	print " "
+	print kiter
+        niter = (scalar)kiter
         server_barrier
 #
 #        call T2oldaa
@@ -1265,6 +1265,7 @@ print " "
         call updatet2
         server_barrier
         call energy
+	print ecorrT
         server_barrier
 #
         if niter >= diis_start
@@ -1274,9 +1275,9 @@ print " "
         server_barrier
 	assert_same ecorrT
 	assert_same eold
-	ediff = eold - ecorrT
-	escr = ediff**2.0
+	escr = (eold - ecorrT)**(2.0)
 	ediff = escr**0.5
+	print ediff
 	assert_same ediff
 	if ediff < cc_conv
 	    exit
@@ -1290,10 +1291,14 @@ print " "
     enddo kiter
 #
     server_barrier
-    totenerg  = ecorrT
-    totenerg += scf_energy
-    lccd_energy = totenerg
+    lccd_correlation  = ecorrT
+    lccd_energy = lccd_correlation
+    lccd_energy += scf_energy
+    print " "
+    print lccd_correlation
     print lccd_energy
+    totenerg = lccd_energy
+
       set_persistent totenerg "totenerg"
       set_persistent     ca    "ca" 
       set_persistent     Fock_a "fock_a"

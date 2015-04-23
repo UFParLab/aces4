@@ -469,6 +469,8 @@ SIOX_FILES=\
 ./src/sialx/qm/tran_rhf_no3v.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
+./src/sialx/qm/rlambda_rhf.siox\
+./src/sialx/qm/rccpt1p2_prop.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab.siox
@@ -591,6 +593,8 @@ EXTRA_DIST += \
 ./src/sialx/qm/tran_rhf_no3v.sialx\
 ./src/sialx/qm/tran_rhf_no4v_defs.sialx\
 ./src/sialx/qm/rccsd_rhf.sialx\
+./src/sialx/qm/rlambda_rhf.sialx\
+./src/sialx/qm/rccpt1p2_prop.sialx\
 ./src/sialx/qm/rccsd_rhf_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\

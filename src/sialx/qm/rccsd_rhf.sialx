@@ -530,13 +530,8 @@ special list_block_map
 #
      PARDO a, i
 #
-           tai[a,i]         = 0.0
-           PUT t1a_old[a,i] = tai[a,i]
-          #DO kdiis 
-          #   if kdiis == 1 
-                 PREPARE D0ai[a,i] = tai[a,i]
-          #   endif 
-          #ENDDO kdiis 
+           PUT t1a_old[a,i] = 0.0
+           PREPARE D0ai[a,i] = 0.0
 #
      ENDPARDO a, i
 #
@@ -1391,9 +1386,8 @@ special list_block_map
 #    ---------------------------------------------
 #
      PARDO mu, nu, i, j
-           Txixj[mu,i,nu,j]           = 0.0
-           PREPARE TAO_ab[mu,i,nu,j]  = Txixj[mu,i,nu,j]
-           PREPARE T2AO_ab[mu,i,nu,j] = Txixj[mu,i,nu,j]
+           PREPARE TAO_ab[mu,i,nu,j]  = 0.0
+           PREPARE T2AO_ab[mu,i,nu,j] = 0.0
      ENDPARDO mu, nu, i, j
 #
      server_barrier 
@@ -1579,9 +1573,8 @@ special list_block_map
 #    ---------------------------------------------
 #
      PARDO mu, nu, i, j
-           Txixj[mu,i,nu,j]           = 0.0
-           PREPARE TAO_ab[mu,i,nu,j]  = Txixj[mu,i,nu,j]
-           PREPARE T2AO_ab[mu,i,nu,j] = Txixj[mu,i,nu,j]
+           PREPARE TAO_ab[mu,i,nu,j]  = 0.0
+           PREPARE T2AO_ab[mu,i,nu,j] = 0.0
      ENDPARDO mu, nu, i, j
 #
      server_barrier 
@@ -2245,16 +2238,14 @@ special list_block_map
 #     ---------------------------------------- 
 #
           PARDO a, i 
-                tai[a,i] = 0.0 
-                PUT t1a_new[a,i] = tai[a,i] 
+                PUT t1a_new[a,i] = 0.0
           ENDPARDO a, i 
 #
 #     Zero out new 2-particle amplitude arrays 
 #     ---------------------------------------- 
 #
           PARDO a, b, i, j 
-                Taibj[a,i,b,j] = 0.0
-                PREPARE T2new_ab[a,i,b,j] = Taibj[a,i,b,j] 
+                PREPARE T2new_ab[a,i,b,j] = 0.0
           ENDPARDO a, b, i, j 
 # 
      ENDPROC T2NEW_ZERO
@@ -2476,7 +2467,6 @@ special list_block_map
 
       sip_barrier 
 
-      jcount = 0.0 
       DO jdiis 
       where jdiis <= Iorder
 	  DO j1diis 

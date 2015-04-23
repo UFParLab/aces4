@@ -559,9 +559,11 @@ set(SIAL_FILES
     src/sialx/qm/tran_rhf_no4v_defs.sialx;
     src/sialx/qm/tran_rhf_no3v.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
+    src/sialx/qm/rlambda_rhf.sialx;
     src/sialx/qm/rlccd_rhf.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
+    src/sialx/qm/rccpt1p2_prop.sialx;
     src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/rcis_d_rhf.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
