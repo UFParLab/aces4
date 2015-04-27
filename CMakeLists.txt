@@ -296,6 +296,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYON
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/helloworld1.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays_wild.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -544,6 +545,7 @@ set(SIAL_FILES
     src/sialx/test/pardo_with_where.sialx;
     src/sialx/test/pardo_load_balance_test.sialx;
     src/sialx/test/read_block_test.sialx;
+    src/sialx/test/aoladder.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;

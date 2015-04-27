@@ -3781,8 +3781,9 @@ import "rccsd_rhf_defs.sialx"
      PROC L2ZERO
 #
           PARDO a, b, i, j
-                Tiajb[i,a,j,b] = 0.0
-                PREPARE L2new_ab[i,a,j,b] = Tiajb[i,a,j,b]
+#                Tiajb[i,a,j,b] = 0.0
+#                PREPARE L2new_ab[i,a,j,b] = Tiajb[i,a,j,b]
+                PREPARE L2new_ab[i,a,j,b] = 0.0
           ENDPARDO a, b, i, j
 #
 #     Zero-out intermediate arrays used in the ladder term 
@@ -3790,8 +3791,10 @@ import "rccsd_rhf_defs.sialx"
 #     
           PARDO mu, nu, i, j
                 Tixjx[i,mu,j,nu]           = 0.0
-                PREPARE Z2ab[i,mu,j,nu]    = Tixjx[i,mu,j,nu]
-                PREPARE L2AO_ab[i,mu,j,nu] = Tixjx[i,mu,j,nu]
+#                PREPARE Z2ab[i,mu,j,nu]    = Tixjx[i,mu,j,nu]
+#                PREPARE L2AO_ab[i,mu,j,nu] = Tixjx[i,mu,j,nu]
+                PREPARE Z2ab[i,mu,j,nu]    = 0.0
+                PREPARE L2AO_ab[i,mu,j,nu] = 0.0
           ENDPARDO mu, nu, i, j
 #
      ENDPROC L2ZERO
@@ -3888,7 +3891,6 @@ import "rccsd_rhf_defs.sialx"
             
                   REQUEST           Diajb[i,a,j,b,kdiis]   
                   t2iajb[i,a,j,b] = Diajb[i,a,j,b,kdiis] 
-                  n2 = 0.0  
                   DO d2   
                   where d2 <= Iorder 
                       n2 = (scalar)d2
@@ -3923,7 +3925,6 @@ import "rccsd_rhf_defs.sialx"
 
       PARDO a, i 
             tia[i,a] = 0.0 
-            n1 = 0.0  
             DO kdiis    
 	    where kdiis < Iorder
                n1 = (scalar)kdiis
@@ -4053,8 +4054,9 @@ import "rccsd_rhf_defs.sialx"
     PROC form_Dscf
 
     pardo mu,nu
-        Txx[mu,nu] = 0.0
-	prepare Dxx_scf[mu,nu] = Txx[mu,nu]
+#        Txx[mu,nu] = 0.0
+#	prepare Dxx_scf[mu,nu] = Txx[mu,nu]
+	prepare Dxx_scf[mu,nu] = 0.0
     endpardo mu,nu
     server_barrier
     pardo mu,nu
@@ -4314,11 +4316,9 @@ import "rccsd_rhf_defs.sialx"
       
       PROC form_G1
 
-    call form_Dscf
     print " "
-    print "SCF dipole moments"
-    print dipole
-
+    restore_persistent dipole "scf_dipole"
+    set_persistent dipole "scf_dipole"
     pardo p,p1
 	prepare G1_a[p,p1] = 0.0
     endpardo p,p1
@@ -4386,7 +4386,9 @@ import "rccsd_rhf_defs.sialx"
 
     enddo ixyz
     server_barrier
+    print "CCSD response dipole moment"
     print dipole
+    set_persistent dipole "ccsd_dipole"
 
       ENDPROC form_G1
 #
@@ -4426,7 +4428,6 @@ import "rccsd_rhf_defs.sialx"
 # --------------------------------------
 #
       CALL READ_2EL 
-
 #
 # Compute Tau and Taup arrays 
 # --------------------------- 
@@ -4527,7 +4528,7 @@ import "rccsd_rhf_defs.sialx"
 #
          CALL LOLDENERGY
 
-	 print ecorrT
+	 #print ecorrT
 #
 	 if kiter >= (int)diis_start
 	     call diisn
@@ -4575,7 +4576,10 @@ import "rccsd_rhf_defs.sialx"
       ENDDO kiter
       server_barrier
 
+      lambda_pseudo = ecorrT
+      print lambda_pseudo
 #
+      
       print " "
       print "Computing CCSD 1-RDM"
 #
@@ -4604,4 +4608,4 @@ import "rccsd_rhf_defs.sialx"
                            ENDSIAL LAMBDA_SV1     
 #
 # EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
-#
+#*
