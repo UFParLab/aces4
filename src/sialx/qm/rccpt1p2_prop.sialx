@@ -351,14 +351,10 @@
 #
       temp   DAOINT[mu,nu]
       static Sxyz[ixyz]
-      static Dipole[ixyz]
+      static dipole[ixyz]
       static NucDip[ixyz]
       static Dip02[ixyz]
-      served Dxx_scf[mu,nu]
-      served Dpq_11[p,q]
-      served Dxx_11[mu,nu]
       served Dxx_02[mu,nu]
-      served Dpx_11[p,nu]
       served Dpx_02[p,nu]
       temp Txx[mu,nu]
       temp Txx1[mu,nu]
@@ -478,148 +474,6 @@
     server_barrier
 #
     ENDPROC T2oldaa
-#
-    PROC form_Dscf
-
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-	prepare Dxx_scf[mu,nu] = Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-	do i
-	    Txx1[mu,nu] = Ca[mu,i]*Ca[nu,i]
-	    Txx[mu,nu] += Txx1[mu,nu]
-	enddo i
-	Txx[mu,nu] *= -2.0
-	prepare Dxx_scf[mu,nu] += Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-
-    do ixyz
-	ncount2 = (scalar)ixyz
-	dsum = 0.0
-	esum = 0.0
-	pardo mu,nu
-	    request Dxx_scf[mu,nu]
-	    ncount1 = 0.0
-	    execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
-	    NucDip[ixyz] = ncount1
-	    Txx[mu,nu] = Dxx_scf[mu,nu]
-	    etemp = Txx[mu,nu]*DAOINT[mu,nu]
-	    esum += etemp
-	endpardo mu,nu
-	server_barrier
-	collective dsum += esum
-	server_barrier
-	dsum += NucDip[ixyz]
-	dipole[ixyz] = dsum
-
-    enddo ixyz
-
-    server_barrier
-
-    ENDPROC form_Dscf
-#
-    PROC form_D11
-
-    pardo p,q
-        Tpq[p,q] = 0.0
-	prepare Dpq_11[p,q] = Tpq[p,q]
-    endpardo p,q
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-	prepare Dxx_11[mu,nu] = Txx[mu,nu]
-    endpardo mu,nu
-    pardo p,nu
-        Tpx[p,nu] = 0.0
-	prepare Dpx_11[p,nu] = Tpx[p,nu]
-    endpardo p,nu
-    server_barrier
-
-    pardo a,i,b,j
-        Tii[i,j] = 0.0
-	do i1
-	    request T2old_ab[a,j,b,i1]
-	    request T2old_ab[a,i,b,i1]
-	    request T2old_aa[a,i,b,i1]
-
-	    Taibj[a,j,b,i1]   = T2old_ab[a,j,b,i1]
-	    T1aibj[a,i,b,i1]  = T2old_ab[a,i,b,i1]
-	    T1aibj[a,i,b,i1] += T2old_aa[a,i,b,i1]
-
-	    T1ii[i,j] = T1aibj[a,i,b,i1]*Taibj[a,j,b,i1]
-	    Tii[i,j] += T1ii[i,j]
-
-	enddo i1
-	Tii[i,j] *= -2.0
-	prepare Dpq_11[i,j] += Tii[i,j]
-    endpardo a,i,b,j
-    pardo a,i,b,b1
-    
-        Taa[a,b] = 0.0
-	do j
-	    request T2old_ab[a,i,b1,j]
-	    request T2old_ab[b,i,b1,j]
-	    request T2old_aa[b,i,b1,j]
-
-            Taibj[a,i,b1,j]   = T2old_ab[a,i,b1,j]
-            T1aibj[b,i,b1,j]  = T2old_ab[b,i,b1,j]
-            T1aibj[b,i,b1,j] += T2old_aa[b,i,b1,j]
-
-	    T1aa[a,b] = Taibj[a,i,b1,j]*T1aibj[b,i,b1,j]
-	    Taa[a,b] += T1aa[a,b]
-
-	enddo j
-	Taa[a,b] *= 2.0
-	prepare Dpq_11[a,b] += Taa[a,b]
-    endpardo a,i,b,b1
-
-    server_barrier
-
-    pardo p,nu
-        Tpx[p,nu] = 0.0
-	do q
-	    request Dpq_11[p,q]
-	    Tpx1[p,nu] = Dpq_11[p,q]*Ca[nu,q]
-	    Tpx[p,nu] += Tpx1[p,nu]
-	enddo q
-	prepare Dpx_11[p,nu] += Tpx[p,nu]
-    endpardo p,nu
-    server_barrier
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-	do p
-	    request Dpx_11[p,nu]
-	    Txx1[mu,nu] = Dpx_11[p,nu]*Ca[mu,p]
-	    Txx[mu,nu] += Txx1[mu,nu]
-	enddo p
-	prepare Dxx_11[mu,nu] += Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-
-    do ixyz
-	ncount2 = (scalar)ixyz
-	esum = 0.0
-	dsum = 0.0
-	pardo mu,nu
-	    request Dxx_11[mu,nu]
-	    ncount1 = 0.0
-	    execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
-	    Txx[mu,nu] = Dxx_11[mu,nu]
-	    etemp = Txx[mu,nu]*DAOINT[mu,nu]
-	    esum += etemp
-	endpardo mu,nu
-	server_barrier
-	collective dsum += esum
-	server_barrier
-	dipole[ixyz] -= dsum
-
-    enddo ixyz
-    server_barrier
-
-    ENDPROC form_D11
 #
     PROC form_Mck_a
 
@@ -1004,11 +858,11 @@
 #    ------------------------------------------------------------------------ 
 
 print " "
-print "-- Parallel CCPT(1-2S) property program"
+print "-- Parallel CCPT(1)(2s) property program"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
 
-    ecrit = 0.000001
+    ecrit = cc_conv
     zero = 0.0
     one = 1.0
     two = 2.0
@@ -1034,20 +888,14 @@ print " "
     restore_persistent Vaaii    "Vaaii"
     restore_persistent Viaai    "Viaai"
     restore_persistent Vaaai    "Vaaai"
+    restore_persistent dipole "lccd_dipole"
     server_barrier
 ##################
-    #call read_2el
-    call T2oldaa
-    call form_Dscf
-    print "SCF dipole moments"
-    print dipole
-    print " "
-    call form_D11
-    print "CCPT(1) dipole moments"
-    print dipole
 
     print " "
     print "Computing second-order singles correction"
+
+    call T2oldaa
     call form_Mck_a
     call t1guess
 
@@ -1057,12 +905,10 @@ print " "
 	print kiter
 	niter = (scalar)kiter
 
-
 	call t1newzero
 	call formt1a
 	call updatet1
         call t1norm
-	print norm
 
          SERVER_BARRIER
          if kiter >= (int)diis_start # two
@@ -1092,13 +938,9 @@ print " "
 	escr += etemp
     enddo ixyz
     print " "
-    print "CCPT(1-S2) dipole moments"
+    print "CCPT(1)(2s) response dipole moments"
     print dipole
-    AbsDip = escr**0.5
-    print "Dipole moment scalar"
-    print AbsDip
     server_barrier
-# execute compute_dipole_integrals DAOINT[mu,nu] icount2
 #
 #    ------------------------------------------------------------------------ 
                            ENDSIAL CCSD_RHF_SV1
