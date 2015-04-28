@@ -1,36 +1,26 @@
-#  Copyright (c) 2003-2010 University of Florida
-  import "rccsd_rhf_defs.sialx" 
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
                            SIAL CCSD_RHF_SV1
+predefined  int norb
+predefined  int naocc
+predefined  int nbocc
+predefined  int baocc
+predefined  int bbocc
+predefined  int eaocc
+predefined  int ebocc
+predefined  int bavirt
+predefined  int bbvirt
+predefined  int eavirt
+predefined  int ebvirt
+predefined  int bavirtorb
+predefined  int bbvirtorb
+predefined  int eavirtorb
+predefined  int ebvirtorb
+special compute_integral_batch w
 #
 #-------------------------------------------------------------------------------
 #
 # Declare indeces 
 # --------------- 
 #
-special list_block_map
-      index kiter    = 1: cc_iter   
-      index   kbeg   = 1: scf_beg # Change to cc_beg 
-      index   korder = 1: scf_hist # Change to cc_hist 
-      index   kone   = 1: 1
-      index   kdiis  = 1: 30 
-      index   k1diis = 1: 30 
-      index   jdiis  = 1: 30 
-      index   j1diis = 1: 30 
-      index      D1  = 1: 30 
-      index      D2  = 1: 30 
 #
       aoindex mu     = 1: norb 
       aoindex nu     = 1: norb
@@ -88,22 +78,6 @@ special compute_int_scratchmem uuu
       static ca[mu,p] 
       static fock_a[p,p1] 
 #
-# Arrays used in the DIIS 
-# -----------------------
-#
-      served Daibj[a,i,b,j,kdiis] 
-      served Eaibj[a,i,b,j,jdiis] 
-      distributed Dai[a,i,kdiis] 
-      distributed Eai[a,i,jdiis] 
-      served D0aibj[a,i,b,j] 
-      served D0ai[a,i] 
-
-      static BB[d1,d2] 
-      temp tbb[d1,d2] 
-      distributed DIST_BB[d1,d2] 
-      scalar n1 
-      scalar n2 
-      scalar worder  
 #
 # Arrays used in transformation for AO2 algorithm
 # -----------------------------------------------
@@ -341,8 +315,6 @@ special compute_int_scratchmem uuu
       scalar jcount 
       scalar kcount 
       scalar niter 
-      scalar diis_start 
-      scalar diis_order  
       scalar temp_order  
       scalar zero
       scalar one
