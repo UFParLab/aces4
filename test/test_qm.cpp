@@ -351,6 +351,70 @@ TEST(Sial_QM,lindep_test){
 	}
 }
 
+/*
+lambda response dipole test
+H 0.0 0.0 0.0
+F 0.0 0.0 0.917
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+spherical=off
+scf_exporder=10
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rlambda_rhf.siox
+*/
+TEST(Sial_QM,rlambda_test){
+	std::string job("rlambda_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+	if (attr->global_rank() == 0) {
+                double * dipole = controller.static_array("dipole");
+                double expected[] = {0.00000000000000, 0.00000000000000, 0.84792717246707};
+                int i = 0;
+                for (i; i < 2; i++){
+                    ASSERT_NEAR(dipole[i], expected[i], 1e-10);
+                }
+	}
+//
+// tran
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// rlambda
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double lambda_pseudo = controller.scalar_value("lambda_pseudo");
+		ASSERT_NEAR(-0.12592115116563, lambda_pseudo, 1e-10);
+
+                double * dipole = controller.static_array("dipole");
+                double expected[] = {0.00000000000000, 0.00000000000000, 0.80028992302928};
+                int i = 0;
+                for (i; i < 2; i++){
+                    ASSERT_NEAR(dipole[i], expected[i], 1e-6);
+                }
+	}
+
+}
+
 //****************************************************************************************************************
 
 //void bt_sighandler(int signum) {

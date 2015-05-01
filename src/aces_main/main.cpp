@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
-//			server_timer.print_timers(lno2name);
+			server_timer.print_timers(lno2name);
 		} else
 #endif
 
@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
 			timeinfo = localtime (&rawtime);
 			std::cout << "Current local time and date:" << asctime(timeinfo);)
 
-//			sialxTimer.print_timers(lno2name);
+			sialxTimer.print_timers(lno2name);
 
 
 		}// end of worker or server

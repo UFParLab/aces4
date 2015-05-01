@@ -277,6 +277,7 @@ test/cis_test.dat\
 test/mcpt2_test.dat\
 test/eom_test.dat\
 test/lindep_test.dat\
+test/rlambda_test.dat\
 test/expected_output/helloworld1.txt\
 test/expected_output/local_arrays_wild.txt\
 test/expected_output/local_arrays.txt\
@@ -448,6 +449,7 @@ SIOX_FILES=\
 ./src/sialx/test/read_block_test.siox\
 ./src/sialx/test/pardo_with_where.siox\
 ./src/sialx/test/pardo_load_balance_test.siox\
+./src/sialx/test/aoladder.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -469,6 +471,8 @@ SIOX_FILES=\
 ./src/sialx/qm/tran_rhf_no3v.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
+./src/sialx/qm/rlambda_rhf.siox\
+./src/sialx/qm/rccpt1p2_prop.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab.siox
@@ -569,6 +573,7 @@ EXTRA_DIST += \
 ./src/sialx/test/read_block_test.sialx\
 ./src/sialx/test/pardo_with_where.sialx\
 ./src/sialx/test/pardo_load_balance_test.sialx\
+./src/sialx/test/aoladder.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
@@ -591,6 +596,8 @@ EXTRA_DIST += \
 ./src/sialx/qm/tran_rhf_no3v.sialx\
 ./src/sialx/qm/tran_rhf_no4v_defs.sialx\
 ./src/sialx/qm/rccsd_rhf.sialx\
+./src/sialx/qm/rlambda_rhf.sialx\
+./src/sialx/qm/rccpt1p2_prop.sialx\
 ./src/sialx/qm/rccsd_rhf_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\

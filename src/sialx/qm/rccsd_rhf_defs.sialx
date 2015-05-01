@@ -46,6 +46,7 @@ special get_my_rank w
 special stripi ru
 special set_ijk_aaa w
 special set_ijk_aab w
+special compute_dipole_integrals wur
 
 endsial rccsd_rhf_defs
 

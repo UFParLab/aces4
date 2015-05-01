@@ -84,6 +84,7 @@ special set_flags2 r
 special return_sval rw
 special compute_aabb_batch ww
 special get_my_rank w
+special compute_dipole_integrals wur
 #special scf_atom u
 #special print_rel_info rr
 
