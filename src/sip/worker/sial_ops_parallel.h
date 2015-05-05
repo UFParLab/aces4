@@ -25,8 +25,13 @@ class DataManager;
 class SipTables;
 class Interpreter;
 
+
+
 class SialOpsParallel {
 public:
+
+
+
 	//PersistentArrayManager is pointer so it won't be
 	//deleted in the destructor--it has a lifespan
 	//beyond SIAL programs.
@@ -43,15 +48,17 @@ public:
 	void create_distributed(int array_id, int pc);
 	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map, int pc);
 	void delete_distributed(int array_id, int pc);
-	void get(BlockId&, int);
-	void put_replace(BlockId&, const Block::BlockPtr, int);
-	void put_accumulate(BlockId&, const Block::BlockPtr, int);
-
-	void destroy_served(int array_id, int);
-	void request(BlockId&, int);
-	void prequest(BlockId&, BlockId&, int);
-	void prepare(BlockId&, Block::BlockPtr, int);
-	void prepare_accumulate(BlockId&, Block::BlockPtr, int);
+	void get(BlockId&, int pc);
+	void put_replace(BlockId&, const Block::BlockPtr, int pc);
+	void put_accumulate(BlockId&, const Block::BlockPtr, int pc);
+	void put_initialize(BlockId&, double value, int pc);
+	void put_increment(BlockId&, double value, int pc);
+	void put_scale(BlockId&, double value, int pc);
+	void destroy_served(int array_id, int pc);
+	void request(BlockId&, int pc);
+	void prequest(BlockId&, BlockId&, int pc);
+	void prepare(BlockId&, Block::BlockPtr, int pc);
+	void prepare_accumulate(BlockId&, Block::BlockPtr, int pc);
 
 	void collective_sum(double rhs_value, int dest_array_slot, int pc);
 	bool assert_same(int source_array_slot, int pc);
@@ -87,6 +94,23 @@ public:
 			bool is_scope_extent = false);
 
 	Block::BlockPtr get_block_for_updating(const BlockId& id, int pc);
+
+
+
+	/** mpi related types and variable */
+	//TODOD is this the right place for this?
+    const static int id_line_section_size;
+
+	struct Put_scalar_op_message_t{
+	    double value_;
+	    int pc_;
+	    int section_;
+		BlockId id_;
+	};
+
+	MPI_Datatype mpi_put_scalar_op_type_;
+    MPI_Datatype block_id_type_;
+	void initialize_mpi_type();
 
 private:
 
@@ -155,6 +179,8 @@ private:
 	void reset_mode();
 
 	bool nearlyEqual(double a, double  b, double epsilon);
+
+
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

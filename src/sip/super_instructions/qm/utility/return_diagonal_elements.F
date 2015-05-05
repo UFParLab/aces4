@@ -22,24 +22,26 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(out)::ierr  
       integer(C_INT) :: n1,n2
 
-      if (rank_0 .eq. 4) then
+      if (rank_0 .eq. 2) then
           if (extents_0(1) .ne. extents_0(2)) then
               write(*,*) "T_pq doublet is not square"
 	      call abort_job()
 	  endif
 	  n1 = extents_0(1)
 	  call ret_diag_tensor2(data_0,n1)
-      endif
-      
-      if (rank_0 .eq. 4) then
+      elseif (rank_0 .eq. 4) then
           if (extents_0(1) .ne. extents_0(2) .or.
      *        extents_0(3) .ne. extents_0(4)) then
-              write(*,*) "T_pqrs doublets are not square"
+              write(*,*) "T_pqrs doublets are not square",
+     *        extents_0(1),extents_0(2),extents_0(3),extents_0(4)
 	      call abort_job()
 	  endif
 	  n1 = extents_0(1)
 	  n2 = extents_0(3)
 	  call ret_diag_tensor4(data_0,n1,n2)
+      else
+              write(*,*) "bad call to return_diagonal_elements"
+	      call abort_job()
       endif
 
       return

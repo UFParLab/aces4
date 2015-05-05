@@ -37,7 +37,7 @@ class DiskBackedBlockMap;
  * 3. Update Block (get_block_for_updating)
  * 4. Flush Block To Disk (in case of limit_reached() being true).
  *
- * For each operation, represeting IOD as 3 bits as initial state,
+ * For each operation, representing IOD as 3 bits as initial state,
  * the action and final state is specified for each operation.
  *
  * // In Memory Operations
@@ -137,7 +137,9 @@ public:
 	int size() { return size_; }
 
     dataPtr accumulate_data(size_t size, dataPtr to_add); /*! for all elements, this->data += to_add->data */
-
+    dataPtr fill_data(size_t size, double value);
+    dataPtr increment_data(size_t size, double delta);
+    dataPtr scale_data(size_t size, double factor);
 
     bool free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/

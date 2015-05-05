@@ -79,7 +79,25 @@ ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	sip_blas_daxpy(size__, d_one, to_add, i_one, data_, i_one);
 	return data_;
 }
+ServerBlock::dataPtr ServerBlock::fill_data(size_t size, double value) {
+	std::fill(data_+0, data_+size, value);
+	return data_;
+}
 
+ServerBlock::dataPtr ServerBlock::scale_data(size_t size, double factor) {
+	for (int i = 0; i < size; ++i) {
+		data_[i] *= factor;
+	}
+//	std::cout << "at server, in scale_data, first element of block is " << data_[0] << std::endl<< std::flush;
+	return data_;
+}
+
+ServerBlock::dataPtr ServerBlock::increment_data(size_t size, double delta) {
+	for (int i = 0; i < size; ++i) {
+		data_[i] += delta;
+	}
+	return data_;
+}
 
 bool ServerBlock::free_in_memory_data() {
 	bool deleted_block = false;

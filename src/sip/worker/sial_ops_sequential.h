@@ -33,9 +33,12 @@ public:
 	void create_distributed(int array_id, int pc);
 	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map, int pc);
 	void delete_distributed(int array_id, int pc);
-	void get(BlockId&, int);
-	void put_replace(BlockId&, const Block::BlockPtr, int);
-	void put_accumulate(BlockId&, const Block::BlockPtr, int);
+	void get(BlockId&, int pc);
+	void put_replace(BlockId&, const Block::BlockPtr, int pc);
+	void put_accumulate(BlockId&, const Block::BlockPtr, int pc);
+	void put_initialize(const BlockId&, double value, int pc);
+	void put_increment(const BlockId&, double value, int pc);
+	void put_scale(const BlockId&, double value, int pc);
 
 	void destroy_served(int array_id, int);
 	void request(BlockId&, int);

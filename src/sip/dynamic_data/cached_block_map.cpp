@@ -58,21 +58,21 @@ void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
 			if (!cleared_any_pending){
                 throw std::out_of_range("No blocks to remove from cache or pending deletes");
             }
-		} else {
-			BlockId block_id = policy_.get_next_block_for_removal();
-			Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
-			allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
-			delete tmp_block_ptr;
-		}
-	}
+        } else {
+            BlockId block_id = policy_.get_next_block_for_removal();
+            Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
+            allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
+            delete tmp_block_ptr;
+        }
+    }
 }
 
 bool CachedBlockMap::test_and_clean_pending(){
 // Cleaning pending blocks is relevant only for the MPI version
 	bool cleared_any_pending = false;
 #ifdef HAVE_MPI
-	std::list<Block*>::iterator it;
-	for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
+    std::list<Block*>::iterator it;
+    for (it = pending_delete_.begin(); it != pending_delete_.end(); ){
         Block* bptr = *it;
 		if (bptr->test()){
 			pending_delete_bytes_ -= bptr->size() * sizeof(double);

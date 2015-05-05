@@ -17,6 +17,7 @@
 
 namespace sip {
 
+int SialOpsPid_line_section_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
 
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
@@ -30,6 +31,7 @@ SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE),
 				sialx_timers_(sialx_timers)
 {
+	initialize_mpi_type();
 }
 
 SialOpsParallel::~SialOpsParallel() {
@@ -47,7 +49,6 @@ void SialOpsParallel::sip_barrier(int pc) {
 //	block_manager_.block_map_.clean_pending();
 //	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
 
-	//do an MPI barrier among all the workers
 	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
 	int num_workers;
 	MPI_Comm_size(worker_comm, &num_workers);
@@ -368,6 +369,101 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 
 }
 
+
+void SialOpsParallel::put_initialize(BlockId& target_id, double value, int pc){
+
+	//partial check for data races
+	check_and_set_mode(target_id,WRITE);
+
+	//send message with target_id and value to server
+	int my_rank = sip_mpi_attr_.global_rank();
+	int server_rank = data_distribution_.get_server_rank(target_id);
+	int put_initialize_tag = barrier_support_.make_mpi_tag_for_PUT_INITIALIZE();
+
+    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
+       		<< " : sending PUT_INITIALIZE for block " << target_id
+       		<< " to server "<< server_rank << std::endl);
+/*
+ * 	struct Put_scalar_op_message_t{
+	    double value_;
+	    int line_;
+	    int section_;
+		BlockId id_;
+	};
+ */
+    Put_scalar_op_message_t message = {
+      		value,
+    		current_pc(),
+    		barrier_support_.section_number(),
+    		target_id};
+    message.id_.parent_id_ptr_ = NULL;
+//	std::cout << "WORKER: message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
+//    std::cout << "message.value_=" << message.value_ << std::endl << std::flush;)
+        
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_communication_time();
+    SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
+    		put_initialize_tag, MPI_COMM_WORLD));
+	ack_handler_.expect_ack_from(server_rank, put_initialize_tag);
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).pause_communication_time();
+}
+
+void SialOpsParallel::put_increment(BlockId& target_id, double value, int pc){
+
+	//partial check for data races
+	check_and_set_mode(target_id,WRITE);
+
+	//send message with target_id and value to server
+	int my_rank = sip_mpi_attr_.global_rank();
+	int server_rank = data_distribution_.get_server_rank(target_id);
+	int put_increment_tag = barrier_support_.make_mpi_tag_for_PUT_INCREMENT();
+
+    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
+       		<< " : sending PUT_INCREMENT for block " << target_id
+       		<< " to server "<< server_rank << std::endl);
+
+    Put_scalar_op_message_t message = {
+     		value,
+			current_pc(),
+    		barrier_support_.section_number(),
+    		target_id};
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_communication_time();
+    SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
+    		put_increment_tag, MPI_COMM_WORLD));
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).pause_communication_time();
+}
+
+void SialOpsParallel::put_scale(BlockId& target_id, double value, int pc){
+
+	//partial check for data races
+	check_and_set_mode(target_id,WRITE);
+
+	//send message with target_id and value to server
+	int my_rank = sip_mpi_attr_.global_rank();
+	int server_rank = data_distribution_.get_server_rank(target_id);
+	int put_scale_tag = barrier_support_.make_mpi_tag_for_PUT_SCALE();
+
+    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+
+    SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
+       		<< " : sending PUT_INITIALIZE for block " << target_id
+       		<< " to server "<< server_rank << std::endl);
+
+    Put_scalar_op_message_t message = {
+     		value,
+			current_pc(),
+    		barrier_support_.section_number(),
+    		target_id};
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).start_communication_time();
+    SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
+    		put_scale_tag, MPI_COMM_WORLD));
+	if (pc >= 0 && sialx_timers_) sialx_timers_->timer(pc).pause_communication_time();
+}
+
+
 void SialOpsParallel::destroy_served(int array_id, int pc) {
 	delete_distributed(array_id, pc);
 }
@@ -652,6 +748,98 @@ Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
     b->wait();
 	if (pc >= 0 && sialx_timers_) { sialx_timers_->timer(pc).pause_block_wait(); sialx_timers_->timer(pc).pause_communication_time(); }
     return b;
+}
+
+
+/*
+    //TODO change line to pc
+	struct Put_scalar_op_message_t{
+	    double value_;
+	    int line_;
+	    int section_;
+		BlockId id_;
+	};
+
+	MPI_Datatype mpi_put_scalar_op_type;
+	MPI_Datatype block_id_type;
+	void initialize_mpi_type();
+ *
+ */
+void SialOpsParallel::initialize_mpi_type(){
+
+    MPI_Aint  displacements[4], s_lower, s_extent;
+    MPI_Datatype  types[4];
+
+    Put_scalar_op_message_t tmp_struct;
+
+    /* create type for BlockId, skip the parent_id_ptr */
+     BlockId id;
+     BlockId * idptr;
+     MPI_Aint id_displacements[3], id_lb, id_extent;
+     MPI_Datatype id_types[3];
+     MPI_Get_address(&id.array_id_, &id_displacements[0]);
+     MPI_Get_address(&id.index_values_, &id_displacements[1]);
+     MPI_Get_address(&id.parent_id_ptr_, &id_displacements[2]);
+     id_types[0] = MPI_INT;
+     id_types[1] = MPI_INT;
+     id_types[2] = MPI_BYTE;
+     int id_counts[3]={1,MAX_RANK, sizeof(idptr)};
+     //convert addresses to displacement from beginning
+     id_displacements[2] -= id_displacements[0];
+     id_displacements[1] -= id_displacements[0];
+     id_displacements[0] = 0;
+//     std::cout << "WORKER id_displacements = " << id_displacements[0] << "," << id_displacements[1] << "," << id_displacements[2] << std::endl << std::flush;
+     MPI_Type_create_struct(3,id_counts, id_displacements, id_types, &block_id_type_);
+     /*check that it has the correct extent*/
+     MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
+     if(id_extent != sizeof(id)){
+
+ //    std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
+    	 MPI_Datatype id_type_old = block_id_type_;
+    	 MPI_Type_create_resized(id_type_old, 0, sizeof(id), &block_id_type_);
+    	 MPI_Type_free(&id_type_old);
+     }
+     MPI_Type_commit(&block_id_type_);
+
+    /* Now get type  for the initialize whole struct */
+    MPI_Get_address(&tmp_struct.value_, &displacements[0]);
+    MPI_Get_address(&tmp_struct.pc_, &displacements[1]);
+    MPI_Get_address(&tmp_struct.section_, &displacements[2]);
+    MPI_Get_address(&tmp_struct.id_, &displacements[3]);
+    types[0] = MPI_DOUBLE;
+    types[1] = MPI_INT;
+    types[2] = MPI_INT;
+    types[3] = block_id_type_;
+    int counts[4] = {1,1,1,1};
+    //convert addresses to displacement from beginning
+    displacements[3] -= displacements[0];
+    displacements[2] -= displacements[0];
+    displacements[1] -= displacements[0];
+    displacements[0] = 0;
+    MPI_Type_create_struct(4,counts, displacements, types, &mpi_put_scalar_op_type_);
+    MPI_Type_get_extent(mpi_put_scalar_op_type_, &s_lower, &s_extent);
+    if (s_extent != sizeof(tmp_struct)){
+//        std::cout << "WORKER: s_extent, sizeof = " << id_extent << "," << sizeof(Put_scalar_op_message_t) << std::endl << std::flush;
+       	 MPI_Datatype type_old = mpi_put_scalar_op_type_;
+       	 MPI_Type_create_resized(type_old, 0, sizeof(Put_scalar_op_message_t), &mpi_put_scalar_op_type_);
+       	 MPI_Type_free(&type_old);
+    }
+    MPI_Type_commit(&mpi_put_scalar_op_type_);
+
+//	BlockId temp_id;
+//	size_t pointer_size = sizeof(temp_id.parent_id_ptr_);
+//
+//    offsets[0] = 0;  //block_id
+//    offsets[1] = int_size * BlockId::MPI_BLOCK_ID_COUNT + /*padding*/ int_size;  //line, section
+//    offsets[2] = offsets[1] + 2* int_size + /*padding*/ 2*int_size; //value
+//
+//
+//	int counts[] = {BlockId::MPI_BLOCK_ID_COUNT, 2, 1};
+//	MPI_Datatype types[] = {MPI_INT, MPI_INT, MPI_DOUBLE};
+//
+//	SIPMPIUtils::check_err(MPI_Type_create_struct(3, counts, offsets, types, &mpi_put_scalar_op_type));
+//	SIPMPIUtils::check_err(MPI_Type_commit(&mpi_put_scalar_op_type));
+
 }
 
 #endif //HAVE_MPI

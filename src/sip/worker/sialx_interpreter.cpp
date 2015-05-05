@@ -219,6 +219,30 @@ void SialxInterpreter::handle_put_accumulate_op(int pc) {
 	sial_ops_.put_accumulate(lhs_id, rhs_block, pc);
 }
 
+void SialxInterpreter::handle_put_initialize_op(int pc) {
+	//put a[...] = 0.0
+	BlockId lhs_id = get_block_id_from_selector_stack();
+	double rhs_value = expression_stack_.top();
+	expression_stack_.pop();
+	sial_ops_.put_initialize(lhs_id, rhs_value, pc);
+}
+
+void SialxInterpreter::handle_put_increment_op(int pc) {
+	 //put a[...] += 1.0
+	sip::BlockId lhs_id = get_block_id_from_selector_stack();
+	double rhs_value = expression_stack_.top();
+	expression_stack_.pop();
+	sial_ops_.put_increment(lhs_id, rhs_value, pc);
+}
+
+void SialxInterpreter::handle_put_scale_op(int pc) {
+	//put a[...] *= 5.0
+	sip::BlockId lhs_id = get_block_id_from_selector_stack();
+	double rhs_value = expression_stack_.top();
+	expression_stack_.pop();
+	sial_ops_.put_scale(lhs_id, rhs_value, pc);
+}
+
 void SialxInterpreter::handle_put_replace_op(int pc) {
 	//put a[...] = b[...]
 	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true);
@@ -811,6 +835,9 @@ restart:
 		case get_op: 					handle_get_op(pc_);						++pc_; break;
 		case put_accumulate_op: 		handle_put_accumulate_op(pc_);			++pc_; break;
 		case put_replace_op: 			handle_put_replace_op(pc_);				++pc_; break;
+		case put_initialize_op: 		handle_put_initialize_op(pc_);			++pc_; break;
+		case put_increment_op: 			handle_put_increment_op(pc_);			++pc_; break;
+		case put_scale_op: 				handle_put_scale_op(pc_);				++pc_; break;
 		case create_op: 				handle_create_op(pc_);					++pc_; break;
 		case delete_op: 				handle_delete_op(pc_);					++pc_; break;
 		case string_load_literal_op: 	handle_string_load_literal_op(pc_);		++pc_; break;

@@ -1,19 +1,5 @@
-#  Copyright (c) 2003-2010 University of Florida
-  import "rccsd_rhf_defs.sialx" 
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
-                           SIAL CCSD_RHF_SV1
+import "rccsd_rhf_defs.sialx" 
+SIAL CCSD_RHF_SV1
 #
 #-------------------------------------------------------------------------------
 #
@@ -30,6 +16,7 @@
       index   j1diis = 1: 30 
       index      D1  = 1: 30 
       index      D2  = 1: 30 
+      index   ixyz   = 1: 3
 #
       aoindex mu     = 1: norb 
       aoindex nu     = 1: norb
@@ -69,333 +56,78 @@
 # Declare static arrays 
 # --------------------- 
 #
-      distributed t1a_old[a,i] 
-      distributed t1a_new[a,i] 
-#
-      distributed Fae_a[a,a1] 
-      distributed Fme_a[i,a] 
-      distributed Fmi_a[i,i1] 
-      distributed DCa[mu,p] 
-      distributed FTa[p,p1] 
-
-      static zz[mu,nu] 
       static ca[mu,p] 
       static fock_a[p,p1] 
+# 
+# Declare distributed arrays 
+# --------------------- 
 #
-# Arrays used in the DIIS 
-# -----------------------
-#
-      served Daibj[a,i,b,j,kdiis] 
-      served Eaibj[a,i,b,j,jdiis] 
-      distributed Dai[a,i,kdiis] 
-      distributed Eai[a,i,jdiis] 
-      served D0aibj[a,i,b,j] 
-      served D0ai[a,i] 
-
-      temp Taibjk[a,i,b,j,kdiis] 
-      static BB[d1,d2] 
-      temp tbb[d1,d2] 
-      distributed DIST_BB[d1,d2] 
-      scalar n1 
-      scalar n2 
-      scalar worder  
-#
-# Arrays used in transformation for AO2 algorithm
-# -----------------------------------------------
+      distributed t1a_old[a,i]
+      distributed t1a_new[a,i]
+      distributed Fae_a[a,a1]
+      distributed Fme_a[i,a]
+      distributed Fmi_a[i,i1]
+      distributed t1a_ax[a,mu]
+      distributed Wminj_ab[i2,i,j3,j1]
+# 
+# Declare served arrays 
+# --------------------- 
 #
       served VSpipi[p1,i,p,i1]
-      served Viaai[i,a1,a,i1] 
+      served Viaai[i,a1,a,i1]
       served Vaaii[a,a1,i,i1]
       served Vaaai[a2,a,a1,i]
-#
-      temp Txixj[mu,i,nu,j]
       served Vpiqj[p,i,q,j]
-#
-# End Arrays used in transformation for AO2 algorithm
-# --------------------------------------------------- 
-#
-# Declare temporary arrays 
-# ------------------------ 
-#
-      temp Txjjx[mu,j,j1,nu]
-      temp Txijx[mu,i,j,nu]
-      temp Txqii[mu,q,i,i1]
-      temp Tqqii[q,q1,i,i1]
-      temp Txpjj[mu,p,j,j1]
-      temp Txqjj[mu,q,j,j1]
-      temp Tppjj[p,p1,j,j1]
-      temp Tqqjj[q,q1,j,j1]
-      temp Tjxqj[j,mu,q,j1]
-      temp Tjqqj[j,q,q1,j1]
-      temp Tixqj[i,mu,q,j]
-      temp Tipqj[i,p,q,j]
-#
-      temp Taiai[p,i,p1,i1]
-      temp T1aiai[p,i,p1,i1]
-      temp T2aiai[p,i,p1,i1]
-      temp T3aiai[p,i,p1,i1]
-      temp Tbjbj[q,j,q1,j1]
-      temp T1bjbj[q,j,q1,j1]
-      temp T2bjbj[q,j,q1,j1]
-      temp T3bjbj[q,j,q1,j1]
-      temp Taibj[p,i,q,j]
-      temp T1aibj[p,i,q,j]
-      temp T2aibj[p,i,q,j]
-      temp T3aibj[p,i,q,j]
-      temp T4aibj[p,i,q,j]
-      temp T5aibj[p,i,q,j]
-#
-      temp Txxxp[mu,nu,lambda,i]
-      temp Txxxq[mu,nu,lambda,j]
-      temp Txxpp[mu,nu,p1,i]
-      temp Txxqq[mu,nu,q1,j]
-      temp Txppp[mu,p2,p1,i]
-      temp Txqpp[mu,q,p1,i]
-      temp Txqqq[mu,q2,q1,j]
-      temp Txpqq[mu,p,q1,j]
-      temp Tpppp[p3,p2,p1,p]
-      temp Tqqqq[q3,q2,q1,q]
-      temp Tppqq[p1,p,q1,j]
-      temp Tqqpp[q1,q,p1,i]
-      temp Tixxx[i,mu,nu,sigma] 
-      temp Tipxx[i,p,nu,sigma] 
-      temp Tipqx[i,p,q,sigma] 
-      temp Tipqq[i,p,q,q1] 
-      temp Txiai[lambda,i,a1,i1] 
-      temp Txjbj[lambda,j,b1,j1] 
-      temp Txibj[lambda,i,b1,j1] 
-#
-      temp tmp1_aiai[a,i,a1,i1] 
-      temp tmp2_aiai[a,i,a1,i1] 
-      temp tmp3_aiai[a,i,a1,i1] 
-      temp tmp1_aibj[a,i,b,j] 
-      temp tmp2_aibj[a,i,b,j] 
-#
-      temp Tai[a,i] 
-      temp T1ai[a,i] 
-      temp T2ai[a,i] 
-      temp T3ai[a,i] 
-      temp Tbj[b,j] 
-      temp T1bj[b,j] 
-      temp T2bj[b,j] 
-#
-      temp Taa[a,a1] 
-      temp T1aa[a,a1] 
-      temp T1bb[b,b1] 
-      temp Tae_a[a,a1] 
-      temp Tae_b[b,b1] 
-#
-      temp Tia[i,a] 
-      temp T1ia[i,a] 
-      temp Tjb[j,b] 
-      temp T1jb[j,b] 
-      temp Tme_a[i,a] 
-      temp Tme_b[j,b] 
-#
-      temp Tii[i,i1] 
-      temp T1ii[i,i1] 
-      temp Tjj[j,j1] 
-      temp T1jj[j,j1] 
-      temp Tmi_a[i,i1] 
-      temp Tmi_b[j,j1] 
-#
-      temp T1pppp[p,p1,p2,p3] 
-      temp T1qqqq[q,q1,q2,q3] 
-      temp Taiii[a,i,i1,i2] 
-      temp T1aiii[a,i,i1,i2] 
-#
-      temp  Tiiii[i,i1,i2,i3] 
-      temp T1iiii[i,i1,i2,i3] 
-#
-      temp  Tjjjj[j,j1,j2,j3] 
-      temp T1jjjj[j,j1,j2,j3] 
-      temp  Tbjjj[b,j,j1,j2] 
-      temp T1bjjj[b,j,j1,j2] 
-#
-      temp  Tiijj[i,i1,j2,j3] 
-      temp T1iijj[i,i1,j2,j3] 
-#
-      temp  tmp_aa[a,a1] 
-      temp tmp1_aa[a,a1] 
-      temp  tmp_ii[i,i1] 
-      temp tmp1_ii[i,i1] 
-#
-      temp  Tiiai[i,i1,a,i2] 
-      temp T1iiai[i,i1,a,i2] 
-#
-      temp  tmp_bb[b,b1] 
-      temp tmp1_bb[b,b1] 
-      temp  tmp_jj[j,j1] 
-      temp tmp1_jj[j,j1] 
-#
-      temp  Tjjbj[j,j1,b,j2] 
-      temp T1jjbj[j,j1,b,j2] 
-# 
-      temp T1aaai[a,a1,a2,i]  
-      temp T2aaai[a,a1,a2,i]  
-      temp Taaaa[a,a1,a2,a3]  
-      temp T1aaaa[a,a1,a2,a3]  
-#
-      temp T1bbbj[b,b1,b2,j]  
-      temp T2bbbj[b,b1,b2,j]  
-      temp Tbbbb[b,b1,b2,b3]  
-      temp T1bbbb[b,b1,b2,b3]  
-#
-      temp Taabb[a,a1,b,b1]  
-      temp T1aabb[a,a1,b,b1]  
-#
-      temp R1aiai[a,i,a1,i1] 
-      temp R2aiai[a,i,a1,i1] 
-      temp R3aiai[a,i,a1,i1] 
-      temp R4aiai[a,i,a1,i1] 
-      temp R1bjbj[b,j,b1,j1] 
-      temp R2bjbj[b,j,b1,j1] 
-      temp R3bjbj[b,j,b1,j1] 
-      temp R4bjbj[b,j,b1,j1] 
-      temp R1aibj[a,i,b,j] 
-      temp R2aibj[a,i,b,j] 
-      temp R3aibj[a,i,b,j] 
-      temp R4aibj[a,i,b,j] 
-#
-      temp T1iaai[i,a,a1,i1] 
-      temp T2iaai[i,a,a1,i1] 
-      temp T1jbbj[j,b,b1,j1] 
-      temp T2jbbj[j,b,b1,j1] 
-      temp T1iabj[i,a,b,j] 
-      temp T2iabj[i,a,b,j] 
-      temp Tjjpp[j,j1,p,p1] 
-      temp T1jjpp[j,j1,p,p1] 
-      temp T2jjpp[j,j1,p,p1] 
-      temp  Tiiqq[i,i1,q,q1] 
-      temp T1iiqq[i,i1,q,q1] 
-      temp T2iiqq[i,i1,q,q1] 
-      temp  Tjjai[j,j1,a,i] 
-      temp T1jjai[j,j1,a,i] 
-      temp T2jjai[j,j1,a,i] 
-      temp  Tiibj[i,i1,b,j] 
-      temp T1iibj[i,i1,b,j] 
-      temp T2iibj[i,i1,b,j] 
-      temp  Tjbai[j,b,a,i]  
-      temp T1jbai[j,b,a,i]  
-      temp T2jbai[j,b,a,i]  
-      temp  Taijj[a,i,j,j1] 
-      temp T1aijj[a,i,j,j1] 
-      temp Tqqip[a,i,b,b1]  
-#
-      temp tpx[p,mu] 
-      temp t1px[p,mu] 
-      temp tqx[q,mu] 
-      temp t1qx[q,mu] 
-      temp txi[mu,i] 
-      temp t1xi[mu,i] 
-      temp txj[mu,j] 
-      temp t1xj[mu,j] 
-#
-# Declare distributed arrays 
-# -------------------------- 
-#
       served T2new_ab[a,i,b,j]
       served T2old_aa[a,i,a1,i1]
       served T2old_ab[a,i,b,j]
-#
       served Tau_ab[a,i,b,j]
       served Taup_aa[a,i,a1,i1]
       served Taup_ab[a,i,b,j]
+      served Wiibb[i1,i,b,b1]
+      served TAO_ab[lambda,i,sigma,j]
+      served T2AO_ab[lambda,i,sigma,j]
+      served TDaixj[a,i,nu,j]
+      served e5aibj[a,i,b,j]
+      served e6aibj[a,i,b,j]
+      served e5aiai[a,i,b,j]
+# 
+# Declare local arrays 
+# --------------------- 
 #
-      served Wiibb[i1,i,b,b1]    
-      served Wjjaa[j1,j,a,a1]      
-#
-# Declare served arrays 
+      local LTAO_ab[lambda,i,sigma,i1]
+      local LDaixj[a,i,nu,j]
+      local L3aiai[a2,i1,a,i2]
+      local L4aiai[a1,i,a2,i1]
+      local L1aibj[a1,i,b,j]
+      local L3aibj[a,i1,b,j]
+      local Liibj[i1,i,b,j]
+      local L1iibj[i,i1,b,j]
+      local Laabj[a,a1,b,j]
+      local L1aiii[a1,i2,i,i1]
+      local LWaibj[a,i,b,j]
+      local LWiaai[i1,a,a2,i]
+      local LWjbai[j,b,a,i]
+# 
+# Declare scalar arrays 
 # --------------------- 
 #
       scalar ncount1
       scalar ncount2
-      scalar jcount 
-      scalar kcount 
-      scalar niter 
-      scalar diis_start 
-      scalar diis_order  
-      scalar temp_order
+      scalar jcount
+      scalar kcount
+      scalar niter
       scalar zero
       scalar one
       scalar two
       scalar five
       scalar six
       scalar seven
-#
-# Arrays needed for AOLADDER contribution
-# ---------------------------------------
-#
-     temp Zab[lambda,i,b,j]
-     temp Yab[lambda,i,mu,j]
-     temp Y1ab[lambda,i,mu,j]
-#
-     temp TXaiai[a,i,nu,i1]
-     temp Taixi[a,i,nu,i1]   
-     temp TYaiai[a,i,a1,i1]
-     temp TY1aiai[a,i,a1,i1]
-     temp TXbjbj[b,j,nu,j1]
-     temp Tbjxj[b,j,nu,j1]
-     temp TYbjbj[b,j,b1,j1]
-     temp TY1bjbj[b,j,b1,j1]
-     temp TXaibj[a,i,nu,j]
-     temp TZaibj[a,i,nu,j]
-     temp Taixj[a,i,nu,j]
-     temp T1aixj[a,i,nu,j]
-     temp TYaibj[a,i,b,j]
-#
-     served TAO_ab[lambda,i,sigma,j]
-     served T2AO_ab[lambda,i,sigma,j]
-     distributed t1a_ax[a,mu] 
-     distributed t1a_xi[mu,i] 
-     distributed t1b_xj[mu,j] 
-     served TDaixj[a,i,nu,j]
-     local LDaixj[a,i,nu,j] 
-#
-      served Vxxxi[mu,nu,lambda,i]
-      served Vxixi[mu,i1,lambda,i]
-      served Vxxii[mu,nu,i1,i]
-      served Vixxi[i1,nu,lambda,i]
-      served Vxipi[mu,i,p,i1]
-      served Vixai[i,mu,a,i1]
-      served Vxaii[mu,a,i,i1]
-      served Vxaai[mu,a1,a,i]
-      served Vxxai[mu,nu,a,i]
-      served Vxixj[mu,i,nu,j]
-      served Vxiqj[mu,i,q,j]
-      temp aoint[mu,nu,lambda,sigma]
-      temp Txixi[mu,i1,lambda,i]
-      temp Txxii[mu,nu,i1,i]
-      temp Tixxi[i1,nu,lambda,i]
-      temp Txipi[mu,i,p,i1]
-      temp T1xipi[mu,i,p,i1]
-      temp Tpipi[p1,i,p,i1]
-      temp T1pipi[p1,i,p,i1]
-      temp Tixai[i,mu,a,i1]
-      temp Txaii[mu,a,i,i1]
-      temp Tiaai[i,a1,a,i1]
-      temp Taaii[a,a1,i,i1]
-      temp Txaai[mu,a1,a,i]
-      temp Taaai[a2,a,a1,i]
-      temp Txxai[mu,nu,a,i]
-      temp T1xaai[mu,a1,a,i] 
-      temp T1xxxi[mu,nu,lambda,i]  
-      temp T1xixi[mu,i,nu,i1]
-      temp Txiix[mu,i,i1,nu]
-      temp Txpii[mu,p,i,i1]
-      temp Tppii[p,p1,i,i1]
-      temp Tixpi[i,mu,p,i1]
-      temp Tippi[i,p,p1,i1]
-#
-      local Lxxxi[mu,nu,lambda,i]
-      local Lxxai[mu,nu,a,i] 
-      local Lxaai[mu,a1,a,i] 
-#
-# Declare scalars 
-# --------------- 
-#
+      scalar lccd_correlation
       scalar lccd_energy
+      scalar mp2_correlation
       scalar etemp
+      scalar escr
       scalar esum
       scalar esuma
       scalar esumb
@@ -404,358 +136,232 @@
       scalar ecorrbb
       scalar ecorrab
       scalar ecorrT
-      scalar enew 
-      scalar eold 
-      scalar ecrit 
-      scalar ediff 
-      scalar escr
-      scalar mp2_energy
-      scalar restart
+      scalar enew
+      scalar eold
+      scalar ecrit
+      scalar ediff
+# 
+# Declare temp arrays 
+# --------------------- 
 #
-# Arrays/Scalars used exclusively in DIIS procedure. 
-# -------------------------------------------------- 
+      temp Tiaai[i,a1,a,i1]
+      temp Taaai[a2,a,a1,i]
+      temp Txixj[mu,i,nu,j]
+      temp T1xixj[mu,i,nu,j]
+      temp Taiai[p,i,p1,i1]
+      temp T1aiai[p,i,p1,i1]
+      temp T2aiai[p,i,p1,i1]
+      temp T3aiai[p,i,p1,i1]
+      temp T1bjbj[q,j,q1,j1]
+      temp T2bjbj[q,j,q1,j1]
+      temp Taibj[p,i,q,j]
+      temp T1aibj[p,i,q,j]
+      temp T2aibj[p,i,q,j]
+      temp T3aibj[p,i,q,j]
+      temp T4aibj[p,i,q,j]
+      temp Tpppp[p3,p2,p1,p]
+      temp tmp1_aiai[a,i,a1,i1]
+      temp tmp2_aiai[a,i,a1,i1]
+      temp tmp1_aibj[a,i,b,j]
+      temp tmp2_aibj[a,i,b,j]
+      temp Tai[a,i]
+      temp T1ai[a,i]
+      temp T2ai[a,i]
+      temp T3ai[a,i]
+      temp Tbj[b,j]
+      temp Taa[a,a1]
+      temp T1aa[a,a1]
+      temp Tia[i,a]
+      temp Tme_a[i,a]
+      temp Tii[i,i1]
+      temp T1ii[i,i1]
+      temp  Tiijj[i,i1,j2,j3]
+      temp T1iijj[i,i1,j2,j3]
+      temp  tmp_aa[a,a1]
+      temp tmp1_aa[a,a1]
+      temp  tmp_ii[i,i1]
+      temp tmp1_ii[i,i1]
+      temp T1aaai[a,a1,a2,i]
+      temp R1aibj[a,i,b,j]
+      temp  Tiiqq[i,i1,q,q1]
+      temp T1iiqq[i,i1,q,q1]
+      temp  Tjjai[j,j1,a,i]
+      temp T1jjai[j,j1,a,i]
+      temp  Tiibj[i,i1,b,j]
+      temp T1iibj[i,i1,b,j]
+      temp  Tjbai[j,b,a,i]
+      temp tpx[p,mu]
+      temp t1px[p,mu]
+      temp AOINT[mu,nu,lambda,sigma]
+      temp Yab[lambda,i,mu,j]
+      temp Y1ab[lambda,i,mu,j]
+      temp TYaiai[a,i,a1,i1]
+      temp Taixj[a,i,nu,j]
 #
-       served e1aibj[a,i,b,j]  
-       served e2aibj[a,i,b,j]  
-       served e3aibj[a,i,b,j]  
-       served e4aibj[a,i,b,j]  
-       served e5aibj[a,i,b,j]  
-       served e6aibj[a,i,b,j]  
+# Arrays used in the DIIS 
+# -----------------------
 #
-       served e5aiai[a,i,b,j] 
+      int Iorder  
+      int Idiis_order
+      static BB[d1,d2] 
+      served Daibj[a,i,b,j,kdiis] 
+      served Eaibj[a,i,b,j,jdiis] 
+      served D0aibj[a,i,b,j] 
+      served D0ai[a,i] 
+      distributed DIST_BB[d1,d2] 
+
+      distributed Dai[a,i,kdiis] 
+      distributed Eai[a,i,jdiis] 
+
+      scalar n1 
+      scalar n2 
+      scalar worder  
+      scalar diis_start
+      scalar diis_order
+      scalar temp_order
+
+      temp tbb[d1,d2] 
+
+      temp   DAOINT[mu,nu]
+      static Sxyz[ixyz]
+      static scf_dipole[ixyz]
+      static dipole[ixyz]
+      served Dpq_11[p,q]
+      served Dxx_11[mu,nu]
+      served Dpx_11[p,nu]
+      temp Txx[mu,nu]
+      temp Txx1[mu,nu]
+      temp T1xx[mu,nu]
+      temp Tpq[p,q]
+      scalar dsum
 #
 #    ------------------------------------------------------------------------ 
-    PROC read_2el
+PROC read_2el
 
-    restore_persistent VSpipi "VSpipi"
-    restore_persistent Vpiqj  "Vpiqj"
-    restore_persistent Vaaii  "Vaaii"
-    restore_persistent Viaai  "Viaai"
+restore_persistent VSpipi "VSpipi"
+restore_persistent Vpiqj  "Vpiqj"
+restore_persistent Vaaii  "Vaaii"
+restore_persistent Viaai  "Viaai"
 #
 
-    ENDPROC read_2el
-#
-     PROC TRAN_TRAN2
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, lambda
-#
-          allocate Lxxxi[mu,nu,lambda,*]
-#     
-          DO sigma
-#
-             execute compute_integral_batch aoint[mu,nu,lambda,sigma]
-#
-             DO i   
-#
-                 T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
-                 Lxxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]
-#    
-             ENDDO i
-#    
-          ENDDO sigma
-
-          DO i
-           DO i1
-              Txxii[mu,nu,i1,i]          = Lxxxi[mu,nu,lambda,i]*ca[lambda,i1]
-              PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-           ENDDO i1
-           ENDDO i
-#
-          DO i
-           DO i1
-              Txixi[mu,i1,lambda,i]      = Lxxxi[mu,nu,lambda,i]*ca[nu,i1]
-              PREPARE Vxixi[mu,i1,lambda,i] += Txixi[mu,i1,lambda,i]
-           ENDDO i1
-           ENDDO i
-#
-          DO i
-           DO i1
-              Tixxi[i1,nu,lambda,i]      = Lxxxi[mu,nu,lambda,i]*ca[mu,i1]
-              PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
-           ENDDO i1
-           ENDDO i
-#    
-##          DO i
-#           DO a
-#              Txxai(mu,nu,a,i)          = Lxxxi(mu,nu,lambda,i)*ca(lambda,a)
-#              PREPARE Vxxai(mu,nu,a,i) += Txxai(mu,nu,a,i)
-#           ENDDO a
-#           ENDDO i
-#
-          deallocate Lxxxi[mu,nu,lambda,*]
-#
-     ENDPARDO mu, nu, lambda
-     server_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN2
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#    Perform the third N5 stage of the transformation.
-#
-     PROC TRAN_TRAN3
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vxixi[mu,i,nu,i1] 
-#
-           DO p
-#
-              Txipi[mu,i,p,i1]          = Vxixi[mu,i,nu,i1]*ca[nu,p]
-              PREPARE Vxipi[mu,i,p,i1] += Txipi[mu,i,p,i1]
-#
-           ENDDO p
-#
-     ENDPARDO mu, nu, i, i1
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vxxii[mu,nu,i,i1] 
-#
-           DO a
-#
-              Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*ca[nu,a]
-              PREPARE Vxaii[mu,a,i,i1] += Txaii[mu,a,i,i1]
-
-           ENDDO a
-#
-     ENDPARDO mu, nu, i, i1
-#
-     PARDO mu, nu, i, i1
-#
-           REQUEST Vixxi[i,mu,nu,i1] 
-#
-           DO a
-#
-              Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*ca[nu,a]
-              PREPARE Vixai[i,mu,a,i1] += Tixai[i,mu,a,i1]
-#
-           ENDDO a
-
-     ENDPARDO mu, nu, i, i1
-#
-#     pardo mu,nu,a,i
-#         request Vxxai(mu,nu,a,i) i
-#         do a1
-##             Txaai(mu,a1,a,i) = Vxxai(mu,nu,a,i)*Ca(nu,a1)
-#             prepare Vxaai(mu,a1,a,i) += Txaai(mu,a1,a,i)
-#         enddo a1
-#     endpardo mu,nu,a,i
-#
-#    ------------------------------------------------------------------------
-#
-     server_barrier
-#
-     ENDPROC TRAN_TRAN3
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_TRAN4
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, p, i, i1
-#
-           REQUEST             Vxipi[mu,i,p,i1] 
-           REQUEST             Vxipi[mu,i1,p,i] 
-           Txipi[mu,i,p,i1]  = Vxipi[mu,i,p,i1]
-           T1xipi[mu,i,p,i1] = Vxipi[mu,i1,p,i]
-           Txipi[mu,i,p,i1] -= T1xipi[mu,i,p,i1]
-#
-           DO p1
-#
-              Tpipi[p1,i,p,i1]          = Vxipi[mu,i,p,i1]*ca[mu,p1]
-              PREPARE Vpiqj[p1,i,p,i1] += Tpipi[p1,i,p,i1]
-#
-           ENDDO p1
-#
-           DO p1
-#
-              Tpipi[p1,i,p,i1]          = Txipi[mu,i,p,i1]*ca[mu,p1]
-              PREPARE VSpipi[p1,i,p,i1] += Tpipi[p1,i,p,i1]
-#
-           ENDDO p1
-#
-     ENDPARDO mu, p, i, i1
-#
-     PARDO mu, a, i, i1
-#
-           REQUEST Vxaii[mu,a,i,i1] 
-           REQUEST Vixai[i,mu,a,i1] 
-#
-           DO a1
-#
-              Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*ca[mu,a1]
-              PREPARE Vaaii[a1,a,i,i1] += Taaii[a1,a,i,i1]
-#
-           ENDDO a1
-#
-           DO a1
-#
-              Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*ca[mu,a1]
-              PREPARE Viaai[i,a1,a,i1] += Tiaai[i,a1,a,i1]
-#
-           ENDDO a1
-#
-     ENDPARDO mu, a, i, i1
-#
-#         pardo mu, a, a1, i
-#             request Vxaai(mu,a,a1,i) i
-#             do a2
-#                 Taaai(a2,a,a1,i) = Vxaai(mu,a,a1,i)*Ca(mu,a2)
-#                 prepare Vaaai(a2,a,a1,i) += Taaai(a2,a,a1,i)
-#             enddo a2
-#         endpardo mu, a, a1, i
-
-         server_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN4
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_UHF
-#
-#        CALL COMP_INTEGRALS # --> compute integrals and put into served array
-         CALL TRAN_TRAN2     # --> performs the first two stages of the
-                             #     two-electron integral transformation.
-         CALL TRAN_TRAN3     # --> performs the third stage
-                             #     two-electron integral transformation.
-         CALL TRAN_TRAN4     # --> performs the fourth stage of the
-                             #     two-electron integral transformation.
-#
-     ENDPROC TRAN_UHF
+endPROC read_2el
 #    ------------------------------------------------------------------------ 
-    PROC IGUESS_UHF
+PROC IGUESS_UHF
 
 #
-    pardo a,b,i,j
+pardo a,b,i,j
 #
-           REQUEST                     Vpiqj[a,i,b,j]   
-           REQUEST                     Vpiqj[b,j,a,i]   
-           Taibj[a,i,b,j]            = Vpiqj[b,j,a,i]
-           Taibj[a,i,b,j]           += Vpiqj[a,i,b,j]
-           execute energy_denominator_rhf  Taibj[a,i,b,j] fock_a  
-           Taibj[a,i,b,j]           *= 0.5  
-           PREPARE T2old_ab[a,i,b,j] = Taibj[a,i,b,j]  
-           PREPARE D0aibj[a,i,b,j]  = Taibj[a,i,b,j]  
+    REQUEST                     Vpiqj[a,i,b,j]   
+    REQUEST                     Vpiqj[b,j,a,i]   
+    Taibj[a,i,b,j]            = Vpiqj[b,j,a,i]
+    Taibj[a,i,b,j]           += Vpiqj[a,i,b,j]
+    execute energy_denominator_rhf  Taibj[a,i,b,j] fock_a  
+    Taibj[a,i,b,j]           *= 0.5  
+    PREPARE T2old_ab[a,i,b,j] = Taibj[a,i,b,j]  
+    PREPARE D0aibj[a,i,b,j]  = Taibj[a,i,b,j]  
 #
-    endpardo a,b,i,j
-    server_barrier
+endpardo a,b,i,j
+server_barrier
 #
-    ENDPROC IGUESS_UHF
+endPROC IGUESS_UHF
 #
-    PROC energy
+PROC energy
 #
-    ecorrab = 0.0
-    esumab  = 0.0
-    server_barrier
-    pardo a,i,b,j
+ecorrab = 0.0
+esumab  = 0.0
+server_barrier
+pardo a,i,b,j
 #
-        request Vpiqj[a,i,b,j] 
-        request Vpiqj[a,j,b,i] 
+    request Vpiqj[a,i,b,j] 
+    request Vpiqj[a,j,b,i] 
 #
-        request T2old_ab[a,i,b,j] 
-        Taibj[a,i,b,j] = T2old_ab[a,i,b,j]
+    request T2old_ab[a,i,b,j] 
+    Taibj[a,i,b,j] = T2old_ab[a,i,b,j]
 #
-        T1aibj[a,i,b,j]  = Vpiqj[a,i,b,j]
-        T2aibj[a,i,b,j]  = Vpiqj[a,j,b,i]
-        T1aibj[a,i,b,j] *= 2.0
-        T1aibj[a,i,b,j] -= T2aibj[a,i,b,j]
+    T1aibj[a,i,b,j]  = Vpiqj[a,i,b,j]
+    T2aibj[a,i,b,j]  = Vpiqj[a,j,b,i]
+    T1aibj[a,i,b,j] *= 2.0
+    T1aibj[a,i,b,j] -= T2aibj[a,i,b,j]
 #
-        etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j]
-        esumab += etemp
+    etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j]
+    esumab += etemp
 #
-    endpardo a,i,b,j
-    server_barrier
+endpardo a,i,b,j
+server_barrier
 #
-    collective ecorrab += esumab
-    ecorrT = ecorrab
-    print ecorrT
+collective ecorrab += esumab
+ecorrT = ecorrab
 #
-    server_barrier
-    ENDPROC energy
+server_barrier
+endPROC energy
 #    ------------------------------------------------------------------------ 
 # AA t2 amps
-    PROC T2oldaa
+PROC T2oldaa
 #
-    pardo a,i,b,j
-        request T2old_ab[a,i,b,j] 
-        request T2old_ab[a,j,b,i] 
-        T1aibj[a,i,b,j]  = T2old_ab[a,i,b,j]
-        T2aibj[a,i,b,j]  = T2old_ab[a,j,b,i]
-        T1aibj[a,i,b,j] -= T2aibj[a,i,b,j]
-        prepare T2old_aa[a,i,b,j] = T1aibj[a,i,b,j]
-    endpardo a,i,b,j
-    server_barrier
+pardo a,i,b,j
+    request T2old_ab[a,i,b,j] 
+    request T2old_ab[a,j,b,i] 
+    T1aibj[a,i,b,j]  = T2old_ab[a,i,b,j]
+    T2aibj[a,i,b,j]  = T2old_ab[a,j,b,i]
+    T1aibj[a,i,b,j] -= T2aibj[a,i,b,j]
+    prepare T2old_aa[a,i,b,j] = T1aibj[a,i,b,j]
+endpardo a,i,b,j
+server_barrier
 #
-    ENDPROC T2oldaa
+endPROC T2oldaa
 #    ------------------------------------------------------------------------ 
-    proc t2new_zero
+proc t2new_zero
 #
-    pardo a,i,b,j
-        Taibj[a,i,b,j] = 0.0
-        prepare T2new_ab[a,i,b,j] = Taibj[a,i,b,j]
-    endpardo a,i,b,j
-    server_barrier
+pardo a,i,b,j
+    Taibj[a,i,b,j] = 0.0
+    prepare T2new_ab[a,i,b,j] = Taibj[a,i,b,j]
+endpardo a,i,b,j
+server_barrier
 #
-    endproc t2new_zero
+endproc t2new_zero
 #    ------------------------------------------------------------------------ 
-    proc T2newab
+proc T2newab
 #
-    pardo a,b,i,j
+pardo a,b,i,j
 #
-        request Vpiqj[a,i,b,j] 
-        Taibj[a,i,b,j]  = Vpiqj[a,i,b,j]
-        Taibj[a,i,b,j] *= 0.5
-        T1aibj[b,j,a,i] = Taibj[a,i,b,j]
-        prepare T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
-        prepare T2new_ab[b,j,a,i] += T1aibj[b,j,a,i]
+    request Vpiqj[a,i,b,j] 
+    Taibj[a,i,b,j]  = Vpiqj[a,i,b,j]
+    Taibj[a,i,b,j] *= 0.5
+    T1aibj[b,j,a,i] = Taibj[a,i,b,j]
+    prepare T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+    prepare T2new_ab[b,j,a,i] += T1aibj[b,j,a,i]
 #
-    endpardo a,b,i,j
+endpardo a,b,i,j
 #
-    endproc T2newab
+endproc T2newab
 #    ------------------------------------------------------------------------ 
-    proc hhladder_ab
+proc hhladder_ab
 #
-    pardo a,b,i1,j1
-        request T2old_ab[a,i1,b,j1] 
-        do i
-            do j
-                request Vpiqj[i,i1,j,j1] 
-                Taibj[a,i,b,j] = T2old_ab[a,i1,b,j1]*Vpiqj[i,i1,j,j1]
-                prepare T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
-            enddo j
-        enddo i
-    endpardo a,b,i1,j1
+pardo a,b,i1,j1
+    request T2old_ab[a,i1,b,j1] 
+    do i
+    do j
+	request Vpiqj[i,i1,j,j1] 
+	Taibj[a,i,b,j] = T2old_ab[a,i1,b,j1]*Vpiqj[i,i1,j,j1]
+	prepare T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+    enddo j
+    enddo i
+endpardo a,b,i1,j1
 #
-    endproc hhladder_ab
+endproc hhladder_ab
 #    ------------------------------------------------------------------------ 
-    proc AOppladder_ab
+proc AOppladder_ab
 
 #    First create and zero-out intermediate arrays
 #    ---------------------------------------------
 #
-     PARDO mu, nu, i, j
-           Txixj[mu,i,nu,j]           = 0.0
-           PREPARE TAO_ab[mu,i,nu,j]  = Txixj[mu,i,nu,j]
-           PREPARE T2AO_ab[mu,i,nu,j] = Txixj[mu,i,nu,j]
-     ENDPARDO mu, nu, i, j
+pardo mu, nu, i, j
+    Txixj[mu,i,nu,j]           = 0.0
+    PREPARE TAO_ab[mu,i,nu,j]  = Txixj[mu,i,nu,j]
+    PREPARE T2AO_ab[mu,i,nu,j] = Txixj[mu,i,nu,j]
+endpardo mu, nu, i, j
 #
-     server_barrier 
+server_barrier 
 #
 #    Form Half back transformed cluster arrays  
 #    -----------------------------------------
@@ -763,448 +369,510 @@
 #    AB spin combination
 #     -------------------
 #
-     PARDO b, a, j, i
+pardo b, a, j, i
 #
-           REQUEST T2old_ab[a,i,b,j] 
+    REQUEST T2old_ab[a,i,b,j] 
 #
-           DO mu
+    do mu
 #
-              Taixj[a,i,mu,j] = T2old_ab[a,i,b,j]*ca[mu,b]
+    Taixj[a,i,mu,j] = T2old_ab[a,i,b,j]*ca[mu,b]
 #
-              DO nu
+	do nu
 #
-                 Txixj[nu,i,mu,j]           = Taixj[a,i,mu,j]*ca[nu,a]
-                 PREPARE TAO_ab[nu,i,mu,j] += Txixj[nu,i,mu,j]
+	    Txixj[nu,i,mu,j]           = Taixj[a,i,mu,j]*ca[nu,a]
+	    PREPARE TAO_ab[nu,i,mu,j] += Txixj[nu,i,mu,j]
 #
-              ENDDO nu
+	enddo nu
+    enddo mu
 #
-           ENDDO mu
+endpardo b, a, j, i
 #
-      ENDPARDO b, a, j, i
-#
-     server_barrier   
+server_barrier   
 #
 #    Contract AOINT with half back transformed Amplitudes 
 #    ----------------------------------------------------    
 #
-     PARDO mu, nu, lambda, sigma
-        WHERE mu < nu 
+pardo mu, nu, lambda, sigma
+WHERE mu < nu 
 #
-           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
+    execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
-           DO i
-           DO j
+    do i
+    do j
 #
-              REQUEST                       TAO_ab[lambda,i,sigma,j] 
-              Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
-              Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
+	REQUEST                       TAO_ab[lambda,i,sigma,j] 
+	Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
+	Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
 #
-              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
-              PREPARE T2AO_ab[nu,j,mu,i] += Y1ab[nu,j,mu,i]
+	PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+	PREPARE T2AO_ab[nu,j,mu,i] += Y1ab[nu,j,mu,i]
 #
-           ENDDO j
-           ENDDO i
+    enddo j
+    enddo i
 #
-     ENDPARDO mu, nu, lambda, sigma
+endpardo mu, nu, lambda, sigma
 #
-     PARDO mu, nu, lambda, sigma
-        WHERE mu == nu 
+pardo mu, nu, lambda, sigma
+WHERE mu == nu 
 #
-           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
+    execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
 #
-           DO i
-           DO j
+    do i
+    do j
 #
-              REQUEST                       TAO_ab[lambda,i,sigma,j] 
-              Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
-              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+	REQUEST                       TAO_ab[lambda,i,sigma,j] 
+	Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
+	PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
 #
-           ENDDO j
-           ENDDO i
+    enddo j
+    enddo i
 #
-     ENDPARDO mu, nu, lambda, sigma
+endpardo mu, nu, lambda, sigma
 #
-     server_barrier  
+server_barrier  
 #
 #    Perform final transformation
 #    ----------------------------
 #
-        PARDO nu, i, j
+pardo nu, i, j
 #
-              allocate LDaixj[*,i,nu,j]
+    allocate LDaixj[*,i,nu,j]
 #
-              DO mu
+    do mu
 #
-                 REQUEST T2AO_ab[mu,i,nu,j] 
+	REQUEST T2AO_ab[mu,i,nu,j] 
 #
-                 DO a
-                    Taixj[a,i,nu,j]   = T2AO_ab[mu,i,nu,j]*ca[mu,a]
-                    LDaixj[a,i,nu,j] += Taixj[a,i,nu,j]
-                 ENDDO a
+	do a
+	Taixj[a,i,nu,j]   = T2AO_ab[mu,i,nu,j]*ca[mu,a]
+	LDaixj[a,i,nu,j] += Taixj[a,i,nu,j]
+	enddo a
 #
-              ENDDO mu
+    enddo mu
 #
-              DO a
-                 PREPARE TDaixj[a,i,nu,j] = LDaixj[a,i,nu,j]
-              ENDDO a
+    do a
+	PREPARE TDaixj[a,i,nu,j] = LDaixj[a,i,nu,j]
+    enddo a
 #
-              deallocate LDaixj[*,i,nu,j]
+    deallocate LDaixj[*,i,nu,j]
 #
-        ENDPARDO nu, i, j
-        server_barrier
+endpardo nu, i, j
+server_barrier
 #
-        PARDO a, i, j, nu
+pardo a, i, j, nu
 #
-              REQUEST TDaixj[a,i,nu,j] 
+    REQUEST TDaixj[a,i,nu,j] 
 #
-              DO b
+    do b
 #
-                 Taibj[a,i,b,j]             = TDaixj[a,i,nu,j]*ca[nu,b]
+	Taibj[a,i,b,j]             = TDaixj[a,i,nu,j]*ca[nu,b]
+	PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
 #
-                 PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+    enddo b
 #
-              ENDDO b
+endpardo a, i, j, nu
 #
-        ENDPARDO a, i, j, nu
-#
-        sip_barrier
-    endproc AOppladder_ab
+sip_barrier
+endproc AOppladder_ab
 #
 #    ------------------------------------------------------------------------ 
-    proc phladder_ab
+proc phladder_ab
 #
-      PARDO j, b, a, i
-            Taibj[a,i,b,j] = 0.0
+pardo j, b, a, i
+    Taibj[a,i,b,j] = 0.0
 #
-            DO i1
-            DO a1
+    do i1
+    do a1
 #
-               REQUEST              Viaai[i,a,a1,i1] 
-               REQUEST              Vaaii[a1,a,i,i1] 
-               REQUEST              T2old_ab[a1,i1,b,j] 
+	REQUEST              Viaai[i,a,a1,i1] 
+	REQUEST              Vaaii[a1,a,i,i1] 
+	REQUEST              T2old_ab[a1,i1,b,j] 
 
-               TYaiai[a,i,a1,i1]   = 0.0
+	TYaiai[a,i,a1,i1]   = 0.0
 #
-               Taiai[a,i,a1,i1]    = Vaaii[a1,a,i,i1]
-               TYaiai[a,i,a1,i1]  -= Taiai[a,i,a1,i1]
-               Taiai[a,i,a1,i1]    = Viaai[i,a,a1,i1]
-               TYaiai[a,i,a1,i1]  += Taiai[a,i,a1,i1]
+	Taiai[a,i,a1,i1]    = Vaaii[a1,a,i,i1]
+	TYaiai[a,i,a1,i1]  -= Taiai[a,i,a1,i1]
+	Taiai[a,i,a1,i1]    = Viaai[i,a,a1,i1]
+	TYaiai[a,i,a1,i1]  += Taiai[a,i,a1,i1]
 #
-               R1aibj[a,i,b,j]     = TYaiai[a,i,a1,i1]*T2old_ab[a1,i1,b,j]
-               Taibj[a,i,b,j]     += R1aibj[a,i,b,j]
+	R1aibj[a,i,b,j]     = TYaiai[a,i,a1,i1]*T2old_ab[a1,i1,b,j]
+	Taibj[a,i,b,j]     += R1aibj[a,i,b,j]
 #
-            ENDDO a1
-            ENDDO i1
+    enddo a1
+    enddo i1
 
-            R1aibj[b,j,a,i]            = taibj[a,i,b,j]
-            PREPARE T2new_ab[a,i,b,j] += taibj[a,i,b,j]
-            PREPARE T2new_ab[b,j,a,i] += R1aibj[b,j,a,i]
+    R1aibj[b,j,a,i]            = taibj[a,i,b,j]
+    PREPARE T2new_ab[a,i,b,j] += taibj[a,i,b,j]
+    PREPARE T2new_ab[b,j,a,i] += R1aibj[b,j,a,i]
 #
-      ENDPARDO j, b, a, i
+endpardo j, b, a, i
 #
-      PARDO i1, a1, a, i
-            REQUEST                     T2old_ab[a1,i1,a,i] 
-            REQUEST                     T2old_ab[a1,i,a,i1] 
-            taiai[a1,i1,a,i]          = T2old_ab[a1,i1,a,i]
-            t1aiai[a1,i1,a,i]         = T2old_ab[a1,i,a,i1]
-            taiai[a1,i1,a,i]         -= t1aiai[a1,i1,a,i]
-            tpppp[a1,i1,i,a]          = taiai[a1,i1,a,i]
+pardo i1, a1, a, i
+    REQUEST                     T2old_ab[a1,i1,a,i] 
+    REQUEST                     T2old_ab[a1,i,a,i1] 
+    taiai[a1,i1,a,i]          = T2old_ab[a1,i1,a,i]
+    t1aiai[a1,i1,a,i]         = T2old_ab[a1,i,a,i1]
+    taiai[a1,i1,a,i]         -= t1aiai[a1,i1,a,i]
+    tpppp[a1,i1,i,a]          = taiai[a1,i1,a,i]
 #
-            DO j
-            DO b
+    do j
+    do b
 #
-               REQUEST                        Viaai[i,a,b,j] 
-               R1aibj[a1,i1,b,j]            = tpppp[a1,i1,i,a]*Viaai[i,a,b,j]
-               Taibj[b,j,a1,i1]             = R1aibj[a1,i1,b,j]
-               PREPARE T2new_ab[a1,i1,b,j] += R1aibj[a1,i1,b,j]
-               PREPARE T2new_ab[b,j,a1,i1] += Taibj[b,j,a1,i1]
+	REQUEST                        Viaai[i,a,b,j] 
+	R1aibj[a1,i1,b,j]            = tpppp[a1,i1,i,a]*Viaai[i,a,b,j]
+	Taibj[b,j,a1,i1]             = R1aibj[a1,i1,b,j]
+	PREPARE T2new_ab[a1,i1,b,j] += R1aibj[a1,i1,b,j]
+	PREPARE T2new_ab[b,j,a1,i1] += Taibj[b,j,a1,i1]
 #
-            ENDDO b
-            ENDDO j
+    enddo b
+    enddo j
 #
-      ENDPARDO i1, a1, a, i
+endpardo i1, a1, a, i
 #
-      PARDO a, j, i1, b1
+pardo a, j, i1, b1
 #
-            REQUEST T2old_ab[a,i1,b1,j] 
+    REQUEST T2old_ab[a,i1,b1,j] 
 #
-            DO i
-            DO b
+    do i
+    do b
 #
-               REQUEST                      Vaaii[b,b1,i1,i] 
+	REQUEST                      Vaaii[b,b1,i1,i] 
 #
-               Taibj[a,i,b,j]             = T2old_ab[a,i1,b1,j]*Vaaii[b,b1,i1,i]
-               Taibj[a,i,b,j]            *= -1.0
+	Taibj[a,i,b,j]             = T2old_ab[a,i1,b1,j]*Vaaii[b,b1,i1,i]
+	Taibj[a,i,b,j]            *= -1.0
 #
-               T2aibj[b,j,a,i]            = Taibj[a,i,b,j]
-               PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
-               PREPARE T2new_ab[b,j,a,i] += T2aibj[b,j,a,i]
+	T2aibj[b,j,a,i]            = Taibj[a,i,b,j]
+	PREPARE T2new_ab[a,i,b,j] += Taibj[a,i,b,j]
+	PREPARE T2new_ab[b,j,a,i] += T2aibj[b,j,a,i]
 #
-            ENDDO b
-            ENDDO i
+    enddo b
+    enddo i
 #
-      ENDPARDO a, j, i1, b1
+endpardo a, j, i1, b1
 #
-    endproc phladder_ab
+endproc phladder_ab
 #    ------------------------------------------------------------------------ 
-#    ------------------------------------------------------------------------ 
-#    ------------------------------------------------------------------------ 
-#    ------------------------------------------------------------------------ 
-    proc updatet2
+proc updatet2
 #
-      PARDO b, a, j, i
+pardo b, a, j, i
 #
-            REQUEST                    T2old_ab[b,j,a,i] 
-            REQUEST                    T2new_ab[b,j,a,i] 
-            Taibj[a,i,b,j]           = T2new_ab[b,j,a,i]
-            T1aibj[a,i,b,j]          = T2old_ab[b,j,a,i]
+    REQUEST                    T2old_ab[b,j,a,i] 
+    REQUEST                    T2new_ab[b,j,a,i] 
+    Taibj[a,i,b,j]           = T2new_ab[b,j,a,i]
+    T1aibj[a,i,b,j]          = T2old_ab[b,j,a,i]
 #
-            REQUEST                    T2old_ab[a,i,b,j] 
-            REQUEST                    T2new_ab[a,i,b,j] 
-            Taibj[a,i,b,j]          += T2new_ab[a,i,b,j]
-            T1aibj[a,i,b,j]         += T2old_ab[a,i,b,j]
+    REQUEST                    T2old_ab[a,i,b,j] 
+    REQUEST                    T2new_ab[a,i,b,j] 
+    Taibj[a,i,b,j]          += T2new_ab[a,i,b,j]
+    T1aibj[a,i,b,j]         += T2old_ab[a,i,b,j]
 
-            execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
-            T1aibj[a,i,b,j] -= Taibj[a,i,b,j]
-            T1aibj[a,i,b,j] *= -0.5
+    execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
+    T1aibj[a,i,b,j] -= Taibj[a,i,b,j]
+    T1aibj[a,i,b,j] *= -0.5
 
-            if niter < diis_order
-               PREPARE Eaibj[a,i,b,j,kiter] = T1aibj[a,i,b,j]
-            endif
+    if kiter < Idiis_order  
+       PREPARE Eaibj[a,i,b,j,kiter] = T1aibj[a,i,b,j] 
+    endif  
 
-            if niter >= diis_order
-               kcount = 0.0
-               DO jdiis
-                  kcount += 1.0
-                  if kcount == diis_order
-                     PREPARE Eaibj[a,i,b,j,jdiis] = T1aibj[a,i,b,j]
-                     exit
-                  endif
-               ENDDO jdiis
-            endif
-      ENDPARDO b, a, j, i
-      server_barrier
+    if kiter >= Idiis_order  
+       do jdiis 
+	  if jdiis == Idiis_order
+	     PREPARE Eaibj[a,i,b,j,jdiis] = T1aibj[a,i,b,j] 
+	     exit 
+	  endif 
+       enddo jdiis 
+    endif  
+endpardo b, a, j, i
+server_barrier
 #
-      PARDO b, a, j, i
+pardo b, a, j, i
 #
-            REQUEST                    T2new_ab[a,i,b,j] 
-            REQUEST                    T2new_ab[b,j,a,i] 
-            Taibj[a,i,b,j]           = T2new_ab[b,j,a,i]
-            Taibj[a,i,b,j]          += T2new_ab[a,i,b,j]
-            Taibj[a,i,b,j]          *= 0.5
-            execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
-            PREPARE T2old_ab[a,i,b,j]    = Taibj[a,i,b,j]
+    REQUEST                    T2new_ab[a,i,b,j] 
+    REQUEST                    T2new_ab[b,j,a,i] 
+    Taibj[a,i,b,j]           = T2new_ab[b,j,a,i]
+    Taibj[a,i,b,j]          += T2new_ab[a,i,b,j]
+    Taibj[a,i,b,j]          *= 0.5
+    execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
+    PREPARE T2old_ab[a,i,b,j]    = Taibj[a,i,b,j]
 #
-      ENDPARDO b, a, j, i
+endpardo b, a, j, i
 #
-    endproc updatet2
+endproc updatet2
 #    ------------------------------------------------------------------------ 
-      PROC DIISN
+PROC DIISN 
 #     ---------- 
+worder = niter 
+if niter >= diis_order 
+    worder = diis_order 
+endif 
+Iorder = (int)worder
+sip_barrier 
+pardo a, i, b, j 
+    do jdiis 
+    where jdiis <= Iorder
 
-      create DIST_BB
-      worder = niter
-      if niter >= diis_order
-         worder = diis_order
-      endif
-      server_barrier
-      PARDO a, i, b, j
-         kcount = 0.0
-         DO jdiis
-            kcount += 1.0
-            if kcount <= worder
+    REQUEST Eaibj[a,i,b,j,jdiis]   
+    REQUEST Eaibj[a,j,b,i,jdiis]   
 
-               REQUEST Eaibj[a,i,b,j,jdiis] 
-               REQUEST Eaibj[a,j,b,i,jdiis] 
+    t1aibj[a,i,b,j] = Eaibj[a,i,b,j,jdiis] 
+    t3aibj[a,j,b,i] = Eaibj[a,j,b,i,jdiis] 
+    t2aibj[a,i,b,j] = t3aibj[a,j,b,i] 
+    t1aibj[a,i,b,j]-= t2aibj[a,i,b,j] 
 
-               t1aibj[a,i,b,j] = Eaibj[a,i,b,j,jdiis]
-               t3aibj[a,j,b,i] = Eaibj[a,j,b,i,jdiis]
-               t2aibj[a,i,b,j] = t3aibj[a,j,b,i]
-               t1aibj[a,i,b,j]-= t2aibj[a,i,b,j]
+    do j1diis 
+    where j1diis <= Iorder
 
-         jcount = 0.0
-         DO j1diis
-            jcount += 1.0
-            if jcount <= worder
+	REQUEST Eaibj[a,i,b,j,j1diis]   
+	REQUEST Eaibj[a,j,b,i,j1diis]   
 
-               REQUEST Eaibj[a,i,b,j,j1diis] 
-               REQUEST Eaibj[a,j,b,i,j1diis] 
+	t3aibj[a,i,b,j] = Eaibj[a,i,b,j,j1diis] 
+	t2aibj[a,j,b,i] = Eaibj[a,j,b,i,j1diis] 
+	t4aibj[a,i,b,j] = t2aibj[a,j,b,i] 
+	t3aibj[a,i,b,j]-= t4aibj[a,i,b,j] 
 
-               t3aibj[a,i,b,j] = Eaibj[a,i,b,j,j1diis]
-               t2aibj[a,j,b,i] = Eaibj[a,j,b,i,j1diis]
-               t4aibj[a,i,b,j] = t2aibj[a,j,b,i]
-               t3aibj[a,i,b,j]-= t4aibj[a,i,b,j]
+	tbb[jdiis,j1diis]          = Eaibj[a,i,b,j,jdiis]*Eaibj[a,i,b,j,j1diis] 
+	tbb[jdiis,j1diis]         *= 2.0  
+	PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]  
 
-               tbb[jdiis,j1diis]          = Eaibj[a,i,b,j,jdiis]*Eaibj[a,i,b,j,j1diis]
-               tbb[jdiis,j1diis]         *= 2.0
-               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
+	etemp                     = t1aibj[a,i,b,j]*t3aibj[a,i,b,j] 
+	tbb[jdiis,j1diis]          = etemp 
+	PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]  
+    enddo j1diis 
+    enddo jdiis 
+endpardo a, i, b, j 
 
-               etemp                     = t1aibj[a,i,b,j]*t3aibj[a,i,b,j]
-               tbb[jdiis,j1diis]          = etemp
-               PUT DIST_BB[jdiis,j1diis] += tbb[jdiis,j1diis]
-            endif
-         ENDDO j1diis
-            endif # kcount <= diis_order  
-         ENDDO jdiis
-      ENDPARDO a, i, b, j
-      server_barrier
+sip_barrier 
 
-      jcount = 0.0
-      DO jdiis
-         jcount += 1.0
-         if jcount <= worder
-      kcount = 0.0
-      DO j1diis
-         kcount += 1.0
-         if kcount <= worder
-            GET DIST_BB[jdiis,j1diis]
-            BB[jdiis,j1diis] = DIST_BB[jdiis,j1diis]
-         endif
-      ENDDO j1diis
-         endif
-      ENDDO jdiis
-     #println "finished coputing BB" 
+do jdiis 
+where jdiis <= Iorder
+    do j1diis 
+    where j1diis <= Iorder
+	GET DIST_BB[jdiis,j1diis] 
+	BB[jdiis,j1diis] = DIST_BB[jdiis,j1diis] 
+    enddo j1diis 
+enddo jdiis 
 
-      execute compute_diis BB
-      temp_order = worder
-     #if worder > diis_order 
-     #   temp_order = diis_order 
-     #endif 
-      server_barrier
-     #println "finished compute_diis" 
-     #DO jdiis 
-     #execute print_block BB(jdiis,jdiis) 
-     #ENDDO jdiis 
-      PARDO a, i, b, j
-            taibj[a,i,b,j] = 0.0
-            n1 = 0.0
-            DO kdiis
-               n1 += 1.0
-               if n1 <  worder # temp_order # VFL  
-                  REQUEST           Daibj[a,i,b,j,kdiis] 
-                  t2aibj[a,i,b,j] = Daibj[a,i,b,j,kdiis]
-                  n2 = 0.0
-                  DO d2
-                    n2 += 1.0
-                    if n2 <= worder
-                      kcount  = n2
-                      kcount -= n1
-                      if kcount == one
-                         REQUEST           Eaibj[a,i,b,j,d2] 
-                         t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2]
-                         execute return_sval BB[d2,d2] etemp
-                        #etemp        = BB(d1,d1)        
-                         t3aibj[a,i,b,j] += t2aibj[a,i,b,j]
-                         t3aibj[a,i,b,j] *= etemp
-                         taibj[a,i,b,j]  += t3aibj[a,i,b,j]
-                      endif
-                    endif #n2 <= worder 
-                   ENDDO d2
-               endif
-            ENDDO kdiis
+execute compute_diis BB 
 
-            n2 = 0.0
-            DO d2
-               n2 += 1.0
-               if n2 == one
-                  REQUEST           D0aibj[a,i,b,j] 
-                  t2aibj[a,i,b,j] = D0aibj[a,i,b,j]
-                  REQUEST           Eaibj[a,i,b,j,d2] 
-                  t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2]
-                  execute return_sval BB[d2,d2] etemp
-                 #etemp        = BB(d1,d1)        
-                  t3aibj[a,i,b,j] += t2aibj[a,i,b,j]
-                  t3aibj[a,i,b,j] *= etemp
-                  taibj[a,i,b,j]  += t3aibj[a,i,b,j]
-               endif
-            ENDDO d2
+sip_barrier 
 
-            PREPARE T2old_ab[a,i,b,j] = taibj[a,i,b,j]
-      ENDPARDO a, i, b, j
-      server_barrier
+pardo a, i, b, j 
+    taibj[a,i,b,j] = 0.0 
+    do kdiis   
+    where kdiis < Iorder
+	n1 = (scalar)kdiis
+
+	REQUEST           Daibj[a,i,b,j,kdiis]   
+	t2aibj[a,i,b,j] = Daibj[a,i,b,j,kdiis] 
+	n2 = 0.0  
+	do d2   
+	where d2 <= Iorder 
+	    n2 = (scalar)d2
+	    kcount  = n2 
+	    kcount -= n1 
+	    if kcount == one 
+		REQUEST           Eaibj[a,i,b,j,d2]   
+		t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2] 
+		etemp =  BB[d2,d2]
+		t3aibj[a,i,b,j] += t2aibj[a,i,b,j] 
+		t3aibj[a,i,b,j] *= etemp   
+		taibj[a,i,b,j]  += t3aibj[a,i,b,j]  
+	    endif 
+	enddo d2 
+    enddo kdiis  
+
+    do d2   
+    if d2 == 1
+	REQUEST           D0aibj[a,i,b,j]  
+	t2aibj[a,i,b,j] = D0aibj[a,i,b,j] 
+	REQUEST           Eaibj[a,i,b,j,d2]   
+	t3aibj[a,i,b,j] = Eaibj[a,i,b,j,d2] 
+	etemp =  BB[d2,d2]
+	t3aibj[a,i,b,j] += t2aibj[a,i,b,j] 
+	t3aibj[a,i,b,j] *= etemp   
+	taibj[a,i,b,j]  += t3aibj[a,i,b,j]  
+    endif 
+    enddo d2 
+
+    PREPARE T2old_ab[a,i,b,j] = taibj[a,i,b,j]
+endpardo a, i, b, j 
+
+server_barrier
 
 # If history space is full shift history end error vectors 
 
-      if niter >= diis_order
+if kiter >= Idiis_order  
 
 # histories first 
 
-      PARDO a, i, b, j
-      n1 = 0.0
-      DO kdiis
-         n1 += 1.0
-         if n1 <  worder # temp_order # VFL 
-         REQUEST Daibj[a,i,b,j,kdiis] 
-         taibj[a,i,b,j] = Daibj[a,i,b,j,kdiis]
-         n2 = 0.0
-      DO k1diis
-         n2 += 1.0
-         etemp = n1
-         etemp -= n2
-         if etemp == 1.0
-            PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j]
-         endif
-         if n1 == one
-            PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j]
-         endif
-      ENDDO k1diis
-         endif
-      ENDDO kdiis
-      ENDPARDO a, i, b, j
+    pardo a, i, b, j 
+	do kdiis 
+	where kdiis < Iorder
+	    n1 = (scalar)kdiis
+	    REQUEST Daibj[a,i,b,j,kdiis]   
+	    taibj[a,i,b,j] = Daibj[a,i,b,j,kdiis] 
+	    do k1diis 
+		n2 = (scalar)k1diis
+		etemp = n1 
+		etemp -= n2 
+		if etemp == 1.0 
+		    PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
+		endif 
+		if n1 == one 
+		    PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j] 
+		endif 
+	    enddo k1diis  
+	enddo kdiis 
+    endpardo a, i, b, j 
+
 # Now error vectors 
 
-      PARDO a, i, b, j
-      n1 = 0.0
-      DO kdiis
-         n1 += 1.0
-         if n1 <= worder # temp_order # VFL 
-         REQUEST Eaibj[a,i,b,j,kdiis] 
-         taibj[a,i,b,j] = Eaibj[a,i,b,j,kdiis]
-         n2 = 0.0
-      DO k1diis
-         n2 += 1.0
-         etemp = n1
-         etemp -= n2
-         if etemp == 1.0
-            PREPARE Eaibj[a,i,b,j,k1diis] = taibj[a,i,b,j]
-         endif
-      ENDDO k1diis
-         endif
-      ENDDO kdiis
-      ENDPARDO a, i, b, j
+    pardo a, i, b, j 
+	do kdiis 
+	where kdiis <= Iorder
+	    n1 = (scalar)kdiis
+	    REQUEST Eaibj[a,i,b,j,kdiis]   
+	    taibj[a,i,b,j] = Eaibj[a,i,b,j,kdiis] 
+	    do k1diis 
+		n2 = (scalar)k1diis
+		etemp = n1 
+		etemp -= n2 
+		if etemp == 1.0 
+		    PREPARE Eaibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
+		endif 
+	    enddo k1diis  
+	enddo kdiis 
+    endpardo a, i, b, j 
 
+endif 
+server_barrier
 
-      endif
-      server_barrier
-      delete DIST_BB
-
-      ENDPROC DIISN
+endPROC DIISN 
 #     -------------
-      PROC MOVET2
+PROC MOVET2
 #     ------------
+PARDO b, a, j, i
 #
-      PARDO b, a, j, i
-#
-            REQUEST                    T2old_ab[a,i,b,j] 
-            Taibj[a,i,b,j]           = T2old_ab[a,i,b,j]
+    REQUEST                    T2old_ab[a,i,b,j]  
+    Taibj[a,i,b,j]           = T2old_ab[a,i,b,j]
 
-            if niter < diis_order
-               PREPARE Daibj[a,i,b,j,kiter] = Taibj[a,i,b,j]
-            endif
+    if kiter < Idiis_order  
+       PREPARE Daibj[a,i,b,j,kiter] = Taibj[a,i,b,j] 
+    endif  
 
-            if niter >= diis_order
-               kcount = 1.0
-               DO kdiis
-                  kcount += 1.0
-                  if kcount == diis_order
-                     PREPARE Daibj[a,i,b,j,kdiis] = Taibj[a,i,b,j]
-                     exit
-                  endif
-               ENDDO kdiis
-            endif
-      ENDPARDO b, a, j, i
+    if kiter >= Idiis_order  
+       DO kdiis 
+	  if kdiis == (Idiis_order - 1)
+	     PREPARE Daibj[a,i,b,j,kdiis] = Taibj[a,i,b,j] 
+	     exit 
+	  endif 
+       ENDDO kdiis 
+    endif  
 #
-      ENDPROC MOVET2
+ENDPARDO b, a, j, i
+#
+endPROC MOVET2
+#
+PROC form_D11
+
+print " "
+restore_persistent scf_dipole "scf_dipole"
+set_persistent scf_dipole "scf_dipole"
+do ixyz
+    dipole[ixyz] = scf_dipole[ixyz]
+enddo ixyz
+
+pardo p,q
+    Tpq[p,q] = 0.0
+    prepare Dpq_11[p,q] = Tpq[p,q]
+endpardo p,q
+pardo mu,nu
+    Txx[mu,nu] = 0.0
+    prepare Dxx_11[mu,nu] = Txx[mu,nu]
+endpardo mu,nu
+pardo p,nu
+    Tpx[p,nu] = 0.0
+    prepare Dpx_11[p,nu] = Tpx[p,nu]
+endpardo p,nu
+server_barrier
+
+pardo a,i,b,j
+    Tii[i,j] = 0.0
+    do i1
+	request T2old_ab[a,j,b,i1]
+	request T2old_ab[a,i,b,i1]
+	request T2old_ab[a,i1,b,i]
+
+	Taibj[a,j,b,i1]   = T2old_ab[a,j,b,i1]
+	T1aibj[a,i,b,i1]  = T2old_ab[a,i,b,i1]
+	T1aibj[a,i,b,i1] *= 2.0
+	T1aibj[a,i,b,i1] -= T2old_ab[a,i1,b,i]
+
+	T1ii[i,j] = T1aibj[a,i,b,i1]*Taibj[a,j,b,i1]
+	Tii[i,j] += T1ii[i,j]
+
+    enddo i1
+    Tii[i,j] *= -2.0
+    prepare Dpq_11[i,j] += Tii[i,j]
+endpardo a,i,b,j
+pardo a,i,b,b1
+
+    Taa[a,b] = 0.0
+    do j
+	request T2old_ab[a,i,b1,j]
+	request T2old_ab[b,i,b1,j]
+	request T2old_ab[b,j,b1,i]
+
+	Taibj[a,i,b1,j]   = T2old_ab[a,i,b1,j]
+	T1aibj[b,i,b1,j]  = T2old_ab[b,i,b1,j]
+	T1aibj[b,i,b1,j] *= 2.0
+	T1aibj[b,i,b1,j] -= T2old_ab[b,j,b1,i]
+
+	T1aa[a,b] = Taibj[a,i,b1,j]*T1aibj[b,i,b1,j]
+	Taa[a,b] += T1aa[a,b]
+
+    enddo j
+    Taa[a,b] *= 2.0
+    prepare Dpq_11[a,b] += Taa[a,b]
+endpardo a,i,b,b1
+
+server_barrier
+    pardo mu,nu
+        prepare Dxx_11[mu,nu] = 0.0
+    endpardo mu,nu
+server_barrier
+    pardo mu,nu,p,p1
+        request Dpq_11[p,p1]
+        Tpx[p,nu] = Dpq_11[p,p1]*ca[nu,p1]
+        Txx[mu,nu] = Tpx[p,nu]*ca[mu,p]
+        prepare Dxx_11[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu,p,p1
+server_barrier
+
+do ixyz
+    ncount2 = (scalar)ixyz
+    esum = 0.0
+    dsum = 0.0
+    pardo mu,nu
+	request Dxx_11[mu,nu]
+	ncount1 = 0.0
+	execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+	Txx[mu,nu] = Dxx_11[mu,nu]
+	etemp = Txx[mu,nu]*DAOINT[mu,nu]
+	esum += etemp
+    endpardo mu,nu
+    server_barrier
+    collective dsum += esum
+    server_barrier
+    dipole[ixyz] -= dsum
+
+enddo ixyz
+server_barrier
+
+print "LCCD response dipole moment"
+print dipole
+set_persistent dipole "lccd_dipole"
+
+ENDPROC form_D11
 #
 #    ------------------------------------------------------------------------ 
 #           MAIN
@@ -1216,93 +884,100 @@ print "-- Parallel LCCD program"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
 
-    ecrit = 0.00000001
-    zero = 0.0
-    one = 1.0
-    two = 2.0
-    five  = 5.0
-    six   = 6.0
-    seven = 7.0
+ecrit = 0.00000001
+zero = 0.0
+one = 1.0
+two = 2.0
+five  = 5.0
+six   = 6.0
+seven = 7.0
 #
-    diis_start = 2.0
-    diis_order = 8.0
-    print diis_start
-    print diis_order
-    server_barrier
+diis_start = (scalar)scf_beg
+diis_order = (scalar)scf_hist
+Idiis_order = scf_hist
+
+print diis_start
+print diis_order
+print " "
+server_barrier
 #
-    restore_persistent ca "ca"
-    restore_persistent Fock_a "fock_a"
-    restore_persistent scf_energy "scf_energy"
-    set_persistent scf_energy "scf_energy"
-    #  server_barrier
-    #  call tran_uhf
-    #  server_barrier
-    call read_2el
-    server_barrier
+restore_persistent ca "ca"
+restore_persistent Fock_a "fock_a"
+restore_persistent scf_energy "scf_energy"
+#  server_barrier
+#  call tran_uhf
+#  server_barrier
+call read_2el
+server_barrier
 # second-order starting guess for the T2 amps
-    call iguess_uhf
+call iguess_uhf
 # second-order energy
-    call energy
-    mp2_energy  = ecorrT
-    mp2_energy += scf_energy
-    print mp2_energy
+call energy
+mp2_correlation  = ecorrT
+print mp2_correlation
 #
-    niter = 0.0
-    do kiter
-        niter += 1.0
-        server_barrier
+do kiter
+    print " "
+    print kiter
+    niter = (scalar)kiter
+    server_barrier
 #
 #        call T2oldaa
-        call t2new_zero
+    call t2new_zero
 #
-        call t2newab
+    call t2newab
 #
-        call hhladder_ab # hh
-        call phladder_ab # ph
-        call AOppladder_ab # pp
-        server_barrier
-#
-        call updatet2
-        server_barrier
-        call energy
-        server_barrier
-#
-        if niter >= diis_start
-            call diisn
-        endif
-        call movet2
-        server_barrier
-	assert_same ecorrT
-	assert_same eold
-	ediff = eold - ecorrT
-	escr = ediff**2.0
-	ediff = escr**0.5
-	assert_same ediff
-	if ediff < cc_conv
-	    println "" #exit
-	endif
-#
-#        Reset eold --> enew 
-#        ------------------- 
-#
-         eold = ecorrT
-#
-    enddo kiter
-#
+    call hhladder_ab # hh
+    call phladder_ab # ph
+    call AOppladder_ab # pp
     server_barrier
-    totenerg  = ecorrT
-    totenerg += scf_energy
-    lccd_energy = totenerg
-    print lccd_energy
-      set_persistent totenerg "totenerg"
-      set_persistent     ca    "ca" 
-      set_persistent     Fock_a "fock_a"
-      set_persistent     T2old_ab "T2old_ab"
-      set_persistent     Viaai  "Viaai"
-      set_persistent     Vaaii  "Vaaii"
-      set_persistent     Vpiqj  "Vpiqj"
-      set_persistent     VSpipi "VSpipi"
-      server_barrier
+#
+    call updatet2
+    server_barrier
+    call energy
+    print ecorrT
+    server_barrier
+#
+    if niter >= diis_start
+	call diisn
+    endif
+    call movet2
+    server_barrier
+    assert_same ecorrT
+    assert_same eold
+    escr = (eold - ecorrT)**(2.0)
+    ediff = escr**0.5
+    print ediff
+    assert_same ediff
+    if ediff < cc_conv
+	exit
+    endif
+#
+    eold = ecorrT
+#
+enddo kiter
+#
+server_barrier
+lccd_correlation  = ecorrT
+lccd_energy = lccd_correlation
+lccd_energy += scf_energy
+print " "
+print lccd_correlation
+print lccd_energy
+totenerg = lccd_energy
+
+call form_D11
+
+set_persistent scf_energy "scf_energy"
+set_persistent totenerg "totenerg"
+set_persistent ca    "ca" 
+set_persistent Fock_a "fock_a"
+set_persistent T2old_ab "T2old_ab"
+set_persistent Viaai  "Viaai"
+set_persistent Vaaii  "Vaaii"
+set_persistent Vpiqj  "Vpiqj"
+set_persistent VSpipi "VSpipi"
+server_barrier
 #
 #    ------------------------------------------------------------------------ 
-                           ENDSIAL CCSD_RHF_SV1
+endSIAL CCSD_RHF_SV1

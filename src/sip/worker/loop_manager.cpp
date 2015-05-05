@@ -27,6 +27,9 @@ std::string LoopManager::to_string() const {
 	return std::string("LoopManager");
 }
 
+
+//+++++++++++++++++++++++++++++++++++++++++
+
 DoLoop::DoLoop(int index_id, DataManager & data_manager,
 		const SipTables & sip_tables) :
 		data_manager_(data_manager), sip_tables_(sip_tables), index_id_(
@@ -80,6 +83,9 @@ std::ostream& operator<<(std::ostream& os, const DoLoop &obj) {
 	os << obj.to_string();
 	return os;
 }
+
+//+++++++++++++++++++++++++++++++++++
+
 SubindexDoLoop::SubindexDoLoop(int subindex_id, DataManager & data_manager,
 		const SipTables & sip_tables) :
 		DoLoop(subindex_id, data_manager, sip_tables) {
@@ -109,6 +115,10 @@ std::ostream& operator<<(std::ostream& os, const SubindexDoLoop &obj) {
 
 SubindexDoLoop::~SubindexDoLoop() {
 }
+
+
+//++++++++++++++++++++++++++++++++++++++++
+
 //note that the max number of indices allowed by the implementation is MAX_RANK.  This limitation is
 // due to the structure of the pardo instruction inherited from aces3
 SequentialPardoLoop::SequentialPardoLoop(int num_indices,

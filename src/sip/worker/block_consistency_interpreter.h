@@ -100,6 +100,9 @@ public:
 	virtual void handle_get_op(int pc);
 	virtual void handle_put_accumulate_op(int pc);
 	virtual void handle_put_replace_op(int pc) ;
+	virtual void handle_put_initialize_op(int pc);
+	virtual void handle_put_increment_op(int pc);
+	virtual void handle_put_scale_op(int pc);
 	virtual void handle_delete_op(int pc);
 
 private:
@@ -111,6 +114,8 @@ private:
 
 	BarrierBlockConsistencyMap& barrier_block_consistency_map_;
 
+	void put_sum_into_block_semantics();
+	void put_replace_block_semantics();
 };
 
 } /* namespace sip */

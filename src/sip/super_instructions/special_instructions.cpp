@@ -280,8 +280,13 @@ void energy_ty_denominator_rhf(
 	int& ierr);
 
 void return_diagonal_elements(
-        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
-	int& ierr);
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void anti_symm_o(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void anti_symm_v(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 }
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
@@ -480,6 +485,8 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["energy_numerator_rhf"]=(fp0)&energy_numerator_rhf;
 	procmap_["return_vpq"]=(fp0)&return_vpq;
 	procmap_["return_diagonal"]=(fp0)&return_diagonal;
+	procmap_["anti_symm_o"]=(fp0)&anti_symm_o;
+	procmap_["anti_symm_v"]=(fp0)&anti_symm_v;
 	procmap_["eigen_calc_sqr_inv"]=(fp0)&eigen_calc_sqr_inv;
 	procmap_["eigen_calc"]=(fp0)&eigen_calc;
 	procmap_["gen_eigen_calc"]=(fp0)&gen_eigen_calc;

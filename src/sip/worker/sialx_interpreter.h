@@ -588,6 +588,9 @@ protected:
 	virtual void handle_get_op(int pc);
 	virtual void handle_put_accumulate_op(int pc);
 	virtual void handle_put_replace_op(int pc);
+	virtual void handle_put_initialize_op(int pc);
+	virtual void handle_put_increment_op(int pc);
+	virtual void handle_put_scale_op(int pc);
 	virtual void handle_create_op(int pc);
 	virtual void handle_delete_op(int pc);
 	virtual void handle_string_load_literal_op(int pc);

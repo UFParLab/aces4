@@ -181,7 +181,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 }
 
 
-ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
+ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(const BlockId& block_id){
 	/** If block is not in block map, allocate space for it
 	 * Otherwise, if the block is in memory, read and return
 	 * if it is only on disk, read it in, store in block map and return.
@@ -215,6 +215,12 @@ ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id)
 	return block;
 }
 
+ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
+	ServerBlock* block = get_block_for_reading(block_id, 0);
+	block->set_dirty();
+	return block;
+}
+
 ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	/** If block is not in block map, allocate space for it
 	 * Otherwise, if the block is not in memory, allocate space for it.
@@ -242,7 +248,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	return block;
 }
 
-ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
+ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, int line){
 	/** If block is not in block map, there is an error !!
 	 * Otherwise, if the block is in memory, read and return or
 	 * if it is only on disk, read it in, store in block map and return.
@@ -255,7 +261,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 
 		std::stringstream errmsg;
 		errmsg << " S " << sip_mpi_attr_.global_rank();
-		errmsg << " : Asking for block " << block_id << ". It has not been put/prepared before !"<< std::endl;
+		errmsg << " : Asking for block " << block_id << ". It has not been put/prepared before !  line"<< line << std::endl;
 		std::cout << errmsg.str() << std::flush;
 		
 		sip::fail(errmsg.str());

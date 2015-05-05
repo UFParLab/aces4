@@ -464,6 +464,12 @@ void SIPMaPInterpreter::handle_put_replace_op(int pc) {
 	pardo_section_time_ += computation_time;
 	pending_acks_list_.push_back(BlockRemoteOp(time_to_get_ack_from_server, pardo_section_time_));
 }
+
+void SIPMaPInterpreter::handle_put_initialize_op(int pc) { fail("Put initialize not implemented yet !"); }
+void SIPMaPInterpreter::handle_put_increment_op(int pc) { fail("Put increment not implemented yet !"); }
+void SIPMaPInterpreter::handle_put_scale_op(int pc) { fail("Put scale not implemented yet !"); }
+
+
 void SIPMaPInterpreter::handle_create_op(int pc){
 	/** A no op for now */
 }

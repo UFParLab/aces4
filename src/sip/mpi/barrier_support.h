@@ -225,6 +225,42 @@ public:
 		return put_accumulate_tag;
 	}
 
+	/**
+	 * Called by worker to construct mpi tag for a DELETE transaction.
+	 *
+	 * The worker's message number is updated.
+	 * @return tag
+	 */
+	int make_mpi_tag_for_PUT_INITIALIZE(){
+		int tag = make_mpi_tag(SIPMPIConstants::PUT_INITIALIZE, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
+	}
+
+	/**
+	 * Called by worker to construct mpi tag for a DELETE transaction.
+	 *
+	 * The worker's message number is updated.
+	 * @return tag
+	 */
+	int make_mpi_tag_for_PUT_INCREMENT(){
+		int tag = make_mpi_tag(SIPMPIConstants::PUT_INCREMENT, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
+	}
+
+	/**
+	 * Called by worker to construct mpi tag for a DELETE transaction.
+	 *
+	 * The worker's message number is updated.
+	 * @return tag
+	 */
+	int make_mpi_tag_for_PUT_SCALE(){
+		int tag = make_mpi_tag(SIPMPIConstants::PUT_SCALE, transaction_number_);
+		transaction_number_ = (transaction_number_ + 1) % (1 << NUM_TRANSACTION_NUMBER_BITS);
+		return tag;
+	}
+
 
 	/**
 	 * Called by worker to construct mpi tag for a DELETE transaction.

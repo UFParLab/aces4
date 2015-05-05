@@ -78,9 +78,23 @@ void SialOpsSequential::destroy_served(int array_id, int pc) {
 	delete_distributed(array_id, pc);
 }
 
+void SialOpsSequential::put_initialize(const BlockId& target_id, double value, int pc){
+	Block::BlockPtr target_block = block_manager_.get_block_for_writing(target_id, false);
+	target_block->fill(value);
+}
+void SialOpsSequential::put_increment(const BlockId& target_id, double value, int pc){
+	Block::BlockPtr target_block = block_manager_.get_block_for_accumulate(target_id);
+	target_block->increment_elements(value);
+}
+void SialOpsSequential::put_scale(const BlockId& target_id, double value, int pc){
+	Block::BlockPtr target_block = block_manager_.get_block_for_updating(target_id);
+	target_block->scale(value);
+}
+
 void SialOpsSequential::request(BlockId& block_id, int pc) {
 	get(block_id, pc);
 }
+
 void SialOpsSequential::prequest(BlockId&, BlockId&, int pc) {
 	fail("PREQUEST not supported !");
 }

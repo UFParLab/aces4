@@ -231,6 +231,83 @@ TEST(Sial,put_test) {
 	}
 }
 
+TEST(Sial,put_initialize) {
+	std::string job("put_initialize");
+	int norb = 3;
+	int segs[] = { 2, 3, 2 };
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("norb_squared", norb * norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(3, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		EXPECT_TRUE(controller.worker_->all_stacks_empty());
+		std::vector<int> index_vec;
+		for (int i = 0; i < norb; ++i) {
+			for (int j = 0; j < norb; ++j) {
+				int k = (i * norb + j) + 1;
+				index_vec.push_back(k);
+				double * local_block = controller.local_block("result",
+						index_vec);
+				double value = local_block[0];
+				double expected = k * k * segs[i] * segs[j];
+				std::cout << "k,value= " << k << " " << value << std::endl;
+				ASSERT_DOUBLE_EQ(expected, value);
+				index_vec.clear();
+			}
+		}
+	}
+
+}
+
+TEST(Sial,put_increment) {
+	std::string job("put_increment");
+	int norb = 3;
+	int segs[] = { 2, 3, 2 };
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("norb_squared", norb * norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(3, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+//	if (attr->is_worker()) {
+//		EXPECT_TRUE(controller.worker_->all_stacks_empty());
+//		std::vector<int> index_vec;
+//		for (int i = 0; i < norb; ++i) {
+//			for (int j = 0; j < norb; ++j) {
+//				int k = (i * norb + j) + 1;
+//				index_vec.push_back(k);
+//				double * local_block = controller.local_block("result",
+//						index_vec);
+//				double value = local_block[0];
+//				double expected = k * k * segs[i] * segs[j];
+//				std::cout << "k,value= " << k << " " << value << std::endl;
+////				ASSERT_DOUBLE_EQ(expected, value);
+//				index_vec.clear();
+//			}
+//		}
+//	}
+
+}
 //TODO  restore functionality for single node version.  Was lost when PersistentArrayManager.h was refactored into
 //worker and server versions.
 
@@ -590,31 +667,30 @@ TEST(Sial,cached_block_map_test) {
 	sip::GlobalState::reinitialize();
 }
 
-TEST(Sial,pardo_load_balance_test){
-    // This test needs to be run with more than 1 worker.
-    // It is NOT AUTOMATED
-    // PLEASE EXAMINE THE OUTPUT MANUALLY
-    std::string job("pardo_load_balance_test");
-    int norb = 4;
-    int segs[] = {2,3,2,2};
-    if (attr->global_rank() == 0) {
-        init_setup(job.c_str());
-        set_constant("norb", norb);
-        std::string tmp = job + ".siox";
-        const char* nm = tmp.c_str();
-        add_sial_program(nm);
-        set_aoindex_info(4, segs);
-        finalize_setup();
-    }
-    std::stringstream output;
 
-    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-    controller.initSipTables();
-    controller.run();
+TEST(Sial,pardo_load_balance_test){
+	// This test needs to be run with more than 1 worker.
+	// It is NOT AUTOMATED
+	// PLEASE EXAMINE THE OUTPUT MANUALLY
+	std::string job("pardo_load_balance_test");
+	int norb = 4;
+	int segs[] = {2,3,2,2};
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(4, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
 
 }
-
-
 
 TEST(Sial,pardo_with_where){
     std::string job("pardo_with_where");
@@ -641,9 +717,9 @@ TEST(Sial,pardo_with_where){
 //****************************************************************************************************************
 
 void bt_sighandler(int signum) {
-	std::cerr << "Interrupt signal (" << signum << ") received." << std::endl;
-	FAIL();
-	abort();
+    std::cerr << "Interrupt signal (" << signum << ") received." << std::endl;
+    FAIL();
+    abort();
 }
 
 int main(int argc, char **argv) {
@@ -680,7 +756,7 @@ int main(int argc, char **argv) {
 	barrier();
 
 #ifdef HAVE_MPI
-	MPI_Finalize();
+    MPI_Finalize();
 #endif
 
 	return result;
