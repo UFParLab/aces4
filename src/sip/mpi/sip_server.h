@@ -18,6 +18,7 @@
 #include "sip_counter.h"
 #include "sip_timer.h"
 
+#include <map>
 
 
 namespace sip {
@@ -176,6 +177,10 @@ private:
 	 */
 	DiskBackedBlockMap disk_backed_block_map_;
 
+	/**
+	 * Last seen BlockId from a PUT or PUT_ACCUMULATE from a given rank.
+	 */
+	std::map<int, BlockId> expecting_blockid_map_;
 
 	/**
 	 * Get
@@ -200,15 +205,18 @@ private:
 	 * Receives the message and obtains the block_id and block size.
 	 * Get the block, creating it if
 	 *    it doesn't exist.
-	 * Posts recvieve with tag put_dat_tag
-	 * Sends an ack to the source
-	 *
 	 * @param mpi_source
 	 * @param put_tag
+	 */
+	void handle_PUT(int mpi_source, int put_tag);
+
+	/**
+	 * Posts recvieve with tag put_dat_tag
+	 * Sends an ack to the source
+	 * @param mpi_source
 	 * @param put_data_tag
 	 */
-	void handle_PUT(int mpi_source, int put_tag, int put_data_tag);
-
+	void handle_PUT_DATA(int mpi_source, int put_data_tag);
 
 	/**
 	 * put_accumulate
@@ -222,14 +230,20 @@ private:
 	 *    the put_accumulate_tag.
 	 * Get the block to accumulate into, creating and initializing it if
 	 *    it doesn't exist.
-	 * Accumulates received data into block
-	 * Sends an ack to the source
 	 *
 	 * @param [in] mpi_source
 	 * @param [in] put_accumulate_tag
-	 * @param [in] put_accumulate_data_tag
 	 */
-	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag);
+	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag);
+
+	/**
+	 * Accumulates received data into block
+	 * Sends an ack to the source
+	 * @param mpi_source
+	 * @param put_accumulate_data_tag
+	 */
+	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_data_tag);
+
 
 	void handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag);
 	void handle_PUT_INCREMENT(int mpi_source, int put_increment_tag);
