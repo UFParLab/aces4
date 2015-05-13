@@ -277,6 +277,8 @@ void DiskBackedArraysIO::delete_array(const int array_id, IdBlockMap<ServerBlock
     }
     */
     
+    return;
+    
     int server_rank        = sip_mpi_attr_.company_rank();
     int server_number      = sip_mpi_attr_.num_servers();
     const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();

@@ -164,7 +164,7 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
      * into newly allocated space, sets the in_memory flag,
      * inserts into block_map_ if needed
      */
-    block = allocate_block(block, block_size, false);
+    block = allocate_block(block_id, block, block_size, false);
     server_timer_.start_timer(current_line(), ServerTimer::READTIME);
     disk_backed_arrays_io_.read_block_from_disk(block_id, block);
     server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
@@ -208,7 +208,7 @@ void DiskBackedBlockMap::prefetch_array(int array_id) {
             msg << " : uninitialized block " << block_id << " will be pre-fetched. "<< std::endl;
             SIP_LOG(std::cout << msg.str() << std::flush);
             //TAU_START("allocate block");
-            block = allocate_block(NULL, block_size, false);
+            block = allocate_block(block_id, NULL, block_size, false);
             //TAU_STOP("allocate block");
             block_map_.insert_block(block_id, block);
             disk_backed_arrays_io_.iread_block_from_disk(block_id, block);
@@ -216,7 +216,7 @@ void DiskBackedBlockMap::prefetch_array(int array_id) {
         } else if(!block->is_in_memory()) {
             if (block->is_on_disk()){
                 //TAU_START("allocate block");
-                block = allocate_block(block, block_size, false);
+                block = allocate_block(block_id, block, block_size, false);
                 //TAU_STOP("allocate block");
                 disk_backed_arrays_io_.iread_block_from_disk(block_id, block);
                 std::cout << "Read block: " << block_id << std::endl;
@@ -274,14 +274,14 @@ bool DiskBackedBlockMap::prefetch_block(const BlockId &block_id) {
         msg << "S " << sip_mpi_attr_.global_rank();
         msg << " : uninitialized block " << block_id << " will be pre-fetched. "<< std::endl;
         SIP_LOG(std::cout << msg.str() << std::flush);
-        block = allocate_block(NULL, block_size, false);
+        block = allocate_block(block_id, NULL, block_size, false);
         block_map_.insert_block(block_id, block);
         disk_backed_arrays_io_.iread_block_from_disk(block_id, block);
         //std::cout << "Read null block: " << block_id << std::endl;
         ret = true;
     } else if(!block->is_in_memory()) {
         if (block->is_on_disk()){
-            block = allocate_block(block, block_size, false);
+            block = allocate_block(block_id, block, block_size, false);
             //block->allocate_in_memory_data(false);
             disk_backed_arrays_io_.iread_block_from_disk(block_id, block);
             //std::cout << "Read block: " << block_id << std::endl;
@@ -403,10 +403,15 @@ void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBloc
 
 void DiskBackedBlockMap::update_array_distance(std::map<int, int> &new_array_distance) {
     array_distance_.clear();
+    this->new_array_distance_.clear();
+    array_distance_mask_.clear();
     
     for (std::map<int, int>::iterator iter = new_array_distance.begin(); iter != new_array_distance.end(); iter ++) {
         array_distance_.insert(std::pair<int,int>(iter->second,iter->first));
+        this->new_array_distance_.insert(std::pair<int,int>(iter->first, iter->second));
+        array_distance_mask_.insert(iter->first);
     }
+    
 }
 
 void DiskBackedBlockMap::remove_block_from_memory(std::size_t needed_bytes) {
@@ -435,11 +440,13 @@ void DiskBackedBlockMap::remove_block_from_memory(std::size_t needed_bytes) {
                 }
             }
         }
+        array_distance_mask_.erase(iter->second);
         array_distance_.erase(iter);
     }
     
-    std::multimap<int,int>::reverse_iterator iter = array_distance_.rbegin();
-    while (iter != array_distance_.rend()) {
+    std::multimap<int,int>::reverse_iterator r_iter = array_distance_.rbegin();
+    while (r_iter != array_distance_.rend()) {
+        std::multimap<int,int>::iterator iter = array_distance_.find(r_iter->first);
         //std::cout << "Remove Array: " << sip_tables_.array_name(iter->second) << " with distance " << iter->first << std::endl;
         
         IdBlockMap<ServerBlock>::PerArrayMap* array_map = per_array_map(iter->second);
@@ -457,14 +464,15 @@ void DiskBackedBlockMap::remove_block_from_memory(std::size_t needed_bytes) {
                 }
             }
         }
-        //array_distance_.erase(std::next(iter).base() );;
-        iter = array_distance_.rbegin();
+        array_distance_mask_.erase(iter->second);
+        array_distance_.erase(iter);
+        r_iter = array_distance_.rbegin();
     }
     
-    throw std::out_of_range("No blocks to remove!");
+    throw std::out_of_range("No more blocks to remove!");
 }
 
-ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, bool initialize){
+ServerBlock* DiskBackedBlockMap::allocate_block(const BlockId &block_id, ServerBlock* block, size_t block_size, bool initialize){
     /** If enough memory remains, allocates block and returns.
      * Otherwise, frees up memory by writing out dirty blocks
      * till enough memory has been obtained, then allocates
@@ -472,30 +480,46 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
      */
     std::size_t remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
     std::size_t block_size_in_bytes = block_size * sizeof(double);
-    //std::set<BlockId> &unused_blocks = server_interpreter_.get_unused_blocks();
-    //std::set<BlockId> &dirty_blocks = server_interpreter_.get_dirty_blocks();
+    std::set<BlockId> &unused_blocks = server_interpreter_.get_unused_blocks();
+    std::set<BlockId> &dirty_blocks = server_interpreter_.get_dirty_blocks();
     
     while (!false && block_size_in_bytes > remaining_mem){
         try{
-            /*
+            
             if (unused_blocks.empty() && dirty_blocks.empty()) {
                 throw std::out_of_range("All blocks have been removed and memory is still insufficient for new block.");
             }
             
+            BlockId blockid;
+            ServerBlock* block = NULL;
+            
             if (!unused_blocks.empty()) {
                 std::set<BlockId>::iterator iter = unused_blocks.begin();
-                ServerBlock* block = block_map_.block(*iter);
-                block->free_in_memory_data();
+                blockid = *iter;
+                block = block_map_.block(*iter);
                 unused_blocks.erase(iter);
             } else if (!dirty_blocks.empty()) {
                 std::set<BlockId>::iterator iter = dirty_blocks.begin();
-                ServerBlock* block = block_map_.block(*iter);
-                write_block_to_disk(*iter, block);
-                block->free_in_memory_data();
+                blockid = *iter;
+                block = block_map_.block(*iter);
                 dirty_blocks.erase(iter);
             }
+            
+            if (block != NULL && block->is_in_memory()) {
+                if (block->is_dirty()) {
+                    write_block_to_disk(blockid, block);
+                    block->unset_dirty();
+                }
+                block->free_in_memory_data();
+                block->unset_in_memory();
+                block->set_on_disk();
+            }
+            
+            //remove_block_from_memory(block_size_in_bytes);
+            
             remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
-            */
+            
+            /*
             BlockId bid = policy_.get_next_block_for_removal();
 			ServerBlock* blk = block_map_.block(bid);
 			SIP_LOG(std::cout << "S " << sip_mpi_attr_.company_rank()
@@ -506,13 +530,14 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 				write_block_to_disk(bid, blk);
 			}
 			blk->free_in_memory_data();
+            */
 
 			// Junmin's fix :
 			// As a result of freeing up block memory, the remaining memory should
 			// have increased. Otherwise it will go into an infinite loop.
-			if (!(remaining_mem < max_allocatable_bytes_ - ServerBlock::allocated_bytes())) {
-				throw std::out_of_range("Break now.");
-			}
+			//if (!(remaining_mem < max_allocatable_bytes_ - ServerBlock::allocated_bytes())) {
+				//throw std::out_of_range("Break now.");
+			//}
             remaining_mem = max_allocatable_bytes_ - ServerBlock::allocated_bytes();
         } catch (const std::out_of_range& oor){
             std::cerr << " In DiskBackedBlockMap::allocate_block" << std::endl;
@@ -538,6 +563,11 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
         block->allocate_in_memory_data(initialize);
     }
 
+    if (array_distance_mask_.find(block_id.array_id()) == array_distance_mask_.end()) {
+        array_distance_mask_.insert(block_id.array_id());
+        array_distance_.insert(std::pair<int,int>(new_array_distance_[block_id.array_id()] ,block_id.array_id()));
+    }
+    
     //block->enter_memory_counter = block_access_counter;
 
     if (max_block_size < block->size()) {
@@ -552,71 +582,85 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
     return block;
 }
 
-ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
-    /** If block is not in block map, allocate space for it
-     * Otherwise, if the block is in memory, read and return
-     * if it is only on disk, read it in, store in block map and return.
-     * set in_memory and dirty_flag
-     */
-    ServerBlock* block = block_map_.block(block_id);
-    size_t block_size = sip_tables_.block_size(block_id);
-    if (block == NULL) {
-        std::stringstream msg;
-        msg << "S " << sip_mpi_attr_.global_rank();
-        msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
-        SIP_LOG(std::cout << msg.str() << std::flush);
-        block = allocate_block(NULL, block_size);
-        block_map_.insert_block(block_id, block);
-    } else {
-        if(!block->is_in_memory()){
-            if (block->is_on_disk()){
-                read_block_from_disk(block, block_id, block_size);
+ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(const BlockId& block_id){
+	/** If block is not in block map, allocate space for it
+	 * Otherwise, if the block is in memory, read and return
+	 * if it is only on disk, read it in, store in block map and return.
+	 * set in_memory and dirty_flag
+	 */
+	ServerBlock* block = block_map_.block(block_id);
+	size_t block_size = sip_tables_.block_size(block_id);
+	if (block == NULL) {
+		std::stringstream msg;
+		msg << "S " << sip_mpi_attr_.global_rank();
+		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
+		SIP_LOG(std::cout << msg.str() << std::flush);
+		block = allocate_block(block_id, NULL, block_size);
+	    block_map_.insert_block(block_id, block);
+	} else {
+		if(!block->is_in_memory()){
+			if (block->is_on_disk()){
+				read_block_from_disk(block, block_id, block_size);
                 disk_volume_counter+=block_size*sizeof(double);
             } else {
-                block->allocate_in_memory_data();
+				//block->allocate_in_memory_data();
+                block = allocate_block(block_id, block, block_size, false);
             }
         }
-    }
+	}
 
-    block->set_in_memory();
-    block->set_dirty();
+	block->set_in_memory();
+	block->set_dirty();
 
-    policy_.touch(block_id);
+	policy_.touch(block_id);
     block_access_counter++;
     data_volume_counter+=block_size*sizeof(double);
 
-    return block;
+	return block;
+}
+
+ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
+	ServerBlock* block = get_block_for_reading(block_id, 0);
+	block->set_dirty();
+    block_access_counter++;
+    
+	size_t block_size = sip_tables_.block_size(block_id);
+    data_volume_counter+=block_size*sizeof(double);
+    
+	return block;
 }
 
 ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
-    /** If block is not in block map, allocate space for it
-     * Otherwise, if the block is not in memory, allocate space for it.
-     * Set in_memory and dirty_flag
-     */
-    ServerBlock* block = block_map_.block(block_id);
-    size_t block_size = sip_tables_.block_size(block_id);
-    if (block == NULL) {
-        std::stringstream msg;
-        msg << "S " << sip_mpi_attr_.global_rank();
-        msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
-        SIP_LOG(std::cout << msg.str() << std::flush);
-        block = allocate_block(NULL, block_size);
-        block_map_.insert_block(block_id, block);
-    } else {
-        if (!block->is_in_memory())
-            block->allocate_in_memory_data();
-    }
+	/** If block is not in block map, allocate space for it
+	 * Otherwise, if the block is not in memory, allocate space for it.
+	 * Set in_memory and dirty_flag
+	 */
+	ServerBlock* block = block_map_.block(block_id);
+	size_t block_size = sip_tables_.block_size(block_id);
+	if (block == NULL) {
+		std::stringstream msg;
+		msg << "S " << sip_mpi_attr_.global_rank();
+		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
+		SIP_LOG(std::cout << msg.str() << std::flush);
+		block = allocate_block(block_id, NULL, block_size);
+	    block_map_.insert_block(block_id, block);
+	} else {
+		if (!block->is_in_memory()) {
+			//block->allocate_in_memory_data();
+            block = allocate_block(block_id, block, block_size, false);
+        }
+	}
 
-    block->set_in_memory();
-    block->set_dirty();
+	block->set_in_memory();
+	block->set_dirty();
 
-    policy_.touch(block_id);
-        block_access_counter++;
+	policy_.touch(block_id);
+    block_access_counter++;
 
-    return block;
+	return block;
 }
 
-ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
+ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, int line){
     /** If block is not in block map, there is an error !!
      * Otherwise, if the block is in memory, read and return or
      * if it is only on disk, read it in, store in block map and return.
@@ -629,7 +673,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
 
         std::stringstream errmsg;
         errmsg << " S " << sip_mpi_attr_.global_rank();
-        errmsg << " : Asking for block " << block_id << ". It has not been put/prepared before !"<< std::endl;
+		errmsg << " : Asking for block " << block_id << ". It has not been put/prepared before !  line"<< line << std::endl;
         std::cout << errmsg.str() << std::flush;
         
         sip::fail(errmsg.str());
@@ -640,7 +684,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
             msg << "S " << sip_mpi_attr_.global_rank();
             msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
             std::cout << msg.str() << std::flush;
-            block = allocate_block(NULL, block_size);
+            block = allocate_block(block_id, NULL, block_size);
             block_map_.insert_block(block_id, block);
         }
 
@@ -666,6 +710,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id){
     sip::check(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
     return block;
 }
+
+
 
 IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map(int array_id){
     return block_map_.per_array_map(array_id);

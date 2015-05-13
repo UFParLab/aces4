@@ -10,11 +10,9 @@
 
 #include <bitset>
 #include <new>
-#include <mpi.h>
 #include "id_block_map.h"
 #include "sip_mpi_constants.h"
-
-#include "TAU.h"
+#include "mpi_state.h"
 
 namespace sip {
 
@@ -38,7 +36,7 @@ class DiskBackedBlockMap;
  * 3. Update Block (get_block_for_updating)
  * 4. Flush Block To Disk (in case of limit_reached() being true).
  *
- * For each operation, represeting IOD as 3 bits as initial state,
+ * For each operation, representing IOD as 3 bits as initial state,
  * the action and final state is specified for each operation.
  *
  * // In Memory Operations
@@ -86,31 +84,23 @@ public:
 	typedef double * dataPtr;
 	typedef ServerBlock* ServerBlockPtr;
 
-    /** Constructs a block, allocating size number 
-     * of double precision numbers; optionally 
-     * initializes all elements to 0 (default true).
-     * @param size
-     * @param init
-     */ 
+	/**
+	 * Constructs a block, allocating size number
+	 * of double precision numbers; optionally
+	 * initializes all elements to 0 (default true).
+	 * @param size
+	 * @param init
+	 */
 	explicit ServerBlock(int size, bool init=true);
-    /**
-     * Constructs a block with a given pointer to 
-     * double precision numbers and size. data 
-     * parameter can be NULL.
-     * @param size
-     * @param data can be NULL
-     */ 
+	/**
+	 * Constructs a block with a given pointer to
+	 * double precision numbers and size. data
+	 * parameter can be NULL.
+	 * @param size
+	 * @param data can be NULL
+	 */
 	explicit ServerBlock(int size, dataPtr data);
 
-	enum MPIOperationType {
-		MPI_NONE  = 0,
-		MPI_READ  = 1,
-		MPI_WRITE = 2,
-	};
-    
-    long long enter_memory_counter;
-    long long leave_memory_counter;
-    
 	~ServerBlock();
 
 	void set_dirty() { disk_status_[ServerBlock::DIRTY_IN_MEMORY] = true; }
@@ -124,11 +114,6 @@ public:
 	bool is_dirty() { return disk_status_[ServerBlock::DIRTY_IN_MEMORY]; }
 	bool is_in_memory() { return disk_status_[ServerBlock::IN_MEMORY]; }
 	bool is_on_disk() { return disk_status_[ServerBlock::ON_DISK]; }
-    
-	bool is_on_mpi() { return isOnMPI; }
-	void set_on_mpi(bool isonmpi) { isOnMPI = isonmpi; }
-	void set_mpi_type(MPIOperationType mpi_op_type) { MPI_operation_type = mpi_op_type; }
-	void set_mpi_request(MPI_Request mpi_req) { mpi_request = mpi_req; }
 
 	/**
 	 * Updates and checks the consistency of a server block.
@@ -143,40 +128,32 @@ public:
 	 */
 	void reset_consistency_status ();
 
-	dataPtr get_data() { 
-        if (isOnMPI && MPI_operation_type == MPI_READ) {
-            TAU_START("Block MPI Wait");
-            MPI_Wait(&mpi_request, MPI_STATUS_IGNORE );
-            TAU_STOP("Block MPI Wait");
-            isOnMPI = false;
-            std::cout << "The block is under MPI request." << std::endl;
-        }
-        return data_;
-    }
-	void set_data(dataPtr data) { data_ = data; } /*! It's a dangerous method since there is not explicit 
-                                                     implementation of properly handling the old pointer. !*/
+	dataPtr get_data() { return data_; }
+	void set_data(dataPtr data) { data_ = data; }
 
 	int size() { return size_; }
 
     dataPtr accumulate_data(size_t size, dataPtr to_add); /*! for all elements, this->data += to_add->data */
-
+    dataPtr fill_data(size_t size, double value);
+    dataPtr increment_data(size_t size, double delta);
+    dataPtr scale_data(size_t size, double factor);
 
     void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
+
+    MPIState& state() { return state_; }
 
 	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
-    bool isOnMPI;
+    long long enter_memory_counter;
+    long long leave_memory_counter;
     
 private:
-
-    MPIOperationType MPI_operation_type;
-    MPI_Request mpi_request;
-    
     const int size_;/**< Number of elements in block */
 	dataPtr data_;	/**< Pointer to block of data */
+    MPIState state_;/**< For blocks busy in async MPI communication */
 
 	enum ServerBlockStatus {
 		IN_MEMORY		= 0,	// Block is on host
@@ -210,7 +187,7 @@ private:
 	/**
 	 * The set of consistent states that a block can be in are shown.
 	 * Each row denote a starting state. A state is shown as <ServerBlockMode><ServerBlockWorker>
-	 * w is an arbitrary rank. w1 is another arbitrary rank not equal to w1.
+	 * w is an arbitrary rank. w1 is another arbitrary rank not equal to w.
 	 * Each column is an action on a block, the state of the block
 	 * is changed to that shown in the row.
 	 * In the table, for ServerBlockMode
@@ -240,7 +217,6 @@ private:
 	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
 };
-
 
 } /* namespace sip */
 

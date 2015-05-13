@@ -40,10 +40,12 @@ public:
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
-	ServerBlock* get_block_for_reading(const BlockId& block_id);
+	ServerBlock* get_block_for_reading(const BlockId& block_id, int line);
 	ServerBlock* get_block_for_writing(const BlockId& block_id);
 	ServerBlock* get_block_for_updating(const BlockId& block_id);
-
+	ServerBlock* get_block_for_accumulate(const BlockId& block_id);
+    
+    
 	// Get entire arrays for save, restore operations
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id);
 	void insert_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr);
@@ -88,13 +90,15 @@ private:
 
 	void read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size);
     void write_block_to_disk(const BlockId& block_id, ServerBlock* block);
-	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, bool initialze=true);
+	ServerBlock* allocate_block(const BlockId &block_id, ServerBlock* block, size_t block_size, bool initialze=true);
 
     void remove_block_from_memory(std::size_t needed_bytes);
     
 	//ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 
     std::multimap<int,int> array_distance_;
+    std::set<int> array_distance_mask_;
+    std::map<int, int> new_array_distance_;
 
     long long block_access_counter;
     long long data_volume_counter;

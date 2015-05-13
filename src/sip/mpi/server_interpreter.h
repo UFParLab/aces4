@@ -59,12 +59,17 @@ public:
 
 	ServerInterpreter(const SipTables&, DiskBackedBlockMap&);
 	~ServerInterpreter();
-
+    
+	void handle_incoming_block_request(int array_id, int worker_rank, int line_number);
+     
+    void prefetch_block1();
+    void free_block1();
+    
 	void handle_block_request(BlockId &block_id, int worker_rank, int line_number, 
                               int *loop_indices, int indices_num);
     
     void handle_put_block_request(BlockId &block_id, int worker_rank, int line_number);
-    
+
     bool prefetch_block();
     bool write_block();
     void free_block();
@@ -84,6 +89,49 @@ private:
 
     DiskBackedBlockMap &block_map_;
 
+    class ProgramBlock {
+    public:
+        int start_line_number;
+        int end_line_number;
+        
+        int worker_number;
+        
+        std::set<int> get_arrays;
+        std::set<int> update_arrays;
+        std::set<int> put_arrays;
+        std::map<int, int> array_distance;
+        
+        ProgramBlock() : start_line_number(0)
+                       , end_line_number(0)
+                       , worker_number(0) {};
+        
+        ~ProgramBlock() {};
+    };
+
+    std::vector<ProgramBlock> program_blocks;
+    std::map<int, int> worker_position;
+    
+    std::set<int> prefetched_arrays;
+    std::set<BlockId> prefetching_blocks;
+    
+    std::set<int> dead_arrays;
+    std::set<BlockId> dead_blocks;
+    
+    int last_program_block;
+    int first_program_block;
+    
+    void generate_program_blocks();
+    
+    int get_program_block_index(int line_number);
+    
+    int get_block_index(int line_number);
+    
+    void prefetch_arrays();
+    void get_dead_arrays();
+    
+    void print_program_blocks();
+    void print_op_table();
+    
     enum LoopType {
         DO = 0,
         PARDO = 1,
@@ -170,6 +218,8 @@ private:
         }
     };
 
+    void generate_loop_blocks();
+    
     void add_new_worker_iteration(int loop_index, LoopBlock &loop_block, int indices_value[7],
                                   std::list<WorkerIteration> &worker_iterations);
 
@@ -185,26 +235,7 @@ private:
     
     std::vector<LoopBlock> loop_blocks;
 
-    std::map<int, int> worker_position;
-    
-    std::set<int> prefetched_arrays;
-    std::set<BlockId> prefetching_blocks;
-    
-    std::set<int> dead_arrays;
-    std::set<BlockId> dead_blocks;
-    
-    int last_program_block;
-    int first_program_block;
-    
-    int get_block_index(int line_number);
-    
-    void generate_loop_blocks();
-    
-    void prefetch_arrays();
-    void get_dead_arrays();
-    
     void print_loop_blocks();
-    void print_op_table();
 
 	//static data
 	const SipTables& sip_tables_;

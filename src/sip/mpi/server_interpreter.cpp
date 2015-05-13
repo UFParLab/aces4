@@ -40,7 +40,13 @@ ServerInterpreter::ServerInterpreter(const SipTables& sipTables, DiskBackedBlock
                    , first_program_block(-1)
                    , block_map_(block_map) {
     //print_op_table();
-    generate_loop_blocks();
+    //generate_loop_blocks();
+    
+    generate_program_blocks();
+    
+    if (program_blocks.size() > 0) {
+        block_map_.update_array_distance(program_blocks[0].array_distance);
+    }
     
     //print_op_table();
     //print_loop_blocks();
@@ -49,6 +55,239 @@ ServerInterpreter::ServerInterpreter(const SipTables& sipTables, DiskBackedBlock
 
 ServerInterpreter::~ServerInterpreter() {
 
+}
+
+void ServerInterpreter::generate_program_blocks() {
+    ProgramBlock program_block;
+    int start_number = 0;
+    int basic_reference = 0;
+    
+    std::set<int> arrays;
+    
+    program_blocks.clear();
+    
+    for (int i = 0; i < op_table_.size(); i ++) {
+        
+        if (op_table_.opcode(i) == get_op) {
+            int array_id = op_table_.arg0(i);
+            program_block.get_arrays.insert(array_id);
+            arrays.insert(array_id);
+        } else if (op_table_.opcode(i) == put_accumulate_op) {
+            int array_id = op_table_.arg1(i);
+            program_block.update_arrays.insert(array_id);
+            arrays.insert(array_id);
+        } else if (op_table_.opcode(i) == put_replace_op) {
+            int array_id = op_table_.arg1(i);
+            program_block.put_arrays.insert(array_id);
+            arrays.insert(array_id);
+        }
+        
+        if (op_table_.opcode(i) == endpardo_op) {
+            program_block.start_line_number = op_table_.line_number(start_number);
+            program_block.end_line_number   = op_table_.line_number(i);
+            
+            program_blocks.push_back(program_block);
+            program_block = ProgramBlock();
+            
+            start_number = i + 1;
+        }
+    }
+    
+    if (program_blocks.size() > 0) {
+        program_blocks[program_blocks.size()-1].end_line_number = op_table_.line_number(op_table_.size()-1);
+    }
+    
+    std::map<int, int> array_distance;
+    
+    for (std::set<int>::iterator iter = arrays.begin(); iter != arrays.end(); iter ++) {
+        array_distance[*iter] = -1;
+    }
+    
+    for (int i = program_blocks.size()-1; i >= 0; i --) {
+        for (std::map<int, int>::iterator iter = array_distance.begin(); iter != array_distance.end(); iter ++) {
+            if (iter->second != -1) {
+                iter->second ++;
+            }
+        }
+        
+        for (std::set<int>::iterator iter = program_blocks[i].get_arrays.begin();
+             iter != program_blocks[i].get_arrays.end();
+             iter ++) {
+            array_distance[*iter] = 0;
+        }
+        
+        for (std::set<int>::iterator iter = program_blocks[i].update_arrays.begin();
+             iter != program_blocks[i].update_arrays.end();
+             iter ++) {
+            array_distance[*iter] = 0;
+        }
+        
+        program_blocks[i].array_distance = array_distance;
+    }
+}
+
+int ServerInterpreter::get_program_block_index(int line_number) {
+    int l = 0, h = program_blocks.size() - 1;
+    
+    while (l < h) {
+        int mid = (l + h) / 2;
+    
+        if (program_blocks[mid].start_line_number <= line_number
+            && program_blocks[mid].end_line_number >= line_number) {
+            return mid;
+        }
+        else if (program_blocks[mid].start_line_number > line_number) {
+            h = mid - 1;
+        }
+        else {
+            l = mid + 1;
+        }
+    }
+    
+    return l;
+}
+
+void ServerInterpreter::handle_incoming_block_request(int array_id, int worker_rank, int line_number) {
+    int old_block = -1, new_block = -1;
+
+    //std::cout << "Handle block request from worker: " << worker_rank << ", line number: " << line_number << std::endl;
+    
+    if (worker_position.count(worker_rank)) {
+        old_block = get_program_block_index(worker_position[worker_rank]);
+    }
+    
+    worker_position[worker_rank] = line_number;
+    new_block = get_program_block_index(worker_position[worker_rank]);
+    
+    if (old_block != -1) {
+        program_blocks[old_block].worker_number --;
+    }
+    
+    program_blocks[new_block].worker_number ++;
+    
+    if (new_block > first_program_block) {
+        first_program_block = new_block;
+        prefetch_arrays();
+    }
+    
+    if (program_blocks[last_program_block].worker_number == 0) {
+        for (int i = last_program_block+1; i < program_blocks.size(); i ++) {
+            if (program_blocks[i].worker_number != 0) {
+                last_program_block = i;
+                get_dead_arrays();
+                block_map_.update_array_distance(program_blocks[i].array_distance);
+                break;
+            }
+        }
+    }
+}
+
+void ServerInterpreter::prefetch_arrays() {
+    ProgramBlock &program_block = program_blocks[first_program_block];
+    
+    for (std::set<int>::iterator iter = program_block.get_arrays.begin(); 
+              iter != program_block.get_arrays.end();
+              iter ++) {
+        if ( prefetched_arrays.count(*iter) == 0 ) {
+            std::set<BlockId> blocks_set;
+            block_map_.get_array_blocks(*iter, blocks_set);
+            for (std::set<BlockId>::iterator itt = blocks_set.begin(); itt != blocks_set.end(); itt ++) {
+                prefetching_blocks.insert(*itt);
+            }
+            prefetched_arrays.insert(*iter);
+            //std::cout << "Prefetching array " << sip_tables_.array_name(*iter) << " ..." << std::endl;
+        }
+    }
+}
+
+void ServerInterpreter::remove_read_block(const BlockId &block_id) {
+    prefetching_blocks.erase(block_id);
+}
+
+void ServerInterpreter::prefetch_block1() {
+    std::set<BlockId>::iterator iter = prefetching_blocks.begin(); 
+    
+    if (iter != prefetching_blocks.end() && block_map_.is_block_prefetchable(*iter)) {
+        block_map_.prefetch_block(*iter);
+        prefetching_blocks.erase(iter);
+    }
+}
+
+bool ServerInterpreter::more_blocks_to_prefetch() {
+    return !prefetching_blocks.empty() 
+            && block_map_.is_block_prefetchable(*prefetching_blocks.begin());
+}
+
+bool ServerInterpreter::more_blocks_to_free() {
+    return !dead_blocks.empty();
+}
+
+bool ServerInterpreter::more_blocks_to_prefetch_or_free() {
+    return more_blocks_to_prefetch() || more_blocks_to_free();
+}
+
+void ServerInterpreter::get_dead_arrays() {
+    ProgramBlock &program_block = program_blocks[last_program_block];
+    
+    for (std::map<int, int>::iterator iter = program_block.array_distance.begin();
+              iter != program_block.array_distance.end();
+              iter ++) {
+        if (iter->second == -1 && !dead_arrays.count(iter->first)) {
+            std::set<BlockId> blocks_set;
+            block_map_.get_dead_blocks(iter->first, blocks_set);
+            for (std::set<BlockId>::iterator itt = blocks_set.begin(); itt != blocks_set.end(); itt ++) {
+                dead_blocks.insert(*itt);
+            }
+            dead_arrays.insert(iter->first);
+        }
+    }
+}
+
+void ServerInterpreter::free_block1() {
+    std::set<BlockId>::iterator iter = dead_blocks.begin(); 
+    
+    if (iter != dead_blocks.end()) {
+        block_map_.free_block(*iter);
+        prefetching_blocks.erase(iter);
+    }
+}
+
+void ServerInterpreter::print_program_blocks() {
+
+    std::cout << "Program Blocks: " << std::endl;
+    for (int i = 0; i < program_blocks.size(); i ++) {
+        std::cout << i << ": " << program_blocks[i].start_line_number << ", " << program_blocks[i].end_line_number << std::endl;
+        std::cout << "Get arrays:" << std::endl;
+        for (std::set<int>::iterator iter = program_blocks[i].get_arrays.begin();
+                 iter != program_blocks[i].get_arrays.end();
+                 iter ++) {
+            std::cout << sip_tables_.array_name(*iter) << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Put arrays:" << std::endl;
+        for (std::set<int>::iterator iter = program_blocks[i].put_arrays.begin();
+                 iter != program_blocks[i].put_arrays.end();
+                 iter ++) {
+            std::cout << sip_tables_.array_name(*iter) << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Update arrays:" << std::endl;
+        for (std::set<int>::iterator iter = program_blocks[i].update_arrays.begin();
+                 iter != program_blocks[i].update_arrays.end();
+                 iter ++) {
+            std::cout << sip_tables_.array_name(*iter) << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Array Distance:" << std::endl;
+        for (std::map<int, int>::iterator iter = program_blocks[i].array_distance.begin();
+                 iter != program_blocks[i].array_distance.end();
+                 iter ++) {
+            std::cout << sip_tables_.array_name(iter->first) << ":" << (iter->second) << " ";
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 void ServerInterpreter::generate_loop_blocks() {
@@ -366,14 +605,6 @@ void ServerInterpreter::remove_worker_iteration(std::list<WorkerIteration> &work
     worker_iterations.pop_front();
 }
 
-void ServerInterpreter::prefetch_arrays() {
-
-}
-
-void ServerInterpreter::remove_read_block(const BlockId &block_id) {
-    prefetching_blocks.erase(block_id);
-}
-
 bool ServerInterpreter::prefetch_block() {
     for (std::map<int, std::list<WorkerIteration> >::iterator iter = workers_iteration.begin(); 
         iter != workers_iteration.end(); iter ++) {
@@ -397,6 +628,8 @@ bool ServerInterpreter::prefetch_block() {
         }
         
         it ++;
+        
+        if (it != iter->second.end())
         {
             std::set<BlockId> &prefetch_blocks = it->prefetch_blocks;
             
@@ -440,32 +673,6 @@ bool ServerInterpreter::write_block() {
     }
     
     return false;
-}
-
-bool ServerInterpreter::more_blocks_to_prefetch() {
-    return !prefetching_blocks.empty() 
-            && block_map_.is_block_prefetchable(*prefetching_blocks.begin());
-}
-
-bool ServerInterpreter::more_blocks_to_free() {
-    return !dead_blocks.empty();
-}
-
-bool ServerInterpreter::more_blocks_to_prefetch_or_free() {
-    return more_blocks_to_prefetch() || more_blocks_to_free();
-}
-
-void ServerInterpreter::get_dead_arrays() {
-
-}
-
-void ServerInterpreter::free_block() {
-    std::set<BlockId>::iterator iter = dead_blocks.begin(); 
-    
-    if (iter != dead_blocks.end()) {
-        block_map_.free_block(*iter);
-        prefetching_blocks.erase(iter);
-    }
 }
 
 void ServerInterpreter::print_workers_iterations() {
