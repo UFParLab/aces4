@@ -336,19 +336,16 @@ void SIPServer::handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_da
 
 	//allocate a temporary buffer and post irecv.
 	ServerBlock::dataPtr temp = new double[block_size];
-	MPI_Request request;
-	MPI_Status status2;
-	MPI_Irecv(temp, block_size, MPI_DOUBLE, mpi_source, put_accumulate_data_tag,
-			MPI_COMM_WORLD, &request);
 
 	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
 	server_timer_[last_seen_pc_].start_block_wait();
 	ServerBlock* block = disk_backed_block_map_.get_block_for_accumulate(block_id);
 	server_timer_[last_seen_pc_].pause_block_wait();
 
-
 	//wait for data to arrive
-	MPI_Wait(&request, &status2);
+	MPI_Status status2;
+	MPI_Recv(temp, block_size, MPI_DOUBLE, mpi_source, put_accumulate_data_tag,
+				MPI_COMM_WORLD, &status2);
 	check_double_count(status2, block_size);
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source)){
