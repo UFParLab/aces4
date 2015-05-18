@@ -73,14 +73,16 @@ c--------------------------------------------------------------------------
       do a = a1,a2
           if (b .ne. d .and. c .ne. e) then
 	      div = array2(a,b,c,d,e)
-	  if (div .eq. 0.d0) then
-	      write(*,*) "--ZERO denominator in invert diagonal asym"
-	      write(*,100) a,b,c,d,e,div
-	      ierr = 1
-	      return
-          endif
-	      val = array1(a,b,c,d,e)/div
-	      array1(a,b,c,d,e) = val
+C	  if (div .eq. 0.d0) then
+C	      write(*,*) "--ZERO denominator in invert diagonal asym"
+C	      write(*,100) a,b,c,d,e,div
+C	      ierr = 1
+C	      return
+C          endif
+              if (div .ne. 0.d0) then
+		  val = array1(a,b,c,d,e)/div
+		  array1(a,b,c,d,e) = val
+	      endif
 	  else
 	      array1(a,b,c,d,e) = 0.d0
           endif

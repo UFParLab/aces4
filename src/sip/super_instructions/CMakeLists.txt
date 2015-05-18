@@ -9,8 +9,8 @@ set(QM_SOURCE_FILES
     qm/check_dconf.F;
     qm/imemory.h;
     qm/set_flags2.f;
-    qm/uintegrals.F;
     qm/instructions_for_testing.f;
+    qm/drop_core_in_sip.F;
     qm/excited/cis_unit_guess.F;
     qm/qm-generic/set_ijk_aaa.F;
     qm/qm-generic/set_ijk_aab.F;
@@ -41,6 +41,7 @@ set(QM_SOURCE_FILES
     qm/mcpt-fragment/return_pairs.F;
     qm/mcpt-fragment/compute_pair_nn.F;
     qm/mcpt-fragment/return_vpq.F;
+    qm/direct_integral/uintegrals.F;
     qm/direct_integral/move_integrals.f;
     qm/direct_integral/pack_coeffs.f;
     qm/direct_integral/lookup_shell.f;
