@@ -81,6 +81,8 @@ SIAL CCSD_RHF_SV1
       served T2new_ab[a,i,b,j]
       served T2old_aa[a,i,a1,i1]
       served T2old_ab[a,i,b,j]
+      served L2old_aa[i,a,i1,a1]
+      served L2old_ab[i,a,j,b]
       served Tau_ab[a,i,b,j]
       served Taup_aa[a,i,a1,i1]
       served Taup_ab[a,i,b,j]
@@ -154,6 +156,8 @@ SIAL CCSD_RHF_SV1
       temp T3aiai[p,i,p1,i1]
       temp T1bjbj[q,j,q1,j1]
       temp T2bjbj[q,j,q1,j1]
+      temp Tiajb[i,a,j,b]
+      temp Tiaia[i,a,i1,a1]
       temp Taibj[p,i,q,j]
       temp T1aibj[p,i,q,j]
       temp T2aibj[p,i,q,j]
@@ -968,11 +972,34 @@ totenerg = lccd_energy
 
 call form_D11
 
+sip_barrier 
+call T2oldaa
+sip_barrier 
+#
+PARDO a, b, i, j 
+#
+    request T2old_ab[a,i,b,j]
+    request T2old_aa[a,i,b,j]
+    Tiajb[i,a,j,b] = T2old_ab[a,i,b,j]
+    Tiaia[i,a,j,b] = T2old_aa[a,i,b,j]
+    prepare L2old_ab[i,a,j,b] = Tiajb[i,a,j,b]
+    prepare L2old_aa[i,a,j,b] = Tiaia[i,a,j,b]
+#
+ENDPARDO a, b, i, j 
+SERVER_BARRIER  
+
+has_singles = 0.0
+is_ccpt = 1.0
+set_persistent has_singles "has_singles"
+set_persistent is_ccpt "is_ccpt"
 set_persistent scf_energy "scf_energy"
 set_persistent totenerg "totenerg"
 set_persistent ca    "ca" 
 set_persistent Fock_a "fock_a"
+set_persistent T2old_aa "T2old_aa"
 set_persistent T2old_ab "T2old_ab"
+set_persistent L2old_aa "L2old_aa"
+set_persistent L2old_ab "L2old_ab"
 set_persistent Viaai  "Viaai"
 set_persistent Vaaii  "Vaaii"
 set_persistent Vpiqj  "Vpiqj"
