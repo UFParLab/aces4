@@ -1,4 +1,7 @@
+
 #include <sip_mpi_constants.h>
+
+#include <iostream>
 #include "sip.h"
 
 namespace sip{
@@ -7,6 +10,7 @@ SIPMPIConstants::MessageType_t SIPMPIConstants::intToMessageType(int msgtype) {
 	if (0 <= msgtype && msgtype < LAST_MESSAGE_TYPE) {
 		return (MessageType_t) msgtype;
 	}
+	std::cerr << "illegal argument to SIPMPIConstants::intToMessageType " << msgtype << std::endl << std::flush;
 	throw std::domain_error("illegal msgtype value");
 }
 

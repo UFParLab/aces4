@@ -102,10 +102,10 @@ private:
 	void remove_completed_requests(int outcount,
 			int array_of_indices[]);
 
-	DISALLOW_COPY_AND_ASSIGN(AsyncAcks);
+
 
 	friend std::ostream& operator<<(std::ostream&, const AsyncAcks &);
-
+	DISALLOW_COPY_AND_ASSIGN(AsyncAcks);
 };
 
 } /* namespace sip */

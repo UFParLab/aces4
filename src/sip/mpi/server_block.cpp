@@ -69,11 +69,12 @@ ServerBlock::~ServerBlock(){
 
 ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	check(size_ == size, "accumulating blocks of unequal size");
-	for (unsigned i = 0; i < size; ++i){
+	for (size_t i = 0; i < size; ++i){
 			data_[i] += to_add[i];
 	}
 	return data_;
 }
+
 ServerBlock::dataPtr ServerBlock::fill_data(size_t size, double value) {
 	std::fill(data_+0, data_+size, value);
 	return data_;

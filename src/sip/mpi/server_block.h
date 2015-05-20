@@ -142,6 +142,9 @@ public:
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
     MPIState& state() { return state_; }
+	MPI_Request* mpi_request() { return &(state_.mpi_request_); }
+	bool test(){ return state_.test(); }
+	void wait(){ state_.wait();}
 
 	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 

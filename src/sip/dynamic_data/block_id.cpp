@@ -27,8 +27,9 @@ BlockId::BlockId(int array_id, const index_value_array_t& index_values) :
 }
 
 BlockId::BlockId(const mpi_block_id_t buffer) :
-		array_id_(buffer[0]), parent_id_ptr_(NULL) {
-	std::copy(buffer + 1, buffer + MAX_RANK + 1, index_values_);
+		array_id_(buffer[0]) {
+	std::copy(buffer + 1, buffer + MAX_RANK +1, index_values_);
+    parent_id_ptr_ = NULL;
 }
 
 BlockId::BlockId(int array_id, const BlockId& old_block) :
@@ -87,8 +88,8 @@ BlockId BlockId::operator=(BlockId tmp) { //param passed by value, makes a copy.
 
 //TODO subindices may not be implemented properly any more:
 BlockId::~BlockId() {
-	if (parent_id_ptr_ != NULL)
-		delete parent_id_ptr_;  //this should be a copy
+
+
 }
 
 bool BlockId::operator==(const BlockId& rhs) const {

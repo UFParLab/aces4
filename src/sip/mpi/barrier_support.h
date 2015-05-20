@@ -149,7 +149,7 @@ public:
 	}
 
 	/**
-	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and session number as the given tag
+	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and transaction number as the given tag
 	 * Called by the server
 	 *
 	 * Requires:  the given tag is a PUT_ACCUMULATE tag.
@@ -163,7 +163,7 @@ public:
 	}
 
 	/**
-	 * Constructs a PUT_DATA tag with the same section number and session number as the given tag
+	 * Constructs a PUT_DATA tag with the same section number and transaction number as the given tag
 	 * Called by the server
 	 *
 	 * Requires:  the given tag is a PUT tag.

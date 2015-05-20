@@ -35,14 +35,73 @@ void SIPServer::run() {
 
 	int my_rank = sip_mpi_attr_.global_rank();
 
-	while (!terminated_) {
+//	{//for gdb
+//	    int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
+
+	while (!terminated_ ) {
 
 		MPI_Status status;
 
-		// Check to see if a request has arrived from any worker.
+		//this statement will spin (if there are expected data messages) or block until a message has arrived.
+		if (expected_data_messages_.has_pending()){
+
+			std::cout << "checking for data message" << std::endl << std::flush;
+
+			int found_message = 0;
+			//there is a pending put_acccumulate,
+			// check for quick-response messages first, but don't block
+			while (found_message==0) {
+
+//				SIPMPIUtils::check_err(
+//						MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+//								&found_message, &status), __LINE__, __FILE__);
+//				std::cout << "small message check: found_message=" << found_message << std::endl << std::flush;
+//				if (found_message == 0) {
+//
+//					found_message =
+//							expected_data_messages_.completed_message_status(
+//									status);
+//					std::cout << "large message check: found_message=" << found_message << std::endl;
+//					std::cout << status << std::endl << std::flush;
+//
+//				}
+
+
+				found_message =expected_data_messages_.completed_message_status(status);
+				std::cout << "large message check: found_message=" << found_message << std::endl;
+				std::cout << status << std::endl << std::flush;
+
+
+if (found_message == 0) {
+	SIPMPIUtils::check_err(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+	&found_message, &status), __LINE__, __FILE__);
+	std::cout << "small message check: found_message=" << found_message << std::endl;
+	std::cout << status << std::endl << std::flush;
+
+
+}
+
+
+			}
+		}
+		else {
+		// There are no pending data requests.  The next message will not be a data message,
+		//	so block and wait for next message.
 		SIPMPIUtils::check_err(
 				MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
 						&status), __LINE__, __FILE__);
+		}
+		std::cout << "normal message after blocking probe" << std::endl ;
+		std::cout << status << std::endl << std::flush;
+		//a message is ready to be received, or if put_data or put_accumulate_data, processed.
+
 
 		//extract info about the message
 		int mpi_tag = status.MPI_TAG;
@@ -52,10 +111,18 @@ void SIPServer::run() {
 		int section_number;
 		int transaction_number;
 
+		try{
 		state_.decode_tag(mpi_tag, message_type, transaction_number);
+		} catch (const std::exception& e) {
+			std::cerr << "exception thrown in server: " << e.what() << std::endl;
+			std::cerr << status << std::endl << std::flush;
+			check(false, "exception thrown decoding tag");
+		}
 
 		SIP_LOG(
 				std::cout<< "S " << my_rank << " : has message with tag " << mpi_tag << " of type " << SIPMPIConstants::messageTypeToName(message_type) << " transaction_number=" << transaction_number << std::endl << std::flush);
+
+		std::cout<< "S " << my_rank << " : has message from " << mpi_source << " with tag " << mpi_tag << " of type " << SIPMPIConstants::messageTypeToName(message_type) << " transaction_number=" << transaction_number << std::endl << std::flush;
 
 		// TODO bool section_number_changed = handle_section_number_change(section_number_changed);
 
@@ -69,9 +136,12 @@ void SIPServer::run() {
 		}
 			break;
 		case SIPMPIConstants::PUT:{
-			int put_data_tag;
-			put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA, transaction_number);
-			handle_PUT(mpi_source, mpi_tag, put_data_tag);
+
+			handle_PUT(mpi_source, mpi_tag, transaction_number);
+		}
+			break;
+		case SIPMPIConstants::PUT_DATA:{
+			handle_PUT_DATA(mpi_source, mpi_tag, status);
 		}
 			break;
 		case SIPMPIConstants::PUT_ACCUMULATE:{
@@ -79,6 +149,10 @@ void SIPServer::run() {
 			put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
 					SIPMPIConstants::PUT_ACCUMULATE_DATA, transaction_number);
 			handle_PUT_ACCUMULATE(mpi_source, mpi_tag, put_accumulate_data_tag);
+		}
+			break;
+		case SIPMPIConstants::PUT_ACCUMULATE_DATA:{
+			handle_PUT_ACCUMULATE_DATA(mpi_source, mpi_tag, status);
 		}
 			break;
 		case SIPMPIConstants::PUT_INITIALIZE:{
@@ -106,6 +180,7 @@ void SIPServer::run() {
 		}
 			break;
 		case SIPMPIConstants::END_PROGRAM:{
+			if(!expected_data_messages_.has_pending())
 			handle_END_PROGRAM(mpi_source, mpi_tag);
 		}
 			break;
@@ -185,7 +260,8 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 }
 
-void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
+void SIPServer::handle_PUT(int mpi_source, int put_tag, int transaction_number) {
+
 	const int recv_data_count = BlockId::MPI_BLOCK_ID_COUNT + 2;
 	const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
 	const int section_num_offset = line_num_offset + 1;
@@ -197,6 +273,8 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 			MPI_Recv(recv_buffer, recv_data_count, MPI_INT, mpi_source, put_tag,
 					MPI_COMM_WORLD, &status));
 	check_int_count(status, recv_data_count);
+
+	std::cout << "received put message" << std::endl<< std::flush;
 
 	last_seen_line_ = recv_buffer[line_num_offset];
 	last_seen_worker_ = mpi_source;
@@ -211,10 +289,8 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	BlockId::mpi_block_id_t buffer;
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
-	//DEBUG
-//	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
-	//get the block and its size, constructing it if it doesn't exist
+	//get the block and its size
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
@@ -226,27 +302,47 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
+	check(block->get_data() != NULL, "returned null block data from get_block_for_writing");
+	check(block != NULL, "REturned null block from get_block_for_writing");
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
-
-	//receive data
-	SIPMPIUtils::check_err(
-			MPI_Recv(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
-					put_data_tag, MPI_COMM_WORLD, &status), __LINE__, __FILE__);
-	check_double_count(status, block_size);
-
+	//data race check
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT, mpi_source)){
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT block semantics (data race) for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source << ". Probably a missing sip_barrier";
 		sial_check(false,err_ss.str());
 	}
 
-	//send ack
+	//post receive
+	int put_data_tag;
+	put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA, transaction_number);
 	SIPMPIUtils::check_err(
-			MPI_Send(0, 0, MPI_INT, mpi_source, put_data_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+			MPI_Irecv(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
+					put_data_tag, MPI_COMM_WORLD, block->mpi_request()), __LINE__, __FILE__);
+
+	//send ack to worker, who is waiting for it
+	//TODO make this asynchronous?
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
+
+	//save request
+	expected_data_messages_.add_put_data_request(block);
+	expected_data_messages_.add_info(mpi_source, put_data_tag, last_seen_line_, block_id, NULL, block);
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+}
 
+void SIPServer::handle_PUT_DATA(int mpi_source, int put_data_tag, const MPI_Status& status){
+
+	DataMessageInfo* info =
+			expected_data_messages_.get_info(mpi_source, put_data_tag);
+	//send ack
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_data_tag,
+					MPI_COMM_WORLD), __LINE__, __FILE__);
+	//delete the info object
+	delete info;
 }
 
 void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
@@ -280,32 +376,40 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	//DEGBUG
 //	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 	//get the block size
-	int block_size;
-	block_size = sip_tables_.block_size(block_id);
+
 	SIP_LOG(std::cout << "S " << sip_mpi_attr_.global_rank()
 			<< " : put accumulate to receive block " << block_id.str(sip_tables_)
-			<< ", size = " << block_size
+			<< ", size = " << sip_tables_.block_size(block_id)
 			<< ", from = " << mpi_source
 			<< ", at line = " << last_seen_line_
 			<< std::endl << std::flush;)
 
-	//allocate a temporary buffer and post irecv.
-	ServerBlock::dataPtr temp = new double[block_size];
-	MPI_Request request;
-	MPI_Status status2;
+	//allocate a temporary buffer and post irecv.  The request handle is placed in the
+	// expected_data_messages_ list.
+	size_t block_size;
+	double* temp = disk_backed_block_map_.get_temp_buffer_for_put_accumulate(block_id, block_size);
+	SIPMPIUtils::check_err(
 	MPI_Irecv(temp, block_size, MPI_DOUBLE, mpi_source, put_accumulate_data_tag,
-			MPI_COMM_WORLD, &request);
+			MPI_COMM_WORLD, expected_data_messages_.add_put_accumulate_data_request()),__LINE__, __FILE__);
 
-	//now get the block itself, constructing it if it doesn't exist.  If creating new block, initialize to zero.
+
+	//send ack to worker, who is waiting for it
+	//TODO make this asynchronous?
+	SIPMPIUtils::check_err(
+			MPI_Send(0, 0, MPI_INT, mpi_source, put_accumulate_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+
+
+	//now get the block itself, constructing it if it doesn't exist.
+	//If creating new block, it should be initialize to zero.
+	//TODO  do this here, or after data received? Could just store BlockId in info
 	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+    //TODO THIS TIMER SHOULD BE IN THE DISK_BACKED_BLOCK_MAP CLASS
 	ServerBlock* block = disk_backed_block_map_.get_block_for_accumulate(block_id);
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
 
 
-	//wait for data to arrive
-	MPI_Wait(&request, &status2);
-	check_double_count(status2, block_size);
-
+	expected_data_messages_.add_info(mpi_source, put_accumulate_data_tag, last_seen_line_, block_id, temp, block);
+	//check the consistency here
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE, mpi_source)){
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT_ACCUMULATE block semantics for " << block_id << " at line " << last_seen_line_ << " from worker " << mpi_source
@@ -313,19 +417,27 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 		sial_check(false,err_ss.str());
 	}
 
+
+	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+
+}
+
+void SIPServer::handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_data_tag, MPI_Status& status){
+	DataMessageInfo* info =
+			expected_data_messages_.get_info(mpi_source, put_accumulate_data_tag);
+	size_t block_size = info->block_->size();
+	//check that the right amount of data was received
+	check_double_count(status, block_size);
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_accumulate_data_tag,
 					MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//accumulate into block
-	block->accumulate_data(block_size, temp);
+	info->block_->accumulate_data(block_size, info->temp_);
 
-	//delete the temporary buffer
-	delete[] temp;
-
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
-
+	//delete the info object, which also deletes the temp buffer
+	delete info;
 }
 
 void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
@@ -576,9 +688,9 @@ void SIPServer::check_int_count(MPI_Status& status, int expected_count) {
 			"message int count different than expected");
 }
 
-void SIPServer::check_double_count(MPI_Status& status, int expected_count) {
+void SIPServer::check_double_count(const MPI_Status& status, int expected_count) {
 	int received_count;
-	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_DOUBLE, &received_count), __LINE__, __FILE__);
+	SIPMPIUtils::check_err(MPI_Get_count(&(const_cast<MPI_Status&>(status)), MPI_DOUBLE, &received_count), __LINE__, __FILE__);
 	check(received_count == expected_count,
 			"message double count different than expected");
 }
@@ -598,6 +710,20 @@ std::ostream& operator<<(std::ostream& os, const SIPServer& obj) {
 	os << "terminated=" << obj.terminated_ << std::endl;
 	return os;
 }
+
+std::ostream& operator<<(std::ostream& os, const MPI_Status& status){
+	int mpi_tag = status.MPI_TAG;
+	int mpi_source = status.MPI_SOURCE;
+	os << "MPI_Status: ";
+	os << " source=" << status.MPI_SOURCE;
+	os << ", tag=" << status.MPI_TAG;
+	int received_count;
+	SIPMPIUtils::check_err(MPI_Get_count(&(const_cast<MPI_Status&>(status)), MPI_DOUBLE, &received_count), __LINE__, __FILE__);
+	os << ", count=" << received_count;
+	return os;
+}
+
+
 
 int SIPServer::last_seen_line(){
 	return last_seen_line_;

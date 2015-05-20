@@ -16,11 +16,15 @@
 #include "disk_backed_block_map.h"
 #include "server_timer.h"
 
+#include <map>
+#include <vector>
+#include <utility>
+
 
 
 namespace sip {
 
-
+std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
 
 /** SIPServer manages distributed/served arrays.
  *
@@ -58,6 +62,162 @@ namespace sip {
  * We need to investigate the performance implications.
  */
 
+class DataMessageInfo{
+public:
+	int pc_;
+	BlockId id_;
+	double* temp_;
+	ServerBlock* block_;
+	DataMessageInfo(int pc, BlockId id, double* temp, ServerBlock* block):
+		pc_(pc), id_(id), temp_(temp), block_(block){
+//		check(id_.parent_id_ptr_ == NULL, "DataMessageInfo blockid with non-null parent");
+	}
+	~DataMessageInfo(){
+		delete[] temp_;
+	}
+	friend std::ostream& operator<<(std::ostream& os, const DataMessageInfo& info){
+		os << "DataMessageInfo:  pc_="<< info.pc_ <<" id_=" << info.id_ <<", temp_=" << info.temp_ << ", block_=" << info.block_ << std::endl;
+		return os;
+	}
+	friend SIPServer
+	DISALLOW_COPY_AND_ASSIGN(DataMessageInfo);
+};
+/**
+ * This class holds the MPI_Requests of posted receives for PUT_ACCUMULATE_DATA
+ * messages.  add_request returns a pointer to a new MPI_Request and
+ * can be passed to the MPI_IRecv function.
+ *
+ * The class also keeps track of buffer locations and the block of the
+ * communication.
+ */
+class PendingDataRequestManager{
+public:
+	typedef std::pair<int,int> Key;  //source, tag
+
+	PendingDataRequestManager():
+		pending_put_data_messages_(),
+		pending_put_accumulate_data_messages_(),
+		data_info_map_(){
+	}
+	~PendingDataRequestManager(){
+		if (!pending_put_data_messages_.empty()){
+			check(false, "destructing PendingDataRequestManager with pending put data message");
+		}
+		if (!pending_put_accumulate_data_messages_.empty()){
+			check(false, "destructing PendingDataRequestManager with pending put accumulate data message");
+		}
+	}
+
+	/**
+	 *
+	 * @return address of an MPI_Request in list
+	 */
+	MPI_Request* add_put_accumulate_data_request(){
+		pending_put_accumulate_data_messages_.push_back(MPI_REQUEST_NULL);
+		return &(*(pending_put_accumulate_data_messages_.rbegin())); //rbegin is iterator to last element
+	}
+
+	MPI_Request** add_put_data_request(ServerBlock* block){
+		pending_put_data_messages_.push_back(block->mpi_request());
+		return &(*(pending_put_data_messages_.rbegin())); //rbegin is iterator to last element
+	}
+
+	/**
+	 * First searches for a completed put_data message.  If there is one,
+	 * it is completed with MPI_Test.  This will set the mpi_state in the block
+	 * to MPI_REQUEST_NULL.  The status is filled in with information from the message.
+	 * The MPI_Request* is removed from the list.
+	 *
+	 * If no completed put_data message found, search for
+	 * a put_accumulate_data message that is ready to
+	 * handle.  If there is one, it is completed with MPI_Test, and its
+	 * MPI_Request is removed from the list.  The status variable is
+	 * filled in with values from the received message.
+	 *
+	 * @param [out] status
+	 * @return true if completed message was found
+	 */
+	bool completed_message_status(MPI_Status& status){
+		//iterate over list of pending put_data messages
+		for (std::list<MPI_Request*>::iterator it = pending_put_data_messages_.begin();
+				it != pending_put_data_messages_.end();
+				++it){
+				   int flag;
+				   MPI_Test(*it, &flag, &status);  //*it is a pointer to the MPI_Request in the block.
+				   if (flag){
+					   std::cout << "found msg with status " << status << std::endl << std::flush;
+					   pending_put_data_messages_.erase(it);
+					   return true;
+				   }
+			}
+		//iterate over list of pending put_accumulate messages
+		for (std::list<MPI_Request>::iterator it = pending_put_accumulate_data_messages_.begin();
+				it != pending_put_accumulate_data_messages_.end();
+				++it){
+				   int flag;
+				   MPI_Test(&(*it), &flag, &status);  //&(*it) is a pointer to the MPI_Request in the list.
+				   if (flag){
+					   pending_put_accumulate_data_messages_.erase(it);
+					   return true;
+				   }
+			}
+		//if here, none were found, so return false
+		return false;
+	}
+
+	bool has_pending(){return !pending_put_accumulate_data_messages_.empty()
+			|| !pending_put_data_messages_.empty();
+	}
+	void add_info(int source, int data_tag, int pc, BlockId id, double* temp, ServerBlock* block ){
+		std::pair<std::map<Key,DataMessageInfo*>::iterator, bool> result;
+
+		result = data_info_map_.insert(
+				std::make_pair(std::make_pair(source, data_tag),new DataMessageInfo(pc, id, temp,  block))
+				);
+		check(result.second, "duplicate key for map insert");
+	}
+	DataMessageInfo* get_info(int source, int data_tag){
+//		Key key = std::make_pair(source, data_tag);
+		std::map<Key,DataMessageInfo*>::iterator it = data_info_map_.find(std::make_pair(source, data_tag));
+		if (it == data_info_map_.end()){
+			check(fail, "info object not found");
+		}
+		DataMessageInfo* to_return = it->second;
+		data_info_map_.erase(it);
+		return to_return;
+	}
+	friend std::ostream& operator<<(std::ostream& os, const PendingDataRequestManager& manager) {
+		os << "PendingDataRequestManager: ";
+		os << " pending_put_data_messages_.size=" << manager.pending_put_data_messages_.size();
+		os << " pending_put_accumulate_data_messages_.size=" << manager.pending_put_accumulate_data_messages_.size();
+		os << ", data_info_map_.size=" << manager.data_info_map_.size();
+		return os;
+	}
+private:
+	/**
+	 * List  of MPI_Requests for posted IRecv for PUT_ACCUMULATE_DATA
+	 * messages.
+	 */
+	std::list<MPI_Request> pending_put_accumulate_data_messages_;
+
+
+	/**
+	 * List of pointers to MPI_Requests for posted IRecv for PUT_DATA messages.
+	 * The MPI_Request is in the block awaiting data, so we need a list of pointers here.
+	 */
+	std::list<MPI_Request*> pending_put_data_messages_;
+	/**
+	 * Map from tag to block to accumulate into.
+	 */
+	std::map<Key,DataMessageInfo*> data_info_map_;
+	/**
+	 * number of expected put or put_accumulate data messages.
+	 * Only test for received messages when this variable is >0.
+	 */
+	DISALLOW_COPY_AND_ASSIGN(PendingDataRequestManager);
+};
+
+
 class SIPServer {
 
 public:
@@ -82,7 +242,7 @@ public:
 		return disk_backed_block_map_.per_array_map(array_id);
 	}
 
-	/**
+	/**last_
 	 * Called by persistent_array_manager. Delegates to block_map_.
 	 */
 	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
@@ -119,6 +279,7 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
+
 	double scalar_value(int){ fail("scalar_value should not be invoked by a server"); return -.1;}
 	void set_scalar_value(int, double) { fail("set_scalar_value should not be invoked by a server");}
     void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
@@ -131,6 +292,7 @@ public:
      * @return
      */
     int last_seen_line();
+
 
 private:
     const SipTables &sip_tables_;
@@ -161,6 +323,7 @@ private:
 	 * Interface to disk backed block manager.
 	 */
 	DiskBackedBlockMap disk_backed_block_map_;
+	PendingDataRequestManager expected_data_messages_;
 
 
 	/**
@@ -183,17 +346,18 @@ private:
 	 *
 	 * invoked by server loop.
 	 *
+	 * Creates the tag for the data message
 	 * Receives the message and obtains the block_id and block size.
 	 * Get the block, creating it if
 	 *    it doesn't exist.
-	 * Posts recvieve with tag put_dat_tag
+	 * Posts receive with tag put_dat_tag
 	 * Sends an ack to the source
 	 *
 	 * @param mpi_source
 	 * @param put_tag
 	 * @param put_data_tag
 	 */
-	void handle_PUT(int mpi_source, int put_tag, int put_data_tag);
+	void handle_PUT(int mpi_source, int put_tag, int transaction_number);
 
 
 	/**
@@ -207,16 +371,15 @@ private:
 	 *    This tag should have the same message number and section number as
 	 *    the put_accumulate_tag.
 	 * Get the block to accumulate into, creating and initializing it if
-	 *    it doesn't exist.
-	 * Accumulates received data into block
-	 * Sends an ack to the source
+	 *    it doesn't exist and add to the tag_to_accumulate_block_ map.
 	 *
 	 * @param [in] mpi_source
 	 * @param [in] put_accumulate_tag
 	 * @param [in] put_accumulate_data_tag
 	 */
+	void handle_PUT_DATA(int mpi_source, int put_data_tag, const MPI_Status& status);
 	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag);
-
+	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_data_tag, MPI_Status& status);
 	void handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag);
 	void handle_PUT_INCREMENT(int mpi_source, int put_increment_tag);
 	void handle_PUT_SCALE(int mpi_source, int put_scale_tag);
@@ -294,7 +457,7 @@ private:
 	 * @param status
 	 * @param expected_count
 	 */
-	void check_double_count(MPI_Status& status, int expected_count);
+	void check_double_count(const MPI_Status& status, int expected_count);
 
 
 	void handle_section_number_change(bool section_number_changed);
@@ -313,7 +476,7 @@ private:
 
 
     friend ServerPersistentArrayManager;
-
+	DISALLOW_COPY_AND_ASSIGN(SIPServer);
 };
 
 } /* namespace sip */

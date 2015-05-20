@@ -154,6 +154,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(const BlockId& block_i
 		block = allocate_block(NULL, block_size);
 	    block_map_.insert_block(block_id, block);
 	} else {
+		block->wait(); //if involved in-progress asynchronous communication, wait for it to complete.
 		if(!block->is_in_memory()){
 			if (block->is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
@@ -192,6 +193,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 		block = allocate_block(NULL, block_size);
 	    block_map_.insert_block(block_id, block);
 	} else {
+		block->wait(); //if involved in-progress asynchronous communication, wait for it to complete.
 		if (!block->is_in_memory())
 			block->allocate_in_memory_data();
 	}
@@ -234,6 +236,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, 
 
 
 	} else {
+		block->wait();  //if involved in-progress asynchronous communication, wait for it to complete.
 		if(!block->is_in_memory())
 			if (block->is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
@@ -248,6 +251,11 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, 
 
 	sip::check(block != NULL, "Block is NULL in Server get_block_for_reading, should not happen !");
 	return block;
+}
+
+double* DiskBackedBlockMap::get_temp_buffer_for_put_accumulate(const BlockId& block_id, size_t& block_size){
+	block_size = sip_tables_.block_size(block_id);
+	return new double[block_size];
 }
 
 IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map(int array_id){
