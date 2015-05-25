@@ -278,6 +278,8 @@ test/mcpt2_test.dat\
 test/eom_test.dat\
 test/lindep_test.dat\
 test/rlambda_test.dat\
+test/lccd_test.dat\
+test/lccsd_test.dat\
 test/expected_output/helloworld1.txt\
 test/expected_output/local_arrays_wild.txt\
 test/expected_output/local_arrays.txt\
@@ -454,6 +456,7 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
 ./src/sialx/qm/scf_frag_defs_lowmem.siox\
+./src/sialx/qm/drop_core_in_sial.siox\
 ./src/sialx/qm/frag_2order_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_singles_lowmem.siox\
@@ -466,6 +469,7 @@ SIOX_FILES=\
 ./src/sialx/qm/lr_eom_ccsd_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
+./src/sialx/qm/rlccsd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
 ./src/sialx/qm/tran_uhf_no4v.siox\
 ./src/sialx/qm/tran_rhf_no3v.siox\
@@ -578,6 +582,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
 ./src/sialx/qm/scf_frag_defs_lowmem.sialx\
+./src/sialx/qm/drop_core_in_sial.sialx\
 ./src/sialx/qm/trans_frag_defs.sialx\
 ./src/sialx/qm/frag_2order_corr_lowmem.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
@@ -591,6 +596,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
 ./src/sialx/qm/reom_rhf_defs.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
+./src/sialx/qm/rlccsd_rhf.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\
 ./src/sialx/qm/tran_uhf_no4v.sialx\
 ./src/sialx/qm/tran_rhf_no3v.sialx\
