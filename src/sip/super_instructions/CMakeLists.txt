@@ -3,21 +3,21 @@ project(super_instructions_library)
 
 # Quantum Methods
 set(QM_SOURCE_FILES
-    qm/cis_unit_guess.F;
-    qm/energy_ty_denominator_rhf.F;
     qm/aoladder_contraction.F;
     qm/int_gen_parms.hf;
     qm/sip_interface.hf;
     qm/check_dconf.F;
     qm/imemory.h;
-    qm/energy_denominator_rhf.F;
-    qm/energy_numerator_rhf.F;
-    qm/return_diagonal.F;
     qm/set_flags2.f;
-    qm/uintegrals.F;
     qm/instructions_for_testing.f;
-    qm/set_ijk_aaa.F;
-    qm/set_ijk_aab.F;
+    qm/drop_core_in_sip.F;
+    qm/excited/cis_unit_guess.F;
+    qm/qm-generic/set_ijk_aaa.F;
+    qm/qm-generic/set_ijk_aab.F;
+    qm/qm-generic/energy_ty_denominator_rhf.F;
+    qm/qm-generic/energy_denominator_rhf.F;
+    qm/qm-generic/energy_numerator_rhf.F;
+    qm/utility/return_diagonal.F;
     qm/utility/return_diagonal_elements.F;
     qm/utility/anti_symm_o.F;
     qm/utility/anti_symm_v.F;
@@ -41,6 +41,7 @@ set(QM_SOURCE_FILES
     qm/mcpt-fragment/return_pairs.F;
     qm/mcpt-fragment/compute_pair_nn.F;
     qm/mcpt-fragment/return_vpq.F;
+    qm/direct_integral/uintegrals.F;
     qm/direct_integral/move_integrals.f;
     qm/direct_integral/pack_coeffs.f;
     qm/direct_integral/lookup_shell.f;

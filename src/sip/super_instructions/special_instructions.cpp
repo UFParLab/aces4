@@ -236,6 +236,11 @@ void compute_nn_repulsion(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
 	int& ierr);
 
+void drop_core_in_sip(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
 void set_frag(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
 	int& ierr);
@@ -507,6 +512,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["compute_dipole_integrals"]=(fp0)&compute_dipole_integrals;
     procmap_["aoladder_contraction"]=(fp0)&aoladder_contraction;
     procmap_["compute_nn_repulsion"]=(fp0)&compute_nn_repulsion;
+    procmap_["drop_core_in_sip"]=(fp0)&drop_core_in_sip;
     procmap_["set_frag"]=(fp0)&set_frag;
     procmap_["frag_index_range"]=(fp0)&frag_index_range;
     procmap_["stripi"]=(fp0)&stripi;

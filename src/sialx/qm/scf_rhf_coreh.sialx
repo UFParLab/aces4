@@ -1621,7 +1621,7 @@ import "scf_defs.sialx"
                DELETE FTpq_b
                DELETE CBT_a
                DELETE CBT_b
-               println " " #exit
+               exit
             ENDIF
          ENDIF
 #

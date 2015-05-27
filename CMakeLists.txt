@@ -334,6 +334,8 @@ configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYON
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/helloworld1.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays_wild.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -659,6 +661,7 @@ set(SIAL_FILES
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
     src/sialx/qm/scf_frag_defs_lowmem.sialx;
+    src/sialx/qm/drop_core_in_sial.sialx;
     src/sialx/qm/frag_2order_corr_lowmem.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
     src/sialx/qm/mcpt2_singles_lowmem.sialx;
@@ -672,6 +675,7 @@ set(SIAL_FILES
     src/sialx/qm/rccsd_rhf.sialx;
     src/sialx/qm/rlambda_rhf.sialx;
     src/sialx/qm/rlccd_rhf.sialx;
+    src/sialx/qm/rlccsd_rhf.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
     src/sialx/qm/rccpt1p2_prop.sialx;
