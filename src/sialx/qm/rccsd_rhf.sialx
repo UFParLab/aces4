@@ -2332,10 +2332,10 @@
 	     if etemp == 1.0 
 		PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
 	     endif 
+	  ENDDO k1diis  
 	     if n1 == one 
 		PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j] 
 	     endif 
-	  ENDDO k1diis  
       ENDDO kdiis 
       ENDPARDO a, i, b, j 
 
@@ -2352,10 +2352,10 @@
 	     if etemp == 1.0 
 		PUT Dai[a,i,k1diis] = tai[a,i] 
 	     endif 
-	     if n1 == one 
-		PREPARE D0ai[a,i] = tai[a,i] 
-	     endif 
 	  ENDDO k1diis  
+	  if n1 == one 
+	     PREPARE D0ai[a,i] = tai[a,i] 
+	  endif 
       ENDDO kdiis 
       ENDPARDO a, i  
 
