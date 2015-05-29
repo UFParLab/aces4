@@ -30,6 +30,9 @@ moaindex aces_defs_pa = baocc: eavirt
 mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
 
+scalar has_singles
+scalar is_ccpt
+
 predefined scalar cc_conv
 scalar scf_energy  # ???? 
 scalar totenerg  #Total energy read in from JOBARC.
@@ -56,6 +59,7 @@ special anti_symm_o u
 special cis_unit_guess ur
 special return_sval ru
 special read_block_from_text_file w
+special compute_dipole_integrals wur
 #     NOT PORTED 
 
 endsial reom_rhf_defs

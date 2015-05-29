@@ -744,10 +744,10 @@
 	     if etemp == 1.0 
 		PUT Dai[a,i,k1diis] = tai[a,i] 
 	     endif 
+	  ENDDO k1diis  
 	     if n1 == one 
 		PREPARE D0ai[a,i] = tai[a,i] 
 	     endif 
-	  ENDDO k1diis  
       ENDDO kdiis 
       ENDPARDO a, i  
 
