@@ -61,12 +61,10 @@ void BlockConsistencyInterpreter::handle_get_op(int pc) {
 	}
 }
 
-void BlockConsistencyInterpreter::put_sum_into_block_semantics() {
+void BlockConsistencyInterpreter::put_sum_into_block_semantics(const BlockId &lhs_id) {
 	PardoSectionConsistencyInfo& pardo_sections_info = barrier_block_consistency_map_[last_seen_barrier_pc_];
 	ArrayIdDeletedMap& array_id_deleted_map = pardo_sections_info.array_id_deleted_map;
 	ArrayBlockConsistencyMap& blocks_consistency_map_ = pardo_sections_info.blocks_consistency_map_;
-	BlockId rhs_id = get_block_id_from_selector_stack();
-	BlockId lhs_id = get_block_id_from_selector_stack();
 	int array_id = lhs_id.array_id();
 	if (array_id_deleted_map[array_id]) {
 		std::stringstream err_ss;
@@ -89,22 +87,24 @@ void BlockConsistencyInterpreter::put_sum_into_block_semantics() {
 }
 
 void BlockConsistencyInterpreter::handle_put_accumulate_op(int pc) {
-	put_sum_into_block_semantics();
+	BlockId rhs_id = get_block_id_from_selector_stack();
+	BlockId lhs_id = get_block_id_from_selector_stack();
+	put_sum_into_block_semantics(lhs_id);
 }
 
 void BlockConsistencyInterpreter::handle_put_increment_op(int pc){
-	put_sum_into_block_semantics();
+	BlockId lhs_id = get_block_id_from_selector_stack();
+	put_sum_into_block_semantics(lhs_id);
 }
 void BlockConsistencyInterpreter::handle_put_scale_op(int pc){
-	put_sum_into_block_semantics();
+	BlockId lhs_id = get_block_id_from_selector_stack();
+	put_sum_into_block_semantics(lhs_id);
 }
 
-void BlockConsistencyInterpreter::put_replace_block_semantics() {
+void BlockConsistencyInterpreter::put_replace_block_semantics(const BlockId &lhs_id) {
 	PardoSectionConsistencyInfo& pardo_sections_info = barrier_block_consistency_map_[last_seen_barrier_pc_];
 	ArrayIdDeletedMap& array_id_deleted_map = pardo_sections_info.array_id_deleted_map;
 	ArrayBlockConsistencyMap& blocks_consistency_map_ = pardo_sections_info.blocks_consistency_map_;
-	BlockId rhs_id = get_block_id_from_selector_stack();
-	BlockId lhs_id = get_block_id_from_selector_stack();
 	int array_id = lhs_id.array_id();
 	if (array_id_deleted_map[array_id]) {
 		std::stringstream err_ss;
@@ -126,11 +126,14 @@ void BlockConsistencyInterpreter::put_replace_block_semantics() {
 }
 
 void BlockConsistencyInterpreter::handle_put_replace_op(int pc) {
-	put_replace_block_semantics();
+	BlockId rhs_id = get_block_id_from_selector_stack();
+	BlockId lhs_id = get_block_id_from_selector_stack();
+	put_replace_block_semantics(lhs_id);
 }
 
 void BlockConsistencyInterpreter::handle_put_initialize_op(int pc) {
-	put_replace_block_semantics();
+	BlockId lhs_id = get_block_id_from_selector_stack();
+	put_replace_block_semantics(lhs_id);
 }
 
 

@@ -46,7 +46,7 @@ public:
 	}
 
 	void blk_sstack(){
-		get_block_id_from_selector_stack();
+		block_selector_stack_.pop();
 //		BlockSelector selector = block_selector_stack_.top();
 //		block_selector_stack_.pop();
 //		int rank = sip_tables_.array_rank(selector.array_id_);
@@ -114,8 +114,8 @@ private:
 
 	BarrierBlockConsistencyMap& barrier_block_consistency_map_;
 
-	void put_sum_into_block_semantics();
-	void put_replace_block_semantics();
+	void put_sum_into_block_semantics(const BlockId &lhs_id);
+	void put_replace_block_semantics(const BlockId &lhs_id);
 };
 
 } /* namespace sip */
