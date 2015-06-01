@@ -143,7 +143,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
 	//DEBUG
-	if(block_id.array_id_==137){std::cout << "get block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(block_id.array_id_==137){std::cout << "get block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	size_t block_size = sip_tables_.block_size(block_id);
 
@@ -168,9 +168,11 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 //	}
 
 	//send block to worker using same tag as GET
+    MPI_Request get_request;
 	SIPMPIUtils::check_err(
-			MPI_Send(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
-					get_tag, MPI_COMM_WORLD), __LINE__, __FILE__);
+			MPI_Isend(block->get_data(), block_size, MPI_DOUBLE, mpi_source,
+					get_tag, MPI_COMM_WORLD, &get_request), __LINE__, __FILE__);
+    block->state().mpi_request_ = get_request;
 
 	if (!block->update_and_check_consistency(SIPMPIConstants::GET, mpi_source)){
 		std::stringstream err_ss;
@@ -210,7 +212,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag, int put_data_tag) {
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
 	//DEBUG
-	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(block_id.array_id_==137){std::cout << "put block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	//get the block and its size, constructing it if it doesn't exist
 	int block_size;
@@ -276,7 +278,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	std::copy(recv_buffer, recv_buffer + BlockId::MPI_BLOCK_ID_COUNT, buffer);
 	BlockId block_id(buffer);
 	//DEGBUG
-	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(block_id.array_id_==137){std::cout << "put_acc block " << block_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 	//get the block size
 	int block_size;
 	block_size = sip_tables_.block_size(block_id);
@@ -359,7 +361,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 
 	//delete the block and map for the indicated array
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
-	if(array_id==137){std::cout << "delete " << array_id << " line "<< last_seen_line_ << std::endl << std::flush;}
+//	if(array_id==137){std::cout << "delete " << array_id << " line "<< last_seen_line_ << std::endl << std::flush;}
 
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 

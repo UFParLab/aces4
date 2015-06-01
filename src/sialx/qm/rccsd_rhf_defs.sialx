@@ -26,11 +26,13 @@ predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT
 
 predefined  scalar cc_conv
 
+scalar has_singles
+scalar is_ccpt
+
 #these are predefined in the index table         
 moaindex aces_defs_pa = baocc: eavirt  
 mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
-
 
 scalar scf_energy  
 scalar totenerg
@@ -46,6 +48,7 @@ special get_my_rank w
 special stripi ru
 special set_ijk_aaa w
 special set_ijk_aab w
+special compute_dipole_integrals wur
 
 endsial rccsd_rhf_defs
 

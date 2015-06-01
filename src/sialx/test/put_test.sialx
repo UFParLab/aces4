@@ -1,43 +1,37 @@
 sial put_test
-predefined int norb
-aoindex i = 1:norb
-aoindex j = 1:norb
-index k = 1:9
-distributed a[i,j]
-temp t[i,j]
-local result[k]
-
-
-scalar x
-
-
-
-print "starting loop"
-pardo i
-do j
-t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
-#x = (scalar)((i-1)*norb + (j-1)) + 1.0
-put a[i,j] = t[i,j]
-#put a[i,j] = x
-print i
-#print t[i,j]
-print x
-enddo j
-endpardo i
-
-sip_barrier
-
-do i
-do j
-get a[i,j]
-x = a[i,j] * a[i,j]
-do k
-where k == ((i-1)*norb + (j-1)) + 1
-result[k] = x
-print k
-println result[k]
-enddo k
-enddo j
-enddo i
+	predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	index k = 1:9
+	distributed a[i,j]
+	temp t[i,j]
+	local result[k]
+	
+	scalar x
+	
+	print "starting loop"
+	pardo i
+		do j
+			t[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+			put a[i,j] = t[i,j]
+			print i
+			print t[i,j]
+		enddo j
+	endpardo i
+	
+	sip_barrier
+	
+	do i
+		do j
+		get a[i,j]
+		x = a[i,j] * a[i,j]
+		do k
+		where k == ((i-1)*norb + (j-1)) + 1
+			result[k] = x
+			print k
+			println result[k]
+		enddo k
+		enddo j
+	enddo i
 
 endsial put_test

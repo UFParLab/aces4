@@ -34,22 +34,29 @@ c--------------------------------------------------------------------------
 	  call abort_job()
       endif
 
-      if (rank_0 .eq. 3) then
-      elseif (rank_0 .eq. 5) then
+      if (rank_0 .eq. 5) then
       call do_return_inv5_as(1, extents_0(1),
      *                    1, extents_0(2),
      *                    1, extents_0(3),
      *                    1, extents_0(4),
      *                    1, extents_0(5),
-     *                    data_0,data_1)
+     *                    data_0,data_1,ierr)
+      else
+	  write(*,*) "bad call to invert_diagonal_asym"
+	  call abort_job()
+      endif
+
+      if (ierr .eq. 1) then
+	  call abort_job()
       endif
 
       return
       end
 
       subroutine do_return_inv5_as(a1,a2,b1,b2,c1,c2,d1,d2,e1,e2, 
-     *                          array1,array2)
+     *                          array1,array2,ierr)
       implicit none
+      integer ierr
       integer a, a1, a2
       integer b, b1, b2
       integer c, c1, c2 
@@ -57,26 +64,28 @@ c--------------------------------------------------------------------------
       integer e, e1, e2
       double precision array1(a1:a2,b1:b2,c1:c2,d1:d2,e1:e2) 
       double precision array2(a1:a2,b1:b2,c1:c2,d1:d2,e1:e2) 
-      double precision val
-
-      val = 0.0 
+      double precision val, div
 
       do e = e1,e2
       do d = d1,d2
       do c = c1,c2
       do b = b1,b2
       do a = a1,a2
-	  if(array2(a,b,c,d,e) .gt. 1.d-12) then
-	      val = array1(a,b,c,d,e)/array2(a,b,c,d,e)
+          if (b .ne. d .and. c .ne. e) then
+	      div = array2(a,b,c,d,e)
+C	  if (div .eq. 0.d0) then
+C	      write(*,*) "--ZERO denominator in invert diagonal asym"
+C	      write(*,100) a,b,c,d,e,div
+C	      ierr = 1
+C	      return
+C          endif
+              if (div .ne. 0.d0) then
+		  val = array1(a,b,c,d,e)/div
+		  array1(a,b,c,d,e) = val
+	      endif
 	  else
-	      val = 0.d0
-	  endif
-C
-          if(b.eq.d .and. c.eq.e) then
-	      val = 0.d0
-	  endif
-          array1(a,b,c,d,e) = val
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
+	      array1(a,b,c,d,e) = 0.d0
+          endif
       enddo 
       enddo 
       enddo 
