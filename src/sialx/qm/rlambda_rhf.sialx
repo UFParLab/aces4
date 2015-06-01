@@ -4599,6 +4599,7 @@ import "rccsd_rhf_defs.sialx"
       set_persistent Viaai  "Viaai"
       set_persistent VSaaai "VSaaai"
       set_persistent Vpiqj  "Vpiqj"
+      set_persistent Vaabj     "Vaaai"
 #
       set_persistent l1a_old  "l1a_old"
       set_persistent L2old_aa "l2old_aa"

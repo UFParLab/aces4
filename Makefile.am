@@ -276,6 +276,9 @@ test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
 test/eom_test.dat\
+test/eom_lccsd_test.dat\
+test/eom_lccd_test.dat\
+test/eom_mp2_test.dat\
 test/lindep_test.dat\
 test/rlambda_test.dat\
 test/lccd_test.dat\
