@@ -1,0 +1,46 @@
+sial cast_indices_to_simple
+predefined int norb
+	index i = 1:norb
+	aoindex j = 1:norb
+	aoindex mu = 1:norb
+	local a[i]
+	local b[j]
+	scalar s
+scalar i_aostart = 2.0
+scalar i_aoend = 1.0
+local SwAO_frag[i]
+int jfrag = 42
+
+allocate SwAO_frag[*]
+	
+	allocate a[*]
+	allocate b[*]
+	
+	do i
+	a[i] = (scalar)(norb -i)
+	enddo i
+	
+	do j
+	 s = a[(index)j]
+	 b[j]=s
+	enddo j
+	
+	do j
+	 
+	   print b[j]
+	enddo j
+	
+	deallocate a[*]
+# don't deallocate b, leave for checking in the test	
+	
+          do mu
+              where mu >= (int)i_aostart
+              where mu >= (int)i_aoend
+              SwAO_frag[(index)mu] = (scalar)jfrag
+              print mu
+              print SwAO_frag[(index)mu]
+          enddo mu
+
+
+
+endsial cast_indices_to_simple

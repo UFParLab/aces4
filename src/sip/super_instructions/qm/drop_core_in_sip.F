@@ -122,7 +122,7 @@ C what the fuck, drop zenon core
       write(*,*) "Setting first",drop_core,"occupied orbitals to zero"
 
       do i = 1,drop_core
-C	  fock(i,i) = 0.d0
+	  fock(i,i) = 0.d0
 	  do mu = 1,nao
 	      MO(mu,i) = 0.d0
 	  enddo

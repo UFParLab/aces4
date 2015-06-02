@@ -399,7 +399,7 @@ void SialOpsParallel::put_initialize(BlockId& target_id, double value){
     		target_id};
     message.id_.parent_id_ptr_ = NULL;
 //	std::cout << "WORKER: message.id_=" << message.id_ << " message.line="<< message.line_ << " message.section="<< message.section_ << " message.value_=" << message.value_ << std::endl << std::flush;
-//    std::cout << "message.value_=" << message.value_ << std::endl << std::flush;)
+//    std::cout << "message.value_=" << message.value_ << std::endl << std::flush;
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_initialize_tag, MPI_COMM_WORLD));
 	ack_handler_.expect_ack_from(server_rank, put_initialize_tag);
@@ -429,7 +429,7 @@ void SialOpsParallel::put_increment(BlockId& target_id, double value){
     		target_id};
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_increment_tag, MPI_COMM_WORLD));
-	ack_handler_.expect_ack_from(server_rank, put_increment_tag);
+    ack_handler_.expect_ack_from(server_rank, put_increment_tag);
 
 }
 
@@ -456,7 +456,7 @@ void SialOpsParallel::put_scale(BlockId& target_id, double value){
     		target_id};
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_scale_tag, MPI_COMM_WORLD));
-	ack_handler_.expect_ack_from(server_rank, put_scale_tag);
+    ack_handler_.expect_ack_from(server_rank, put_scale_tag);
 
 }
 
@@ -776,7 +776,7 @@ void SialOpsParallel::initialize_mpi_type(){
      MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
      if(id_extent != sizeof(id)){
 
- //    std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
+//     std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
     	 MPI_Datatype id_type_old = block_id_type_;
     	 MPI_Type_create_resized(id_type_old, 0, sizeof(id), &block_id_type_);
     	 MPI_Type_free(&id_type_old);
