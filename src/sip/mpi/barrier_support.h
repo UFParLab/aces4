@@ -140,11 +140,9 @@ public:
 	 */
 	bool check_section_number_invariant(int section_number) {
 		bool section_number_changed = false;
-		if (section_number < this->section_number_) {
-		    std::cout << "current line = " << current_line() << std::endl;
-		    }
 		check(section_number >= this->section_number_,
-				"Section number invariant violated. Received request from an older section !");
+				"Section number invariant violated. Received request from an older section !",
+				    current_line());
 		if (section_number > this->section_number_) {
 			this->section_number_ = section_number;
 			section_number_changed = true;
