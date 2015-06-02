@@ -5166,7 +5166,7 @@ pardo a,i,a1,i1
     put DRNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 pardo a,i,a1,i1
-    put DRNaiai[a,i,a1,i1] = 0.0
+    put D2RNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 server_barrier
 pardo a,i,a1,i1

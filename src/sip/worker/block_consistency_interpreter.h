@@ -46,7 +46,8 @@ public:
 	}
 
 	void blk_sstack(){
-		block_selector_stack_.pop();
+		//block_selector_stack_.pop();
+		get_block_id_from_selector_stack();
 //		BlockSelector selector = block_selector_stack_.top();
 //		block_selector_stack_.pop();
 //		int rank = sip_tables_.array_rank(selector.array_id_);
