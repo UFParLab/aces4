@@ -38,6 +38,7 @@
 
 #include <sstream>
 #include "sip_mpi_constants.h"
+#include "sip_interface.h"
 
 namespace sip {
 
@@ -139,6 +140,9 @@ public:
 	 */
 	bool check_section_number_invariant(int section_number) {
 		bool section_number_changed = false;
+		if (section_number < this->section_number_) {
+		    std::cout << "current line = " << current_line() << std::endl;
+		    }
 		check(section_number >= this->section_number_,
 				"Section number invariant violated. Received request from an older section !");
 		if (section_number > this->section_number_) {
