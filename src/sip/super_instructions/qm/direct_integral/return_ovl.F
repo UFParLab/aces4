@@ -144,6 +144,7 @@ c    &                         extents(2)+offset_2
 c  Remove scratch space  
       call delete_scratch_array(cscr)
       call delete_scratch_array(ciscr)
+      call delete_scratch_array(czscr)
 
       return
       end
