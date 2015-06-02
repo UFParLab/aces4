@@ -44,7 +44,7 @@ if myrank == root
         Tai[a,i] = t1a[a,i]
         St1a[a,i] = t1a[a,i]
         St1b[a,i] = t1a[a,i]
-#        put t1b[a,i] = Tai[a,i]
+        put t1b[a,i] = Tai[a,i]
     enddo i
     enddo a
 endif
