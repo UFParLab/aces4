@@ -721,10 +721,10 @@ if kiter >= Idiis_order
 		if etemp == 1.0 
 		    PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
 		endif 
+	    enddo k1diis  
 		if n1 == one 
 		    PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j] 
 		endif 
-	    enddo k1diis  
 	enddo kdiis 
     endpardo a, i, b, j 
 
