@@ -3382,7 +3382,7 @@ pardo a,i,a1,i1
     put DRNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 pardo a,i,a1,i1
-    put DRNaiai[a,i,a1,i1] = 0.0
+    put D2RNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 server_barrier
 pardo a,i,a1,i1
@@ -4133,6 +4133,7 @@ PROC all_GS
 #
 do ksub
 where ksub == 1
+server_barrier
 #######################
 # get k=k'=1 overlap
     normS   = 0.0
@@ -4180,6 +4181,7 @@ where ksub == 1
     pardo a,i,b,j
         prepare RB2_ab[ksub,a,i,b,j] *= norm2
     endpardo a,i,b,j
+    server_barrier
 #
 # flip sign of left vector for negative bi-norm
     norm2 *= etemp
@@ -4193,11 +4195,12 @@ where ksub == 1
     pardo a,i,b,j
         prepare LB2_ab[ksub,a,i,b,j] *= norm2
     endpardo a,i,b,j
-enddo ksub
 server_barrier
+enddo ksub
 
 # loop over "k+1"
 do qsub
+server_barrier
 #######################
 # make copy of Ak+1
     Tk[qsub] = 1.0
@@ -4236,6 +4239,7 @@ do qsub
 
     do ksub
     where ksub < qsub
+server_barrier
 #######################
 # form (Ak+1,Gk) = Loverlap1
 	Tk[ksub] = 1.0
@@ -4331,6 +4335,7 @@ do qsub
 	    Tkaibj[qsub,a,i,b,j] = Tkk[qsub,ksub]*RB2_ab[ksub,a,i,b,j]
 	    prepare RB2_ab[qsub,a,i,b,j] += Tkaibj[qsub,a,i,b,j]
 	endpardo a,i,b,j
+    server_barrier
     enddo ksub
     server_barrier
 
@@ -4381,6 +4386,7 @@ do qsub
     pardo a,i,b,j
         prepare RB2_ab[qsub,a,i,b,j] *= norm2
     endpardo a,i,b,j
+    server_barrier
 #
     norm2 *= etemp
 #

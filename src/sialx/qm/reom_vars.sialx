@@ -640,6 +640,7 @@ scalar norm1
 scalar norm1aa
 scalar norm1ab
 scalar norm2
+scalar norm3
 scalar norm2aa
 scalar norm2ab
 scalar norml

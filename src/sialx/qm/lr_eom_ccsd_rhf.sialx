@@ -44,7 +44,7 @@ if myrank == root
         Tai[a,i] = t1a[a,i]
         St1a[a,i] = t1a[a,i]
         St1b[a,i] = t1a[a,i]
-        put t1b[a,i] = Tai[a,i]
+#        put t1b[a,i] = Tai[a,i]
     enddo i
     enddo a
 endif
@@ -3611,7 +3611,7 @@ pardo a,i,a1,i1
     put DRNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 pardo a,i,a1,i1
-    put DRNaiai[a,i,a1,i1] = 0.0
+    put D2RNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 server_barrier
 pardo a,i,a1,i1
@@ -4411,6 +4411,7 @@ where ksub == 1
     endpardo a,i,b,j
 #
 # flip sign of left vector for negative bi-norm
+    server_barrier
     norm2 *= etemp
 #
     pardo a,i
@@ -4611,6 +4612,7 @@ do qsub
         prepare RB2_ab[qsub,a,i,b,j] *= norm2
     endpardo a,i,b,j
 #
+    server_barrier
     norm2 *= etemp
 #
     pardo a,i
