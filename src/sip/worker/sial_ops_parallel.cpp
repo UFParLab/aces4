@@ -429,6 +429,7 @@ void SialOpsParallel::put_increment(BlockId& target_id, double value){
     		target_id};
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_increment_tag, MPI_COMM_WORLD));
+    ack_handler_.expect_ack_from(server_rank, put_increment_tag);
 
 }
 
@@ -455,6 +456,7 @@ void SialOpsParallel::put_scale(BlockId& target_id, double value){
     		target_id};
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_scale_tag, MPI_COMM_WORLD));
+    ack_handler_.expect_ack_from(server_rank, put_scale_tag);
 
 }
 
