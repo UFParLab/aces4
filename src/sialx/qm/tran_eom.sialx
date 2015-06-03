@@ -874,6 +874,34 @@ CALL TRAN_TRAN3     # --> performs the third stage
 #     two-electron integral transformation.  
 CALL TRAN_TRAN4     # --> performs the fourth stage of the  
 #     two-electron integral transformation.  
+server_barrier
+destroy vixai
+destroy vixbj
+destroy vixxi
+destroy vixxj
+destroy vjxbj
+destroy vjxxj
+destroy vxaai
+destroy vxabj
+destroy vxaii
+destroy vxajj
+destroy vxbai
+destroy vxbbj
+destroy vxbii
+destroy vxbjj
+destroy vxipi
+destroy vxiqj
+destroy vxixi
+destroy vxixj
+destroy vxjqj
+destroy vxjxj
+destroy vxxai
+destroy vxxbj
+destroy vxxii
+destroy vxxij
+destroy vxxjj
+destroy vxxxi
+destroy vxxxj
 #
 ENDPROC TRAN_UHF 
 

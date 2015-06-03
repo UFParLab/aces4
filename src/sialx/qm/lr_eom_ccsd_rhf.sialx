@@ -1367,8 +1367,6 @@ pardo a1, b, j1, i
     do j
 #   
 	request HBAR_JKIA_aabb[j1,j,i,a] 
-#####          Tppqq(a1,a,b,j)                   = t1ppqq(a1,i,b,j1)*Vpiqj(a,i,j,j1)
-####           Tppqq(a1,a,b,j)                   = t1ppqq(a1,i,b,j1)*HBAR_JKIA_aabb(j1,j,i,a)
 	tqpqp[j1,i,j,a]   = HBAR_JKIA_aabb[j1,j,i,a]
 	Tppqq[a1,a,b,j] = t0pqqp[a1,b,j1,i]*tqpqp[j1,i,j,a] 
 	prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
@@ -1426,18 +1424,18 @@ pardo j,sigma
 
 endpardo j, sigma
 
-pardo i, sigma
-
-    t1xi[sigma,i]=0.0
-
-    do a
-	txi[sigma,i]=St1a[a,i]*ca[sigma,a]
-	t1xi[sigma,i]+=txi[sigma,i]
-    enddo a
-
-    put Mxi[sigma,i]=t1xi[sigma,i]
-
-endpardo i, sigma
+#pardo i, sigma
+#
+#    t1xi[sigma,i]=0.0
+#
+#    do a
+#	txi[sigma,i]=St1a[a,i]*ca[sigma,a]
+#	t1xi[sigma,i]+=txi[sigma,i]
+#    enddo a
+#
+#    put Mxi[sigma,i]=t1xi[sigma,i]
+#
+#endpardo i, sigma
 
 server_barrier
 
@@ -1447,7 +1445,7 @@ server_barrier
 pardo mu,lambda,nu
 
     allocate Lxxxj[mu,lambda,nu,*]
-    allocate Lxxxi[mu,lambda,nu,*]
+#    allocate Lxxxi[mu,lambda,nu,*]
 
     do sigma
 
@@ -1462,25 +1460,25 @@ pardo mu,lambda,nu
 
 	enddo j
 ###
-	do i
-
-	    get Mxi[sigma,i]
-
-	    tmxxxi[mu,lambda,nu,i]=aoint[mu,lambda,nu,sigma]*Mxi[sigma,i]
-	    Lxxxi[mu,lambda,nu,i]+=tmxxxi[mu,lambda,nu,i]
-
-	enddo i
+#	do i
+#
+#	    get Mxi[sigma,i]
+#
+#	    tmxxxi[mu,lambda,nu,i]=aoint[mu,lambda,nu,sigma]*Mxi[sigma,i]
+#	    Lxxxi[mu,lambda,nu,i]+=tmxxxi[mu,lambda,nu,i]
+#
+#	enddo i
 ###
     enddo sigma
 
     do j
 	prepare Mxxxj[mu,lambda,nu,j]=Lxxxj[mu,lambda,nu,j]
     enddo j
-    do i
-	prepare Mxxxi[mu,lambda,nu,i]=Lxxxi[mu,lambda,nu,i]
-    enddo i
+#    do i
+#	prepare Mxxxi[mu,lambda,nu,i]=Lxxxi[mu,lambda,nu,i]
+#    enddo i
 
-    deallocate Lxxxi[mu,lambda,nu,*]
+#    deallocate Lxxxi[mu,lambda,nu,*]
     deallocate Lxxxj[mu,lambda,nu,*]
 
 endpardo mu,lambda,nu
@@ -1514,29 +1512,29 @@ pardo mu, nu, j
 
 endpardo mu, nu, j 
 
-pardo mu, nu, i 
-
-    allocate Lxxai[mu,nu,*,i]
-
-    do lambda  
-
-	request Mxxxi[mu,nu,lambda,i] 
-
-	do a
-
-	    tmxxai[mu,nu,a,i]=Mxxxi[mu,nu,lambda,i]*ca[lambda,a]
-	    lxxai[mu,nu,a,i]+=tmxxai[mu,nu,a,i]
-
-	enddo a
-    enddo lambda  
-
-    do a
-	prepare Mxxai[mu,nu,a,i]=lxxai[mu,nu,a,i]
-    enddo a
-
-    deallocate Lxxai[mu,nu,*,i]
-
-endpardo mu, nu, i 
+#pardo mu, nu, i 
+#
+#    allocate Lxxai[mu,nu,*,i]
+#
+#    do lambda  
+#
+#	request Mxxxi[mu,nu,lambda,i] 
+#
+#	do a
+#
+#	    tmxxai[mu,nu,a,i]=Mxxxi[mu,nu,lambda,i]*ca[lambda,a]
+#	    lxxai[mu,nu,a,i]+=tmxxai[mu,nu,a,i]
+#
+#	enddo a
+#    enddo lambda  
+#
+#    do a
+#	prepare Mxxai[mu,nu,a,i]=lxxai[mu,nu,a,i]
+#    enddo a
+#
+#    deallocate Lxxai[mu,nu,*,i]
+#
+#endpardo mu, nu, i 
 
 server_barrier
 
@@ -1568,80 +1566,80 @@ pardo mu, b, j
 
 endpardo mu, b, j
 
-pardo mu, a, i
+#pardo mu, a, i
+#
+#    allocate Lxbai[mu,*,a,i]
+#
+#    do lambda
+#
+#	request Mxxai[mu,lambda,a,i] 
+#
+#	do b
+#
+#	    tmxbai[mu,b,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,b]
+#	    lxbai[mu,b,a,i]+=tmxbai[mu,b,a,i]
+#
+#	enddo b
+#
+#    enddo lambda
+#
+#    do b
+#	prepare Mxbai[mu,b,a,i]=lxbai[mu,b,a,i]
+#    enddo b
+#
+#    deallocate Lxbai[mu,*,a,i]
+#
+#endpardo mu, a, i
 
-    allocate Lxbai[mu,*,a,i]
+#pardo mu, a, i
+#
+#    allocate Lxaai[mu,*,a,i]
+#
+#    do lambda
+#
+#	request Mxxai[mu,lambda,a,i] 
+#
+#	do a1
+#
+#	tmxaai[mu,a1,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,a1]
+#	lxaai[mu,a1,a,i]+=tmxaai[mu,a1,a,i]
+#
+#	enddo a1
+#
+#    enddo lambda
+#
+#    do a1
+#	prepare Mxaai[mu,a1,a,i]=lxaai[mu,a1,a,i]
+#    enddo a1
+#
+#    deallocate Lxaai[mu,*,a,i]
+#
+#endpardo mu, a, i
 
-    do lambda
-
-	request Mxxai[mu,lambda,a,i] 
-
-	do b
-
-	    tmxbai[mu,b,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,b]
-	    lxbai[mu,b,a,i]+=tmxbai[mu,b,a,i]
-
-	enddo b
-
-    enddo lambda
-
-    do b
-	prepare Mxbai[mu,b,a,i]=lxbai[mu,b,a,i]
-    enddo b
-
-    deallocate Lxbai[mu,*,a,i]
-
-endpardo mu, a, i
-
-pardo mu, a, i
-
-    allocate Lxaai[mu,*,a,i]
-
-    do lambda
-
-	request Mxxai[mu,lambda,a,i] 
-
-	do a1
-
-	tmxaai[mu,a1,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,a1]
-	lxaai[mu,a1,a,i]+=tmxaai[mu,a1,a,i]
-
-	enddo a1
-
-    enddo lambda
-
-    do a1
-	prepare Mxaai[mu,a1,a,i]=lxaai[mu,a1,a,i]
-    enddo a1
-
-    deallocate Lxaai[mu,*,a,i]
-
-endpardo mu, a, i
-
-pardo mu, b, j
-
-    allocate Lxbbj[mu,*,b,j]
-
-    do lambda
-
-	request Mxxbj[mu,lambda,b,j] 
-
-	do b1
-
-	tmxbbj[mu,b1,b,j]=Mxxbj[mu,lambda,b,j]*ca[lambda,b1]
-	lxbbj[mu,b1,b,j]+=tmxbbj[mu,b1,b,j]
-
-	enddo b1
-
-    enddo lambda
-
-    do b1
-	prepare Mxbbj[mu,b1,b,j]=lxbbj[mu,b1,b,j]
-    enddo b1
-
-    deallocate Lxbbj[mu,*,b,j]
-
-endpardo mu, b, j
+#pardo mu, b, j
+#
+#    allocate Lxbbj[mu,*,b,j]
+#
+#    do lambda
+#
+#	request Mxxbj[mu,lambda,b,j] 
+#
+#	do b1
+#
+#	tmxbbj[mu,b1,b,j]=Mxxbj[mu,lambda,b,j]*ca[lambda,b1]
+#	lxbbj[mu,b1,b,j]+=tmxbbj[mu,b1,b,j]
+#
+#	enddo b1
+#
+#    enddo lambda
+#
+#    do b1
+#	prepare Mxbbj[mu,b1,b,j]=lxbbj[mu,b1,b,j]
+#    enddo b1
+#
+#    deallocate Lxbbj[mu,*,b,j]
+#
+#endpardo mu, b, j
 
 server_barrier
 
@@ -1864,10 +1862,9 @@ WHERE a == a1
     do a2 
 	Txppp[mu,a2,a1,a] = Vxxaa[mu,nu,a1,a]*ca[nu,a2] 
 	do a3 
-	if a2 == a3 
+	where a2 == a3 
 	    Tpppp[a3,a2,a1,a] = Txppp[mu,a2,a1,a]*ca[mu,a3] 
 	    prepare Vaaaa[a3,a2,a1,a] += Tpppp[a3,a2,a1,a] 
-	endif 
 	enddo a3 
     enddo a2 
 endpardo mu, nu, a, a1 
@@ -1878,10 +1875,9 @@ WHERE b == b1
     do a2 
 	Txpqq[mu,a2,b1,b] = Gxxbb[mu,nu,b1,b]*ca[nu,a2] 
 	do a3 
-	if a2 == a3 
+	where a2 == a3 
 	    Tppqq[a3,a2,b1,b] = Txpqq[mu,a2,b1,b]*ca[mu,a3] 
 	    prepare Vaabb[a3,a2,b1,b] += Tppqq[a3,a2,b1,b] 
-	endif 
 	enddo a3 
     enddo a2 
 endpardo mu, nu, b, b1 
@@ -2184,6 +2180,11 @@ server_barrier
 
 delete Faa
 delete Fab
+
+destroy Gxxbb
+destroy Vxxaa
+destroy Vaaaa
+destroy Vaabb
 
 server_barrier
 
