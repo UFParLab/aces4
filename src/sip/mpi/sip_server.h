@@ -57,11 +57,13 @@ std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
  *     of the block with the given value.
  * DELETE:
  *
- * TODO:  In the current implementation, on receipt of a PUT or PUT_ACCUMULATE, the server waits for the
- * following PUT_DATA or PUT_ACCUMULATE_DATA message.
- * We need to investigate the performance implications.
+
  */
 
+
+/** contains the information necessary to handle pending PUT_DATA or PUT_ACCUMULATE messages for which a receive has been posted.
+ *
+ */
 class DataMessageInfo{
 public:
 	int pc_;
@@ -145,7 +147,6 @@ public:
 				   int flag;
 				   MPI_Test(*it, &flag, &status);  //*it is a pointer to the MPI_Request in the block.
 				   if (flag){
-					   std::cout << "found msg with status " << status << std::endl << std::flush;
 					   pending_put_data_messages_.erase(it);
 					   return true;
 				   }
