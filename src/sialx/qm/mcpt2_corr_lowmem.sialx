@@ -2983,10 +2983,11 @@ endif
          execute return_sval xi1[i1] n1 
          if n1== icount  
 
-              txpxq[mu,i,nu,i1]       = 0.0 
-              PUT TAO_ab[mu,i,nu,i1]  = txpxq[mu,i,nu,i1] 
-              PUT T2AO_ab[mu,i,nu,i1] = txpxq[mu,i,nu,i1] 
-
+#              txpxq[mu,i,nu,i1]       = 0.0 
+#              PUT TAO_ab[mu,i,nu,i1]  = txpxq[mu,i,nu,i1] 
+#              PUT T2AO_ab[mu,i,nu,i1] = txpxq[mu,i,nu,i1] 
+              PUT TAO_ab[mu,i,nu,i1]  = 0.0
+              PUT T2AO_ab[mu,i,nu,i1] = 0.0
          endif 
         ENDDO i1 
          endif 
