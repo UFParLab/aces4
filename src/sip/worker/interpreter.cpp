@@ -255,7 +255,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			std::cout << "calling put_replace "<< lhs_id << std::endl << std::flush;
 			sial_ops_.put_replace(lhs_id, rhs_block);
 			++pc;
 		}

@@ -912,12 +912,11 @@
 # 
      PROC T2NEW_ZERO
 #    --------------- 
-	  
+#
 #     Zero out new 1-particle amplitude arrays 
 #     ---------------------------------------- 
 #
           PARDO a, i 
-	        
                 PUT t1a_new[a,i] = 0.0
           ENDPARDO a, i 
 #
@@ -925,10 +924,8 @@
 #     ---------------------------------------- 
 #
           PARDO a, b, i, j 
-	        
                 PREPARE T2new_ab[a,i,b,j] = 0.0
           ENDPARDO a, b, i, j 
-          sip_barrier
 # 
      ENDPROC T2NEW_ZERO
 # 
@@ -1263,12 +1260,10 @@
 	     if etemp == 1.0 
 		PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
 	     endif 
-	     	  ENDDO k1diis  
 	     if n1 == one 
-	     
 		PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j] 
 	     endif 
-
+	  ENDDO k1diis  
       ENDDO kdiis 
       ENDPARDO a, i, b, j 
 

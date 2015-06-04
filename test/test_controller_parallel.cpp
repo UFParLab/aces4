@@ -269,12 +269,9 @@ double* TestControllerParallel::local_block(const std::string& name,
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
-std::cout << "before creating server timer " << std::endl << std::flush;
 		sip::ServerTimer server_timer(sip_tables_->max_timer_slots());
-		std::cout << "after creating server timer" << std::endl << std::flush;
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
 				spam_, server_timer);
-		std::cout << "after creating server" << std::endl << std::flush;
 		barrier();
 		if (verbose_)
 			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
@@ -282,9 +279,7 @@ std::cout << "before creating server timer " << std::endl << std::flush;
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
-				std::cout << "before server run" << std::endl << std::flush;
 				server_->run();
-				std::cout << "after server run" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in server: " << e.what();
 				ADD_FAILURE();
@@ -323,9 +318,7 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
-				std::cout << "before worker interpret" << std::endl << std::flush;
 				worker_->interpret();
-				std::cout << "after worker interpret" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in worker: " << e.what();
 				ADD_FAILURE();

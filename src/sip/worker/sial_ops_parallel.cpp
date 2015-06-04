@@ -230,13 +230,11 @@ void SialOpsParallel::put_replace(BlockId& target_id,
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
-    		<< " : sending PUT for block " << target_id
-    		<< " to server "<< server_rank << std::endl);
-
-    std::cout<<"W " << sip_mpi_attr_.global_rank()
      		<< " : sending PUT for block " << target_id.str(sip_tables_)
      		<< " to server "<< server_rank << " at line "<< current_line()
-     		<< " in program " << GlobalState::get_program_name() << std::endl << std::flush;
+     		<< " in program " << GlobalState::get_program_name() << std::endl << std::flush;);
+
+
 
     // Construct int array to send to server.
     const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
@@ -254,17 +252,16 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 	//wait for ack from server
 	//TODO put this in another thread?
 	ack_handler_.expect_sync_ack_from(server_rank, put_tag);
-	std::cout << "received ack"<< std::endl << std::flush;
+
 //	MPI_Request request;
 		SIPMPIUtils::check_err(
 				MPI_Isend(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 						server_rank, put_data_tag, MPI_COMM_WORLD, source_block->mpi_request()));
-		std::cout << "sent putData"<< std::endl << std::flush;
 	//the data message should be acked
 	ack_handler_.expect_ack_from(server_rank, put_data_tag);
 
 	SIP_LOG(std::cout << "W " << my_rank << " : Done with PUT for block " << target_id << " to server rank " << server_rank << std::endl;)
-	std::cout << "W " << my_rank << " : Done with PUT for block " << target_id << " to server rank " << server_rank << std::endl;
+
 }
 
 //NOTE:  I can't remember why the source block was copied.
@@ -355,7 +352,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 //			MPI_Send(source_block->get_data(), source_block->size(), MPI_DOUBLE,
 //					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD));
 	//wait for ack from server
-	//TODO put this in another thread?
+	//TODO handle asynchronously??
 	ack_handler_.expect_sync_ack_from(server_rank, put_accumulate_tag);
 //	MPI_Request request;
 		SIPMPIUtils::check_err(
@@ -432,6 +429,7 @@ void SialOpsParallel::put_increment(BlockId& target_id, double value){
     		target_id};
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_increment_tag, MPI_COMM_WORLD));
+	ack_handler_.expect_ack_from(server_rank, put_increment_tag);
 
 }
 
@@ -458,6 +456,8 @@ void SialOpsParallel::put_scale(BlockId& target_id, double value){
     		target_id};
     SIPMPIUtils::check_err(MPI_Send(&message, 1, mpi_put_scalar_op_type_, server_rank,
     		put_scale_tag, MPI_COMM_WORLD));
+
+	ack_handler_.expect_ack_from(server_rank, put_scale_tag);
 
 }
 
