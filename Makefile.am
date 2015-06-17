@@ -481,7 +481,9 @@ SIOX_FILES=\
 ./src/sialx/qm/rccpt1p2_prop.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
-./src/sialx/qm/rccsdpt_aab.siox
+./src/sialx/qm/rccsdpt_aab.siox\
+./src/sialx/qm/scf_uhf.siox\
+./src/sialx/qm/scf_rhf.siox\
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -612,7 +614,11 @@ EXTRA_DIST += \
 ./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\
 ./src/sialx/qm/rccsdpt_aab_defs.sialx\
-./src/sialx/qm/rccsdpt_aab.sialx
+./src/sialx/qm/rccsdpt_aab.sialx\
+./src/sialx/qm/scf_uhf.sialx\
+./src/sialx/qm/scf_uhf_defs.sialx\
+./src/sialx/qm/scf_rhf.sialx\
+./src/sialx/qm/scf_rhf_defs.sialx
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\

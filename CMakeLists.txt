@@ -576,7 +576,12 @@ set(SIAL_FILES
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
-    src/sialx/qm/rccsd_rhf_defs.sialx)
+    src/sialx/qm/rccsd_rhf_defs.sialx;
+    src/sialx/qm/scf_uhf.sialx;
+    src/sialx/qm/scf_uhf_defs.sialx; 
+    src/sialx/qm/scf_rhf.sialx; 
+    src/sialx/qm/scf_rhf_defs.sialx)
+    
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})
