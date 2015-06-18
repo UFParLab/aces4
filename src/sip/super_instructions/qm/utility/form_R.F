@@ -1,18 +1,10 @@
-C  Copyright (c) 2003-2010 University of Florida
-C
-C  This program is free software; you can redistribute it and/or modify
-C  it under the terms of the GNU General Public License as published by
-C  the Free Software Foundation; either version 2 of the License, or
-C  (at your option) any later version.
 
-C  This program is distributed in the hope that it will be useful,
-C  but WITHOUT ANY WARRANTY; without even the implied warranty of
-C  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-C  GNU General Public License for more details.
-
-C  The GNU General Public License is included in this distribution
-C  in the file COPYRIGHT.
-c
+! --------------------------------------------------------------------------
+!> @author Victor Lotrich QTP.
+!> @brief
+!>   Symmetrize the b_array into the R array
+!>
+! --------------------------------------------------------------------------
       subroutine form_R(b_array, R, rpack, v, i1, i2, rank, rank2)
       implicit none 
 c
@@ -34,9 +26,6 @@ c      print *, 'i2 = ', i2
 c      print *, 'i1 = ', i1
 c      print *, 'rank = ', rank
 c      print *, 'rank2 = ', rank2
-c--------------------------------------------------------------------------
-!>   Symmetrize the b_array into the R array
-c--------------------------------------------------------------------------
 
       do i = 1, maxdim
       do j = i, maxdim

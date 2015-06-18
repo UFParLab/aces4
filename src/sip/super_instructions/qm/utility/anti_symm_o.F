@@ -1,6 +1,14 @@
-c--------------------------------------------------------------------------
-c The diagonal elements of a four index array are extracted.
-c--------------------------------------------------------------------------
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief
+!> The diagonal, occupied, elements of a four index array are extracted using storage pattern VOVO
+!
+!> @details
+!> sialx definition: special anti_symm_o u
+!>
+!> sialx usage: execute anti_symm_o Taiai[a,i,a1,i1]
+! --------------------------------------------------------------------------
+
       subroutine anti_symm_o(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c  ierr) BIND(C)
