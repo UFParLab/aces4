@@ -1,17 +1,12 @@
-C Copyright (c) 2003-2010 University of Florida
-C
-C This program is free software; you can redistribute it and/or modify
-C it under the terms of the GNU General Public License as published by
-C the Free Software Foundation; either version 2 of the License, or
-C (at your option) any later version.
+! --------------------------------------------------------------------------
+!> @author Victor Lotrich QTP
+!> @brief
+!> returns the trace of a set of blocks.
+!>
+!> @details
+!>
+! --------------------------------------------------------------------------
 
-C This program is distributed in the hope that it will be useful,
-C but WITHOUT ANY WARRANTY; without even the implied warranty of
-C MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-C GNU General Public License for more details.
-
-C The GNU General Public License is included in this distribution
-C in the file COPYRIGHT.
       subroutine return_diagonal(
      * array_0, rank_0, index_values_0, size_0, extents_0, data_0,
      * array_1, rank_1, index_values_1, size_1, extents_1, data_1,
@@ -19,10 +14,6 @@ C in the file COPYRIGHT.
       use, intrinsic :: ISO_C_BINDING
       implicit none
 
-c--------------------------------------------------------------------------
-c Usage: execute check_dconf array scalar
-c
-c--------------------------------------------------------------------------
       include 'sip_interface.f'
 
 ! output array --> array_0

@@ -1,19 +1,22 @@
-c--------------------------------------------------------------------------
-!> special  eigen_calc_sqr_inv
-!>   Calculates the eigenvalues and eigenvectors of a 2-d square matrix.
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief Calculates the eigenvalues and eigenvectors of a 2-d square matrix.
 !>   The matrix is also diagonalized on output and inverted. 
 !>
-!>   The eigenvalues are stored in a common block.  
-!>   The instruction is executed as follows:
-!>   
-!>   execute eig Array1 Array2 scalar
+!> @details
+!> sialx def: special eigen_calc_sqr_inv uuu
 !>
-!>   where Array1 is the input matrix that is to be diagonalized.
-!>         Array2 is the matrix whose columns are the eigenvectors of Array1.
-!>         scalar is the number of droped elements
+!> sialx usage: execute eigen_calc_sqr_inv Array1 Array2 scalar
+!>
+!>   Array1 is the input matrix that is to be diagonalized.
+!>
+!>   Array2 is the matrix whose columns are the eigenvectors of Array1.
+!>
+!>   scalar is the number of droped elements
 !>
 !>   Both Array1 and Array2 must be "static" arrays.
-c--------------------------------------------------------------------------
+! --------------------------------------------------------------------------
+
 
       subroutine eigen_calc_sqr_inv(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
@@ -98,6 +101,10 @@ c--------------------------------------------------------------------------
       return
       end
 
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief call to wrapper routine to DSYEV that will invert and screen eigenvalues.
+! --------------------------------------------------------------------------
       subroutine eig_sqr_inv(Amat,Bvec,n,
      *                       work,nw,sw,eigval,ierr,nlindep)
       use, intrinsic :: ISO_C_BINDING
