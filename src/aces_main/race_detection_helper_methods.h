@@ -5,8 +5,8 @@
  *      Author: njindal
  */
 
-#ifndef ACES_MAIN_BLOCK_CONSISTENCY_HELPER_METHODS_H_
-#define ACES_MAIN_BLOCK_CONSISTENCY_HELPER_METHODS_H_
+#ifndef ACES_MAIN_RACE_DETECTION_HELPER_METHODS_H_
+#define ACES_MAIN_RACE_DETECTION_HELPER_METHODS_H_
 
 #include "config.h"
 #include "siox_reader.h"
@@ -31,8 +31,6 @@
 #include "sipmap_timer.h"
 #include "remote_array_model.h"
 #include "rank_distribution.h"
-#include "block_consistency_interpreter.h"
-
 #include <vector>
 #include <sstream>
 #include <iostream>
@@ -44,6 +42,7 @@
 #include <fenv.h>
 
 #include <execinfo.h>
+#include <race_detection_interpreter.h>
 #include <signal.h>
 
 #ifdef HAVE_MPI
@@ -292,4 +291,4 @@ setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
 
 
 
-#endif /* ACES_MAIN_BLOCK_CONSISTENCY_HELPER_METHODS_H_ */
+#endif /* ACES_MAIN_RACE_DETECTION_HELPER_METHODS_H_ */

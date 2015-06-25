@@ -159,6 +159,7 @@ public:
 
 	friend class DataManager;
 	friend class SialxInterpreter;
+	friend class AbstractControlFlowInterpreter;
 
 private:
 	/** Obtains block from BlockMap.

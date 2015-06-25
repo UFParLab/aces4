@@ -49,6 +49,7 @@ namespace sip {
 
 class DataManager;
 class SialxInterpreter;
+class AbstractControlFlowInterpreter;
 
 class SipTables {
 public:
@@ -194,6 +195,7 @@ private:
 
 	friend class SioxReader;  //initializes the SipTable
 	friend class SialxInterpreter;
+	friend class AbstractControlFlowInterpreter;
 	friend class DataManager;
 	friend class ContiguousArrayManager;
 	friend class DiskBackedArraysIO;

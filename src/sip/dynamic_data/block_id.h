@@ -221,6 +221,11 @@ public:
 	 */
 	std::string str(const SipTables& sip_tables) const;
 
+	/**
+	 * @return
+	 */
+	index_value_array_t& index_values() { return index_values_; }
+
 	friend std::ostream& operator<<(std::ostream&, const BlockId &);
 
 private:

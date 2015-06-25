@@ -2,12 +2,12 @@
 #ifndef TEST_CONTROLLER_H_
 #define TEST_CONTROLLER_H_
 
+#include <race_detection_interpreter.h>
 #include <string>
 #include <iostream>
 #include <map>
 #include "setup_reader.h"
 #include "test_constants.h"
-#include "block_consistency_interpreter.h"
 
 
 
@@ -60,11 +60,11 @@ public:
 
 };
 
-class BlockConsistencyTestController : public TestController{
+class RaceDetectionTestController : public TestController{
 public:
-	BlockConsistencyTestController (int num_workers, std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
+	RaceDetectionTestController (int num_workers, std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
 			bool expect_success=true);
-	virtual ~BlockConsistencyTestController() {}
+	virtual ~RaceDetectionTestController() {}
 	virtual void runWorker();
 	virtual void initSipTables(const std::string& sial_dir_name = block_consistency_dir_name){
 		TestController::initSipTables(sial_dir_name);

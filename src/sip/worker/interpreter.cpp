@@ -11,6 +11,9 @@
 namespace sip {
 
 std::vector<Interpreter*> Interpreter::global_interpreters_;
+
+#ifdef _OPENMP
 bool Interpreter::done_once = false;
+#endif
 
 } /* namespace sip */

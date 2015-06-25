@@ -12,7 +12,7 @@ aces4 \
 aces4_profile \
 aces4_sipmap \
 aces4_memory_ops \
-aces4_block_consistency \
+aces4_race_detection \
 print_siptables \
 print_init_file \
 profile_merge \
@@ -119,6 +119,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
+./src/sip/worker/abstract_control_flow_interpreter.h\
+./src/sip/worker/abstract_control_flow_interpreter.cpp\
 ./src/sip/worker/sialx_interpreter.cpp\
 ./src/sip/worker/sialx_interpreter.h\
 ./src/sip/worker/profile_interpreter.cpp\
@@ -129,8 +131,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/remote_array_model.cpp\
 ./src/sip/worker/memory_ops_interpreter.cpp\
 ./src/sip/worker/memory_ops_interpreter.h\
-./src/sip/worker/block_consistency_interpreter.cpp\
-./src/sip/worker/block_consistency_interpreter.h\
+./src/sip/worker/race_detection_interpreter.cpp\
+./src/sip/worker/race_detection_interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
 ./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/profile_timer.h\
@@ -218,10 +220,10 @@ aces4_memory_ops_SOURCES=\
     ./src/aces_main/memory_ops_main.cpp\
     ./src/aces_main/main_helper_methods.h
 
-aces4_block_consistency_SOURCES=\
+aces4_race_detection_SOURCES=\
 	$(ACES_SOURCEFILES) \
-    ./src/aces_main/block_consistency_main.cpp\
-    ./src/aces_main/block_consistency_helper_methods.h
+    ./src/aces_main/race_detection_main.cpp\
+    ./src/aces_main/race_detection_helper_methods.h
 
 print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
@@ -267,7 +269,7 @@ aces4_memory_ops_LDADD = \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 	
-aces4_block_consistency_LDADD = \
+aces4_race_detection_LDADD = \
 	libtensordil.a \
 	libsqlite3.a \
 	libjsoncpp.a \
@@ -326,7 +328,7 @@ aces4_memory_ops_LDFLAGS = \
 	$(OPENMP_CFLAGS)\
 	$(OPENMP_CXXFLAGS)	
 	
-aces4_block_consistency_LDFLAGS = \
+aces4_race_detection_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
 	$(OPENMP_FCFLAGS)\
 	$(OPENMP_CFLAGS)\

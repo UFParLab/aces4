@@ -149,8 +149,8 @@ protected:
 	 * at any given time.
 	 */
 	static std::vector<Interpreter*> global_interpreters_;
-	static bool done_once;
 #ifdef _OPENMP
+	static bool done_once;
 	Interpreter() {
 	    int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 #pragma omp critical

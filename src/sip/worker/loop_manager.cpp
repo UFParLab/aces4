@@ -8,6 +8,7 @@
 #include "loop_manager.h"
 #include <sstream>
 #include "sialx_interpreter.h"
+#include "abstract_control_flow_interpreter.h"
 
 namespace sip {
 LoopManager::LoopManager() :
@@ -459,6 +460,103 @@ std::string BalancedTaskAllocParallelPardoLoop::to_string() const {
 std::ostream& operator<<(std::ostream& os, const BalancedTaskAllocParallelPardoLoop &obj) {
 	os << obj.to_string();
 	return os;
+}
+
+
+
+
+
+
+BalancedTaskAllocAbstractControlFlowPardoLoop::BalancedTaskAllocAbstractControlFlowPardoLoop(
+		int num_indices, const int (&index_id)[MAX_RANK],
+				DataManager & data_manager, const SipTables & sip_tables,
+				int num_where_clauses, AbstractControlFlowInterpreter* interpreter, int company_rank,
+				int num_workers, long& iteration) :
+				data_manager_(data_manager), sip_tables_(sip_tables), num_indices_(
+						num_indices), first_time_(true), iteration_(iteration), num_where_clauses_(
+						num_where_clauses), company_rank_(company_rank), num_workers_(
+						num_workers), interpreter_(interpreter) {
+
+	std::copy(index_id + 0, index_id + MAX_RANK, index_id_ + 0);
+	for (int i = 0; i < num_indices; ++i) {
+		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
+		upper_bound_[i] = lower_seg_[i] + sip_tables_.num_segments(index_id_[i]);
+		CHECK_WITH_LINE(lower_seg_[i] < upper_bound_[i],
+				"Pardo loop index " + sip_tables_.index_name(index_id_[i]) + " has empty range",
+				Interpreter::global_interpreter()->line_number());
+	}
+}
+
+BalancedTaskAllocAbstractControlFlowPardoLoop::~BalancedTaskAllocAbstractControlFlowPardoLoop() {
+}
+
+inline bool BalancedTaskAllocAbstractControlFlowPardoLoop::increment_indices() {
+	bool more = false; 	// More iterations?
+	int current_value;
+	for (int i = 0; i < num_indices_; ++i) {
+		current_value = data_manager_.index_value(index_id_[i]);
+		++current_value;
+		if (current_value < upper_bound_[i]) {
+			//increment current index and return
+			data_manager_.set_index_value(index_id_[i], current_value);
+			more = true;
+			break;
+		} else {
+			//wrap around and handle next index
+			data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
+		}
+	} //if here, then all indices are at their max value
+	return more;
+}
+
+inline bool BalancedTaskAllocAbstractControlFlowPardoLoop::initialize_indices() {
+	//initialize values of all indices
+	bool more_iterations = true;
+	for (int i = 0; i < num_indices_; ++i) {
+		if (lower_seg_[i] >= upper_bound_[i]) {
+			more_iterations = false; //this loop has an empty range in at least one dimension.
+			return more_iterations;
+		}
+		CHECK_WITH_LINE(data_manager_.index_value(index_id_[i]) == DataManager::undefined_index_value,
+				"SIAL or SIP error, index " + sip_tables_.index_name(index_id_[i]) + " already has value before loop",
+				Interpreter::global_interpreter()->line_number());
+		data_manager_.set_index_value(index_id_[i], lower_seg_[i]);
+	}
+	more_iterations = true;
+	return more_iterations;
+}
+
+bool BalancedTaskAllocAbstractControlFlowPardoLoop::do_update() {
+
+	if (to_exit_)
+		return false;
+	bool more_iters;
+	if (first_time_) {
+		first_time_ = false;
+		more_iters = initialize_indices();
+	} else {
+		more_iters = increment_indices();
+	}
+
+	while(more_iters){
+		bool where_clauses_value = interpreter_->interpret_where(num_where_clauses_);
+		//if true, the pc will be after the last where clause
+		//otherwise it is undefined
+		if(where_clauses_value){
+			iteration_++;
+			if ((iteration_-1) % num_workers_ == company_rank_){
+				return true;
+			}
+		}
+		more_iters = increment_indices();
+	}
+	return more_iters; //this should be false here
+}
+
+void BalancedTaskAllocAbstractControlFlowPardoLoop::do_finalize() {
+	for (int i = 0; i < num_indices_; ++i) {
+		data_manager_.set_index_undefined(index_id_[i]);
+	}
 }
 
 } /* namespace sip */

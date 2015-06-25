@@ -8,11 +8,12 @@
 #ifndef SIPMAP_INTERPRETER_H_
 #define SIPMAP_INTERPRETER_H_
 
-#include "sialx_interpreter.h"
+#include "abstract_control_flow_interpreter.h"
 #include "profile_timer.h"
 #include "profile_timer_store.h"
 #include "sipmap_timer.h"
 #include "remote_array_model.h"
+
 
 #include <utility>
 #include <map>
@@ -44,7 +45,7 @@ private:
  * a sqlite3 database.
  * Time per line is saved into the SIPMaPTimer instance.
  */
-class SIPMaPInterpreter: public SialxInterpreter {
+class SIPMaPInterpreter: public AbstractControlFlowInterpreter {
 public:
 	SIPMaPInterpreter(int worker_rank, int num_workers,
 			const SipTables& sipTables,
@@ -53,6 +54,10 @@ public:
 			SIPMaPTimer& sipmap_timer);
 	virtual ~SIPMaPInterpreter();
 
+
+	virtual SialPrinter* get_printer() { return NULL; }
+	virtual void post_interpret(int old_pc, int new_pc) {}
+	virtual void pre_interpret(int pc) {}
 
 
 //	virtual void handle_jump_if_zero_op(int &pc);	// TODO - To visit if & else parts of the code.
@@ -191,8 +196,6 @@ private:
 	std::vector<PardoSectionsInfo> pardo_section_times_;	//! [out] Set of times per pardo section.
 	std::set<BlockId> cached_blocks_map_;					//! Set of cached blocks in the current pardo section. An overestimate
 
-	const int worker_rank_;							//! Worker rank for which the interpreter is being run
-	const int num_workers_;							//! Total number of workers
 	const ProfileTimerStore& profile_timer_store_;	//! Backing store with profile info
 	const RemoteArrayModel& remote_array_model_;	//! Encapsulates time to get/put blocks
 	SIPMaPTimer& sipmap_timer_;						//! Records time per sialx line

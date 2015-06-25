@@ -180,6 +180,8 @@ set(ACES_WORKER_FILES
     src/sip/worker/loop_manager.h;
     src/sip/worker/interpreter.cpp;
     src/sip/worker/interpreter.h;
+    src/sip/worker/abstract_control_flow_interpreter.h;
+    src/sip/worker/abstract_control_flow_interpreter.cpp;
     src/sip/worker/sialx_interpreter.cpp;
    	src/sip/worker/sialx_interpreter.h;
    	src/sip/worker/profile_interpreter.cpp;
@@ -190,8 +192,8 @@ set(ACES_WORKER_FILES
    	src/sip/worker/remote_array_model.cpp;
    	src/sip/worker/memory_ops_interpreter.cpp;
    	src/sip/worker/memory_ops_interpreter.h;
-   	src/sip/worker/block_consistency_interpreter.cpp;
-   	src/sip/worker/block_consistency_interpreter.h;
+   	src/sip/worker/race_detection_interpreter.cpp;
+   	src/sip/worker/race_detection_interpreter.h;
    	src/sip/worker/memory_ops_interpreter.h;
     src/sip/worker/sialx_timer.cpp;
     src/sip/worker/sialx_timer.h;
@@ -397,7 +399,7 @@ add_executable(aces4_sipmap src/aces_main/sipmap_main.cpp src/aces_main/sipmap_h
 add_executable(aces4_memory_ops src/aces_main/memory_ops_main.cpp src/aces_main/main_helper_methods.h)
 
 # block consistency executable
-add_executable(aces4_block_consistency src/aces_main/block_consistency_main.cpp src/aces_main/block_consistency_helper_methods.h)
+add_executable(aces4_race_detection src/aces_main/race_detection_main.cpp src/aces_main/race_detection_helper_methods.h)
 
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
@@ -427,8 +429,8 @@ set_target_properties(aces4_sipmap PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(aces4_memory_ops PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4_memory_ops PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
-set_target_properties(aces4_block_consistency PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(aces4_block_consistency PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+set_target_properties(aces4_race_detection PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(aces4_race_detection PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
@@ -449,7 +451,7 @@ target_link_libraries(aces4 ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_profile ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_sipmap ${TOLINK_LIBRARIES})
 target_link_libraries(aces4_memory_ops ${TOLINK_LIBRARIES})
-target_link_libraries(aces4_block_consistency ${TOLINK_LIBRARIES})
+target_link_libraries(aces4_race_detection ${TOLINK_LIBRARIES})
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES})
 target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
 target_link_libraries(profile_merge ${TOLINK_LIBRARIES}) 
@@ -462,7 +464,7 @@ if(HAVE_CUDA)
 	add_dependencies(aces4_profile tensordil superinstructions cudasuperinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions cudasuperinstructions)
 	add_dependencies(aces4_memory_ops tensordil superinstructions cudasuperinstructions)
-	add_dependencies(aces4_block_consistency tensordil superinstructions cudasuperinstructions)
+	add_dependencies(aces4_race_detection tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
 	add_dependencies(profile_merge tensordil superinstructions cudasuperinstructions)
@@ -472,7 +474,7 @@ else()
 	add_dependencies(aces4_profile tensordil superinstructions)
 	add_dependencies(aces4_sipmap tensordil superinstructions)
 	add_dependencies(aces4_memory_ops tensordil superinstructions)
-	add_dependencies(aces4_block_consistency tensordil superinstructions)
+	add_dependencies(aces4_race_detection tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
 	add_dependencies(profile_merge tensordil superinstructions)

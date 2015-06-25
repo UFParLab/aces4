@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 #include <fenv.h>
 #include <execinfo.h>
+#include <race_detection_interpreter.h>
 #include <signal.h>
 #include <cstdlib>
 #include <cassert>
@@ -31,7 +32,6 @@
 #include "worker_persistent_array_manager.h"
 #include "block.h"
 #include "rank_distribution.h"
-#include "block_consistency_interpreter.h"
 
 #ifdef HAVE_TAU
 #include <TAU.h>
@@ -93,7 +93,7 @@ TEST(BlockConsistencyInterpreter, test1){
 				finalize_setup();
 			}
 			std::stringstream output;
-			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			RaceDetectionTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
 			controller.initSipTables();
 			ASSERT_THROW(controller.runWorker(), std::logic_error);
 		}
@@ -118,7 +118,7 @@ TEST(BlockConsistencyInterpreter, test2){
 				finalize_setup();
 			}
 			std::stringstream output;
-			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			RaceDetectionTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
 			controller.initSipTables();
 			ASSERT_THROW(controller.runWorker(), std::logic_error);
 		}
@@ -143,7 +143,7 @@ TEST(BlockConsistencyInterpreter, test3){
 				finalize_setup();
 			}
 			std::stringstream output;
-			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			RaceDetectionTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
 			controller.initSipTables();
 			ASSERT_THROW(controller.runWorker(), std::logic_error);
 		}
@@ -168,7 +168,7 @@ TEST(BlockConsistencyInterpreter, test4){
 				finalize_setup();
 			}
 			std::stringstream output;
-			BlockConsistencyTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
+			RaceDetectionTestController controller(num_workers, job, true, VERBOSE_TEST, "", output, false);
 			controller.initSipTables();
 			controller.runWorker();
 		}

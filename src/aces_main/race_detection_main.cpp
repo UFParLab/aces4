@@ -5,7 +5,7 @@
  *      Author: njindal
  */
 
-#include "block_consistency_helper_methods.h"
+#include <race_detection_helper_methods.h>
 
 
 int main(int argc, char* argv[]) {
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 
 		for (int worker_rank=0; worker_rank<num_workers; worker_rank += gap){
 
-			sip::BlockConsistencyInterpreter runner(worker_rank, num_workers, sipTables, barrier_block_consistency_map_);
+			sip::RaceDetectionInterpreter runner(worker_rank, num_workers, sipTables, barrier_block_consistency_map_);
 			runner.interpret();
 			runner.post_sial_program();
 			barrier();

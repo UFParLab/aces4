@@ -17,6 +17,7 @@
 namespace sip {
 
 class SialxInterpreter;
+class AbstractControlFlowInterpreter;
 
 /*! Base class for loop managers. */
 class LoopManager {
@@ -146,7 +147,7 @@ public:
 	virtual ~BalancedTaskAllocParallelPardoLoop();
 	friend std::ostream& operator<<(std::ostream&,
 			const BalancedTaskAllocParallelPardoLoop &);
-private:
+protected:
 	virtual std::string to_string() const;
 	virtual bool do_update();
 	virtual void do_finalize();
@@ -170,6 +171,45 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(BalancedTaskAllocParallelPardoLoop);
 
 };
+
+/**
+ * Pardo Loop manager used by Abstract Control Flow Interpreters.
+ * Similar to the BalancedTaskAllocParallelPardoLoop
+ */
+class BalancedTaskAllocAbstractControlFlowPardoLoop: public LoopManager {
+public:
+	BalancedTaskAllocAbstractControlFlowPardoLoop(int num_indices,
+				const int (&index_id)[MAX_RANK], DataManager & data_manager,
+				const SipTables & sip_tables, int num_where_clauses,
+				AbstractControlFlowInterpreter* interpreter, int company_rank, int num_workers,
+				long& iteration);
+	virtual ~BalancedTaskAllocAbstractControlFlowPardoLoop();
+
+private:
+	virtual std::string to_string() const { return std::string(""); }
+	virtual bool do_update();
+	virtual void do_finalize();
+	bool first_time_;
+	int num_indices_;
+	long& iteration_;
+	index_selector_t index_id_;
+	index_value_array_t lower_seg_;
+	index_value_array_t upper_bound_;
+	int num_where_clauses_;
+
+	DataManager & data_manager_;
+	const SipTables & sip_tables_;
+	int company_rank_;
+	int num_workers_;
+	AbstractControlFlowInterpreter* interpreter_;
+
+	bool increment_indices();
+	bool initialize_indices();
+
+	DISALLOW_COPY_AND_ASSIGN(BalancedTaskAllocAbstractControlFlowPardoLoop);
+
+};
+
 
 } /* namespace sip */
 #endif /* LOOP_MANAGER_H_ */

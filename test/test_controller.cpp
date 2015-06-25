@@ -253,19 +253,19 @@ std::string TestController::expectedOutput() {
 }
 
 
-BlockConsistencyTestController::BlockConsistencyTestController(int num_workers,
+RaceDetectionTestController::RaceDetectionTestController(int num_workers,
 		std::string job, bool has_dot_dat_file, bool verbose,
 		std::string comment, std::ostream& sial_output, bool expect_success) :
 		num_workers_(num_workers), TestController(job, has_dot_dat_file, verbose,
 				comment, sial_output, expect_success) {
 }
 
-void BlockConsistencyTestController::runWorker(){
+void RaceDetectionTestController::runWorker(){
 	// Clear previous worker_ to avoid leak
 	if (worker_ != NULL)
 		delete worker_;
 	for (int worker_rank=0; worker_rank<num_workers_; worker_rank += 1){
-		worker_ = new sip::BlockConsistencyInterpreter(worker_rank, num_workers_, *sip_tables_, barrier_block_consistency_map_);
+		worker_ = new sip::RaceDetectionInterpreter(worker_rank, num_workers_, *sip_tables_, barrier_block_consistency_map_);
 		if (verbose_)
 			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
 					<< " STARTING" << std::endl << std::flush;

@@ -43,7 +43,7 @@ class TestControllerParallel;
 class TestController;
 
 namespace sip {
-
+class SialxInterpreter;
 class LoopManager;
 class SialPrinter;
 class BalancedTaskAllocParallelPardoLoop;

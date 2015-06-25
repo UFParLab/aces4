@@ -31,6 +31,7 @@ class SialxInterpreter;
 class ProfileInterpreter;
 class MemoryOpsInterpreter;
 class SIPMaPInterpreter;
+class AbstractControlFlowInterpreter;
 
 class DataManager {
 public:
@@ -95,7 +96,6 @@ public:
 	//immutable data for convenience
 	const BlockManager& block_manager() const { return block_manager_; }	// For printing
 
-
 private:
 
 
@@ -113,6 +113,7 @@ private:
 	const SipTables& sip_tables_;
 
 	friend class SialxInterpreter;
+	friend class AbstractControlFlowInterpreter;
 	friend class ProfileInterpreter;
 	friend class MemoryOpsInterpreter;
 	friend class SIPMaPInterpreter;
