@@ -10,15 +10,20 @@
 
 #include <bitset>
 #include <new>
+
 #include "id_block_map.h"
 #include "sip_mpi_constants.h"
-#include "mpi_state.h"
+#include "async_ops.h"
 
 namespace sip {
 
 class SIPServer;
 class DiskBackedArraysIO;
 class DiskBackedBlockMap;
+class PendingAsyncManager;
+
+
+
 
 /**
  * Maintains a Block in the memory of a server.
@@ -79,6 +84,40 @@ class DiskBackedBlockMap;
  * 111 -> No Action				-> 111
  *
  */
+class ServerBlock;
+
+
+
+
+class DiskBackingState{
+public:
+	void set_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = true; }
+	void set_in_memory() { disk_status_[DiskBackingState::IN_MEMORY] = true; }
+	void set_on_disk() { disk_status_[DiskBackingState::ON_DISK] = true; }
+
+	void unset_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false; }
+	void unset_in_memory() { disk_status_[DiskBackingState::IN_MEMORY] = false; }
+	void unset_on_disk() { disk_status_[DiskBackingState::ON_DISK] = false; }
+
+	bool is_dirty() { return disk_status_[DiskBackingState::DIRTY_IN_MEMORY]; }
+	bool is_in_memory() { return disk_status_[DiskBackingState::IN_MEMORY]; }
+	bool is_on_disk() { return disk_status_[DiskBackingState::ON_DISK]; }
+private:
+	DiskBackingState(){
+		disk_status_[IN_MEMORY] = false;
+		disk_status_[ON_DISK] = false;
+		disk_status_[DIRTY_IN_MEMORY] = false;
+	}
+	enum ServerBlockStatus {
+		IN_MEMORY		= 0,	// Block is on host
+		ON_DISK			= 1,	// Block is on device (GPU)
+		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
+	};
+	std::bitset<3> disk_status_;
+	friend ServerBlock;
+	DISALLOW_COPY_AND_ASSIGN(DiskBackingState);
+};
+
 class ServerBlock {
 public:
 	typedef double * dataPtr;
@@ -103,17 +142,7 @@ public:
 
 	~ServerBlock();
 
-	void set_dirty() { disk_status_[ServerBlock::DIRTY_IN_MEMORY] = true; }
-	void set_in_memory() { disk_status_[ServerBlock::IN_MEMORY] = true; }
-	void set_on_disk() { disk_status_[ServerBlock::ON_DISK] = true; }
 
-	void unset_dirty() { disk_status_[ServerBlock::DIRTY_IN_MEMORY] = false; }
-	void unset_in_memory() { disk_status_[ServerBlock::IN_MEMORY] = false; }
-	void unset_on_disk() { disk_status_[ServerBlock::ON_DISK] = false; }
-
-	bool is_dirty() { return disk_status_[ServerBlock::DIRTY_IN_MEMORY]; }
-	bool is_in_memory() { return disk_status_[ServerBlock::IN_MEMORY]; }
-	bool is_on_disk() { return disk_status_[ServerBlock::ON_DISK]; }
 
 	/**
 	 * Updates and checks the consistency of a server block.
@@ -141,10 +170,8 @@ public:
     void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
     void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
-    MPIState& state() { return state_; }
-	MPI_Request* mpi_request() { return &(state_.mpi_request_); }
-	bool test(){ return state_.test(); }
-	void wait(){ state_.wait();}
+
+	void wait(){ async_state_.wait_all();}
 
 	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 
@@ -153,14 +180,10 @@ public:
 private:
     const int size_;/**< Number of elements in block */
 	dataPtr data_;	/**< Pointer to block of data */
-    MPIState state_;/**< For blocks busy in async MPI communication */
+//    MPIState state_;/**< For blocks busy in async MPI communication */
 
-	enum ServerBlockStatus {
-		IN_MEMORY		= 0,	// Block is on host
-		ON_DISK			= 1,	// Block is on device (GPU)
-		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
-	};
-	std::bitset<3> disk_status_;
+	BlockAsyncManager async_state_; /** handles async communication operations */
+    DiskBackingState disk_state_;
 
 
 	/**	 Structures and methods to check for block consistency during GET, PUT, PUT+ operations
@@ -210,12 +233,15 @@ private:
 
 	std::pair<ServerBlockMode, int> consistency_status_; /*! State of block */
 
-	const static std::size_t field_members_size_;
+//	const static std::size_t field_members_size_;
 	static std::size_t allocated_bytes_;
 
 	friend DiskBackedArraysIO;
 	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
+	friend PendingAsyncManager;
+
+	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
 };
 
 } /* namespace sip */

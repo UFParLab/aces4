@@ -59,7 +59,7 @@ private:
 
 	void read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size);
     void write_block_to_disk(const BlockId& block_id, ServerBlock* block);
-	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, bool initialze=true);
+	ServerBlock* allocate_block(ServerBlock* block, size_t block_size, bool initialize);
 
 	//ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 

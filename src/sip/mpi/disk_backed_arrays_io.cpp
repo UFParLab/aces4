@@ -388,9 +388,9 @@ void DiskBackedArraysIO::write_persistent_array_blocks(
 			bool to_write_dirty_block = false;
 
 			ServerBlock* sb = found_it->second;
-			bool dirty = sb->is_dirty();
-			bool on_disk = sb->is_on_disk();
-			bool in_memory = sb->is_in_memory();
+			bool dirty = sb->disk_state_.is_dirty();
+			bool on_disk = sb->disk_state_.is_on_disk();
+			bool in_memory = sb->disk_state_.is_in_memory();
 			// Error cases
 			if (!on_disk && !in_memory)
 				sip::fail("Invalid block state ! - neither on disk or memory");
@@ -451,7 +451,7 @@ void DiskBackedArraysIO::write_all_dirty_blocks(MPI_File fh,
 		for (; it != array_blocks->end(); ++it) {
 			const BlockId& bid = it->first;
 			const ServerBlock::ServerBlockPtr bptr = it->second;
-			if (bptr->is_dirty())
+			if (bptr->disk_state_.is_dirty())
 				write_block_to_file(fh, bid, bptr);
 		}
 	}

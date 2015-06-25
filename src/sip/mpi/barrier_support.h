@@ -40,7 +40,7 @@
 #include "sip_mpi_constants.h"
 
 namespace sip {
-
+class SIPServer;
 class BarrierSupport {
 public:
 
@@ -126,7 +126,7 @@ public:
 	 * @param transaction_number
 	 * @return
 	 */
-	void decode_tag(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& transaction_number){
+	static void decode_tag(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& transaction_number){
 		message_type = extract_message_type(mpi_tag);
 		transaction_number = extract_transaction_number(mpi_tag);
 	}
@@ -351,6 +351,7 @@ private:
 	 */
 	unsigned int transaction_number_;
 
+	friend class SIPServer;
 	DISALLOW_COPY_AND_ASSIGN(BarrierSupport);
 
 };

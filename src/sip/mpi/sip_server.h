@@ -61,161 +61,223 @@ std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
  */
 
 
-/** contains the information necessary to handle pending PUT_DATA or PUT_ACCUMULATE messages for which a receive has been posted.
- *
- */
-class DataMessageInfo{
-public:
-	int pc_;
-	BlockId id_;
-	double* temp_;
-	ServerBlock* block_;
-	DataMessageInfo(int pc, BlockId id, double* temp, ServerBlock* block):
-		pc_(pc), id_(id), temp_(temp), block_(block){
-//		check(id_.parent_id_ptr_ == NULL, "DataMessageInfo blockid with non-null parent");
-	}
-	~DataMessageInfo(){
-		delete[] temp_;
-	}
-	friend std::ostream& operator<<(std::ostream& os, const DataMessageInfo& info){
-		os << "DataMessageInfo:  pc_="<< info.pc_ <<" id_=" << info.id_ <<", temp_=" << info.temp_ << ", block_=" << info.block_ << std::endl;
-		return os;
-	}
-	friend SIPServer
-	DISALLOW_COPY_AND_ASSIGN(DataMessageInfo);
-};
-/**
- * This class holds the MPI_Requests of posted receives for PUT_ACCUMULATE_DATA
- * messages.  add_request returns a pointer to a new MPI_Request and
- * can be passed to the MPI_IRecv function.
- *
- * The class also keeps track of buffer locations and the block of the
- * communication.
- */
-class PendingDataRequestManager{
-public:
-	typedef std::pair<int,int> Key;  //source, tag
+///** contains the information necessary to handle pending PUT_DATA or PUT_ACCUMULATE messages for which a receive has been posted.
+// *
+// */
+//class DataMessageInfo{
+//public:
+//	int pc_;
+//	BlockId id_;
+//	double* temp_;
+//	ServerBlock* block_;
+//	DataMessageInfo(int pc, BlockId id, double* temp, ServerBlock* block):
+//		pc_(pc), id_(id), temp_(temp), block_(block){
+////		check(id_.parent_id_ptr_ == NULL, "DataMessageInfo blockid with non-null parent");
+//	}
+//	~DataMessageInfo(){
+//		delete[] temp_;
+//	}
+//	friend std::ostream& operator<<(std::ostream& os, const DataMessageInfo& info){
+//		os << "DataMessageInfo:  pc_="<< info.pc_ <<" id_=" << info.id_ <<", temp_=" << info.temp_ << ", block_=" << info.block_ << std::endl;
+//		return os;
+//	}
+//	friend SIPServer
+//	DISALLOW_COPY_AND_ASSIGN(DataMessageInfo);
+//};
+///**
+// * This class holds the MPI_Requests of posted receives for PUT_ACCUMULATE_DATA
+// * messages.  add_request returns a pointer to a new MPI_Request and
+// * can be passed to the MPI_IRecv function.
+// *
+// * The class also keeps track of buffer locations and the block of the
+// * communication.
+// */
+//class PendingDataRequestManager{
+//public:
+//	typedef std::pair<int,int> Key;  //source, tag
+//
+//	PendingDataRequestManager():
+//		pending_put_data_messages_(),
+//		pending_put_accumulate_data_messages_(),
+//		data_info_map_(){
+//	}
+//	~PendingDataRequestManager(){
+//		if (!pending_put_data_messages_.empty()){
+//			check(false, "destructing PendingDataRequestManager with pending put data message");
+//		}
+//		if (!pending_put_accumulate_data_messages_.empty()){
+//			check(false, "destructing PendingDataRequestManager with pending put accumulate data message");
+//		}
+//	}
+//
+//	/**
+//	 *
+//	 * @return address of an MPI_Request in list
+//	 */
+//	MPI_Request* add_put_accumulate_data_request(){
+//		pending_put_accumulate_data_messages_.push_back(MPI_REQUEST_NULL);
+//		return &(*(pending_put_accumulate_data_messages_.rbegin())); //rbegin is iterator to last element
+//	}
+//
+//	MPI_Request** add_put_data_request(ServerBlock* block){
+//		pending_put_data_messages_.push_back(block->mpi_request());
+//		return &(*(pending_put_data_messages_.rbegin())); //rbegin is iterator to last element
+//	}
+//
+//	/**
+//	 * First searches for a completed put_data message.  If there is one,
+//	 * it is completed with MPI_Test.  This will set the mpi_state in the block
+//	 * to MPI_REQUEST_NULL.  The status is filled in with information from the message.
+//	 * The MPI_Request* is removed from the list.
+//	 *
+//	 * If no completed put_data message found, search for
+//	 * a put_accumulate_data message that is ready to
+//	 * handle.  If there is one, it is completed with MPI_Test, and its
+//	 * MPI_Request is removed from the list.  The status variable is
+//	 * filled in with values from the received message.
+//	 *
+//	 * @param [out] status
+//	 * @return true if completed message was found
+//	 */
+//	bool completed_message_status(MPI_Status& status){
+//		//iterate over list of pending put_data messages
+//		for (std::list<MPI_Request*>::iterator it = pending_put_data_messages_.begin();
+//				it != pending_put_data_messages_.end();
+//				++it){
+//				   int flag;
+//				   MPI_Test(*it, &flag, &status);  //*it is a pointer to the MPI_Request in the block.
+//				   if (flag){
+//					   pending_put_data_messages_.erase(it);
+//					   return true;
+//				   }
+//			}
+//		//iterate over list of pending put_accumulate messages
+//		for (std::list<MPI_Request>::iterator it = pending_put_accumulate_data_messages_.begin();
+//				it != pending_put_accumulate_data_messages_.end();
+//				++it){
+//				   int flag;
+//				   MPI_Test(&(*it), &flag, &status);  //&(*it) is a pointer to the MPI_Request in the list.
+//				   if (flag){
+//					   pending_put_accumulate_data_messages_.erase(it);
+//					   return true;
+//				   }
+//			}
+//		//if here, none were found, so return false
+//		return false;
+//	}
+//
+//	bool has_pending(){return !pending_put_accumulate_data_messages_.empty()
+//			|| !pending_put_data_messages_.empty();
+//	}
+//	void add_info(int source, int data_tag, int pc, BlockId id, double* temp, ServerBlock* block ){
+//		std::pair<std::map<Key,DataMessageInfo*>::iterator, bool> result;
+//
+//		result = data_info_map_.insert(
+//				std::make_pair(std::make_pair(source, data_tag),new DataMessageInfo(pc, id, temp,  block))
+//				);
+//		check(result.second, "duplicate key for map insert");
+//	}
+//	DataMessageInfo* get_info(int source, int data_tag){
+////		Key key = std::make_pair(source, data_tag);
+//		std::map<Key,DataMessageInfo*>::iterator it = data_info_map_.find(std::make_pair(source, data_tag));
+//		if (it == data_info_map_.end()){
+//			check(fail, "info object not found");
+//		}
+//		DataMessageInfo* to_return = it->second;
+//		data_info_map_.erase(it);
+//		return to_return;
+//	}
+//	friend std::ostream& operator<<(std::ostream& os, const PendingDataRequestManager& manager) {
+//		os << "PendingDataRequestManager: ";
+//		os << " pending_put_data_messages_.size=" << manager.pending_put_data_messages_.size();
+//		os << " pending_put_accumulate_data_messages_.size=" << manager.pending_put_accumulate_data_messages_.size();
+//		os << ", data_info_map_.size=" << manager.data_info_map_.size();
+//		return os;
+//	}
+//private:
+//	/**
+//	 * List  of MPI_Requests for posted IRecv for PUT_ACCUMULATE_DATA
+//	 * messages.
+//	 */
+//	std::list<MPI_Request> pending_put_accumulate_data_messages_;
+//
+//
+//	/**
+//	 * List of pointers to MPI_Requests for posted IRecv for PUT_DATA messages.
+//	 * The MPI_Request is in the block awaiting data, so we need a list of pointers here.
+//	 */
+//	std::list<MPI_Request*> pending_put_data_messages_;
+//	/**
+//	 * Map from tag to block to accumulate into.
+//	 */
+//	std::map<Key,DataMessageInfo*> data_info_map_;
+//	/**
+//	 * number of expected put or put_accumulate data messages.
+//	 * Only test for received messages when this variable is >0.
+//	 */
+//	DISALLOW_COPY_AND_ASSIGN(PendingDataRequestManager);
+//};
 
-	PendingDataRequestManager():
-		pending_put_data_messages_(),
-		pending_put_accumulate_data_messages_(),
-		data_info_map_(){
+
+
+class PendingAsyncManager{
+public:
+	PendingAsyncManager():next_block_iter_(pending_.begin()){}
+	~PendingAsyncManager(){
+		check(pending_.empty(),"destructing non-empty PendingDataRequestManager");
 	}
-	~PendingDataRequestManager(){
-		if (!pending_put_data_messages_.empty()){
-			check(false, "destructing PendingDataRequestManager with pending put data message");
-		}
-		if (!pending_put_accumulate_data_messages_.empty()){
-			check(false, "destructing PendingDataRequestManager with pending put accumulate data message");
-		}
+
+	void add_put_data_request(int mpi_source, int put_data_tag, ServerBlock* block, int pc){
+		block->async_state_.add_put_data_request(mpi_source, put_data_tag, block, pc);
+		pending_.push_back(block);
+	}
+
+	void add_put_accumulate_data_request(int mpi_source, int put_accumulate_data_tag, ServerBlock* block, int pc){
+		block->async_state_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, pc);
+		pending_.push_back(block);
+	}
+
+	void add_get_reply(int mpi_source, int get_tag, ServerBlock* block, int pc){
+		block->async_state_.add_get_reply(mpi_source, get_tag, block, pc);
+		pending_.push_back(block);
 	}
 
 	/**
-	 *
-	 * @return address of an MPI_Request in list
+	 * Returns true if there may be pending async ops.
+	 * It is possible that there are blocks in the pending list that have no pending ops,
+	 * so we only have false => no pending ops
+	 * @return
 	 */
-	MPI_Request* add_put_accumulate_data_request(){
-		pending_put_accumulate_data_messages_.push_back(MPI_REQUEST_NULL);
-		return &(*(pending_put_accumulate_data_messages_.rbegin())); //rbegin is iterator to last element
-	}
-
-	MPI_Request** add_put_data_request(ServerBlock* block){
-		pending_put_data_messages_.push_back(block->mpi_request());
-		return &(*(pending_put_data_messages_.rbegin())); //rbegin is iterator to last element
-	}
+	bool may_have_pending(){return !pending_.empty();}
 
 	/**
-	 * First searches for a completed put_data message.  If there is one,
-	 * it is completed with MPI_Test.  This will set the mpi_state in the block
-	 * to MPI_REQUEST_NULL.  The status is filled in with information from the message.
-	 * The MPI_Request* is removed from the list.
-	 *
-	 * If no completed put_data message found, search for
-	 * a put_accumulate_data message that is ready to
-	 * handle.  If there is one, it is completed with MPI_Test, and its
-	 * MPI_Request is removed from the list.  The status variable is
-	 * filled in with values from the received message.
-	 *
-	 * @param [out] status
-	 * @return true if completed message was found
+	 * Tries to handle the pending requests for the next block in the pending list.
+	 * If all requests for that block have been handled, then it is removed from the list.
+	 * The
 	 */
-	bool completed_message_status(MPI_Status& status){
-		//iterate over list of pending put_data messages
-		for (std::list<MPI_Request*>::iterator it = pending_put_data_messages_.begin();
-				it != pending_put_data_messages_.end();
-				++it){
-				   int flag;
-				   MPI_Test(*it, &flag, &status);  //*it is a pointer to the MPI_Request in the block.
-				   if (flag){
-					   pending_put_data_messages_.erase(it);
-					   return true;
-				   }
-			}
-		//iterate over list of pending put_accumulate messages
-		for (std::list<MPI_Request>::iterator it = pending_put_accumulate_data_messages_.begin();
-				it != pending_put_accumulate_data_messages_.end();
-				++it){
-				   int flag;
-				   MPI_Test(&(*it), &flag, &status);  //&(*it) is a pointer to the MPI_Request in the list.
-				   if (flag){
-					   pending_put_accumulate_data_messages_.erase(it);
-					   return true;
-				   }
-			}
-		//if here, none were found, so return false
-		return false;
-	}
+	void try_pending(){ //tries to handle a block
+		if(next_block_iter_ == pending_.end()){
 
-	bool has_pending(){return !pending_put_accumulate_data_messages_.empty()
-			|| !pending_put_data_messages_.empty();
-	}
-	void add_info(int source, int data_tag, int pc, BlockId id, double* temp, ServerBlock* block ){
-		std::pair<std::map<Key,DataMessageInfo*>::iterator, bool> result;
-
-		result = data_info_map_.insert(
-				std::make_pair(std::make_pair(source, data_tag),new DataMessageInfo(pc, id, temp,  block))
-				);
-		check(result.second, "duplicate key for map insert");
-	}
-	DataMessageInfo* get_info(int source, int data_tag){
-//		Key key = std::make_pair(source, data_tag);
-		std::map<Key,DataMessageInfo*>::iterator it = data_info_map_.find(std::make_pair(source, data_tag));
-		if (it == data_info_map_.end()){
-			check(fail, "info object not found");
 		}
-		DataMessageInfo* to_return = it->second;
-		data_info_map_.erase(it);
-		return to_return;
+			bool block_complete = (*next_block_iter_)->async_state_.try_handle_all();
+			if (block_complete) {
+				next_block_iter_ = pending_.erase(next_block_iter_);
+			}
+			else {
+				++next_block_iter_;
+			}
 	}
-	friend std::ostream& operator<<(std::ostream& os, const PendingDataRequestManager& manager) {
-		os << "PendingDataRequestManager: ";
-		os << " pending_put_data_messages_.size=" << manager.pending_put_data_messages_.size();
-		os << " pending_put_accumulate_data_messages_.size=" << manager.pending_put_accumulate_data_messages_.size();
-		os << ", data_info_map_.size=" << manager.data_info_map_.size();
-		return os;
+
+	void wait_all(){
+		while (may_have_pending()){
+			try_pending();
+		}
 	}
+
 private:
-	/**
-	 * List  of MPI_Requests for posted IRecv for PUT_ACCUMULATE_DATA
-	 * messages.
-	 */
-	std::list<MPI_Request> pending_put_accumulate_data_messages_;
-
-
-	/**
-	 * List of pointers to MPI_Requests for posted IRecv for PUT_DATA messages.
-	 * The MPI_Request is in the block awaiting data, so we need a list of pointers here.
-	 */
-	std::list<MPI_Request*> pending_put_data_messages_;
-	/**
-	 * Map from tag to block to accumulate into.
-	 */
-	std::map<Key,DataMessageInfo*> data_info_map_;
-	/**
-	 * number of expected put or put_accumulate data messages.
-	 * Only test for received messages when this variable is >0.
-	 */
-	DISALLOW_COPY_AND_ASSIGN(PendingDataRequestManager);
+	std::list<ServerBlock*> pending_;
+	std::list<ServerBlock*>::iterator next_block_iter_;  //points to next block in list to try
+    DISALLOW_COPY_AND_ASSIGN(PendingAsyncManager);
 };
 
 
@@ -324,7 +386,7 @@ private:
 	 * Interface to disk backed block manager.
 	 */
 	DiskBackedBlockMap disk_backed_block_map_;
-	PendingDataRequestManager expected_data_messages_;
+	PendingAsyncManager async_ops_;
 
 
 	/**
@@ -378,7 +440,7 @@ private:
 	 * @param [in] put_accumulate_tag
 	 * @param [in] put_accumulate_data_tag
 	 */
-	void handle_PUT_DATA(int mpi_source, int put_data_tag, const MPI_Status& status);
+//	void handle_PUT_DATA(int mpi_source, int put_data_tag, const MPI_Status& status);
 	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag);
 	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_data_tag, MPI_Status& status);
 	void handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag);

@@ -37,23 +37,32 @@ SialOpsParallel::~SialOpsParallel() {
 }
 
 void SialOpsParallel::sip_barrier() {
+
 	//wait for all expected acks,
 	ack_handler_.wait_all();
+
+	// Remove and deallocate cached blocks of distributed and served arrays.
+	// This is done here to ensure that all pending "gets" have been satisfied.
+	//TODO optimize this--if only read and needed in the future, don't need to delete.
+	for (int i = 0; i < sip_tables_.num_arrays(); ++i) {
+		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i))
+			block_manager_.delete_per_array_map_and_blocks(i);
+	}
 /* At this point, all puts should have been acked, thus the blocks are no longer pending.  After clean, the pending_list_ should be empty
  * Commented out for performance reasons.
  */
 //	block_manager_.block_map_.clean_pending();
 //	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
-	MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
-	int num_workers;
-	MPI_Comm_size(worker_comm, &num_workers);
 
 
-	if (num_workers > 1) {
+	if (sip_mpi_attr_.company_size() > 1) {
+		MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(MPI_Barrier(worker_comm));
 	}
 	//DEBUG  this code checks that the barrier is from the same op_table entry at each worker.
 	//If not, it prints a warning
+//	int num_workers;
+//	MPI_Comm_size(worker_comm, &num_workers);
 //	int pc = Interpreter::global_interpreter->get_pc();
 //	int pcs[num_workers];
 //	int lines[num_workers];
@@ -70,14 +79,14 @@ void SialOpsParallel::sip_barrier() {
 
 	//update the local sip_barrier state;
 	//increment section number, reset msg number
+//	//DEBUG
+//	std::cout<<"W " << sip_mpi_attr_.global_rank()
+//	     		<< " : calling update_state_at_barrier "
+//	     		<<  " at line "<< current_line()
+//	     		<< " in program " << GlobalState::get_program_name() << std::endl << std::flush;
 	barrier_support_.update_state_at_barrier();
 
-	// Remove and deallocate cached blocks of distributed and served arrays
-	//TODO optimize this--if only read and needed in the future, don't need to delete.
-	for (int i = 0; i < sip_tables_.num_arrays(); ++i) {
-		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i))
-			block_manager_.delete_per_array_map_and_blocks(i);
-	}
+
 	reset_mode();
 	SIP_LOG(std::cout<< "W " << sip_mpi_attr_.global_rank() << " : Done with BARRIER "<< std::endl);
 }

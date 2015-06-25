@@ -65,11 +65,11 @@ void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block, const BlockId
      * into newly allocated space, sets the in_memory flag,
      * inserts into block_map_ if needed
      */
-	block = allocate_block(block, block_size);
+	block = allocate_block(block, block_size,false);
 	server_timer_.start_timer(current_line(), ServerTimer::READTIME);
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
 	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
-	block->set_in_memory();
+	block->disk_state_.set_in_memory();
 }
 
 void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBlock* block){
@@ -77,8 +77,8 @@ void DiskBackedBlockMap::write_block_to_disk(const BlockId& block_id, ServerBloc
     disk_backed_arrays_io_.write_block_to_disk(block_id, block);
 	server_timer_.pause_timer(current_line(), ServerTimer::WRITETIME);
 
-    block->unset_dirty();
-    block->set_on_disk();
+    block->disk_state_.unset_dirty();
+    block->disk_state_.set_on_disk();
 }
 
 ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block_size, bool initialize){
@@ -97,7 +97,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 					<< " : Freeing block " << bid
 					<< " and writing to disk to make space for new block"
 					<< std::endl);
-			if(blk->is_dirty()){
+			if(blk->disk_state_.is_dirty()){
 				write_block_to_disk(bid, blk);
 			}
 			blk->free_in_memory_data();
@@ -124,10 +124,15 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
 	}
 
 	std::stringstream ss;
-	ss << "S " << sip_mpi_attr_.company_rank() << " : Could not allocate memory for block of size "
-			<< block_size << ", Memory being used :" << ServerBlock::allocated_bytes() << std::endl;
+	ss << "S ";
+	ss << sip_mpi_attr_.company_rank();
+	ss << " : Could not allocate memory for block of size ";
+	ss << block_size;
+	ss << ", Memory being used :";
+	ss << ServerBlock::allocated_bytes();
+	ss << std::endl;
 	sip :: check (block_size <= max_allocatable_bytes_ - ServerBlock::allocated_bytes(), ss.str());
-   
+
     if (block == NULL) {
 	    block = new ServerBlock(block_size, initialize);
     } else {
@@ -151,21 +156,21 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(const BlockId& block_i
 		msg << "S " << sip_mpi_attr_.global_rank();
 		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for updating "<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
-		block = allocate_block(NULL, block_size);
+		block = allocate_block(NULL, block_size, true);
 	    block_map_.insert_block(block_id, block);
 	} else {
-		block->wait(); //if involved in-progress asynchronous communication, wait for it to complete.
-		if(!block->is_in_memory()){
-			if (block->is_on_disk()){
+//		block->wait(); //if involved in-progress asynchronous communication, wait for it to complete.
+		if(!block->disk_state_.is_in_memory()){
+			if (block->disk_state_.is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
             } else {
-				block->allocate_in_memory_data();
+				block->allocate_in_memory_data(true);
             }
         }
 	}
 
-	block->set_in_memory();
-	block->set_dirty();
+	block->disk_state_.set_in_memory();
+	block->disk_state_.set_dirty();
 
 	policy_.touch(block_id);
 
@@ -174,7 +179,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(const BlockId& block_i
 
 ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
 	ServerBlock* block = get_block_for_reading(block_id, 0);
-	block->set_dirty();
+	block->disk_state_.set_dirty();
 	return block;
 }
 
@@ -187,19 +192,20 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
 		std::stringstream msg;
-		msg << "S " << sip_mpi_attr_.global_rank();
+		msg << "S ";
+		msg << sip_mpi_attr_.global_rank();
 		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
 		SIP_LOG(std::cout << msg.str() << std::flush);
-		block = allocate_block(NULL, block_size);
+		block = allocate_block(NULL, block_size,false);
 	    block_map_.insert_block(block_id, block);
 	} else {
 		block->wait(); //if involved in-progress asynchronous communication, wait for it to complete.
-		if (!block->is_in_memory())
+		if (!block->disk_state_.is_in_memory())
 			block->allocate_in_memory_data();
 	}
 
-	block->set_in_memory();
-	block->set_dirty();
+	block->disk_state_.set_in_memory();
+	block->disk_state_.set_dirty();
 
 	policy_.touch(block_id);
 
@@ -230,22 +236,22 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, 
 			msg << "S " << sip_mpi_attr_.global_rank();
 			msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
 			std::cout << msg.str() << std::flush;
-			block = allocate_block(NULL, block_size);
+			block = allocate_block(NULL, block_size,true);
 			block_map_.insert_block(block_id, block);
 		}
 
 
 	} else {
 		block->wait();  //if involved in-progress asynchronous communication, wait for it to complete.
-		if(!block->is_in_memory())
-			if (block->is_on_disk()){
+		if(!block->disk_state_.is_in_memory())
+			if (block->disk_state_.is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
             } else {
 				sip::fail("get_block_for_reading : ServerBlock neither on memory or on disk !");
             }
 	}
 
-	block->set_in_memory();
+	block->disk_state_.set_in_memory();
 
 	policy_.touch(block_id);
 
@@ -253,10 +259,10 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, 
 	return block;
 }
 
-double* DiskBackedBlockMap::get_temp_buffer_for_put_accumulate(const BlockId& block_id, size_t& block_size){
-	block_size = sip_tables_.block_size(block_id);
-	return new double[block_size];
-}
+//double* DiskBackedBlockMap::get_temp_buffer_for_put_accumulate(const BlockId& block_id, size_t& block_size){
+//	block_size = sip_tables_.block_size(block_id);
+//	return new double[block_size];
+//}
 
 IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map(int array_id){
 	return block_map_.per_array_map(array_id);
@@ -302,7 +308,7 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string& lab
         int size = sip_tables_.block_size(*it);         // Number of FP numbers
         double *data = NULL;
         ServerBlock *sb = new ServerBlock(size, data);   // ServerBlock which doesn't "take up any memory"
-        sb->set_on_disk();
+        sb->disk_state_.set_on_disk();
         block_map_.insert_block(*it, sb);
     }
 

@@ -119,8 +119,11 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/server_persistent_array_manager.h;
         src/sip/mpi/server_persistent_array_manager.cpp;
         src/sip/mpi/server_timer.h;
-        src/sip/mpi/server_timer.cpp;        
-        src/sip/dynamic_data/mpi_state.h)
+        src/sip/mpi/server_timer.cpp; 
+        src/sip/mpi/async_ops.h;
+        src/sip/mpi/async_ops.cpp;       
+        src/sip/dynamic_data/mpi_state.h
+ )
 else ()
     set(ACES_MPI_FILES "")
 endif()
