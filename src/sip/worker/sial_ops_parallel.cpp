@@ -38,9 +38,6 @@ SialOpsParallel::~SialOpsParallel() {
 
 void SialOpsParallel::sip_barrier() {
 
-	//wait for all expected acks,
-	ack_handler_.wait_all();
-
 	// Remove and deallocate cached blocks of distributed and served arrays.
 	// This is done here to ensure that all pending "gets" have been satisfied.
 	//TODO optimize this--if only read and needed in the future, don't need to delete.
@@ -48,13 +45,21 @@ void SialOpsParallel::sip_barrier() {
 		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i))
 			block_manager_.delete_per_array_map_and_blocks(i);
 	}
-/* At this point, all puts should have been acked, thus the blocks are no longer pending.  After clean, the pending_list_ should be empty
- * Commented out for performance reasons.
- */
+
+	//wait for all expected acks,
+	ack_handler_.wait_all();
+
+  //At this point, all pending gets have been received and all
+ //puts should have been acked, thus the blocks are no longer pending.
+ //After clean, the pending_list_ should be empty
+
+
+	//TODO investigate this
 //	block_manager_.block_map_.clean_pending();
 //	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
 
 
+	//Now, do an MPI barrier with the other workers.
 	if (sip_mpi_attr_.company_size() > 1) {
 		MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(MPI_Barrier(worker_comm));
@@ -132,8 +137,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 
 	//send get message to block's server, and post receive
 	int server_rank = data_distribution_.get_server_rank(block_id);
-	int get_tag;
-	get_tag = barrier_support_.make_mpi_tag_for_GET();
+	int get_tag = barrier_support_.make_mpi_tag_for_GET();
 
     sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line()); 
 
@@ -141,28 +145,26 @@ void SialOpsParallel::get(BlockId& block_id) {
     		<< " : sending GET for block " << block_id
     		<< " to server "<< server_rank << std::endl);
 
-    // Construct int array to send to server.
-    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
-    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
-    const int section_num_offset = line_num_offset + 1;
-    int to_send[to_send_size]; // BlockId & line number
-    int *serialized_block_id = block_id.to_mpi_array();
-    std::copy(serialized_block_id + 0, serialized_block_id + BlockId::MPI_BLOCK_ID_COUNT, to_send);
-    to_send[line_num_offset] = current_line();
-    to_send[section_num_offset] = barrier_support_.section_number();
-
-	SIPMPIUtils::check_err(
-			MPI_Send(to_send, to_send_size, MPI_INT,
-					server_rank, get_tag, MPI_COMM_WORLD));
-
 	//allocate block, and insert in block map, using block data as buffer
 	block = block_manager_.get_block_for_writing(block_id, true);
 
 	//post an asynchronous receive and store the request in the
-	//block's state
+	//block's state.
+	//IMPORTANT:  this must be done before sending the message to the server to ensure no 
+	// MPI buffering is used
 	SIPMPIUtils::check_err(
 			MPI_Irecv(block->get_data(), block->size(), MPI_DOUBLE, server_rank,
 					get_tag, MPI_COMM_WORLD, block->mpi_request()));
+
+
+	//construct and send the get message
+    int send_buff[SIPMPIUtils::BLOCKID_BUFF_ELEMS];
+    SIPMPIUtils::encode_BlockID_buff(send_buff, block_id, current_line(),barrier_support_.section_number());
+
+    SIPMPIUtils::check_err(
+    		MPI_Send(send_buff, SIPMPIUtils::BLOCKID_BUFF_ELEMS, MPI_INT,
+    				server_rank, get_tag, MPI_COMM_WORLD));
+
 }
 
 //NOTE:  I can't remember why the source block was copied.

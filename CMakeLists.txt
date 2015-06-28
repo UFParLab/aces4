@@ -547,6 +547,7 @@ set(SIAL_FILES
     src/sialx/test/index_scalar_cast.sialx;
     src/sialx/test/contig_local3.sialx;
     src/sialx/test/cached_block_map_test.sialx;
+    src/sialx/test/cached_block_map_test_no_dangling_get.sialx;
     src/sialx/test/pardo_with_where.sialx;
     src/sialx/test/pardo_load_balance_test.sialx;
     src/sialx/test/read_block_test.sialx;

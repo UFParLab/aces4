@@ -22,19 +22,20 @@ class ServerBlock;
 /**
  * Base class for pending asynchronous operations on a block
  *
- * Objects are owned by a data structure belonging to the block and constructed when
+ * Theses bjects are owned by a data structure belonging to the block and constructed when
  * inserted and destructed when removed.  These objects are not copyable--there should be
  * a single instance per operation.
  *
- * Coding standards related to asynchronous operations:
+ * Semantic requirements and coding standards related to asynchronous operations:
  * The constructor of each class should perform the asynchronous send or post the asynchronous receive
  * that derived objects of this class are handling.  The do_handle method should perform tasks necessary
- * to complete the operation after it has been enabled.
+ * to complete the operation after it has been enabled.  This may require sending a message, removing
+ * items from a data structure, or doing nothing (in the case the op is an asynchronous mpi send).
  *
  * Each subclass should maintain the following properties:
  * 1.  The constructor should perform the communication (async send, or receive) that this object is
  * 		managing the wait for
- * 2.  Closure:  the methods should be callable from anywhere
+ * 2.  Closure:  the methods should be callable from anywhere.
  * 3.  Nonblocking:  An enabled operations should be able to be executed to completion without blocking.
  *
  * This class is a wrapper for these operations which ensures that calls are idempotent.
@@ -81,6 +82,9 @@ public:
 		async_status_ = READY;
 	}
 
+	bool is_done() {
+		return async_status_ == DONE;
+	}
 
 	/**  Attempts to handle this operation.
 	 *
@@ -90,19 +94,18 @@ public:
 	 * @return  true if the operation has been completed and async_status_ set to DONE
 	 */
 	bool try_handle() {
-		if (async_status_ == READY || (async_status_==WAITING && test())) {
+		if (async_status_ == READY || (async_status_ == WAITING && test())) {
 			do_handle();  //this should always succeed if called when enabled
 			async_status_ = DONE;
 			return true;
 		}
-		return async_status_== DONE;
+		return async_status_ == DONE;
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const AsyncBase &obj) {
 		os << obj.to_string();
 		return os;
 	}
-
 
 protected:
 	//subclasses should invoke AsyncStatus::to_string() in overriding methods
@@ -115,7 +118,7 @@ protected:
 
 private:
 	AsyncStatus async_status_; //initially WAITING, must be DONE before destruction
-	int pc_;  //index into optable of the sialx instruction that generated this operation
+	int pc_; //index into optable of the sialx instruction that generated this operation
 
 	//precondition:  async_state == WAITNG
 	//postcondition: returned value == "operation is enabled"
@@ -128,8 +131,6 @@ private:
 	//precondition:  async_state == READY
 	//postcondition:  op completed
 	virtual void do_handle()=0;
-
-
 
 	DISALLOW_COPY_AND_ASSIGN (AsyncBase);
 };
@@ -159,16 +160,17 @@ private:
 		MPI_Wait(&mpi_request_, MPI_STATUS_IGNORE);
 	}
 
-	void do_handle() {  //nothing to do here.
+	void do_handle() {
+		//nothing to do here since we have either returned from wait or test returned true
 	}
 
-	std::string to_string() const{
+	std::string to_string() const {
 		std::stringstream ss;
 		ss << "GetAsync";
 		ss << AsyncBase::to_string();
 		return ss.str();
 	}
-
+	DISALLOW_COPY_AND_ASSIGN (GetAsync);
 };
 
 /** Represents asynchronous put_accumulate operation
@@ -186,10 +188,10 @@ private:
  *
  * Destructor: deletes the temp data buffer.
  *
- *Note The constructor does not send the "reply" message to the source to let it know that
- *Note the data message can be sent.  This should be done AFTER this object is constructed
- *Note in order to ensure that the Irecv has been posted (and thus ensuring that the message
- *Note bypasses MPI buffers
+ *The constructor does not send the "reply" message to the source to let it know that
+ *the data message can be sent.  This should be done AFTER this object is constructed
+ *in order to ensure that the Irecv has been posted, and thus ensuring that the
+ *in large message can bypass the MPI buffers
  *
  *TODO:  reuse the temp buffers?
  *
@@ -197,7 +199,7 @@ private:
 class PutAccumulateDataAsync: public AsyncBase {
 public:
 	PutAccumulateDataAsync(int mpi_source, int put_accumulate_data_tag,
-			ServerBlock* block,  int pc);
+			ServerBlock* block, int pc);
 	virtual ~PutAccumulateDataAsync() {
 		check(temp_ != NULL,
 				"destructor of PutAccumulateDataAsync invoked with null data_");
@@ -208,18 +210,14 @@ private:
 	int mpi_source_;
 	int tag_;
 	MPI_Request mpi_request_;
-	double* temp_;  //buffer to recieve data.  created in constructor, deleted in destructor
+	double* temp_; //buffer to receive data.  created in constructor, deleted in destructor
 
 	bool do_test();
 	void do_wait();
 	void do_handle();
 	virtual std::string to_string() const;
+	DISALLOW_COPY_AND_ASSIGN (PutAccumulateDataAsync);
 };
-
-
-
-
-
 
 /** Represents asynchronous put data operation
  *
@@ -245,7 +243,8 @@ class PutDataAsync: public AsyncBase {
 
 public:
 	PutDataAsync(int mpi_source, int put_data_tag, ServerBlock* block, int pc);
-	virtual ~PutDataAsync() {}
+	virtual ~PutDataAsync() {
+	}
 
 private:
 	ServerBlock* block_;
@@ -258,21 +257,16 @@ private:
 	void do_handle();
 
 	std::string to_string() const;
-
+	DISALLOW_COPY_AND_ASSIGN (PutDataAsync);
 };
 
-
-
-
-
-
-
-/** This class manages the pending asynchronous communication operations on a block.  It contains
- * a list of pending operations on a block, and provides a set of factory methods
+/** This class manages the pending asynchronous communication
+ * operations on a single block.  It contains
+ * a list of pending operations, and provides a set of factory methods
  * to create and save AsyncOp operations.
  *
  * Currently, get_block_for_reading and get_block_for_writing stop and wait for
- * pending operations to be completed before returning. get_block_for_accumulate,
+ * all pending operations to be completed before returning. get_block_for_accumulate,
  * on the other hand does not wait, but adds its async_op to the list
  * and returns.
  *
@@ -281,21 +275,20 @@ private:
  * Each asynchronous operation, OP,  should have an add_OP method in this class which creates
  * an instance of an appropriate subclass of AsyncBase and adds it to the pending list.
  */
-class BlockAsyncManager {
+class ServerBlockAsyncManager {
 public:
-	BlockAsyncManager(){}
-	~BlockAsyncManager(){
+	ServerBlockAsyncManager() {
+	}
+	~ServerBlockAsyncManager() {
 		check(pending_.empty(), "deleting block with pending async ops");
 	}
 	void add_put_accumulate_data_request(int mpi_source,
-			int put_accumulate_data_tag, ServerBlock* block,
-			int pc);
+			int put_accumulate_data_tag, ServerBlock* block, int pc);
 
 	void add_put_data_request(int mpi_source, int put_data_tag,
 			ServerBlock* block, int pc);
 
 	void add_get_reply(int mpi_source, int get_tag, ServerBlock *, int pc);
-
 
 	/**
 	 *
@@ -311,30 +304,63 @@ public:
 	 * On a return value of true, the caller should delete this block from its set of blocks with pending
 	 * items.
 	 *
-	 * @return  false if the pending list for the block is not empty.
+	 * @return  false if the pending list for the block is not on return empty.
 	 *
 	 */
 	bool try_handle_all() {
 		std::list<AsyncBase*>::iterator it = pending_.begin();
-		while(it != pending_.end()){
+		while (it != pending_.end()) {
 			bool res = (*it)->try_handle();
 			if (res) {
 				delete *it;
 				it = pending_.erase(it);
-			}
-			else return false;
+			} else
+				return false;
 		}
 		return true;
 	}
 
+	/**
+	 * Attempts to handle the first item in the list.  If the first item is not enabled, the routine
+	 * returns immediately.  Otherwise, the item will be handled and removed from the list.  If the
+	 * first item is actually done, it will be removed from the list, and the next item tried.
+	 * If the list is empty, or becomes empty after removing done operations, true is returned,
+	 * otherwise false.
+	 *
+	 * @return  false if the pending list for the block is not empty after attempting to handle one op.
+	 *
+	 * From the point of view of the caller, try_handle_all and try_handle look the
+	 * same, a return value of true means that all pending ops for this block have
+	 * been handled.  The difference is how long the methods keep trying.
+	 *
+	 */
+	bool try_handle() {
+		std::list<AsyncBase*>::iterator it = pending_.begin();
+		//handle already done acks
+		while (it != pending_.end() && (*it)->is_done()) {
+			delete *it;
+			it = pending_.erase(it);
+		}
+		//nothing left to handle
+		if (it == pending_.end()) {
+			return true;
+		}
+		bool res = (*it)->try_handle();
+		if (res) {
+			delete *it;
+			it = pending_.erase(it);
+		}
+		return pending_.empty();
 
-	/** Handles all pending asyncs on this block, waiting for each one in turn to be enabled
+	}
+
+	/** Handles all pending asyncs on this block, waiting for each one in
+	 * turn to be enabled.
+	 *
+	 * Postcondition:  there are no pending ops on this block
 	 * */
 
 	void wait_all() {
-		if (!has_pending()) {
-			return;
-		}
 		std::list<AsyncBase*>::iterator it = pending_.begin();
 		while (it != pending_.end()) {
 			(*it)->wait();
@@ -347,7 +373,7 @@ public:
 
 private:
 	std::list<AsyncBase*> pending_;
-	DISALLOW_COPY_AND_ASSIGN (BlockAsyncManager);
+	DISALLOW_COPY_AND_ASSIGN (ServerBlockAsyncManager);
 };
 
 } /* namespace sip */

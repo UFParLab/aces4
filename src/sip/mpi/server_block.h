@@ -182,7 +182,7 @@ private:
 	dataPtr data_;	/**< Pointer to block of data */
 //    MPIState state_;/**< For blocks busy in async MPI communication */
 
-	BlockAsyncManager async_state_; /** handles async communication operations */
+	ServerBlockAsyncManager async_state_; /** handles async communication operations */
     DiskBackingState disk_state_;
 
 
