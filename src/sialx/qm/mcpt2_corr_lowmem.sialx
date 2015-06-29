@@ -1701,6 +1701,20 @@ import "mcpt2_vars.sialx"
 
          ENDDO i 
          ENDDO a  
+      ENDIF
+      ENDPARDO ifrag
+      server_barrier
+
+      PARDO ifrag 
+         icount = (scalar)ifrag
+
+         GET     e1error[ifrag] 
+         etemp = e1error[ifrag] 
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
 
          DO a 
 	 where (int)SwVirtA_frag[(index)a] == ifrag
@@ -2055,39 +2069,50 @@ import "mcpt2_vars.sialx"
 	  ENDDO a1  
 	  ENDDO i  
 	  ENDDO a  
-
-	  DO a
-	  where (int)SwVirtA_frag[(index)a] == ifrag
-	  DO i  
-	  where (int)SwOccA_frag[(index)i] == ifrag
-	  DO a1  
-	  where (int)SwVirtA_frag[(index)a1] == ifrag
-	  DO i1  
-	  where (int)SwOccA_frag[(index)i1] == ifrag
-
-               GET                T20aiai[a,i,a1,i1] 
-               GET                Vaibj[a,i,a1,i1]  
-               GET                Vaibj[a,i1,a1,i]  
-
-               tppqq[a,i,a1,i1] = T20aiai[a,i,a1,i1] 
-
-               execute energy_denominator_rhf tppqq[a,i,a1,i1] fock_a  
-
-               t1ppqq[a,i,a1,i1] = Vaibj[a,i,a1,i1]  
-               t3ppqq[a,i1,a1,i] = Vaibj[a,i1,a1,i]  
-               t2ppqq[a,i,a1,i1]   = t3ppqq[a,i1,a1,i] 
-               t1ppqq[a,i,a1,i1]*= 2.0  
-               t1ppqq[a,i,a1,i1]-= t2ppqq[a,i,a1,i1] 
-
-               etemp = tppqq[a,i,a1,i1]*t1ppqq[a,i,a1,i1] 
-               esum += etemp 
-
-	  ENDDO i1  
-	  ENDDO a1  
-	  ENDDO i  
-	  ENDDO a  
-# 
       ENDPARDO ifrag 
+
+#      server_barrier
+#
+#      PARDO ifrag  
+#         icount = (scalar)ifrag
+#
+#	  esum = 0.0 
+##
+#
+#	  DO a
+#	  where (int)SwVirtA_frag[(index)a] == ifrag
+#	  DO i  
+#	  where (int)SwOccA_frag[(index)i] == ifrag
+#	  DO a1  
+#	  where (int)SwVirtA_frag[(index)a1] == ifrag
+#	  DO i1  
+#	  where (int)SwOccA_frag[(index)i1] == ifrag
+#
+#               GET                T20aiai[a,i,a1,i1] 
+#               GET                Vaibj[a,i,a1,i1]  
+#               GET                Vaibj[a,i1,a1,i]  
+#
+#               tppqq[a,i,a1,i1] = T20aiai[a,i,a1,i1] 
+#
+#               execute energy_denominator_rhf tppqq[a,i,a1,i1] fock_a  
+#
+#               t1ppqq[a,i,a1,i1] = Vaibj[a,i,a1,i1]  
+#               t3ppqq[a,i1,a1,i] = Vaibj[a,i1,a1,i]  
+#               t2ppqq[a,i,a1,i1]   = t3ppqq[a,i1,a1,i] 
+#               t1ppqq[a,i,a1,i1]*= 2.0  
+#               t1ppqq[a,i,a1,i1]-= t2ppqq[a,i,a1,i1] 
+#
+#               etemp = tppqq[a,i,a1,i1]*t1ppqq[a,i,a1,i1] 
+#               esum += etemp 
+#
+#	  ENDDO i1  
+#	  ENDDO a1  
+#	  ENDDO i  
+#	  ENDDO a  
+## 
+#      ENDPARDO ifrag 
+#
+#      sip_barrier
 
 # -----------------------------------------------------------------------------
 # Now form the initial guess to Taibj 
@@ -2192,6 +2217,10 @@ import "mcpt2_vars.sialx"
       DO kiter 
       print kiter
 #
+#
+# -----------------------------------------------------------------------------
+#     START OF FRAGMENT ITERATIONS 
+# -----------------------------------------------------------------------------
       sip_barrier
       PARDO ifrag  
       icount = (scalar)ifrag
@@ -2206,11 +2235,6 @@ import "mcpt2_vars.sialx"
          GET     e20c_old[ifrag] 
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
-	 
-#
-# -----------------------------------------------------------------------------
-#     START OF FRAGMENT ITERATIONS 
-# -----------------------------------------------------------------------------
        
         et2_correction = 0.0 
         esum = 0.0  
@@ -2231,6 +2255,25 @@ import "mcpt2_vars.sialx"
 	  ENDDO a1  
 	  ENDDO i  
 	  ENDDO a  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
 
           DO mu
 	  where (int)SwAO_frag[(index)mu] == ifrag
@@ -2249,6 +2292,26 @@ import "mcpt2_vars.sialx"
           ENDDO nu 
           ENDDO i
           ENDDO mu 
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
        
 # Form backtransformed amplitudes 
 
@@ -2284,6 +2347,26 @@ import "mcpt2_vars.sialx"
 	  ENDDO a
 	  ENDDO i 
 	  ENDDO mu
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 # Do Ladder contraction 
 #
@@ -2315,6 +2398,26 @@ import "mcpt2_vars.sialx"
 	  ENDDO lambda  
 	  ENDDO nu  
 	  ENDDO mu   
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 # Add the WMEBJ term 
 #
@@ -2356,6 +2459,26 @@ import "mcpt2_vars.sialx"
 	  ENDDO a1  
 	  ENDDO i  
 	  ENDDO a  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 #     AB 
 #
@@ -2395,6 +2518,26 @@ import "mcpt2_vars.sialx"
 	  ENDDO i  
 	  ENDDO a  
 	  ENDDO a1  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 #     AB 
 #
@@ -2428,6 +2571,26 @@ import "mcpt2_vars.sialx"
 	  ENDDO i1  
 	  ENDDO j  
 	  ENDDO a 
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 #     v^2 o^4 term  
 #
@@ -2458,6 +2621,26 @@ import "mcpt2_vars.sialx"
 	  ENDDO i1  
 	  ENDDO b  
 	  ENDDO a 
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 # 
 #    Perform final transformation of LADDER contribution
 #    ---------------------------------------------------
@@ -2506,6 +2689,26 @@ import "mcpt2_vars.sialx"
         ENDDO j
         ENDDO i  
         ENDDO nu  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 # Form the new ampllitude 
 #
@@ -2527,6 +2730,26 @@ import "mcpt2_vars.sialx"
           ENDDO a1 
           ENDDO i 
           ENDDO a
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+      icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 
 # Form the new energy 
 
@@ -2633,6 +2856,10 @@ import "mcpt2_vars.sialx"
       DO kiter 
 	 print kiter
 #
+#
+# -----------------------------------------------------------------------------
+#     START OF FRAGMENT ITERATIONS 
+# -----------------------------------------------------------------------------
       PARDO ifrag, jfrag   
       where ifrag != jfrag
       where (int)elst_dist[ifrag,jfrag] == ifrag
@@ -2650,10 +2877,6 @@ import "mcpt2_vars.sialx"
          GET     d20c_old[ifrag,jfrag] 
          e1old = d20c_old[ifrag,jfrag] 
          do_iter = 1.0 
-#
-# -----------------------------------------------------------------------------
-#     START OF FRAGMENT ITERATIONS 
-# -----------------------------------------------------------------------------
 
         e2old = 0.0 
         et2_correction = 0.0  
@@ -2693,6 +2916,31 @@ import "mcpt2_vars.sialx"
           ENDDO nu
           ENDDO i
           ENDDO mu
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 
 # Form backtransformed amplitudes 
 
@@ -2728,6 +2976,31 @@ import "mcpt2_vars.sialx"
 	  ENDDO a
 	  ENDDO i
 	  ENDDO mu
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 #
 # Do Ladder contraction 
 #
@@ -2759,6 +3032,31 @@ import "mcpt2_vars.sialx"
 	  ENDDO lambda
 	  ENDDO nu
 	  ENDDO mu
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 #
 # Add the WMEBJ term 
 #
@@ -2793,6 +3091,31 @@ import "mcpt2_vars.sialx"
 	  ENDDO i1
 	  ENDDO j
 	  ENDDO a
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 #
 	  DO a
 	  where (int)SwVirtA_frag[(index)a] == ifrag
@@ -2823,6 +3146,31 @@ import "mcpt2_vars.sialx"
 	  ENDDO j1
 	  ENDDO j
 	  ENDDO a
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 #
 #     v^2 o^4 term  
 #
@@ -2854,6 +3202,31 @@ import "mcpt2_vars.sialx"
 	  ENDDO i1
 	  ENDDO b
 	  ENDDO a
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 # 
 #    Perform final transformation of LADDER contribution
 #    ---------------------------------------------------
@@ -2902,6 +3275,31 @@ import "mcpt2_vars.sialx"
 	    ENDDO j
 	    ENDDO i
 	    ENDDO nu
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 # 
 #    Add the contributions coming from Vaiai  
 #    ---------------------------------------------------
@@ -2963,6 +3361,31 @@ import "mcpt2_vars.sialx"
 	  ENDDO b  
 	  ENDDO i  
 	  ENDDO a  
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 #
 # Form the new ampllitude 
 #
@@ -2984,6 +3407,31 @@ import "mcpt2_vars.sialx"
           ENDDO a1
           ENDDO i
           ENDDO a
+      ENDIF
+      ENDPARDO ifrag, jfrag   
+      server_barrier
+      PARDO ifrag, jfrag   
+      where ifrag != jfrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+         GET     d2error[ifrag,jfrag] 
+         etemp = d2error[ifrag,jfrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     d20c_old[ifrag,jfrag] 
+         e1old = d20c_old[ifrag,jfrag] 
+         do_iter = 1.0 
+
+        e2old = 0.0 
+        et2_correction = 0.0  
+        esum = 0.0  
+
 
 # Form the new energy 
 
@@ -3094,6 +3542,10 @@ import "mcpt2_vars.sialx"
          do_iter = 0.0 
 #
       sip_barrier
+#
+# -----------------------------------------------------------------------------
+#     START OF FRAGMENT ITERATIONS 
+# -----------------------------------------------------------------------------
       PARDO ifrag  
 	 icount = (scalar)ifrag
 
@@ -3107,10 +3559,6 @@ import "mcpt2_vars.sialx"
          GET     e20c_old[ifrag] 
          e1old = e20c_old[ifrag] 
          do_iter = 1.0 
-#
-# -----------------------------------------------------------------------------
-#     START OF FRAGMENT ITERATIONS 
-# -----------------------------------------------------------------------------
        
         et2_correction = 0.0 
         esum = 0.0  
@@ -3131,6 +3579,26 @@ import "mcpt2_vars.sialx"
         ENDDO a1 
         ENDDO i 
         ENDDO a 
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 
         DO mu
 	where (int)SwAO_frag[(index)mu] == ifrag
@@ -3150,6 +3618,26 @@ import "mcpt2_vars.sialx"
         ENDDO i
         ENDDO mu 
        
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 # Form backtransformed amplitudes 
 
         DO mu 
@@ -3184,6 +3672,26 @@ import "mcpt2_vars.sialx"
        ENDDO a
        ENDDO i 
        ENDDO mu
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 # Do Ladder contraction 
 #
@@ -3215,6 +3723,26 @@ import "mcpt2_vars.sialx"
         ENDDO lambda  
         ENDDO nu  
         ENDDO mu   
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 # Add the WMEBJ term 
 #
@@ -3256,6 +3784,26 @@ import "mcpt2_vars.sialx"
         ENDDO a1  
         ENDDO i  
         ENDDO a  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 #     AB 
 #
@@ -3295,6 +3843,26 @@ import "mcpt2_vars.sialx"
         ENDDO i  
         ENDDO a  
         ENDDO a1  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 #     AB 
 #
@@ -3328,6 +3896,26 @@ import "mcpt2_vars.sialx"
         ENDDO i1  
         ENDDO j  
         ENDDO a 
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 #     v^2 o^4 term  
 #
@@ -3358,6 +3946,26 @@ import "mcpt2_vars.sialx"
         ENDDO i1  
         ENDDO b  
         ENDDO a 
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 # 
 #    Perform final transformation of LADDER contribution
 #    ---------------------------------------------------
@@ -3405,6 +4013,26 @@ import "mcpt2_vars.sialx"
         ENDDO j
         ENDDO i  
         ENDDO nu  
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 #
 # Form the new ampllitude 
 #
@@ -3426,6 +4054,26 @@ import "mcpt2_vars.sialx"
         ENDDO a1 
         ENDDO i 
         ENDDO a
+      ENDIF
+      ENDPARDO ifrag  
+      server_barrier
+      PARDO ifrag  
+	 icount = (scalar)ifrag
+
+         GET     e2error[ifrag] 
+	 etemp = e2error[ifrag]
+         if etemp < zero  
+            etemp *= -1.0 
+         endif 
+
+      IF etemp > cc_conv 
+         GET     e20c_old[ifrag] 
+         e1old = e20c_old[ifrag] 
+         do_iter = 1.0 
+       
+        et2_correction = 0.0 
+        esum = 0.0  
+
 
 # Form the new energy 
 
