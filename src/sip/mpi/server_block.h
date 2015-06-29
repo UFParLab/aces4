@@ -14,6 +14,7 @@
 #include "id_block_map.h"
 #include "sip_mpi_constants.h"
 #include "async_ops.h"
+#include "distributed_block_consistency.h"
 
 namespace sip {
 
@@ -21,7 +22,6 @@ class SIPServer;
 class DiskBackedArraysIO;
 class DiskBackedBlockMap;
 class PendingAsyncManager;
-
 
 
 
@@ -86,9 +86,6 @@ class PendingAsyncManager;
  */
 class ServerBlock;
 
-
-
-
 class DiskBackingState{
 public:
 	void set_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = true; }
@@ -126,11 +123,11 @@ public:
 	/**
 	 * Constructs a block, allocating size number
 	 * of double precision numbers; optionally
-	 * initializes all elements to 0 (default true).
+	 * initializes all elements to 0
 	 * @param size
 	 * @param init
 	 */
-	explicit ServerBlock(int size, bool init=true);
+	explicit ServerBlock(int size, bool init);
 	/**
 	 * Constructs a block with a given pointer to
 	 * double precision numbers and size. data
@@ -150,14 +147,11 @@ public:
 	 * @param worker
 	 * @return false if brought into inconsistent state by operation
 	 */
-	bool update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker);
+	bool update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker, int section){
+			return race_state_.update_and_check_consistency(operation, worker, section);
+}
 
-	/**
-	 * Resets consistency status of block to (NONE, OPEN).
-	 */
-	void reset_consistency_status ();
-
-	dataPtr get_data() { return data_; }
+    dataPtr get_data() { return data_; }
 	void set_data(dataPtr data) { data_ = data; }
 
 	int size() { return size_; }
@@ -168,7 +162,7 @@ public:
     dataPtr scale_data(size_t size, double factor);
 
     void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
-    void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
+    void allocate_in_memory_data(bool init); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
 
 	void wait(){ async_state_.wait_all();}
@@ -180,58 +174,10 @@ public:
 private:
     const int size_;/**< Number of elements in block */
 	dataPtr data_;	/**< Pointer to block of data */
-//    MPIState state_;/**< For blocks busy in async MPI communication */
-
 	ServerBlockAsyncManager async_state_; /** handles async communication operations */
     DiskBackingState disk_state_;
+    DistributedBlockConsistency race_state_;
 
-
-	/**	 Structures and methods to check for block consistency during GET, PUT, PUT+ operations
-	 * from different workers in a pardo section
-	 */
-
-	enum ServerBlockMode {
-		NONE = 2,			// Block not being worked on
-		READ = 3, 			// GET/REQUEST done on block
-		WRITE = 4, 			// PUT/PREPARE done on block
-		ACCUMULATE = 5, 	// PUT+/PREPARE+ done on block
-		SINGLE_WORKER = 6,	// PUT/PUT+ and GET done by same worker
-		INVALID_MODE = 999
-	};
-
-	/** Can convert OPEN to ONE_WORKER and ONE_WORKER to MULTIPLE_WORKER */
-	enum ServerBlockWorker {
-		OPEN = -3,				// Block not worked on
-		ONE_WORKER = -2,		// Just one worker worked on block, UNUSED - actual rank is stored
-		MULTIPLE_WORKER = -1,	// More than one worker worked on block
-		INVALID_WORKER = -999
-	};
-
-	/**
-	 * The set of consistent states that a block can be in are shown.
-	 * Each row denote a starting state. A state is shown as <ServerBlockMode><ServerBlockWorker>
-	 * w is an arbitrary rank. w1 is another arbitrary rank not equal to w.
-	 * Each column is an action on a block, the state of the block
-	 * is changed to that shown in the row.
-	 * In the table, for ServerBlockMode
-	 * N = NONE, R = READ, W = WRITE, A = ACCUMULATE, S = SINGLE_WORKER
-	 * For ServerBlockWorker
-	 * O = OPEN, w = worker rank (ONE_WORKER),  w1 = some other worker, M = MULTIPLE_WORKER
-	 *
-	 * The positions denoted with 'X' are error conditions.
-	 *
-	 *
-	 *    		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-	 *		NO      Rw      Ww         Aw         Rw1        Ww1     Aw1
-	 *		Rw      Rw      Sw         Sw         RM          X       X
-	 *		RM      RM       X          X          RM         X       X
-	 *		Ww      Sw      Sw         Sw          X          X       X
-	 *		Aw      Sw      Sw         Aw          X          X       AM
-	 *		AM       X       X         AM          X          X       AM
-	 *		Sw      Sw      Sw         Sw          X          X       X
-	 */
-
-	std::pair<ServerBlockMode, int> consistency_status_; /*! State of block */
 
 //	const static std::size_t field_members_size_;
 	static std::size_t allocated_bytes_;

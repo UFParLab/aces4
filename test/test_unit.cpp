@@ -83,7 +83,7 @@ TEST(Sial_Unit,ServerBlockLRUArrayPolicy){
 
 	// Allocate dummy data for ServerBlock so that ServerBlock
 	// Specific LRUArrayPolicy processes it correctly.
-	sip::ServerBlock *sb = new sip::ServerBlock(1);
+	sip::ServerBlock *sb = new sip::ServerBlock(1, true);
 
 	sip::IdBlockMap<sip::ServerBlock> server_block_map(6);
 	server_block_map.insert_block(bid0, sb);

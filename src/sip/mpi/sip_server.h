@@ -26,200 +26,26 @@ namespace sip {
 
 std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
 
-/** SIPServer manages distributed/served arrays.
- *
- * The server executes a loop, run, that repeatedly polls for messages from workers and handles them.
- * The loop terminates when an END_PROGRAM message is received.
- *
- * The current sip_barrier implementation requires each "transaction" initiated by a worker be acknowledged by the server.
- * Also, workers and servers need to be able to match messages that belong to a single transaction.
- * For example, a GET transaction has a request and a reply.  PUT and PUT_ACCUMULATE
- * involve two messages from the worker to the server, one containing the block meta-data (id, size)
- * and another containing the data itself; followed by an ack from the server to the worker.
- * Each transaction is given a unique number.  To allow some error checking of the barrier routines,
- * this number is formed by combining the section number (each barrier increases the section number)
- * and message number within the barrier.  In a message, the transaction number is combined with
- * a constant indicating the message type and sent in the tag of the mpi message.
- *
- * The BarrierSupport class provides routines for constructing tags and extracting the components;
- * it also maintains the section and message numbers and provides a routine for checking the
- * section number invariant at server.
- *
- * The server supports the following "transactions" with workers:
- * GET: server receives GET from worker, replies with requested block.  It is a fatal error for a worker to request a block that doesn't exist
- * PUT: server receives PUT from worker with block id, server receives matching PUT_DATA from worker.  replies with PUT_DATA_ACK.
- * PUT_ACCUMULATE: server receives PUT_ACCUMLATE from worker with block id, server receives matching PUT_ACCUMULATE_DATA from worker.  replies with PUT_ACCUMULATE_DATA_ACK.
- * PUT_INITIALIZE: server receives PUT_INITIALIZE from  worker with block id and double value and replies with ack containing same tag.  Server initializes each element of the
- *     block to the value. If the block does not exist, it is created.
- * PUT_INCREMENT: server receives PUT_INCREMENT from worker with block id and double value and replies with ack containing the same tag.  Server increments each element
- *     of the block with the given value.
- * PUT_SCALE:  server receives PUT_SCALE from worker with block id and double value and replies with ack containing the same tag.  Server multiplies each element
- *     of the block with the given value.
- * DELETE:
- *
 
+
+
+
+/**
+ * Manages server-wide pending blocks by keeping a list of (pointers to) blocks that
+ * may have pending asynchronous operations.
+ *
+ * The server loop should check occasionally (may_have_pending)
+ * and handle pending requests (try_pending). An iterator maintains the
+ * next block to look at, so on each call of try_pending, the next block will
+ * be chosen.
+ *
+ * When a block no longer has any pending requests, it should be removed from the list.
+ *
+ * The system should maintain the
+ * invariant that if a block has a pending request, it is in the list.  The
+ * converse does not necessarily hold. It is also the case that a block may
+ * appear more than once in the list, but only one will be removed
  */
-
-
-///** contains the information necessary to handle pending PUT_DATA or PUT_ACCUMULATE messages for which a receive has been posted.
-// *
-// */
-//class DataMessageInfo{
-//public:
-//	int pc_;
-//	BlockId id_;
-//	double* temp_;
-//	ServerBlock* block_;
-//	DataMessageInfo(int pc, BlockId id, double* temp, ServerBlock* block):
-//		pc_(pc), id_(id), temp_(temp), block_(block){
-////		check(id_.parent_id_ptr_ == NULL, "DataMessageInfo blockid with non-null parent");
-//	}
-//	~DataMessageInfo(){
-//		delete[] temp_;
-//	}
-//	friend std::ostream& operator<<(std::ostream& os, const DataMessageInfo& info){
-//		os << "DataMessageInfo:  pc_="<< info.pc_ <<" id_=" << info.id_ <<", temp_=" << info.temp_ << ", block_=" << info.block_ << std::endl;
-//		return os;
-//	}
-//	friend SIPServer
-//	DISALLOW_COPY_AND_ASSIGN(DataMessageInfo);
-//};
-///**
-// * This class holds the MPI_Requests of posted receives for PUT_ACCUMULATE_DATA
-// * messages.  add_request returns a pointer to a new MPI_Request and
-// * can be passed to the MPI_IRecv function.
-// *
-// * The class also keeps track of buffer locations and the block of the
-// * communication.
-// */
-//class PendingDataRequestManager{
-//public:
-//	typedef std::pair<int,int> Key;  //source, tag
-//
-//	PendingDataRequestManager():
-//		pending_put_data_messages_(),
-//		pending_put_accumulate_data_messages_(),
-//		data_info_map_(){
-//	}
-//	~PendingDataRequestManager(){
-//		if (!pending_put_data_messages_.empty()){
-//			check(false, "destructing PendingDataRequestManager with pending put data message");
-//		}
-//		if (!pending_put_accumulate_data_messages_.empty()){
-//			check(false, "destructing PendingDataRequestManager with pending put accumulate data message");
-//		}
-//	}
-//
-//	/**
-//	 *
-//	 * @return address of an MPI_Request in list
-//	 */
-//	MPI_Request* add_put_accumulate_data_request(){
-//		pending_put_accumulate_data_messages_.push_back(MPI_REQUEST_NULL);
-//		return &(*(pending_put_accumulate_data_messages_.rbegin())); //rbegin is iterator to last element
-//	}
-//
-//	MPI_Request** add_put_data_request(ServerBlock* block){
-//		pending_put_data_messages_.push_back(block->mpi_request());
-//		return &(*(pending_put_data_messages_.rbegin())); //rbegin is iterator to last element
-//	}
-//
-//	/**
-//	 * First searches for a completed put_data message.  If there is one,
-//	 * it is completed with MPI_Test.  This will set the mpi_state in the block
-//	 * to MPI_REQUEST_NULL.  The status is filled in with information from the message.
-//	 * The MPI_Request* is removed from the list.
-//	 *
-//	 * If no completed put_data message found, search for
-//	 * a put_accumulate_data message that is ready to
-//	 * handle.  If there is one, it is completed with MPI_Test, and its
-//	 * MPI_Request is removed from the list.  The status variable is
-//	 * filled in with values from the received message.
-//	 *
-//	 * @param [out] status
-//	 * @return true if completed message was found
-//	 */
-//	bool completed_message_status(MPI_Status& status){
-//		//iterate over list of pending put_data messages
-//		for (std::list<MPI_Request*>::iterator it = pending_put_data_messages_.begin();
-//				it != pending_put_data_messages_.end();
-//				++it){
-//				   int flag;
-//				   MPI_Test(*it, &flag, &status);  //*it is a pointer to the MPI_Request in the block.
-//				   if (flag){
-//					   pending_put_data_messages_.erase(it);
-//					   return true;
-//				   }
-//			}
-//		//iterate over list of pending put_accumulate messages
-//		for (std::list<MPI_Request>::iterator it = pending_put_accumulate_data_messages_.begin();
-//				it != pending_put_accumulate_data_messages_.end();
-//				++it){
-//				   int flag;
-//				   MPI_Test(&(*it), &flag, &status);  //&(*it) is a pointer to the MPI_Request in the list.
-//				   if (flag){
-//					   pending_put_accumulate_data_messages_.erase(it);
-//					   return true;
-//				   }
-//			}
-//		//if here, none were found, so return false
-//		return false;
-//	}
-//
-//	bool has_pending(){return !pending_put_accumulate_data_messages_.empty()
-//			|| !pending_put_data_messages_.empty();
-//	}
-//	void add_info(int source, int data_tag, int pc, BlockId id, double* temp, ServerBlock* block ){
-//		std::pair<std::map<Key,DataMessageInfo*>::iterator, bool> result;
-//
-//		result = data_info_map_.insert(
-//				std::make_pair(std::make_pair(source, data_tag),new DataMessageInfo(pc, id, temp,  block))
-//				);
-//		check(result.second, "duplicate key for map insert");
-//	}
-//	DataMessageInfo* get_info(int source, int data_tag){
-////		Key key = std::make_pair(source, data_tag);
-//		std::map<Key,DataMessageInfo*>::iterator it = data_info_map_.find(std::make_pair(source, data_tag));
-//		if (it == data_info_map_.end()){
-//			check(fail, "info object not found");
-//		}
-//		DataMessageInfo* to_return = it->second;
-//		data_info_map_.erase(it);
-//		return to_return;
-//	}
-//	friend std::ostream& operator<<(std::ostream& os, const PendingDataRequestManager& manager) {
-//		os << "PendingDataRequestManager: ";
-//		os << " pending_put_data_messages_.size=" << manager.pending_put_data_messages_.size();
-//		os << " pending_put_accumulate_data_messages_.size=" << manager.pending_put_accumulate_data_messages_.size();
-//		os << ", data_info_map_.size=" << manager.data_info_map_.size();
-//		return os;
-//	}
-//private:
-//	/**
-//	 * List  of MPI_Requests for posted IRecv for PUT_ACCUMULATE_DATA
-//	 * messages.
-//	 */
-//	std::list<MPI_Request> pending_put_accumulate_data_messages_;
-//
-//
-//	/**
-//	 * List of pointers to MPI_Requests for posted IRecv for PUT_DATA messages.
-//	 * The MPI_Request is in the block awaiting data, so we need a list of pointers here.
-//	 */
-//	std::list<MPI_Request*> pending_put_data_messages_;
-//	/**
-//	 * Map from tag to block to accumulate into.
-//	 */
-//	std::map<Key,DataMessageInfo*> data_info_map_;
-//	/**
-//	 * number of expected put or put_accumulate data messages.
-//	 * Only test for received messages when this variable is >0.
-//	 */
-//	DISALLOW_COPY_AND_ASSIGN(PendingDataRequestManager);
-//};
-
-
-
 class PendingAsyncManager{
 public:
 	PendingAsyncManager():next_block_iter_(pending_.begin()){}
@@ -253,23 +79,27 @@ public:
 	/**
 	 * Tries to handle the pending requests for the next block in the pending list.
 	 * If all requests for that block have been handled, then it is removed from the list.
-	 * The
+	 *
 	 */
-	void try_pending(){ //tries to handle a block
-		if(next_block_iter_ == pending_.end()){
-
+	void try_pending() { //tries to handle a block
+		if (pending_.end() == pending_.begin())
+			return;
+		if (next_block_iter_ == pending_.end()) { //wrap around list
+			next_block_iter_ = pending_.begin();
 		}
-			bool block_complete = (*next_block_iter_)->async_state_.try_handle_all();
-			if (block_complete) {
-				next_block_iter_ = pending_.erase(next_block_iter_);
-			}
-			else {
-				++next_block_iter_;
-			}
+		bool block_complete =
+				(*next_block_iter_)->async_state_.try_handle(); //this could be replace with try_handle_all
+		                                                        //for less overhead, but
+		                                                        //longer latency for short messages.
+		if (block_complete) {
+			next_block_iter_ = pending_.erase(next_block_iter_);
+		} else {
+			++next_block_iter_;
+		}
 	}
 
-	void wait_all(){
-		while (may_have_pending()){
+	void wait_all() {
+		while (may_have_pending()) {
 			try_pending();
 		}
 	}
@@ -280,6 +110,43 @@ private:
     DISALLOW_COPY_AND_ASSIGN(PendingAsyncManager);
 };
 
+/** SIPServer manages distributed/served arrays.
+ *
+ * The server executes a loop, run, that repeatedly polls for messages from workers and handles them.
+ * The loop terminates when an END_PROGRAM message is received.
+ *
+ * The current sip_barrier implementation requires each "transaction" initiated by a worker be acknowledged by the server.
+ * Also, workers and servers need to be able to match messages that belong to a single transaction.
+ * For example, a GET transaction has a request and a reply.  PUT and PUT_ACCUMULATE
+ * involve two messages from the worker to the server, one containing the block meta-data (id, size)
+ * and another containing the data itself; followed by an ack from the server to the worker.
+ * Each transaction is given a unique number.  To allow some error checking of the barrier routines,
+ * this number is formed by combining the section number (each barrier increases the section number)
+ * and message number within the barrier.  In a message, the transaction number is combined with
+ * a constant indicating the message type and sent in the tag of the mpi message.
+ *
+ * The BarrierSupport class provides routines for constructing tags and extracting the components;
+ * it also maintains the section and message numbers and provides a routine for checking the
+ * section number invariant at server.
+ *
+ * The server supports the following "transactions" with workers:
+ * GET: server receives GET from worker, replies with requested block.  It is a fatal error for a worker to request a block that doesn't exist
+ * PUT: server receives PUT from worker with block id, server receives matching PUT_DATA from worker.  replies with PUT_DATA_ACK.
+ * PUT_ACCUMULATE: server receives PUT_ACCUMLATE from worker with block id, server receives matching PUT_ACCUMULATE_DATA from worker.  replies with PUT_ACCUMULATE_DATA_ACK.
+ * PUT_INITIALIZE: server receives PUT_INITIALIZE from  worker with block id and double value and replies with ack containing same tag.  Server initializes each element of the
+ *     block to the value. If the block does not exist, it is created.
+ * PUT_INCREMENT: server receives PUT_INCREMENT from worker with block id and double value and replies with ack containing the same tag.  Server increments each element
+ *     of the block with the given value.
+ * PUT_SCALE:  server receives PUT_SCALE from worker with block id and double value and replies with ack containing the same tag.  Server multiplies each element
+ *     of the block with the given value.
+ * DELETE:  deletes all the blocks of the indicated array
+ *
+ * The communication between servers and workers is designed to bypass MPI buffers for large messages.
+ * Unanticipated  messages handled by the server loop are short.  Messages containing blocks are announced
+ * first with a short message, then the server posts an MPI_Irecv and sends an acknowledgment.  On
+ * receipt of the ack, the worker send the anticipated large message containing the data.
+ *
+ */
 
 class SIPServer {
 
@@ -313,8 +180,8 @@ public:
 	}
 
 	/**
-	 * Called by persistent_array_manager during restore.  elegates
-	 * to block_map_
+	 * Called by persistent_array_manager during restore.  delegates
+	 * to the block map
 	 *
 	 * @param array_id
 	 * @param map_ptr
@@ -343,10 +210,10 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
 
-	double scalar_value(int){ fail("scalar_value should not be invoked by a server"); return -.1;}
-	void set_scalar_value(int, double) { fail("set_scalar_value should not be invoked by a server");}
-    void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
-    Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
+//	double scalar_value(int){ fail("scalar_value should not be invoked by a server"); return -.1;}
+//	void set_scalar_value(int, double) { fail("set_scalar_value should not be invoked by a server");}
+//    void set_contiguous_array(int, Block* ) {fail("set_contiguous_array should not be invoked by a server");}
+//    Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
 
 
     /**
@@ -361,7 +228,7 @@ private:
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
 	const DataDistribution &data_distribution_;
-
+	MPIScalarOpType mpi_type_;
 	ServerTimer& server_timer_;
 
 	int last_seen_line_;
@@ -379,12 +246,7 @@ private:
 	 */
 	bool terminated_;
 
-
 	ServerPersistentArrayManager* persistent_array_manager_;
-
-	/**
-	 * Interface to disk backed block manager.
-	 */
 	DiskBackedBlockMap disk_backed_block_map_;
 	PendingAsyncManager async_ops_;
 
@@ -413,7 +275,7 @@ private:
 	 * Receives the message and obtains the block_id and block size.
 	 * Get the block, creating it if
 	 *    it doesn't exist.
-	 * Posts receive with tag put_dat_tag
+	 * Creates an async op to manage the receive
 	 * Sends an ack to the source
 	 *
 	 * @param mpi_source
@@ -429,22 +291,49 @@ private:
 	 * invoked by server loop.
 	 *
 	 * Receives the message and obtains the block_id and block size.
-	 * Creates a temp buffer to receive the data, and posts receive
-	 *    for message with the put_accumulate_data_tag.
-	 *    This tag should have the same message number and section number as
-	 *    the put_accumulate_tag.
-	 * Get the block to accumulate into, creating and initializing it if
-	 *    it doesn't exist and add to the tag_to_accumulate_block_ map.
+	 * Gets the block to accumulate into, creating and initializing it if
+	 *    it doesn't exist
+	 * Creates an async op which manages the asynchronous receive which completes the transaction,
+	 * including allocating a temp buffer, and performing the accumulate operation.
 	 *
 	 * @param [in] mpi_source
 	 * @param [in] put_accumulate_tag
 	 * @param [in] put_accumulate_data_tag
 	 */
-//	void handle_PUT_DATA(int mpi_source, int put_data_tag, const MPI_Status& status);
 	void handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag, int put_accumulate_data_tag);
-	void handle_PUT_ACCUMULATE_DATA(int mpi_source, int put_accumulate_data_tag, MPI_Status& status);
+
+/**
+ * put_initialize
+ *
+ * Receives the message and obtains block_id, and value from the message.
+ * Initializes each element of the block to the given value.
+ *
+ * @param [in] mpi_source
+ * @param [in] put_initialize_tag
+ */
 	void handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag);
+
+	/**
+	 * put_increment
+	 *
+	 * Receives the message and obtains block_id, and value from the message.
+	 * Increments each element of the block by the given value.
+	 *
+	 * @param [in] mpi_source
+	 * @param [in] put_increment_tag
+	 */
 	void handle_PUT_INCREMENT(int mpi_source, int put_increment_tag);
+
+
+	/**
+	 * put_scale
+	 *
+	 * Receives the message and obtains block_id, and value from the message.
+	 * Multiplies each element of the block by the given value.
+	 *
+	 * @param [in] mpi_source
+	 * @param [in] put_increment_tag
+	 */
 	void handle_PUT_SCALE(int mpi_source, int put_scale_tag);
 
 	/**
@@ -523,22 +412,8 @@ private:
 	void check_double_count(const MPI_Status& status, int expected_count);
 
 
-	void handle_section_number_change(bool section_number_changed);
-
-
-	struct Put_scalar_op_message_t{
-	    double value_;
-	    int line_;
-	    int section_;
-		BlockId id_;
-	};
-
-	MPI_Datatype mpi_put_scalar_op_type_;
-	MPI_Datatype block_id_type_;
-	void initialize_mpi_type();
-
-
     friend ServerPersistentArrayManager;
+
 	DISALLOW_COPY_AND_ASSIGN(SIPServer);
 };
 

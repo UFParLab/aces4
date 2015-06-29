@@ -136,7 +136,7 @@ ServerBlock* DiskBackedBlockMap::allocate_block(ServerBlock* block, size_t block
     if (block == NULL) {
 	    block = new ServerBlock(block_size, initialize);
     } else {
-        block->allocate_in_memory_data();
+        block->allocate_in_memory_data(initialize);
     }
 
 	return block;
@@ -201,7 +201,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	} else {
 		block->wait(); //if involved in-progress asynchronous communication, wait for it to complete.
 		if (!block->disk_state_.is_in_memory())
-			block->allocate_in_memory_data();
+			block->allocate_in_memory_data(false);
 	}
 
 	block->disk_state_.set_in_memory();
@@ -324,19 +324,6 @@ void DiskBackedBlockMap::save_persistent_array(const int array_id,
 
 }
 
-
-void DiskBackedBlockMap::reset_consistency_status_for_all_blocks(){
-	int num_arrays = block_map_.size();
-	for (int i=0; i<num_arrays; i++){
-		typedef IdBlockMap<ServerBlock>::PerArrayMap PerArrayMap;
-		typedef IdBlockMap<ServerBlock>::PerArrayMap::iterator PerArrayMapIterator;
-		PerArrayMap *map = block_map_.per_array_map(i);
-		PerArrayMapIterator it = map->begin();
-		for (; it != map->end(); ++it){
-			it->second->reset_consistency_status();
-		}
-	}
-}
 
 void DiskBackedBlockMap::set_max_allocatable_bytes(std::size_t size){
     static bool done_once = false;

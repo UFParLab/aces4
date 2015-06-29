@@ -743,7 +743,49 @@ TEST(Sial,pardo_with_where){
 
 }
 
+TEST(Sial,put_accumulate_stress){
+    std::string job("put_accumulate_stress");
+    int norb = 4;
+    int kmax = 20;
+    int segs[] = {2,3,2,2};
+    if (attr->global_rank() == 0) {
+        init_setup(job.c_str());
+        set_constant("norb", norb);
+        set_constant("kmax", kmax);
+        std::string tmp = job + ".siox";
+        const char* nm = tmp.c_str();
+        add_sial_program(nm);
+        set_aoindex_info(4, segs);
+        finalize_setup();
+    }
+    std::stringstream output;
 
+    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    controller.initSipTables();
+    controller.run();
+
+    std::cerr << "finished run, check results" << std::endl << std::flush;
+
+	if (attr->is_worker()) {
+		int i,j;
+		for (i=1; i <= norb ; ++i ){
+			for (j = 1; j <= norb; ++j){
+			    double value = kmax*(2*i + 2*j);
+			    std::vector<int> indices;
+			    indices.push_back(i);
+			    indices.push_back(j);
+			    double * block_data = controller.local_block(std::string("a"),indices);
+			    size_t block_size = segs[i-1] * segs[j-1];
+			    for (size_t count = 0; count < block_size; ++count){
+			    	if (count == 0){
+			    		std::cerr << "i=" << i << " j=" << j << " value="<< value << " block_data[0]=" << block_data[count] << std::endl << std::flush;
+			    	}
+			    	ASSERT_DOUBLE_EQ(value, block_data[count]);
+			    }
+			}
+		}
+	}
+}
 
 //****************************************************************************************************************
 

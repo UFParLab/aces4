@@ -22,7 +22,7 @@ namespace sip {
 std::size_t ServerBlock::allocated_bytes_ = 0;
 
 ServerBlock::ServerBlock(int size, bool initialize):
-		size_(size), consistency_status_(std::make_pair(NONE, OPEN)){
+		size_(size){
 	if (initialize){
 		data_ = new double[size_]();
     } else {
@@ -40,7 +40,7 @@ ServerBlock::ServerBlock(int size, bool initialize):
 }
 
 ServerBlock::ServerBlock(int size, dataPtr data):
-		size_(size), data_(data), consistency_status_(std::make_pair(NONE, OPEN)) {
+		size_(size), data_(data) {
 	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = (data_ == NULL) ? false : true;
 	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
 	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
@@ -137,159 +137,159 @@ std::ostream& operator<<(std::ostream& os, const ServerBlock& block) {
 	return os;
 }
 
-void ServerBlock::reset_consistency_status (){
-	check(consistency_status_.first != INVALID_MODE &&
-			consistency_status_.second != INVALID_WORKER,
-			"Inconsistent block status !");
-	consistency_status_.first = NONE;
-	consistency_status_.second = OPEN;
-}
+//void ServerBlock::reset_consistency_status (){
+//	check(consistency_status_.first != INVALID_MODE &&
+//			consistency_status_.second != INVALID_WORKER,
+//			"Inconsistent block status !");
+//	consistency_status_.first = NONE;
+//	consistency_status_.second = OPEN;
+//}
 
 
-bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker){
-
-	/**
-	 * Block Consistency Rules
-	 *
-	 *     		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-	 *		NO      Rw      Ww         Aw         Rw1        Ww1     Aw1
-	 *		Rw      Rw      Sw         Sw         RM          X       X
-	 *		RM      RM       X          X          RM         X       X
-	 *		Ww      Sw      Sw         Sw          X          X       X
-	 *		Aw      Sw      Sw         Aw          X          X       AM
-	 *		AM       X       X         AM          X          X       AM
-	 *		Sw      Sw      Sw         Sw          X          X       X
-	 */
-
-	ServerBlockMode mode = consistency_status_.first;
-	int prev_worker = consistency_status_.second;
-
-	// Check if block already in inconsistent state.
-	if (mode == INVALID_MODE || prev_worker == INVALID_WORKER){
-		std::cout << "block in inconsistent state on entry to update and check "<< std::endl << std::flush;
-		return false;
-	}
-
-
-	ServerBlockMode new_mode = INVALID_MODE;
-	int new_worker = INVALID_WORKER;
-
-	switch (mode){
-	case NONE: {
-		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-		 *		NO      Rw      Ww         Aw         Rw1        Ww1     Aw1
-		 */
-		if (OPEN == prev_worker){
-			switch(operation){
-			case SIPMPIConstants::GET : new_mode = READ; new_worker = worker; break;
-			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE	:		new_mode = WRITE; 		new_worker = worker; break;
-			case SIPMPIConstants::PUT_ACCUMULATE :	case SIPMPIConstants::PUT_INCREMENT: case SIPMPIConstants::PUT_SCALE: new_mode = ACCUMULATE; 	new_worker = worker; break;
-			default : goto consistency_error;
-			}
-		} else {
-			goto consistency_error;
-		}
-	}
-		break;
-	case READ: {
-		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-		 *		Rw      Rw      Sw         Sw         RM          X       X
-		 *		RM      RM       X          X          RM         X       X
-		 */
-		if (OPEN == prev_worker){
-			goto consistency_error;
-		} else if (MULTIPLE_WORKER == prev_worker){
-			switch(operation){
-			case SIPMPIConstants::GET :				new_mode = READ; new_worker = MULTIPLE_WORKER; break;
-			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE: case SIPMPIConstants::PUT_ACCUMULATE : case SIPMPIConstants::PUT_INCREMENT: case SIPMPIConstants::PUT_SCALE:{	goto consistency_error; } break;
-			default : goto consistency_error;
-			}
-		} else { 	// Single worker
-			switch(operation){
-			case SIPMPIConstants::GET :	new_mode = READ; new_worker = (worker == prev_worker ? worker : MULTIPLE_WORKER); break;
-			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_ACCUMULATE : case SIPMPIConstants::PUT_SCALE:{
-				if (worker != prev_worker)
-					goto consistency_error;
-				new_mode = SINGLE_WORKER;
-				new_worker = worker;
-			}
-			break;
-			default : goto consistency_error;
-			}
-		}
-	}
-		break;
-	case WRITE:{
-		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-		 *		Ww      Sw      Sw         Sw          X          X       X
-		 */
-		if (prev_worker == worker){
-			new_mode = SINGLE_WORKER; new_worker = worker;
-		} else {
-			goto consistency_error;
-		}
-	}
-	break;
-	case ACCUMULATE:{
-		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-		 *		Aw      Sw      Sw         Aw          X          X       AM
-		 *		AM       X       X         AM          X          X       AM
-		 */
-		if (OPEN == prev_worker){
-			goto consistency_error;
-		} else if (MULTIPLE_WORKER == prev_worker){
-			if (SIPMPIConstants::PUT_ACCUMULATE == operation || SIPMPIConstants::PUT_INCREMENT == operation || SIPMPIConstants::PUT_SCALE == operation){
-				new_mode = ACCUMULATE; new_worker = MULTIPLE_WORKER;
-			} else {
-				goto consistency_error;
-			}
-		} else { // Single worker
-			switch(operation){
-			case SIPMPIConstants::GET : case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE: {
-				if (prev_worker != worker)
-					goto consistency_error;
-				new_worker = worker;
-				new_mode = SINGLE_WORKER;
-			}
-			break;
-			case SIPMPIConstants::PUT_ACCUMULATE :	case SIPMPIConstants::PUT_SCALE : case SIPMPIConstants::PUT_INCREMENT : {
-				new_mode = ACCUMULATE;
-				new_worker = (worker == prev_worker ? worker : MULTIPLE_WORKER);
-			}
-			break;
-			default : goto consistency_error;
-			}
-		}
-	}
-	break;
-	case SINGLE_WORKER:{
-		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-		 *		Sw      Sw      Sw         Sw          X          X       X
-		 */
-		if (worker == prev_worker){
-			new_mode = SINGLE_WORKER; new_worker = worker;
-		} else {
-			goto consistency_error;
-		}
-	}
-	break;
-	default:
-		goto consistency_error;
-	}
-
-	consistency_status_.first = new_mode;
-	consistency_status_.second = new_worker;
-	return true;
-
-consistency_error:
-std::cout << "Inconsistent block at server " << consistency_status_.first << "," << consistency_status_.second << std::endl << std::flush;
-	SIP_LOG(std::cout << "Inconsistent block at server ")
-	consistency_status_.first = INVALID_MODE;
-	consistency_status_.second = INVALID_WORKER;
-
-	return false;
-
-}
+//bool ServerBlock::update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker){
+//
+//	/**
+//	 * Block Consistency Rules
+//	 *
+//	 *     		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
+//	 *		NO      Rw      Ww         Aw         Rw1        Ww1     Aw1
+//	 *		Rw      Rw      Sw         Sw         RM          X       X
+//	 *		RM      RM       X          X          RM         X       X
+//	 *		Ww      Sw      Sw         Sw          X          X       X
+//	 *		Aw      Sw      Sw         Aw          X          X       AM
+//	 *		AM       X       X         AM          X          X       AM
+//	 *		Sw      Sw      Sw         Sw          X          X       X
+//	 */
+//
+//	ServerBlockMode mode = consistency_status_.first;
+//	int prev_worker = consistency_status_.second;
+//
+//	// Check if block already in inconsistent state.
+//	if (mode == INVALID_MODE || prev_worker == INVALID_WORKER){
+//		std::cout << "block in inconsistent state on entry to update and check "<< std::endl << std::flush;
+//		return false;
+//	}
+//
+//
+//	ServerBlockMode new_mode = INVALID_MODE;
+//	int new_worker = INVALID_WORKER;
+//
+//	switch (mode){
+//	case NONE: {
+//		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
+//		 *		NO      Rw      Ww         Aw         Rw1        Ww1     Aw1
+//		 */
+//		if (OPEN == prev_worker){
+//			switch(operation){
+//			case SIPMPIConstants::GET : new_mode = READ; new_worker = worker; break;
+//			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE	:		new_mode = WRITE; 		new_worker = worker; break;
+//			case SIPMPIConstants::PUT_ACCUMULATE :	case SIPMPIConstants::PUT_INCREMENT: case SIPMPIConstants::PUT_SCALE: new_mode = ACCUMULATE; 	new_worker = worker; break;
+//			default : goto consistency_error;
+//			}
+//		} else {
+//			goto consistency_error;
+//		}
+//	}
+//		break;
+//	case READ: {
+//		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
+//		 *		Rw      Rw      Sw         Sw         RM          X       X
+//		 *		RM      RM       X          X          RM         X       X
+//		 */
+//		if (OPEN == prev_worker){
+//			goto consistency_error;
+//		} else if (MULTIPLE_WORKER == prev_worker){
+//			switch(operation){
+//			case SIPMPIConstants::GET :				new_mode = READ; new_worker = MULTIPLE_WORKER; break;
+//			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE: case SIPMPIConstants::PUT_ACCUMULATE : case SIPMPIConstants::PUT_INCREMENT: case SIPMPIConstants::PUT_SCALE:{	goto consistency_error; } break;
+//			default : goto consistency_error;
+//			}
+//		} else { 	// Single worker
+//			switch(operation){
+//			case SIPMPIConstants::GET :	new_mode = READ; new_worker = (worker == prev_worker ? worker : MULTIPLE_WORKER); break;
+//			case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_ACCUMULATE : case SIPMPIConstants::PUT_SCALE:{
+//				if (worker != prev_worker)
+//					goto consistency_error;
+//				new_mode = SINGLE_WORKER;
+//				new_worker = worker;
+//			}
+//			break;
+//			default : goto consistency_error;
+//			}
+//		}
+//	}
+//		break;
+//	case WRITE:{
+//		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
+//		 *		Ww      Sw      Sw         Sw          X          X       X
+//		 */
+//		if (prev_worker == worker){
+//			new_mode = SINGLE_WORKER; new_worker = worker;
+//		} else {
+//			goto consistency_error;
+//		}
+//	}
+//	break;
+//	case ACCUMULATE:{
+//		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
+//		 *		Aw      Sw      Sw         Aw          X          X       AM
+//		 *		AM       X       X         AM          X          X       AM
+//		 */
+//		if (OPEN == prev_worker){
+//			goto consistency_error;
+//		} else if (MULTIPLE_WORKER == prev_worker){
+//			if (SIPMPIConstants::PUT_ACCUMULATE == operation || SIPMPIConstants::PUT_INCREMENT == operation || SIPMPIConstants::PUT_SCALE == operation){
+//				new_mode = ACCUMULATE; new_worker = MULTIPLE_WORKER;
+//			} else {
+//				goto consistency_error;
+//			}
+//		} else { // Single worker
+//			switch(operation){
+//			case SIPMPIConstants::GET : case SIPMPIConstants::PUT : case SIPMPIConstants::PUT_INITIALIZE: {
+//				if (prev_worker != worker)
+//					goto consistency_error;
+//				new_worker = worker;
+//				new_mode = SINGLE_WORKER;
+//			}
+//			break;
+//			case SIPMPIConstants::PUT_ACCUMULATE :	case SIPMPIConstants::PUT_SCALE : case SIPMPIConstants::PUT_INCREMENT : {
+//				new_mode = ACCUMULATE;
+//				new_worker = (worker == prev_worker ? worker : MULTIPLE_WORKER);
+//			}
+//			break;
+//			default : goto consistency_error;
+//			}
+//		}
+//	}
+//	break;
+//	case SINGLE_WORKER:{
+//		/*  		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
+//		 *		Sw      Sw      Sw         Sw          X          X       X
+//		 */
+//		if (worker == prev_worker){
+//			new_mode = SINGLE_WORKER; new_worker = worker;
+//		} else {
+//			goto consistency_error;
+//		}
+//	}
+//	break;
+//	default:
+//		goto consistency_error;
+//	}
+//
+//	consistency_status_.first = new_mode;
+//	consistency_status_.second = new_worker;
+//	return true;
+//
+//consistency_error:
+//std::cout << "Inconsistent block at server " << consistency_status_.first << "," << consistency_status_.second << std::endl << std::flush;
+//	SIP_LOG(std::cout << "Inconsistent block at server ")
+//	consistency_status_.first = INVALID_MODE;
+//	consistency_status_.second = INVALID_WORKER;
+//
+//	return false;
+//
+//}
 
 std::size_t ServerBlock::allocated_bytes(){
 	return allocated_bytes_;

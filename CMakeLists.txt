@@ -122,7 +122,9 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/server_timer.cpp; 
         src/sip/mpi/async_ops.h;
         src/sip/mpi/async_ops.cpp;       
-        src/sip/dynamic_data/mpi_state.h
+        src/sip/dynamic_data/mpi_state.h;
+        src/sip/dynamic_data/distributed_block_consistency.h;
+        src/sip/dynamic_data/distributed_block_consistency.cpp      
  )
 else ()
     set(ACES_MPI_FILES "")
@@ -552,6 +554,7 @@ set(SIAL_FILES
     src/sialx/test/pardo_load_balance_test.sialx;
     src/sialx/test/read_block_test.sialx;
     src/sialx/test/aoladder.sialx;
+    src/sialx/test/put_accumulate_stress.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;

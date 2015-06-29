@@ -126,7 +126,7 @@ private:
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;
 	DataDistribution data_distribution_; // Data distribution scheme
-
+	MPIScalarOpType mpi_type_;
 	/**
 	 * values for mode_ array
 	 */

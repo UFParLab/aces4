@@ -47,8 +47,6 @@ public:
 	void save_persistent_array(const int array_id,const std::string& array_label,
 			IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
-	void reset_consistency_status_for_all_blocks();
-
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
 
 
