@@ -4599,10 +4599,11 @@ import "rccsd_rhf_defs.sialx"
       set_persistent Viaai  "Viaai"
       set_persistent VSaaai "VSaaai"
       set_persistent Vpiqj  "Vpiqj"
+      set_persistent Vaabj     "Vaaai"
 #
       set_persistent l1a_old  "l1a_old"
-      set_persistent L2old_aa "l2old_aa"
-      set_persistent L2old_ab "l2old_ab"
+      set_persistent L2old_aa "L2old_aa"
+      set_persistent L2old_ab "L2old_ab"
       server_barrier
 #
                            ENDSIAL LAMBDA_SV1     

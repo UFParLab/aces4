@@ -1,18 +1,19 @@
-c--------------------------------------------------------------------------
-!> special eigen_calc uu
-!>   Calculates the eigenvalues and eigenvectors of a 2-d square matrix.
-!>   The matrix is also diagonalized on output and inverted. 
+
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief Calculates the eigenvalues and eigenvectors of a 2-d square matrix.
 !>
-!>   The eigenvalues are stored in a common block.  
-!>   The instruction is executed as follows:
-!>   
-!>   execute eig Array1 Array2
+!> @details
+!> sialx def: special eigen_calc uu
 !>
-!>   where Array1 is the input matrix that is to be diagonalized.
-!>         Array2 is the matrix whose columns are the eigenvectors of Array1.
+!> sialx usage: execute eigen_calc Array1 Array2
+!>
+!>   Array1 is the input matrix that is to be diagonalized.
+!>
+!>   Array2 is the matrix whose columns are the eigenvectors of Array1.
 !>
 !>   Both Array1 and Array2 must be "static" arrays.
-c--------------------------------------------------------------------------
+! --------------------------------------------------------------------------
 
       subroutine eigen_calc(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
@@ -86,6 +87,15 @@ c--------------------------------------------------------------------------
       return
       end
 
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief Wrapper routine to DSYEV.
+!>
+!> @details
+!>   DSYEV computes all eigenvalues and, optionally, eigenvectors of a
+!>   real symmetric matrix A.
+! --------------------------------------------------------------------------
+
       subroutine dsyev_wrapper(Amat,Bvec,n,work,nw,sw,eigval,ierr)
       use, intrinsic :: ISO_C_BINDING 
       implicit none 
@@ -120,8 +130,6 @@ C checking
          print *, '      sum of differences is ',dtmp
       endif
 
-*  DSYEV computes all eigenvalues and, optionally, eigenvectors of a
-*  real symmetric matrix A.
 *
 *  Arguments
 *  =========

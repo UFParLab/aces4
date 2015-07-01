@@ -38,6 +38,7 @@
 
 #include <sstream>
 #include "sip_mpi_constants.h"
+#include "sip_interface.h"
 
 namespace sip {
 

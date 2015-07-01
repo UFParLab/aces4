@@ -210,22 +210,24 @@ H -0.75198755    -0.50051034    -0.00000000
 H  0.75198873    -0.50050946    -0.00000000
 
 *ACES2(BASIS=3-21G
-scf_conv=8
-cc_conv=8
+scf_conv=12
+cc_conv=12
 spherical=off
 excite=eomee
 estate_sym=2
-estate_tol=7
+estate_tol=9
 symmetry=off
 CALC=ccsd)
 
 *SIP
 MAXMEM=1500
 SIAL_PROGRAM = scf_rhf_coreh.siox
-SIAL_PROGRAM = tran_uhf_no4v.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
 SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rlambda_rhf.siox
 SIAL_PROGRAM = rcis_rhf.siox
-SIAL_PROGRAM = lr_eom_ccsd_rhf.siox 
+SIAL_PROGRAM = lr_eom_ccsd_rhf.siox
+
 */
 TEST(Sial_QM,eom_test){
 	std::string job("eom_test");
@@ -255,6 +257,10 @@ TEST(Sial_QM,eom_test){
 		double ccsd_energy = controller.scalar_value("ccsd_energy");
 		ASSERT_NEAR(-75.71251002928709, ccsd_energy, 1e-10);
 	}
+//
+// lambda 
+	controller.initSipTables(qm_dir_name);
+	controller.run();
 //
 // CIS
 	controller.initSipTables(qm_dir_name);
@@ -499,7 +505,7 @@ SIAL_PROGRAM = scf_rhf_coreh.siox
 SIAL_PROGRAM = tran_rhf_no4v.siox
 SIAL_PROGRAM = rlccsd_rhf.siox
 */
-TEST(Sial_QM,lccsd_test){
+TEST(Sial_QM,DISABLED_lccsd_test){
 	std::string job("lccsd_test");
 
 	std::stringstream output;
@@ -532,6 +538,249 @@ TEST(Sial_QM,lccsd_test){
 		ASSERT_NEAR(-0.12865706498547, lccsd_correlation, 1e-10);
 		double lccsd_energy = controller.scalar_value("lccsd_energy");
 		ASSERT_NEAR(-75.71298380772593, lccsd_energy, 1e-10);
+	}
+}
+
+/* eom-lccsd test, ZMAT is:
+test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+spherical=off
+excite=eomee
+estate_sym=2
+estate_tol=9
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = rlccsd_rhf.siox
+SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
+
+*/
+TEST(Sial_QM,eom_lccsd_test){
+	std::string job("eom_lccsd_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274034, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.36275490375537, 0.43493738840536};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-10);
+		}
+	}
+//
+// lccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double lccsd_energy = controller.scalar_value("lccsd_energy");
+		ASSERT_NEAR(-75.71298380772593, lccsd_energy, 1e-10);
+	}
+//
+// eom
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.32874112347521, 0.41219254536467};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-8);
+		}
+	}
+}
+
+/* eom-lccd test, ZMAT is:
+test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+spherical=off
+excite=eomee
+estate_sym=2
+estate_tol=9
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = rlccd_rhf.siox
+SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
+
+*/
+TEST(Sial_QM,DISABLED_eom_lccd_test){
+	std::string job("eom_lccd_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274034, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.36275490375537, 0.43493738840536};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-10);
+		}
+	}
+//
+// lccd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double lccd_energy = controller.scalar_value("lccd_energy");
+		ASSERT_NEAR(-75.71210049055006, lccd_energy, 1e-10);
+	}
+//
+// eom
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.32875641545765, 0.41224004798367};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-8);
+		}
+	}
+}
+
+/* eom-mbpt test, ZMAT is:
+test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+spherical=off
+excite=eomee
+estate_sym=2
+estate_tol=9
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = mp2_rhf_disc.siox
+SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
+
+*/
+TEST(Sial_QM,eom_mp2_test){
+	std::string job("eom_mp2_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274034, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.36275490375537, 0.43493738840536};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-10);
+		}
+	}
+//
+// mp2
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double mp2_energy = controller.scalar_value("mp2_energy");
+		ASSERT_NEAR(-75.70540831822183, mp2_energy, 1e-10);
+	}
+//
+// eom
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.32702247859224, 0.41071327775950};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-8);
+		}
 	}
 }
 
