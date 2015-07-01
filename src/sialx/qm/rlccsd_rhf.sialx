@@ -1422,6 +1422,7 @@
 #        ---------------------------------------------- 
 #
          CALL T2NEW_ZERO
+	 server_barrier
 #
 #
 #        Calculate new one-particle amplitudes 
