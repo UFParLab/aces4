@@ -145,9 +145,9 @@ public:
 	virtual void handle_get_op(int pc);
 	virtual void handle_put_accumulate_op(int pc);
 	virtual void handle_put_replace_op(int pc) ;
-	virtual void handle_put_initialize_op(int pc);
-	virtual void handle_put_increment_op(int pc);
-	virtual void handle_put_scale_op(int pc);
+	//virtual void handle_put_initialize_op(int pc);
+	//virtual void handle_put_increment_op(int pc);
+	//virtual void handle_put_scale_op(int pc);
 	virtual void handle_set_persistent_op(int pc) ;
 	virtual void handle_restore_persistent_op(int pc);
 	virtual void handle_create_op(int pc);
