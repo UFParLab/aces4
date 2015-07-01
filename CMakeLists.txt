@@ -567,6 +567,7 @@ set(SIAL_FILES
     src/sialx/qm/tran_uhf_no4v.sialx;
     src/sialx/qm/tran_rhf_no4v_defs.sialx;
     src/sialx/qm/tran_rhf_no3v.sialx;
+    src/sialx/qm/tran_eom.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
     src/sialx/qm/rlambda_rhf.sialx;
     src/sialx/qm/rlccd_rhf.sialx;
