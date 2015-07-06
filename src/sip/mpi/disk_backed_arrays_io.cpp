@@ -278,7 +278,7 @@ void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 }
 
 
-
+//TODO save offset in ServerBlock
 MPI_Offset DiskBackedArraysIO::calculate_block_offset(const BlockId& bid){
 
 	// Return the cached offset if available

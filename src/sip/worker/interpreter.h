@@ -57,7 +57,7 @@ public:
 
 	/** Static pointer to the current Interpreter.  This is
 	 * initialized in the Interpreter constructor and reset to NULL
-	 * in its destructor.  There should be at most on Interpreter instance
+	 * in its destructor.  There should be at most one Interpreter instance
 	 * at any given time.
 	 */
 	static Interpreter* global_interpreter;

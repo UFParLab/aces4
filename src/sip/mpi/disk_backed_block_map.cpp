@@ -179,6 +179,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(const BlockId& block_i
 
 ServerBlock* DiskBackedBlockMap::get_block_for_updating(const BlockId& block_id){
 	ServerBlock* block = get_block_for_reading(block_id, 0);
+	block->wait();  //get_block_for_reading only waits for pending writers to complete,
+	                //we need to wait for pending readers, too.
 	block->disk_state_.set_dirty();
 	return block;
 }
@@ -191,11 +193,11 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(const BlockId& block_id){
 	ServerBlock* block = block_map_.block(block_id);
 	size_t block_size = sip_tables_.block_size(block_id);
 	if (block == NULL) {
-		std::stringstream msg;
+		SIP_LOG(std::stringstream msg;
 		msg << "S ";
 		msg << sip_mpi_attr_.global_rank();
 		msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl;
-		SIP_LOG(std::cout << msg.str() << std::flush);
+		std::cout << msg.str() << std::flush);
 		block = allocate_block(NULL, block_size,false);
 	    block_map_.insert_block(block_id, block);
 	} else {
@@ -228,21 +230,21 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, 
 		errmsg << " : Asking for block " << block_id << ". It has not been put/prepared before !  line"<< line << std::endl;
 		std::cout << errmsg.str() << std::flush;
 		
-		sip::fail(errmsg.str());
+		sial_check(false,errmsg.str());
 
-		// WARNING DISABLED !
-		if (false){
-			std::stringstream msg;
-			msg << "S " << sip_mpi_attr_.global_rank();
-			msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
-			std::cout << msg.str() << std::flush;
-			block = allocate_block(NULL, block_size,true);
-			block_map_.insert_block(block_id, block);
-		}
+//		// WARNING DISABLED !
+//		if (false){
+//			std::stringstream msg;
+//			msg << "S " << sip_mpi_attr_.global_rank();
+//			msg << " : getting uninitialized block " << block_id << ".  Creating zero block "<< std::endl;
+//			std::cout << msg.str() << std::flush;
+//			block = allocate_block(NULL, block_size,true);
+//			block_map_.insert_block(block_id, block);
+//		}
 
 
 	} else {
-		block->wait();  //if involved in-progress asynchronous communication, wait for it to complete.
+		block->wait_for_writes();  //if involved in-progress asynchronous communication, wait for ops that may modify to complete.
 		if(!block->disk_state_.is_in_memory())
 			if (block->disk_state_.is_on_disk()){
 				read_block_from_disk(block, block_id, block_size);
@@ -251,7 +253,8 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id, 
             }
 	}
 
-	block->disk_state_.set_in_memory();
+//	block->disk_state_.set_in_memory();
+//not needed here, done in read_block_from_disk
 
 	policy_.touch(block_id);
 

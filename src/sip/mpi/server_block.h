@@ -166,6 +166,7 @@ public:
 
 
 	void wait(){ async_state_.wait_all();}
+	void wait_for_writes(){ async_state_.wait_for_writes();}
 
 	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 

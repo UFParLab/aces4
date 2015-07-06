@@ -164,26 +164,26 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, last_seen_line_, section);
 	last_seen_worker_ = mpi_source;
 	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
-
+    int pc;
     //retrieve the block
-	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
-	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+	server_timer_.start_timer(pc, ServerTimer::BLOCKWAITTIME);
+	server_timer_.start_timer(pc, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id,
-			last_seen_line_);
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+			pc);
+	server_timer_.pause_timer(pc, ServerTimer::BLOCKWAITTIME);
 
 	//create async op to handle the reply
-	async_ops_.add_get_reply(mpi_source, get_tag, block, last_seen_line_);
+	async_ops_.add_get_reply(mpi_source, get_tag, block, pc);
 
 
 	//handle section number updates
 	SIP_LOG(
-			std::cout << "S " << sip_mpi_attr_.global_rank() << " : get for block " << block_id.str(sip_tables_) << ", size = " << block_size << ", sent from = " << mpi_source << ", at line = " << last_seen_line_ << std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank() << " : get for block " << block_id.str(sip_tables_) << ", size = " << block_size << ", sent from = " << mpi_source << ", at line = " << line_number(pc) << std::endl;)
 
 	if(section < state_.section_number_){
 		std::cout << "illegal section number "<< section
 				<< " where state_.section_number_ = "<< state_.section_number_
-				<< " at block "<< block_id << " line" << last_seen_line_ << " from worker "
+				<< " at block "<< block_id << " line" << line_number(pc) << " from worker "
 				<< last_seen_worker_ << std::endl;
 		std::cout << "This likely due to a \"get\" without subsequent use of block in the section" << std::flush;
 	}
@@ -194,12 +194,11 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 			mpi_source, section)) {
 		std::stringstream err_ss;
 		err_ss << "Data race at server for block " << block_id
-				<< " at line " << last_seen_line_ << "from worker "
-				<< mpi_source << ".  Probably a missing sip_barrier";
-		sial_check(false, err_ss.str());
+				<< "from worker " << mpi_source << ".  Probably a missing sip_barrier";
+		sial_check(false, err_ss.str(), line_number(pc));
 	}
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 }
 
@@ -253,9 +252,9 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 			mpi_source, section)) {
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT block semantics (data race) for " << block_id
-				<< " at line " << last_seen_line_ << " from worker "
+				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str());
+		sial_check(false, err_ss.str(), last_seen_line_);
 	}
 	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
 
@@ -313,9 +312,9 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 			mpi_source, section)) {
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT_ACCUMULATE block semantics (data race) for " << block_id
-				<< " at line " << last_seen_line_ << " from worker "
+				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str());
+		sial_check(false, err_ss.str(),last_seen_line_);
 	}
 
 	SIP_LOG(
@@ -392,9 +391,9 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag) {
 			mpi_source, section)) {
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT_INITIALIZE block semantics (data race) for " << block_id
-				<< " at line " << last_seen_line_ << " from worker "
+				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str());
+		sial_check(false, err_ss.str(), last_seen_line_);
 	}
 }
 
@@ -433,9 +432,9 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 			mpi_source, section)) {
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT_INCREMENT block semantics (data race) for " << block_id
-				<< " at line " << last_seen_line_ << " from worker "
+				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str());
+		sial_check(false, err_ss.str(), last_seen_line_);
 	}
 }
 
@@ -470,9 +469,9 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag) {
 			mpi_source, section)) {
 		std::stringstream err_ss;
 		err_ss << "Incorrect PUT_SCALE block semantics (data race) for " << block_id
-				<< " at line " << last_seen_line_ << " from worker "
+				 << " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str());
+		sial_check(false, err_ss.str(), last_seen_line_);
 	}
 }
 
