@@ -927,6 +927,7 @@
                 PREPARE T2new_ab[a,i,b,j] = 0.0
           ENDPARDO a, b, i, j 
 # 
+	sip_barrier
      ENDPROC T2NEW_ZERO
 # 
 #    ------------------------------------------------------------------------ 
