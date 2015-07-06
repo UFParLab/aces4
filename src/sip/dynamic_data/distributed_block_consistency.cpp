@@ -10,21 +10,21 @@
 namespace sip {
 
 
-DistributedBlockConsistency::DistributedBlockConsistency(): last_section_(0){
-	consistency_status_.first = NONE;
-	consistency_status_.second = OPEN;
-
+DistributedBlockConsistency::DistributedBlockConsistency():
+		mode_(NONE),
+		worker_(OPEN),
+        last_section_(0){
 }
 
 void DistributedBlockConsistency::reset_consistency_status (){
-	check(consistency_status_.first != INVALID_MODE &&
-			consistency_status_.second != INVALID_WORKER,
+	check(mode_ != INVALID_MODE &&
+			worker_ != INVALID_WORKER,
 			"Inconsistent block status !");
-	consistency_status_.first = NONE;
-	consistency_status_.second = OPEN;
+	mode_ = NONE;
+	worker_ = OPEN;
 }
 
-//TODO clean this up
+
 bool DistributedBlockConsistency::update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker, int section){
 	if (section > last_section_){
 		//a barrier occurred since last access of block
@@ -46,8 +46,8 @@ bool DistributedBlockConsistency::update_and_check_consistency(SIPMPIConstants::
 	 *		Sw      Sw      Sw         Sw          X          X       X
 	 */
 
-	ServerBlockMode mode = consistency_status_.first;
-	int prev_worker = consistency_status_.second;
+	ServerBlockMode mode = mode_;
+	int prev_worker = worker_;
 
 	// Check if block already in inconsistent state.
 	if (mode == INVALID_MODE || prev_worker == INVALID_WORKER)
@@ -161,14 +161,14 @@ bool DistributedBlockConsistency::update_and_check_consistency(SIPMPIConstants::
 		goto consistency_error;
 	}
 
-	consistency_status_.first = new_mode;
-	consistency_status_.second = new_worker;
+	mode_ = new_mode;
+	worker_ = new_worker;
 	return true;
 
 consistency_error:
 	SIP_LOG(std::cout << "Inconsistent block at server ")
-	consistency_status_.first = INVALID_MODE;
-	consistency_status_.second = INVALID_WORKER;
+	mode_ = INVALID_MODE;
+	worker_ = INVALID_WORKER;
 
 	return false;
 

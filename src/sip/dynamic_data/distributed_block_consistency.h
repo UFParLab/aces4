@@ -76,8 +76,9 @@ private:
 	 *		Sw      Sw      Sw         Sw          X          X       X
 	 */
 
-	//TODO  get rid of pair
-	std::pair<ServerBlockMode, int> consistency_status_; /*! State of block */
+
+	ServerBlockMode mode_;
+	int worker_;  //either a value from ServerBlockWorker, or the rank of last worker
 	int last_section_;
 
 	/**
