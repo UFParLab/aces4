@@ -98,7 +98,7 @@ void SialOpsParallel::sip_barrier() {
 }
 
 /** Currently this is a no-op.  Map, and blocks are created lazily when needed */
-void SialOpsParallel::create_distributed(int array_id) {
+void SialOpsParallel::create_distributed(int array_id, int pc) {
 }
 
 /** Removes all the blocks associated with the given array from the block map.
@@ -106,7 +106,7 @@ void SialOpsParallel::create_distributed(int array_id) {
  * be called, which will delete the data. Because of this, we must be very
  * careful to remove any blocks that should not be delete from the block_map_ first.
  */
-void SialOpsParallel::delete_distributed(int array_id) {
+void SialOpsParallel::delete_distributed(int array_id, int pc) {
 
 	//delete any blocks stored locally along with the map
 	block_manager_.block_map_.delete_per_array_map_and_blocks(array_id);
@@ -114,8 +114,7 @@ void SialOpsParallel::delete_distributed(int array_id) {
 	//send delete message to server if responsible worker
 	int server_rank = sip_mpi_attr_.my_server();
 	if (server_rank > 0) {
-		int line_number = current_line();
-		int to_send[3] = { array_id, line_number, barrier_support_.section_number() };
+		int to_send[3] = { array_id, pc, barrier_support_.section_number() };
 		SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank() << " : sending DELETE to server "<< server_rank << std::endl);
 		int delete_tag = barrier_support_.make_mpi_tag_for_DELETE();
 		SIPMPIUtils::check_err(
@@ -126,7 +125,7 @@ void SialOpsParallel::delete_distributed(int array_id) {
 }
 
 //TODO optimize this.  Can reduce searches in block map.
-void SialOpsParallel::get(BlockId& block_id) {
+void SialOpsParallel::get(BlockId& block_id, int pc) {
 
 	//check for "data race"
 	check_and_set_mode(block_id, READ);
@@ -160,7 +159,7 @@ void SialOpsParallel::get(BlockId& block_id) {
 
 	//construct and send the get message
     int send_buff[SIPMPIUtils::BLOCKID_BUFF_ELEMS];
-    SIPMPIUtils::encode_BlockID_buff(send_buff, block_id, current_line(),barrier_support_.section_number());
+    SIPMPIUtils::encode_BlockID_buff(send_buff, block_id, pc ,barrier_support_.section_number());
 
     SIPMPIUtils::check_err(
     		MPI_Send(send_buff, SIPMPIUtils::BLOCKID_BUFF_ELEMS, MPI_INT,
@@ -228,7 +227,7 @@ void SialOpsParallel::get(BlockId& block_id) {
  * @param source_ptr
  */
 void SialOpsParallel::put_replace(BlockId& target_id,
-		const Block::BlockPtr source_block) {
+		const Block::BlockPtr source_block, int pc) {
 
 	//partial check for data races
 	check_and_set_mode(target_id, WRITE);
@@ -259,7 +258,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 
 	//construct and send the request message
     int send_buff[SIPMPIUtils::BLOCKID_BUFF_ELEMS];
-    SIPMPIUtils::encode_BlockID_buff(send_buff, target_id, current_line(),
+    SIPMPIUtils::encode_BlockID_buff(send_buff, target_id, pc,
     		barrier_support_.section_number());
 
 	SIPMPIUtils::check_err(
@@ -328,7 +327,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
  * @param pointer to source block
  */
 void SialOpsParallel::put_accumulate(BlockId& target_id,
-		const Block::BlockPtr source_block) {
+		const Block::BlockPtr source_block, int pc) {
 
 	//partial check for data races
 	check_and_set_mode(target_id, WRITE);
@@ -348,7 +347,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 
 	//construct and send the request message
     int send_buff[SIPMPIUtils::BLOCKID_BUFF_ELEMS];
-    SIPMPIUtils::encode_BlockID_buff(send_buff, target_id, current_line(),
+    SIPMPIUtils::encode_BlockID_buff(send_buff, target_id, pc,
     		barrier_support_.section_number());
 
 	SIPMPIUtils::check_err(
@@ -401,7 +400,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 
 
 
-void SialOpsParallel::put_initialize(BlockId& target_id, double value){
+void SialOpsParallel::put_initialize(BlockId& target_id, double value, int pc){
 
 	//partial check for data races
 	check_and_set_mode(target_id,WRITE);
@@ -419,7 +418,7 @@ void SialOpsParallel::put_initialize(BlockId& target_id, double value){
 
     MPIScalarOpType::scalar_op_message_t send_buff;
     send_buff.value_ = value;
-    SIPMPIUtils::encode_BlockID_buff(send_buff.id_pc_section_buff_, target_id, current_line(),
+    SIPMPIUtils::encode_BlockID_buff(send_buff.id_pc_section_buff_, target_id, pc,
     		barrier_support_.section_number());
     SIPMPIUtils::check_err(MPI_Send(&send_buff, 1, mpi_type_.mpi_scalar_op_type_, server_rank,
    		put_initialize_tag, MPI_COMM_WORLD));
@@ -447,7 +446,7 @@ void SialOpsParallel::put_initialize(BlockId& target_id, double value){
 
 }
 
-void SialOpsParallel::put_increment(BlockId& target_id, double value){
+void SialOpsParallel::put_increment(BlockId& target_id, double value, int pc){
 
 	//partial check for data races
 	check_and_set_mode(target_id,WRITE);
@@ -465,7 +464,7 @@ void SialOpsParallel::put_increment(BlockId& target_id, double value){
 
     MPIScalarOpType::scalar_op_message_t send_buff;
     send_buff.value_ = value;
-    SIPMPIUtils::encode_BlockID_buff(send_buff.id_pc_section_buff_, target_id, current_line(),
+    SIPMPIUtils::encode_BlockID_buff(send_buff.id_pc_section_buff_, target_id, pc,
     		barrier_support_.section_number());
     SIPMPIUtils::check_err(MPI_Send(&send_buff, 1, mpi_type_.mpi_scalar_op_type_, server_rank,
     		put_increment_tag, MPI_COMM_WORLD));
@@ -481,7 +480,7 @@ void SialOpsParallel::put_increment(BlockId& target_id, double value){
 
 }
 
-void SialOpsParallel::put_scale(BlockId& target_id, double value){
+void SialOpsParallel::put_scale(BlockId& target_id, double value, int pc){
 
 	//partial check for data races
 	check_and_set_mode(target_id,WRITE);
@@ -500,7 +499,7 @@ void SialOpsParallel::put_scale(BlockId& target_id, double value){
 
     MPIScalarOpType::scalar_op_message_t send_buff;
     send_buff.value_ = value;
-    SIPMPIUtils::encode_BlockID_buff(send_buff.id_pc_section_buff_, target_id, current_line(),
+    SIPMPIUtils::encode_BlockID_buff(send_buff.id_pc_section_buff_, target_id, pc,
     		barrier_support_.section_number());
     SIPMPIUtils::check_err(MPI_Send(&send_buff, 1, mpi_type_.mpi_scalar_op_type_, server_rank,
     		put_scale_tag, MPI_COMM_WORLD));
@@ -520,22 +519,22 @@ void SialOpsParallel::put_scale(BlockId& target_id, double value){
 }
 
 
-void SialOpsParallel::destroy_served(int array_id) {
-	delete_distributed(array_id);
+void SialOpsParallel::destroy_served(int array_id, int pc) {
+	delete_distributed(array_id, pc);
 }
 
-void SialOpsParallel::request(BlockId& block_id) {
-	get(block_id);
+void SialOpsParallel::request(BlockId& block_id, int pc) {
+	get(block_id, pc);
 }
-void SialOpsParallel::prequest(BlockId&, BlockId&) {
+void SialOpsParallel::prequest(BlockId&, BlockId&, int pc) {
 	fail("PREQUEST Not supported !");
 }
-void SialOpsParallel::prepare(BlockId& lhs_id, Block::BlockPtr source_ptr) {
-	put_replace(lhs_id, source_ptr);
+void SialOpsParallel::prepare(BlockId& lhs_id, Block::BlockPtr source_ptr, int pc) {
+	put_replace(lhs_id, source_ptr, pc);
 }
 void SialOpsParallel::prepare_accumulate(BlockId& lhs_id,
-		Block::BlockPtr source_ptr) {
-	put_accumulate(lhs_id, source_ptr);
+		Block::BlockPtr source_ptr, int pc) {
+	put_accumulate(lhs_id, source_ptr, pc);
 }
 
 void SialOpsParallel::collective_sum(double rhs_value,
@@ -619,7 +618,7 @@ void SialOpsParallel::broadcast_static(Block::BlockPtr source_or_dest, int sourc
  * @param string_slot
  */
 void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
-		int string_slot) {
+		int string_slot, int pc) {
 	if (sip_tables_.is_distributed(array_slot)
 			|| sip_tables_.is_served(array_slot)) {
 		int my_server = sip_mpi_attr_.my_server();
@@ -627,8 +626,8 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
 			int set_persistent_tag;
 			set_persistent_tag =
 					barrier_support_.make_mpi_tag_for_SET_PERSISTENT();
-			int line_number = current_line();
-			int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+
+			int buffer[4] = { array_slot, string_slot, pc, barrier_support_.section_number()};
 			SIPMPIUtils::check_err(
 					MPI_Send(buffer, 4, MPI_INT, my_server, set_persistent_tag,
 							MPI_COMM_WORLD));
@@ -652,7 +651,7 @@ void SialOpsParallel::set_persistent(Interpreter * worker, int array_slot,
  */
 
 void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
-		int string_slot) {
+		int string_slot, int pc) {
 	SIP_LOG(std::cout << "restore_persistent with array " << sip_tables_.array_name(array_slot) << " in slot " << array_slot << " and string \"" << sip_tables_.string_literal(string_slot) << "\"" << std::endl);
 
 	if (sip_tables_.is_distributed(array_slot)
@@ -662,8 +661,7 @@ void SialOpsParallel::restore_persistent(Interpreter* worker, int array_slot,
 			int restore_persistent_tag;
 			restore_persistent_tag =
 					barrier_support_.make_mpi_tag_for_RESTORE_PERSISTENT();
-			int line_number = current_line();
-			int buffer[4] = { array_slot, string_slot, line_number, barrier_support_.section_number()};
+			int buffer[4] = { array_slot, string_slot, pc, barrier_support_.section_number()};
 			SIPMPIUtils::check_err(
 					MPI_Send(buffer, 4, MPI_INT, my_server,
 							restore_persistent_tag, MPI_COMM_WORLD));
@@ -739,18 +737,18 @@ void SialOpsParallel::log_statement(opcode_t type, int line){
 					 << " : Line "<<line << ", type: " << opcodeToName(type)<<std::endl);
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int line) {
+Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int pc) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
 		check_and_set_mode(array_id, READ);
-		return wait_and_check(block_manager_.get_block_for_reading(id), line);
+		return wait_and_check(block_manager_.get_block_for_reading(id), pc);
 	}
 	return block_manager_.get_block_for_reading(id);
 }
 
 Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
-		bool is_scope_extent) {
+		bool is_scope_extent, int pc) {
 	int array_id = id.array_id();
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
@@ -758,18 +756,18 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 				"sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
-	return wait_and_check(block_manager_.get_block_for_writing(id, is_scope_extent),current_line());
+	return wait_and_check(block_manager_.get_block_for_writing(id, is_scope_extent),pc);
 	//TODO  get rid of call to current_line
 }
 
-Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
+Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id, int pc) {
 	int array_id = id.array_id();
 	check(
 			!(sip_tables_.is_distributed(array_id)
 					|| sip_tables_.is_served(array_id)),
 			"attempting to update distributed or served block", current_line());
 
-	return wait_and_check(block_manager_.get_block_for_updating(id), current_line());
+	return wait_and_check(block_manager_.get_block_for_updating(id), pc);
 	//TODO  get rid of call to current_line
 }
 
@@ -778,13 +776,13 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id) {
 // an Isend (put) or IReceive (get).  Checking the size only make sense for the latter.
 //For the time being, we will just call the version of wait that does not  check the size.
 //If asynch puts turn out to be useful, we can revisit this.
-Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
+Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
 
 		if (sialx_timers_ && !b->test()){
-			sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
+			sialx_timers_->start_timer(pc, SialxTimer::BLOCKWAITTIME);
 //		    b->wait(b->size());
 			b->wait();
-	        sialx_timers_->pause_timer(line, SialxTimer::BLOCKWAITTIME);
+	        sialx_timers_->pause_timer(pc, SialxTimer::BLOCKWAITTIME);
 		}
 		else
 //		b->wait(b->size());
@@ -808,68 +806,68 @@ Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int line) {
 	void initialize_mpi_type();
  *
  */
-void SialOpsParallel::initialize_mpi_type(){
-
-    MPI_Aint  displacements[4], s_lower, s_extent;
-    MPI_Datatype  types[4];
-
-    Put_scalar_op_message_t tmp_struct;
-
-    /* create type for BlockId, skip the parent_id_ptr */
-     BlockId id;
-     BlockId * idptr;
-     MPI_Aint id_displacements[3], id_lb, id_extent;
-     MPI_Datatype id_types[3];
-     MPI_Get_address(&id.array_id_, &id_displacements[0]);
-     MPI_Get_address(&id.index_values_, &id_displacements[1]);
-     MPI_Get_address(&id.parent_id_ptr_, &id_displacements[2]);
-     id_types[0] = MPI_INT;
-     id_types[1] = MPI_INT;
-     id_types[2] = MPI_BYTE;
-     int id_counts[3]={1,MAX_RANK, sizeof(idptr)};
-     //convert addresses to displacement from beginning
-     id_displacements[2] -= id_displacements[0];
-     id_displacements[1] -= id_displacements[0];
-     id_displacements[0] = 0;
-//     std::cout << "WORKER id_displacements = " << id_displacements[0] << "," << id_displacements[1] << "," << id_displacements[2] << std::endl << std::flush;
-     MPI_Type_create_struct(3,id_counts, id_displacements, id_types, &block_id_type_);
-     /*check that it has the correct extent*/
-     MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
-     if(id_extent != sizeof(id)){
-
- //    std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
-    	 MPI_Datatype id_type_old = block_id_type_;
-    	 MPI_Type_create_resized(id_type_old, 0, sizeof(id), &block_id_type_);
-    	 MPI_Type_free(&id_type_old);
-     }
-     MPI_Type_commit(&block_id_type_);
-
-    /* Now get type  for the  whole struct */
-    MPI_Get_address(&tmp_struct.value_, &displacements[0]);
-    MPI_Get_address(&tmp_struct.line_, &displacements[1]);
-    MPI_Get_address(&tmp_struct.section_, &displacements[2]);
-    MPI_Get_address(&tmp_struct.id_, &displacements[3]);
-    types[0] = MPI_DOUBLE;
-    types[1] = MPI_INT;
-    types[2] = MPI_INT;
-    types[3] = block_id_type_;
-    int counts[4] = {1,1,1,1};
-    //convert addresses to displacement from beginning
-    displacements[3] -= displacements[0];
-    displacements[2] -= displacements[0];
-    displacements[1] -= displacements[0];
-    displacements[0] = 0;
-    MPI_Type_create_struct(4,counts, displacements, types, &mpi_put_scalar_op_type_);
-    MPI_Type_get_extent(mpi_put_scalar_op_type_, &s_lower, &s_extent);
-    if (s_extent != sizeof(tmp_struct)){
-//        std::cout << "WORKER: s_extent, sizeof = " << id_extent << "," << sizeof(Put_scalar_op_message_t) << std::endl << std::flush;
-       	 MPI_Datatype type_old = mpi_put_scalar_op_type_;
-       	 MPI_Type_create_resized(type_old, 0, sizeof(Put_scalar_op_message_t), &mpi_put_scalar_op_type_);
-       	 MPI_Type_free(&type_old);
-    }
-    MPI_Type_commit(&mpi_put_scalar_op_type_);
-
-}
+//void SialOpsParallel::initialize_mpi_type(){
+//
+//    MPI_Aint  displacements[4], s_lower, s_extent;
+//    MPI_Datatype  types[4];
+//
+//    Put_scalar_op_message_t tmp_struct;
+//
+//    /* create type for BlockId, skip the parent_id_ptr */
+//     BlockId id;
+//     BlockId * idptr;
+//     MPI_Aint id_displacements[3], id_lb, id_extent;
+//     MPI_Datatype id_types[3];
+//     MPI_Get_address(&id.array_id_, &id_displacements[0]);
+//     MPI_Get_address(&id.index_values_, &id_displacements[1]);
+//     MPI_Get_address(&id.parent_id_ptr_, &id_displacements[2]);
+//     id_types[0] = MPI_INT;
+//     id_types[1] = MPI_INT;
+//     id_types[2] = MPI_BYTE;
+//     int id_counts[3]={1,MAX_RANK, sizeof(idptr)};
+//     //convert addresses to displacement from beginning
+//     id_displacements[2] -= id_displacements[0];
+//     id_displacements[1] -= id_displacements[0];
+//     id_displacements[0] = 0;
+////     std::cout << "WORKER id_displacements = " << id_displacements[0] << "," << id_displacements[1] << "," << id_displacements[2] << std::endl << std::flush;
+//     MPI_Type_create_struct(3,id_counts, id_displacements, id_types, &block_id_type_);
+//     /*check that it has the correct extent*/
+//     MPI_Type_get_extent(block_id_type_, &id_lb, &id_extent);
+//     if(id_extent != sizeof(id)){
+//
+// //    std::cout << "WORKER: id_extent, sizeof = " << id_extent << "," << sizeof(id) << std::endl << std::flush;
+//    	 MPI_Datatype id_type_old = block_id_type_;
+//    	 MPI_Type_create_resized(id_type_old, 0, sizeof(id), &block_id_type_);
+//    	 MPI_Type_free(&id_type_old);
+//     }
+//     MPI_Type_commit(&block_id_type_);
+//
+//    /* Now get type  for the  whole struct */
+//    MPI_Get_address(&tmp_struct.value_, &displacements[0]);
+//    MPI_Get_address(&tmp_struct.line_, &displacements[1]);
+//    MPI_Get_address(&tmp_struct.section_, &displacements[2]);
+//    MPI_Get_address(&tmp_struct.id_, &displacements[3]);
+//    types[0] = MPI_DOUBLE;
+//    types[1] = MPI_INT;
+//    types[2] = MPI_INT;
+//    types[3] = block_id_type_;
+//    int counts[4] = {1,1,1,1};
+//    //convert addresses to displacement from beginning
+//    displacements[3] -= displacements[0];
+//    displacements[2] -= displacements[0];
+//    displacements[1] -= displacements[0];
+//    displacements[0] = 0;
+//    MPI_Type_create_struct(4,counts, displacements, types, &mpi_put_scalar_op_type_);
+//    MPI_Type_get_extent(mpi_put_scalar_op_type_, &s_lower, &s_extent);
+//    if (s_extent != sizeof(tmp_struct)){
+////        std::cout << "WORKER: s_extent, sizeof = " << id_extent << "," << sizeof(Put_scalar_op_message_t) << std::endl << std::flush;
+//       	 MPI_Datatype type_old = mpi_put_scalar_op_type_;
+//       	 MPI_Type_create_resized(type_old, 0, sizeof(Put_scalar_op_message_t), &mpi_put_scalar_op_type_);
+//       	 MPI_Type_free(&type_old);
+//    }
+//    MPI_Type_commit(&mpi_put_scalar_op_type_);
+//
+//}
 
 #endif //HAVE_MPI
 

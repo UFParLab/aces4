@@ -22,7 +22,7 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 				sip_tables, sip_mpi_attr, data_distribution, server_timer), sip_mpi_attr_(
 				sip_mpi_attr), persistent_array_manager_(
 				persistent_array_manager), terminated_(false), server_timer_(
-				server_timer), last_seen_line_(0), last_seen_worker_(0) {
+				server_timer), last_seen_worker_(0) {
 	mpi_type_.initialize_mpi_scalar_op_type();
 	SIPServer::global_sipserver = this;
 }
@@ -161,10 +161,10 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	check_int_count(status, SIPMPIUtils::BLOCKID_BUFF_ELEMS);
 	BlockId block_id;
 	int section;
-	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, last_seen_line_, section);
+	int pc;
+	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, pc, section);
 	last_seen_worker_ = mpi_source;
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
-    int pc;
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
     //retrieve the block
 	server_timer_.start_timer(pc, ServerTimer::BLOCKWAITTIME);
 	server_timer_.start_timer(pc, ServerTimer::BLOCKWAITTIME);
@@ -214,19 +214,20 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 	check_int_count(status, SIPMPIUtils::BLOCKID_BUFF_ELEMS);
 	BlockId block_id;
 	int section;
-	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, last_seen_line_, section);
+	int pc;
+	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, pc, section);
 	last_seen_worker_ = mpi_source;
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
 
     //retrieve the block for writing
-	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+	server_timer_.start_timer(pc, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+	server_timer_.pause_timer(pc, ServerTimer::BLOCKWAITTIME);
 
     //create async_op to handle message with the data
     int put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA,
 			transaction_number);
-	async_ops_.add_put_data_request(mpi_source, put_data_tag, block, last_seen_line_);
+	async_ops_.add_put_data_request(mpi_source, put_data_tag, block, pc);
 
 	//send ack to worker, who is waiting for it
 	SIPMPIUtils::check_err(
@@ -240,7 +241,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 	if(section < state_.section_number_){
 		std::cout << "illegal section number "<< section
 				<< " where state_.section_number_ = "<< state_.section_number_
-				<< " at block "<< block_id << " line" << last_seen_line_ << " from worker "
+				<< " at block "<< block_id << " line" << line_number(pc) << " from worker "
 				<< last_seen_worker_ << std::endl;
 		std::cout << "This likely due to a \"get\" without subsequent use of block in the section" << std::flush;
 	}
@@ -254,9 +255,9 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 		err_ss << "Incorrect PUT block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), last_seen_line_);
+		sial_check(false, err_ss.str(), line_number(pc));
 	}
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 
 
@@ -275,21 +276,22 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	check_int_count(status, SIPMPIUtils::BLOCKID_BUFF_ELEMS);
 	BlockId block_id;
 	int section;
-	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, last_seen_line_, section);
+	int pc;
+	SIPMPIUtils::decode_BlockID_buff(buffer, block_id, pc, section);
 	last_seen_worker_ = mpi_source;
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
 
     //retrieve the block for accumulate
-	server_timer_.start_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+	server_timer_.start_timer(pc, ServerTimer::BLOCKWAITTIME);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_accumulate(
 			block_id);
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::BLOCKWAITTIME);
+	server_timer_.pause_timer(pc, ServerTimer::BLOCKWAITTIME);
 
     //create async op to handle message with data
 	int put_accumulate_data_tag;
 	put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
 			SIPMPIConstants::PUT_ACCUMULATE_DATA, transaction_number);
-	async_ops_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, last_seen_line_);
+	async_ops_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, pc);
 
 	//send ack to worker, who is waiting for it
 	SIPMPIUtils::check_err(
@@ -300,7 +302,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	if(section < state_.section_number_){
 		std::cout << "illegal section number "<< section
 				<< " where state_.section_number_ = "<< state_.section_number_
-				<< " at block "<< block_id << " line" << last_seen_line_ << " from worker "
+				<< " at block "<< block_id << " line" << line_number(pc) << " from worker "
 				<< last_seen_worker_ << std::endl;
 		std::cout <<  std::flush;
 	}
@@ -314,13 +316,13 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 		err_ss << "Incorrect PUT_ACCUMULATE block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(),last_seen_line_);
+		sial_check(false, err_ss.str(),line_number(pc));
 	}
 
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : put accumulate to receive block " << block_id.str(sip_tables_) << ", size = " << sip_tables_.block_size(block_id) << ", from = " << mpi_source << ", at line = " << last_seen_line_ << std::endl << std::flush;)
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 }
 
@@ -338,14 +340,14 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 	check_int_count(status, 3);
 	int array_id = recv_buffer[0];
 
-	last_seen_line_ = recv_buffer[1];
+	int pc = recv_buffer[1];
 	last_seen_worker_ = mpi_source;
 	int section = recv_buffer[2];
 
 	state_.check_section_number_invariant(
 			section);
 
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
 
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : deleting array " << sip_tables_.array_name(array_id) << ", id = " << array_id << ", sent from = " << mpi_source << ", at line = " << last_seen_line_ << std::endl;)
@@ -357,7 +359,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 
 	//delete the block and map for the indicated array
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 }
 
@@ -367,9 +369,10 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag) {
 	SIPMPIUtils::check_err(MPI_Recv(&message, 1, mpi_type_.mpi_scalar_op_type_, mpi_source,
 			put_initialize_tag, MPI_COMM_WORLD, &status));
 	int section;
+	int pc;
 	BlockId block_id;
 	SIPMPIUtils::decode_BlockID_buff(message.id_pc_section_buff_, block_id,
-			last_seen_line_, section);
+			pc, section);
 
 	last_seen_worker_ = mpi_source;
 	state_.check_section_number_invariant(
@@ -384,7 +387,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag) {
 
 	//get the block size
 	int block_size = sip_tables_.block_size(block_id);
-	block->fill_data(block_size, message.value_);
+	block->fill_data(message.value_);
 
 	//data race check
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT,
@@ -393,7 +396,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag) {
 		err_ss << "Incorrect PUT_INITIALIZE block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), last_seen_line_);
+		sial_check(false, err_ss.str(), line_number(pc));
 	}
 }
 
@@ -404,9 +407,10 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 	SIPMPIUtils::check_err(MPI_Recv(&message, 1, mpi_type_.mpi_scalar_op_type_, mpi_source,
 			put_increment_tag, MPI_COMM_WORLD, &status));
 	int section;
+	int pc;
 	BlockId block_id;
 	SIPMPIUtils::decode_BlockID_buff(message.id_pc_section_buff_, block_id,
-			last_seen_line_, section);
+			pc, section);
 
 	last_seen_worker_ = mpi_source;
 	state_.check_section_number_invariant(
@@ -425,7 +429,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 
 	//get the block size and perform the operation
 	int block_size = sip_tables_.block_size(block_id);
-	block->increment_data(block_size, message.value_);
+	block->increment_data(message.value_);
 
 	//data race check, same effect as PUT_ACCUMULATE
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT_ACCUMULATE,
@@ -434,7 +438,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 		err_ss << "Incorrect PUT_INCREMENT block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), last_seen_line_);
+		sial_check(false, err_ss.str(), line_number(pc));
 	}
 }
 
@@ -445,9 +449,10 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag) {
 	SIPMPIUtils::check_err(MPI_Recv(&message, 1, mpi_type_.mpi_scalar_op_type_, mpi_source,
 			put_scale_tag, MPI_COMM_WORLD, &status));
 	int section;
+	int pc;
 	BlockId block_id;
 	SIPMPIUtils::decode_BlockID_buff(message.id_pc_section_buff_, block_id,
-			last_seen_line_, section);
+			pc, section);
 
 	last_seen_worker_ = mpi_source;
 	state_.check_section_number_invariant(section);
@@ -462,7 +467,7 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag) {
 
 	//get the block size and perform the operation
 	int block_size = sip_tables_.block_size(block_id);
-	block->scale_data(block_size, message.value_);
+	block->scale_data(message.value_);
 
 	//data race check, same effect as PUT
 	if (!block->update_and_check_consistency(SIPMPIConstants::PUT,
@@ -471,7 +476,7 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag) {
 		err_ss << "Incorrect PUT_SCALE block semantics (data race) for " << block_id
 				 << " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), last_seen_line_);
+		sial_check(false, err_ss.str(), line_number(pc));
 	}
 }
 
@@ -485,10 +490,11 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 			MPI_Recv(0, 0, MPI_INT, mpi_source, end_program_tag, MPI_COMM_WORLD,
 					&status), __LINE__, __FILE__);
 
-	last_seen_line_ = 0; 	// Special line number for end program
+//	last_seen_line_ = 0; 	// Special line number for end program
+	int pc = sip_tables_.op_table_size();
 	last_seen_worker_ = mpi_source;
 
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
 
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : ending program " << ", sent from = " << mpi_source << std::endl;)
@@ -504,7 +510,7 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 	//set terminated flag;
 	terminated_ = true;
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 }
 
@@ -523,7 +529,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
 
-	last_seen_line_ = buffer[2];
+	int pc  = buffer[2];
 	last_seen_worker_ = mpi_source;
 
 	int section = buffer[3];
@@ -531,7 +537,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	state_.check_section_number_invariant(section);
 
 
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -545,7 +551,7 @@ void SIPServer::handle_SET_PERSISTENT(int mpi_source, int set_persistent_tag) {
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : set persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id << ", sent from = " << mpi_source << ", at line = " << last_seen_line_ << std::endl;);
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 }
 
@@ -563,14 +569,14 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 
 	int array_id = buffer[0];
 	int string_slot = buffer[1];
-	last_seen_line_ = buffer[2];
+	int pc = buffer[2];
 	last_seen_worker_ = mpi_source;
 
 	int section = buffer[3];
 	state_.check_section_number_invariant(section);
 
 
-	server_timer_.start_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.start_timer(pc, ServerTimer::TOTALTIME);
 
 	//send ack
 	SIPMPIUtils::check_err(
@@ -583,7 +589,7 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : restored persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id << ", sent from = " << mpi_source << ", at line = " << last_seen_line_ << std::endl;)
 
-	server_timer_.pause_timer(last_seen_line_, ServerTimer::TOTALTIME);
+	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
 }
 
@@ -626,8 +632,8 @@ std::ostream& operator<<(std::ostream& os, const MPI_Status& status) {
 	return os;
 }
 
-int SIPServer::last_seen_line() {
-	return last_seen_line_;
-}
+//int SIPServer::last_seen_line() {
+//	return last_seen_line_;
+//}
 
 } /* namespace sip */

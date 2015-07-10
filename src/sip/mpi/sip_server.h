@@ -207,6 +207,16 @@ public:
 		return sip_tables_.array_name(array_id);
 	}
 
+	/**returns the line in the sials code corresponding to the given pc
+	 * or -1 if the pc value is past the end of the program, or program end
+	 *
+	 * @param pc
+	 * @return
+	 */
+	int line_number(int pc) const {
+		return sip_tables_.line_number(pc);
+	}
+
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
 
@@ -216,22 +226,9 @@ public:
 //    Block* get_and_remove_contiguous_array(int) {fail("get_and_remove_contiguous_aray should not be invoked by a server"); return NULL;}
 
 
-//    /**
-//     * Gets the last seen sialx line from which a worker
-//     * sent a message. Line -1 is seen for PROGRAM_END.
-//     * @return
-//     */
-//    int last_seen_line(){
-//    	if (last_seen_pc_ < op_table_.size())
-//    		return sip_tables_.op_table_line_number(last_seen_pc_);
-//    	else
-//    		return -1;// Past the end of the program. Probably being called by a test.
-//    	}
-//    }
 
-	int line_number(int pc){
-		return sip_tables_.op_table_.line_number(pc);
-	}
+
+
 
 
 private:

@@ -15,17 +15,23 @@
 #include "sip_mpi_constants.h"
 #include "async_ops.h"
 #include "distributed_block_consistency.h"
+#include <gtest/gtest_prod.h>
 
 namespace sip {
 
 class SIPServer;
 class DiskBackedArraysIO;
 class DiskBackedBlockMap;
-class PendingAsyncManager;
 
 
 
 /**
+ * TODO  Update these comments!!!
+ *
+ * These methods should be called by the DiskBackedBlockManager.
+ *
+ *
+ *
  * Maintains a Block in the memory of a server.
  * Each block maintains its status. The status informs the client of a
  * ServerBlock instance of how to treat it.
@@ -87,31 +93,38 @@ class PendingAsyncManager;
 class ServerBlock;
 
 class DiskBackingState{
-public:
-	void set_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = true; }
-	void set_in_memory() { disk_status_[DiskBackingState::IN_MEMORY] = true; }
-	void set_on_disk() { disk_status_[DiskBackingState::ON_DISK] = true; }
-
-	void unset_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false; }
-	void unset_in_memory() { disk_status_[DiskBackingState::IN_MEMORY] = false; }
-	void unset_on_disk() { disk_status_[DiskBackingState::ON_DISK] = false; }
-
-	bool is_dirty() { return disk_status_[DiskBackingState::DIRTY_IN_MEMORY]; }
-	bool is_in_memory() { return disk_status_[DiskBackingState::IN_MEMORY]; }
-	bool is_on_disk() { return disk_status_[DiskBackingState::ON_DISK]; }
 private:
+//	void set_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = true; }
+	void set_valid_on_disk() { disk_status_[VALID_ON_DISK] = true; }
+	void set_in_memory() { disk_status_[IN_MEMORY] = true; }
+	void set_on_disk() { disk_status_[ON_DISK] = true; }
+
+//	void unset_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false; }
+	void unset_valid_on_disk() { disk_status_[VALID_ON_DISK] = false; }
+	void unset_in_memory() { disk_status_[IN_MEMORY] = false; }
+	void unset_on_disk() { disk_status_[ON_DISK] = false; }
+
+//	bool is_dirty() { return disk_status_[DiskBackingState::DIRTY_IN_MEMORY]; }
+	bool is_valid_on_disk() {return disk_status_[VALID_ON_DISK]; }
+	bool is_in_memory() { return disk_status_[IN_MEMORY]; }
+	bool is_on_disk() { return disk_status_[ON_DISK]; }
+
 	DiskBackingState(){
 		disk_status_[IN_MEMORY] = false;
 		disk_status_[ON_DISK] = false;
-		disk_status_[DIRTY_IN_MEMORY] = false;
+//		disk_status_[DIRTY_IN_MEMORY] = false;
+		disk_status_[VALID_ON_DISK] = false;
 	}
 	enum ServerBlockStatus {
 		IN_MEMORY		= 0,	// Block is on host
 		ON_DISK			= 1,	// Block is on device (GPU)
-		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
+//		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
+		VALID_ON_DISK = 2,      // BLock is up-to-date on disk
 	};
 	std::bitset<3> disk_status_;
 	friend ServerBlock;
+	friend DiskBackedBlockMap;
+	friend DiskBackedArraysIO;
 	DISALLOW_COPY_AND_ASSIGN(DiskBackingState);
 };
 
@@ -120,22 +133,7 @@ public:
 	typedef double * dataPtr;
 	typedef ServerBlock* ServerBlockPtr;
 
-	/**
-	 * Constructs a block, allocating size number
-	 * of double precision numbers; optionally
-	 * initializes all elements to 0
-	 * @param size
-	 * @param init
-	 */
-	explicit ServerBlock(int size, bool init);
-	/**
-	 * Constructs a block with a given pointer to
-	 * double precision numbers and size. data
-	 * parameter can be NULL.
-	 * @param size
-	 * @param data can be NULL
-	 */
-	explicit ServerBlock(int size, dataPtr data);
+
 
 	~ServerBlock();
 
@@ -154,26 +152,45 @@ public:
     dataPtr get_data() { return data_; }
 	void set_data(dataPtr data) { data_ = data; }
 
-	int size() { return size_; }
+	size_t size() { return size_; }
 
     dataPtr accumulate_data(size_t size, dataPtr to_add); /*! for all elements, this->data += to_add->data */
-    dataPtr fill_data(size_t size, double value);
-    dataPtr increment_data(size_t size, double delta);
-    dataPtr scale_data(size_t size, double factor);
+    dataPtr fill_data(double value);
+    dataPtr increment_data(double delta);
+    dataPtr scale_data(double factor);
 
-    void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
-    void allocate_in_memory_data(bool init); 	/*! Allocs mem for FP data, optionally initializes to 0*/
+//    void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
+//    void allocate_in_memory_data(bool init); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
 
 	void wait(){ async_state_.wait_all();}
 	void wait_for_writes(){ async_state_.wait_for_writes();}
 
-	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
+//	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
+//TODO this is only public because "friending the test class doesn't seem to work"
+	/**
+	 * Constructs a block, allocating size number
+	 * of double precision numbers; optionally
+	 * initializes all elements to 0
+	 * @param size
+	 * @param init
+	 */
+	explicit ServerBlock(size_t size, bool init);
 private:
-    const int size_;/**< Number of elements in block */
+
+	/**
+	 * Constructs a block with a given pointer to
+	 * double precision numbers and size. data
+	 * parameter can be NULL.
+	 * @param size
+	 * @param data can be NULL
+	 */
+	explicit ServerBlock(size_t size, dataPtr data);
+
+    const size_t size_;/**< Number of elements in block */
 	dataPtr data_;	/**< Pointer to block of data */
 	ServerBlockAsyncManager async_state_; /** handles async communication operations */
     DiskBackingState disk_state_;
@@ -181,12 +198,14 @@ private:
 
 
 //	const static std::size_t field_members_size_;
-	static std::size_t allocated_bytes_;
+//	static std::size_t allocated_bytes_;
 
 	friend DiskBackedArraysIO;
 	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
-	friend PendingAsyncManager;
+	friend class PendingAsyncManager;
+	FRIEND_TEST(Sial_Unit,ServerBlockLRUArrayPolicy);
+//	friend class Sial_Unit_ServerBlockLRUArrayPolicy_Test;
 
 	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
 };

@@ -208,8 +208,8 @@ void TestControllerParallel::print_timers(std::ostream& out){
 				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
 		return;
 	}
-	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
-	sialx_timers_->print_timers(lno2name, out);
+//	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
+//	sialx_timers_->print_timers(lno2name, out);
 	out<< std::flush;
 }
 
@@ -269,7 +269,7 @@ double* TestControllerParallel::local_block(const std::string& name,
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
-		sip::ServerTimer server_timer(sip_tables_->max_timer_slots());
+		sip::ServerTimer server_timer(sip_tables_->op_table_size());
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
 				spam_, server_timer);
 		barrier();
@@ -307,8 +307,8 @@ bool TestControllerParallel::runWorker() {
 
 
 
-		int slot = sip_tables_->max_timer_slots();
-		sialx_timers_ = new sip::SialxTimer(sip_tables_->max_timer_slots());
+//		int slot = sip_tables_->op_table_size();
+		sialx_timers_ = new sip::SialxTimer(sip_tables_->op_table_size());
 		worker_ = new sip::Interpreter(*sip_tables_, sialx_timers_, printer_, wpam_);
 		barrier();
 

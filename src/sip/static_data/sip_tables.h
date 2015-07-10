@@ -59,13 +59,15 @@ public:
 	/**
 	 * @return Maximum number of slots to initialize in the timer
 	 */
-	int max_timer_slots() const;
+//	int max_timer_slots() const;
 
 	/**
 	 * Returns a vector that contain super instruction names
 	 * @return
 	 */
-	std::vector<std::string> line_num_to_name() const;
+//	std::vector<std::string> line_num_to_name() const;
+
+	size_t op_table_size() const {return op_table_.size();}
 
 //scalars and arrays
 	int array_slot(const std::string& name){return array_table_.array_slot(name);}
@@ -156,6 +158,11 @@ public:
 //	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
 //	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot) const;
 
+
+//optable
+	int line_number(int pc) const{
+		return op_table_.line_number(pc);
+	}
     void print() const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 

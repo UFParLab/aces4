@@ -19,50 +19,45 @@
 namespace sip {
 
 //const std::size_t ServerBlock::field_members_size_ = sizeof(int) + sizeof(int) + sizeof(dataPtr);
-std::size_t ServerBlock::allocated_bytes_ = 0;
+//std::size_t ServerBlock::allocated_bytes_ = 0;
 
-ServerBlock::ServerBlock(int size, bool initialize):
+//caller is responsible for updating memory usage accounting in DiskBackedBlockMap
+ServerBlock::ServerBlock(size_t size, bool initialize):
 		size_(size){
 	if (initialize){
 		data_ = new double[size_]();
     } else {
 		data_ = new double[size_];
     }
-
-	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = true;
-	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
-	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
+//	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = true;
+//	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
+//	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
 
 	// Only Count number of bytes allocated for actual data.
 //	const std::size_t bytes_in_block = field_members_size_ + size_ * sizeof(dataPtr);
 //	allocated_bytes_ += bytes_in_block;
-	allocated_bytes_ += size_ * sizeof(double);
+//	allocated_bytes_ += size_ * sizeof(double);
 }
 
-ServerBlock::ServerBlock(int size, dataPtr data):
+
+ServerBlock::ServerBlock(size_t size, dataPtr data):
 		size_(size), data_(data) {
-	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = (data_ == NULL) ? false : true;
-	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
-	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
+//	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = (data_ == NULL) ? false : true;
+//	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
+//	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
 
 	// Only Count number of bytes allocated for actual data.
 //	const std::size_t bytes_in_block = field_members_size_ + size_ * sizeof(dataPtr);
 //	allocated_bytes_ += bytes_in_block;
-    if (data_ != NULL)
-    	allocated_bytes_ += size_ * sizeof(double);
+//    if (data_ != NULL)
+//    	allocated_bytes_ += size_ * sizeof(double);
 }
 
 ServerBlock::~ServerBlock(){
-	const std::size_t bytes_in_block = size_ * sizeof(double);
+//	const std::size_t bytes_in_block = size_ * sizeof(double);
 	std::stringstream ss;
 	if (data_ != NULL) {
         async_state_.wait_all();
-		ss << "Allocated bytes [ " << allocated_bytes_ <<" ] less than size of block being destroyed "
-				<< " [ " << bytes_in_block << " ] ";
-		sip::check(allocated_bytes_ >= bytes_in_block, ss.str());
-		allocated_bytes_ -= bytes_in_block;
-
-		sip::check(disk_state_.disk_status_[DiskBackingState::IN_MEMORY], "ServerBlock not in memory yet data_ is not NULL");
 		delete [] data_;
 	}
 }
@@ -75,47 +70,47 @@ ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	return data_;
 }
 
-ServerBlock::dataPtr ServerBlock::fill_data(size_t size, double value) {
-	std::fill(data_+0, data_+size, value);
+ServerBlock::dataPtr ServerBlock::fill_data(double value) {
+	std::fill(data_+0, data_+size_, value);
 	return data_;
 }
 
-ServerBlock::dataPtr ServerBlock::scale_data(size_t size, double factor) {
-	for (int i = 0; i < size; ++i) {
+ServerBlock::dataPtr ServerBlock::scale_data(double factor) {
+	for (int i = 0; i < size_; ++i) {
 		data_[i] *= factor;
 	}
 //	std::cout << "at server, in scale_data, first element of block is " << data_[0] << std::endl<< std::flush;
 	return data_;
 }
 
-ServerBlock::dataPtr ServerBlock::increment_data(size_t size, double delta) {
-	for (int i = 0; i < size; ++i) {
+ServerBlock::dataPtr ServerBlock::increment_data( double delta) {
+	for (int i = 0; i < size_; ++i) {
 		data_[i] += delta;
 	}
 	return data_;
 }
 
-void ServerBlock::free_in_memory_data() {
-	if (data_ != NULL) {
-        async_state_.wait_all();
-		delete [] data_; data_ = NULL;
-		disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = false;
-		disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
-		allocated_bytes_ -= size_ * sizeof(double);
-	}
-}
+//void ServerBlock::free_in_memory_data() {
+//	if (data_ != NULL) {
+//        async_state_.wait_all();
+//		delete [] data_; data_ = NULL;
+//		disk_state_.disk_status_[IN_MEMORY] = false;
+//		disk_state_.disk_status_[DIRTY_IN_MEMORY] = false;
+//		allocated_bytes_ -= size_ * sizeof(double);
+//	}
+//}
 
-void ServerBlock::allocate_in_memory_data(bool initialize) {
-   	sip::check(data_ == NULL, "data_ was not NULL, allocating memory in allocate_in_memory_data!");
-   	if (initialize) 
-        data_ = new double[size_]();
-   	else 
-        data_ = new double[size_];
-
-   	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = true;
-   	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
-   	allocated_bytes_ += size_ * sizeof(double);
-}
+//void ServerBlock::allocate_in_memory_data(bool initialize) {
+//   	sip::check(data_ == NULL, "data_ was not NULL, allocating memory in allocate_in_memory_data!");
+//   	if (initialize)
+//        data_ = new double[size_]();
+//   	else
+//        data_ = new double[size_];
+//
+//   	disk_state_.disk_status_[IN_MEMORY] = true;
+//   	disk_state_.disk_status_[DIRTY_IN_MEMORY] = false;
+//   	allocated_bytes_ += size_ * sizeof(double);
+//}
 
 std::ostream& operator<<(std::ostream& os, const ServerBlock& block) {
 	os << "SIZE=" << block.size_ << std::endl;
@@ -291,9 +286,9 @@ std::ostream& operator<<(std::ostream& os, const ServerBlock& block) {
 //
 //}
 
-std::size_t ServerBlock::allocated_bytes(){
-	return allocated_bytes_;
-}
+//std::size_t ServerBlock::allocated_bytes(){
+//	return allocated_bytes_;
+//}
 
 
 } /* namespace sip */

@@ -287,14 +287,24 @@ private:
 // 						Methods for SialxTimers
 //*********************************************************************
 
-SialxTimer::SialxTimer(int sialx_lines) :
-		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)),
-		sialx_lines_(sialx_lines){
+//SialxTimer::SialxTimer(int sialx_lines) :
+//		delegate_(1 + NUMBER_TIMER_KINDS_*(sialx_lines)),
+//		sialx_lines_(sialx_lines){
+//	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
+//	 * one for each kind defined in the TimerKind_t enum.
+//	 * One extra added since line numbers begin at 1.
+//	 */
+//}
+
+SialxTimer::SialxTimer(int op_table_size) :
+		delegate_( NUMBER_TIMER_KINDS_*op_table_size),
+		sialx_lines_(op_table_size){
 	/* Need NUMBER_TIMER_KINDS_ times the maximum number of slots,
 	 * one for each kind defined in the TimerKind_t enum.
 	 * One extra added since line numbers begin at 1.
 	 */
 }
+
 
 void SialxTimer::start_timer(int line_number, TimerKind_t kind){
 //	check(kind < NUMBER_TIMER_KINDS_, "Invalid timer type", line_number);

@@ -262,8 +262,8 @@ private:
 
 	/** auxillary field needed by sialx timers.
 	 * If value is positive, then the timer corresponding to the line is on.
-	 * Should be initialized to value <= 0 **/
-	int timer_line_;
+	 * Should be initialized to  0  and timer 0 should be started right before the loop**/
+	int timer_pc_;
 
 	/** Manages per-line timers.
 	 *

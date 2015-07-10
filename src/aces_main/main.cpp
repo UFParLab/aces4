@@ -181,25 +181,27 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
-		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
+//		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::ServerTimer server_timer(sipTables.max_timer_slots());
+			sip::ServerTimer server_timer(sipTables.op_table_size());
 			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
 			server.run();
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
 			persistent_server.save_marked_arrays(&server);
-			server_timer.print_timers(lno2name);
+			// TODO restore this
+//			server_timer.print_timers(lno2name);
 		} else
 #endif
 
 		//interpret current program on worker
 		{
 
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+//			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+			sip::SialxTimer sialxTimer(sipTables.op_table_size());
 
 			sip::Interpreter runner(sipTables, &sialxTimer, &persistent_worker);
 
@@ -219,8 +221,8 @@ int main(int argc, char* argv[]) {
 			time (&rawtime);
 			timeinfo = localtime (&rawtime);
 			std::cout << "Current local time and date:" << asctime(timeinfo);)
-
-			sialxTimer.print_timers(lno2name);
+//TODO restore this
+//			sialxTimer.print_timers(lno2name);
 
 
 		}// end of worker or server

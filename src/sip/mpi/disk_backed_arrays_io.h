@@ -152,33 +152,33 @@ private:
 	 */
 	bool file_exists(const std::string& name);
 
-	/**
-	 * Writes out all the dirty blocks of an array to a given persistent file.
-	 * @param fh
-	 * @param array_blocks
-	 */
-	void write_all_dirty_blocks(MPI_File fh, const IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
-
-	/**
-	 * Zeroes out all blocks on disk for a given array.
-	 * @param array_id
-	 * @param mpif
-	 */
-	void collectively_zero_out_all_disk_blocks(const int array_id, MPI_File mpif);
-
-	/**
-	 * Collectively (Using MPIIO) copies data from the given MPI File handle
-	 * to a new file.
-	 *
-	 * Not used in current implementation. Kept around for future use.
-	 * Please verify correctness before using.
-	 *
-	 * @param persistent_filename
-	 * @param mpif_array
-	 */
-	void collectively_copy_block_data(
-				char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array);
-
+//	/**
+//	 * Writes out all the dirty blocks of an array to a given persistent file.
+//	 * @param fh
+//	 * @param array_blocks
+//	 */
+//	void write_all_dirty_blocks(MPI_File fh, const IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
+//
+//	/**
+//	 * Zeroes out all blocks on disk for a given array.
+//	 * @param array_id
+//	 * @param mpif
+//	 */
+//	void collectively_zero_out_all_disk_blocks(const int array_id, MPI_File mpif);
+//
+//	/**
+//	 * Collectively (Using MPIIO) copies data from the given MPI File handle
+//	 * to a new file.
+//	 *
+//	 * Not used in current implementation. Kept around for future use.
+//	 * Please verify correctness before using.
+//	 *
+//	 * @param persistent_filename
+//	 * @param mpif_array
+//	 */
+//	void collectively_copy_block_data(
+//				char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array);
+//
 	/**
 	 * To save the persistent array,
 	 * write out zero for blocks that have not been formed yet.

@@ -55,7 +55,8 @@ void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
                 throw std::out_of_range("No blocks to remove from cache or pending deletes");
             }
         } else {
-            BlockId block_id = policy_.get_next_block_for_removal();
+        	Block* scratch;
+            BlockId block_id = policy_.get_next_block_for_removal(scratch);
             Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
             allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
             delete tmp_block_ptr;
