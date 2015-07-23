@@ -298,6 +298,7 @@ set(QM_SOURCE_FILES
 set(GENERAL_SOURCE_FILES
     general/list_block_map.cpp;
     general/print_block.cpp;
+    general/write_block_to_file.cpp;
     general/print_static_array.cpp;
     general/get_my_rank.cpp;
     general/swap_blocks.cpp;
