@@ -292,14 +292,25 @@ void anti_symm_o(
 
 void anti_symm_v(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
-}
 
+void debug_permute_3214(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void debug_permute_1432(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+}
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void read_block_from_text_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 //void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void write_block_to_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void read_block_from_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -469,6 +480,7 @@ void SpecialInstructionManager::init_procmap(){
 
 	procmap_["print_block"]=(fp0)&print_block;
 	procmap_["write_block_to_file"]=(fp0)&write_block_to_file;
+	procmap_["read_block_from_file"]=(fp0)&read_block_from_file;
 	procmap_["read_block_from_text_file"]=(fp0)&read_block_from_text_file;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
 	procmap_["list_block_map"]=(fp0)&list_block_map;
@@ -529,6 +541,8 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
 
+    procmap_["debug_permute_3214"]=(fp0)&debug_permute_3214;
+    procmap_["debug_permute_1432"]=(fp0)&debug_permute_1432;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

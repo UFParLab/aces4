@@ -1,0 +1,89 @@
+import "reom_rhf_defs.sialx" 
+import "reom_vars.sialx"
+
+SIAL SYMMETRHC_A
+
+special read_block_from_file w
+special debug_permute_3214 wr
+special debug_permute_1432 wr
+
+#print "Anti-symmetrizing Q2*H*B _aa"
+
+server_barrier
+pardo a,i,a1,i1
+    put DRNaiai[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+pardo a,i,a1,i1
+    put D2RNaiai[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+server_barrier
+pardo a,i,a1,i1
+    execute read_block_from_file VCHACT2AA[a,i,a1,i1]
+    #print VCHACT2AA[a,i,a1,i1]
+    Taiai[a,i,a1,i1] = VCHACT2AA[a,i,a1,i1]
+    T3aiai[a1,i,a,i1] = 0.0
+
+#    if a == a1
+#    execute anti_symm_v Taiai[a,i,a1,i1]
+#    endif
+#    if a < a1
+    T3aiai[a1,i,a,i1] = Taiai[a,i,a1,i1]
+    T3aiai[a1,i,a,i1] *= -1.0
+#    endif
+
+    put DRNaiai[a,i,a1,i1] += Taiai[a,i,a1,i1]
+    put DRNaiai[a1,i,a,i1] += T3aiai[a1,i,a,i1]
+endpardo a,i,a1,i1
+server_barrier
+pardo a,i,a1,i1
+    get DRNaiai[a,i,a1,i1]
+    Taiai[a,i,a1,i1] = DRNaiai[a,i,a1,i1]
+    T3aiai[a,i1,a1,i] = 0.0
+
+#    if i == i1
+#    execute anti_symm_o Taiai[a,i,a1,i1]
+#    endif
+#    if i < i1
+    T3aiai[a,i1,a1,i] = Taiai[a,i,a1,i1]
+    T3aiai[a,i1,a1,i] *= -1.0
+#    endif
+
+    put D2RNaiai[a,i,a1,i1] += Taiai[a,i,a1,i1]
+    put D2RNaiai[a,i1,a1,i] += T3aiai[a,i1,a1,i]
+
+endpardo a,i,a1,i1
+server_barrier
+pardo a,i,a1,i1
+    get D2RNaiai[a,i,a1,i1]
+    Taiai[a,i,a1,i1] = D2RNaiai[a,i,a1,i1]
+    prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
+endpardo a,i,a1,i1
+server_barrier
+delete DRNaiai
+delete D2RNaiai
+server_barrier
+
+sum1 = 0.0
+pardo a,i,a1,i1
+    request VCHACT2AA[a,i,a1,i1]
+    request VCHACT2AA[a,i1,a1,i]
+    Taiai[a,i,a1,i1]  = VCHACT2AA[a,i,a1,i1]
+    
+    Taiai[a,i,a1,i1] -= VCHACT2AA[a,i1,a1,i]
+    
+    #T2aiai[a,i,a1,i1] = VCHACT2AA[a,i1,a1,i]
+    #T2aiai[a,i,a1,i1] *= -1.0 
+    #Taiai[a,i,a1,i1] += T2aiai[a,i,a1,i1]
+    
+    T1aiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
+
+    etemp = Taiai[a,i,a1,i1]*T1aiai[a,i,a1,i1]
+    sum1 += etemp
+endpardo a,i,a1,i1
+server_barrier
+sum2 = 0.0
+collective sum2 += sum1
+print sum2
+
+
+ENDSIAL SYMMETRHC_A#

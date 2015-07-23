@@ -296,9 +296,12 @@ set(QM_SOURCE_FILES
 
 # General Super Instructions
 set(GENERAL_SOURCE_FILES
+	general/debug_permute_3214.F;
+	general/debug_permute_1432.F;
     general/list_block_map.cpp;
     general/print_block.cpp;
     general/write_block_to_file.cpp;
+    general/read_block_from_file.cpp;
     general/print_static_array.cpp;
     general/get_my_rank.cpp;
     general/swap_blocks.cpp;

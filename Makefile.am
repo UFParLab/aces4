@@ -457,6 +457,7 @@ SIOX_FILES=\
 ./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/cast_indices_to_simple.siox\
 ./src/sialx/test/aoladder.siox\
+./src/sialx/qm/debug_eom_antisymm.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -587,6 +588,7 @@ EXTRA_DIST += \
 ./src/sialx/test/put_initialize.sialx\
 ./src/sialx/test/cast_indices_to_simple.sialx\
 ./src/sialx/test/aoladder.sialx\
+./src/sialx/qm/debug_eom_antisymm.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\

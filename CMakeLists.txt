@@ -552,6 +552,7 @@ set(SIAL_FILES
     src/sialx/test/read_block_test.sialx;
     src/sialx/test/cast_indices_to_simple.sialx;
     src/sialx/test/aoladder.sialx;
+    src/sialx/qm/debug_eom_antisymm.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
