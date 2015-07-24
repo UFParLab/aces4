@@ -5,6 +5,9 @@ import "tran_eom.sialx"
 SIAL R_EE_EOM_CCSD_RHF
 #***********************************************************
 
+
+special write_block_to_file u
+
 PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
@@ -3617,6 +3620,11 @@ endpardo a,i,a1,i1
 server_barrier
 pardo a,i,a1,i1
     request VCHACT2AA[a,i,a1,i1]
+
+    execute write_block_to_file VCHACT2AA[a,i,a1,i1]
+
+    print VCHACT2AA[a,i,a1,i1]
+
     Taiai[a,i,a1,i1] = VCHACT2AA[a,i,a1,i1]
     T3aiai[a1,i,a,i1] = 0.0
 
@@ -6672,111 +6680,8 @@ do kstate
     SEkold[kstate] = 0.0
 enddo kstate
 
-do kiter
-    print " "
-    print kiter
-
     call form_G
     call diag_G
-    call update_vecs
-    call all_GS
 
-    etemp = 0.0
-    etemp2 = 0.0
-    do kstate
-        etemp1 = SEk0[kstate]
-        etemp2 = SEkold[kstate]
-        etemp1 -= etemp2
-        etemp2 = etemp1**2.0
-        etemp += etemp2
-    enddo kstate
-    etemp3 = (scalar)eom_roots
-    rms_e_conv = (etemp/etemp3)**0.5
-    do kstate
-        SEkold[kstate] = SEk0[kstate]
-    enddo kstate
-    print rms_e_conv
-    print rms_orb_conv
-    server_barrier
-    assert_same rms_e_conv
-    if rms_e_conv < eom_tol
-        exit
-    endif
-    server_barrier
-enddo kiter
-
-print " "
-print "EOM-CCSD has converged"
-#print "FINAL excitation energies"
-#do kstate
-#    allocate contiguous EOM_EE_Energy[kstate:kstate]
-#    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
-#    print EOM_EE_Energy[kstate:kstate]
-#    deallocate contiguous EOM_EE_Energy[kstate:kstate]
-#enddo kstate
-
-# -----------------
-# props
-# -----------------
-# scale so <R|R>=1.0 
-call norm_lr_vec
-call form_r0
-
-call hf_density
-
-allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
-allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
-allocate contiguous EOM_EE_Energy[1:eom_roots]
-
-do kstate
-    print " "
-    print "--------"
-    print kstate
-
-# logright = 0.0 : Left = left eom amplitudes
-# logright = 1.0 : Left = lambda amplitudes
-
-    omega = SEk0[kstate]
-    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
-    r0 = SR0[kstate]
-    print EOM_EE_Energy[kstate:kstate]
-    print " "
-
-    do ixyz
-	RDipole[ixyz] = 0.0
-	LDipole[ixyz] = 0.0
-    enddo ixyz
-
-    call get_r_amps
-
-    logright = one
-    CALL PUT_IN_Lk
-    call compute_density
-    call back_transform_dipole
-#    print Rdipole
-
-    logright = zero
-    r0 = 1.0
-    CALL PUT_IN_Lk
-    call compute_density
-    call back_transform_dipole
-#    print Ldipole
-
-    dsum = 0.0
-    do ixyz
-	sum1 = RDipole[ixyz]
-	sum2 = LDipole[ixyz]
-	etemp = sum1*sum2*omega*2.0/3.0
-	Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz] = etemp
-        print Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz]
-	dsum += etemp
-    enddo ixyz
-    Dipole_Oscillator_Norm[kstate:kstate] = dsum
-    print Dipole_Oscillator_Norm[kstate:kstate]
-
-
-enddo kstate
-
-server_barrier
 #
 endSIAL R_EE_EOM_CCSD_RHF
