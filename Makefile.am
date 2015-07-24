@@ -80,6 +80,8 @@ ACES_DATA_FILES=\
 ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.cpp\
 ./src/sip/worker/loop_manager.h\
+./src/sip/worker/fragment_loop_manager.cpp\
+./src/sip/worker/fragment_loop_manager.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
 ./src/sip/worker/sialx_timer.cpp\
@@ -275,6 +277,7 @@ test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
+test/mcpt2_water_test.dat\
 test/eom_test.dat\
 test/eom_lccsd_test.dat\
 test/eom_lccd_test.dat\
@@ -464,6 +467,8 @@ SIOX_FILES=\
 ./src/sialx/qm/drop_core_in_sial.siox\
 ./src/sialx/qm/frag_2order_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
+./src/sialx/qm/init_eom_mcpt.siox\
+./src/sialx/qm/mcpt2_vars.siox\
 ./src/sialx/qm/mcpt2_singles_lowmem.siox\
 ./src/sialx/qm/mcpt2_doubles_lowmem.siox\
 ./src/sialx/qm/trans_frag_defs.siox\
@@ -595,6 +600,8 @@ EXTRA_DIST += \
 ./src/sialx/qm/trans_frag_defs.sialx\
 ./src/sialx/qm/frag_2order_corr_lowmem.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
+./src/sialx/qm/init_eom_mcpt.sialx\
+./src/sialx/qm/mcpt2_vars.sialx\
 ./src/sialx/qm/mcpt2_singles_lowmem.sialx\
 ./src/sialx/qm/mcpt2_doubles_lowmem.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\

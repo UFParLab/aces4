@@ -747,6 +747,7 @@ c---------------------------------------------------------------------------
 c-------------------------------------------------------------------------- 
       include 'sip_interface.f'
       include 'imemory.h' 
+      include 'omp_lib.h'
 
 !     one dimensional array containg alphas(exponents)   
       TYPE(C_PTR) :: ntot_alpha, ixalphas 
@@ -878,8 +879,8 @@ c     integer watom_frag(nfrags, *)
 
       integer beg_anfps(nshells)  
       integer end_anfps(nshells)  
-      double precision scr(*)   
-      integer iscr(*)
+      double precision scr(zmax)   
+      integer iscr(imax)
 
       integer ccbeg(*), ccend(*)
 
@@ -1242,34 +1243,34 @@ c---------------------------------------------------------------------------
 
            if (nints .gt. 0) then
 
-               call form_ss1fock(scr(nfirst), n_basis,
+               call form_ss1fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
-               call form_ss2fock(scr(nfirst), n_basis,
-     *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
-     *                        HFD_A,HFD_B,FA,FB)
-
-               call form_ss3fock(scr(nfirst), n_basis,
+               call form_ss2fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
 
-               call form_ss4fock(scr(nfirst), n_basis,
+               call form_ss3fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
 
-               call form_ss5fock(scr(nfirst), n_basis,
+               call form_ss4fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
 
-               call form_ss6fock(scr(nfirst), n_basis,
+               call form_ss5fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
 
-               call form_ss7fock(scr(nfirst), n_basis,
+               call form_ss6fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
 
-               call form_ss8fock(scr(nfirst), n_basis,
+               call form_ss7fock_omp(scr(nfirst), n_basis,
+     *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
+     *                        HFD_A,HFD_B,FA,FB)
+
+               call form_ss8fock_omp(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
 
@@ -2512,961 +2513,12 @@ C      endif
       return
       end
 
-
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss1fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-      double precision t8xx
-      double precision t9xx
-      double precision t10xx
-      double precision t11xx
-      double precision t12xx
-      double precision t13xx
-      double precision t14xx
-      double precision t15xx
-      double precision t16xx
-      double precision t17xx
-      double precision t18xx
-      double precision t19xx
-      double precision t20xx
-      double precision t21xx
-      double precision t22xx
-c
-c
-c############ CLASS 6  ############
-c SS1 
-c#  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
-c#                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if ( l .lt. s) then 
-            T1xx = HFD_A(l,s) + HFD_B(l,s)
-            T5xx = 0.0 
-      do n = bb1, bb2 
-         if ( n .ne. s) then 
-         if ( n .ne. l) then 
-            T11xx = 0.0 
-            T13xx = 0.0 
-            T19xx = 0.0 
-            T21xx = 0.0 
-      do m = aa1, aa2 
-c
-         if ( m .lt. n) then 
-         if ( m .lt. l) then 
-         if ( m .ne. s) then 
-
-            wint      = int_block(m,n,l,s) 
-            T4xx      = HFD_A(m,n) + HFD_B(m,n)
-            T2xx      = 2.0*wint*T1xx
-            T5xx      = T5xx + 2.0*wint*T4xx
-            T7xx      = wint*HFD_A(n,s)
-            T9xx      = wint*HFD_A(n,l)
-            T11xx     = T11xx + wint*HFD_A(m,s)
-            T13xx     = T13xx + wint*HFD_A(m,l)
-            T19xx     = T19xx + wint*HFD_B(m,s)
-            T21xx     = T21xx + wint*HFD_b(m,l)
-
-            F_a(m,n)  = F_a(m,n) + T2xx
-            F_b(m,n)  = F_b(m,n) + T2xx
-            F_a(n,m)  = F_a(n,m) + T2xx
-            F_b(n,m)  = F_b(n,m) + T2xx
-
-            F_A(m,l) = F_a(m,l) - T7xx
-            F_A(l,m) = F_a(l,m) - T7xx
-
-            F_a(m,s) = F_a(m,s) - T9xx
-            F_A(s,m) = F_a(s,m) - T9xx
-
-            T15xx    = wint*HFD_B(n,s)
-            F_B(m,l) = F_b(m,l) - T15xx
-            F_B(l,m) = F_b(l,m) - T15xx
-
-            T17xx    = wint*HFD_B(n,l)
-            F_b(m,s) = F_b(m,s) - T17xx
-            F_b(s,m) = F_b(s,m) - T17xx
-
-         endif 
-         endif 
-         endif 
-
-      enddo ! m  
-            F_A(n,l) = F_a(n,l) - T11xx
-            F_A(l,n) = F_a(l,n) - T11xx
-            F_A(n,s) = F_a(n,s) - T13xx
-            F_A(s,n) = F_a(s,n) - T13xx
-            F_b(n,l) = F_b(n,l) - T19xx
-            F_b(l,n) = F_b(l,n) - T19xx
-            F_b(n,s) = F_b(n,s) - T21xx
-            F_b(s,n) = F_b(s,n) - T21xx
-         endif 
-         endif 
-      enddo ! n  
-            F_a(l,s) = F_a(l,s) + T5xx
-            F_b(l,s) = F_b(l,s) + T5xx
-            F_a(s,l) = F_a(s,l) + T5xx
-            F_b(s,l) = F_b(s,l) + T5xx
-         endif 
-      enddo ! l  
-      enddo ! s  
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss2fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-      double precision t8xx
-      double precision t9xx
-      double precision t10xx
-      double precision t11xx
-      double precision t12xx
-      double precision t13xx
-      double precision t14xx
-      double precision t15xx
-      double precision t16xx
-      double precision t17xx
-      double precision t18xx
-      double precision t19xx
-      double precision t20xx
-      double precision t21xx
-      double precision t22xx
-c
-c########### CLASS 3  ############
-c SS2 
-c  Do two-center part (m m |m n)->(m n |m m ),(m m|n m),(n m|m m)
-c  Do three-center part (m m |n l)->(m m |l n ),(n l|m m),(l n|m m)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if (l .lt. s) then 
-             T1xx = HFD_a(l,s) + HFD_b(l,s)
-             T4xx = 0.0  
-      do n = bb1, bb2 
-      do m = aa1, aa2 
-         if (m .eq. n) then 
-
-             wint     = int_block(m,n,l,s) 
-             T3xx     = HFD_a(m,n) + HFD_b(m,n)
-             T2xx     = 2.0*wint*T1xx
-             T4xx     = T4xx + wint*T3xx
-             T6xx     = wint*HFD_a(n,s)
-             T8xx     = wint*HFD_a(n,l)
-             T10xx    = wint*HFD_b(n,s)
-             T12xx    = wint*HFD_b(n,l)
-
-             F_a(m,n) = F_a(m,n) + T2xx
-             F_b(m,n) = F_b(m,n) + T2xx
-
-             F_a(m,l) = F_a(m,l) - T6xx
-             F_a(l,m) = F_a(l,m) - T6xx
-
-             F_a(m,s) = F_a(m,s) - T8xx
-             F_a(s,m) = F_a(s,m) - T8xx
-
-             F_b(m,l) = F_b(m,l) - T10xx
-             F_b(l,m) = F_b(l,m) - T10xx
-
-             F_b(m,s) = F_b(m,s) - T12xx
-             F_b(s,m) = F_b(s,m) - T12xx
-
-         endif 
-      enddo 
-      enddo 
-             F_a(l,s) = F_a(l,s) + T4xx
-             F_b(l,s) = F_b(l,s) + T4xx
-             F_a(s,l) = F_a(s,l) + T4xx
-             F_b(s,l) = F_b(s,l) + T4xx
-         endif 
-      enddo 
-      enddo 
-
-c ---------------------------------------------------------------------------- 
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss3fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-      double precision t8xx
-      double precision t9xx
-      double precision t10xx
-      double precision t11xx
-      double precision t12xx
-      double precision t13xx
-      double precision t14xx
-      double precision t15xx
-      double precision t16xx
-      double precision t17xx
-      double precision t18xx
-      double precision t19xx
-      double precision t20xx
-      double precision t21xx
-      double precision t22xx
-c
-c########### CLASS 5  ############
-c##################  CLASS A ##############
-c SS3 
-c  Do three-center part (m n |m la)->(m n |la m ),(n m|m la),(n m|la m)
-c                       (m la |m n),(la m |m n ),(m la |n m),(la m |n m)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if ( l .lt. s) then 
-            T1xx = HFD_a(l,s) + HFD_b(l,s)
-            T5xx = 0.0 
-      do n = bb1, bb2 
-         if ( n .lt. s) then 
-            T19xx = 0.0 
-            T21xx = 0.0 
-            T11xx = 0.0 
-            T13xx = 0.0 
-      do m = aa1, aa2 
-         if ( m .lt. n) then 
-         if ( m .eq. l) then 
-
-                wint     = int_block(m,n,l,s) 
-                T4xx     = HFD_a(m,n) + HFD_b(m,n)
-                T2xx     = 2.0*wint*T1xx
-                T5xx     = T5xx + 2.0*wint*T4xx
-                T7xx     = wint*HFD_a(n,s)
-                T9xx     = wint*HFD_a(n,l)
-                T11xx    = T11xx + wint*HFD_a(m,s)
-                T13xx    = T13xx + wint*HFD_a(m,l)
-                T15xx    = wint*HFD_b(n,s)
-                T17xx    = wint*HFD_b(n,l)
-                T19xx    = T19xx + wint*HFD_b(m,s)
-                T21xx    = T21xx + wint*HFD_b(m,l)
-
-                F_a(m,n) = F_a(m,n) + T2xx
-                F_b(m,n) = F_b(m,n) + T2xx
-                F_a(n,m) = F_a(n,m) + T2xx
-                F_b(n,m) = F_b(n,m) + T2xx
-
-                F_a(m,l) = F_a(m,l) - T7xx
-                F_a(l,m) = F_a(l,m) - T7xx
-                F_a(m,s) = F_a(m,s) - T9xx
-                F_a(s,m) = F_a(s,m) - T9xx
-
-                F_b(m,l) = F_b(m,l) - T15xx
-                F_b(l,m) = F_b(l,m) - T15xx
-                F_b(m,s) = F_b(m,s) - T17xx
-                F_b(s,m) = F_b(s,m) - T17xx
-c
-         endif 
-         endif 
-      enddo ! m  
-            F_b(n,l) = F_b(n,l) - T19xx
-            F_b(l,n) = F_b(l,n) - T19xx
-            F_b(n,s) = F_b(n,s) - T21xx
-            F_b(s,n) = F_b(s,n) - T21xx
-            F_a(n,l) = F_a(n,l) - T11xx
-            F_a(l,n) = F_a(l,n) - T11xx
-            F_a(n,s) = F_a(n,s) - T13xx
-            F_a(s,n) = F_a(s,n) - T13xx
-         endif 
-      enddo ! n  
-            F_a(l,s) = F_a(l,s) + T5xx
-            F_b(l,s) = F_b(l,s) + T5xx
-            F_a(s,l) = F_a(s,l) + T5xx
-            F_b(s,l) = F_b(s,l) + T5xx
-         endif 
-      enddo ! l  
-      enddo ! s  
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss4fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-      double precision t8xx
-      double precision t9xx
-      double precision t10xx
-      double precision t11xx
-      double precision t12xx
-      double precision t13xx
-      double precision t14xx
-      double precision t15xx
-      double precision t16xx
-      double precision t17xx
-      double precision t18xx
-      double precision t19xx
-      double precision t20xx
-      double precision t21xx
-      double precision t22xx
-c
-c##################  CLASS B ##############
-c SS4 
-c  Do three-center part (m n |m la)->(m n |la m ),(n m|m la),(n m|la m)
-c                       (m la |m n),(la m |m n ),(m la |n m),(la m |n m)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if ( l .lt. s) then 
-            T1xx = HFD_a(l,s) + HFD_b(l,s)
-            T11xx = 0.0 
-            T13xx = 0.0 
-            T5xx  = 0.0 
-      do n = bb1, bb2 
-         if ( n .eq. l) then 
-            T19xx = 0.0 
-            T21xx = 0.0 
-      do m = aa1, aa2 
-         if ( m .lt.  n) then 
-         if ( m .lt. s) then 
-
-             wint     = int_block(m,n,l,s) 
-             T4xx     = HFD_a(m,n) + HFD_b(m,n)
-             T2xx     = 2.0*wint*T1xx
-             T7xx     = wint*HFD_a(n,s)
-             T9xx     = wint*HFD_a(n,l)
-             T15xx    = wint*HFD_b(n,s)
-             T17xx    = wint*HFD_b(n,l)
-
-             T19xx    = T19xx + wint*HFD_b(m,s)
-             T21xx    = T21xx + wint*HFD_b(m,l)
-
-             T5xx     = T5xx + 2.0*wint*T4xx
-             T11xx    = T11xx + wint*HFD_a(m,s)
-             T13xx    = T13xx + wint*HFD_a(m,l)
-
-             F_a(m,n) = F_a(m,n) + T2xx
-             F_b(m,n) = F_b(m,n) + T2xx
-             F_a(n,m) = F_a(n,m) + T2xx
-             F_b(n,m) = F_b(n,m) + T2xx
-
-             F_a(m,l) = F_a(m,l) - T7xx
-             F_a(l,m) = F_a(l,m) - T7xx
-
-             F_a(m,s) = F_a(m,s) - T9xx
-             F_a(s,m) = F_a(s,m) - T9xx
-
-             F_b(m,l) = F_b(m,l) - T15xx
-             F_b(l,m) = F_b(l,m) - T15xx
-
-             F_b(m,s) = F_b(m,s) - T17xx
-             F_b(s,m) = F_b(s,m) - T17xx
-c
-         endif 
-         endif 
-      enddo ! m  
-             F_a(n,l) = F_a(n,l) - T11xx
-             F_a(l,n) = F_a(l,n) - T11xx
-             F_a(n,s) = F_a(n,s) - T13xx
-             F_a(s,n) = F_a(s,n) - T13xx
-             F_b(n,l) = F_b(n,l) - T19xx
-             F_b(l,n) = F_b(l,n) - T19xx
-             F_b(n,s) = F_b(n,s) - T21xx
-             F_b(s,n) = F_b(s,n) - T21xx
-         endif 
-      enddo ! n  
-             F_a(l,s) =  F_a(l,s) + T5xx
-             F_b(l,s) =  F_b(l,s) + T5xx
-             F_a(s,l) =  F_a(s,l) + T5xx
-             F_b(s,l) =  F_b(s,l) + T5xx
-         endif 
-      enddo ! l  
-      enddo ! s  
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss5fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-      double precision t8xx
-      double precision t9xx
-      double precision t10xx
-      double precision t11xx
-      double precision t12xx
-      double precision t13xx
-      double precision t14xx
-      double precision t15xx
-      double precision t16xx
-      double precision t17xx
-      double precision t18xx
-      double precision t19xx
-      double precision t20xx
-      double precision t21xx
-      double precision t22xx
-c
-c##################  CLASS C ##############
-c SS5 
-c  Do three-center part (m n |m la)->(m n |la m ),(n m|m la),(n m|la m)
-c                       (m la |m n),(la m |m n ),(m la |n m),(la m |n m)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if ( l .lt. s) then 
-            T1xx = HFD_a(l,s) + HFD_b(l,s)
-            T5xx = 0.0 
-      do n = bb1, bb2 
-         if ( n .eq. s) then 
-            T11xx = 0.0 
-            T13xx = 0.0 
-            T19xx = 0.0 
-            T21xx = 0.0 
-      do m = aa1, aa2 
-         if ( m .lt. n) then 
-         if ( m .lt. l) then 
-c 
-             wint     = int_block(m,n,l,s) 
-             T4xx     = HFD_a(m,n) + HFD_b(m,n)
-             T2xx     = 2.0*wint*T1xx
-             T7xx     = wint*HFD_a(n,s)
-             T9xx     = wint*HFD_a(n,l)
-             T15xx    = wint*HFD_b(n,s)
-             T17xx    = wint*HFD_b(n,l)
-
-             T11xx    = T11xx + wint*HFD_a(m,s)
-             T13xx    = T13xx + wint*HFD_a(m,l)
-             T5xx     = T5xx + 2.0*wint*T4xx
-             T19xx    = T19xx + wint*HFD_b(m,s)
-             T21xx    = T21xx + wint*HFD_b(m,l)
-
-             F_a(m,n) = F_a(m,n) + T2xx
-             F_a(n,m) = F_a(n,m) + T2xx
-             F_b(m,n) = F_b(m,n) + T2xx
-             F_b(n,m) = F_b(n,m) + T2xx
-
-             F_a(m,l) = F_a(m,l) - T7xx
-             F_a(l,m) = F_a(l,m) - T7xx
-
-             F_a(m,s) = F_a(m,s) - T9xx
-             F_a(s,m) = F_a(s,m) - T9xx
-
-             F_b(m,l) = F_b(m,l) - T15xx
-             F_b(l,m) = F_b(l,m) - T15xx
-
-             F_b(m,s) = F_b(m,s) - T17xx
-             F_b(s,m) = F_b(s,m) - T17xx
-c
-         endif 
-         endif 
-      enddo ! m  
-            F_b(n,l) = F_b(n,l) - T19xx
-            F_b(l,n) = F_b(l,n) - T19xx
-            F_a(n,l) = F_a(n,l) - T11xx
-            F_a(l,n) = F_a(l,n) - T11xx
-            F_a(n,s) = F_a(n,s) - T13xx
-            F_a(s,n) = F_a(s,n) - T13xx
-            F_b(n,s) = F_b(n,s) - T21xx
-            F_b(s,n) = F_b(s,n) - T21xx
-         endif 
-      enddo ! n  
-            F_a(l,s) = F_a(l,s) + T5xx
-            F_b(l,s) = F_b(l,s) + T5xx
-            F_a(s,l) = F_a(s,l) + T5xx
-            F_b(s,l) = F_b(s,l) + T5xx
-         endif 
-      enddo ! l  
-      enddo ! s  
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss6fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-c
-c########### CLASS 1  ############
-c SS6 
-c  Do one-center part (m m |m m)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-            T1xx = HFD_a(l,s) + HFD_b(l,s)
-      do n = bb1, bb2 
-      do m = aa1, aa2 
-         if ( n .eq. m ) then 
-         if ( s .eq. m ) then 
-         if ( l .eq. m ) then 
-        
-            wint     = int_block(m,n,l,s) 
-            T2xx     = wint*T1xx
-            T3xx     = wint*HFD_a(n,s)
-            T4xx     = wint*HFD_b(n,s)
-
-            F_a(m,n) = F_a(m,n) + T2xx
-            F_b(m,n) = F_b(m,n) + T2xx
-            F_a(m,l) = F_a(m,l) - T3xx
-            F_b(m,l) = F_b(m,l) - T4xx
-c
-         endif 
-         endif 
-         endif 
-      enddo ! m  
-      enddo ! n  
-      enddo ! l  
-      enddo ! s   
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss7fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-c
-c########### CLASS 2  ############
-c SS7 
-c  Do two-center part (m m |n n)->(n n |m m )
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if ( l .eq. s) then 
-            T1xx = HFD_a(l,s) + HFD_b(l,s)
-            T4xx = 0.0 
-      do n = bb1, bb2 
-      do m = aa1, aa2 
-         if ( m .eq. n) then 
-         if ( m .lt. l) then 
- 
-             wint     = int_block(m,n,l,s) 
-             T3xx     = HFD_a(m,n) + HFD_b(m,n)
-             T2xx     = wint*T1xx
-             T4xx     = T4xx + wint*T3xx
-             T5xx     = wint*HFD_a(n,s)
-             T7xx     = wint*HFD_b(n,s)
-
-             F_a(m,n) = F_a(m,n) + T2xx
-             F_b(m,n) = F_b(m,n) + T2xx
-
-             F_a(m,l) = F_a(m,l) - T5xx
-             F_a(l,m) = F_a(l,m) - T5xx
-
-             F_b(m,l) = F_b(m,l) - T7xx
-             F_b(l,m) = F_b(l,m) - T7xx
-c
-         endif 
-         endif 
-c
-      enddo ! m  
-      enddo ! n  
-            F_a(l,s) = F_a(l,s) + T4xx
-            F_b(l,s) = F_b(l,s) + T4xx
-         endif 
-      enddo ! l  
-      enddo ! s  
-c
-c########### END CLASS 2  ############
-c
-      return 
-      end 
-c
-c ---------------------------------------------------------------------------- 
-
-      subroutine form_ss8fock(int_block,n_basis,aa1,aa2,bb1,bb2,cc1,cc2,
-     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s, l  
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision F_A(n_basis,n_basis) 
-      double precision F_B(n_basis,n_basis) 
-      double precision F1A(n_basis) 
-      double precision F1B(n_basis) 
-      double precision tempa, tempb, temp_rs, temp_mn   
-
-      double precision wint  
-      double precision t1xx
-      double precision t2xx
-      double precision t3xx
-      double precision t4xx
-      double precision t5xx
-      double precision t6xx
-      double precision t7xx
-      double precision t8xx
-      double precision t9xx
-      double precision t10xx
-      double precision t11xx
-c
-c########### CLASS 4  ############
-c SS8 
-c  Do two-center part (m n |m n)->(m n |n m ),(n m|m n),(n m|n m)
-c
-      do s = dd1, dd2 
-      do l = cc1, cc2 
-         if ( l .lt. s ) then 
-            T1xx = HFD_a(l,s) + HFD_b(l,s)
-      do n = bb1, bb2 
-         if ( n .eq. s) then 
-            T6xx  = 0.0 
-            T7xx  = 0.0 
-            T10xx = 0.0 
-            T11xx = 0.0 
-      do m = aa1, aa2 
-         if ( m .lt. n) then 
-         if ( m .eq. l) then 
- 
-             wint     = int_block(m,n,l,s) 
-             T2xx     = 2.0*wint*T1xx
-
-             T4xx     = wint*HFD_a(n,s)
-             T5xx     = wint*HFD_a(n,l)
-             T8xx     = wint*HFD_b(n,s)
-             T9xx     = wint*HFD_b(n,l)
-
-             T6xx     = T6xx  + wint*HFD_a(m,s)
-             T7xx     = T7xx  + wint*HFD_a(m,l)
-             T10xx    = T10xx + wint*HFD_b(m,s)
-             T11xx    = T11xx + wint*HFD_b(m,l)
- 
-             F_a(m,n) = F_a(m,n) + T2xx
-             F_b(m,n) = F_b(m,n) + T2xx
-             F_a(n,m) = F_a(n,m) + T2xx
-             F_b(n,m) = F_b(n,m) + T2xx
-
-             F_a(m,l) = F_a(m,l) - T4xx
-             F_a(m,s) = F_a(m,s) - T5xx
-             F_b(m,l) = F_b(m,l) - T8xx
-             F_b(m,s) = F_b(m,s) - T9xx
-c
-         endif 
-         endif 
-      enddo ! m  
-            F_a(n,l) = F_a(n,l) - T6xx
-            F_a(n,s) = F_a(n,s) - T7xx
-            F_b(n,l) = F_b(n,l) - T10xx
-            F_b(n,s) = F_b(n,s) - T11xx
-         endif 
-      enddo ! n  
-         endif 
-      enddo ! l  
-      enddo ! s  
 c
 c ---------------------------------------------------------------------------- 
 c
-      return 
-      end 
 
-      subroutine fock_transpose(Fa,FB,Qxx,FTa,FTb,n_basis) 
-      implicit none 
-      integer n_basis, m, n, l, s  
-      double precision Fa(n_basis,n_basis)  
-      double precision Fb(n_basis,n_basis)  
-      double precision FTa(n_basis,n_basis)  
-      double precision FTb(n_basis,n_basis)  
-      double precision Qxx(n_basis,n_basis)  
-      double precision tempa, tempb 
-
-      do m = 1, n_basis 
-      do n = 1, n_basis 
-         FTa(m,n) = 0.0  
-         FTb(m,n) = 0.0  
-      enddo 
-      enddo 
-
-      do m = 1, n_basis  
-      do s = 1, n_basis  
-         tempa = 0.0 
-         tempb = 0.0 
-         do l = 1, n_basis  
-            tempa = tempa + Qxx(l,m)*FA(l,s) 
-            tempb = tempb + Qxx(l,m)*FB(l,s) 
-         enddo 
-
-         do n = 1, n_basis  
-            FTa(m,n) = FTa(m,n) + tempa*Qxx(s,n) 
-            FTb(m,n) = FTb(m,n) + tempb*Qxx(s,n) 
-         enddo 
-      enddo 
-      enddo 
-
-      return 
-      end 
-
-      subroutine c_backtran(Qxx,ca,cb,cba,cbb,n_basis) 
-      implicit none 
-      integer n_basis 
-      integer m, p, n  
-      double precision Qxx(n_basis,n_basis)  
-      double precision ca(n_basis,n_basis)  
-      double precision cb(n_basis,n_basis)  
-      double precision cba(n_basis,n_basis)  
-      double precision cbb(n_basis,n_basis) 
-      double precision tempa, tempb  
-
-      do p = 1, n_basis  
-      do m = 1, n_basis  
-         tempa = 0.0  
-         tempb = 0.0  
-         do n = 1, n_basis  
-            tempa = tempa + Qxx(m,n)*ca(n,p) 
-            tempb = tempb + Qxx(m,n)*cb(n,p) 
-         enddo 
-         cba(m,p) = tempa
-         cbb(m,p) = tempb
-      enddo 
-      enddo 
-
-      do p = 1, n_basis  
-      do m = 1, n_basis  
-         ca(m,p) = cba(m,p) 
-         cb(m,p) = cbb(m,p) 
-      enddo 
-      enddo 
-
-      return 
-      end 
-
-
-      subroutine hfdensity(ca,cb,HFD_A,HFD_B,n_basis,nocc_a,nocc_b) 
-      implicit none 
-      integer n_basis, nocc_a, nocc_b 
-      integer m, n, i, j 
-      double precision ca(n_basis,n_basis) 
-      double precision cb(n_basis,n_basis) 
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision tempa, tempb  
-
-      do m = 1, n_basis  
-      do n = 1, n_basis  
-         tempa = 0.0 
-         tempb = 0.0 
-         do i = 1, nocc_a 
-            tempa = tempa + ca(m,i)*ca(n,i) 
-         enddo 
-         do j = 1, nocc_b 
-            tempb = tempb + cb(m,j)*cb(n,j) 
-         enddo 
-         HFD_A(m,n) = tempa 
-         HFD_B(m,n) = tempb 
-      enddo 
-      enddo 
-
-      return 
-      end 
-
-      subroutine form_ss(int_block,m,n,r,s,n_basis,aa1,aa2,bb1,bb2,
-     *                   cc1,cc2,dd1,dd2)
-      implicit none 
-      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
-      integer a, b, c, d 
-      integer m, n, r, s   
-      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-      double precision temp_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
-
-      if ((m .lt. n) .and. (r .lt. s)) then 
-         do a = aa1, aa2 
-         do b = bb1, bb2 
-         do c = cc1, cc2 
-         do d = dd1, dd2 
-            int_block(b,a,c,d) = int_block(a,b,c,d)  
-            int_block(a,b,d,c) = int_block(a,b,c,d)  
-            int_block(b,a,d,c) = int_block(a,b,c,d)  
-         enddo 
-         enddo 
-         enddo 
-         enddo 
-      endif 
-
-      if ((m .lt. n) .and. (r .eq. s)) then 
-         do a = aa1, aa2 
-         do b = bb1, bb2 
-         do c = cc1, cc2 
-         do d = dd1, dd2 
-            int_block(b,a,c,d) = int_block(a,b,c,d)  
-            int_block(a,b,d,c) = int_block(a,b,c,d)  
-         enddo 
-         enddo 
-         enddo 
-         enddo 
-      endif 
-
-      if ((m .eq. n) .and. (r .lt. s)) then 
-         do a = aa1, aa2 
-         do b = bb1, bb2 
-         do c = cc1, cc2 
-         do d = dd1, dd2 
-            int_block(a,b,d,c) = int_block(a,b,c,d)  
-            int_block(b,a,d,c) = int_block(a,b,c,d)  
-         enddo 
-         enddo 
-         enddo 
-         enddo 
-      endif 
-
-      return 
-      end 
-
-      subroutine hfdensity_copy(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,n_basis)  
-      implicit none 
-
-      integer n_basis, a, b 
-      double precision HFD_A(n_basis,n_basis) 
-      double precision HFD_B(n_basis,n_basis) 
-      double precision HFDOLD_A(n_basis,n_basis) 
-      double precision HFDOLD_B(n_basis,n_basis) 
-
-      do a = 1, n_basis 
-      do b = 1, n_basis 
-         HFDOLD_A(b,a) = HFD_A(b,a) 
-         HFDOLD_B(b,a) = HFD_B(b,a) 
-      enddo 
-      enddo 
-
-      return 
-      end 
-
-
-      subroutine check_conv(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,n_basis,flag)  
+      subroutine check_conv_L(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,
+     *                        n_basis,flag)  
       use, intrinsic :: ISO_C_BINDING
       implicit none 
       include 'sip_interface.f'
@@ -3507,164 +2559,9 @@ c     endif
       return 
       end 
 
-      subroutine do_diis(nhist_old,navirt,naocc,nbvirt,nbocc,norb,
-     *                   Fai,Ea,Fbj,Eb,FA,FB) 
-
-      Implicit none 
-      integer nhist, nhist_old, norb, navirt, naocc, nbvirt, nbocc 
-      double precision CM(nhist_old+1),BM(nhist_old+1,nhist_old+1) 
-      double precision R(nhist_old+1,nhist_old+1) 
-      double precision Fai(navirt,naocc,nhist_old+1), 
-     *                 Ea(norb,norb,nhist_old+1)  
-      double precision Fbj(nbvirt,nbocc,nhist_old+1), 
-     *                 Eb(norb,norb,nhist_old+1)  
-      double precision FA(norb,norb), FB(norb,norb) 
-      double precision itemp, jtemp, atemp, btemp 
-      double precision rpack(nhist_old*nhist_old+2*nhist_old+1) 
-      integer iP(nhist_old+1) 
-      integer m, n, a, i, b, j, k, npack  
-
-c---------------------------------------------------------------------------
-c Zero out B and C matrices 
-c---------------------------------------------------------------------------
-
-      nhist = nhist_old ! - 1  
-
-      do n = 1, nhist+1  
-         CM(n) = 0.0 
-         do m = 1, nhist+1  
-            BM(m,n)  = 0.0 
-         enddo ! m 
-      enddo ! n  
-
-c---------------------------------------------------------------------------
-c Form the B matrix 
-c---------------------------------------------------------------------------
-
-c     alpha-spin 
-      do n = 1, nhist 
-         do m = 1, nhist   
-
-            btemp = 0.0 
-
-            do i = 1, naocc 
-            do a = 1, navirt 
-
-               btemp = btemp + Fai(a,i,m)*Fai(a,i,n)  
-
-            enddo ! a 
-            enddo ! i 
-
-            BM(m,n) = btemp 
-
-          enddo ! m 
-      enddo ! n 
-
-c     beta-spin 
-      do n = 1, nhist 
-         do m = 1, nhist   
-
-            btemp = 0.0 
-
-            do j = 1, nbocc 
-            do b = 1, nbvirt 
-
-               btemp = btemp + Fbj(b,j,m)*Fbj(b,j,n)  
-
-            enddo ! b 
-            enddo ! j 
-
-            BM(m,n) = BM(m,n) + btemp 
-
-          enddo ! m 
-       enddo ! n 
-
-c---------------------------------------------------------------------------
-c Done forming the B matrix 
-c---------------------------------------------------------------------------
-
-      do n = 1, nhist 
-      do m = n, nhist   
-         R(n,m) = BM(n,m) 
-         if (m .ne. n) R(m,n) = BM(n,m) 
-      enddo 
-      enddo 
-    
-      do m = 1, nhist 
-         R(m,nhist+1) = -1.0 
-         R(nhist+1,m) = -1.0 
-      enddo 
-      R(nhist+1,nhist+1) = 0.0 
-
-c     write(6,*) ' R vector ' 
-c     do m = 1, nhist + 1  
-c     do n = 1, nhist + 1 
-c        write(6,*) '  ', m, n, R(m,n) 
-c     enddo 
-c     enddo 
-
-      npack = 0 
-      do n = 1, nhist+1  
-      do m = 1, nhist+1  
-         npack = npack + 1 
-         Rpack(npack) = R(m,n) 
-      enddo 
-      enddo 
-
-      do m = 1, nhist  
-         CM(m) = 0.0 
-      enddo 
-      CM(nhist+1) = -1.0 
-
-      call dgesv(nhist+1,1,Rpack,nhist+1,iP,CM,nhist+1,i) 
-      if (i .ne. 0) then 
-         write(6,*) ' Error in atom DIIS ', i
-         call abort_job() 
-      endif 
-
-c     write(6,*) ' C vector ', nhist + 1  
-c     do m = 1, nhist+1 
-c        write(6,*) '  ', m,  CM(M) 
-c     enddo 
-
-      CM(nhist+1) = 0.0 
-
-c---------------------------------------------------------------------------
-c Form the updated Fock matrix   
-c---------------------------------------------------------------------------
-
-      nhist = nhist_old 
-
-c     write(6,*) ' Updating F ' 
-      do n = 1, norb  
-      do m = 1, norb  
-         itemp = 0.0 
-         do k = 1, nhist  
-             itemp = itemp + Ea(m,n,k)*CM(k)  
-         enddo ! k  
-         FA(m,n) = itemp 
-      enddo ! m 
-      enddo ! n 
-
-c     write(6,*) ' Updating F ' 
-      do m = 1, norb  
-      do n = 1, norb  
-         jtemp = 0.0 
-         do k = 1, nhist  
-             jtemp = jtemp + Eb(m,n,k)*CM(k)  
-         enddo ! k  
-         FB(m,n) = jtemp 
-      enddo ! m 
-      enddo ! n 
-
-c     write(6,*) ' Finished DIIS of order', nhist 
-
-      return 
-      end 
-
 c       call gen_hist(iter,maxhist,diis_start,n_basis,nvirt_a,
 c    *                nocc_a,nvirt_b,nocc_b,ca,cb,FA,FB,Fai,Fbj,Ea,Eb)
-      subroutine gen_hist(kiter,maxhist,diis_start,norb,navirt,naocc,
+      subroutine gen_hist_l(kiter,maxhist,diis_start,norb,navirt,naocc,
      *                    nbvirt,nbocc,ca,cb,Fpq_a,Fpq_b,Fai,Fbj,Ea,Eb)
 
       Implicit none 
@@ -3784,35 +2681,6 @@ c              write(6,*) ' XXXXX', a, i, kiter-2, Fai(a,i,kiter-2)
       return 
       end 
 
-      subroutine move_hist(nhist,diis_start,norb,Fa,Fb,Ea,Eb) 
-      Implicit none 
-      integer norb, nhist, diis_start, m, n, k 
-      Double precision Ea(norb,norb,nhist), Eb(norb,norb,nhist) 
-      Double precision Fa(norb,norb), Fb(norb,norb) 
-
-c Shift histories 
-
-      do k = 2, nhist 
-         do n = 1, norb 
-         do m = 1, norb 
-            Ea(m,n,k-1) = Ea(m,n,k) 
-            Eb(m,n,k-1) = Eb(m,n,k) 
-         enddo 
-         enddo 
-      enddo 
-
-c Current Fock 
-
-      do n = 1, norb 
-      do m = 1, norb 
-         Ea(m,n,nhist) = Fa(m,n) 
-         Eb(m,n,nhist) = Fb(m,n) 
-      enddo 
-      enddo 
-
-      return 
-      end 
-
       subroutine hfenergy_l(HFD_A,HFD_B,FA,FB,h0,nnr,
      *                      n_basis,current_frag)
       implicit none 
@@ -3883,3 +2751,802 @@ C
       return
       end
 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss1fock_omp(int_block,n_basis,aa1,aa2,bb1,
+     *                      bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+      double precision t8xx
+      double precision t9xx
+      double precision t10xx
+      double precision t11xx
+      double precision t12xx
+      double precision t13xx
+      double precision t14xx
+      double precision t15xx
+      double precision t16xx
+      double precision t17xx
+      double precision t18xx
+      double precision t19xx
+      double precision t20xx
+      double precision t21xx
+      double precision t22xx
+c
+c
+c############ CLASS 6  ############
+c SS1 
+c#  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
+c#                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if ( l .lt. s) then 
+            T1xx = HFD_A(l,s) + HFD_B(l,s)
+            T5xx = 0.0 
+      do n = bb1, bb2 
+         if ( n .ne. s) then 
+         if ( n .ne. l) then 
+            T11xx = 0.0 
+            T13xx = 0.0 
+            T19xx = 0.0 
+            T21xx = 0.0 
+      do m = aa1, aa2 
+c
+         if ( m .lt. n) then 
+         if ( m .lt. l) then 
+         if ( m .ne. s) then 
+
+            wint      = int_block(m,n,l,s) 
+            T4xx      = HFD_A(m,n) + HFD_B(m,n)
+            T2xx      = 2.0*wint*T1xx
+            T5xx      = T5xx + 2.0*wint*T4xx
+            T7xx      = wint*HFD_A(n,s)
+            T9xx      = wint*HFD_A(n,l)
+            T11xx     = T11xx + wint*HFD_A(m,s)
+            T13xx     = T13xx + wint*HFD_A(m,l)
+            T19xx     = T19xx + wint*HFD_B(m,s)
+            T21xx     = T21xx + wint*HFD_b(m,l)
+
+            F_a(m,n)  = F_a(m,n) + T2xx
+            F_b(m,n)  = F_b(m,n) + T2xx
+            F_a(n,m)  = F_a(n,m) + T2xx
+            F_b(n,m)  = F_b(n,m) + T2xx
+
+            F_A(m,l) = F_a(m,l) - T7xx
+            F_A(l,m) = F_a(l,m) - T7xx
+
+            F_a(m,s) = F_a(m,s) - T9xx
+            F_A(s,m) = F_a(s,m) - T9xx
+
+            T15xx    = wint*HFD_B(n,s)
+            F_B(m,l) = F_b(m,l) - T15xx
+            F_B(l,m) = F_b(l,m) - T15xx
+
+            T17xx    = wint*HFD_B(n,l)
+            F_b(m,s) = F_b(m,s) - T17xx
+            F_b(s,m) = F_b(s,m) - T17xx
+
+         endif 
+         endif 
+         endif 
+
+      enddo ! m  
+            F_A(n,l) = F_a(n,l) - T11xx
+            F_A(l,n) = F_a(l,n) - T11xx
+            F_A(n,s) = F_a(n,s) - T13xx
+            F_A(s,n) = F_a(s,n) - T13xx
+            F_b(n,l) = F_b(n,l) - T19xx
+            F_b(l,n) = F_b(l,n) - T19xx
+            F_b(n,s) = F_b(n,s) - T21xx
+            F_b(s,n) = F_b(s,n) - T21xx
+         endif 
+         endif 
+      enddo ! n  
+            F_a(l,s) = F_a(l,s) + T5xx
+            F_b(l,s) = F_b(l,s) + T5xx
+            F_a(s,l) = F_a(s,l) + T5xx
+            F_b(s,l) = F_b(s,l) + T5xx
+         endif 
+      enddo ! l  
+      enddo ! s  
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss2fock_omp(int_block,n_basis,aa1,aa2,bb1,
+     *                      bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+      double precision t8xx
+      double precision t9xx
+      double precision t10xx
+      double precision t11xx
+      double precision t12xx
+      double precision t13xx
+      double precision t14xx
+      double precision t15xx
+      double precision t16xx
+      double precision t17xx
+      double precision t18xx
+      double precision t19xx
+      double precision t20xx
+      double precision t21xx
+      double precision t22xx
+c
+c########### CLASS 3  ############
+c SS2 
+c  Do two-center part (m m |m n)->(m n |m m ),(m m|n m),(n m|m m)
+c  Do three-center part (m m |n l)->(m m |l n ),(n l|m m),(l n|m m)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if (l .lt. s) then 
+             T1xx = HFD_a(l,s) + HFD_b(l,s)
+             T4xx = 0.0  
+      do n = bb1, bb2 
+      do m = aa1, aa2 
+         if (m .eq. n) then 
+
+             wint     = int_block(m,n,l,s) 
+             T3xx     = HFD_a(m,n) + HFD_b(m,n)
+             T2xx     = 2.0*wint*T1xx
+             T4xx     = T4xx + wint*T3xx
+             T6xx     = wint*HFD_a(n,s)
+             T8xx     = wint*HFD_a(n,l)
+             T10xx    = wint*HFD_b(n,s)
+             T12xx    = wint*HFD_b(n,l)
+
+             F_a(m,n) = F_a(m,n) + T2xx
+             F_b(m,n) = F_b(m,n) + T2xx
+
+             F_a(m,l) = F_a(m,l) - T6xx
+             F_a(l,m) = F_a(l,m) - T6xx
+
+             F_a(m,s) = F_a(m,s) - T8xx
+             F_a(s,m) = F_a(s,m) - T8xx
+
+             F_b(m,l) = F_b(m,l) - T10xx
+             F_b(l,m) = F_b(l,m) - T10xx
+
+             F_b(m,s) = F_b(m,s) - T12xx
+             F_b(s,m) = F_b(s,m) - T12xx
+
+         endif 
+      enddo 
+      enddo 
+             F_a(l,s) = F_a(l,s) + T4xx
+             F_b(l,s) = F_b(l,s) + T4xx
+             F_a(s,l) = F_a(s,l) + T4xx
+             F_b(s,l) = F_b(s,l) + T4xx
+         endif 
+      enddo 
+      enddo 
+
+c ---------------------------------------------------------------------------- 
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss3fock_omp(int_block,n_basis,aa1,aa2,bb1,
+     *                      bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+      double precision t8xx
+      double precision t9xx
+      double precision t10xx
+      double precision t11xx
+      double precision t12xx
+      double precision t13xx
+      double precision t14xx
+      double precision t15xx
+      double precision t16xx
+      double precision t17xx
+      double precision t18xx
+      double precision t19xx
+      double precision t20xx
+      double precision t21xx
+      double precision t22xx
+c
+c########### CLASS 5  ############
+c##################  CLASS A ##############
+c SS3 
+c  Do three-center part (m n |m la)->(m n |la m ),(n m|m la),(n m|la m)
+c                       (m la |m n),(la m |m n ),(m la |n m),(la m |n m)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if ( l .lt. s) then 
+            T1xx = HFD_a(l,s) + HFD_b(l,s)
+            T5xx = 0.0 
+      do n = bb1, bb2 
+         if ( n .lt. s) then 
+            T19xx = 0.0 
+            T21xx = 0.0 
+            T11xx = 0.0 
+            T13xx = 0.0 
+      do m = aa1, aa2 
+         if ( m .lt. n) then 
+         if ( m .eq. l) then 
+
+                wint     = int_block(m,n,l,s) 
+                T4xx     = HFD_a(m,n) + HFD_b(m,n)
+                T2xx     = 2.0*wint*T1xx
+                T5xx     = T5xx + 2.0*wint*T4xx
+                T7xx     = wint*HFD_a(n,s)
+                T9xx     = wint*HFD_a(n,l)
+                T11xx    = T11xx + wint*HFD_a(m,s)
+                T13xx    = T13xx + wint*HFD_a(m,l)
+                T15xx    = wint*HFD_b(n,s)
+                T17xx    = wint*HFD_b(n,l)
+                T19xx    = T19xx + wint*HFD_b(m,s)
+                T21xx    = T21xx + wint*HFD_b(m,l)
+
+                F_a(m,n) = F_a(m,n) + T2xx
+                F_b(m,n) = F_b(m,n) + T2xx
+                F_a(n,m) = F_a(n,m) + T2xx
+                F_b(n,m) = F_b(n,m) + T2xx
+
+                F_a(m,l) = F_a(m,l) - T7xx
+                F_a(l,m) = F_a(l,m) - T7xx
+                F_a(m,s) = F_a(m,s) - T9xx
+                F_a(s,m) = F_a(s,m) - T9xx
+
+                F_b(m,l) = F_b(m,l) - T15xx
+                F_b(l,m) = F_b(l,m) - T15xx
+                F_b(m,s) = F_b(m,s) - T17xx
+                F_b(s,m) = F_b(s,m) - T17xx
+c
+         endif 
+         endif 
+      enddo ! m  
+            F_b(n,l) = F_b(n,l) - T19xx
+            F_b(l,n) = F_b(l,n) - T19xx
+            F_b(n,s) = F_b(n,s) - T21xx
+            F_b(s,n) = F_b(s,n) - T21xx
+            F_a(n,l) = F_a(n,l) - T11xx
+            F_a(l,n) = F_a(l,n) - T11xx
+            F_a(n,s) = F_a(n,s) - T13xx
+            F_a(s,n) = F_a(s,n) - T13xx
+         endif 
+      enddo ! n  
+            F_a(l,s) = F_a(l,s) + T5xx
+            F_b(l,s) = F_b(l,s) + T5xx
+            F_a(s,l) = F_a(s,l) + T5xx
+            F_b(s,l) = F_b(s,l) + T5xx
+         endif 
+      enddo ! l  
+      enddo ! s  
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss4fock_omp(int_block,n_basis,aa1,aa2,
+     *                      bb1,bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+      double precision t8xx
+      double precision t9xx
+      double precision t10xx
+      double precision t11xx
+      double precision t12xx
+      double precision t13xx
+      double precision t14xx
+      double precision t15xx
+      double precision t16xx
+      double precision t17xx
+      double precision t18xx
+      double precision t19xx
+      double precision t20xx
+      double precision t21xx
+      double precision t22xx
+c
+c##################  CLASS B ##############
+c SS4 
+c  Do three-center part (m n |m la)->(m n |la m ),(n m|m la),(n m|la m)
+c                       (m la |m n),(la m |m n ),(m la |n m),(la m |n m)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if ( l .lt. s) then 
+            T1xx = HFD_a(l,s) + HFD_b(l,s)
+            T11xx = 0.0 
+            T13xx = 0.0 
+            T5xx  = 0.0 
+      do n = bb1, bb2 
+         if ( n .eq. l) then 
+            T19xx = 0.0 
+            T21xx = 0.0 
+      do m = aa1, aa2 
+         if ( m .lt.  n) then 
+         if ( m .lt. s) then 
+
+             wint     = int_block(m,n,l,s) 
+             T4xx     = HFD_a(m,n) + HFD_b(m,n)
+             T2xx     = 2.0*wint*T1xx
+             T7xx     = wint*HFD_a(n,s)
+             T9xx     = wint*HFD_a(n,l)
+             T15xx    = wint*HFD_b(n,s)
+             T17xx    = wint*HFD_b(n,l)
+
+             T19xx    = T19xx + wint*HFD_b(m,s)
+             T21xx    = T21xx + wint*HFD_b(m,l)
+
+             T5xx     = T5xx + 2.0*wint*T4xx
+             T11xx    = T11xx + wint*HFD_a(m,s)
+             T13xx    = T13xx + wint*HFD_a(m,l)
+
+             F_a(m,n) = F_a(m,n) + T2xx
+             F_b(m,n) = F_b(m,n) + T2xx
+             F_a(n,m) = F_a(n,m) + T2xx
+             F_b(n,m) = F_b(n,m) + T2xx
+
+             F_a(m,l) = F_a(m,l) - T7xx
+             F_a(l,m) = F_a(l,m) - T7xx
+
+             F_a(m,s) = F_a(m,s) - T9xx
+             F_a(s,m) = F_a(s,m) - T9xx
+
+             F_b(m,l) = F_b(m,l) - T15xx
+             F_b(l,m) = F_b(l,m) - T15xx
+
+             F_b(m,s) = F_b(m,s) - T17xx
+             F_b(s,m) = F_b(s,m) - T17xx
+c
+         endif 
+         endif 
+      enddo ! m  
+             F_a(n,l) = F_a(n,l) - T11xx
+             F_a(l,n) = F_a(l,n) - T11xx
+             F_a(n,s) = F_a(n,s) - T13xx
+             F_a(s,n) = F_a(s,n) - T13xx
+             F_b(n,l) = F_b(n,l) - T19xx
+             F_b(l,n) = F_b(l,n) - T19xx
+             F_b(n,s) = F_b(n,s) - T21xx
+             F_b(s,n) = F_b(s,n) - T21xx
+         endif 
+      enddo ! n  
+             F_a(l,s) =  F_a(l,s) + T5xx
+             F_b(l,s) =  F_b(l,s) + T5xx
+             F_a(s,l) =  F_a(s,l) + T5xx
+             F_b(s,l) =  F_b(s,l) + T5xx
+         endif 
+      enddo ! l  
+      enddo ! s  
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss5fock_omp(int_block,n_basis,aa1,aa2,
+     *                      bb1,bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+      double precision t8xx
+      double precision t9xx
+      double precision t10xx
+      double precision t11xx
+      double precision t12xx
+      double precision t13xx
+      double precision t14xx
+      double precision t15xx
+      double precision t16xx
+      double precision t17xx
+      double precision t18xx
+      double precision t19xx
+      double precision t20xx
+      double precision t21xx
+      double precision t22xx
+c
+c##################  CLASS C ##############
+c SS5 
+c  Do three-center part (m n |m la)->(m n |la m ),(n m|m la),(n m|la m)
+c                       (m la |m n),(la m |m n ),(m la |n m),(la m |n m)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if ( l .lt. s) then 
+            T1xx = HFD_a(l,s) + HFD_b(l,s)
+            T5xx = 0.0 
+      do n = bb1, bb2 
+         if ( n .eq. s) then 
+            T11xx = 0.0 
+            T13xx = 0.0 
+            T19xx = 0.0 
+            T21xx = 0.0 
+      do m = aa1, aa2 
+         if ( m .lt. n) then 
+         if ( m .lt. l) then 
+c 
+             wint     = int_block(m,n,l,s) 
+             T4xx     = HFD_a(m,n) + HFD_b(m,n)
+             T2xx     = 2.0*wint*T1xx
+             T7xx     = wint*HFD_a(n,s)
+             T9xx     = wint*HFD_a(n,l)
+             T15xx    = wint*HFD_b(n,s)
+             T17xx    = wint*HFD_b(n,l)
+
+             T11xx    = T11xx + wint*HFD_a(m,s)
+             T13xx    = T13xx + wint*HFD_a(m,l)
+             T5xx     = T5xx + 2.0*wint*T4xx
+             T19xx    = T19xx + wint*HFD_b(m,s)
+             T21xx    = T21xx + wint*HFD_b(m,l)
+
+             F_a(m,n) = F_a(m,n) + T2xx
+             F_a(n,m) = F_a(n,m) + T2xx
+             F_b(m,n) = F_b(m,n) + T2xx
+             F_b(n,m) = F_b(n,m) + T2xx
+
+             F_a(m,l) = F_a(m,l) - T7xx
+             F_a(l,m) = F_a(l,m) - T7xx
+
+             F_a(m,s) = F_a(m,s) - T9xx
+             F_a(s,m) = F_a(s,m) - T9xx
+
+             F_b(m,l) = F_b(m,l) - T15xx
+             F_b(l,m) = F_b(l,m) - T15xx
+
+             F_b(m,s) = F_b(m,s) - T17xx
+             F_b(s,m) = F_b(s,m) - T17xx
+c
+         endif 
+         endif 
+      enddo ! m  
+            F_b(n,l) = F_b(n,l) - T19xx
+            F_b(l,n) = F_b(l,n) - T19xx
+            F_a(n,l) = F_a(n,l) - T11xx
+            F_a(l,n) = F_a(l,n) - T11xx
+            F_a(n,s) = F_a(n,s) - T13xx
+            F_a(s,n) = F_a(s,n) - T13xx
+            F_b(n,s) = F_b(n,s) - T21xx
+            F_b(s,n) = F_b(s,n) - T21xx
+         endif 
+      enddo ! n  
+            F_a(l,s) = F_a(l,s) + T5xx
+            F_b(l,s) = F_b(l,s) + T5xx
+            F_a(s,l) = F_a(s,l) + T5xx
+            F_b(s,l) = F_b(s,l) + T5xx
+         endif 
+      enddo ! l  
+      enddo ! s  
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss6fock_omp(int_block,n_basis,aa1,aa2,
+     *                      bb1,bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+c
+c########### CLASS 1  ############
+c SS6 
+c  Do one-center part (m m |m m)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+C            Write(*,*) "S and L", dd1, dd2,cc1, cc2
+            T1xx = HFD_a(l,s) + HFD_b(l,s)
+      do n = bb1, bb2 
+      do m = aa1, aa2 
+         if ( n .eq. m ) then 
+         if ( s .eq. m ) then 
+         if ( l .eq. m ) then 
+        
+            wint     = int_block(m,n,l,s) 
+            T2xx     = wint*T1xx
+            T3xx     = wint*HFD_a(n,s)
+            T4xx     = wint*HFD_b(n,s)
+
+            F_a(m,n) = F_a(m,n) + T2xx
+            F_b(m,n) = F_b(m,n) + T2xx
+            F_a(m,l) = F_a(m,l) - T3xx
+            F_b(m,l) = F_b(m,l) - T4xx
+c
+         endif 
+         endif 
+         endif 
+      enddo ! m  
+      enddo ! n  
+      enddo ! l  
+      enddo ! s   
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss7fock_omp(int_block,n_basis,aa1,aa2,
+     *                      bb1,bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+c
+c########### CLASS 2  ############
+c SS7 
+c  Do two-center part (m m |n n)->(n n |m m )
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if ( l .eq. s) then 
+            T1xx = HFD_a(l,s) + HFD_b(l,s)
+            T4xx = 0.0 
+      do n = bb1, bb2 
+      do m = aa1, aa2 
+         if ( m .eq. n) then 
+         if ( m .lt. l) then 
+ 
+             wint     = int_block(m,n,l,s) 
+             T3xx     = HFD_a(m,n) + HFD_b(m,n)
+             T2xx     = wint*T1xx
+             T4xx     = T4xx + wint*T3xx
+             T5xx     = wint*HFD_a(n,s)
+             T7xx     = wint*HFD_b(n,s)
+
+             F_a(m,n) = F_a(m,n) + T2xx
+             F_b(m,n) = F_b(m,n) + T2xx
+
+             F_a(m,l) = F_a(m,l) - T5xx
+             F_a(l,m) = F_a(l,m) - T5xx
+
+             F_b(m,l) = F_b(m,l) - T7xx
+             F_b(l,m) = F_b(l,m) - T7xx
+c
+         endif 
+         endif 
+c
+      enddo ! m  
+      enddo ! n  
+            F_a(l,s) = F_a(l,s) + T4xx
+            F_b(l,s) = F_b(l,s) + T4xx
+         endif 
+      enddo ! l  
+      enddo ! s  
+c
+c########### END CLASS 2  ############
+c
+      return 
+      end 
+c
+c ---------------------------------------------------------------------------- 
+
+      subroutine form_ss8fock_omp(int_block,n_basis,aa1,aa2,
+     *                      bb1,bb2,cc1,cc2,
+     *                      dd1,dd2,HFD_A,HFD_B,F_A,F_B)
+      implicit none 
+      include 'omp_lib.h'
+      integer aa1, aa2, bb1, bb2, cc1, cc2, dd1, dd2, n_basis 
+      integer a, b, c, d 
+      integer m, n, r, s, l  
+      double precision int_block(aa1:aa2,bb1:bb2,cc1:cc2,dd1:dd2)  
+      double precision HFD_A(n_basis,n_basis) 
+      double precision HFD_B(n_basis,n_basis) 
+      double precision F_A(n_basis,n_basis) 
+      double precision F_B(n_basis,n_basis) 
+      double precision F1A(n_basis) 
+      double precision F1B(n_basis) 
+      double precision tempa, tempb, temp_rs, temp_mn   
+
+      double precision wint  
+      double precision t1xx
+      double precision t2xx
+      double precision t3xx
+      double precision t4xx
+      double precision t5xx
+      double precision t6xx
+      double precision t7xx
+      double precision t8xx
+      double precision t9xx
+      double precision t10xx
+      double precision t11xx
+c
+c########### CLASS 4  ############
+c SS8 
+c  Do two-center part (m n |m n)->(m n |n m ),(n m|m n),(n m|n m)
+c
+      do s = dd1, dd2 
+      do l = cc1, cc2 
+         if ( l .lt. s ) then 
+            T1xx = HFD_a(l,s) + HFD_b(l,s)
+      do n = bb1, bb2 
+         if ( n .eq. s) then 
+            T6xx  = 0.0 
+            T7xx  = 0.0 
+            T10xx = 0.0 
+            T11xx = 0.0 
+      do m = aa1, aa2 
+         if ( m .lt. n) then 
+         if ( m .eq. l) then 
+ 
+             wint     = int_block(m,n,l,s) 
+             T2xx     = 2.0*wint*T1xx
+
+             T4xx     = wint*HFD_a(n,s)
+             T5xx     = wint*HFD_a(n,l)
+             T8xx     = wint*HFD_b(n,s)
+             T9xx     = wint*HFD_b(n,l)
+
+             T6xx     = T6xx  + wint*HFD_a(m,s)
+             T7xx     = T7xx  + wint*HFD_a(m,l)
+             T10xx    = T10xx + wint*HFD_b(m,s)
+             T11xx    = T11xx + wint*HFD_b(m,l)
+ 
+             F_a(m,n) = F_a(m,n) + T2xx
+             F_b(m,n) = F_b(m,n) + T2xx
+             F_a(n,m) = F_a(n,m) + T2xx
+             F_b(n,m) = F_b(n,m) + T2xx
+
+             F_a(m,l) = F_a(m,l) - T4xx
+             F_a(m,s) = F_a(m,s) - T5xx
+             F_b(m,l) = F_b(m,l) - T8xx
+             F_b(m,s) = F_b(m,s) - T9xx
+c
+         endif 
+         endif 
+      enddo ! m  
+            F_a(n,l) = F_a(n,l) - T6xx
+            F_a(n,s) = F_a(n,s) - T7xx
+            F_b(n,l) = F_b(n,l) - T10xx
+            F_b(n,s) = F_b(n,s) - T11xx
+         endif 
+      enddo ! n  
+         endif 
+      enddo ! l  
+      enddo ! s  
+c
+c ---------------------------------------------------------------------------- 
+c
+      return 
+      end 

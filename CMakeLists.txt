@@ -176,6 +176,8 @@ set(ACES_DATA_FILES
 set(ACES_WORKER_FILES
     src/sip/worker/loop_manager.cpp;
     src/sip/worker/loop_manager.h;
+    src/sip/worker/fragment_loop_manager.cpp;
+    src/sip/worker/fragment_loop_manager.h;
     src/sip/worker/interpreter.cpp;
     src/sip/worker/interpreter.h;
     src/sip/worker/sialx_timer.cpp;
@@ -298,6 +300,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ 
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -362,7 +365,7 @@ else()
 	add_dependencies(print_siptables tensordil superinstructions)
 endif()
 
-add_dependencies(superinstructions aces4_core tensordil)
+add_dependencies(superinstructions aces4_sip tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
@@ -412,11 +415,11 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_test(NAME test_qm           COMMAND mpirun -np 2 test_qm)
     add_test(NAME test_unit         COMMAND mpirun -np 2 test_unit)
 
-    add_dependencies(test_basic_sial   gtest gtest_main test_contollers)
-    add_dependencies(test_sial         gtest gtest_main test_contollers)
-    #add_dependencies(test_mpi_qm       gtest gtest_main test_contollers)
-    add_dependencies(test_qm           gtest gtest_main test_contollers)
-    add_dependencies(test_unit         gtest gtest_main test_contollers)
+    add_dependencies(test_basic_sial   gtest gtest_main test_controllers)
+    add_dependencies(test_sial         gtest gtest_main test_controllers)
+    #add_dependencies(test_mpi_qm       gtest gtest_main test_controllers)
+    add_dependencies(test_qm           gtest gtest_main test_controllers)
+    add_dependencies(test_unit         gtest gtest_main test_controllers)
 
 else() # Single Node Version Tests
     add_executable(test_basic_sial   test/test_basic_sial.cpp    
@@ -444,9 +447,9 @@ else() # Single Node Version Tests
     add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
 
-    add_dependencies(test_basic_sial gtest gtest_main test_contollers)
-    add_dependencies(test_sial       gtest gtest_main test_contollers)
-    add_dependencies(test_qm         gtest gtest_main test_contollers)
+    add_dependencies(test_basic_sial gtest gtest_main test_controllers)
+    add_dependencies(test_sial       gtest gtest_main test_controllers)
+    add_dependencies(test_qm         gtest gtest_main test_controllers)
 
 endif()
 
@@ -559,6 +562,7 @@ set(SIAL_FILES
     src/sialx/qm/drop_core_in_sial.sialx;
     src/sialx/qm/frag_2order_corr_lowmem.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
+    src/sialx/qm/mcpt2_vars.sialx;
     src/sialx/qm/mcpt2_singles_lowmem.sialx;
     src/sialx/qm/mcpt2_doubles_lowmem.sialx;
     src/sialx/qm/trans_frag_defs.sialx;
@@ -580,6 +584,7 @@ set(SIAL_FILES
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/lr_eom_linccsd_rhf.sialx;
+    src/sialx/qm/init_eom_mcpt.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx)
 

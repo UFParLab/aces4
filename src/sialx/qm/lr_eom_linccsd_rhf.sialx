@@ -4,8 +4,6 @@ import "tran_eom.sialx"
 
 SIAL R_EE_EOM_CCSD_RHF
 
-temp Taaai[a,a1,a2,i]
-
 #***********************************************************
 
 PROC READ_AMP
@@ -13,6 +11,8 @@ PROC READ_AMP
 print "reading persistent arrays"
 #     -------------
 restore_persistent has_singles "has_singles"
+restore_persistent is_ccpt "is_ccpt"
+print is_ccpt
 server_barrier
 restore_persistent ca    "ca"
 restore_persistent Fock_a "fock_a"
@@ -28,10 +28,21 @@ restore_persistent Viaai "Viaai"
 restore_persistent Vaaai "Vaaai"
 restore_persistent VSaaai "VSaaai"
 restore_persistent Vpiqj "Vpiqj"
-restore_persistent dipole "scf_dipole"
-set_persistent dipole "scf_dipole"
-restore_persistent NucDip "nuclear_dipole"
-set_persistent NucDip "nuclear_dipole"
+#restore_persistent dipole "scf_dipole"
+#set_persistent dipole "scf_dipole"
+#restore_persistent NucDip "nuclear_dipole"
+#set_persistent NucDip "nuclear_dipole"
+server_barrier
+
+if is_ccpt == 6.0
+restore_persistent MOI_HBAR_ia "MOI_HBAR_ia"
+restore_persistent MOI_HBAR_aa "MOI_HBAR_aa"
+restore_persistent MOI_HBAR_ii "MOI_HBAR_ii"
+restore_persistent MOI_HBAR_AJIB "MOI_HBAR_ajib"
+restore_persistent MOI_HBAR_IAJK "MOI_HBAR_iajk"
+restore_persistent MOI_HBAR_ABCI "MOI_HBAR_abci"
+endif
+
 server_barrier
 
 
@@ -46,6 +57,7 @@ endpardo a,i
 
 server_barrier
 if has_singles == 1.0
+print "reading singles"
 restore_persistent t1a "t1a_old"
 restore_persistent Lam1a  "l1a_old"
 endif
@@ -185,6 +197,16 @@ LHBAR_aa[a,a1] = HBAR_aa[a,a1]
 enddo a1 
 enddo a 
 server_barrier 
+
+if is_ccpt == 6.0
+do a 
+do a1 
+GET MOI_HBAR_aa[a,a1] 
+LHBAR_aa[a,a1] = MOI_HBAR_aa[a,a1] 
+enddo a1 
+enddo a 
+server_barrier 
+endif
 
 ENDPROC HBAR_AB_CCPT
 
@@ -332,13 +354,16 @@ GET              HBAR_ii[i,i1]
 LHBAR_ii[i,i1] = HBAR_ii[i,i1]  
 enddo i1 
 enddo i 
-do j 
-do j1 
-GET              HBAR_jj[j,j1] 
-LHBAR_jj[j,j1] = HBAR_jj[j,j1]  
-enddo j1 
-enddo j 
 server_barrier 
+if is_ccpt == 6.0
+do i 
+do i1 
+GET              MOI_HBAR_ii[i,i1] 
+LHBAR_ii[i,i1] += MOI_HBAR_ii[i,i1]  
+enddo i1 
+enddo i 
+server_barrier 
+endif
 
 #     done beta-beta spin component. 
 #     ------------------------------ 
@@ -428,6 +453,21 @@ LHBAR_jb[j,b] = HBAR_jb[j,b]
 enddo j 
 enddo b 
 server_barrier 
+if is_ccpt == 6.0
+do a 
+do i 
+GET MOI_HBAR_ia[i,a] 
+LHBAR_ia[i,a] += MOI_HBAR_ia[i,a]  
+enddo i 
+enddo a 
+do b 
+do j 
+GET MOI_HBAR_ia[j,b] 
+LHBAR_jb[j,b] += MOI_HBAR_ia[j,b]  
+enddo j 
+enddo b 
+server_barrier 
+endif
 
 ENDPROC HBAR_IB_CCPT
 
@@ -4168,9 +4208,9 @@ server_barrier
     endif
     norm1 *= etemp
     norm2 = (norm1)**(-0.5)
-#    if norm1 < (10.0)**(-12.0)
-#	norm2 = 1.0
-#    endif
+    if norm1 < (10.0)**(-12.0)
+	norm2 = 1.0
+    endif
 #######################
     pardo a,i
         prepare RB1_a[ksub,a,i] *= norm2
@@ -4373,9 +4413,9 @@ server_barrier
     endif
     norm1 *= etemp
     norm2 = (norm1)**(-0.5)
-#    if norm1 < (10.0)**(-12.0)
-#	norm2 = 1.0
-#    endif
+    if norm1 < (10.0)**(-12.0)
+	norm2 = 1.0
+    endif
 #######################
     pardo a,i
         prepare RB1_a[qsub,a,i] *= norm2
@@ -6410,6 +6450,43 @@ do ixyz
 enddo ixyz
 #
 ENDPROC back_transform_dipole
+#
+PROC energy_new
+     ecorrab = 0.0 
+     esumab  = 0.0 
+     sip_barrier 
+     pardo a,i
+         get T1a[a,i]
+	 etemp = T1a[a,i]*fock_a[i,a]
+         etemp*= 2.0  
+         esumab += etemp 
+     endpardo a,i
+     PARDO a, b, i, j 
+#
+           REQUEST Vpiqj[a,i,b,j]   
+           REQUEST Vpiqj[a,j,b,i]   
+#
+           REQUEST T2ab[a,i,b,j]   
+#
+           Taibj[a,i,b,j] = T2ab[a,i,b,j]  
+#
+           T1aibj[a,i,b,j] = Vpiqj[a,i,b,j]  
+           T2aibj[a,i,b,j] = Vpiqj[a,j,b,i]  
+           T1aibj[a,i,b,j]*= 2.0  
+           T1aibj[a,i,b,j]-= T2aibj[a,i,b,j]  
+#
+           etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j] 
+           esumab += etemp 
+#
+     ENDPARDO a, b, i, j 
+
+     sip_barrier 
+#
+     collective ecorrab += esumab
+     ecorrT = ecorrab 
+     print "Ground state energy"
+     print ecorrT
+ENDPROC energy_new
 #-------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------
@@ -6441,6 +6518,8 @@ call form_diag
 iguess=0
 print "Assuming 0.0 for initial R2 vectors"
 call form_guess
+
+call energy_new
 
 do kstate
     SEkold[kstate] = 0.0

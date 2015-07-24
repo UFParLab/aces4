@@ -917,16 +917,14 @@
 #     ---------------------------------------- 
 #
           PARDO a, i 
-	        Tai[a,i] = 0.0
-                PUT t1a_new[a,i] = Tai[a,i]
+                PUT t1a_new[a,i] = 0.0
           ENDPARDO a, i 
 #
 #     Zero out new 2-particle amplitude arrays 
 #     ---------------------------------------- 
 #
           PARDO a, b, i, j 
-	        Taibj[a,i,b,j] = 0.0
-                PREPARE T2new_ab[a,i,b,j] = Taibj[a,i,b,j]
+                PREPARE T2new_ab[a,i,b,j] = 0.0
           ENDPARDO a, b, i, j 
 # 
      ENDPROC T2NEW_ZERO
@@ -1262,10 +1260,11 @@
 	     if etemp == 1.0 
 		PREPARE Daibj[a,i,b,j,k1diis] = taibj[a,i,b,j] 
 	     endif 
-	  ENDDO k1diis  
+	     ENDDO k1diis 
 	     if n1 == one 
 		PREPARE D0aibj[a,i,b,j] = taibj[a,i,b,j] 
 	     endif 
+	   
       ENDDO kdiis 
       ENDPARDO a, i, b, j 
 
@@ -1282,10 +1281,10 @@
 	     if etemp == 1.0 
 		PUT Dai[a,i,k1diis] = tai[a,i] 
 	     endif 
-	  ENDDO k1diis  
 	     if n1 == one 
 		PREPARE D0ai[a,i] = tai[a,i] 
 	     endif 
+	  ENDDO k1diis  
       ENDDO kdiis 
       ENDPARDO a, i  
 
