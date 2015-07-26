@@ -13623,10 +13623,10 @@ std::ostream& operator<<(std::ostream& os,
                 where_ = fragment_special_where_clause(rcut,jfrag,ifrag) && fragment_special_where_clause(NE,jfrag,ifrag);
                 break;
             case 2:
-                where_ = fragment_special_where_clause(occ,index,ifrag);
+                where_ = fragment_special_where_clause(virt,index,ifrag);
                 break;
             case 3:
-                where_ = fragment_special_where_clause(occ,index,ifrag);
+                where_ = fragment_special_where_clause(virt,index,ifrag);
                 break;
             case 4:
                 where_ = fragment_special_where_clause(virt,index,jfrag);
