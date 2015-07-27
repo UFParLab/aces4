@@ -3354,7 +3354,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, a, a1, b, j
 
-    PARDO ifrag, jfrag, a, a1, b, j #GETLINE: Fragment_NR1ij_oo_vo_
+    PARDO ifrag, jfrag, a, a1, b, j #GETLINE: Fragment_NR1ij_vv_vo_
     where ifrag == 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)a] == ifrag

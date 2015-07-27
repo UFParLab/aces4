@@ -382,12 +382,12 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 					break;
 				case 3302:
 				case 3320:
-				case 3357:
 					loop = new Fragment_NR1ij_oo_vo_PardoLoopManager(
 						num_indices, index_selectors(), data_manager_, sip_tables_,
 							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
 					break;
 				case 3341:
+				case 3357:
 					loop = new Fragment_NR1ij_vv_vo_PardoLoopManager(
 						num_indices, index_selectors(), data_manager_, sip_tables_,
 							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
