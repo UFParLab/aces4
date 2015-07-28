@@ -516,6 +516,9 @@ private:
 	friend class Fragment_NR1ij_vv_vo_PardoLoopManager;
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
+	void permute_rhs_to_lhs(const BlockSelector& lhs_selector,
+			const BlockSelector& rhs_selector, sip::Block::BlockPtr lhs_block,
+			sip::Block::BlockPtr rhs_block, bool extra_check);
 };
 /* class Interpreter */
 
