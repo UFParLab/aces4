@@ -149,39 +149,30 @@ std::string PutDataAsync::to_string() const {
 
 
 
-
-
-
-
-
-
-
-
-
+/*************ServerBlockAsyncManager*************/
 
 
 void ServerBlockAsyncManager::add_get_reply(int mpi_source, int get_tag,
 		ServerBlock* block, int pc) {
+//create async op, (which does async send of requested block)
 pending_.push_back(new GetAsync(mpi_source, get_tag, block,  pc));
 
 }
 
 void ServerBlockAsyncManager::add_put_data_request(int mpi_source, int put_data_tag,
 	ServerBlock* block, int pc) {
-//create async op (which posts irecv
+//create async op (which posts irecv)
 pending_.push_back(
 		new PutDataAsync(mpi_source, put_data_tag, block, pc));
-
+num_pending_writes_++;
 }
 
 void ServerBlockAsyncManager::add_put_accumulate_data_request(int mpi_source,
 	int put_accumulate_data_tag, ServerBlock* block, int pc) {
-//create async op (which posts irecv
-
+//create async op (which posts irecv)
 pending_.push_back(
 		new PutAccumulateDataAsync(mpi_source, put_accumulate_data_tag, block, pc));
-
-
+num_pending_writes_++;
 }
 
 } /* namespace sip */

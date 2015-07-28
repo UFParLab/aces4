@@ -141,7 +141,7 @@ private:
 	//postcondition:  "operation is enabled"
 	virtual void do_wait()=0;
 
-	//precondition:  async_state == READY
+	//precondition:  async_state == READY (or WAITING and test has returned true)
 	//postcondition:  op completed
 	virtual void do_handle()=0;
 
@@ -159,6 +159,7 @@ private:
  */
 class GetAsync: public AsyncBase {
 public:
+	//asynchronous send with response performed in constructor.
 	GetAsync(int mpi_source, int get_tag, ServerBlock* block, int pc);
 	virtual ~GetAsync() {
 	}
@@ -315,7 +316,7 @@ public:
 		check(pending_.empty(), "deleting block with pending async ops");
 	}
 
-	//increments num_pending_writes_ and num_pending_
+	//increments num_pending_writes_
 	void add_put_accumulate_data_request(int mpi_source,
 			int put_accumulate_data_tag, ServerBlock* block, int pc);
 
@@ -341,7 +342,7 @@ public:
 	 * @return  false if the pending list for the block is not on return empty.
 	 *
 	 */
-	bool try_handle_all() {
+	bool try_handle_all_test_none_pending() {
 		std::list<AsyncBase*>::iterator it = pending_.begin();
 		while (it != pending_.end()) {
 			bool res = (*it)->try_handle();
@@ -371,7 +372,7 @@ public:
 	 * been handled.  The difference is how long the methods keep trying.
 	 *
 	 */
-	bool try_handle() {
+	bool try_handle_test_none_pending() {
 		std::list<AsyncBase*>::iterator it = pending_.begin();
 		//remove already done ops, if any, from list
 		while (it != pending_.end() && (*it)->is_done()) {
@@ -415,7 +416,6 @@ public:
 			}
 			delete *it;
 			it = pending_.erase(it);
-
 		}
 	}
 

@@ -425,10 +425,10 @@ IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map(
 	return block_map_.per_array_map(array_id);
 }
 
-IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::get_and_remove_per_array_map(
-		int array_id) {
-	return block_map_.get_and_remove_per_array_map(array_id);
-}
+//IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::get_and_remove_per_array_map(
+//		int array_id) {
+//	return block_map_.get_and_remove_per_array_map(array_id);
+//}
 
 void DiskBackedBlockMap::insert_per_array_map(int array_id,
 		IdBlockMap<ServerBlock>::PerArrayMap* map_ptr) {

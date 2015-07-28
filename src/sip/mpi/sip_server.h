@@ -44,7 +44,12 @@ std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
  * The system should maintain the
  * invariant that if a block has a pending request, it is in the list.  The
  * converse does not necessarily hold. It is also the case that a block may
- * appear more than once in the list, but only one will be removed
+ * appear more than once in the list, but only one entry will be removed each time.
+ *
+ * Invariants:
+ * if a block is in the pending list, it is in memory
+ * (thus it must be deleted from the pending list on delete block, and as
+ *    part of disk backing)
  */
 class PendingAsyncManager{
 public:
@@ -53,19 +58,19 @@ public:
 		check(pending_.empty(),"destructing non-empty PendingDataRequestManager");
 	}
 
-	void add_put_data_request(int mpi_source, int put_data_tag, ServerBlock* block, int pc){
+	void add_put_data_request(int mpi_source, int put_data_tag, BlockId id, ServerBlock* block, int pc){
 		block->async_state_.add_put_data_request(mpi_source, put_data_tag, block, pc);
-		pending_.push_back(block);
+		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
 	}
 
-	void add_put_accumulate_data_request(int mpi_source, int put_accumulate_data_tag, ServerBlock* block, int pc){
+	void add_put_accumulate_data_request(int mpi_source, int put_accumulate_data_tag, BlockId id, ServerBlock* block, int pc){
 		block->async_state_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, pc);
-		pending_.push_back(block);
+		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
 	}
 
-	void add_get_reply(int mpi_source, int get_tag, ServerBlock* block, int pc){
+	void add_get_reply(int mpi_source, int get_tag, BlockId id, ServerBlock* block, int pc){
 		block->async_state_.add_get_reply(mpi_source, get_tag, block, pc);
-		pending_.push_back(block);
+		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
 	}
 
 	/**
@@ -82,13 +87,13 @@ public:
 	 *
 	 */
 	void try_pending() { //tries to handle a block
-		if (pending_.end() == pending_.begin())
+		if (pending_.empty())
 			return;
 		if (next_block_iter_ == pending_.end()) { //wrap around list
 			next_block_iter_ = pending_.begin();
 		}
 		bool block_complete =
-				(*next_block_iter_)->async_state_.try_handle(); //this could be replace with try_handle_all
+				(next_block_iter_->second)->async_state_.try_handle_test_none_pending(); //this could be replace with try_handle_all_test_none_pending
 		                                                        //for less overhead, but
 		                                                        //longer latency for short messages.
 		if (block_complete) {
@@ -104,9 +109,29 @@ public:
 		}
 	}
 
+
+	//call when an array is deleted.
+	//leaves next_block_iter_ pointing to a valid
+	//iterator (possibly end) for pending_
+	//next_block_iter_ is unchanged if nothing was deleted
+	void remove_all_entries_for_array(int array_id){
+		std::list<std::pair<BlockId,ServerBlock*> >::iterator iter = pending_.begin();
+		while (iter != pending_.end()){
+			if(iter->first.array_id() == array_id){
+				bool block_complete = iter->second->async_state_.try_handle_test_none_pending();
+				check(block_complete, "attempting to delete array with pending async ops");
+				iter = pending_.erase(iter);
+				next_block_iter_ = iter;
+			}
+			else ++iter;
+		}
+	}
+
+
+
 private:
-	std::list<ServerBlock*> pending_;
-	std::list<ServerBlock*>::iterator next_block_iter_;  //points to next block in list to try
+	std::list<std::pair<BlockId,ServerBlock*> > pending_;
+	std::list<std::pair<BlockId,ServerBlock*> >::iterator next_block_iter_;  //points to next block in list to try
     DISALLOW_COPY_AND_ASSIGN(PendingAsyncManager);
 };
 
@@ -172,12 +197,12 @@ public:
 		return disk_backed_block_map_.per_array_map(array_id);
 	}
 
-	/**last_
-	 * Called by persistent_array_manager. Delegates to block_map_.
-	 */
-	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
-			return disk_backed_block_map_.get_and_remove_per_array_map(array_id);
-	}
+//	/**last_
+//	 * Called by persistent_array_manager. Delegates to block_map_.
+//	 */
+//	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id){
+//			return disk_backed_block_map_.get_and_remove_per_array_map(array_id);
+//	}
 
 	/**
 	 * Called by persistent_array_manager during restore.  delegates

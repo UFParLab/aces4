@@ -173,7 +173,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	server_timer_.pause_timer(pc, ServerTimer::BLOCKWAITTIME);
 
 	//create async op to handle the reply
-	async_ops_.add_get_reply(mpi_source, get_tag, block, pc);
+	async_ops_.add_get_reply(mpi_source, get_tag, block_id, block, pc);
 
 
 	//handle section number updates
@@ -227,7 +227,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
     //create async_op to handle message with the data
     int put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA,
 			transaction_number);
-	async_ops_.add_put_data_request(mpi_source, put_data_tag, block, pc);
+	async_ops_.add_put_data_request(mpi_source, put_data_tag, block_id, block, pc);
 
 	//send ack to worker, who is waiting for it
 	SIPMPIUtils::check_err(
@@ -291,7 +291,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	int put_accumulate_data_tag;
 	put_accumulate_data_tag = BarrierSupport::make_mpi_tag(
 			SIPMPIConstants::PUT_ACCUMULATE_DATA, transaction_number);
-	async_ops_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, pc);
+	async_ops_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block_id, block, pc);
 
 	//send ack to worker, who is waiting for it
 	SIPMPIUtils::check_err(
@@ -358,6 +358,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			__LINE__, __FILE__);
 
 	//delete the block and map for the indicated array
+	async_ops_.remove_all_entries_for_array(array_id);
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
 	server_timer_.pause_timer(pc, ServerTimer::TOTALTIME);
 
