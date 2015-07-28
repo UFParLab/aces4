@@ -4,8 +4,6 @@ import "tran_eom.sialx"
 
 SIAL R_EE_EOM_CCSD_RHF
 
-temp Taaai[a,a1,a2,i]
-
 #***********************************************************
 
 PROC READ_AMP
@@ -3482,12 +3480,21 @@ do ksub
 
     call AOLADDER_NEW
     call R2ABLIN_NEW_CCPT
-    call R2AALIN_NEW_CCPT
+#    call R2AALIN_NEW_CCPT
     call R1ANEW_CCPT
 
     server_barrier
 
-    call SYMMETRHC_A
+#    call SYMMETRHC_A
+
+    pardo a,i,a1,i1
+        request VCHACT2AB[a,i,a1,i1]
+        request VCHACT2AB[a,i1,a1,i]
+	Taiai[a,i,a1,i1]  = VCHACT2AB[a,i,a1,i1]
+	T1aiai[a,i,a1,i1] = VCHACT2AB[a,i1,a1,i]
+	Taiai[a,i,a1,i1] -= T1aiai[a,i,a1,i1]
+	prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
+    endpardo a,i,a1,i1
 
     call place_HB
     server_barrier
@@ -4413,8 +4420,8 @@ server_barrier
 call move_by_one_RK1
 call move_by_one_LK1
 
-call move_by_one_RK2aa
-call move_by_one_LK2aa
+#call move_by_one_RK2aa
+#call move_by_one_LK2aa
 
 call move_by_one_RK2ab
 call move_by_one_LK2ab
@@ -4423,8 +4430,8 @@ server_barrier
 call form_new_RK1
 call form_new_LK1
 
-call form_new_RK2aa
-call form_new_LK2aa
+#call form_new_RK2aa
+#call form_new_LK2aa
 
 call form_new_RK2ab
 call form_new_LK2ab
@@ -4437,41 +4444,60 @@ server_barrier
 call update_RB1
 call update_LB1
 
-call update_RB2aa
-call update_LB2aa
+#call update_RB2aa
+#call update_LB2aa
 
 call update_RB2ab
 call update_LB2ab
 
 server_barrier
-sum1 = 0.0
-pardo a,i,kstate
-    request cRk1_a[kstate,a,i]
-    Tkai[kstate,a,i] = cRk1_a[kstate,a,i]
-    etemp = Tkai[kstate,a,i] * cRk1_a[kstate,a,i]
-    sum1 += etemp
-endpardo a,i,kstate
 
-pardo a,i,a1,i1,kstate
-    request cRk2_aa[kstate,a,i,a1,i1]
-    Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
-    etemp = Tkaiai[kstate,a,i,a1,i1]*cRk2_aa[kstate,a,i,a1,i1]
-    sum1 += etemp
-endpardo a,i,a1,i1,kstate
+pardo a,i,a1,i1,ksub
+    request RB2_ab[ksub,a,i,a1,i1]
+    request RB2_ab[ksub,a,i1,a1,i]
+    Tkaiai[ksub,a,i,a1,i1]  = RB2_ab[ksub,a,i,a1,i1]
+    T1kaiai[ksub,a,i,a1,i1] = RB2_ab[ksub,a,i1,a1,i]
+    Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
+    prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+endpardo a,i,a1,i1,ksub
 
-pardo a,i,b,j,kstate
-    request cRk2_ab[kstate,a,i,b,j]
-    Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
-    etemp = Tkaibj[kstate,a,i,b,j]*cRk2_ab[kstate,a,i,b,j]
-    sum1 += etemp
-endpardo a,i,b,j,kstate
+pardo a,i,a1,i1,ksub
+    request LB2_ab[ksub,a,i,a1,i1]
+    request LB2_ab[ksub,a,i1,a1,i]
+    Tkaiai[ksub,a,i,a1,i1]  = LB2_ab[ksub,a,i,a1,i1]
+    T1kaiai[ksub,a,i,a1,i1] = LB2_ab[ksub,a,i1,a1,i]
+    Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
+    prepare LB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+endpardo a,i,a1,i1,ksub
 server_barrier
-sum2 = 0.0
-collective sum2 += sum1
-etemp3 = (scalar)eom_roots
-rms_orb_conv = (sum2/etemp3)**(0.5)
-server_barrier
-assert_same rms_orb_conv
+#sum1 = 0.0
+#pardo a,i,kstate
+#    request cRk1_a[kstate,a,i]
+#    Tkai[kstate,a,i] = cRk1_a[kstate,a,i]
+#    etemp = Tkai[kstate,a,i] * cRk1_a[kstate,a,i]
+#    sum1 += etemp
+#endpardo a,i,kstate
+#
+#pardo a,i,a1,i1,kstate
+#    request cRk2_aa[kstate,a,i,a1,i1]
+#    Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
+#    etemp = Tkaiai[kstate,a,i,a1,i1]*cRk2_aa[kstate,a,i,a1,i1]
+#    sum1 += etemp
+#endpardo a,i,a1,i1,kstate
+#
+#pardo a,i,b,j,kstate
+#    request cRk2_ab[kstate,a,i,b,j]
+#    Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
+#    etemp = Tkaibj[kstate,a,i,b,j]*cRk2_ab[kstate,a,i,b,j]
+#    sum1 += etemp
+#endpardo a,i,b,j,kstate
+#server_barrier
+#sum2 = 0.0
+#collective sum2 += sum1
+#etemp3 = (scalar)eom_roots
+#rms_orb_conv = (sum2/etemp3)**(0.5)
+#server_barrier
+#assert_same rms_orb_conv
 #
 ENDPROC update_vecs
 
