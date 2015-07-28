@@ -276,6 +276,9 @@ test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
 test/eom_test.dat\
+test/eom_lccsd_test.dat\
+test/eom_lccd_test.dat\
+test/eom_mp2_test.dat\
 test/lindep_test.dat\
 test/rlambda_test.dat\
 test/lccd_test.dat\
@@ -451,6 +454,8 @@ SIOX_FILES=\
 ./src/sialx/test/read_block_test.siox\
 ./src/sialx/test/pardo_with_where.siox\
 ./src/sialx/test/pardo_load_balance_test.siox\
+./src/sialx/test/put_initialize.siox\
+./src/sialx/test/cast_indices_to_simple.siox\
 ./src/sialx/test/aoladder.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
@@ -467,12 +472,14 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_d_rhf.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/lr_eom_ccsd_rhf.siox\
+./src/sialx/qm/lr_eom_linccsd_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/rlccd_rhf.siox\
 ./src/sialx/qm/rlccsd_rhf.siox\
 ./src/sialx/qm/tran_rhf_no4v.siox\
 ./src/sialx/qm/tran_uhf_no4v.siox\
 ./src/sialx/qm/tran_rhf_no3v.siox\
+./src/sialx/qm/tran_eom.siox\
 ./src/sialx/qm/tran_rhf_no4v_defs.siox\
 ./src/sialx/qm/rccsd_rhf.siox\
 ./src/sialx/qm/rlambda_rhf.siox\
@@ -577,6 +584,8 @@ EXTRA_DIST += \
 ./src/sialx/test/read_block_test.sialx\
 ./src/sialx/test/pardo_with_where.sialx\
 ./src/sialx/test/pardo_load_balance_test.sialx\
+./src/sialx/test/put_initialize.sialx\
+./src/sialx/test/cast_indices_to_simple.sialx\
 ./src/sialx/test/aoladder.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
@@ -595,11 +604,14 @@ EXTRA_DIST += \
 ./src/sialx/qm/rcis_d_rhf.sialx\
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
 ./src/sialx/qm/reom_rhf_defs.sialx\
+./src/sialx/qm/lr_eom_ccsd_rhf.sialx\
+./src/sialx/qm/lr_eom_linccsd_rhf.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
 ./src/sialx/qm/rlccsd_rhf.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\
 ./src/sialx/qm/tran_uhf_no4v.sialx\
 ./src/sialx/qm/tran_rhf_no3v.sialx\
+./src/sialx/qm/tran_eom.sialx\
 ./src/sialx/qm/tran_rhf_no4v_defs.sialx\
 ./src/sialx/qm/rccsd_rhf.sialx\
 ./src/sialx/qm/rlambda_rhf.sialx\

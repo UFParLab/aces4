@@ -299,6 +299,9 @@ configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COP
 configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -553,6 +556,7 @@ set(SIAL_FILES
     src/sialx/test/pardo_with_where.sialx;
     src/sialx/test/pardo_load_balance_test.sialx;
     src/sialx/test/read_block_test.sialx;
+    src/sialx/test/cast_indices_to_simple.sialx;
     src/sialx/test/aoladder.sialx;
     src/sialx/test/put_accumulate_stress.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
@@ -570,6 +574,7 @@ set(SIAL_FILES
     src/sialx/qm/tran_uhf_no4v.sialx;
     src/sialx/qm/tran_rhf_no4v_defs.sialx;
     src/sialx/qm/tran_rhf_no3v.sialx;
+    src/sialx/qm/tran_eom.sialx;
     src/sialx/qm/rccsd_rhf.sialx;
     src/sialx/qm/rlambda_rhf.sialx;
     src/sialx/qm/rlccd_rhf.sialx;
@@ -581,6 +586,7 @@ set(SIAL_FILES
     src/sialx/qm/rcis_d_rhf.sialx;
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
+    src/sialx/qm/lr_eom_linccsd_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx)
 

@@ -1,6 +1,6 @@
-#  Copyright (c) 2003-2010 University of Florida
-  import "rccsd_rhf_defs.sialx" 
-                           SIAL CCSD_RHF_SV1
+
+      import "rccsd_rhf_defs.sialx" 
+      SIAL CCSD_RHF_SV1
 #
 #-------------------------------------------------------------------------------
 #
@@ -2588,6 +2588,10 @@
 #
 ######CALL WRITE_2EL   
 #
+      has_singles = 1.0
+      is_ccpt = 0.0
+      set_persistent has_singles "has_singles"
+      set_persistent is_ccpt "is_ccpt"
       set_persistent t1a_old "t1a_old"
       set_persistent T2old_aa "T2old_aa"
       set_persistent T2old_ab "T2old_ab"

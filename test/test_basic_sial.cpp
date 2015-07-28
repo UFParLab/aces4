@@ -1416,6 +1416,48 @@ TEST(BasicSial,assign_to_static_array_test) {
 	controller.runWorker();
 }
 
+
+TEST(BasicSial,cast_indices_to_simple) {
+	std::string job("cast_indices_to_simple");
+	int norb = 5;
+	int segs[] = { 2, 2, 5, 5, 5 };
+	{
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(norb, segs);
+		finalize_setup();
+	}
+	barrier();
+	std::stringstream output;
+	TestController controller(job, true, true, "", output);
+	controller.initSipTables();
+	controller.runWorker();
+
+	int b_slot = controller.worker_->array_slot(std::string("b"));
+	int j_slot = 1;//controller.worker_->sip_tables_.index_table_.index_id("j");
+	sip::index_value_array_t b_indices;
+
+	for (int i = 1; i < MAX_RANK; i++){
+		b_indices[i] = sip::unused_index_value;
+	}
+	for (int i = 0; i < norb; ++i){
+		b_indices[0] = i + 1;
+		double value = norb - b_indices[0];
+		sip::BlockId b_bid(b_slot, b_indices);
+		sip::Block::BlockPtr b_bptr = controller.worker_->get_block_for_reading(
+				b_bid);
+		sip::Block::dataPtr b_data = b_bptr->get_data();
+		for (int k = 0; k < segs[i]; k++){
+			EXPECT_DOUBLE_EQ(value, *b_data);
+			b_data++;
+		}
+	}
+}
+
+
 TEST(BasicSial,return_sval_test){
 	std::string job("return_sval_test");
 	std::stringstream output;
