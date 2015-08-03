@@ -35,6 +35,24 @@ restore_persistent Vpiqj "Vpiqj"
 server_barrier
 
 if is_ccpt == 6.0
+restore_persistent FwC "MOI_wC"
+server_barrier
+print "placing wC into Fai fock"
+execute get_my_rank rank
+myrank = (int)rank
+if myrank == root
+do a
+    do i
+	get FwC[a,i]
+	Tai[a,i] = FwC[a,i]
+	Tia[i,a] = FwC[a,i]
+	fock_a[a,i] = Tai[a,i]
+	fock_a[i,a] = Tia[i,a]
+    enddo i
+enddo a
+endif
+server_barrier
+broadcast_from root fock_a
 restore_persistent MOI_HBAR_ia "MOI_HBAR_ia"
 restore_persistent MOI_HBAR_aa "MOI_HBAR_aa"
 restore_persistent MOI_HBAR_ii "MOI_HBAR_ii"
@@ -201,8 +219,10 @@ server_barrier
 if is_ccpt == 6.0
 do a 
 do a1 
-GET MOI_HBAR_aa[a,a1] 
-LHBAR_aa[a,a1] = MOI_HBAR_aa[a,a1] 
+GET MOI_HBAR_aa[a1,a] 
+Taa[a1,a] = MOI_HBAR_aa[a1,a]
+Taa[a1,a] *=  1.0
+LHBAR_aa[a1,a] += Taa[a1,a]
 enddo a1 
 enddo a 
 server_barrier 
@@ -358,7 +378,9 @@ server_barrier
 if is_ccpt == 6.0
 do i 
 do i1 
-GET              MOI_HBAR_ii[i,i1] 
+GET MOI_HBAR_ii[i,i1] 
+Tpp[i,i1]  = MOI_HBAR_ii[i,i1]
+Tpp[i,i1] *=  1.0
 LHBAR_ii[i,i1] += MOI_HBAR_ii[i,i1]  
 enddo i1 
 enddo i 
@@ -457,12 +479,16 @@ if is_ccpt == 6.0
 do a 
 do i 
 GET MOI_HBAR_ia[i,a] 
-LHBAR_ia[i,a] += MOI_HBAR_ia[i,a]  
+Tpp[i,a] = MOI_HBAR_ia[i,a]
+Tpp[i,a] *= 1.0
+LHBAR_ia[i,a] += Tpp[i,a]
 enddo i 
 enddo a 
 do b 
 do j 
 GET MOI_HBAR_ia[j,b] 
+Tpp[j,b] = MOI_HBAR_ia[j,b]
+Tpp[j,b] *= 1.0
 LHBAR_jb[j,b] += MOI_HBAR_ia[j,b]  
 enddo j 
 enddo b 
@@ -1656,26 +1682,31 @@ print "Adding in MCPT MOI HBAR elements"
 pardo a, a1, a2, i
     request MOI_HBAR_ABCI[a,a1,a2,i]
     Taaai[a,a1,a2,i] = MOI_HBAR_ABCI[a,a1,a2,i]
-    prepare HBAR_ABCI_aabb += Taaai[a,a1,a2,i]
+   # Taaai[a,a1,a2,i] *= 2.0
+    prepare HBAR_ABCI_aabb[a,a1,a2,i] += Taaai[a,a1,a2,i]
 endpardo a, a1, a2, i
 pardo i, i1, b, j
     request MOI_HBAR_iajk[i,i1,b,j]
     Tiibj[i,i1,b,j] = MOI_HBAR_iajk[i,i1,b,j]
-    prepare HBAR_IAJK_aabb[i,i1,b,j] = Tiibj[i,i1,b,j]
+   # Tiibj[i,i1,b,j] *= 2.0
+    prepare HBAR_IAJK_aabb[i,i1,b,j] += Tiibj[i,i1,b,j]
 endpardo i, i1, b, j
-pardo i, i1, b, j
-    request MOI_HBAR_iajk[i,i1,b,j]
-    request MOI_HBAR_iajk[i,j,b,i1]
-    Tiibj[i,i1,b,j] = MOI_HBAR_iajk[i,i1,b,j]
-    T1iibj[i,i1,b,j] = MOI_HBAR_iajk[i,j,b,i1]
-    Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
-    prepare HBAR_IAJK_aaaa[i,i1,b,j] = Tiibj[i,i1,b,j]
-endpardo i, i1, b, j
+pardo a, i1, i2, i
+    request                             MOI_HBAR_iajk[i,i1,a,i2]
+    request                             MOI_HBAR_iajk[i,i2,a,i1]
+    tpppp[i,i1,a,i2]                  = MOI_HBAR_iajk[i,i1,a,i2]
+    t1pppp[i,i1,a,i2]                 = MOI_HBAR_iajk[i,i2,a,i1]
+    tpppp[i,i1,a,i2]                 -= t1pppp[i,i1,a,i2]
+   # tpppp[i,i1,a,i2] *= 2.0
+    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += tpppp[i,i1,a,i2]
+endpardo a, i1, i2, i
 
 pardo i, a, b, j
     request MOI_HBAR_AJIB[i,a,b,j] 
     Tiabj[i,a,b,j]  = MOI_HBAR_AJIB[i,a,b,j]
     T1iabj[i,a,b,j] = MOI_HBAR_AJIB[i,a,b,j]
+   # Tiabj[i,a,b,j]  *= 2.0
+   # T1iabj[i,a,b,j] *= 2.0
     prepare HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
     prepare HBAR_AJIB_aaaa[i,a,b,j] += T1iabj[i,a,b,j]
 endpardo i, a, b, j 
