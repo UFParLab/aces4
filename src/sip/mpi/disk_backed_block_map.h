@@ -30,7 +30,7 @@ class ServerPersistentArrayManager;
  */
 class DiskBackedBlockMap {
 public:
-	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&, ServerTimer&);
+	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&);
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
@@ -61,6 +61,9 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
 
+	std::ostream& gather_statistics(std::ostream& out){
+		return out;
+	}
 //unneeded, set in constructor
 //	/** Sets max_allocatable_bytes_ */
 //    void set_max_allocatable_bytes(std::size_t size);
@@ -89,8 +92,6 @@ private:
 	const SIPMPIAttr & sip_mpi_attr_;
 	const DataDistribution &data_distribution_;
 
-	ServerTimer &server_timer_;
-
     // Since the policy_ can be constructed only
     // after the block_map_ has been constructed, 
     // policy_ must appear after the declaration
@@ -110,6 +111,7 @@ private:
 	 * data portion of a block, or the temp buffer for an asynchronous operation.
 	 */
 	std::size_t remaining_doubles_;
+
 
 };
 

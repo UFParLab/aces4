@@ -36,7 +36,7 @@ public:
 	//beyond SIAL programs.
 	SialOpsParallel(DataManager &,
 			WorkerPersistentArrayManager*,
-			SialxTimer*,
+//			SialxTimer*,
 			const SipTables&);
 	~SialOpsParallel();
 
@@ -121,7 +121,7 @@ private:
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;
-	SialxTimer* sialx_timers_;
+//	SialxTimer* sialx_timers_;
 
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;

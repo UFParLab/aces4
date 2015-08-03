@@ -121,7 +121,9 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/server_timer.h;
         src/sip/mpi/server_timer.cpp; 
         src/sip/mpi/async_ops.h;
-        src/sip/mpi/async_ops.cpp;       
+        src/sip/mpi/async_ops.cpp; 
+        src/sip/mpi/counter.h;
+        src/sip/mpi/counter.cpp;      
         src/sip/dynamic_data/mpi_state.h;
         src/sip/dynamic_data/distributed_block_consistency.h;
         src/sip/dynamic_data/distributed_block_consistency.cpp      
@@ -195,6 +197,8 @@ set(ACES_WORKER_FILES
     src/sip/worker/sial_printer.cpp;
     src/sip/worker/sial_math.h;
     src/sip/worker/sial_math.cpp;
+    src/sip/worker/tracer.h;
+    src/sip/worker/tracer.cpp;
     src/sip/sip_interface.h;
     src/sip/sip_interface.cpp;
     src/sip/tensor_algebra/tensor_ops_c_prototypes.h;

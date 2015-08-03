@@ -21,14 +21,12 @@ int SialOpsPid_line_section_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
 #ifdef HAVE_MPI //only compile if parallel
 SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 		WorkerPersistentArrayManager* persistent_array_manager,
-		SialxTimer* sialx_timers,
 		const SipTables& sip_tables) :
 		sip_tables_(sip_tables), sip_mpi_attr_(
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,
 				sip_mpi_attr_), persistent_array_manager_(
-				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE),
-				sialx_timers_(sialx_timers)
+				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE)
 {
 //	initialize_mpi_type();
 	mpi_type_.initialize_mpi_scalar_op_type();
@@ -778,15 +776,18 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id, int p
 //If asynch puts turn out to be useful, we can revisit this.
 Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
 
-		if (sialx_timers_ && !b->test()){
-			sialx_timers_->start_timer(pc, SialxTimer::BLOCKWAITTIME);
+//		if (sialx_timers_ && !b->test()){
+//			sialx_timers_->start_timer(pc, SialxTimer::BLOCKWAITTIME);
 //		    b->wait(b->size());
-			b->wait();
-	        sialx_timers_->pause_timer(pc, SialxTimer::BLOCKWAITTIME);
-		}
-		else
+//			b->wait();
+//	        sialx_timers_->pause_timer(pc, SialxTimer::BLOCKWAITTIME);
+//		}
+//		else
 //		b->wait(b->size());
-			b->wait();
+//			b->wait();
+
+
+	b->wait();
 
 	return b;
 }

@@ -202,15 +202,24 @@ double* TestControllerParallel::static_array(const std::string& name){
 }
 
 void TestControllerParallel::print_timers(std::ostream& out){
-	if (! attr->is_worker()) return;
-	if (sip_tables_ == NULL || sialx_timers_ == NULL){
-		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
-				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
-		return;
+//	if (! attr->is_worker()) return;
+//	if (sip_tables_ == NULL || sialx_timers_ == NULL){
+//		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
+//				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
+//		return;
+//	}
+////	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
+////	sialx_timers_->print_timers(lno2name, out);
+//	out<< std::flush;
+	barrier();
+	if (attr->is_worker()){
+//TODO print
 	}
-//	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
-//	sialx_timers_->print_timers(lno2name, out);
-	out<< std::flush;
+	barrier();
+	if (attr->is_server()){
+		server_->print_statistics(out);
+	}
+	barrier();
 }
 
 void TestControllerParallel::run() {
@@ -269,9 +278,9 @@ double* TestControllerParallel::local_block(const std::string& name,
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
-		sip::ServerTimer server_timer(sip_tables_->op_table_size());
+	//	sip::ServerTimer server_timer(sip_tables_->op_table_size());
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
-				spam_, server_timer);
+				spam_);
 		barrier();
 		if (verbose_)
 			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
@@ -308,8 +317,8 @@ bool TestControllerParallel::runWorker() {
 
 
 //		int slot = sip_tables_->op_table_size();
-		sialx_timers_ = new sip::SialxTimer(sip_tables_->op_table_size());
-		worker_ = new sip::Interpreter(*sip_tables_, sialx_timers_, printer_, wpam_);
+	//	sialx_timers_ = new sip::SialxTimer(sip_tables_->op_table_size());
+		worker_ = new sip::Interpreter(*sip_tables_,  printer_, wpam_);
 		barrier();
 
 		if (verbose_)

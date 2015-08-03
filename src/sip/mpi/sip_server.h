@@ -7,6 +7,10 @@
 
 #ifndef SIP_SERVER_H_
 #define SIP_SERVER_H_
+#include <map>
+#include <vector>
+#include <utility>
+#include <iomanip>
 
 #include "sip_tables.h"
 #include "server_block.h"
@@ -14,11 +18,9 @@
 #include "barrier_support.h"
 #include "server_persistent_array_manager.h"
 #include "disk_backed_block_map.h"
-#include "server_timer.h"
+//#include "server_timer.h"
+#include "counter.h"
 
-#include <map>
-#include <vector>
-#include <utility>
 
 
 
@@ -26,7 +28,7 @@ namespace sip {
 
 std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
 
-
+class SIPServer;
 
 
 
@@ -53,7 +55,8 @@ std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
  */
 class PendingAsyncManager{
 public:
-	PendingAsyncManager():next_block_iter_(pending_.begin()){}
+	PendingAsyncManager():next_block_iter_(pending_.begin()),
+	pending_counter_(SIPMPIAttr::get_instance().company_communicator()){}
 	~PendingAsyncManager(){
 		check(pending_.empty(),"destructing non-empty PendingDataRequestManager");
 	}
@@ -61,16 +64,19 @@ public:
 	void add_put_data_request(int mpi_source, int put_data_tag, BlockId id, ServerBlock* block, int pc){
 		block->async_state_.add_put_data_request(mpi_source, put_data_tag, block, pc);
 		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
+		pending_counter_.inc();
 	}
 
 	void add_put_accumulate_data_request(int mpi_source, int put_accumulate_data_tag, BlockId id, ServerBlock* block, int pc){
 		block->async_state_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, pc);
 		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
+		pending_counter_.inc();
 	}
 
 	void add_get_reply(int mpi_source, int get_tag, BlockId id, ServerBlock* block, int pc){
 		block->async_state_.add_get_reply(mpi_source, get_tag, block, pc);
 		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
+		pending_counter_.inc();
 	}
 
 	/**
@@ -93,20 +99,23 @@ public:
 			next_block_iter_ = pending_.begin();
 		}
 		bool block_complete =
-				(next_block_iter_->second)->async_state_.try_handle_test_none_pending(); //this could be replace with try_handle_all_test_none_pending
+//				(next_block_iter_->second)->async_state_.try_handle_test_none_pending(); //this could be replace with try_handle_all_test_none_pending
 		                                                        //for less overhead, but
 		                                                        //longer latency for short messages.
+		(next_block_iter_->second)->async_state_.try_handle_all_test_none_pending();
 		if (block_complete) {
 			next_block_iter_ = pending_.erase(next_block_iter_);
 		} else {
 			++next_block_iter_;
 		}
+		pending_counter_.set(pending_.size());
 	}
 
 	void wait_all() {
 		while (may_have_pending()) {
 			try_pending();
 		}
+		pending_counter_.set(pending_.size());
 	}
 
 
@@ -125,13 +134,23 @@ public:
 			}
 			else ++iter;
 		}
+		pending_counter_.set(pending_.size());
 	}
 
-
+//	std::ostream& gather_and_print_statistics(std::ostream& out, const std::string& title=""){
+//		pending_counter_.gather();
+//		if (SIPMPIAttr::get_instance().is_company_master()){
+//			out << title << std::endl;
+//			out << pending_counter_ << std::endl << std::flush;
+//		}
+//		return out;
+//	}
+	friend class SIPServer;
 
 private:
 	std::list<std::pair<BlockId,ServerBlock*> > pending_;
 	std::list<std::pair<BlockId,ServerBlock*> >::iterator next_block_iter_;  //points to next block in list to try
+	PMaxCounter pending_counter_;
     DISALLOW_COPY_AND_ASSIGN(PendingAsyncManager);
 };
 
@@ -176,7 +195,7 @@ private:
 class SIPServer {
 
 public:
-	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*, ServerTimer&);
+	SIPServer(SipTables&, DataDistribution&, SIPMPIAttr&, ServerPersistentArrayManager*);
 	~SIPServer();
 
 
@@ -242,6 +261,41 @@ public:
 		return sip_tables_.line_number(pc);
 	}
 
+	void print_statistics(std::ostream& os){
+		op_timer_.gather();
+		op_timer_.reduce();
+		get_block_timer_.gather(); //indexed by pc
+		get_block_timer_.reduce();
+		idle_timer_.gather();
+		total_timer_.gather();
+		pending_timer_.gather();
+		handle_op_timer_.gather();
+		num_ops_.gather();
+		async_ops_.pending_counter_.gather();
+
+		if (sip_mpi_attr_.is_company_master()){
+			os << "@@@@@@ Server op_timer_" << std::endl;
+			//os << op_timer_ << std::endl;
+			op_timer_.print_op_table_stats(os, sip_tables_);
+			os << std::endl << "@@@@@@ Server get_block_timer_" << std::endl;
+			//os << get_block_timer_ << std::endl;
+			get_block_timer_.print_op_table_stats(os, sip_tables_);
+			os << std::endl << "@@@@@@ total_timer_" << std::endl;
+			os << total_timer_ << std::endl;
+			os << std::endl << "@@@@@@ handle_op_timer_" << std::endl;
+			os << handle_op_timer_ << std::endl;
+			os << std::endl << "@@@@@@ idle_timer_" << std::endl;
+			os << idle_timer_ << std::endl;
+			os << std::endl << "@@@@@@ pending_timer_" << std::endl;
+			os << pending_timer_ << std::endl;
+			os << std::endl << "@@@@@@ num_ops_" << std::endl;
+			os << num_ops_ << std::endl;
+			os << std::endl << "@@@@@@ async_ops_pending_" << std::endl;
+			os << async_ops_.pending_counter_ << std::endl;
+		}
+
+	}
+
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
 
@@ -261,7 +315,9 @@ private:
 	const SIPMPIAttr & sip_mpi_attr_;
 	const DataDistribution &data_distribution_;
 	MPIScalarOpType mpi_type_;
-	ServerTimer& server_timer_;
+
+
+	int pc_;
 
 //	int last_seen_line_;
 	int last_seen_worker_;
@@ -282,6 +338,14 @@ private:
 	DiskBackedBlockMap disk_backed_block_map_;
 	PendingAsyncManager async_ops_;
 
+	/** Timers and counters */
+	MPITimerList op_timer_;  //indexed by pc
+	MPITimerList get_block_timer_; //indexed by pc
+	MPITimer idle_timer_;
+	MPITimer pending_timer_;
+	MPITimer total_timer_;
+	PCounter num_ops_;
+	MPITimer handle_op_timer_;
 
 	/**
 	 * Get

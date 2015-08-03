@@ -163,6 +163,10 @@ public:
 	int line_number(int pc) const{
 		return op_table_.line_number(pc);
 	}
+
+	std::string opcode_name(int pc) const{
+		return opcodeToName(op_table_.opcode(pc));
+	}
     void print() const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 

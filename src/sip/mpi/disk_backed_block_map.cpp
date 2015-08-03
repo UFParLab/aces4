@@ -56,14 +56,14 @@ template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(Serve
 
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		const SIPMPIAttr& sip_mpi_attr,
-		const DataDistribution& data_distribution, ServerTimer& server_timer) :
+		const DataDistribution& data_distribution) :
 		sip_tables_(sip_tables), sip_mpi_attr_(sip_mpi_attr), data_distribution_(
 				data_distribution), block_map_(sip_tables.num_arrays()), disk_backed_arrays_io_(
 				sip_tables, sip_mpi_attr, data_distribution), policy_(
 				block_map_), max_allocatable_bytes_(
 				sip::GlobalState::get_max_data_memory_usage()), max_allocatable_doubles_(
 				max_allocatable_bytes_ / sizeof(double)), remaining_doubles_(
-				max_allocatable_doubles_), server_timer_(server_timer) {
+				max_allocatable_doubles_) {
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap() {
@@ -482,11 +482,8 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id,
 void DiskBackedBlockMap::save_persistent_array(const int array_id,
 		const std::string& array_label,
 		IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
-	server_timer_.start_timer(current_line(), ServerTimer::WRITETIME);
 	disk_backed_arrays_io_.save_persistent_array(array_id, array_label,
 			array_blocks);
-	server_timer_.pause_timer(current_line(), ServerTimer::WRITETIME);
-
 }
 
 //void DiskBackedBlockMap::set_max_allocatable_bytes(std::size_t size) {

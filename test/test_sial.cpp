@@ -764,7 +764,7 @@ TEST(Sial,put_accumulate_stress){
     controller.initSipTables();
     controller.run();
 
-    std::cerr << "finished run, check results" << std::endl << std::flush;
+//    std::cerr << "finished run, checking results" << std::endl << std::flush;
 
 	if (attr->is_worker()) {
 		int i,j;
@@ -777,14 +777,22 @@ TEST(Sial,put_accumulate_stress){
 			    double * block_data = controller.local_block(std::string("a"),indices);
 			    size_t block_size = segs[i-1] * segs[j-1];
 			    for (size_t count = 0; count < block_size; ++count){
-			    	if (count == 0){
-			    		std::cerr << "i=" << i << " j=" << j << " value="<< value << " block_data[0]=" << block_data[count] << std::endl << std::flush;
-			    	}
+//			    	if (count == 0){
+//			    		std::cerr << "i=" << i << " j=" << j << " value="<< value << " block_data[0]=" << block_data[count] << std::endl << std::flush;
+//			    	}
 			    	ASSERT_DOUBLE_EQ(value, block_data[count]);
 			    }
 			}
 		}
 	}
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+    else {
+    	barrier();
+    	controller.server_->print_statistics(std::cerr);
+    }
 }
 
 //****************************************************************************************************************

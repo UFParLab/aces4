@@ -32,6 +32,8 @@
 
 #ifdef HAVE_MPI
 #include "sial_ops_parallel.h"
+#include "counter.h"
+#include "tracer.h"
 #else
 #include "sial_ops_sequential.h"
 #endif //HAVE_MPI
@@ -49,9 +51,9 @@ class Interpreter {
 public:
 
 
-	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	Interpreter(const SipTables&, SialxTimer* timers, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
+	Interpreter(const SipTables&,  SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(const SipTables&,  WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(const SipTables&,  SialPrinter* printer);
 	~Interpreter();
 
 
@@ -176,6 +178,19 @@ public:
 	 */
 	void post_sial_program();
 
+	/**
+	 * Prints gathers and/or reduces counters and timers managed by the interpreter.
+	 * This is a collective operation.
+	 * @param os
+	 */
+	void gather_and_print_statistics(std::ostream& os){
+	    tracer_->gather();
+	    if (SIPMPIAttr::get_instance().is_company_master()){
+	    	os << "Printing worker statistics"<<std::endl;
+	    	os << *tracer_;
+	    	os << std::endl << std::flush;
+	    }
+	}
 
 
 	int arg0(){ return op_table_.arg0(pc); }
@@ -275,9 +290,9 @@ private:
 
 	const OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 
-	/** Data structure to hold timers.  Owned by
-	 * calling program.  May be NULL */
-	SialxTimer* sialx_timers_;
+//	/** Data structure to hold timers.  Owned by
+//	 * calling program.  May be NULL */
+//	SialxTimer* sialx_timers_;
 
 	/**
 	 * Owned by main program
@@ -363,19 +378,11 @@ private:
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
-//	void handle_assignment_op(int pc);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
 	void handle_contraction_op(int pc);
-//	void handle_where_op(int pc);
-//	bool evaluate_where_clause(int pc);
-//	bool evaluate_double_relational_expr(int pc);
-//	bool evaluate_int_relational_expr(int pc);
-//	void handle_collective_sum_op(int source_array_slot, int dest_array_slot);
-//	void handle_sum_op(int pc, double factor);
 	void handle_block_add(int pc);
 	void handle_block_subtract(int pc);
-//	void handle_self_multiply_op(int pc);
 	void handle_slice_op(int pc);
 	void handle_insert_op(int pc);
 
@@ -472,7 +479,7 @@ private:
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
 			sip::BlockId& id, bool contiguous_allowed = true);
 
-
+	PCounter iter_counter_;
 
 	Tracer* tracer_;
 

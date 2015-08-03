@@ -34,30 +34,33 @@ namespace sip {
 
 Interpreter* Interpreter::global_interpreter = NULL;
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		SialPrinter* printer) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 		NULL), sial_ops_(data_manager_,
-		NULL, sialx_timer, sipTables) {
+		NULL,  sipTables),
+		iter_counter_(SIPMPIAttr::get_instance().company_communicator()){
 	_init(sipTables);
 }
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sialx_timer, sipTables) {
+				persistent_array_manager,  sipTables),
+				iter_counter_(SIPMPIAttr::get_instance().company_communicator()){
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
+		sip_tables_(sipTables),  printer_(NULL), data_manager_(
 				sipTables), op_table_(sip_tables_.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sialx_timer, sipTables) {
+				persistent_array_manager,  sipTables),
+				iter_counter_(SIPMPIAttr::get_instance().company_communicator()){
 	_init(sipTables);
 }
 
@@ -71,7 +74,12 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	tracer_ = new Tracer(this, sip_tables, std::cout);
+#ifdef HAVE_MPI
+	tracer_ = new Tracer(sip_tables);
+#else
+	tracer_ = new TracerSequential(sip_tables);
+#endif
+
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 	timer_pc_ = 0;
 	iteration_=0;
@@ -89,14 +97,16 @@ void Interpreter::interpret() {
 
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
+	tracer_->init_trace();
 	while (pc < pc_end) {
+		iter_counter_.inc();
 		opcode_t opcode = op_table_.opcode(pc);
 		sip::check(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
-		tracer_->trace(pc, opcode);
-		sialx_timers_->start_timer(pc_start, SialxTimer::TOTALTIME);
-		timer_pc_ = pc_start;
+//		tracer_->trace(pc, opcode);
+//		sialx_timers_->start_timer(pc_start, SialxTimer::TOTALTIME);
+//		timer_pc_ = pc_start;
 
 
 		SIP_LOG(
@@ -911,10 +921,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		//TODO  only call where necessary
 		contiguous_blocks_post_op();
+		tracer_->trace_op(pc, opcode);
 		timer_trace(pc, opcode, current_line());
 	}			// while
 				//interpreter loop finished.  Ensure all timers turned off.
-	timer_trace(pc, invalid_op, -99);
+//	timer_trace(pc, invalid_op, -99);
+	tracer_->stop_trace();
+
 } //interpret
 
 void Interpreter::post_sial_program() {
@@ -972,15 +985,15 @@ void Interpreter::post_sial_program() {
 
 
 void Interpreter::timer_trace(int pc, opcode_t opcode, int line) {
-	if (sialx_timers_ == NULL)
-		return;
-//	if (timer_line_ > 0) { //a timer is on
-//		if (timer_line_ == line) { //still on same line, no change to timer
-//			return;
-//		}
-		sialx_timers_->pause_timer(timer_pc_, SialxTimer::TOTALTIME);
-		sialx_timers_->start_timer(pc, SialxTimer::TOTALTIME);
-		timer_pc_ = pc;
+//	if (sialx_timers_ == NULL)
+//		return;
+////	if (timer_line_ > 0) { //a timer is on
+////		if (timer_line_ == line) { //still on same line, no change to timer
+////			return;
+////		}
+//		sialx_timers_->pause_timer(timer_pc_, SialxTimer::TOTALTIME);
+//		sialx_timers_->start_timer(pc, SialxTimer::TOTALTIME);
+//		timer_pc_ = pc;
 //	}
 //	//only start a timer for the interesting op_codes.
 //	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
