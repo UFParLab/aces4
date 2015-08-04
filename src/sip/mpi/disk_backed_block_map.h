@@ -34,7 +34,7 @@ public:
     ~DiskBackedBlockMap();
 
 	// Get blocks for reading, writing, updating
-	ServerBlock* get_block_for_reading(const BlockId& block_id, int line);
+	ServerBlock* get_block_for_reading(const BlockId& block_id, int pc);
 	ServerBlock* get_block_for_writing(const BlockId& block_id);
 	ServerBlock* get_block_for_updating(const BlockId& block_id);
 	ServerBlock* get_block_for_accumulate(const BlockId& block_id);
