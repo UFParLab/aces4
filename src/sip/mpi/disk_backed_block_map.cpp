@@ -446,7 +446,7 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id) {
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : Deleted blocks from disk" << std::endl;);
 
-	block_map_.delete_per_array_map_and_blocks(array_id);// remove from memory
+	remaining_doubles_ += block_map_.delete_per_array_map_and_blocks(array_id)/sizeof(double);// remove from memory
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : Removed blocks from memory" << std::endl;);
 }
