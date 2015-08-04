@@ -14,6 +14,7 @@
 #include "sip_mpi_attr.h"
 #include "block_manager.h"
 #include "data_distribution.h"
+#include "counter.h"
 //#include "data_manager.h"
 //#include "worker_persistent_array_manager.h"
 
@@ -23,7 +24,7 @@ class SialxTimer;
 class WorkerPersistentArrayManager;
 class DataManager;
 class SipTables;
-
+class Interpreter;
 
 
 class SialOpsParallel {
@@ -114,6 +115,7 @@ public:
     MPI_Datatype block_id_type_;
 	void initialize_mpi_type();
 
+	friend class Interpreter;
 private:
 
 	const SipTables& sip_tables_;
@@ -121,7 +123,7 @@ private:
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;
-//	SialxTimer* sialx_timers_;
+	MPICounter server_op_counter_;
 
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;

@@ -55,8 +55,9 @@ class SIPServer;
  */
 class PendingAsyncManager{
 public:
-	PendingAsyncManager():next_block_iter_(pending_.begin()),
-	pending_counter_(SIPMPIAttr::get_instance().company_communicator()){}
+	PendingAsyncManager():next_block_iter_(pending_.begin())
+	, pending_counter_(SIPMPIAttr::get_instance().company_communicator())
+{}
 	~PendingAsyncManager(){
 		check(pending_.empty(),"destructing non-empty PendingDataRequestManager");
 	}
@@ -150,7 +151,8 @@ public:
 private:
 	std::list<std::pair<BlockId,ServerBlock*> > pending_;
 	std::list<std::pair<BlockId,ServerBlock*> >::iterator next_block_iter_;  //points to next block in list to try
-	PMaxCounter pending_counter_;
+	MPIMaxCounter pending_counter_;
+//	NoopCounter<long> pending_counter_;
     DISALLOW_COPY_AND_ASSIGN(PendingAsyncManager);
 };
 
@@ -261,37 +263,47 @@ public:
 		return sip_tables_.line_number(pc);
 	}
 
-	void print_statistics(std::ostream& os){
+	void gather_and_print_statistics(std::ostream& os){
 		op_timer_.gather();
 		op_timer_.reduce();
 		get_block_timer_.gather(); //indexed by pc
 		get_block_timer_.reduce();
 		idle_timer_.gather();
+		idle_timer_.reduce();
 		total_timer_.gather();
+		total_timer_.reduce();
 		pending_timer_.gather();
-		handle_op_timer_.gather();
+		pending_timer_.reduce();
+		handle_op_timer_.reduce();
 		num_ops_.gather();
 		async_ops_.pending_counter_.gather();
-
+//
 		if (sip_mpi_attr_.is_company_master()){
-			os << "@@@@@@ Server op_timer_" << std::endl;
+			os << "\n\nPrinting Server statistics"<< std::endl;
+
+			os << "directly processing ops: "<< std::setiosflags(std::ios::fixed) << std::setprecision(0) <<(handle_op_timer_.get_mean()/total_timer_.get_mean())*100 << '%' << std::endl;
+			os << "handling async ops: "<< std::setiosflags(std::ios::fixed) << std::setprecision(0)  << (pending_timer_.get_mean()/total_timer_.get_mean())*100 << '%' << std::endl;
+			os << "idle: " << std::setiosflags(std::ios::fixed) << std::setprecision(0) << (idle_timer_.get_mean()/total_timer_.get_mean())*100 << '%' << std::endl;
+			os << std::endl;
+			os << std::setiosflags(std::ios::fixed) << std::setprecision(8);
+			os << " Server op_timer_" << std::endl;
 			//os << op_timer_ << std::endl;
 			op_timer_.print_op_table_stats(os, sip_tables_);
-			os << std::endl << "@@@@@@ Server get_block_timer_" << std::endl;
+			os << std::endl << "Server get_block_timer_" << std::endl;
 			//os << get_block_timer_ << std::endl;
 			get_block_timer_.print_op_table_stats(os, sip_tables_);
-			os << std::endl << "@@@@@@ total_timer_" << std::endl;
-			os << total_timer_ << std::endl;
-			os << std::endl << "@@@@@@ handle_op_timer_" << std::endl;
-			os << handle_op_timer_ << std::endl;
-			os << std::endl << "@@@@@@ idle_timer_" << std::endl;
-			os << idle_timer_ << std::endl;
-			os << std::endl << "@@@@@@ pending_timer_" << std::endl;
-			os << pending_timer_ << std::endl;
-			os << std::endl << "@@@@@@ num_ops_" << std::endl;
-			os << num_ops_ << std::endl;
-			os << std::endl << "@@@@@@ async_ops_pending_" << std::endl;
-			os << async_ops_.pending_counter_ << std::endl;
+			os << std::endl << "total_timer_" << std::endl;
+			os << total_timer_ ;
+			os << std::endl << "handle_op_timer_" << std::endl;
+			os << handle_op_timer_;
+			os << std::endl << "idle_timer_" << std::endl;
+			os << idle_timer_ ;
+			os << std::endl << "pending_timer_" << std::endl;
+			os << pending_timer_ ;
+			os << std::endl << "num_ops_" << std::endl;
+			os << num_ops_ ;
+			os << std::endl << "async_ops_pending_" << std::endl;
+			os << async_ops_.pending_counter_ ;
 		}
 
 	}
@@ -338,13 +350,15 @@ private:
 	DiskBackedBlockMap disk_backed_block_map_;
 	PendingAsyncManager async_ops_;
 
-	/** Timers and counters */
+//	/** Timers and counters */
 	MPITimerList op_timer_;  //indexed by pc
 	MPITimerList get_block_timer_; //indexed by pc
+//  NoopTimerList<double> op_timer_;
+//	NoopTimerList<double> get_block_timer_;
 	MPITimer idle_timer_;
 	MPITimer pending_timer_;
 	MPITimer total_timer_;
-	PCounter num_ops_;
+	MPICounter num_ops_;
 	MPITimer handle_op_timer_;
 
 	/**

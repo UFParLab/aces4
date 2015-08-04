@@ -26,7 +26,8 @@ SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 				SIPMPIAttr::get_instance()), data_manager_(data_manager), block_manager_(
 				data_manager.block_manager_), data_distribution_(sip_tables_,
 				sip_mpi_attr_), persistent_array_manager_(
-				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE)
+				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE),
+				server_op_counter_(sip_mpi_attr_.company_communicator())
 {
 //	initialize_mpi_type();
 	mpi_type_.initialize_mpi_scalar_op_type();
@@ -124,7 +125,7 @@ void SialOpsParallel::delete_distributed(int array_id, int pc) {
 
 //TODO optimize this.  Can reduce searches in block map.
 void SialOpsParallel::get(BlockId& block_id, int pc) {
-
+	server_op_counter_.inc();
 	//check for "data race"
 	check_and_set_mode(block_id, READ);
 
@@ -326,7 +327,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
  */
 void SialOpsParallel::put_accumulate(BlockId& target_id,
 		const Block::BlockPtr source_block, int pc) {
-
+	server_op_counter_.inc();
 	//partial check for data races
 	check_and_set_mode(target_id, WRITE);
 

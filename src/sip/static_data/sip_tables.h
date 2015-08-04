@@ -165,7 +165,9 @@ public:
 	}
 
 	std::string opcode_name(int pc) const{
-		return opcodeToName(op_table_.opcode(pc));
+		if (pc < op_table_.size()) return opcodeToName(op_table_.opcode(pc));
+		//the worker sends the server an end_program instruction with pc = 1 + last pc, which is the op_table_.size()
+		return std::string("END_PROGRAM");
 	}
     void print() const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);

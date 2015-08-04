@@ -73,9 +73,9 @@ void trace_op(int pc, opcode_t opcode)
 
 private:
 
-	PCounterList opcode_histogram_;  //this records the number of times each opcode has been executed
+	MPICounterList opcode_histogram_;  //this records the number of times each opcode has been executed
 	                                     //can be used to evaluate test coverage of the sial interpreter.
-	PCounterList pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
+	MPICounterList pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
 	                                     //can be used to find dead code in a sial program.
 	MPITimer run_loop_timer_;
 

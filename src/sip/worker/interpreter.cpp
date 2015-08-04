@@ -39,8 +39,9 @@ Interpreter::Interpreter(const SipTables& sipTables,
 		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 		NULL), sial_ops_(data_manager_,
-		NULL,  sipTables),
-		iter_counter_(SIPMPIAttr::get_instance().company_communicator()){
+		NULL,  sipTables)
+		,iter_counter_(SIPMPIAttr::get_instance().company_communicator())
+{
 	_init(sipTables);
 }
 Interpreter::Interpreter(const SipTables& sipTables,

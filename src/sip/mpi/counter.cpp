@@ -11,369 +11,272 @@
 
 namespace sip {
 
-
-//Counter::Counter():value_(0){}
-//virtual ~Counter();
-//void inc(size_t delta = 1){value_+= delta;}
-//size_t get_value(){return value_;}
-//void reset(){value_ = 0;}
-//friend std::ostream& operator<<(std::ostream& os, const Counter& obj){
-//	os << "value=" << obj.value_ ;
+//
+//
+//std::ostream& CounterList::stream_out(std::ostream& os) const{
+//	int i = 0;
+//	std::vector<size_t>::const_iterator it = list_.begin();
+//	size_t list_size = list_.size();
+//	while(i < list_size){
+//		os << i << ',' << list_[i] << std::endl;
+//		++i;
+//		++it;
+//	}
 //	return os;
+//}
+//
+//
+//void PCounterList::gather(){
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//	size_t list_size = list_.size();
+//	int vecsize = rank == 0 ? comm_size * list_size : 0;
+//	gathered_vals_.resize(vecsize,0);
+//	if (comm_size>1){
+//		MPI_Gather(list_.data(), list_size, MPI_UNSIGNED_LONG, gathered_vals_.data(),
+//				list_size, MPI_UNSIGNED_LONG, 0,
+//				comm_);
+//	}
+//	else {
+//		gathered_vals_ = list_;
+//	}
+//}
+//
+//void PCounterList::reduce(){
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//	size_t list_size = list_.size();
+//	int vecsize = rank == 0 ? list_size : 0;
+//	reduced_vals_.resize(vecsize,0.0);
+//	if (comm_size>1){
+//		MPI_Reduce(list_.data(), reduced_vals_.data(), list_size, MPI_UNSIGNED_LONG, MPI_SUM,
+//				0, comm_);
+//	}
+//	else {
+//		reduced_vals_ = list_;
+//	}
+//}
+//
+//std::ostream& PCounterList::stream_out(std::ostream& os) const {
+//	if (gathered_vals_.size() == 0 && reduced_vals_.size()==0){
+//		return CounterList::stream_out(os);
+//	}
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//
+//	if(gathered_vals_.size() > 0){
+//	std::vector<size_t>::const_iterator it;
+//	size_t list_size = list_.size();
+//	int stride = list_size;
+//	int i = 0;
+//	while (i < list_size) {
+//		os << i;
+//		it = gathered_vals_.begin() + i;
+//		for (int j = 0; j < comm_size; ++j) {
+//			os << ',' << *it;
+//			it += stride;
+//		}
+//		os << std::endl;
+//		++i;
+//	}
+//	}
+//	if (reduced_vals_.size()>0){
+//		if (gathered_vals_.size() > 0) os << std::endl << std::endl;
+//		double dcomm_size = static_cast<double>(comm_size);
+//		int i = 0;
+//		std::vector<size_t>::const_iterator it = reduced_vals_.begin();
+//		size_t list_size = list_.size();
+//		while(i < list_size){
+//			os << i << ',' << static_cast<double>(reduced_vals_[i])/dcomm_size << std::endl;
+//			++i;
+//			++it;
+//		}
+//	}
+//	return os;
+//}
+
+/*********************************/
+
+
+//void PMaxCounter::gather(){
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//	int vecsize = rank == 0 ? comm_size*2 : 0;
+//	gathered_vals_.resize(vecsize,0);
+//	size_t sendbuf[] = {value_,max_};
+//	if (comm_size>1){
+//		MPI_Gather(sendbuf, 2, MPI_LONG, gathered_vals_.data(),
+//				2, MPI_LONG, 0,
+//				comm_);
+//	}
+//	else {
+//		gathered_vals_[0] = value_;
+//		gathered_vals_[1]=max_;
+//	}
+//}
+//
+//void PMaxCounter::reduce(){
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//	int vecsize = rank == 0 ? comm_size*2 : 0;
+//	reduced_vals_.resize(vecsize,0);
+//	std::vector<long> sendbuf;
+//	sendbuf.reserve(2);
+//	sendbuf.push_back(value_);
+//	sendbuf.push_back(max_);
+//	if (comm_size>1){
+//		MPI_Reduce(sendbuf.data(), reduced_vals_.data(), 2, MPI_LONG, MPI_SUM,0, comm_);
+//	}
+//	else {
+//		reduced_vals_ = sendbuf;
+//	}
 //}
 
 
 
 
-void PCounter::gather(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-	int vecsize = rank == 0 ? comm_size : 0;
-	gathered_vals_.resize(vecsize,0);
-	if (comm_size>1){
-		MPI_Gather(&value_, 1, MPI_UNSIGNED_LONG, gathered_vals_.data(),
-				1, MPI_LONG_LONG, 0,
-				comm_);
-	}
-	else {
-		gathered_vals_[0] = value_;
-	}
-}
-
-void PCounter::reduce(){
-	int comm_size;
-	MPI_Comm_size(comm_, &comm_size);
-
-	if (comm_size>1){
-		MPI_Reduce(&value_, &reduced_val_, 1, MPI_UNSIGNED_LONG, MPI_SUM,
-				0, comm_);
-	}
-	else {
-		reduced_val_ = value_;
-	}
-	have_reduced_ = true;
-}
-
-//If values have been gathered, print those, otherwise print own value.
-std::ostream& PCounter::stream_out(std::ostream& os) const{
-	if (gathered_vals_.size() == 0 && !have_reduced_) {
-		//print own data
-		int rank;
-		MPI_Comm_rank(comm_, &rank);
-		os << "Rank=" << rank << ", value_="<< value_;
-		return os;
-	}
-	int comm_size;
-	MPI_Comm_size(comm_, &comm_size);
-
-	if (gathered_vals_.size() > 0){
-	//output gathered values in comma separated list
-	os << "value";
-	std::vector<size_t>::const_iterator it = gathered_vals_.begin();
-	for (int j = 0; j < comm_size; ++j){
-		os << ',' << *it;
-		++it;
-	}
-	}
-	if (have_reduced_){
-		os << std::endl;
-		os << static_cast<double>(reduced_val_)/static_cast<double>(comm_size);
-	}
-	return os;
-}
 
 
-std::ostream& CounterList::stream_out(std::ostream& os) const{
-	int i = 0;
-	std::vector<size_t>::const_iterator it = list_.begin();
-	size_t list_size = list_.size();
-	while(i < list_size){
-		os << i << ',' << list_[i] << std::endl;
-		++i;
-		++it;
-	}
-	return os;
-}
 
 
-void PCounterList::gather(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-	size_t list_size = list_.size();
-	int vecsize = rank == 0 ? comm_size * list_size : 0;
-	gathered_vals_.resize(vecsize,0);
-	if (comm_size>1){
-		MPI_Gather(list_.data(), list_size, MPI_UNSIGNED_LONG, gathered_vals_.data(),
-				list_size, MPI_UNSIGNED_LONG, 0,
-				comm_);
-	}
-	else {
-		gathered_vals_ = list_;
-	}
-}
-
-void PCounterList::reduce(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-	size_t list_size = list_.size();
-	int vecsize = rank == 0 ? list_size : 0;
-	reduced_vals_.resize(vecsize,0.0);
-	if (comm_size>1){
-		MPI_Reduce(list_.data(), reduced_vals_.data(), list_size, MPI_UNSIGNED_LONG, MPI_SUM,
-				0, comm_);
-	}
-	else {
-		reduced_vals_ = list_;
-	}
-}
-
-std::ostream& PCounterList::stream_out(std::ostream& os) const {
-	if (gathered_vals_.size() == 0 && reduced_vals_.size()==0){
-		return CounterList::stream_out(os);
-	}
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-
-	if(gathered_vals_.size() > 0){
-	std::vector<size_t>::const_iterator it;
-	size_t list_size = list_.size();
-	int stride = list_size;
-	int i = 0;
-	while (i < list_size) {
-		os << i;
-		it = gathered_vals_.begin() + i;
-		for (int j = 0; j < comm_size; ++j) {
-			os << ',' << *it;
-			it += stride;
-		}
-		os << std::endl;
-		++i;
-	}
-	}
-	if (reduced_vals_.size()>0){
-		if (gathered_vals_.size() > 0) os << std::endl << std::endl;
-		double dcomm_size = static_cast<double>(comm_size);
-		int i = 0;
-		std::vector<size_t>::const_iterator it = reduced_vals_.begin();
-		size_t list_size = list_.size();
-		while(i < list_size){
-			os << i << ',' << static_cast<double>(reduced_vals_[i])/dcomm_size << std::endl;
-			++i;
-			++it;
-		}
-	}
-	return os;
-}
-
-/*********************************/
-
-
-void PMaxCounter::gather(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-	int vecsize = rank == 0 ? comm_size*2 : 0;
-	gathered_vals_.resize(vecsize,0);
-	size_t sendbuf[] = {value_,max_};
-	if (comm_size>1){
-		MPI_Gather(sendbuf, 2, MPI_LONG, gathered_vals_.data(),
-				2, MPI_LONG, 0,
-				comm_);
-	}
-	else {
-		gathered_vals_[0] = value_;
-		gathered_vals_[1]=max_;
-	}
-}
-
-void PMaxCounter::reduce(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-	int vecsize = rank == 0 ? comm_size*2 : 0;
-	reduced_vals_.resize(vecsize,0);
-	std::vector<long> sendbuf;
-	sendbuf.reserve(2);
-	sendbuf.push_back(value_);
-	sendbuf.push_back(max_);
-	if (comm_size>1){
-		MPI_Reduce(sendbuf.data(), reduced_vals_.data(), 2, MPI_LONG, MPI_SUM,0, comm_);
-	}
-	else {
-		reduced_vals_ = sendbuf;
-	}
-}
-
-std::ostream& PMaxCounter::stream_out(std::ostream& os) const {
-	if (gathered_vals_.size() == 0 && reduced_vals_.size() == 0) {
-		return MaxCounter::stream_out(os);
-	}
-	int comm_size;
-	MPI_Comm_size(comm_, &comm_size);
-
-	int stride = 2;
-
-	// output gathered values
-	if (gathered_vals_.size() > 0) {
-		os << "value";
-		std::vector<long>::const_iterator it = gathered_vals_.begin();
-		for (int j = 0; j < comm_size; ++j) {
-			os << ',' << *it;
-			it += stride;
-		}
-		os << std::endl << "max";
-		it = gathered_vals_.begin() + 1;
-		for (int j = 0; j < comm_size; ++j) {
-			os << ',' << *it;
-			it += stride;
-		}
-	}
-
-	if (reduced_vals_.size() > 0) {
-		//output reduced values
-		os << std::endl << "mean"
-				<< static_cast<double>(reduced_vals_[0])
-						/ static_cast<double>(comm_size);
-	}
-	os << std::endl;
-	return os;
-
-}
-std::ostream& MaxCounterList::stream_out(std::ostream& os) const{
-	int i = 0;
-	std::vector<MaxCounter>::const_iterator it = list_.begin();
-	size_t list_size = list_.size();
-	while(i < list_size){
-		os << i << ',' << list_[i] << std::endl;
-		++i;
-		++it;
-	}
-	return os;
-}
-
-////todo  create an MPI_Datatype instead of copying
-void PMaxCounterList::gather(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-
-	//copy values into the send buffer.  This should be replaced by code that uses an MPI_Datatype
-	std::vector<long> sendbuf;
-	sendbuf.reserve(list_.size()*2);
-	std::vector<MaxCounter>::iterator it;
-	for (it = list_.begin(); it != list_.end(); ++it){
-		sendbuf.push_back(it->get_value());
-		sendbuf.push_back(it->get_max());
-	}
-
-	//create destination buffer, its size is 0 except at master
-	int vecsize = rank == 0 ? comm_size*sendbuf.size() : 0;
-	gathered_vals_.resize(vecsize,0);
-
-	if (comm_size>1){
-		MPI_Gather(sendbuf.data(), sendbuf.size(), MPI_LONG, gathered_vals_.data(),
-				sendbuf.size(), MPI_LONG, 0,
-				comm_);
-	}
-	else {
-		gathered_vals_ = sendbuf;
-	}
-}
-
-void PMaxCounterList::reduce(){
-	int rank;
-	int comm_size;
-	MPI_Comm_rank(comm_, &rank);
-	MPI_Comm_size(comm_, &comm_size);
-
-	//copy values into the send buffer.  This should be replaced by code that uses an MPI_Datatype
-	std::vector<long> sendbuf;
-	sendbuf.reserve(list_.size()*2);
-	std::vector<MaxCounter>::iterator it;
-	for (it = list_.begin(); it != list_.end(); ++it){
-		sendbuf.push_back(it->get_value());
-		sendbuf.push_back(it->get_max());
-	}
-
-	//create destination buffer, its size is 0 except at master
-	int vecsize = rank == 0 ? sendbuf.size() : 0;
-	reduced_vals_.resize(vecsize,0);
-
-	if (comm_size>1){
-		MPI_Reduce(sendbuf.data(), reduced_vals_.data(), vecsize, MPI_LONG, MPI_SUM,0,comm_);
-	}
-	else {
-		reduced_vals_ = sendbuf;
-	}
-}
-
-	std::ostream& PMaxCounterList::stream_out(std::ostream& os) const {
-		if (gathered_vals_.size() == 0 && reduced_vals_.size() == 0) {
-			os << "Single process output" << std::endl;
-			return MaxCounterList::stream_out(os);
-		}
-		int comm_size;
-		MPI_Comm_size(comm_, &comm_size);
-		int vals_per_entry = 2;  //value_ and max_
-
-		size_t list_size = list_.size();
-		std::vector<long>::const_iterator it;
-		if (gathered_vals_.size() > 0) {
-			//output the values
-			os << "Values" << std::endl;
-			int i = 0;
-
-
-			size_t stride = list_size * vals_per_entry;
-			size_t offset = 0; //offset of this entry into structure
-			//for each item in the list, print a row of value_ from each process
-			while (i < list_size) {
-				os << i;
-				it = gathered_vals_.begin() + (i * vals_per_entry) + offset;
-				for (int j = 0; j < comm_size; ++j) {
-					os << ',' << *it;
-					it += stride;
-				}
-				os << std::endl;
-				++i;
-			}
-			//output the max
-			os << "Max" << std::endl;
-			i = 0;
-			offset = 1;  //start on the second element
-			while (i < list_size) {
-				os << i;
-				it = gathered_vals_.begin() + (i * vals_per_entry) + offset;
-				for (int j = 0; j < comm_size; ++j) {
-					os << ',' << *it;
-					it += stride;
-				}
-				os << std::endl;
-				++i;
-			}
-		}
-		if (reduced_vals_.size() > 0) {
-			int i = 0;
-			while (i < list_size) {
-				os << i;
-				it = gathered_vals_.begin() + (i * vals_per_entry);
-				os << ',' << *it << std::endl;
-				++i;
-			}
-		}
-		return os;
-	}
+//
+//
+//
+//std::ostream& MaxCounterList::stream_out(std::ostream& os) const{
+//	int i = 0;
+//	std::vector<MaxCounter>::const_iterator it = list_.begin();
+//	size_t list_size = list_.size();
+//	while(i < list_size){
+//		os << i << ',' << list_[i] << std::endl;
+//		++i;
+//		++it;
+//	}
+//	return os;
+//}
+//
+//////todo  create an MPI_Datatype instead of copying
+//void PMaxCounterList::gather(){
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//
+//	//copy values into the send buffer.  This should be replaced by code that uses an MPI_Datatype
+//	std::vector<long> sendbuf;
+//	sendbuf.reserve(list_.size()*2);
+//	std::vector<MaxCounter>::iterator it;
+//	for (it = list_.begin(); it != list_.end(); ++it){
+//		sendbuf.push_back(it->get_value());
+//		sendbuf.push_back(it->get_max());
+//	}
+//
+//	//create destination buffer, its size is 0 except at master
+//	int vecsize = rank == 0 ? comm_size*sendbuf.size() : 0;
+//	gathered_vals_.resize(vecsize,0);
+//
+//	if (comm_size>1){
+//		MPI_Gather(sendbuf.data(), sendbuf.size(), MPI_LONG, gathered_vals_.data(),
+//				sendbuf.size(), MPI_LONG, 0,
+//				comm_);
+//	}
+//	else {
+//		gathered_vals_ = sendbuf;
+//	}
+//}
+//
+//void PMaxCounterList::reduce(){
+//	int rank;
+//	int comm_size;
+//	MPI_Comm_rank(comm_, &rank);
+//	MPI_Comm_size(comm_, &comm_size);
+//
+//	//copy values into the send buffer.  This should be replaced by code that uses an MPI_Datatype
+//	std::vector<long> sendbuf;
+//	sendbuf.reserve(list_.size()*2);
+//	std::vector<MaxCounter>::iterator it;
+//	for (it = list_.begin(); it != list_.end(); ++it){
+//		sendbuf.push_back(it->get_value());
+//		sendbuf.push_back(it->get_max());
+//	}
+//
+//	//create destination buffer, its size is 0 except at master
+//	int vecsize = rank == 0 ? sendbuf.size() : 0;
+//	reduced_vals_.resize(vecsize,0);
+//
+//	if (comm_size>1){
+//		MPI_Reduce(sendbuf.data(), reduced_vals_.data(), vecsize, MPI_LONG, MPI_SUM,0,comm_);
+//	}
+//	else {
+//		reduced_vals_ = sendbuf;
+//	}
+//}
+//
+//	std::ostream& PMaxCounterList::stream_out(std::ostream& os) const {
+//		if (gathered_vals_.size() == 0 && reduced_vals_.size() == 0) {
+//			os << "Single process output" << std::endl;
+//			return MaxCounterList::stream_out(os);
+//		}
+//		int comm_size;
+//		MPI_Comm_size(comm_, &comm_size);
+//		int vals_per_entry = 2;  //value_ and max_
+//
+//		size_t list_size = list_.size();
+//		std::vector<long>::const_iterator it;
+//		if (gathered_vals_.size() > 0) {
+//			//output the values
+//			os << "Values" << std::endl;
+//			int i = 0;
+//
+//
+//			size_t stride = list_size * vals_per_entry;
+//			size_t offset = 0; //offset of this entry into structure
+//			//for each item in the list, print a row of value_ from each process
+//			while (i < list_size) {
+//				os << i;
+//				it = gathered_vals_.begin() + (i * vals_per_entry) + offset;
+//				for (int j = 0; j < comm_size; ++j) {
+//					os << ',' << *it;
+//					it += stride;
+//				}
+//				os << std::endl;
+//				++i;
+//			}
+//			//output the max
+//			os << "Max" << std::endl;
+//			i = 0;
+//			offset = 1;  //start on the second element
+//			while (i < list_size) {
+//				os << i;
+//				it = gathered_vals_.begin() + (i * vals_per_entry) + offset;
+//				for (int j = 0; j < comm_size; ++j) {
+//					os << ',' << *it;
+//					it += stride;
+//				}
+//				os << std::endl;
+//				++i;
+//			}
+//		}
+//		if (reduced_vals_.size() > 0) {
+//			int i = 0;
+//			while (i < list_size) {
+//				os << i;
+//				it = gathered_vals_.begin() + (i * vals_per_entry);
+//				os << ',' << *it << std::endl;
+//				++i;
+//			}
+//		}
+//		return os;
+//	}
 //
 //
 //
