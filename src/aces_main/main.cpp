@@ -215,15 +215,14 @@ int main(int argc, char* argv[]) {
 			persistent_server.save_marked_arrays(&server);
 			save_persistent_timer.pause();
 
+			//print worker stats before barrier
 			MPI_Barrier(MPI_COMM_WORLD);
-			//print worker stats
-			MPI_Barrier(MPI_COMM_WORLD);
-			//print server stats
-			server.print_statistics(server_stat_os);
+
+			server.gather_and_print_statistics(server_stat_os);
 			//print persistent array stats
 			save_persistent_timer.gather();
 		  if(sip_mpi_attr.is_company_master()){
-			server_stat_os << "Save persistent array data" << std::endl;
+			server_stat_os << "Save persistent array times" << std::endl;
 			server_stat_os << save_persistent_timer << std::endl << std::flush;
 		  }
 		} else
@@ -248,12 +247,13 @@ int main(int argc, char* argv[]) {
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker;)
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl;
+
+			//print worker stats before barrier
 			time_t rawtime;
 			struct tm * timeinfo;
 			time (&rawtime);
 			timeinfo = localtime (&rawtime);
 			std::cout << "Current local time and date:" << asctime(timeinfo);)
-			MPI_Barrier(MPI_COMM_WORLD);
 			runner.gather_and_print_statistics(worker_stat_os);
 			MPI_Barrier(MPI_COMM_WORLD);
 			//print server stats

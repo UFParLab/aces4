@@ -153,6 +153,7 @@ TEST(Sial,pardo_loop_corner_case) {
 //}
 
 TEST(Sial,broadcast_static){
+	{
 	std::string job("broadcast_static");
 	int norb = 3;
 	int segs[] = {2,3,2};
@@ -188,6 +189,25 @@ TEST(Sial,broadcast_static){
 		ASSERT_DOUBLE_EQ(expected[i], a[i]);
 	}
 }
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+    else {
+    	barrier();
+    	controller.server_->gather_and_print_statistics(std::cerr);
+    }
+
+	}
+	barrier();
+	if (attr->is_worker()){
+    std::cerr << "done with worker" << std::endl << std::flush;
+    barrier();
+	}
+	else {
+	    barrier();
+	    std::cerr << "done with server" << std::endl << std::flush;
+	}
 
 }
 
@@ -634,11 +654,20 @@ TEST(Sial,persistent_distributed_array_mpi){
 			}
 		}
 	}
-	controller.print_timers(std::cout);
+//	controller.print_timers(std::cout);
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+    else {
+    	barrier();
+    	controller.server_->gather_and_print_statistics(std::cerr);
+    }
+    barrier();
 
 }
 
-TEST(Sial,cached_block_map_test) {
+TEST(Sial,DISABLED_cached_block_map_test) {
     std::string job("cached_block_map_test");
     int norb = 4;
     int iterations = 3;
@@ -667,7 +696,7 @@ TEST(Sial,cached_block_map_test) {
 }
 
 
-TEST(Sial,cached_block_map_test_no_dangling_get) {
+TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
     std::string job("cached_block_map_test_no_dangling_get");
     int norb = 4;
     int iterations = 3;
@@ -740,7 +769,15 @@ TEST(Sial,pardo_with_where){
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
-
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+    else {
+    	barrier();
+    	controller.server_->gather_and_print_statistics(std::cerr);
+    }
+    barrier();
 }
 
 TEST(Sial,put_accumulate_stress){
@@ -791,8 +828,9 @@ TEST(Sial,put_accumulate_stress){
     }
     else {
     	barrier();
-    	controller.server_->print_statistics(std::cerr);
+    	controller.server_->gather_and_print_statistics(std::cerr);
     }
+    barrier();
 }
 
 //****************************************************************************************************************

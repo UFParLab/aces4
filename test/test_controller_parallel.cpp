@@ -211,15 +211,15 @@ void TestControllerParallel::print_timers(std::ostream& out){
 ////	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
 ////	sialx_timers_->print_timers(lno2name, out);
 //	out<< std::flush;
-	barrier();
-	if (attr->is_worker()){
-//TODO print
-	}
-	barrier();
-	if (attr->is_server()){
-		server_->print_statistics(out);
-	}
-	barrier();
+//	barrier();
+//	if (attr->is_worker()){
+////TODO print
+//	}
+//	barrier();
+//	if (attr->is_server()){
+//		server_->print_statistics(out);
+//	}
+//	barrier();
 }
 
 void TestControllerParallel::run() {
@@ -301,7 +301,7 @@ bool TestControllerParallel::runServer() {
 			if (std::cout != sial_output_)
 				std::cout << sial_output_.rdbuf();
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
-					<< job_ << "SERVER TERMINATED " << std::endl << std::flush;
+					<< prog_name_ << "TERMINATED SERVER" << std::endl << std::flush;
 		}
 		spam_->save_marked_arrays(server_);
 	}
@@ -335,7 +335,7 @@ bool TestControllerParallel::runWorker() {
 		} else {
 			worker_->interpret();
 		}
-
+		worker_->post_sial_program();
 		if (verbose_) {
 			if (std::cout != sial_output_){
 				std::cout << sial_output_.rdbuf();
@@ -344,7 +344,7 @@ bool TestControllerParallel::runWorker() {
 					<< prog_name_ << " TERMINATED WORKER " << std::endl
 					<< std::flush;
 		}
-		worker_->post_sial_program();
+
 //		std::cout << "\nRank " << attr->global_rank() << " after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
 //		std::cout << "\nRank " << attr->global_rank() << " after sae_marked_arrays" << std::endl << std::flush;

@@ -24,14 +24,14 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 				sip_mpi_attr), persistent_array_manager_(
 				persistent_array_manager), terminated_(false),
 				last_seen_worker_(0),
-				pc_(0),
-op_timer_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()),
-get_block_timer_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()),
-idle_timer_(sip_mpi_attr.company_communicator()),
-pending_timer_(sip_mpi_attr.company_communicator()),
-total_timer_(sip_mpi_attr.company_communicator()),
-num_ops_(sip_mpi_attr.company_communicator()),
-handle_op_timer_(sip_mpi_attr.company_communicator())
+				pc_(0)
+,op_timer_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()+1)
+,get_block_timer_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()+1)
+,idle_timer_(sip_mpi_attr.company_communicator())
+,pending_timer_(sip_mpi_attr.company_communicator())
+,total_timer_(sip_mpi_attr.company_communicator())
+,num_ops_(sip_mpi_attr.company_communicator())
+,handle_op_timer_(sip_mpi_attr.company_communicator())
 				{
 	mpi_type_.initialize_mpi_scalar_op_type();
 	SIPServer::global_sipserver = this;

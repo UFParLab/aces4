@@ -185,9 +185,12 @@ public:
 	 */
 	void gather_and_print_statistics(std::ostream& os){
 	    tracer_->gather();
+	    sial_ops_.server_op_counter_.gather();
 	    if (SIPMPIAttr::get_instance().is_company_master()){
 	    	os << "Printing worker statistics"<<std::endl;
 	    	os << *tracer_;
+	    	os << std::endl;
+	    	os << sial_ops_.server_op_counter_;
 	    	os << std::endl << std::flush;
 	    }
 	}
@@ -479,9 +482,10 @@ private:
 	sip::Block::BlockPtr get_gpu_block_from_selector_stack(char intent,
 			sip::BlockId& id, bool contiguous_allowed = true);
 
-	PCounter iter_counter_;
+
 
 	Tracer* tracer_;
+	MPICounter iter_counter_;
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
