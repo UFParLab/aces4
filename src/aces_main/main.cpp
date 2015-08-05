@@ -99,14 +99,14 @@ int main(int argc, char* argv[]) {
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
-	std::size_t memory = 2147483648;	// Default memory usage : 2 GB
-
+	std::size_t worker_memory = 2147483648;	// Default memory usage : 2 GB
+	std::size_t server_memory = 2147483648;
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
 	// d: name of .dat file.
 	// s: directory to look for siox files
 	// m: approximate memory to be used. Actual usage will be more than this.
 	// h & ? are for help. They require no arguments
-	const char *optString = "d:s:m:h?";
+	const char *optString = "d:s:m:h:w:v:?";
 	int c;
 	while ((c = getopt(argc, argv, optString)) != -1){
 		switch (c) {
@@ -123,21 +123,41 @@ int main(int argc, char* argv[]) {
 			std::stringstream ss(memory_string);
 			double memory_in_gb;
 			ss >> memory_in_gb;
-			memory = memory_in_gb * 1024 * 1024 * 1024;
+			worker_memory = memory_in_gb * 1024 * 1024 * 1024;
+			server_memory = worker_memory;
+		}
+			break;
+		case 'w':{
+			std::string memory_string(optarg);
+			std::stringstream ss(memory_string);
+			double memory_in_gb;
+			ss >> memory_in_gb;
+			worker_memory = memory_in_gb * 1024 * 1024 * 1024;
+		}
+			break;
+		case 'v':{
+			std::string memory_string(optarg);
+			std::stringstream ss(memory_string);
+			double memory_in_gb;
+			ss >> memory_in_gb;
+			server_memory = memory_in_gb * 1024 * 1024 * 1024;
 		}
 			break;
 		case 'h':case '?':
 		default:
 			std::cerr << "Usage : "<< argv[0] <<" -d <init_data_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>" << std::endl;
 			std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
-			std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
+			std::cerr << "\tm is the approximate memory to use for workers and servers. Actual usage will be more." << std::endl;
+			std::cerr << "\tw is the approximate memory for workers. Actual usage will be more." << std::endl;
+			std::cerr << "\tvr is the approximate memory for servers. Actual usage will be more." << std::endl;
 			std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 			return 1;
 		}
 	}
 
 	// Set Approx Max memory usage
-	sip::GlobalState::set_max_data_memory_usage(memory);
+	sip::GlobalState::set_max_worker_data_memory_usage(worker_memory);
+	sip::GlobalState::set_max_server_data_memory_usage(server_memory);//small enough for disk back use in eom test
 
 	//create setup_file
 	std::string job(init_file);
@@ -222,7 +242,7 @@ int main(int argc, char* argv[]) {
 			//print persistent array stats
 			save_persistent_timer.gather();
 		  if(sip_mpi_attr.is_company_master()){
-			server_stat_os << "Save persistent array times" << std::endl;
+			server_stat_os << std::endl << "Save persistent array times" << std::endl;
 			server_stat_os << save_persistent_timer << std::endl << std::flush;
 		  }
 		} else

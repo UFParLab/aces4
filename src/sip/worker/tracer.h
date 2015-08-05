@@ -49,8 +49,8 @@ void trace_op(int pc, opcode_t opcode)
 	}
 
 	void gather(){
-		pc_histogram_.gather();
-		opcode_histogram_.gather();
+//		pc_histogram_.gather();
+//		opcode_histogram_.gather();
 		run_loop_timer_.gather();
 		run_loop_timer_.reduce();
 		opcode_timer_.gather();

@@ -11,7 +11,7 @@ namespace sip {
 
 CachedBlockMap::CachedBlockMap(int num_arrays)
 	: block_map_(num_arrays), cache_(num_arrays), policy_(cache_),
-	  max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
+	  max_allocatable_bytes_(sip::GlobalState::get_max_worker_data_memory_usage()),
 	  allocated_bytes_(0), pending_delete_bytes_(0){
 }
 

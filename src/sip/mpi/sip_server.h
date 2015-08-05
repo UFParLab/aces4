@@ -11,6 +11,7 @@
 #include <vector>
 #include <utility>
 #include <iomanip>
+#include <ios>
 
 #include "sip_tables.h"
 #include "server_block.h"
@@ -264,29 +265,33 @@ public:
 	}
 
 	void gather_and_print_statistics(std::ostream& os){
-		op_timer_.gather();
+//		op_timer_.gather();
 		op_timer_.reduce();
-		get_block_timer_.gather(); //indexed by pc
+//		get_block_timer_.gather(); //indexed by pc
 		get_block_timer_.reduce();
-		idle_timer_.gather();
+//		idle_timer_.gather();
 		idle_timer_.reduce();
-		total_timer_.gather();
+//		total_timer_.gather();
 		total_timer_.reduce();
 		pending_timer_.gather();
 		pending_timer_.reduce();
 		handle_op_timer_.reduce();
 		num_ops_.gather();
 		async_ops_.pending_counter_.gather();
+		disk_backed_block_map_.allocated_doubles_.gather();
+		disk_backed_block_map_.blocks_to_disk_.gather();
 //
 		if (sip_mpi_attr_.is_company_master()){
-			os << "\n\nPrinting Server statistics"<< std::endl;
-
-			os << "directly processing ops: "<< std::setiosflags(std::ios::fixed) << std::setprecision(0) <<(handle_op_timer_.get_mean()/total_timer_.get_mean())*100 << '%' << std::endl;
-			os << "handling async ops: "<< std::setiosflags(std::ios::fixed) << std::setprecision(0)  << (pending_timer_.get_mean()/total_timer_.get_mean())*100 << '%' << std::endl;
-			os << "idle: " << std::setiosflags(std::ios::fixed) << std::setprecision(0) << (idle_timer_.get_mean()/total_timer_.get_mean())*100 << '%' << std::endl;
+			os << "\n\nServer statistics"<< std::endl << std::endl;
+			std::ios saved_format(NULL);
+			saved_format.copyfmt(os);
+			os << "Server Utilization Summary (approximate percent time)" << std::endl;
+			os << "directly processing ops,"<< std::setiosflags(std::ios::fixed) << std::setprecision(0) <<(handle_op_timer_.get_mean()/total_timer_.get_mean())*100  << std::endl;
+			os << "handling async ops,"<< std::setiosflags(std::ios::fixed) << std::setprecision(0)  << (pending_timer_.get_mean()/total_timer_.get_mean())*100 << std::endl;
+			os << "idle," << std::setiosflags(std::ios::fixed) << std::setprecision(0) << (idle_timer_.get_mean()/total_timer_.get_mean())*100 <<  std::endl;
+			os.copyfmt(saved_format);
 			os << std::endl;
-			os << std::setiosflags(std::ios::fixed) << std::setprecision(8);
-			os << " Server op_timer_" << std::endl;
+			os << "Server op_timer_" << std::endl;
 			//os << op_timer_ << std::endl;
 			op_timer_.print_op_table_stats(os, sip_tables_);
 			os << std::endl << "Server get_block_timer_" << std::endl;
@@ -304,6 +309,11 @@ public:
 			os << num_ops_ ;
 			os << std::endl << "async_ops_pending_" << std::endl;
 			os << async_ops_.pending_counter_ ;
+			os << std::endl << "allocated_doubles_" << std::endl;
+			os << disk_backed_block_map_.allocated_doubles_ ;
+			os << std::endl << "blocks_to_disk_" << std::endl;
+			os << disk_backed_block_map_.blocks_to_disk_ ;
+     		os << std::endl << std::flush;
 		}
 
 	}
