@@ -15,7 +15,7 @@
 #include "sip_mpi_constants.h"
 #include "async_ops.h"
 #include "distributed_block_consistency.h"
-#include <gtest/gtest_prod.h>
+//#include <gtest/gtest_prod.h>
 
 namespace sip {
 
@@ -204,7 +204,7 @@ private:
 	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
 	friend class PendingAsyncManager;
-	FRIEND_TEST(Sial_Unit,ServerBlockLRUArrayPolicy);
+//	FRIEND_TEST(Sial_Unit,ServerBlockLRUArrayPolicy);
 //	friend class Sial_Unit_ServerBlockLRUArrayPolicy_Test;
 
 	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
