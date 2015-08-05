@@ -42,7 +42,7 @@ public:
 	~SialOpsParallel();
 
 	/** implements a global SIAL barrier */
-	void sip_barrier();
+	void sip_barrier(int pc);
 
 	/** SIAL operations on arrays */
 	void create_distributed(int array_id, int pc);
@@ -116,6 +116,7 @@ public:
 	void initialize_mpi_type();
 
 	friend class Interpreter;
+	friend class WorkerStatistics;
 private:
 
 	const SipTables& sip_tables_;
@@ -123,12 +124,14 @@ private:
 	DataManager& data_manager_;
 	BlockManager& block_manager_;
 	WorkerPersistentArrayManager* persistent_array_manager_;
-	MPICounter server_op_counter_;
 
 	AsyncAcks ack_handler_;
 	BarrierSupport barrier_support_;
 	DataDistribution data_distribution_; // Data distribution scheme
 	MPIScalarOpType mpi_type_;
+
+	// Instrumentation
+	MPITimerList wait_time_; //"block wait time"
 	/**
 	 * values for mode_ array
 	 */
@@ -152,10 +155,10 @@ private:
 	 *
 	 * Requires b != NULL
 	 * @param b
-	 * @param line the current line number in sial code. Used to reference timer for block wait time.
+	 * @param pc  current index in optable. Used to index the wait_time_ timer list.
 	 * @return  the input parameter--for convenience
 	 */
-	Block::BlockPtr wait_and_check(Block::BlockPtr b, int line);
+	Block::BlockPtr wait_and_check(Block::BlockPtr b, int pc);
 
 	/**
 	 * returns true if the mode associated with an array is compatible with

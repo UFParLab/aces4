@@ -1,0 +1,69 @@
+sial disk_backing_test
+	predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	index k = 1:norb
+	distributed a0[i,j]
+	distributed a1[i,j]
+	distributed a2[i,j]
+	distributed a3[i,j]
+	temp t0[i,j]
+	temp t1[i,j]
+	temp t2[i,j]
+	temp t3[i,j]
+	local result0[k]
+	local result1[k]
+	local result2[k]
+	local result3[k]	
+	scalar x0
+	scalar x1
+	scalar x2
+	scalar x3
+	
+	allocate result0[*]
+	allocate result1[*]
+	allocate result2[*]
+	allocate result3[*]
+	
+#	print "starting loop"
+	pardo i
+		do j
+			t0[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+			t1[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+			t2[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+			t3[i,j] = (scalar)((i-1)*norb + (j-1)) + 1.0
+			put a0[i,j] = t0[i,j]
+			put a1[i,j] = t1[i,j]
+			put a2[i,j] = t2[i,j]
+			put a3[i,j] = t3[i,j]
+		enddo j
+	endpardo i
+	
+	sip_barrier
+	
+	do i
+		do j
+		get a0[i,j]
+		get a1[i,j]
+		get a2[i,j]
+		get a3[i,j]		
+		x0 = a0[i,j] * a0[i,j]
+		x1 = a1[i,j] * a1[i,j]
+		x2 = a2[i,j] * a2[i,j]
+		x3 = a3[i,j] * a3[i,j]
+#		print i
+#		print j
+		do k
+		where k == ((i-1)*norb + (j-1)) + 1
+#		print k
+			result0[k] = x0
+			result1[k] = x1
+			result2[k] = x2
+			result3[k] = x3
+#			println result0[k]
+		enddo k
+		enddo j
+	enddo i
+#	print "end of program"
+
+endsial disk_backing_test

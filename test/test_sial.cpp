@@ -69,7 +69,8 @@ TEST(Sial,empty){
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
 	controller.run();
-
+	std::cout << "rank " << attr->global_rank() << "done" << std::endl << std::flush;
+	barrier();
 }
 
 /** This function takes lower and upper ranges of indices
@@ -685,7 +686,8 @@ TEST(Sial,DISABLED_cached_block_map_test) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
-    sip::GlobalState::set_max_data_memory_usage(limit_size);
+    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+    sip::GlobalState::set_max_worker_data_memory_usage(limit_size);
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
@@ -714,7 +716,8 @@ TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
-    sip::GlobalState::set_max_data_memory_usage(limit_size);
+    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+    sip::GlobalState::set_max_worker_data_memory_usage(limit_size);
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
@@ -823,7 +826,7 @@ TEST(Sial,put_accumulate_stress){
 		}
 	}
     if (attr-> is_worker()){
-    	controller.worker_->gather_and_print_statistics(std::cerr);
+     	controller.worker_->gather_and_print_statistics(std::cerr);
     	barrier();
     }
     else {
@@ -833,6 +836,149 @@ TEST(Sial,put_accumulate_stress){
     barrier();
 }
 
+/* This test sets a very low limit for memory usage at the server
+ * and sends enough blocks to require disk backing.
+ *
+ * Each array has 10 30x30x30x30 blocks (= 64,800,000 bytes)
+ * This test creates 4 of them, sends them to a server, then
+ * reads them back and gets the results.  The server limit is
+ * set at 70,000,000, so disk backing should start with the second
+ * array.
+ */
+TEST(Sip,disk_backing_test) {
+	std::string job("disk_backing_test");
+	size_t limit_size = 70000000;
+    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+    if ( attr->global_rank() == 0){
+    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    }
+    barrier();
+    int norb = 9;
+	int segs[] = { 900, 900, 900, 900, 900, 900, 900, 900, 900 };
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("norb_squared", norb * norb);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(9, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+//	if (attr->is_worker()) {
+//		EXPECT_TRUE(controller.worker_->all_stacks_empty());
+//		std::vector<int> index_vec;
+//		for (int i = 0; i < norb; ++i) {
+//			for (int j = 0; j < norb; ++j) {
+//				int k = (i * norb + j) + 1;
+//				index_vec.push_back(k);
+//				double * local_block = controller.local_block("result0",
+//						index_vec);
+//				double value = local_block[0];
+//				double expected = k * k * segs[i] * segs[j];
+//				std::cout << "k,value= " << k << " " << value << std::endl;
+//				ASSERT_DOUBLE_EQ(expected, value);
+//				index_vec.clear();
+//			}
+//		}
+//	}
+
+	barrier();
+	std::cout << "global rank " << attr->global_rank() << "attr->is_worker()" << attr->is_worker();
+	std::cout << std::endl << std::flush;
+	if (attr->is_worker()) {
+		controller.worker_->gather_and_print_statistics(std::cout);
+		barrier();
+	} else {
+		barrier();
+		controller.server_->gather_and_print_statistics(std::cout);
+	}
+	barrier();
+    sip::GlobalState::reinitialize();
+}
+
+/* This test is the same as disk_backing_test except that the memory limit is the default.
+ *
+ * Each array has 10 30x30x30x30 blocks (= 64,800,000 bytes)
+ * This test creates 4 of them, sends them to a server, then
+ * reads them back and gets the results.
+ */
+TEST(Sip,disk_backing_test_default_limit) {
+	std::string job("disk_backing_test_default_limit");
+	std::string siox("disk_backing_test");
+//	if (attr->is_worker()){
+//		std::cout << "I am a worker with global rank " << attr->global_rank() << std::endl << std::flush;
+//	}
+//	else {
+//		std::cout << "I am a server with global rank " << attr->global_rank() << std::endl << std::flush;
+//	}
+    if ( attr->global_rank() == 0){
+    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    }
+    barrier();
+    int norb = 9;
+	int segs[] = { 900, 900, 900, 900, 900, 900, 900, 900, 900 };
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("norb_squared", norb * norb);
+		std::string tmp = siox + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(9, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		EXPECT_TRUE(controller.worker_->all_stacks_empty());
+		std::vector<int> index_vec;
+		for (int i = 0; i < norb; ++i) {
+			for (int j = 0; j < norb; ++j) {
+				for (int kk = 0; kk < norb; ++kk) {
+					if (kk == (i * norb + j)) {
+						int k = kk + 1;
+						index_vec.push_back(k);
+						double * local_block = controller.local_block("result0",
+								index_vec);
+						double value = local_block[0];
+						double expected = k * k * segs[i] * segs[j];
+						std::cout << "k,value= " << k << " " << value
+								<< std::endl;
+						ASSERT_DOUBLE_EQ(expected, value);
+						index_vec.clear();
+					}
+				}
+			}
+		}
+	}
+	barrier();
+
+	std::cout << "global rank " << attr->global_rank() << " attr->is_worker() "
+			<< attr->is_worker();
+	std::cout << std::endl << std::flush;
+	if (attr->is_server()) {
+		controller.server_->gather_and_print_statistics(std::cout);
+		std::cout << std::flush;
+		barrier();
+	} else {
+		barrier();
+		controller.worker_->gather_and_print_statistics(std::cout);
+		std::cout << std::flush;
+	}
+	barrier();
+	sip::GlobalState::reinitialize();
+}
 //****************************************************************************************************************
 
 void bt_sighandler(int signum) {
@@ -904,5 +1050,4 @@ int main(int argc, char **argv) {
     MPI_Finalize();
 #endif
     return result;
-
 }

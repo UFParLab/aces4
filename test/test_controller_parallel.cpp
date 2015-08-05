@@ -61,7 +61,7 @@ TestControllerParallel::TestControllerParallel(std::string job,
 				true), expect_success_(expect_success), prog_number_(0), spam_(
 				NULL), server_(NULL), worker_(NULL), printer_(NULL), server_timer_(NULL), sialx_timers_(NULL) {
 	barrier();
-	sip::GlobalState::reinitialize();
+//	sip::GlobalState::reinitialize();
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);

@@ -27,7 +27,7 @@ SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 				data_manager.block_manager_), data_distribution_(sip_tables_,
 				sip_mpi_attr_), persistent_array_manager_(
 				persistent_array_manager), mode_(sip_tables_.num_arrays(), NONE),
-				server_op_counter_(sip_mpi_attr_.company_communicator())
+				wait_time_(sip_mpi_attr_.company_communicator(), sip_tables_.op_table_size()+1)
 {
 //	initialize_mpi_type();
 	mpi_type_.initialize_mpi_scalar_op_type();
@@ -36,7 +36,7 @@ SialOpsParallel::SialOpsParallel(DataManager& data_manager,
 SialOpsParallel::~SialOpsParallel() {
 }
 
-void SialOpsParallel::sip_barrier() {
+void SialOpsParallel::sip_barrier(int pc) {
 
 	// Remove and deallocate cached blocks of distributed and served arrays.
 	// This is done here to ensure that all pending "gets" have been satisfied.
@@ -61,8 +61,10 @@ void SialOpsParallel::sip_barrier() {
 
 	//Now, do an MPI barrier with the other workers.
 	if (sip_mpi_attr_.company_size() > 1) {
+		wait_time_.start(pc);
 		MPI_Comm worker_comm = sip_mpi_attr_.company_communicator();
 		SIPMPIUtils::check_err(MPI_Barrier(worker_comm));
+		wait_time_.pause(pc);
 	}
 	//DEBUG  this code checks that the barrier is from the same op_table entry at each worker.
 	//If not, it prints a warning
@@ -125,7 +127,6 @@ void SialOpsParallel::delete_distributed(int array_id, int pc) {
 
 //TODO optimize this.  Can reduce searches in block map.
 void SialOpsParallel::get(BlockId& block_id, int pc) {
-	server_op_counter_.inc();
 	//check for "data race"
 	check_and_set_mode(block_id, READ);
 
@@ -327,7 +328,6 @@ void SialOpsParallel::put_replace(BlockId& target_id,
  */
 void SialOpsParallel::put_accumulate(BlockId& target_id,
 		const Block::BlockPtr source_block, int pc) {
-	server_op_counter_.inc();
 	//partial check for data races
 	check_and_set_mode(target_id, WRITE);
 
@@ -679,11 +679,12 @@ void SialOpsParallel::end_program() {
 	//implicit sip_barrier
 	//this is required to ensure that there are no pending messages
 	//at the server when the end_program message arrives.
-	sip_barrier();
+	int end_prog_pc = sip_tables_.op_table_size();
+	sip_barrier(end_prog_pc);
 	int my_server = sip_mpi_attr_.my_server();
 	SIP_LOG(std::cout << "I'm a worker with rank "<< sip_mpi_attr_.global_rank() << "   in end_program and my server is " << my_server << std::endl << std::flush); //DEBUG
 	//send end_program message to server, if designated worker and wait for ack.
-	sip_barrier();
+	sip_barrier(end_prog_pc);
 	if (my_server > 0) {
 		int end_program_tag;
 		end_program_tag = barrier_support_.make_mpi_tag_for_END_PROGRAM();
@@ -787,8 +788,9 @@ Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
 //		b->wait(b->size());
 //			b->wait();
 
-
+	wait_time_.start(pc);
 	b->wait();
+	wait_time_.pause(pc);
 
 	return b;
 }

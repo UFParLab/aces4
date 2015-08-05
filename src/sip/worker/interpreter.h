@@ -41,12 +41,12 @@
 class TestControllerParallel;
 class TestController;
 
+
 namespace sip {
 
 class LoopManager;
 class SialPrinter;
 class Tracer;
-
 class Interpreter {
 public:
 
@@ -178,19 +178,15 @@ public:
 	 */
 	void post_sial_program();
 
-	/**
-	 * Prints gathers and/or reduces counters and timers managed by the interpreter.
-	 * This is a collective operation.
-	 * @param os
-	 */
 	void gather_and_print_statistics(std::ostream& os){
 	    tracer_->gather();
-	    sial_ops_.server_op_counter_.gather();
+	    sial_ops_.wait_time_.reduce();
 	    if (SIPMPIAttr::get_instance().is_company_master()){
-	    	os << "Printing worker statistics"<<std::endl;
+	    	os << "Worker Statistics"<<std::endl << std::endl;
 	    	os << *tracer_;
 	    	os << std::endl;
-	    	os << sial_ops_.server_op_counter_;
+	    	os << "Worker wait_time_" << std::endl;
+	    	sial_ops_.wait_time_.print_op_table_stats(os, sip_tables_);
 	    	os << std::endl << std::flush;
 	    }
 	}
@@ -211,11 +207,9 @@ public:
 	 *
 	 */
 	int line_number() {
-		if (pc < op_table_.size())
 			return op_table_.line_number(pc);
-		else
-			return -1;// Past the end of the program. Probably being called by a test.
 	}
+
 	int get_pc(){
 		return pc;
 	}
@@ -485,7 +479,7 @@ private:
 
 
 	Tracer* tracer_;
-	MPICounter iter_counter_;
+
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;

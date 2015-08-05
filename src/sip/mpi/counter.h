@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 #include <iomanip>
+#include <limits>
 #include "sip.h"
 #include "sip_tables.h"
 #ifdef HAVE_MPI
@@ -70,7 +71,6 @@ public:
 	void inc(T delta = 0){}
 	void dec(T delta = 0){}
 	T get_value(){}
-	T get_max(){}
 	void reset(){}
 	void gather(){}
 	void reduce(){}
@@ -120,7 +120,7 @@ protected:
 			//print own data
 			int rank;
 			MPI_Comm_rank(comm_, &rank);
-			os << "company rank=" << rank << ", value_=" << value_;
+			os << "company rank," << rank << ", value_," << value_ << std::endl;
 			return os;
 		}
 		int comm_size;
@@ -141,6 +141,7 @@ protected:
 					<< static_cast<double>(reduced_val_)
 							/ static_cast<double>(comm_size);
 		}
+		os << std::endl;
 		return os;
 	}
 	void gather_impl() {
@@ -186,8 +187,8 @@ private:
 template<typename T>
 class CounterList {
 public:
-	explicit CounterList(size_t size) :
-			size_(size), list_(size) {
+	explicit CounterList(size_t size, bool filter = true) :
+			size_(size), list_(size,0), filter_(filter) {
 	}
 	~CounterList() {
 	}
@@ -211,6 +212,7 @@ public:
 protected:
 	std::vector<size_t> list_;
 	size_t size_;
+	bool filter_;
 	DISALLOW_COPY_AND_ASSIGN(CounterList);
 };
 
@@ -301,8 +303,10 @@ protected:
 			int i = 0;
 			std::vector<size_t>::const_iterator it = reduced_vals_.begin();
 			while (i < size_) {
+				if (filter_ && *it != 0){
 				os << i << ',' << static_cast<double>(*it) / dcomm_size
 						<< std::endl;
+				}
 				++i;
 				++it;
 			}
@@ -318,16 +322,20 @@ private:
 
 
 /** Enhanced "counter" that can be decremented (and may have a value < 0) and remembers its maximum */
-template<typename T>
+template<typename T, typename D>
 class MaxCounter {
 public:
-	MaxCounter() :
-			value_(0), max_(0) {
+	MaxCounter(D init = 0) :
+			value_(init), max_(init) {
 	}
+
 	~MaxCounter() {
 	}
 	;
-	void inc(long delta = 1) {
+	void inc(D delta = 1) {
+		if (std::numeric_limits<D>::max() - value_  <= delta){
+			std::cerr << "value, delta = " << value_ << ',' << delta;
+		}
 		value_ += delta;
 		if (value_ > max_){
 			max_ = value_;
@@ -339,10 +347,10 @@ public:
 			max_ = value_;
 		}
 	}
-	long get_value() {
+	D get_value() {
 		return value_;
 	}
-	void set(long val){
+	void set(D val){
 		value_ = val;
 		if (value_>max_) {
 			max_ = value_;
@@ -361,12 +369,12 @@ public:
 	void reduce() {
 		static_cast<T*>(this)->reduce_impl();
 	}
-	template<typename T> friend class MaxCounter;
-	template<typename T> friend std::ostream& operator<<(std::ostream& os,
-			const MaxCounter<T>& obj);
+	template<typename T, typename D> friend class MaxCounter;
+	template<typename T, typename D> friend std::ostream& operator<<(std::ostream& os,
+			const MaxCounter<T,D>& obj);
 protected:
-	long value_;
-	long max_;
+	D value_;
+	D max_;
 	std::ostream& stream_out(std::ostream& os) const {
 		os << value_;
 		return os;
@@ -374,8 +382,8 @@ protected:
 	DISALLOW_COPY_AND_ASSIGN(MaxCounter);
 };
 
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const MaxCounter<T>& obj) {
+template<typename T, typename D>
+std::ostream& operator<<(std::ostream& os, const MaxCounter<T,D>& obj) {
 	return static_cast<const T&>(obj).stream_out(os);
 }
 
@@ -418,25 +426,26 @@ std::ostream& operator<<(std::ostream& os, const MaxCounter<T>& obj) {
 //	DISALLOW_COPY_AND_ASSIGN(MaxCounter);
 //};
 
-class MPIMaxCounter: public MaxCounter<MPIMaxCounter> {
+
+class MPIMaxCounter: public MaxCounter<MPIMaxCounter,long long> {
 public:
-	explicit MPIMaxCounter(const MPI_Comm& comm) :
+	explicit MPIMaxCounter(const MPI_Comm& comm, long long init=0) : MaxCounter(init),
 			comm_(comm), gathered_value_(0), reduced_value_(0), gathered_max_(0), reduced_max_(0)
 	, gather_done_(false), reduce_done_(false){
 	}
 	~MPIMaxCounter() {
 	}
 
-	template<typename T> friend class MaxCounter;
-	template<typename T> friend std::ostream& operator<<(std::ostream& os,
-			const MaxCounter<T>& obj);
+	template<typename T, typename D> friend class MaxCounter;
+	template<typename T, typename D> friend std::ostream& operator<<(std::ostream& os,
+			const MaxCounter<T,D>& obj);
 protected:
 
 	const MPI_Comm& comm_;
-	std::vector<long> gathered_value_;
-	long reduced_value_;
-	std::vector<long> gathered_max_;
-	long reduced_max_;
+	std::vector<long long> gathered_value_;
+	long long reduced_value_;
+	std::vector<long long> gathered_max_;
+	long long reduced_max_;
 	bool gather_done_;
 	bool reduce_done_;
 
@@ -451,8 +460,8 @@ protected:
 			gather_done_=true;
 		}
 		if(comm_size>1){
-			MPI_Gather(&value_, 1, MPI_LONG, gathered_value_.data(), 1, MPI_LONG, 0, comm_);
-			MPI_Gather(&max_, 1, MPI_LONG, gathered_max_.data(), 1, MPI_LONG, 0, comm_);
+			MPI_Gather(&value_, 1, MPI_LONG_LONG, gathered_value_.data(), 1, MPI_LONG_LONG, 0, comm_);
+			MPI_Gather(&max_, 1, MPI_LONG_LONG, gathered_max_.data(), 1, MPI_LONG_LONG, 0, comm_);
 		}
 		else{
 			gathered_value_[0] = value_;
@@ -468,8 +477,8 @@ protected:
 			reduce_done_=true;
 		}
 		if(comm_size>1){
-			MPI_Reduce(&value_, &reduced_value_, 1, MPI_LONG, MPI_SUM, 0, comm_);
-			MPI_Reduce(&max_, &reduced_max_, 1, MPI_LONG, MPI_MAX, 0, comm_);
+			MPI_Reduce(&value_, &reduced_value_, 1, MPI_LONG_LONG, MPI_SUM, 0, comm_);
+			MPI_Reduce(&max_, &reduced_max_, 1, MPI_LONG_LONG, MPI_MAX, 0, comm_);
 		}
 		else{
 			reduced_value_ = value_;
@@ -483,7 +492,7 @@ protected:
 			//print own data
 			int rank;
 			MPI_Comm_rank(comm_, &rank);
-			os << "company rank=" << rank << ", value_=" << value_ << " max_=" << max_ << std::endl;
+			os << "company rank," << rank << ", value_," << value_ << " max_," << max_ << std::endl;
 			return os;
 		}
 		int comm_size;
@@ -492,14 +501,14 @@ protected:
 		if (gather_done_) {
 			//output gathered values in comma separated list
 			os << "value_";
-			std::vector<long>::const_iterator it = gathered_value_.begin();
+			std::vector<long long>::const_iterator it = gathered_value_.begin();
 			for (int j = 0; j < comm_size; ++j) {
 				os << ',' << *it;
 				++it;
 			}
 			os << std::endl;
 			os << "max_";
-			std::vector<long>::const_iterator itm = gathered_max_.begin();
+			std::vector<long long>::const_iterator itm = gathered_max_.begin();
 			for (int j = 0; j < comm_size; ++j) {
 				os << ',' << *itm;
 				++itm;
@@ -507,10 +516,10 @@ protected:
 			os << std::endl;
 		}
 		if (reduce_done_) {
-			os << std::endl << "reduced mean=";
+			os << std::endl << "reduced mean";
 			os << static_cast<double>(reduced_value_)
 							/ static_cast<double>(comm_size);
-			os << "reduced max=";
+			os << "reduced max";
 			os << reduced_max_;
 			os << std::endl;
 		}
@@ -647,7 +656,7 @@ template<typename T, typename R>
 class TimerList {
 public:
 	TimerList(size_t size) :
-			size_(size), total_(size, R()), start_(size, R()), max_(size, R()), num_epochs_(
+			size_(size), total_(size, 0), start_(size, R()), max_(size,0), num_epochs_(
 					size, 0), on_(size, false) {
 	}
 	void start(size_t index) {
@@ -947,8 +956,11 @@ protected:
 					reduced_num_epoch_.begin();
 			os << "reduced values:  mean, max, num_epoch" << std::endl;
 			for (int i = 0; i != size_; ++i) {
-				os << i << ',' << *(mean_iter++) << ',' << *(max_iter++) << ','
-						<< *(num_epoch_iter++) << std::endl;
+				os << i << ',' << *mean_iter << ',' << *max_iter << ','
+						<< *num_epoch_iter++ << std::endl;
+				++mean_iter;
+				++max_iter;
+				++num_epoch_iter;
 			}
 		}
 		return os;
@@ -956,21 +968,23 @@ protected:
 
 	void print_op_table_stats_impl(std::ostream& os,
 			const SipTables& sip_tables, bool filter = true) const {
-		std::setprecision(30);
+
 		int comm_size;
 		MPI_Comm_size(comm_, &comm_size);
 		check(reduce_done_, "must call reduce before print_optable_stats");
-		os << "pc, line number, opcode, mean,  max,  num_epochs" << std::endl;
+		os << "pc, line number, opcode, mean,  max,  mean num_epochs" << std::endl;
 		std::vector<double>::const_iterator mean_iter = reduced_mean_.begin();
 		std::vector<double>::const_iterator max_iter = reduced_max_.begin();
 		std::vector<unsigned long>::const_iterator num_epoch_iter =
 				reduced_num_epoch_.begin();
 		for (int i = 0; i != size_; ++i) {
 			if (!filter || *num_epoch_iter > 0) {
+				std::setprecision(30);
 				os << i << ',' << sip_tables.line_number(i) << ','
 						<< sip_tables.opcode_name(i) << ',';
-				os << *mean_iter << ',' << *max_iter << ','
-						<< *num_epoch_iter / comm_size;
+				os << *mean_iter << ',' << *max_iter << ',';
+				std::setprecision(3);
+				os<< (double)(*num_epoch_iter) / comm_size;
 				os << std::endl;
 			}
 			++mean_iter;
@@ -1056,9 +1070,9 @@ protected:
 	void reduce_impl() {
 	}
 	std::ostream& stream_out(std::ostream& os) const {
-		os << ", total_=" << total_;
-		os << ", max_=" << max_;
-		os << ", num_epochs_=" << num_epochs_;
+		os << ", total_," << total_;
+		os << ", max_," << max_;
+		os << ", num_epochs_," << num_epochs_;
 		os << std::endl;
 		return os;
 	}
@@ -1190,8 +1204,8 @@ protected:
 			os << std::endl;
 		}
 		if (reduce_done_) {
-			os << "mean=" << reduced_mean_ << std::endl;
-			os << "max epoch=" << reduced_max_ << std::endl;
+			os << "mean," << reduced_mean_ << std::endl;
+			os << "max epoch," << reduced_max_ << std::endl;
 		}
 		return os;
 	}

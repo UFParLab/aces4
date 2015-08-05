@@ -40,7 +40,6 @@ Interpreter::Interpreter(const SipTables& sipTables,
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 		NULL), sial_ops_(data_manager_,
 		NULL,  sipTables)
-		,iter_counter_(SIPMPIAttr::get_instance().company_communicator())
 {
 	_init(sipTables);
 }
@@ -50,8 +49,7 @@ Interpreter::Interpreter(const SipTables& sipTables,
 		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager,  sipTables),
-				iter_counter_(SIPMPIAttr::get_instance().company_communicator()){
+				persistent_array_manager,  sipTables){
 	_init(sipTables);
 }
 
@@ -60,8 +58,7 @@ Interpreter::Interpreter(const SipTables& sipTables,
 		sip_tables_(sipTables),  printer_(NULL), data_manager_(
 				sipTables), op_table_(sip_tables_.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager,  sipTables),
-				iter_counter_(SIPMPIAttr::get_instance().company_communicator()){
+				persistent_array_manager,  sipTables){
 	_init(sipTables);
 }
 
@@ -100,7 +97,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
 	tracer_->init_trace();
 	while (pc < pc_end) {
-		iter_counter_.inc();
 		opcode_t opcode = op_table_.opcode(pc);
 		sip::check(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
@@ -197,7 +193,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case sip_barrier_op: {
-			sial_ops_.sip_barrier();
+			sial_ops_.sip_barrier(pc);
 			iteration_ = 0;
 			++pc;
 		}

@@ -12,6 +12,7 @@
 #include "disk_backed_arrays_io.h"
 #include "lru_array_policy.h"
 #include "server_timer.h"
+#include "counter.h"
 
 namespace sip {
 class BlockId;
@@ -60,7 +61,7 @@ public:
 			IdBlockMap<ServerBlock>::PerArrayMap* array_blocks);
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
-
+	friend class SIPServer;
 	std::ostream& gather_statistics(std::ostream& out){
 		return out;
 	}
@@ -111,6 +112,8 @@ private:
 	 * data portion of a block, or the temp buffer for an asynchronous operation.
 	 */
 	std::size_t remaining_doubles_;
+	MPIMaxCounter allocated_doubles_; //init to mem size, and subtract to record min.
+	MPICounter blocks_to_disk_;
 
 
 };

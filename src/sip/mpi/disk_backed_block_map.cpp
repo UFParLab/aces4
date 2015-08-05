@@ -61,9 +61,12 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 				data_distribution), block_map_(sip_tables.num_arrays()), disk_backed_arrays_io_(
 				sip_tables, sip_mpi_attr, data_distribution), policy_(
 				block_map_), max_allocatable_bytes_(
-				sip::GlobalState::get_max_data_memory_usage()), max_allocatable_doubles_(
-				max_allocatable_bytes_ / sizeof(double)), remaining_doubles_(
-				max_allocatable_doubles_) {
+				sip::GlobalState::get_max_server_data_memory_usage()), max_allocatable_doubles_(
+				max_allocatable_bytes_ / sizeof(double))
+, remaining_doubles_(max_allocatable_doubles_)
+,allocated_doubles_(sip_mpi_attr.company_communicator())
+,blocks_to_disk_(sip_mpi_attr.company_communicator())
+{
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap() {
@@ -105,10 +108,13 @@ size_t DiskBackedBlockMap::backup_and_free_doubles(size_t requested_doubles_to_f
 					std::cout << "S " << sip_mpi_attr_.company_rank() << " : Freeing block " << bid << " and writing to disk to make space for new block" << std::endl);
 			if (!blk->disk_state_.is_valid_on_disk()) {
 				write_block_to_disk(bid, blk);
+				blocks_to_disk_.inc();
 				blk->disk_state_.set_valid_on_disk();
+				blk->disk_state_.unset_in_memory();
 			}
 			double* data_to_free = blk->get_data();
 			free_data(data_to_free, blk->size()); //this method updates remaining_doubles_
+			blk->data_ = NULL;
 			freed_count += blk->size();
 		}
 	} catch (const std::out_of_range& oor) {
@@ -121,13 +127,12 @@ size_t DiskBackedBlockMap::backup_and_free_doubles(size_t requested_doubles_to_f
 //backing up to disk if necessary.
 //updates remaining_doubles_
 double* DiskBackedBlockMap::allocate_data(size_t size, bool initialize){
-
-	size_t to_free = (remaining_doubles_ - size > 0) ? 0 : size;
+	size_t to_free = (remaining_doubles_ <= size) ?  size : 0;
 	size_t freed = 0;
 	double* data = NULL;
 	bool allocated = false;
 	while (!allocated) {
-		freed = backup_and_free_doubles(to_free); //free_doubles simply returns if to_free <= 0
+		freed = backup_and_free_doubles(to_free); //free_doubles simply returns 0 if to_free <= 0
 		try {
 			if (initialize){
 			data = new double[size]();
@@ -136,6 +141,7 @@ double* DiskBackedBlockMap::allocate_data(size_t size, bool initialize){
 				data = new double[size];
 			}
 			remaining_doubles_ -= size;
+			allocated_doubles_.inc(size);
 			allocated = true;
 		}
 		catch (const std::bad_alloc& ba) {
@@ -155,6 +161,7 @@ void DiskBackedBlockMap::free_data(double*& data, size_t size){
 	delete[] data;
 	data = NULL;
 	remaining_doubles_ += size;
+	allocated_doubles_.inc(-size);
 }
 
 
@@ -446,7 +453,9 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id) {
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : Deleted blocks from disk" << std::endl;);
 
-	remaining_doubles_ += block_map_.delete_per_array_map_and_blocks(array_id)/sizeof(double);// remove from memory
+	size_t bytes_deleted = block_map_.delete_per_array_map_and_blocks(array_id);// remove from memory
+	remaining_doubles_ += bytes_deleted/ sizeof(double);
+	allocated_doubles_.inc(-(bytes_deleted/sizeof(double)));
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : Removed blocks from memory" << std::endl;);
 }
