@@ -56,6 +56,7 @@ class SIPServer;
  */
 class PendingAsyncManager{
 public:
+	static const long long MAX_PENDING = 32;
 	PendingAsyncManager():next_block_iter_(pending_.begin())
 	, pending_counter_(SIPMPIAttr::get_instance().company_communicator())
 {}
@@ -64,18 +65,21 @@ public:
 	}
 
 	void add_put_data_request(int mpi_source, int put_data_tag, BlockId id, ServerBlock* block, int pc){
+		if (pending_counter_.get_value() > MAX_PENDING) wait_all();
 		block->async_state_.add_put_data_request(mpi_source, put_data_tag, block, pc);
 		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
 		pending_counter_.inc();
 	}
 
 	void add_put_accumulate_data_request(int mpi_source, int put_accumulate_data_tag, BlockId id, ServerBlock* block, int pc){
+		if (pending_counter_.get_value() > MAX_PENDING) wait_all();
 		block->async_state_.add_put_accumulate_data_request(mpi_source, put_accumulate_data_tag, block, pc);
 		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
 		pending_counter_.inc();
 	}
 
 	void add_get_reply(int mpi_source, int get_tag, BlockId id, ServerBlock* block, int pc){
+		if (pending_counter_.get_value() > MAX_PENDING) wait_all();
 		block->async_state_.add_get_reply(mpi_source, get_tag, block, pc);
 		pending_.push_back(std::pair<BlockId,ServerBlock*>(id,block));
 		pending_counter_.inc();
@@ -370,6 +374,7 @@ private:
 	MPITimer total_timer_;
 	MPICounter num_ops_;
 	MPITimer handle_op_timer_;
+
 
 	/**
 	 * Get
