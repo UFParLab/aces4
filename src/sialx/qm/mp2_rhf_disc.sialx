@@ -1,50 +1,9 @@
-#  Copyright (c) 2003-2010 University of Florida
-import "rccsd_rhf_defs.sialx"
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+      import "rccsd_rhf_defs.sialx"
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
-#
-                           SIAL MP2_RHF_DISC          
-#
-# ----------------------------------------------------------------------------
-#
-# The sial program SIAL_UHF performs a UHF based SCF calculation. Davidson 
-# damping is performed during the first scf_beg-1 iterations after which the 
-# DIIS is turned on with scf_order. At present DIIS is turned on after the 
-# third iteration and 6 histories are kept. 
-#
-
-# Fock matrix final arrays:
-# ------------------------- 
-#
-# 1. Fpq_a  
-# 2. Fpq_b  
-#
-# Transformation coefficients final arrays:
-# ----------------------------------------- 
-#
-# 1. Ca  
-# 2. Cb  
-#
-# Converged SCF energy:
-# --------------------- 
-#
-# 1. scfeneg 
-#
-# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+      SIAL MP2_RHF_DISC          
 #
 # Declare indices 
 # --------------- 
-#
 #
       index   kiter  = 1: scf_iter  
       #index   kiter  = 1, 1  
@@ -240,9 +199,12 @@ import "rccsd_rhf_defs.sialx"
       temp T1bjbj[b,j,b1,j1]
       temp Taibj[a,i,b,j]
       temp T1aibj[a,i,b,j]
+      temp Tiajb[i,a,j,b]
+      temp Tiaia[i,a,i1,a1]
 
       scalar ecorraa 
       scalar esumaa 
+      scalar mp2_correlation
       scalar mp2_energy 
 
       static ca[mu,p]
@@ -253,6 +215,11 @@ import "rccsd_rhf_defs.sialx"
 
       static fockrohf_a[aces_defs_mu,aces_defs_mu]
       static fockrohf_b[aces_defs_mu,aces_defs_mu]
+
+      served T2old_aa[a,i,a1,i1]
+      served T2old_ab[a,i,b,j]
+      served L2old_ab[i,a,j,b]
+      served L2old_aa[i,a,i1,a1]
  
 # ---------------------------------------------------------------------------- 
 #
@@ -470,7 +437,6 @@ import "rccsd_rhf_defs.sialx"
         ENDPARDO a, a1, i1
  
         sip_barrier
-        delete Vaiai #(*,*,*,i)
  
 ########################################################################
 #                                                                      #     
@@ -491,13 +457,19 @@ import "rccsd_rhf_defs.sialx"
      collective ecorraa += esumaa
      sip_barrier
 
-     print ecorraa 
 #
      restore_persistent scf_energy "scf_energy"
-     mp2_energy  = ecorraa
-     totenerg   = mp2_energy + scf_energy
-     print mp2_energy  
+     server_barrier
+     mp2_correlation = ecorraa
+     totenerg  = ecorraa
+     totenerg += scf_energy
+     mp2_energy = totenerg
+     print " "
+     print scf_energy
+     print mp2_correlation
+     print mp2_energy
      set_persistent scf_energy "scf_energy"
+     set_persistent totenerg "totenerg"
 
 # 
 #    ------------------------------------------------------------------------ 
@@ -514,12 +486,14 @@ import "rccsd_rhf_defs.sialx"
 #
 #     Define a few constants 
 #     ---------------------- 
+      print " "
+      print "-- Parallel direct MP2 program"
+      print "-- Written by Victor F. Lotrich, 2014"
+      print " "
       sip_barrier
 #
       restore_persistent fock_a "fock_a" 
-      println " past restoring fock_a" 
       restore_persistent Ca "ca"
-      println " past restoring ca" 
       sip_barrier
 
 #     Start the mp2 calculation  
@@ -528,7 +502,43 @@ import "rccsd_rhf_defs.sialx"
       CALL TRAN_XXOO 
       CALL MP2_RHF
       sip_barrier 
+#
+      PARDO a, b, i, j 
+#
+           get                     Vaiai[a,i,b,j]   
+           get                     Vaiai[b,j,a,i]   
+           Taibj[a,i,b,j]            = Vaiai[b,j,a,i]
+           Taibj[a,i,b,j]           += Vaiai[a,i,b,j]
+           execute energy_denominator_rhf  Taibj[a,i,b,j] fock_a  
+           Taibj[a,i,b,j]           *= 0.5  
+           Tiajb[i,a,j,b]            = Taibj[a,i,b,j]
+           PREPARE T2old_ab[a,i,b,j] = Taibj[a,i,b,j]  
+	   prepare L2old_ab[i,a,j,b] = Tiajb[i,a,j,b]
+#
+      ENDPARDO a, b, i, j 
+      SERVER_BARRIER  
+      PARDO a, i, b, j 
+            REQUEST                     T2old_ab[a,i,b,j]  
+            REQUEST                     T2old_ab[a,j,b,i]  
+            taiai[a,i,b,j]            = T2old_ab[a,i,b,j] 
+            t1aiai[a,i,b,j]           = T2old_ab[a,j,b,i] 
+            taiai[a,i,b,j]           -= t1aiai[a,i,b,j] 
+	    Tiaia[i,a,j,b] = taiai[a,i,b,j]
+            PREPARE T2old_aa[a,i,b,j] = taiai[a,i,b,j] 
+	    prepare L2old_aa[i,a,j,b] = Tiaia[i,a,j,b]
+      ENDPARDO a, i, b, j 
+      SERVER_BARRIER  
 
+      has_singles = 0.0
+      is_ccpt = 1.0
+      set_persistent fock_a "fock_a" 
+      set_persistent Ca "ca"
+      set_persistent has_singles "has_singles"
+      set_persistent is_ccpt "is_ccpt"
+      set_persistent T2old_aa "T2old_aa"
+      set_persistent T2old_ab "T2old_ab"
+      set_persistent L2old_aa "L2old_aa"
+      set_persistent L2old_ab "L2old_ab"
 #
                            ENDSIAL MP2_RHF_DISC          
 #

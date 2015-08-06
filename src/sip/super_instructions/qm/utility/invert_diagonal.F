@@ -1,3 +1,15 @@
+
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief
+!> returns element by element t1= t1/t2
+!>
+!> @details
+!>  define: special invert_diagonal uu
+!>
+!>  Usage: execute invert_diagonal T1 T2
+! --------------------------------------------------------------------------
+
       subroutine invert_diagonal(
      * array_0, rank_0, index_values_0, size_0, extents_0, data_0,
      * array_1, rank_1, index_values_1, size_1, extents_1, data_1,
@@ -5,11 +17,6 @@
       use, intrinsic :: ISO_C_BINDING
       implicit none
 
-c--------------------------------------------------------------------------
-c Usage: execute invert_diagonal T1 T2
-C returns element by element t1= t1/t2
-c
-c--------------------------------------------------------------------------
       include 'sip_interface.f'
 
 ! output array --> array_0

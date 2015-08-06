@@ -1,14 +1,21 @@
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP
+!> @brief
+!> force zeroes off diagonal element of a block.
+!> 4 index returns Tpqrs = Tpqrs * delta_pq*delta_rs
+!>
+!> @details
+!>   special return_diagonal u
+!>
+!>   Usage: execute return_diagonal temp
+!>
+! --------------------------------------------------------------------------
+
       subroutine return_diagonal_elements(
      *  array_0, rank_0, index_values_0, size_0, extents_0, data_0,  
      *  ierr) BIND(C) 
       use, intrinsic :: ISO_C_BINDING 
       implicit none 
-
-c--------------------------------------------------------------------------
-!> special return_diagonal u
-!>   Usage: execute return_diagonal temp
-!>   4 index returns Tpqrs = delta_pq*delta_rs
-c--------------------------------------------------------------------------
 
       include 'sip_interface.f' 
 
