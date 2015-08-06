@@ -974,6 +974,9 @@ import "scf_rhf_defs.sialx"
 # The oed_ovl get overwritten by density matrix duiring the FOck
 # built. Save it to OVLP for level shifting.
 #
+       sip_barrier
+       execute get_my_rank rank
+       if rank == 0.0
        DO mu
        DO nu
              execute return_ovl Txx[mu,nu]
@@ -992,6 +995,7 @@ import "scf_rhf_defs.sialx"
          PUT OVLP_INV[mu,nu] = txx[mu,nu]
        ENDDO nu
        ENDDO mu
+       endif
 
        sip_barrier
 
@@ -2967,6 +2971,7 @@ import "scf_rhf_defs.sialx"
          iter_count += 1
          prnt_count += 1
 
+         print " "
          print "The iteration number"
          print iter_count
 
@@ -3228,11 +3233,11 @@ import "scf_rhf_defs.sialx"
          ENDIF 
 
 #bgn_debug
-         print "Some varibles during the SCF iterations"
-         print diis_start
-         print iter_count
-         print diis_end
-         print DIIS_ORDER
+#         print "Some varibles during the SCF iterations"
+#         print diis_start
+#         print iter_count
+#         print diis_end
+#         print DIIS_ORDER
 #end_debug
 
          IF ITER_COUNT > 1
@@ -3244,8 +3249,8 @@ import "scf_rhf_defs.sialx"
          IF ITER_COUNT <= DIIS_END
 
 #bgn_debug 
-          print "The DIIS order"
-          print DIIS_ORDER
+#          print "The DIIS order"
+#          print DIIS_ORDER
 #end_debug
 
             CALL DIISN
@@ -3349,8 +3354,8 @@ import "scf_rhf_defs.sialx"
          sip_barrier
 #
 #bgn_debug
-        print "The maximum density difference"
-        print done
+#        print "The maximum density difference"
+#        print done
 #end_debug
 
 #JNB:
