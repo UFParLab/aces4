@@ -43,11 +43,14 @@ C The output is the damp factor (a scalar)
 
       integer(C_INT), intent(out)::ierr
 
+      real(C_DOUBLE) :: damp
 c---------------------------------------------------------------------------
       ierr = 0
 
       pa1 = 1
-      call damp_factor(data_0, data_1, pa1, extents_0(1))
+      damp = data_1(1)
+      call damp_factor(data_0, damp, pa1, extents_0(1))
+      data_1(1) = damp
 
       return
       end
@@ -67,13 +70,13 @@ C
       DATA ZERO,PT25,PT5,TWO,FOUR,FAC /0.0D+00,2.5D-01,0.5D+00,
      1 2.0D+00,4.0D+00,1.6D+01/
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(6,"(a)") "Checking the input arrays"
       Write(*,"(a,1x,i4)") "The input dimensions: ", pa2
       write(6,"(4(1x,F10.5))") (XXX(i),i=1,pa2), DAMP
 C      endif 
-C#endif 
+#endif 
 
       DE    = XXX(1)
       DEP   = XXX(2)
@@ -137,11 +140,11 @@ C
   600 CONTINUE
       DAMP=DMIN1(DAMP,DMPMAX)
    
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(*,"(a,1x, F15.10)") "The damp factor", damp
 C      endif
-C#endif
+#endif
 
       return
       end

@@ -117,14 +117,14 @@ C Get the MO alpha/beta segment ranges
             if (index_values_0(2).gt.1) then
                do i = 1, index_values_0(2) - 1
                   offset_2 = offset_2 + F_nmoasegs(i)
-                  Write(*,*) "A segs", F_nmoasegs(i)
+C                  Write(*,*) "A segs", F_nmoasegs(i)
                enddo
              endif
          elseif (type .eq. "Beta ") then
             if (index_values_0(2).gt.1) then
                do i = 1, index_values_0(2) - 1
                   offset_2 = offset_2 + F_nmobsegs(i)
-                  Write(*,*) "B segs", F_nmobsegs(i)
+C                  Write(*,*) "B segs", F_nmobsegs(i)
                enddo
              endif
          endif 
@@ -159,7 +159,7 @@ C-------------------------------------------------------------------------
       double precision yyy(bb1:eb1)
       double precision z
 C
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(6,"(a)") "Checking the input arrays"
       Write(6,*) "The input dimensions"
@@ -170,7 +170,7 @@ C      if (me .eq. master) then
       Write(*,"(6(1x,F3.1))") (yyy(i),i=bb1,eb1)
       write(6,"(a)") "End checking input array"
 C      endif 
-C#endif 
+#endif 
    
       Do j = ba2, ea2
          Z = yyy(j+off_2) 
