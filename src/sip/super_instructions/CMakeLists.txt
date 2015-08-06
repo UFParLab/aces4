@@ -18,6 +18,8 @@ set(QM_SOURCE_FILES
     qm/qm-generic/energy_denominator_rhf.F;
     qm/qm-generic/energy_numerator_rhf.F;
     qm/utility/return_diagonal.F;
+    qm/utility/inverse_lu_decomposition.F;
+    qm/utility/lu_decomposition.F;
     qm/utility/return_diagonal_elements.F;
     qm/utility/anti_symm_o.F;
     qm/utility/anti_symm_v.F;
@@ -298,6 +300,8 @@ set(QM_SOURCE_FILES
 set(GENERAL_SOURCE_FILES
     general/list_block_map.cpp;
     general/print_block.cpp;
+    general/write_block_to_file.cpp;
+    general/read_block_from_file.cpp;
     general/print_static_array.cpp;
     general/get_my_rank.cpp;
     general/swap_blocks.cpp;
