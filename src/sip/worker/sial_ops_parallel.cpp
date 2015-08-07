@@ -277,7 +277,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 
 	//the data message should be acked
 	ack_handler_.expect_ack_from(server_rank, put_data_tag);
-
+	source_block->wait();
 }
 
 //NOTE:  I can't remember why the source block was copied.
@@ -363,6 +363,13 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 					server_rank, put_accumulate_data_tag, MPI_COMM_WORLD, source_block->mpi_request()));
 
 	ack_handler_.expect_ack_from(server_rank, put_accumulate_data_tag);
+
+	source_block->wait();
+
+
+
+
+
 //    // Construct int array to send to server.
 //    const int to_send_size = BlockId::MPI_BLOCK_ID_COUNT + 2;
 //    const int line_num_offset = BlockId::MPI_BLOCK_ID_COUNT;
