@@ -102,6 +102,7 @@ size_t DiskBackedBlockMap::backup_and_free_doubles(size_t requested_doubles_to_f
 		while (freed_count < requested_doubles_to_free) { //if requested_doubles_to_free <= 0, no iterations performed.
 			ServerBlock* block;
 			BlockId bid = policy_.get_next_block_for_removal(block);
+			block->wait();
 			ServerBlock* blk = block_map_.block(bid);
 			check(blk == block, "bug in free_doubles");
 			SIP_LOG(
