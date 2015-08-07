@@ -99,7 +99,7 @@ public:
 	 * @return  true if the operation has been completed and async_status_ set to DONE
 	 */
 	bool try_handle() {
-		if (async_status_ == READY || (async_status_ == WAITING && test())) {
+		if (async_status_ == READY || ((async_status_ == WAITING) && test())) {
 			do_handle();  //this should always succeed if called when enabled
 			async_status_ = DONE;
 			return true;
