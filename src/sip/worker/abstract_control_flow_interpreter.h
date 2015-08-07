@@ -8,7 +8,7 @@
 #ifndef SIP_WORKER_ABSTRACT_CONTROL_FLOW_INTERPRETER_H_
 #define SIP_WORKER_ABSTRACT_CONTROL_FLOW_INTERPRETER_H_
 
-
+#include <sstream>
 #include "config.h"
 #include "interpreter.h"
 #include "block_manager.h"

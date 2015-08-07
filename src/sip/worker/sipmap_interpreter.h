@@ -164,6 +164,7 @@ public:
 	virtual void handle_delete_op(int pc) {}
 	virtual void handle_set_persistent_op(int pc) {}
 	virtual void handle_restore_persistent_op(int pc){}
+	virtual void do_post_sial_program() {} 
 
 #endif // HAVE_MPI
 

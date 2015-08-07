@@ -318,6 +318,7 @@ public:
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
 
+
 private:
 	int timer_pc_; 		/** Auxillary field needed by Sialx timers. initialize to value < 0 **/
 
@@ -445,6 +446,10 @@ protected:
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
 	void handle_block_add(int pc);
 	void handle_block_subtract(int pc);
+    void permute_rhs_to_lhs(int pc,
+                            const BlockSelector& lhs_selector, const BlockSelector& rhs_selector, 
+                            Block::BlockPtr lhs_block, Block::BlockPtr rhs_block, 
+                            bool extra_check);
 	void loop_start(int &pc, LoopManager * loop);
 	void loop_end(int &pc);
 

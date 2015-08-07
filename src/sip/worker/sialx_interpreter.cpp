@@ -573,35 +573,10 @@ void SialxInterpreter::handle_block_permute_op(int pc) {
 	//get rhs blcok from selector stack
 	BlockSelector rhs_selector = block_selector_stack_.top();
 	sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r', true); //TODO, check contiguous allowed.
-	//permutation vector is in the instructions' index_selector array.
-	//Calculate permutation and compare with compiler's.
-	//when confident about the compiler, can remove this code.
-	int lhs_rank = lhs_selector.rank_;
-	int permutation[MAX_RANK];
-	std::fill(permutation + 0, permutation + MAX_RANK, 0);
-	for (int i = 0; i < lhs_rank; ++i) {
-		int lhs_index = lhs_selector.index_ids_[i];
-		int j;
-		for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index;
-				++j) {
-			/* keep looking until matching index found */
-		}
-		CHECK(j < lhs_rank, "illegal transpose");
-		permutation[j] = i;
-	}
-	for (int i = lhs_rank; i < MAX_RANK; ++i) {
-		//fill in unused dims with -1 to cause failure if accessed
-		permutation[i] = -1;
-	}
-	//compare caluculated here and compiler generated
-	bool OK = true;
-	for (int i = 0; i < MAX_RANK && OK; ++i) {
-		OK &= (permutation[i] == index_selectors(pc)[i]);
-	}
-	check(OK, "permutation vector from compiler differs from sip's",
-			line_number());
-	//do the transpose
-	lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
+	//permutation vector is in the instructions' index_selector array
+    //
+    permute_rhs_to_lhs(pc, lhs_selector, rhs_selector, lhs_block, rhs_block, true);
+
 	//#ifdef HAVE_CUDA
 	//				if (gpu_enabled_) {
 	//					_gpu_permute(lhs_block->get_gpu_data(), lhs_rank, lhs_block->shape().segment_sizes_, lhs_selector.index_ids_,
@@ -736,6 +711,43 @@ void SialxInterpreter::handle_print_block_op(int pc) {
 	if (arg0(pc))
 		printer_->endl();
 }
+
+void SialxInterpreter::permute_rhs_to_lhs(int pc, const BlockSelector& lhs_selector,
+        const BlockSelector& rhs_selector, Block::BlockPtr lhs_block,
+        Block::BlockPtr rhs_block, bool extra_check) {
+
+    //permutation vector is in the instructions' index_selector array.
+    //Calculate permutation and compare with compiler's.
+    //when confident about the compiler, can remove this code.
+    int lhs_rank = lhs_selector.rank_;
+    int permutation[MAX_RANK];
+    std::fill(permutation + 0, permutation + MAX_RANK, 0);
+    for (int i = 0; i < lhs_rank; ++i) {
+        int lhs_index = lhs_selector.index_ids_[i];
+        int j;
+        for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index; ++j) {
+            /* keep looking until matching index found */
+        }
+        sip::check(j < lhs_rank, "illegal transpose");
+        permutation[j] = i;
+    }
+    for (int i = lhs_rank; i < MAX_RANK; ++i) {
+        //fill in unused dims with -1 to cause failure if accessed
+        permutation[i] = -1;
+    }
+    //compare caluculated here and compiler generated
+    if (extra_check){
+        bool OK = true;
+        for (int i = 0; i < MAX_RANK && OK; ++i) {
+            OK &= (permutation[i] == index_selectors(pc)[i]);
+        }
+        check(OK, "permutation vector from compiler differs from sip's", line_number());
+    }
+    //do the transpose
+    lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
+}
+   
+    
 
 void SialxInterpreter::handle_println_op(int pc) {
 	printer_->print_string("\n");
@@ -1821,14 +1833,59 @@ sip::Block::BlockPtr SialxInterpreter::get_block(char intent,
 }
 
 void SialxInterpreter::handle_block_add(int pc) {
-	//d = l + r
-	BlockId did, lid, rid;
-	Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
-	double *rdata  = rblock->get_data();
-	Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
-	double *ldata = lblock->get_data();
-	Block::BlockPtr dblock = get_block_from_instruction(pc, 'w',  true);
-	double *ddata = dblock->get_data();
+    //d = l + r
+    BlockId did, lid, rid;
+    BlockSelector l_selector = block_selector_stack_.top();
+    Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
+    BlockSelector r_selector = block_selector_stack_.top();
+    Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
+    BlockSelector d_selector(arg0(pc), arg1(pc), index_selectors(pc));
+    Block::BlockPtr dblock = get_block_from_instruction('w', true);
+
+    double *rdata = rblock->get_data();
+    double *ldata = lblock->get_data();
+    double *ddata = dblock->get_data();
+
+    // Make sure selectors are the same for l & r;
+    sip::check(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
+    sip::check(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
+
+    bool compatible_l_r_indices = true;
+    for (int i=0; i<l_selector.rank_; ++i){
+        if (l_selector.index_ids_[i] != r_selector.index_ids_[i]){
+            compatible_l_r_indices = false;
+            break;
+        }
+    }
+
+    // If d & l are not the same, operation is  c = a + b
+    // If d & l are the same, operation is a += b
+    // In that case, check if r & d have the same selector indices
+    // If not, create a temp block with the permuted block and do the operation
+
+    Block *tempblock = NULL;
+    bool no_permute_d_r = true;
+    for(int i=0; i<r_selector.rank_; ++i){
+        if (r_selector.index_ids_[i] != d_selector.index_ids_[i]){
+            no_permute_d_r = false;
+            break;
+        }
+    }
+
+    if (lblock != dblock){
+        if (!compatible_l_r_indices)
+                    fail("Incompatible indices for l & r on RHS", line_number());
+        if(!no_permute_d_r)
+            fail("Incompatible indices for LHS & RHS", line_number());
+    } else {
+        // Created a transposed temporary block.
+        // This will become the new rdata.
+        Block::dataPtr tempdata = new double[rblock->size()];
+        tempblock = new Block(rblock->shape(), tempdata);
+        permute_rhs_to_lhs(pc, d_selector, r_selector, tempblock, rblock, false);
+        rdata = tempblock->get_data();
+    }
+
 	int size = dblock->size();
 
 	// Use BLAS DAXPY or loop
@@ -1847,15 +1904,63 @@ void SialxInterpreter::handle_block_add(int pc) {
 		sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
 		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
 	}
+
+    delete tempblock;
 }
 
 void SialxInterpreter::handle_block_subtract(int pc){
-	Block::BlockPtr rblock = get_block_from_selector_stack('r',  true);
-	double *rdata  = rblock->get_data();
-	Block::BlockPtr lblock = get_block_from_selector_stack('r',  true);
-	double *ldata = lblock->get_data();
-	Block::BlockPtr dblock = get_block_from_instruction(pc, 'w', true);
-	double *ddata = dblock->get_data();
+    BlockId did, lid, rid;
+    BlockSelector r_selector = block_selector_stack_.top();
+    Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
+    BlockSelector l_selector = block_selector_stack_.top();
+    Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
+    BlockSelector d_selector(arg0(pc), arg1(pc), index_selectors(pc));
+    Block::BlockPtr dblock = get_block_from_instruction('w', true);
+
+    double *rdata = rblock->get_data();
+    double *ldata = lblock->get_data();
+    double *ddata = dblock->get_data();
+
+    // Make sure selectors are the same for l & r;
+    sip::check(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
+    sip::check(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
+
+    bool compatible_l_r_indices = true;
+    for (int i=0; i<l_selector.rank_; ++i){
+        if (l_selector.index_ids_[i] != r_selector.index_ids_[i]){
+            compatible_l_r_indices = false;
+            break;
+        }
+    }
+
+    // If d & l are not the same, operation is  c = a - b
+    // If d & l are the same, operation is a -= b
+    // In that case, check if r & d have the same selector indices
+    // If not, create a temp block with the permuted block and do the operation
+
+    Block *tempblock = NULL;
+    bool no_permute_d_r = true;
+    for(int i=0; i<r_selector.rank_; ++i){
+        if (r_selector.index_ids_[i] != d_selector.index_ids_[i]){
+            no_permute_d_r = false;
+            break;
+        }
+    }
+
+    if (lblock != dblock){
+        if (!compatible_l_r_indices)
+                    fail("Incompatible indices for l & r on RHS", line_number());
+        if(!no_permute_d_r)
+            fail("Incompatible indices for LHS & RHS", line_number());
+    } else {
+        // Created a transposed temporary block.
+        // This will become the new rdata.
+        Block::dataPtr tempdata = new double[rblock->size()];
+        tempblock = new Block(rblock->shape(), tempdata);
+        permute_rhs_to_lhs(pc, d_selector, r_selector, tempblock, rblock, false);
+        rdata = tempblock->get_data();
+    }
+
 	int size = dblock->size();
 
 	// Use BLAS DAXPY or loop
@@ -1876,6 +1981,8 @@ void SialxInterpreter::handle_block_subtract(int pc){
 		sip_blas_dscal(size, d_negative_one, ddata, i_one);
 		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
 	}
+
+    delete tempblock;
 }
 
 void SialxInterpreter::contiguous_blocks_post_op() {
