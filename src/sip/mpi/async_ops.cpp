@@ -7,6 +7,8 @@
 
 #include "async_ops.h"
 #include "server_block.h"
+#include "disk_backed_block_map.h"
+#include "sip_server.h"
 
 namespace sip {
 
@@ -33,7 +35,10 @@ PutAccumulateDataAsync::PutAccumulateDataAsync(int mpi_source,
 		AsyncBase(pc), mpi_source_(mpi_source), tag_(put_accumulate_data_tag),  block_(
 				block), mpi_request_(MPI_REQUEST_NULL) {
 	//allocate temp buffer
-	temp_ = new double[block->size()];
+
+//	temp_ = new double[block->size()];
+    size_t size = block_->size();
+	temp_ = SIPServer::global_sipserver->disk_backed_block_map_.allocate_data(size, false);
 	//post receive
 	SIPMPIUtils::check_err(
 			MPI_Irecv(temp_, block->size(), MPI_DOUBLE, mpi_source,
@@ -41,6 +46,13 @@ PutAccumulateDataAsync::PutAccumulateDataAsync(int mpi_source,
 			__FILE__);
 	//reply should be sent in calling routing AFTER this object has been constructed,
 	//so the Irecv will already be posted.
+}
+
+PutAccumulateDataAsync::~PutAccumulateDataAsync() {
+	check(temp_ != NULL,
+			"destructor of PutAccumulateDataAsync invoked with null data_");
+	//delete[] temp_;
+	SIPServer::global_sipserver->disk_backed_block_map_.free_data(temp_, block_->size());
 }
 
 bool PutAccumulateDataAsync::do_test() {

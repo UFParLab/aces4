@@ -15,6 +15,7 @@
 #include "barrier_support.h"
 #include "sip_mpi_utils.h"
 
+
 namespace sip {
 
 class ServerBlock;
@@ -222,11 +223,7 @@ class PutAccumulateDataAsync: public AsyncBase {
 public:
 	PutAccumulateDataAsync(int mpi_source, int put_accumulate_data_tag,
 			ServerBlock* block, int pc);
-	virtual ~PutAccumulateDataAsync() {
-		check(temp_ != NULL,
-				"destructor of PutAccumulateDataAsync invoked with null data_");
-		delete[] temp_;
-	}
+	virtual ~PutAccumulateDataAsync();
 private:
 	ServerBlock* block_;
 	int mpi_source_;
@@ -310,7 +307,8 @@ private:
  */
 class ServerBlockAsyncManager {
 public:
-	ServerBlockAsyncManager():num_pending_writes_(0) {
+	ServerBlockAsyncManager():
+		num_pending_writes_(0) {
 	}
 	~ServerBlockAsyncManager() {
 		check(pending_.empty(), "deleting block with pending async ops");
