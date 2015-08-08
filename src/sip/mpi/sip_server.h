@@ -30,6 +30,7 @@ namespace sip {
 std::ostream& operator<<(std::ostream& os, const MPI_Status& obj);
 
 class SIPServer;
+class PutAccumulateDataAsync;
 
 
 
@@ -538,6 +539,7 @@ private:
 
 
     friend ServerPersistentArrayManager;
+    friend PutAccumulateDataAsync;
 
 	DISALLOW_COPY_AND_ASSIGN(SIPServer);
 };
