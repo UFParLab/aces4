@@ -72,7 +72,7 @@ public:
 private:
 
 	// Reads block data from disk, updates memory accounting and block dis_back_state
-	void read_block_from_disk(ServerBlock*& block, const BlockId& block_id, size_t block_size);
+	void read_block_from_disk(ServerBlock* block, const BlockId& block_id, size_t block_size);
 
 	// Writes block data to disk and frees in memory data, updates memory accounting and block disk_back_state
     void write_block_to_disk(const BlockId& block_id, ServerBlock* block);
