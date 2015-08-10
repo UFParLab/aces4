@@ -873,35 +873,40 @@ import "scf_defs.sialx"
        ENDPARDO mu, nu  
        sip_barrier 
 #
-       n1 = diis_start  
-       n1-= 1.0  
-       DO d1 
-          n1 += 1.0 
-          if n1 == worder  
-#
-                PARDO mu, nu 
-                   GET              Fpq_a[mu,nu] 
-                   GET              Fpq_b[mu,nu] 
-                   txx[mu,nu]     = Fpq_a[mu,nu] 
-                   PUT Fa[mu,nu,d1] = txx[mu,nu]  
-                   txx[mu,nu]     = Fpq_b[mu,nu] 
-                   PUT Fb[mu,nu,d1] = txx[mu,nu]  
-                ENDPARDO mu, nu 
-                PARDO a, i 
-                   GET FFai[a,i] 
-                   PUT Fai[a,i,d1] = FFai[a,i]  
-                ENDPARDO a, i 
-                PARDO b, j 
-                   GET FFbj[b,j] 
-                   PUT Fbj[b,j,d1] = FFbj[b,j]  
-                ENDPARDO b, j 
-                exit 
+       n1 = diis_start
+       n1-= 1.0
+       DO d1
+          n1 += 1.0
+          if n1 == worder
+                server_barrier
 
-          endif # d1 = kiter 
+                PARDO mu, nu
+                   GET              Fpq_a[mu,nu]
+                   txx[mu,nu]     = Fpq_a[mu,nu]
+                   PUT Fa[mu,nu,d1] = txx[mu,nu]
+                ENDPARDO mu, nu
+                PARDO mu, nu
+                   GET              Fpq_b[mu,nu]
+                   txx[mu,nu]     = Fpq_b[mu,nu]
+                   PUT Fb[mu,nu,d1] = txx[mu,nu]
+                ENDPARDO mu, nu
+                PARDO a, i
+                   GET FFai[a,i]
+                   PUT Fai[a,i,d1] = FFai[a,i]
+                ENDPARDO a, i
+                PARDO b, j
+                   GET FFbj[b,j]
+                   PUT Fbj[b,j,d1] = FFbj[b,j]
+                ENDPARDO b, j
+                server_barrier
+
+                exit
+
+          endif # d1 = kiter
 #
-       ENDDO d1 
+       ENDDO d1
 #
-       sip_barrier 
+       sip_barrier
 #
        ENDPROC GEN_6HISTORY  
 #      ---------------------  
@@ -914,86 +919,37 @@ import "scf_defs.sialx"
 #      Move histories 
 #      -------------- 
 #
-       PARDO mu, nu 
-          n1 = 0.0 
-          DO d1 
-             n1 += 1.0 
-             GET          Fa[mu,nu,d1] 
-             tpq[mu,nu] = Fa[mu,nu,d1] 
-             n2 = 0.0 
-          DO d2 
-             n2 += 1.0 
-             etemp = n1 
-             etemp-= n2 
-             if etemp == 1.0 
-               #tpqx(mu,nu,d2)   = tpq(mu,nu) 
-               #PUT Fa(mu,nu,d2) = tpqx(mu,nu,d2) 
-                PUT Fa[mu,nu,d2] = tpq[mu,nu] 
-             endif 
-          ENDDO d2 
-          ENDDO d1 
-       ENDPARDO mu, nu 
+
+      DO d1 
+      DO d2 
+      where d1 == d2 + 1
+       sip_barrier 
+	  PARDO mu, nu 
+		 GET          Fa[mu,nu,d1] 
+		 tpq[mu,nu] = Fa[mu,nu,d1] 
+		 PUT Fa[mu,nu,d2] = tpq[mu,nu] 
+	  ENDPARDO mu, nu 
 #
-       PARDO a, i 
-          n1 = 0.0 
-          DO d1 
-             n1 += 1.0 
-             GET        Fai[a,i,d1] 
-             tai[a,i] = Fai[a,i,d1] 
-             n2 = 0.0 
-          DO d2 
-             n2 += 1.0 
-             etemp = n1 
-             etemp-= n2 
-             if etemp == 1.0 
-               #taix(a,i,d2)   = tai(a,i) 
-               #PUT Fai(a,i,d2) = taix(a,i,d2) 
-                PUT Fai[a,i,d2] = tai[a,i] 
-             endif 
-          ENDDO d2 
-          ENDDO d1 
-       ENDPARDO a,i  
+	  PARDO a, i 
+		 GET        Fai[a,i,d1] 
+		 tai[a,i] = Fai[a,i,d1] 
+		 PUT Fai[a,i,d2] = tai[a,i] 
+	  ENDPARDO a,i  
 #
-       PARDO mu, nu 
-          n1 = 0.0 
-          DO d1 
-             n1 += 1.0 
-             GET          Fb[mu,nu,d1] 
-             tpq[mu,nu] = Fb[mu,nu,d1] 
-             n2 = 0.0 
-          DO d2 
-             n2 += 1.0 
-             etemp = n1 
-             etemp-= n2 
-             if etemp == 1.0 
-               #tpqx(mu,nu,d2)   = tpq(mu,nu) 
-               #PUT Fb(mu,nu,d2) = tpqx(mu,nu,d2) 
-                PUT Fb[mu,nu,d2] = tpq[mu,nu] 
-             endif 
-          ENDDO d2 
-          ENDDO d1 
-       ENDPARDO mu, nu 
+	  PARDO mu, nu 
+		 GET          Fb[mu,nu,d1] 
+		 tpq[mu,nu] = Fb[mu,nu,d1] 
+		 PUT Fb[mu,nu,d2] = tpq[mu,nu] 
+	   ENDPARDO mu, nu 
 #
-       PARDO b, j 
-          n1 = 0.0 
-          DO d1 
-             n1 += 1.0 
-             GET        Fbj[b,j,d1] 
-             tbj[b,j] = Fbj[b,j,d1] 
-             n2 = 0.0 
-          DO d2 
-             n2 += 1.0 
-             etemp = n1 
-             etemp-= n2 
-             if etemp == 1.0 
-               #tbjx(b,j,d2)   = tbj(b,j) 
-               #PUT Fbj(b,j,d2) = tbjx(b,j,d2) 
-                PUT Fbj[b,j,d2] = tbj[b,j] 
-             endif 
-          ENDDO d2 
-          ENDDO d1 
-       ENDPARDO b,j  
-                
+	   PARDO b, j 
+		 GET        Fbj[b,j,d1] 
+		 tbj[b,j] = Fbj[b,j,d1] 
+		 PUT Fbj[b,j,d2] = tbj[b,j] 
+	  ENDPARDO b,j  
+       sip_barrier 
+      ENDDO d2 
+      ENDDO d1 
        sip_barrier 
 #
        ENDPROC MOVE6    
