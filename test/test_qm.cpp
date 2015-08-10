@@ -478,7 +478,7 @@ TEST(Sial_QM,lccd_dropcore_test){
 		double lccd_energy = controller.scalar_value("lccd_energy");
 		ASSERT_NEAR(-75.71042854160481, lccd_energy, 1e-10);
                 double * dipole = controller.static_array("dipole");
-                double expected[] = {0.00000078371778, -0.93549859964190, -0.00000000000000};
+                double expected[] = {0.000000, -0.93525122104258496, -0.00000};
                 int i = 0;
                 for (i; i < 2; i++){
                     ASSERT_NEAR(dipole[i], expected[i], 1e-6);
