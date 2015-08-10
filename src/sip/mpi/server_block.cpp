@@ -64,6 +64,8 @@ ServerBlock::~ServerBlock(){
 
 ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
 	check(size_ == size, "accumulating blocks of unequal size");
+	check(data_ != NULL, "attempting to accumulate into block with null data_");
+	check(to_add != NULL, "attempting to accumulate from null dataPtr");
 	for (size_t i = 0; i < size; ++i){
 			data_[i] += to_add[i];
 	}

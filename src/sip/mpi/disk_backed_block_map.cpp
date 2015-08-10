@@ -72,13 +72,15 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 DiskBackedBlockMap::~DiskBackedBlockMap() {
 }
 
-void DiskBackedBlockMap::read_block_from_disk(ServerBlock*& block,
+void DiskBackedBlockMap::read_block_from_disk(ServerBlock* block,
 		const BlockId& block_id, size_t block_size) {
 	/** Allocates space for a block, reads block from disk
 	 * into newly allocated space, sets the in_memory flag,
 	 * inserts into block_map_ if needed
 	 */
-	block = allocate_block(block_size, false);
+//	block = allocate_block(block_size, false);
+	block->set_data(allocate_data(block->size(), false));
+
 //	server_timer_.start_timer(current_line(), ServerTimer::READTIME);
 	disk_backed_arrays_io_.read_block_from_disk(block_id, block);
 //	server_timer_.pause_timer(current_line(), ServerTimer::READTIME);
