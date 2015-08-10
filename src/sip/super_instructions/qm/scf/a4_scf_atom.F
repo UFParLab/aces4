@@ -445,7 +445,7 @@ C
       call c_f_pointer(cptr_ccend_pack,fptr_ccend_pack,
      *                 [pcoeffs_pack_dim])
 
-      call integer_scratch_array(ncenters,cptr_acharge)
+      call scratch_array(ncenters,cptr_acharge)
       call c_f_pointer(cptr_acharge,fptr_acharge,[ncenters])
 C
 C Load of scratch arrays are being use in compute atomscf. Only
@@ -665,7 +665,7 @@ CSSS      write(6,"(6(1x,F12.6))")(data_4(i),i=1,size_4)
       call delete_scratch_array(cptr_pcoeffs_pack)
       call delete_integer_scratch_array(cptr_ccbeg_pack)
       call delete_integer_scratch_array(cptr_ccend_pack)
-      call delete_integer_scratch_array(cptr_acharge)
+      call delete_scratch_array(cptr_acharge)
       call delete_scratch_array(cptr_work1)
       call delete_scratch_array(cptr_work2)
       call delete_scratch_array(cptr_work3)
@@ -1117,8 +1117,8 @@ C
                nocc_a = 1
                nocc_b = 0
             Else
-               nocc_b = charge(m)/2 
-               nocc_a = charge(m) - nocc_b 
+               nocc_b = int(charge(m))/2 
+               nocc_a = int(charge(m)) - nocc_b 
             Endif 
          endif 
       enddo 
@@ -3104,7 +3104,6 @@ c Interface added but should be included instead
 
       integer (C_INT) one
 
-      integer iscr(*), end_nfps(nshells),indx_cc(*)
       integer da1,da2,db1,db2
       integer m1,m2,n1,n2, ncenters,npcoeffs,nshells
       integer N_bfns_total,n_c_funcs
@@ -3117,6 +3116,7 @@ c Interface added but should be included instead
       integer ccbeg(n_c_funcs),ccend(n_c_funcs)
       integer ccbeg_pack(n_c_funcs),ccend_pack(n_c_funcs)
       integer a,b,newcenters,nfirst,nints
+      integer iscr(*), end_nfps(nshells),indx_cc(*)
 C
       double precision scr(*)
       double precision zsum(da1:da2,db1:db2)
@@ -3344,11 +3344,6 @@ c---------------------------------------------------------------------------
 
       implicit none
 
-      double precision ca(na1:na2,nb1:nb2)
-      double precision cb(nc1:nc2,nd1:nd2)
-      double precision da(ne1:ne2,nf1:nf2)
-      double precision db(ng1:ng2,nh1:nh2)
-
       integer a,b
       integer na1,na2,nb1,nb2,nc1,nc2,nd1,nd2
       integer ne1,ne2,nf1,nf2,ng1,ng2,nh1,nh2
@@ -3357,6 +3352,11 @@ c---------------------------------------------------------------------------
       integer N_MO_alpha_total,N_MO_beta_total
       integer N_bfns_total
       integer nbasis_from_file,ierror
+
+      double precision ca(na1:na2,nb1:nb2)
+      double precision cb(nc1:nc2,nd1:nd2)
+      double precision da(ne1:ne2,nf1:nf2)
+      double precision db(ng1:ng2,nh1:nh2)
 
       logical aExist,bExist
 

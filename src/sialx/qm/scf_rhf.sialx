@@ -63,6 +63,7 @@ import "scf_rhf_defs.sialx"
       index   jjter1 = 1: 1
       index   jjter2 = 2: 2
       index   ithree = 1: 3
+      index   ixyz   = 1: 3
 #
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -516,6 +517,15 @@ import "scf_rhf_defs.sialx"
       INT Start_History
       INT IZERO
       INT master 
+
+      temp DAOINT[mu,nu]
+      static dipole[ixyz]
+      static NucDip[ixyz]
+      static Dip02[ixyz]
+      served Dxx_scf[mu,nu]
+      scalar dsum
+      scalar AbsDip
+      scalar ncount2
 
 #-----------------------------------------------------------------------------
  
@@ -1687,12 +1697,14 @@ import "scf_rhf_defs.sialx"
        DO d1
           n1 += 1
           if n1 == TARGET
-#
+	      server_barrier
                 PARDO mu, nu
                    GET              Fpq_a[mu,nu]
-                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_a[mu,nu]
                    PUT Fa[mu,nu,d1] = txx[mu,nu]
+                ENDPARDO mu, nu
+                PARDO mu, nu
+                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_b[mu,nu]
                    PUT Fb[mu,nu,d1] = txx[mu,nu]
                 ENDPARDO mu, nu
@@ -1704,6 +1716,7 @@ import "scf_rhf_defs.sialx"
                    GET FFbj[b,j]
                    PUT Fbj[b,j,d1] = FFbj[b,j]
                 ENDPARDO b, j
+	      server_barrier
                 exit
 
           endif # d1 = kiter
@@ -1725,11 +1738,14 @@ import "scf_rhf_defs.sialx"
 #              print "The target in GEN_6HISTORY"
 #              print  n1
 #end_debug
+	       server_barrier
                 PARDO mu, nu
                    GET              Fpq_a[mu,nu]
-                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_a[mu,nu]
                    PUT Fa[mu,nu,d1] = txx[mu,nu]
+                ENDPARDO mu, nu
+                PARDO mu, nu
+                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_b[mu,nu]
                    PUT Fb[mu,nu,d1] = txx[mu,nu]
                 ENDPARDO mu, nu
@@ -1741,6 +1757,7 @@ import "scf_rhf_defs.sialx"
                    GET FFbj[b,j]
                    PUT Fbj[b,j,d1] = FFbj[b,j]
                 ENDPARDO b, j
+		server_barrier
                 exit
 
           endif # d1 = kiter
@@ -1762,90 +1779,38 @@ import "scf_rhf_defs.sialx"
 #      Move histories 
 #      -------------- 
 #
-       PARDO mu, nu 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder
-             GET          Fa[mu,nu,d1] 
-             tpq[mu,nu] = Fa[mu,nu,d1] 
-             n2 = 0
-          DO d2 
-             n2 += 1
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1
-                tpqx[mu,nu,d2]   = tpq[mu,nu] 
-                PUT Fa[mu,nu,d2] = tpqx[mu,nu,d2] 
-             endif 
-          ENDDO d2 
-            endif 
-          ENDDO d1 
-       ENDPARDO mu, nu 
+      DO d1 
+      DO d2 
+      where d1 <= worder
+      where d1 == d2 + 1
+       sip_barrier 
+	  PARDO mu, nu 
+		 GET          Fa[mu,nu,d1] 
+		 tpq[mu,nu] = Fa[mu,nu,d1] 
+		 PUT Fa[mu,nu,d2] = tpq[mu,nu] 
+	  ENDPARDO mu, nu 
 #
-       PARDO a, i 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder 
-             GET        Fai[a,i,d1] 
-             tai[a,i] = Fai[a,i,d1] 
-             n2 = 0 
-          DO d2 
-             n2 += 1 
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1
-                taix[a,i,d2]   = tai[a,i] 
-                PUT Fai[a,i,d2] = taix[a,i,d2] 
-             endif 
-          ENDDO d2 
-            endif 
-          ENDDO d1 
-       ENDPARDO a,i  
+	  PARDO a, i 
+		 GET        Fai[a,i,d1] 
+		 tai[a,i] = Fai[a,i,d1] 
+		 PUT Fai[a,i,d2] = tai[a,i] 
+	  ENDPARDO a,i  
 #
-       PARDO mu, nu 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder 
-             GET          Fb[mu,nu,d1] 
-             tpq[mu,nu] = Fb[mu,nu,d1] 
-             n2 = 0 
-          DO d2 
-             n2 += 1 
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1 
-                tpqx[mu,nu,d2]   = tpq[mu,nu] 
-                PUT Fb[mu,nu,d2] = tpqx[mu,nu,d2] 
-             endif 
-          ENDDO d2 
-             endif 
-          ENDDO d1 
-       ENDPARDO mu, nu 
+	  PARDO mu, nu 
+		 GET          Fb[mu,nu,d1] 
+		 tpq[mu,nu] = Fb[mu,nu,d1] 
+		 PUT Fb[mu,nu,d2] = tpq[mu,nu] 
+	   ENDPARDO mu, nu 
 #
-       PARDO b, j 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder
-             GET        Fbj[b,j,d1] 
-             tbj[b,j] = Fbj[b,j,d1] 
-             n2 = 0 
-          DO d2 
-             n2 += 1 
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1
-                tbjx[b,j,d2]   = tbj[b,j] 
-                PUT Fbj[b,j,d2] = tbjx[b,j,d2] 
-             endif 
-          ENDDO d2 
-             endif 
-          ENDDO d1 
-       ENDPARDO b,j  
-                
+	   PARDO b, j 
+		 GET        Fbj[b,j,d1] 
+		 tbj[b,j] = Fbj[b,j,d1] 
+		 PUT Fbj[b,j,d2] = tbj[b,j] 
+	  ENDPARDO b,j  
+       sip_barrier 
+      ENDDO d2 
+      ENDDO d1 
+       sip_barrier 
        sip_barrier 
 #
        ENDPROC MOVE6    
@@ -2649,6 +2614,48 @@ import "scf_rhf_defs.sialx"
       DELETE SCb
 
      ENDPROC BUILT_AO_FOCK
+
+    PROC form_Dscf
+
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+        prepare Dxx_scf[mu,nu] = Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+        do i
+            T1xx[mu,nu] = Ca[mu,i]*Ca[nu,i]
+            Txx[mu,nu] += T1xx[mu,nu]
+        enddo i
+        Txx[mu,nu] *= -2.0
+        prepare Dxx_scf[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+
+    do ixyz
+        ncount2 = (scalar)ixyz
+        dsum = 0.0
+        esum = 0.0
+        pardo mu,nu
+            request Dxx_scf[mu,nu]
+            ncount1 = 0.0
+            execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+            NucDip[ixyz] = ncount1
+            Txx[mu,nu] = Dxx_scf[mu,nu]
+            etemp = Txx[mu,nu]*DAOINT[mu,nu]
+            esum += etemp
+        endpardo mu,nu
+        server_barrier
+        collective dsum += esum
+        server_barrier
+        dsum += NucDip[ixyz]
+        dipole[ixyz] = dsum
+    enddo ixyz
+
+    server_barrier
+
+    ENDPROC form_Dscf
 #    ---------------------
 #
 ############################################################################## 
@@ -2683,7 +2690,11 @@ import "scf_rhf_defs.sialx"
 
       iter_count = 0
       prnt_count = 0
-      diis_end   = 150
+
+# use scf_ variables for controlling diis
+      diis_start = scf_beg
+      diis_order = scf_hist
+      diis_end   = scf_iter
 
       START_HISTORY  = DIIS_START
       START_HISTORY -= DIIS_ORDER
@@ -3495,7 +3506,14 @@ import "scf_rhf_defs.sialx"
       totenerg = scf_energy
       print scf_energy
 
+	call form_Dscf
+	print " "
+	print "SCF dipole moments"
+	print dipole
+
       set_persistent scf_energy "scf_energy"
+      set_persistent dipole "scf_dipole"
+      set_persistent NucDip "nuclear_dipole"
       sip_barrier
 #                         
                            ENDSIAL SCF_RHF
