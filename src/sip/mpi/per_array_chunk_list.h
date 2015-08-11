@@ -20,10 +20,10 @@ class ServerBlock;
 /** Entries in ChunkMap.  Each entry represents a chunk
  *
  */
-class ChunkListEntry {
+class Chunk {
 
 private:
-	ChunkListEntry(double* data, size_t size, bool valid_on_disk,
+	Chunk(double* data, size_t size, bool valid_on_disk,
 			bool initialized, MPI_Offset file_offset) :
 			data_(data), next_ptr_(data), num_allocated_doubles_(size), valid_on_disk_(
 					valid_on_disk), initialized_(initialized), file_offset_(
@@ -31,7 +31,7 @@ private:
 	}
 
 	//while this frees the data, it doesn't do any additional accounting
-	~ChunkListEntry() {
+	~Chunk() {
 		if (data_ != NULL)
 			delete[] data_;
 		data_ = NULL;
@@ -55,14 +55,14 @@ private:
 	friend class DiskBackedBlockMap;
 	friend class ServerBlock;
 	friend class DiskBackedArraysIO;
-	friend std::ostream& operator<<(std::ostream&, const ChunkListEntry &);
+	friend std::ostream& operator<<(std::ostream&, const Chunk &);
 	friend std::ostream& operator<<(std::ostream& os, const ServerBlock& block);
 };
 
 /** per array list of chunks */
 class ChunkList {
 public:
-	typedef std::vector<ChunkListEntry> ChunkList_t;
+	typedef std::vector<Chunk> ChunkList_t;
 
 	ChunkList(size_t max_block_size, size_t chunk_size,
 			const DataDistribution& data_distribution) :
@@ -77,7 +77,7 @@ public:
 	}
 
 	bool has_space_in_current_chunk(size_t num_doubles) {
-		ChunkListEntry& entry = chunk_list_.at(current_chunk_);
+		Chunk& entry = chunk_list_.at(current_chunk_);
 		return chunk_size_ - entry.num_allocated_doubles_ > num_doubles;
 	}
 
@@ -94,8 +94,8 @@ public:
 	 * @return
 	 */
 	double* allocate_data_from_chunk(size_t num_doubles, bool initialize,
-			ChunkListEntry& chunk, size_t& offset) {
-		ChunkListEntry& entry = chunk_list_.at(current_chunk_);
+			Chunk& chunk, size_t& offset) {
+		Chunk& entry = chunk_list_.at(current_chunk_);
 
 		check(has_space_in_current_chunk(num_doubles),
 				"not enough space in chunk");
@@ -114,7 +114,7 @@ public:
 //	//frees memory
 //	//to be used after chunk is written to disk
 //	void free_and_set_valid_on_disk(int chunk){
-//		ChunkListEntry& entry = chunk_list_.at(current_chunk_);
+//		Chunk& entry = chunk_list_.at(current_chunk_);
 //		delete [] entry.data_;
 //		entry.data_ = NULL;
 //		entry.next_ptr_ = NULL;
@@ -125,7 +125,7 @@ public:
 //	//returns the number of total number of doubles in allocated chunks
 //	size_t used_doubles(){
 //		size_t num_doubles = 0;
-//		std::vector<ChunkListEntry>::iterator it;
+//		std::vector<Chunk>::iterator it;
 //		for (it = chunk_list_.begin(); it != chunk_list_.end(); ++it){
 //			if(it->data_ != NULL){ num_doubles += chunk_size_; }
 //		}
@@ -135,7 +135,7 @@ public:
 	//called when array is deleted, return number of doubles freed
 	size_t delete_all_chunks() {
 		size_t doubles_freed = 0;
-		std::vector<ChunkListEntry>::iterator it = chunk_list_.begin();
+		std::vector<Chunk>::iterator it = chunk_list_.begin();
 		while (it != chunk_list_.end()) {
 			if (it->data_ != NULL) {
 				doubles_freed += chunk_size_;
@@ -165,7 +165,7 @@ public:
 		SIPMPIAttr& mpi_attr = SIPMPIAttr::get_instance();
 		MPI_Offset mpi_offset = (mpi_attr.company_size() * list_pos
 				+ mpi_attr.company_rank()) * chunk_size_;
-		ChunkListEntry entry(chunk_data, chunk_size_, false, initialize,
+		Chunk entry(chunk_data, chunk_size_, false, initialize,
 				mpi_offset);
 		chunk_list_.push_back(entry);
 		return chunk_size_;
@@ -174,7 +174,7 @@ public:
 //	//reallocates memory for an existing chunk.  Throws a bad alloc exception if
 //	//request cannot be satisfied.
 //	void set_chunk_data(int chunk, double* chunk_data){
-//		ChunkListEntry& entry = chunk_list_.at(chunk);
+//		Chunk& entry = chunk_list_.at(chunk);
 //		entry.data_ = chunk_data;
 //		entry.next_ptr_ = chunk_data;
 //	}
@@ -183,14 +183,14 @@ public:
 	//memory is not initialized to zero
 	//precondition:  chunk.data_ is NULL
 	//returns size of chunk
-	size_t reallocate_chunk_data(ChunkListEntry& chunk) {
+	size_t reallocate_chunk_data(Chunk& chunk) {
 		check(chunk.data_ == NULL,
 				"memory leak--reallocating non-NULL chunk data");
 		chunk.data_ = new double[chunk_size_];
 		return chunk_size_;
 	}
 
-//	size_t free_chunk_data(ChunkListEntry& chunk) {
+//	size_t free_chunk_data(Chunk& chunk) {
 //		delete[] chunk.data_;
 //		chunk.data_ = NULL;
 //		return chunk_size_;
@@ -198,7 +198,7 @@ public:
 
 	size_t free_all_chunk_data() {
 		size_t doubles_freed = 0;
-		std::vector<ChunkListEntry>::iterator it = chunk_list_.begin();
+		std::vector<Chunk>::iterator it = chunk_list_.begin();
 		while (it != chunk_list_.end()) {
 			if (it->data_ != NULL) {
 				doubles_freed += chunk_size_;
@@ -213,7 +213,7 @@ public:
 	friend class DiskBackedBlockMap;
 
 private:
-	std::vector<ChunkListEntry> chunk_list_; //entries are never removed from this list
+	std::vector<Chunk> chunk_list_; //entries are never removed from this list
 	//but the data belonging to individual entries may
 	//be freed.
 	int current_chunk_;

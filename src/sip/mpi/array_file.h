@@ -37,7 +37,7 @@ class ArrayFile {
 public:
 
 	/**
-	 * Opens a file using MPI_IO.
+	 * Opens the file
 	 *
 	 * This is a collective operation among the given communicator.
 	 *
@@ -152,13 +152,15 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_write_(ChunkListEntry & chunk) {
+	void chunk_write_(Chunk & chunk) {
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_write_at(fh_, offset, chunk.data_, chunk_size_,
 				MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "write_chunk_from_disk failed");
 	}
+
+
 
 	/**
 	 * Write the given chunk to disk.
@@ -167,13 +169,14 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_write_all(ChunkListEntry & chunk) {
+	void chunk_write_all(Chunk & chunk) {
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_write_at_all(fh_, offset, chunk.data_, chunk_size_,
 				MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "chunk_write_all write failed");
 	}
+
 
 	void chunk_write_all_nop() {
 		int err = MPI_File_write_at_all(fh_, 0, NULL, 0, MPI_DOUBLE, &status);
@@ -187,7 +190,7 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_read(ChunkListEntry& chunk) {
+	void chunk_read(Chunk& chunk) {
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_read_at(fh_, offset, chunk.data_, chunk_size_,
@@ -202,7 +205,7 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_read_all(ChunkListEntry & chunk) {
+	void chunk_read_all(Chunk & chunk) {
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_read_at_all(fh_, offset, chunk.data_, chunk_size_,
