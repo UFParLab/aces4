@@ -123,7 +123,11 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/async_ops.h;
         src/sip/mpi/async_ops.cpp; 
         src/sip/mpi/counter.h;
-        src/sip/mpi/counter.cpp;      
+        src/sip/mpi/counter.cpp;   
+        src/sip/mpi/array_file.h;
+        src/sip/mpi/array_file.cpp;
+        src/sip/mpi/per_array_chunk_list.h;
+        src/sip/mpi/per_array_chunk_list.cpp;   
         src/sip/dynamic_data/mpi_state.h;
         src/sip/dynamic_data/distributed_block_consistency.h;
         src/sip/dynamic_data/distributed_block_consistency.cpp      

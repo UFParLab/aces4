@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+<?fileVersion 4.0.0?>
+
+<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1661730038" moduleId="org.eclipse.cdt.core.settings" name="Build (MPI)">
@@ -58,6 +60,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/MPI}&quot;"/>
+									<listOptionValue builtIn="false" value="/apps/compilers/intel/2013/composerxe/sp1.3.174/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/tbb/include"/>
+									<listOptionValue builtIn="false" value="/usr/mpi/intel/openmpi-1.6/include"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1018706944" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
@@ -88,6 +94,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0}&quot;"/>
+									<listOptionValue builtIn="false" value="/apps/compilers/intel/2013/composerxe/sp1.3.174/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/tbb/include"/>
+									<listOptionValue builtIn="false" value="/usr/mpi/intel/openmpi-1.6/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1921683653" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
@@ -161,6 +171,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/BUILD}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0}&quot;"/>
+									<listOptionValue builtIn="false" value="/apps/compilers/intel/2013/composerxe/sp1.3.174/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/tbb/include"/>
+									<listOptionValue builtIn="false" value="/usr/mpi/intel/openmpi-1.6/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2107047516" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -188,6 +202,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/BUILD}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/}&quot;"/>
+									<listOptionValue builtIn="false" value="/apps/compilers/intel/2013/composerxe/sp1.3.174/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/tbb/include"/>
+									<listOptionValue builtIn="false" value="/usr/mpi/intel/openmpi-1.6/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.434581642" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -279,6 +297,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/TAU}&quot;"/>
+									<listOptionValue builtIn="false" value="/apps/compilers/intel/2013/composerxe/sp1.3.174/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/tbb/include"/>
+									<listOptionValue builtIn="false" value="/usr/mpi/intel/openmpi-1.6/include"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1933186069" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
@@ -310,6 +332,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/test/gtest-1.7.0/include/gtest/internal}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/aces4/TAU}&quot;"/>
+									<listOptionValue builtIn="false" value="/apps/compilers/intel/2013/composerxe/sp1.3.174/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/mkl/include"/>
+									<listOptionValue builtIn="false" value="/opt/intel/composerxe/tbb/include"/>
+									<listOptionValue builtIn="false" value="/usr/mpi/intel/openmpi-1.6/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.2132765748" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_MPI=1"/>
