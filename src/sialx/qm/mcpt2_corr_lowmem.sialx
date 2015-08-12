@@ -1261,10 +1261,10 @@ import "mcpt2_vars.sialx"
 
 
  
-       PUT e10c[ifrag]     = esum
-       PUT e10c_old[ifrag] = esum
+       PUT e10c[ifrag]     += esum
+       PUT e10c_old[ifrag] += esum
        esum = 10.0
-       PUT e1error[ifrag]  = esum
+       PUT e1error[ifrag]  += esum
 # 
       ENDPARDO ifrag, a, i
       sip_barrier
@@ -3930,129 +3930,129 @@ print " "
 
       print eint_tot 
 
+##
+## Form the new energy
+##
 #
-# Form the new energy
+#print "starting additional transformations"
+#call ADDITIONAL_FRAG_TRAN
+#print "Finished additional transformations"
+#print "Forming HBAR elements"
+#call FORM_JFRAG_HBAR
+#print "done forming HBAR elements"
 #
-
-print "starting additional transformations"
-call ADDITIONAL_FRAG_TRAN
-print "Finished additional transformations"
-print "Forming HBAR elements"
-call FORM_JFRAG_HBAR
-print "done forming HBAR elements"
-
-server_barrier
-do ifrag
-where ifrag == 1
-
-    pardo fa, fi
-        get t1old[fa,fi]
-	get wC[fa,fi]
-
-	tai[fa,fi] = t1old[fa,fi]
-	t1ai[fa,fi] = wC[fa,fi]
-
-	put FT1old[fa,fi] = tai[fa,fi]
-	put FwC[fa,fi] = t1ai[fa,fi]
-
-    endpardo fa, fi
-
-    pardo fa, fi, fa1, fi1
-
-        get T2old[fa,fi,fa1,fi1]
-
-	t1ppqq[fa,fi,fa1,fi1] = T2old[fa,fi,fa1,fi1]
-
-	put FT2old[fa,fi,fa1,fi1] = t1ppqq[fa,fi,fa1,fi1]
-	
-    endpardo fa, fi, fa1, fi1
-
-    pardo fmu, fi
-    print  ca[fmu,fi]
-       put Fca_o[fmu,fi] = ca[fmu,fi]
-    endpardo fmu, fi
-
-    pardo fmu, fa
-    print ca[fmu,fa]
-       put Fca_v[fmu,fa] = ca[fmu,fa]
-    endpardo fmu, fa
-
-    pardo fi, fi1
-        get Dfock_a[fi,fi1]
-#	GET         wC[fi,fi1]
-	Tpp[fi,fi1] = Dfock_a[fi,fi1]
-#	Tpp[fi,fi1] += wC[fi,fi1]
-        put FFock_oo[fi,fi1] = Tpp[fi,fi1]
-    endpardo fi, fi1
-
-    pardo fa, fa1
-        get Dfock_a[fa,fa1]
-#	GET         wC[fa,fa1]
-	Tpp[fa,fa1] = Dfock_a[fa,fa1]
-#	Tpp[fa,fa1] += wC[fa,fa1]
-        put FFock_vv[fa,fa1] = Tpp[fa,fa1]
-    endpardo fa, fa1
-
-esum1 = 0.0
-esum2 = 0.0
-    server_barrier
-
-      PARDO fa, fi, fa1, fi1 
-
-               GET                T2old[fa,fi,fa1,fi1]
-               GET                Vaibj[fa,fi,fa1,fi1]
-               GET                Vaibj[fa,fi1,fa1,fi]
-
-               t1ppqq[fa,fi,fa1,fi1] = Vaibj[fa,fi,fa1,fi1]
-               t3ppqq[fa,fi1,fa1,fi] = Vaibj[fa,fi1,fa1,fi]
-               t2ppqq[fa,fi,fa1,fi1] = t3ppqq[fa,fi1,fa1,fi]
-               t1ppqq[fa,fi,fa1,fi1]*= 2.0
-               t1ppqq[fa,fi,fa1,fi1]-= t2ppqq[fa,fi,fa1,fi1]
-
-               etemp = T2old[fa,fi,fa1,fi1]*t1ppqq[fa,fi,fa1,fi1]
-
-               esum2 += etemp
-
-      ENDPARDO fa, fi, fa1, fi1
-
-      PARDO fa, fi
-
-               GET        FT1old[fa,fi] 
-               GET        FwC[fa,fi] 
-               tai[fa,fi] = FT1old[fa,fi] 
-
-               etemp = tai[fa,fi]*FwC[fa,fi]  
-               etemp*= 2.0  
-
-	       esum1 += etemp
-
-      ENDPARDO fa, fi
-
-server_barrier
-e1new = 0.0
-e2new = 0.0
-collective e1new += esum1
-collective e2new += esum2
-print ifrag
-print e1new
-print e2new
-
-enddo ifrag
-
-server_barrier
-set_persistent FwC "MOI_wC"
-set_persistent FT1old "MOI_T1"
-set_persistent FT2old "MOI_T2ab"
-set_persistent FFock_oo "MOI_Fock_oo"
-set_persistent FFock_vv "MOI_Fock_vv"
-set_persistent Fca_o "MOI_Ca_o"
-set_persistent Fca_v "MOI_Ca_v"
-set_persistent HBAR_ii "MOI_HBAR_ii"
-set_persistent HBAR_aa "MOI_HBAR_aa"
-set_persistent HBAR_ia "MOI_HBAR_ia"
-set_persistent HBAR_AJIB "MOI_HBAR_ajib"
-set_persistent HBAR_IAJK "MOI_HBAR_iajk"
-set_persistent HBAR_ABCI "MOI_HBAR_abci"
+#server_barrier
+#do ifrag
+#where ifrag == 1
+#
+#    pardo fa, fi
+#        get t1old[fa,fi]
+#	get wC[fa,fi]
+#
+#	tai[fa,fi] = t1old[fa,fi]
+#	t1ai[fa,fi] = wC[fa,fi]
+#
+#	put FT1old[fa,fi] = tai[fa,fi]
+#	put FwC[fa,fi] = t1ai[fa,fi]
+#
+#    endpardo fa, fi
+#
+#    pardo fa, fi, fa1, fi1
+#
+#        get T2old[fa,fi,fa1,fi1]
+#
+#	t1ppqq[fa,fi,fa1,fi1] = T2old[fa,fi,fa1,fi1]
+#
+#	put FT2old[fa,fi,fa1,fi1] = t1ppqq[fa,fi,fa1,fi1]
+#	
+#    endpardo fa, fi, fa1, fi1
+#
+#    pardo fmu, fi
+#    print  ca[fmu,fi]
+#       put Fca_o[fmu,fi] = ca[fmu,fi]
+#    endpardo fmu, fi
+#
+#    pardo fmu, fa
+#    print ca[fmu,fa]
+#       put Fca_v[fmu,fa] = ca[fmu,fa]
+#    endpardo fmu, fa
+#
+#    pardo fi, fi1
+#        get Dfock_a[fi,fi1]
+##	GET         wC[fi,fi1]
+#	Tpp[fi,fi1] = Dfock_a[fi,fi1]
+##	Tpp[fi,fi1] += wC[fi,fi1]
+#        put FFock_oo[fi,fi1] = Tpp[fi,fi1]
+#    endpardo fi, fi1
+#
+#    pardo fa, fa1
+#        get Dfock_a[fa,fa1]
+##	GET         wC[fa,fa1]
+#	Tpp[fa,fa1] = Dfock_a[fa,fa1]
+##	Tpp[fa,fa1] += wC[fa,fa1]
+#        put FFock_vv[fa,fa1] = Tpp[fa,fa1]
+#    endpardo fa, fa1
+#
+#esum1 = 0.0
+#esum2 = 0.0
+#    server_barrier
+#
+#      PARDO fa, fi, fa1, fi1 
+#
+#               GET                T2old[fa,fi,fa1,fi1]
+#               GET                Vaibj[fa,fi,fa1,fi1]
+#               GET                Vaibj[fa,fi1,fa1,fi]
+#
+#               t1ppqq[fa,fi,fa1,fi1] = Vaibj[fa,fi,fa1,fi1]
+#               t3ppqq[fa,fi1,fa1,fi] = Vaibj[fa,fi1,fa1,fi]
+#               t2ppqq[fa,fi,fa1,fi1] = t3ppqq[fa,fi1,fa1,fi]
+#               t1ppqq[fa,fi,fa1,fi1]*= 2.0
+#               t1ppqq[fa,fi,fa1,fi1]-= t2ppqq[fa,fi,fa1,fi1]
+#
+#               etemp = T2old[fa,fi,fa1,fi1]*t1ppqq[fa,fi,fa1,fi1]
+#
+#               esum2 += etemp
+#
+#      ENDPARDO fa, fi, fa1, fi1
+#
+#      PARDO fa, fi
+#
+#               GET        FT1old[fa,fi] 
+#               GET        FwC[fa,fi] 
+#               tai[fa,fi] = FT1old[fa,fi] 
+#
+#               etemp = tai[fa,fi]*FwC[fa,fi]  
+#               etemp*= 2.0  
+#
+#	       esum1 += etemp
+#
+#      ENDPARDO fa, fi
+#
+#server_barrier
+#e1new = 0.0
+#e2new = 0.0
+#collective e1new += esum1
+#collective e2new += esum2
+#print ifrag
+#print e1new
+#print e2new
+#
+#enddo ifrag
+#
+#server_barrier
+#set_persistent FwC "MOI_wC"
+#set_persistent FT1old "MOI_T1"
+#set_persistent FT2old "MOI_T2ab"
+#set_persistent FFock_oo "MOI_Fock_oo"
+#set_persistent FFock_vv "MOI_Fock_vv"
+#set_persistent Fca_o "MOI_Ca_o"
+#set_persistent Fca_v "MOI_Ca_v"
+#set_persistent HBAR_ii "MOI_HBAR_ii"
+#set_persistent HBAR_aa "MOI_HBAR_aa"
+#set_persistent HBAR_ia "MOI_HBAR_ia"
+#set_persistent HBAR_AJIB "MOI_HBAR_ajib"
+#set_persistent HBAR_IAJK "MOI_HBAR_iajk"
+#set_persistent HBAR_ABCI "MOI_HBAR_abci"
 
          sip_barrier 
                            ENDSIAL FRAG_2ORDER_CORR 
