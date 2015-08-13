@@ -113,10 +113,10 @@ size_t DiskBackedBlockMap::backup_and_free_doubles(size_t requested_doubles_to_f
 				write_block_to_disk(bid, blk);
 				blocks_to_disk_.inc();
 				blk->disk_state_.set_valid_on_disk();
-				blk->disk_state_.unset_in_memory();
 			}
 			double* data_to_free = blk->get_data();
 			free_data(data_to_free, blk->size()); //this method updates remaining_doubles_
+			blk->disk_state_.unset_in_memory();
 			blk->data_ = NULL;
 			freed_count += blk->size();
 		}
