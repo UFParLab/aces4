@@ -293,6 +293,9 @@ void anti_symm_o(
 void anti_symm_v(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
+void print_block_and_index(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
 //##############################
 }
 
@@ -532,6 +535,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
+    procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
 	//THE & WITH THE NAME IN THE C PROTOTYPE.

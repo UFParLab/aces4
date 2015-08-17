@@ -3385,40 +3385,47 @@ pardo a,i,a1,i1
     put D2RNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 server_barrier
-pardo a,i,a1,i1
-    request VCHACT2AA[a,i,a1,i1]
-    Taiai[a,i,a1,i1] = VCHACT2AA[a,i,a1,i1]
-    T3aiai[a1,i,a,i1] = 0.0
-
-    if a == a1
-	execute anti_symm_v Taiai[a,i,a1,i1]
-    endif
-    if a < a1
-	T3aiai[a1,i,a,i1]  = Taiai[a,i,a1,i1]
-	T3aiai[a1,i,a,i1] *= -1.0
-    endif
-
-    put DRNaiai[a,i,a1,i1] += Taiai[a,i,a1,i1]
-    put DRNaiai[a1,i,a,i1] += T3aiai[a1,i,a,i1]
-endpardo a,i,a1,i1
+     PARDO  a, a1, i, i1
+     where a == a1
+          REQUEST            VCHACT2AA[a,i,a1,i1]
+          Raiai[a,i,a1,i1] = VCHACT2AA[a,i,a1,i1]
+          execute anti_symm_v Raiai[a,i,a1,i1]
+#
+          put DRNaiai[a,i,a1,i1] += Raiai[a,i,a1,i1]
+     ENDPARDO a, a1, i, i1
+#
+     PARDO  a, a1, i, i1
+     where a < a1
+          REQUEST            VCHACT2AA[a,i,a1,i1]
+#
+	  Raiai[a,i,a1,i1]   = VCHACT2AA[a,i,a1,i1]
+	  R3aiai[a1,i,a,i1]  = VCHACT2AA[a,i,a1,i1]
+	  R3aiai[a1,i,a,i1] *= -1.0
+#
+          put DRNaiai[a,i,a1,i1] += Raiai[a,i,a1,i1]
+          put DRNaiai[a1,i,a,i1] += R3aiai[a1,i,a,i1]
+     ENDPARDO a, a1, i, i1
 server_barrier
-pardo a,i,a1,i1
-    get DRNaiai[a,i,a1,i1]
-    Taiai[a,i,a1,i1] = DRNaiai[a,i,a1,i1]
-    T3aiai[a,i1,a1,i] = 0.0
-
-    if i == i1
-	execute anti_symm_o Taiai[a,i,a1,i1]
-    endif
-    if i < i1
-	T3aiai[a,i1,a1,i]  = Taiai[a,i,a1,i1]
-	T3aiai[a,i1,a1,i] *= -1.0
-    endif
-
-    put D2RNaiai[a,i,a1,i1] += Taiai[a,i,a1,i1]
-    put D2RNaiai[a,i1,a1,i] += T3aiai[a,i1,a1,i]
-
-endpardo a,i,a1,i1
+     PARDO a, a1, i, i1
+     where i == i1
+           get DRNaiai[a,i,a1,i1]
+           Raiai[a,i,a1,i1] = DRNaiai[a,i,a1,i1]
+           execute anti_symm_o Raiai[a,i,a1,i1]
+#
+           put D2RNaiai[a,i,a1,i1]+=Raiai[a,i,a1,i1]
+     ENDPARDO  a, a1, i, i1
+#
+     PARDO a, a1, i, i1
+     where i < i1
+           get DRNaiai[a,i,a1,i1]
+           Raiai[a,i,a1,i1]  = DRNaiai[a,i,a1,i1]
+           R2aiai[a,i1,a1,i] = DRNaiai[a,i,a1,i1]
+           R2aiai[a,i1,a1,i] *=-1.0
+#
+           put D2RNaiai[a,i,a1,i1]+=Raiai[a,i,a1,i1]
+           put D2RNaiai[a,i1,a1,i]+=R2aiai[a,i1,a1,i]
+#
+     ENDPARDO  a, a1, i, i1
 server_barrier
 pardo a,i,a1,i1
     get D2RNaiai[a,i,a1,i1]
