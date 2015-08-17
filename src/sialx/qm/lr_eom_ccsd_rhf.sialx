@@ -3659,6 +3659,7 @@ server_barrier
 delete DRNaiai
 delete D2RNaiai
 server_barrier
+
 ENDPROC SYMMETRHC_A
 
 PROC place_HB
@@ -3718,6 +3719,20 @@ do ksub
     server_barrier
 
     call SYMMETRHC_A
+
+#    server_barrier
+#    sum1 = 0.0
+#    pardo a,i,a1,i1
+#	request VCHACT2AA[a,i,a1,i1]
+#	Taiai[a,i,a1,i1]  = VCHACT2AA[a,i,a1,i1]
+#	etemp = Taiai[a,i,a1,i1]*VCHACT2AA[a,i,a1,i1]
+#	sum1 += etemp
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    sum2 = 0.0
+#    collective sum2 += sum1
+#    print "r2aa checksum"
+#    print sum2
 
     call place_HB
     server_barrier
