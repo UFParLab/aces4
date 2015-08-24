@@ -15,15 +15,67 @@
 #include "sip_mpi_constants.h"
 #include "async_ops.h"
 #include "distributed_block_consistency.h"
-#include <gtest/gtest_prod.h>
+#include "chunk_manager.h"
+#include "chunk.h"
+
 
 namespace sip {
 
 class SIPServer;
-class DiskBackedArraysIO;
 class DiskBackedBlockMap;
+class ServerBlock;
 
+/**
+ * Encapsulates the data array belonging to this block, and the information necessary to
+ * retrieve it.  The data array may be NULL.
+ */
+class BlockData{
+public:
+	/**
+	 *
+	 * @return  pointer to this blocks data array, or NULL if not in memory.
+	 */
+	double* get_data() const{
+		return chunk_->get_data(offset_);
+	}
 
+	Chunk::offset_val_t file_offset(){
+		return chunk_->file_offset() + offset_;
+	}
+
+	friend std::ostream& operator<< (std::ostream& os, const BlockData& block);
+
+	/** Overload ==  Only compares chunk and offset
+	 * Overloading == and < is required because we are using BlockIds as
+	 * keys in the block map, which is currently an STL map instance,
+	 * where map is a binary tree.
+	 *
+	 * @param rhs
+	 * @return
+	 */
+	bool operator==(const BlockData& rhs) const;
+
+	/** Overload <.
+	 *  a < b if the a.chunk_ < b.chunk_ or a.chunk_ = chunk_  &&  a.offset_ < b.offset
+	 * @param rhs
+	 * @return
+	 */
+	bool operator<(const BlockData& rhs) const;
+
+	friend class DiskBackedBlockMap;
+
+private:
+	BlockData(size_t size, Chunk* chunk, Chunk::offset_val_t offset):
+		size_(size), chunk_(chunk), offset_(offset){
+	}
+
+	const size_t size_;
+	Chunk* chunk_;
+	Chunk::offset_val_t offset_;  //offset, in units of double values within the chunk
+
+	friend ServerBlock;
+
+};
 
 /**
  * TODO  Update these comments!!!
@@ -90,43 +142,12 @@ class DiskBackedBlockMap;
  * 111 -> No Action				-> 111
  *
  */
-class ServerBlock;
 
-class DiskBackingState{
-private:
-//	void set_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = true; }
-	void set_valid_on_disk() { disk_status_[VALID_ON_DISK] = true; }
-	void set_in_memory() { disk_status_[IN_MEMORY] = true; }
-	void set_on_disk() { disk_status_[ON_DISK] = true; }
-
-//	void unset_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false; }
-	void unset_valid_on_disk() { disk_status_[VALID_ON_DISK] = false; }
-	void unset_in_memory() { disk_status_[IN_MEMORY] = false; }
-	void unset_on_disk() { disk_status_[ON_DISK] = false; }
-
-//	bool is_dirty() { return disk_status_[DiskBackingState::DIRTY_IN_MEMORY]; }
-	bool is_valid_on_disk() {return disk_status_[VALID_ON_DISK]; }
-	bool is_in_memory() { return disk_status_[IN_MEMORY]; }
-	bool is_on_disk() { return disk_status_[ON_DISK]; }
-
-	DiskBackingState(){
-		disk_status_[IN_MEMORY] = false;
-		disk_status_[ON_DISK] = false;
-//		disk_status_[DIRTY_IN_MEMORY] = false;
-		disk_status_[VALID_ON_DISK] = false;
-	}
-	enum ServerBlockStatus {
-		IN_MEMORY		= 0,	// Block is on host
-		ON_DISK			= 1,	// Block is on device (GPU)
-//		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
-		VALID_ON_DISK = 2,      // BLock is up-to-date on disk
-	};
-	std::bitset<3> disk_status_;
-	friend ServerBlock;
-	friend DiskBackedBlockMap;
-	friend DiskBackedArraysIO;
-	DISALLOW_COPY_AND_ASSIGN(DiskBackingState);
-};
+/** Invariants:
+ *
+ *  Block has been assigned data in a chunk.
+ *  The block pointer is stored in that chunk iff block exists.
+ */
 
 class ServerBlock {
 public:
@@ -134,10 +155,7 @@ public:
 	typedef ServerBlock* ServerBlockPtr;
 
 
-
-	~ServerBlock();
-
-
+	~ServerBlock(); //remove from chunk's block list
 
 	/**
 	 * Updates and checks the consistency of a server block.
@@ -149,63 +167,46 @@ public:
 			return race_state_.update_and_check_consistency(operation, worker, section);
 }
 
-    dataPtr get_data() { return data_; }
-	void set_data(dataPtr data) { data_ = data; }
-
-	size_t size() { return size_; }
+    dataPtr get_data() { return block_data_.get_data(); }
+	size_t size() const { return block_data_.size_; }
+	Chunk* get_chunk(){ return block_data_.chunk_;}
 
     dataPtr accumulate_data(size_t size, dataPtr to_add); /*! for all elements, this->data += to_add->data */
     dataPtr fill_data(double value);
     dataPtr increment_data(double delta);
     dataPtr scale_data(double factor);
 
-//    void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
-//    void allocate_in_memory_data(bool init); 	/*! Allocs mem for FP data, optionally initializes to 0*/
-
-
 	void wait(){ async_state_.wait_all();}
 	void wait_for_writes(){ async_state_.wait_for_writes();}
 
-//	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
-
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
-//TODO this is only public because "friending the test class doesn't seem to work"
-	/**
-	 * Constructs a block, allocating size number
-	 * of double precision numbers; optionally
-	 * initializes all elements to 0
-	 * @param size
-	 * @param init
-	 */
-	explicit ServerBlock(size_t size, bool init);
 private:
 
-	/**
-	 * Constructs a block with a given pointer to
-	 * double precision numbers and size. data
-	 * parameter can be NULL.
-	 * @param size
-	 * @param data can be NULL
-	 */
-	explicit ServerBlock(size_t size, dataPtr data);
+//    const size_t size_;/**< Number of elements in block */  //TODO get rid of this, is now in BlockData
 
-    const size_t size_;/**< Number of elements in block */
-	dataPtr data_;	/**< Pointer to block of data */
+    BlockData block_data_;
+
 	ServerBlockAsyncManager async_state_; /** handles async communication operations */
-    DiskBackingState disk_state_;
+
     DistributedBlockConsistency race_state_;
 
+    /*  this is private because blocks should ONLY be created by create_block
+     * method in DiskBackedBlockMap;
+     */
+//	ServerBlock(size_t size, Chunk& chunk, Chunk::offset_val_t offset):
+//	//	size_(size),
+//		block_data_(size, chunk, offset){
+//	}
 
-//	const static std::size_t field_members_size_;
-//	static std::size_t allocated_bytes_;
+    ServerBlock(size_t size, ChunkManager* manager,
+    		int chunk_number, Chunk::offset_val_t offset):
+    			block_data_(size, manager->chunk(chunk_number), offset){}
 
-	friend DiskBackedArraysIO;
-	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
 	friend class PendingAsyncManager;
-	FRIEND_TEST(Sial_Unit,ServerBlockLRUArrayPolicy);
-//	friend class Sial_Unit_ServerBlockLRUArrayPolicy_Test;
+	friend class DiskBackedBlockMap;
+
 
 	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
 };

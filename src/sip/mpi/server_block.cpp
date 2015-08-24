@@ -16,19 +16,54 @@
 
 #include "lru_array_policy.h"
 
+using namespace std::rel_ops;
 namespace sip {
+
+bool BlockData::operator==(const BlockData& rhs) const {
+	return chunk_->file_offset() == rhs.chunk_->file_offset() && offset_ == rhs.offset_;
+}
+
+bool BlockData::operator<(const BlockData& rhs) const{
+	if (this == &rhs) return false;
+	return (chunk_->file_offset() < rhs.chunk_->file_offset()) || ((chunk_->file_offset() == rhs.chunk_->file_offset()) && (offset_ < rhs.offset_));
+}
+
+std::ostream& operator<< (std::ostream& os, const BlockData& block_data){
+	os << "BlockData" << std::endl;
+	os << "SIZE=" << block_data.size_ << std::endl;
+	os << "Chunk" << block_data.chunk_ << std::endl;
+	os << "offset" << block_data.offset_ << std::endl;
+	int i = 0;
+	const int MAX_TO_PRINT = 800;
+	const int MAX_IN_ROW = 80;
+	int size = block_data.size_;
+	double* data = block_data.get_data();
+	if (data == NULL) {
+		os << " data = NULL";
+	} else {
+		while (i < size && i < MAX_TO_PRINT) {
+			for (int j = 0; j < MAX_IN_ROW && i < size; ++j) {
+				os << data[i++] << "  ";
+			}
+			os << '\n';
+		}
+	}
+	os << "END OF BLOCK" << std::endl;
+	return os;
+}
+
 
 //const std::size_t ServerBlock::field_members_size_ = sizeof(int) + sizeof(int) + sizeof(dataPtr);
 //std::size_t ServerBlock::allocated_bytes_ = 0;
 
 //caller is responsible for updating memory usage accounting in DiskBackedBlockMap
-ServerBlock::ServerBlock(size_t size, bool initialize):
-		size_(size){
-	if (initialize){
-		data_ = new double[size_]();
-    } else {
-		data_ = new double[size_];
-    }
+//ServerBlock::ServerBlock(size_t size, bool initialize):
+//		size_(size){
+//	if (initialize){
+//		data_ = new double[size_]();
+//    } else {
+//		data_ = new double[size_];
+//    }
 //	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = true;
 //	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
 //	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
@@ -37,48 +72,52 @@ ServerBlock::ServerBlock(size_t size, bool initialize):
 //	const std::size_t bytes_in_block = field_members_size_ + size_ * sizeof(dataPtr);
 //	allocated_bytes_ += bytes_in_block;
 //	allocated_bytes_ += size_ * sizeof(double);
-}
+//}
 
 
-ServerBlock::ServerBlock(size_t size, dataPtr data):
-		size_(size), data_(data) {
-//	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = (data_ == NULL) ? false : true;
-//	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
-//	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
-
-	// Only Count number of bytes allocated for actual data.
-//	const std::size_t bytes_in_block = field_members_size_ + size_ * sizeof(dataPtr);
-//	allocated_bytes_ += bytes_in_block;
-//    if (data_ != NULL)
-//    	allocated_bytes_ += size_ * sizeof(double);
-}
+//ServerBlock::ServerBlock(size_t size, dataPtr data):
+//		size_(size), data_(data) {
+////	disk_state_.disk_status_[DiskBackingState::IN_MEMORY] = (data_ == NULL) ? false : true;
+////	disk_state_.disk_status_[DiskBackingState::ON_DISK] = false;
+////	disk_state_.disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false;
+//
+//	// Only Count number of bytes allocated for actual data.
+////	const std::size_t bytes_in_block = field_members_size_ + size_ * sizeof(dataPtr);
+////	allocated_bytes_ += bytes_in_block;
+////    if (data_ != NULL)
+////    	allocated_bytes_ += size_ * sizeof(double);
+//}
 
 ServerBlock::~ServerBlock(){
-//	const std::size_t bytes_in_block = size_ * sizeof(double);
-	std::stringstream ss;
-	if (data_ != NULL) {
-        async_state_.wait_all();
-		delete [] data_;
-	}
+////	const std::size_t bytes_in_block = size_ * sizeof(double);
+//	std::stringstream ss;
+//	if (data_ != NULL) {
+//        async_state_.wait_all();
+//		delete [] data_;
+//	}
+	block_data_.chunk_->remove_server_block(this);
 }
 
-ServerBlock::dataPtr ServerBlock::accumulate_data(size_t size, dataPtr to_add){
-	check(size_ == size, "accumulating blocks of unequal size");
+ServerBlock::dataPtr ServerBlock::accumulate_data(size_t asize, dataPtr to_add){
+	double* data_ = block_data_.get_data();
+	check(size() == asize, "accumulating blocks of unequal size");
 	check(data_ != NULL, "attempting to accumulate into block with null data_");
 	check(to_add != NULL, "attempting to accumulate from null dataPtr");
-	for (size_t i = 0; i < size; ++i){
+	for (size_t i = 0; i < asize; ++i){
 			data_[i] += to_add[i];
 	}
 	return data_;
 }
 
 ServerBlock::dataPtr ServerBlock::fill_data(double value) {
-	std::fill(data_+0, data_+size_, value);
+	double* data_ = block_data_.get_data();
+	std::fill(data_+0, data_+size(), value);
 	return data_;
 }
 
 ServerBlock::dataPtr ServerBlock::scale_data(double factor) {
-	for (int i = 0; i < size_; ++i) {
+	double* data_ = block_data_.get_data();
+	for (int i = 0; i < size(); ++i) {
 		data_[i] *= factor;
 	}
 //	std::cout << "at server, in scale_data, first element of block is " << data_[0] << std::endl<< std::flush;
@@ -86,7 +125,8 @@ ServerBlock::dataPtr ServerBlock::scale_data(double factor) {
 }
 
 ServerBlock::dataPtr ServerBlock::increment_data( double delta) {
-	for (int i = 0; i < size_; ++i) {
+	double* data_ = block_data_.get_data();
+	for (int i = 0; i < size(); ++i) {
 		data_[i] += delta;
 	}
 	return data_;
@@ -115,21 +155,7 @@ ServerBlock::dataPtr ServerBlock::increment_data( double delta) {
 //}
 
 std::ostream& operator<<(std::ostream& os, const ServerBlock& block) {
-	os << "SIZE=" << block.size_ << std::endl;
-	int i = 0;
-	const int MAX_TO_PRINT = 800;
-	const int MAX_IN_ROW = 80;
-	int size = block.size_;
-	if (block.data_ == NULL) {
-		os << " data_ = NULL";
-	} else {
-		while (i < size && i < MAX_TO_PRINT) {
-			for (int j = 0; j < MAX_IN_ROW && i < size; ++j) {
-				os << block.data_[i++] << "  ";
-			}
-			os << '\n';
-		}
-	}
+	os << block.block_data_ << std::endl;
 	os << "END OF BLOCK" << std::endl;
 	return os;
 }

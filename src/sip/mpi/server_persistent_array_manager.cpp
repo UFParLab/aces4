@@ -58,9 +58,9 @@ namespace sip {
 		runner->disk_backed_block_map_.restore_persistent_array(array_id, label);
 	}
 
-
+//TODO  don't need array_blocks parameter any more
 	void ServerPersistentArrayManager::save_distributed(SIPServer* runner, const int array_id, const std::string& label, IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
-		runner->disk_backed_block_map_.save_persistent_array(array_id, label, array_blocks);
+		runner->disk_backed_block_map_.save_persistent_array(array_id, label);
 	}
 
 

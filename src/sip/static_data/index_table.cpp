@@ -369,6 +369,22 @@ int IndexTable::num_subsegments(int index_slot, int parent_segment_value) const 
 	return toreturn;
 }
 
+void IndexTable::segment_info(int index_slot, int& min, int& max, int& num_segments, int& lower) const{
+	num_segments = entries_.at(index_slot).num_segments_;
+	check(num_segments >0, "index with no segments");
+	lower = lower_seg(index_slot);
+	int seg = lower;
+	min = max = segment_extent(index_slot, seg);
+	seg++;
+	for (int i = 1; i < num_segments; ++i){
+		int extent = segment_extent(index_slot,seg);
+		min = (extent < min)? extent : min;
+		max = (extent > max)? extent : max;
+	}
+
+}
+
+
 std::ostream& operator<<(std::ostream& os, const IndexTable& indexTableObj) {
 	std::vector<IndexTableEntry>::const_iterator it;
 	const std::vector<IndexTableEntry> &table = indexTableObj.entries_;

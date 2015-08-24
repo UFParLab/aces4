@@ -19,12 +19,14 @@ class ArrayFile;
 
 /** Entries in ChunkMap.  Each entry represents a chunk
  *
- *This is a passive container, its state is maintained by the containing ChunkList class.
+ *This is a passive container, its state is controlled by the containing ChunkList class.
  *In particular, the lifetime of the data array is managed elsewhere.
  */
 class Chunk {
 
 public:
+
+	typedef double* data_ptr_t;
 	/**
 	 *
 	 * @param data
@@ -32,28 +34,21 @@ public:
 	 * @param valid_on_disk
 	 * @param file_offset
 	 */
-	Chunk(double* data, size_t size, MPI_Offset file_offset, bool valid_on_disk) :
-			data_(data),
-			num_allocated_doubles_(0),
-			file_offset_(file_offset),
-			valid_on_disk_(valid_on_disk){
+	Chunk(data_ptr_t data, size_t size, MPI_Offset file_offset, bool valid_on_disk) :
+			data_(data), num_assigned_doubles_(0), file_offset_(file_offset), valid_on_disk_(
+					valid_on_disk) {
 	}
 
-	~Chunk() {//don't delete data here
+	~Chunk() { //don't delete data here.  Data is owned by the owning ChunkManager
 	}
 private:
-
-	double* data_;  //pointer to beginning of chunk
-	MPI_Offset file_offset_;  //offset is in units of doubles starting at 0
-							  //the file view should have been set with a displacement
-							  //to skip the header and index.
-	size_t num_allocated_doubles_; //number of doubles allocated  (remaining = chunk size = num_allocated_doubles)
+	data_ptr_t data_;  //pointer to beginning of chunk
+	ArrayFile::offset_val_t file_offset_; //offset is in units of doubles starting at 0
+	//the file view should have been set with a displacement
+	//to skip the header and index.
+	size_t num_assigned_doubles_; //number of doubles allocated  (remaining = chunk size - num_allocated_doubles)
 	bool valid_on_disk_;
 
-
-	double * next_data_(){
-		return data_ + num_allocated_doubles_;
-	}
 	friend class ChunkList;
 	friend class ArrayFile;
 	friend std::ostream& operator<<(std::ostream&, const Chunk& obj);
@@ -61,21 +56,127 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(Chunk);
 };
 
-///** per array list of chunks */
-//class ChunkList {
-//public:
-//	typedef std::vector<Chunk*> ChunkList_t;
-//
-//	ChunkList(size_t chunk_size) :
-//			chunk_size_(chunk_size), {
-//		check(max_block_size < (size_t) std::numeric_limits<int>::max(),
-//				"Chunk size exceeds implementation limit (which currently is the max value represented by int");
-//	}
-//
-//	~ChunkList() {
-//		//TODO list contains pointer so Entries which contain pointers to data arrays.
-//		//pay attention to when these are deleted.
-//	}
+/**
+ * This class maintains the set of Chunks for each array.
+ *
+ * It owns and is responsible for allocating and deallocating chunk data arrays.
+ */
+class ChunkManager {
+public:
+	typedef std::vector<Chunk> chunks_t;
+	typedef size_t chunk_size_t;
+	typedef ArrayFile::offset_val_t offset_val_t;
+	typedef Chunk::data_ptr_t data_ptr_t;
+
+	ChunkManager(chunk_size_t chunk_size) :
+	chunk_size_(chunk_size), {
+	}
+
+	/**
+	 * Deletes chunks managed by this list and
+	 *
+	 * Precondition:  All of the data arrays belonging to chunks belonging to this manager have already
+	 * been deleted.  This is checked.  The reason for this decision is to allow the DiskBackedBlockMap
+	 * to learn how much memory has been released.
+	 *
+	 * Precondition:  All of the blocks belonging to this array have already been deleted.  This guarantees that
+	 * no pending operations are in progress.  This cannot be checked here.
+	 */
+	~ChunkManager() {
+		chunks_t::iterator it;
+		for (it = chunks_.begin(); it != chunks_.end(); ++it) {
+			check(it->data_ == NULL, "Memory leak: attempting to delete chunk with allocated data");
+		}
+	}
+
+	/**
+	 * Allocates a data array for a new chunk and updates the manager's state.
+	 * Other bookkeeping must be done by the caller.
+	 *
+	 * The offset of the new chunk is determined from the number of servers, the chunk_size,
+	 * and the number of chunks already created by this manager.  Chunks are stored in an
+	 * ordered list so that the offsets increase with chunk numbers.
+	 *
+	 * Throws a bad alloc exception if memory request cannot be satisfied.
+	 * Typically the caller may try to free some memory and try again.
+	 *
+	 * The data array is not initialized to zero.
+	 *
+	 * @return number of doubles allocated
+	 */
+	size_t new_chunk();
+
+	/**
+	 * Assigns num_doubles from the given chunk, and returns the offset.
+	 * Will try to create a new chunk if not enough space in the current one.
+	 *
+	 * (We will use allocate to refer to asking the OS to allocate more memory with new, and
+	 * assign for allocations we manage.)
+	 *
+	 * Throws an exception (propagated from new_chunk) if allocating a new chunk fails.
+	 * Returns number of doubles newly allocated by this call.  This is zero if there
+	 * was enough space in the current chunk to satisyf the request.
+	 *
+	 * @param [in] num_doubles
+	 * @param [in]initialize
+	 * @param [out] chunk   number of chunk that holds data
+	 * @param [out] offset
+	 * @return number of newly allocated doubles
+	 */
+	size_t assign_block_data_from_chunk(size_t num_doubles, bool initialize,
+			int& chunk_number, size_t& offset);
+
+
+	/**
+	 * Deletes data array for the given chunk (if one was allocated) and returns the amount
+	 * of memory involved
+	 *
+	 * @param chunk
+	 * @return
+	 */
+	size_t delete_chunk_data(Chunk& chunk);
+
+
+	/**
+	 * Deletes the data array for all chunks belonging to this manager.  Establishes the
+	 * precondition of the destructor.
+	 * @return doubles deallocated.
+	 */
+	size_t delete_chunk_data_all();
+
+	//returns null if no data allocated for this chunk
+	data_ptr_t get_data(int chunk_num, offset_val_t offset) const{
+		Chunk& chunk = chunks_.at(chunk_num);
+		if (chunk.data_ != NULL){
+			return chunk.data_ + offset;
+		}
+		return NULL;
+	}
+
+
+
+private:
+	chunks_t chunks_;
+	const chunk_size_t chunk_size_;
+
+};
+
+} /* namespace sip */
+
+#endif /* PER_ARRAY_CHUNK_LIST_H_ */
+///**
+// * Called to free chunk data, for example after chunk has been written to disk.
+// * The num_allocated_doubles member is not modified.
+// *
+// * @param chunk
+// * @return
+// */
+//size_t free_chunk_data(Chunk* chunk){
+//	if (chunk->data_ == NULL) return 0;
+//	delete [] chunk->data_;
+//	chunk->data_=NULL;
+//	return chunk_size_;
+//}
 //
 //	double * get_data(Chunk* entry, size_t offset){
 //		return entry->data_ + offset;
@@ -173,12 +274,9 @@ private:
 //	size_t new_chunk();
 //}
 //;
-
-} /* namespace sip */
-
-#endif /* PER_ARRAY_CHUNK_LIST_H_ */
-
-
+//} /* namespace sip */
+//
+//#endif /* PER_ARRAY_CHUNK_LIST_H_ */
 
 ///**
 // * Delete all chunks in the list and return number of doubles freed.
@@ -195,7 +293,6 @@ private:
 //	}
 //	return doubles_freed;
 //}
-
 //	//frees memory
 //	//to be used after chunk is written to disk
 //	void free_and_set_valid_on_disk(int chunk){
@@ -206,7 +303,6 @@ private:
 //		entry.num_allocated_doubles_ = 0;
 //		entry.valid_on_disk_ = true;
 //	}
-
 //	//returns the number of total number of doubles in allocated chunks
 //	size_t used_doubles(){
 //		size_t num_doubles = 0;
@@ -216,7 +312,6 @@ private:
 //		}
 //		return num_doubles;
 //	}
-
 ////called when array is deleted, return number of doubles freed
 //size_t delete_all_chunks() {
 //	size_t doubles_freed = 0;
@@ -234,7 +329,6 @@ private:
 //double* data(int chunk_num, size_t chunk_offset) {
 //	return chunk_list_.at(chunk_num).data_ + chunk_offset;
 //}
-
 ////allocates memory for a new chunk and updates its own data structures.  Other bookkeeping
 //// must be done by caller.  This will throw a bad alloc exception if memory request
 ////cannot be satisfied, so the call should be surrounded by try-catch.
@@ -255,7 +349,6 @@ private:
 //	chunk_list_.push_back(entry);
 //	return chunk_size_;
 //}
-
 //used to reallocate data before reading from disk
 //memory is not initialized to zero
 //precondition:  chunk.data_ is NULL
@@ -293,4 +386,3 @@ private:
 //}
 //return doubles_freed;
 //}
-

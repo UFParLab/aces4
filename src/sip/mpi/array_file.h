@@ -13,19 +13,26 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <sstream>
 #include <mpi.h>
 #include "sip.h"
-#include "per_array_chunk_list.h"
+#include "chunk.h"
+#include "data_distribution.h"
+
 namespace sip {
 
-/** Encapsulates file IO for server disk backing and persistence
+class Chunk;
+class ChunkManager;
+/** Encapsulates file IO for server disk backing and persistence.
+ *
+ * Responsible for converting array names and persistent array labels to file names.
  *
  * The file format is
  *
  * <file> ::= <header> <index> <data>
  *
  *
- * <header> ::= <size_t num_blocks> <size_t chunk_size>
+ * <header> ::= <size_t num_blocks> <size_t chunk_size> <size_t num_servers>
  * <index> ::=  <MPI_Offset><MPI_Offset>*  where the length of this list is num_blocks
  * <data> ::= <double>*
  *
@@ -39,20 +46,30 @@ namespace sip {
  */
 class ArrayFile {
 public:
-	/**
-	 * These definitions define the type of the values in the header.  The C++ type must
-	 * match the MPI type.
+
+	/** these definitions define the types of values in the header and index.
+	 *
+	 * Note header_val_t and index_val_t are defined to be c++ types,
+	 * as is MPI_Offset  The latter's size is supposed to be large enough to handle
+	 * the largest files supported on the given system.
+	 *
+	 * In contrast MPI_INDEX_VAL_T and MPI_HEADER_VAL_T are MPI_Datatype (and
+	 * can be passed as type arguments to MPI routines.)
+	 *
+	 * The c++ types must match the MPI_Datatype.  For example, if the c++
+	 * type is int, the MPI_Datatype should be MPI_INT.
+	 *
+	 * WARNING:  MPI_Offset is implementation/configuration specific.
+	 * TODO fix more generally
 	 */
-	const static int NUM_VALS_IN_HEADER = 2;
+
 	typedef int header_val_t;
 #define  MPI_HEADER_VAL_T MPI_INT
 
-/** these definitions define the types of values in the index.
- * The c++ type must match the mpi type.
- */
-	typedef int index_val_t;
-#define  MPI_INDEX_VAL_T  MPI_INT
+	typedef MPI_Offset offset_val_t;
+#define  MPI_OFFSET_VAL_T  MPI_LONG_LONG
 
+	const static int NUM_VALS_IN_HEADER = 3;
 	/**
 	 * Opens the file.
 	 *
@@ -74,10 +91,10 @@ public:
 	 * TODO add more info about array to header and check when reopened.
 	 */
 
-	ArrayFile(header_val_t num_blocks, header_val_t chunk_size, const std::string& file_name,
-			const MPI_Comm& comm, bool new_file) :
-			num_blocks_(num_blocks), chunk_size_(chunk_size), is_persistent_(
-					false), label_(std::string("")), comm_(comm) {
+	ArrayFile(header_val_t num_blocks, header_val_t chunk_size, const std::string& array_name,
+			const MPI_Comm& comm, bool new_file, bool save_after_close = false) :
+			num_blocks_(num_blocks), chunk_size_(chunk_size), name_(array_name), is_persistent_(
+					false), save_after_close_(save_after_close), label_(std::string("")), comm_(comm) {
 
 		check_implementation_limits();
 
@@ -85,17 +102,17 @@ public:
 		if (new_file){
 			//open file, creating if necessary.
 			//write header with passed in info
-		int err = MPI_File_open(comm_, const_cast<char *>(file_name.c_str()),
+		int err = MPI_File_open(comm_, const_cast<char *>(file_name().c_str()),
 				 MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL,
 				&fh_);
 		check(err == MPI_SUCCESS, "failure opening new array file at server");
-
-		write_header(); //currently, the header contains the number of blocks and chunk size
+		std::cout << "creating file " << file_name() << std::endl <<std::flush;
+		write_header(); //currently, the header contains the number of blocks, chunk size, and number of servers
 
 		}
 		else {
 			//file must exist.  Read and broadcast header and check that values are as expected.
-			int err = MPI_File_open(comm_, const_cast<char *>(file_name.c_str()),
+			int err = MPI_File_open(comm_, const_cast<char *>(persistent_file_name().c_str()),
 					 MPI_MODE_RDWR, MPI_INFO_NULL,
 					&fh_);
 			check(err == MPI_SUCCESS, "failure opening existing array file at server");
@@ -107,11 +124,23 @@ public:
 	}
 
 	/**
-	 * Closes the file. If it has not been marked persistent, it deletes it.
-	 * If persistent, calls flush and renames it.
+	 *
+	 * If the file is not persistent, it is closed and deleted.
+	 * If it persistent, it is closed and renamed to a filename constructed from the label.
 	 */
 	~ArrayFile() {
 		MPI_File_close(&fh_);
+
+		std::cout << "closing file " << file_name() << std::endl <<std::flush;
+		if (is_persistent_){
+			rename_persistent();
+		}
+		else {
+			if (!save_after_close_) {
+				std::cout << "deleting file " << file_name() << std::endl <<std::flush;
+				delete_file();
+			}
+		}
 	}
 
 
@@ -121,25 +150,15 @@ public:
 	 * Followed by a collective sync.
 	 */
 	void write_header() {
-//			{//for gdb
-//			    int i = 0;
-//			    char hostname[256];
-//			    gethostname(hostname, sizeof(hostname));
-//			    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-//			    fflush(stdout);
-//			    while (0 == i)
-//			        sleep(5);
-//			}
-		int rank;
-		MPI_Comm_rank(comm_, &rank);
-		int err = MPI_File_set_view(fh_, 0, MPI_INDEX_VAL_T, MPI_INDEX_VAL_T,
+		int err = MPI_File_set_view(fh_, 0, MPI_OFFSET_VAL_T, MPI_OFFSET_VAL_T,
 				"native", MPI_INFO_NULL);
-		if (rank == 0) {
+		if (comm_rank() == 0) {
 			header_val_t header[NUM_VALS_IN_HEADER];
 			header[0] = num_blocks_;
 			header[1] = chunk_size_;
+			header[2] = comm_size();
 			int err = MPI_File_write_at(fh_, 0, header,
-					NUM_VALS_IN_HEADER, MPI_INDEX_VAL_T, MPI_STATUS_IGNORE);
+					NUM_VALS_IN_HEADER, MPI_OFFSET_VAL_T, MPI_STATUS_IGNORE);
 			check(err == MPI_SUCCESS, "failure writing array file header");
 		}
 		set_view_for_data();
@@ -148,19 +167,21 @@ public:
 	void read_header() {
 		int rank;
 		MPI_Comm_rank(comm_, &rank);
-		int err = MPI_File_set_view(fh_, 0, MPI_INDEX_VAL_T, MPI_INDEX_VAL_T,
+		int err = MPI_File_set_view(fh_, 0, MPI_OFFSET_VAL_T, MPI_OFFSET_VAL_T,
 				"native", MPI_INFO_NULL);
 		header_val_t header[NUM_VALS_IN_HEADER];
 		if (rank == 0) {
 			int err = MPI_File_read_at(fh_, 0, header,
-					NUM_VALS_IN_HEADER, MPI_INDEX_VAL_T, MPI_STATUS_IGNORE);
+					NUM_VALS_IN_HEADER, MPI_OFFSET_VAL_T, MPI_STATUS_IGNORE);
 			check(err == MPI_SUCCESS, "failure reading array file header");
 		}
-		err = MPI_Bcast(header, NUM_VALS_IN_HEADER, MPI_INDEX_VAL_T, 0,
+		err = MPI_Bcast(header, NUM_VALS_IN_HEADER, MPI_OFFSET_VAL_T, 0,
 				comm_);
 		check(err == MPI_SUCCESS, "header broadcast failed");
 		num_blocks_ = header[0];
 		chunk_size_ = header[1];
+		int file_comm_size = header[2];
+		check(file_comm_size == comm_size(), "unimplemented feature--currently num servers must be same for reading and writing persisitent array");
 		set_view_for_data();
 	}
 
@@ -170,7 +191,7 @@ public:
 	void check_implementation_limits() {
 		check(
 				num_blocks_
-						< std::numeric_limits<index_val_t>::max() / chunk_size_,
+						< std::numeric_limits<offset_val_t>::max() / chunk_size_,
 				"implementation limit encountered:  type used to represent offsets in the index file may not be big enough");
 		check(num_blocks_ < std::numeric_limits<int>::max(),
 				"implemenation limit enountered:  number of blocks too large for int used when writing index file");
@@ -179,7 +200,7 @@ public:
 	void set_view_for_data() {
 		//displacement must be in bytes
 		MPI_Offset displacement = (NUM_VALS_IN_HEADER * sizeof(header_val_t))
-				+ (num_blocks_ * sizeof(index_val_t));
+				+ (num_blocks_ * sizeof(offset_val_t));
 		//TODO add padding for alignment?
 		int err = MPI_File_set_view(fh_, displacement, MPI_DOUBLE, MPI_DOUBLE,
 				"native", MPI_INFO_NULL);
@@ -193,7 +214,7 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_write_(Chunk & chunk) {
+	void chunk_write_(const Chunk & chunk) {
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_write_at(fh_, offset, chunk.data_, chunk_size_,
@@ -210,7 +231,7 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_write_all(Chunk & chunk) {
+	void chunk_write_all(const Chunk & chunk) const {
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_write_at_all(fh_, offset, chunk.data_, chunk_size_,
@@ -219,7 +240,7 @@ public:
 	}
 
 
-	void chunk_write_all_nop() {
+	void chunk_write_all_nop() const{
 		MPI_Status status;
 		int err = MPI_File_write_at_all(fh_, 0, NULL, 0, MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "chunk_write_all_nop failed");
@@ -233,6 +254,7 @@ public:
 	 * @param chunk
 	 */
 	void chunk_read(Chunk& chunk) {
+		std::cerr << "in chunk_read " << chunk << std::endl << std::flush;
 		MPI_Offset offset = chunk.file_offset_;
 		MPI_Status status;
 		int err = MPI_File_read_at(fh_, offset, chunk.data_, chunk_size_,
@@ -275,25 +297,24 @@ public:
 	 *
 	 * @param index
 	 */
-	void write_index(index_val_t* index, header_val_t size) {
+	void write_index(offset_val_t* index, header_val_t size) {
 		check(size == num_blocks_, "array passed to write_index may not have correct size");
 		int rank;
 		MPI_Comm_rank(comm_, &rank);
 		MPI_Offset displacement = NUM_VALS_IN_HEADER * sizeof(header_val_t);
-		int err = MPI_File_set_view(fh_, displacement, MPI_INDEX_VAL_T,
-				MPI_INDEX_VAL_T, "native", MPI_INFO_NULL);
+		int err = MPI_File_set_view(fh_, displacement, MPI_OFFSET_VAL_T,
+				MPI_OFFSET_VAL_T, "native", MPI_INFO_NULL);
 		check(err == MPI_SUCCESS, "setting view to write index failed");
 		MPI_Status status;
 		if (rank == 0) {
 			int err = MPI_Reduce(MPI_IN_PLACE, index, num_blocks_,
-					MPI_INDEX_VAL_T, MPI_SUM, 0, comm_);
+					MPI_OFFSET_VAL_T, MPI_SUM, 0, comm_);
 			check(err == MPI_SUCCESS, "failure reducing file index at root");
-
 			err = MPI_File_write_at(fh_, 0, index, num_blocks_,
-					MPI_INDEX_VAL_T, &status);
+					MPI_OFFSET_VAL_T, &status);
 			check(err == MPI_SUCCESS, "failure writing file index");
 		} else {
-			int err = MPI_Reduce(index, NULL, num_blocks_, MPI_INDEX_VAL_T,
+			int err = MPI_Reduce(index, NULL, num_blocks_, MPI_OFFSET_VAL_T,
 					MPI_SUM, 0, comm_);
 			check(err == MPI_SUCCESS, "failure reducing file index at root");
 		}
@@ -314,26 +335,27 @@ public:
 	 *
 	 * @param index
 	 */
-	void read_index(index_val_t* index, header_val_t size) {
-		check(size == num_blocks_, "array passed to read_index may not have correct size");
+	void read_index(offset_val_t* index, header_val_t size) {
+		check(size == num_blocks_,
+				"array passed to read_index may not have correct size");
 		int rank;
 		MPI_Comm_rank(comm_, &rank);
 		MPI_Offset displacement = NUM_VALS_IN_HEADER * sizeof(header_val_t);
-		int err = MPI_File_set_view(fh_, displacement, MPI_INDEX_VAL_T,
-				MPI_INDEX_VAL_T, "native", MPI_INFO_NULL);
+		int err = MPI_File_set_view(fh_, displacement, MPI_OFFSET_VAL_T,
+		MPI_OFFSET_VAL_T, "native", MPI_INFO_NULL);
 		MPI_Status status;
 		if (rank == 0) {
 			err = MPI_File_read_at(fh_, 0, index, num_blocks_,
-					MPI_INDEX_VAL_T, &status);
+			MPI_OFFSET_VAL_T, &status);
 			check(err == MPI_SUCCESS, "failure reading file index");
 		}
-			err = MPI_Bcast(index, num_blocks_, MPI_INDEX_VAL_T, 0,
-					comm_);
-			check(err == MPI_SUCCESS, "index broadcast failed");
-			set_view_for_data();
+		err = MPI_Bcast(index, num_blocks_, MPI_OFFSET_VAL_T, 0, comm_);
+		check(err == MPI_SUCCESS, "index broadcast failed");
+		set_view_for_data();
 	}
 
 	void set_persistent(const std::string& label) {
+		check(is_persistent_==false, "calling set_persistent on already persistent file");
 		is_persistent_ = true;
 		label_ = label;
 	}
@@ -350,7 +372,39 @@ public:
 		MPI_File_sync(fh_);
 	}
 
+	int comm_rank() const{
+		int rank;
+		MPI_Comm_rank(comm_, &rank);
+		return rank;
+	}
+
+	int comm_size() const{
+		int size;
+		MPI_Comm_size(comm_, &size);
+		return size;
+	}
+
+
+
+	//const_cast<char *>(file_name.c_str())
+	void rename_persistent(){
+		if (comm_rank() == 0){
+		std::string name = persistent_file_name();
+		int err = std::remove(const_cast<char *>(name.c_str()));
+		//note that here the error is that the remove succeeded.
+		check_and_warn(err != 0, std::string("Deleted existing persistent file ") + name);
+		err = std::rename(const_cast<char*>(file_name().c_str()),
+				const_cast<char*>(persistent_file_name().c_str()));
+		if (err != 0){
+			perror("Error renaming persistent array");
+			check(false,"");
+		}
+		}
+	}
+
+	friend ChunkManager;
 	friend std::ostream& operator<<(std::ostream& os, const ArrayFile& obj);
+
 
 private:
 	MPI_File fh_;
@@ -360,6 +414,41 @@ private:
 	bool is_persistent_;
 	std::string label_;
 	const MPI_Comm& comm_;
+	bool save_after_close_;  //used in tests.
+
+	std::string file_name() const{
+		std::stringstream ss;
+		ss << "server." << name_ << ".arr";
+		return ss.str();
+	}
+
+	std::string persistent_file_name() const{
+		check (is_persistent_ , "getting persistent array file name for non-persistent file" );
+		std::stringstream ss;
+		ss << "server." << label_ << ".persistsarr";
+		return ss.str();
+	}
+
+	void delete_file(){
+		if (comm_rank() == 0){
+		std::string name = file_name();
+		int err = std::remove(const_cast<char *>(name.c_str()));
+		if (err != 0){
+			perror ("Error deleting non-persistent array");
+			check_and_warn(false, std::string("file ") + name);
+		}
+		}
+	}
+
+//	void init_offset_block_map_from_index(offset_val_t* index, header_val_t size){
+//		int j = 0;
+//		offset_val_t start_offset =
+//		for(int i = 0; i < size; ++i){
+//
+//		}
+//	}
+
+	friend class DiskBackedBlockMap;
 
 	DISALLOW_COPY_AND_ASSIGN(ArrayFile);
 };

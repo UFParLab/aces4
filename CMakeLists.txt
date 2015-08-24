@@ -110,8 +110,6 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/sip_server.cpp;
         src/sip/worker/sial_ops_parallel.h;
         src/sip/worker/sial_ops_parallel.cpp;
-        src/sip/mpi/disk_backed_arrays_io.h;
-        src/sip/mpi/disk_backed_arrays_io.cpp;
         src/sip/mpi/server_block.h;
         src/sip/mpi/server_block.cpp;
         src/sip/mpi/disk_backed_block_map.h;
@@ -126,8 +124,10 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/counter.cpp;   
         src/sip/mpi/array_file.h;
         src/sip/mpi/array_file.cpp;
-        src/sip/mpi/per_array_chunk_list.h;
-        src/sip/mpi/per_array_chunk_list.cpp;   
+        src/sip/mpi/chunk_manager.h;
+        src/sip/mpi/chunk_manager.cpp;  
+        src/sip/mpi/chunk.h;
+        src/sip/mpi/chunk.cpp;          
         src/sip/dynamic_data/mpi_state.h;
         src/sip/dynamic_data/distributed_block_consistency.h;
         src/sip/dynamic_data/distributed_block_consistency.cpp      

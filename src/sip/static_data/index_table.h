@@ -168,7 +168,20 @@ public:
 	 */
 	IndexTableEntry();
 	~IndexTableEntry();
-
+	void min_max_num_segs(size_t& min_seg_size, size_t& max_seg_size, size_t num_segs) const{
+		int min = 0;
+		int max = 0;
+		int i = lower_seg_;
+		for (int j = 0 ; j <= num_segs; ++j){
+			int seg_size = segment_extent(i);
+			if (seg_size < min) min = seg_size;
+			if (seg_size > max) max = seg_size;
+			++i;
+		}
+		min_seg_size = min;
+		max_seg_size = max;
+		num_segs = num_segments_;
+	}
 	/** returns the number of elements in the given segment (i.e. value of index) */
 	int segment_extent(int index_value) const;
 	/** returns the total size of this dimension.  Used for contiguous (static) arrays */
@@ -243,6 +256,19 @@ public:
     IndexType_t index_type(int index_slot) const;
 
 
+     /**
+      *
+      * @param index_slot [in] index of interest
+      * @param min [out]       size of smallest segment for the given index
+      * @param max [out]       size of largest segment for the given index
+      * @param num_segments [out]  number of segments for this index
+      * @param lower [out]   lower bound for this index
+      *
+      * Negative lower bound is allowed for simple indices
+      */
+    void segment_info(int index_slot, int& min, int& max, int& num_segments, int& lower) const;
+
+
     /*! The next set of convenience functions are for subindices */
 
     bool is_subindex(int index_slot) const;
@@ -254,6 +280,9 @@ public:
     int subsegment_extent(int subindex_slot, int parent_segment_value, int subsegment_value) const;
     /*! The number of subsegments in the parent segment of the given subindex */
     int num_subsegments(int subindex_slot, int parent_segment_value) const;
+    void min_max_num_segs(int index_slot, size_t& min_seg_size, size_t& max_seg_size, size_t& num_segs) const{
+    	return entries_.at(index_slot).min_max_num_segs(min_seg_size, max_seg_size, num_segs);
+    }
 
 	friend std::ostream& operator<<(std::ostream&, const IndexTable &);
 
