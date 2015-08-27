@@ -356,8 +356,9 @@ TEST(Sial_QM,lindep_test){
 		ASSERT_NEAR(-64.24332859583458, scf_energy, 1e-10);
 	}
 }
+
 /*
-linear CCSD test
+test
 O -0.00000007     0.06307336     0.00000000
 H -0.75198755    -0.50051034    -0.00000000
 H  0.75198873    -0.50050946    -0.00000000
@@ -373,6 +374,38 @@ SIAL_PROGRAM = scf_rhf.siox
 */
 TEST(Sial_QM,scf_rhf_aguess_test){
 	std::string job("scf_rhf_aguess_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.5843267427, scf_energy, 1e-10);
+	}
+}
+
+/*
+test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+spherical=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_uhf.siox
+*/
+TEST(Sial_QM,scf_uhfrhf_aguess_test){
+	std::string job("scf_uhfrhf_aguess_test");
 
 	std::stringstream output;
 

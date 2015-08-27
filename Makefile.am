@@ -283,6 +283,8 @@ test/lindep_test.dat\
 test/rlambda_test.dat\
 test/lccd_test.dat\
 test/lccsd_test.dat\
+test/scf_rhf_aguess_test.dat\
+test/scf_uhfrhf_aguess_test.dat\
 test/expected_output/helloworld1.txt\
 test/expected_output/local_arrays_wild.txt\
 test/expected_output/local_arrays.txt\
