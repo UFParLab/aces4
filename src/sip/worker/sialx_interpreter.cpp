@@ -1840,7 +1840,7 @@ void SialxInterpreter::handle_block_add(int pc) {
     BlockSelector r_selector = block_selector_stack_.top();
     Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
     BlockSelector d_selector(arg0(pc), arg1(pc), index_selectors(pc));
-    Block::BlockPtr dblock = get_block_from_instruction('w', true);
+    Block::BlockPtr dblock = get_block_from_instruction(pc, 'w', true);
 
     double *rdata = rblock->get_data();
     double *ldata = lblock->get_data();
@@ -1889,21 +1889,20 @@ void SialxInterpreter::handle_block_add(int pc) {
 	int size = dblock->size();
 
 	// Use BLAS DAXPY or loop
-	//for(size_t i = 0; i != size; ++i){
-	//	*(ddata++) = *(ldata++)  + *(rdata++);
-	//}
-
-	double d_one = 1.0;
-	int i_one = 1;
-	if (rdata == ddata){							// In ideal shape Y = X + Y
-		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
-	} else if (ldata == ddata){ 					// In shape Y = Y + X
-		sip_blas_daxpy(size, d_one, rdata, i_one, ddata, i_one);
-	} else {										// In shape Z = X + Y
-		//std::copy(rdata, rdata + size, ddata);
-		sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
-		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
+	for(size_t i = 0; i != size; ++i){
+		*(ddata++) = *(ldata++)  + *(rdata++);
 	}
+
+	//double d_one = 1.0;
+	//int i_one = 1;
+	//if (rdata == ddata){							// In ideal shape Y = X + Y
+	//	sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
+	//} else if (ldata == ddata){ 					// In shape Y = Y + X
+	//	sip_blas_daxpy(size, d_one, rdata, i_one, ddata, i_one);
+	//} else {										// In shape Z = X + Y
+	//	sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
+	//	sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
+	//}
 
     delete tempblock;
 }
@@ -1915,7 +1914,7 @@ void SialxInterpreter::handle_block_subtract(int pc){
     BlockSelector l_selector = block_selector_stack_.top();
     Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
     BlockSelector d_selector(arg0(pc), arg1(pc), index_selectors(pc));
-    Block::BlockPtr dblock = get_block_from_instruction('w', true);
+    Block::BlockPtr dblock = get_block_from_instruction(pc, 'w', true);
 
     double *rdata = rblock->get_data();
     double *ldata = lblock->get_data();
@@ -1964,23 +1963,23 @@ void SialxInterpreter::handle_block_subtract(int pc){
 	int size = dblock->size();
 
 	// Use BLAS DAXPY or loop
-	//for(size_t i = 0; i != size; ++i){
-	//	*(ddata++) = *(ldata++)  - *(rdata++);
-	//}
-
-	double d_one = 1.0;
-	double d_negative_one = -1.0;
-	int i_one = 1;
-	if (rdata == ddata){							// In shape Y = X - Y
-		sip_blas_dscal(size, d_negative_one, ddata, i_one);
-		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
-	} else if (ldata == ddata){ 					// In shape Y = Y - X
-		sip_blas_daxpy(size, d_negative_one, rdata, i_one, ddata, i_one);
-	} else {										// In shape Z = X - Y
-		sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
-		sip_blas_dscal(size, d_negative_one, ddata, i_one);
-		sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
+	for(size_t i = 0; i != size; ++i){
+		*(ddata++) = *(ldata++)  - *(rdata++);
 	}
+
+	//double d_one = 1.0;
+	//double d_negative_one = -1.0;
+	//int i_one = 1;
+	//if (rdata == ddata){							// In shape Y = X - Y
+	//	sip_blas_dscal(size, d_negative_one, ddata, i_one);
+	//	sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
+	//} else if (ldata == ddata){ 					// In shape Y = Y - X
+	//	sip_blas_daxpy(size, d_negative_one, rdata, i_one, ddata, i_one);
+	//} else {										// In shape Z = X - Y
+	//	sip_blas_dcopy(size, rdata, i_one, ddata, i_one);
+	//	sip_blas_dscal(size, d_negative_one, ddata, i_one);
+	//	sip_blas_daxpy(size, d_one, ldata, i_one, ddata, i_one);
+	//}
 
     delete tempblock;
 }
