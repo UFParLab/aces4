@@ -82,17 +82,10 @@
       do b = b1,b2
       do a = a1,a2
           div = array2(a,b,c)
-C	  if (div .eq. 0.d0) then
-C	      write(*,*) "--ZERO denominator in invert diagonal"
-C	      write(*,100) a,b,c,div
-C	      ierr = 1
-C	      return
-C          endif
           if (div .ne. 0.d0) then
 	      val = array1(a,b,c)/div
 	      array1(a,b,c) = val
 	  endif
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
       enddo 
       enddo 
@@ -122,17 +115,10 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       do b = b1,b2
       do a = a1,a2
           div = array2(a,b,c,d,e)
-C	  if (div .eq. 0.d0) then
-C	      write(*,*) "--ZERO denominator in invert diagonal"
-C	      write(*,100) a,b,c,d,e,div
-C	      ierr = 1
-C	      return
-C          endif
           if (div .ne. 0.d0) then
 	      val = array1(a,b,c,d,e)/div
 	      array1(a,b,c,d,e) = val
 	  endif
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
       enddo 
       enddo 

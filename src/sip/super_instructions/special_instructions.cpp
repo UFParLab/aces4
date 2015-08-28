@@ -323,6 +323,9 @@ void a4_dscale(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
 	int& ierr);
 
+void print_block_and_index(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
 //##############################
 }
 
@@ -570,6 +573,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
     procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
+    procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
