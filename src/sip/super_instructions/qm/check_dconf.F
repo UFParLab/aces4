@@ -42,6 +42,7 @@ c--------------------------------------------------------------------------
       real(C_DOUBLE), intent(out)::data_1(1:size_1) 
 
       integer(C_INT), intent(out)::ierr 
+      real(C_DOUBLE) :: val
 
 c     if (nindex .ne. 2) then
 c        print *,'Error: check_dconf at line ',current_line
@@ -54,8 +55,10 @@ c        print *,'Error: check_dconf at line ',current_line,' not ',
 c    *           'called with scalar in 2nd arg.'
 c        call abort_job()      
 c     endif
-
-      call docheck(data_0, data_1, 1, extents_0(1), 1, extents_0(2))  
+ 
+      val = 0.0
+      call docheck(data_0, val, 1, extents_0(1), 1, extents_0(2))  
+      data_1(1) = val
 
       return 
       end 
