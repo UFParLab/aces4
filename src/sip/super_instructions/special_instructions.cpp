@@ -293,11 +293,44 @@ void anti_symm_o(
 void anti_symm_v(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
+void a4_david_damp_factor(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_get_init_occupation(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_return_occupation(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_scf_atom(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4,
+        int& array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * data_5,
+         int& ierr);
+
+void a4_dscale(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+	int& ierr);
+
 void print_block_and_index(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
 //##############################
 }
+
+//ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
+ //the extern C block)
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
@@ -535,7 +568,13 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
+    procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
+    procmap_["a4_david_damp_factor"]=(fp0)&a4_david_damp_factor;
+    procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
+    procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
+    procmap_["a4_dscale"]=(fp0)&a4_dscale;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
+
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
 	//THE & WITH THE NAME IN THE C PROTOTYPE.

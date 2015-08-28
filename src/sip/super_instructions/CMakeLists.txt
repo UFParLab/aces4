@@ -12,6 +12,11 @@ set(QM_SOURCE_FILES
     qm/instructions_for_testing.f;
     qm/drop_core_in_sip.F;
     qm/excited/cis_unit_guess.F;
+    qm/scf/a4_david_damp_factor.F;
+    qm/scf/a4_get_init_occupation.F;
+    qm/scf/a4_return_occupation.F;
+    qm/scf/a4_scf_atom.F;
+    qm/scf/a4_dscale.F;
     qm/qm-generic/set_ijk_aaa.F;
     qm/qm-generic/set_ijk_aab.F;
     qm/qm-generic/energy_ty_denominator_rhf.F;

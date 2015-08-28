@@ -48,6 +48,7 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(in)::size_2
       integer(C_INT), intent(in)::extents_2(1:rank_2)
       real(C_DOUBLE), intent(out)::data_2(1:size_2)
+      real(C_DOUBLE) :: shift
 
       integer(C_INT), intent(out)::ierr
 c mosegments 
@@ -92,13 +93,15 @@ c Find the offset index ranges
           enddo 
       endif 
 
+      shift = data_2(1)
+
       call do_rhfty_den4(1, extents_0(1),offset_1, 
      *                 1, extents_0(2),offset_2, 
      *                 1, extents_0(3),offset_3, 
      *                 1, extents_0(4),offset_4, 
      *                 data_0, 
      *                 1, extents_1(1), 1, extents_1(2),
-     *                 data_1,data_2) 
+     *                 data_1,shift) 
 
       end if  ! rank0 .eq. 4 
 
