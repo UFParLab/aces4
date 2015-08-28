@@ -294,7 +294,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COP
 configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_water-dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_water_dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)

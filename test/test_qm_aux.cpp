@@ -51,8 +51,8 @@ SIAL_PROGRAM = rcis_rhf.siox
 SIAL_PROGRAM = lr_eom_ccsd_rhf.siox
 */
 
-TEST(Sial_QM,eom_water-dimer_test){
-	std::string job("eom_water-dimer_test");
+TEST(Sial_QM,eom_water_dimer_test){
+	std::string job("eom_water_dimer_test");
 
 	std::stringstream output;
 

@@ -198,12 +198,12 @@ AM_CPPFLAGS = \
 
 if WORKING_MPI
 TESTS = test_qm test_qm_aux test_sial test_unit test_basic_sial
-check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
+check_PROGRAMS = test_qm test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
 TESTS = test_basic_sial test_sial test_qm test_qm_aux
-check_PROGRAMS = test_basic_sial test_sial test_qm
+check_PROGRAMS = test_basic_sial test_sial test_qm 
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
@@ -253,7 +253,16 @@ test_qm_SOURCES = \
     test/test_controller.cpp\
     test/test_constants.h\
     test/test_constants.cpp\
-    test/test_qm.cpp\
+    test/test_qm.cpp
+    
+test_qm_aux_SOURCES = \
+	$(ACES_SOURCEFILES) \
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+	test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
     test/test_qm_aux.cpp
 
 TEST_LDADD_VARS = \
@@ -278,7 +287,7 @@ test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
 test/eom_test.dat\
-test/eom_water-dimer_test.dat\
+test/eom_water_dimer_test.dat\
 test/eom_lccsd_test.dat\
 test/eom_lccd_test.dat\
 test/eom_mp2_test.dat\
