@@ -19,8 +19,8 @@
 #endif
 
 
-//bool VERBOSE_TEST = false;
-bool VERBOSE_TEST = true;
+bool VERBOSE_TEST = false;
+//bool VERBOSE_TEST = true;
 
 // old ccsd(t) test.... difficult to deal with because the ZMAT source is gone
 TEST(Sial_QM,DISABLED_ccsdpt_test){

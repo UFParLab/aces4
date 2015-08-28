@@ -45,15 +45,15 @@ void SIPServer::run() {
 	total_timer_.start();
 	int my_rank = sip_mpi_attr_.global_rank();
 
-//	{//for gdb
-//	    int i = 0;
-//	    char hostname[256];
-//	    gethostname(hostname, sizeof(hostname));
-//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-//	    fflush(stdout);
-//	    while (0 == i)
-//	        sleep(5);
-//	}
+	{//for gdb
+	    int i = 0;
+	    char hostname[256];
+	    gethostname(hostname, sizeof(hostname));
+	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+	    fflush(stdout);
+	    while (0 == i)
+	        sleep(5);
+	}
 
 	while (!terminated_) {
 		idle_timer_.start();

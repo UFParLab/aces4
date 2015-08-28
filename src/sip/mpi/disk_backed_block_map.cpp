@@ -54,6 +54,9 @@ template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(Serve
 			"No server blocks to remove - all empty or none present !");
 }
 
+const DiskBackedBlockMap::offset_val_t DiskBackedBlockMap::ABSENT_BLOCK_OFFSET=-1;
+
+
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		const SIPMPIAttr& sip_mpi_attr,
 		const DataDistribution& data_distribution) :
@@ -66,12 +69,45 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 ,allocated_doubles_(sip_mpi_attr.company_communicator())
 ,blocks_to_disk_(sip_mpi_attr.company_communicator())
 {
+   _init();
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap() {
-	//TODO check this
+  _finalize();
 }
 
+void DiskBackedBlockMap::_init(){
+	//create manager and open file for each distributed or served array
+	int num_arrays = sip_tables_.num_arrays();
+	chunk_managers_.resize(num_arrays,NULL);
+	array_files_.resize(num_arrays,NULL);
+
+	const MPI_Comm& comm = SIPMPIAttr::get_instance().company_communicator();
+
+
+	for( int i = 0; i < num_arrays; ++i){
+		if (sip_tables_.is_distributed(i) || sip_tables_.is_served(i)){
+			ArrayFile::header_val_t num_blocks = sip_tables_.num_blocks(i);
+			size_t max_block_size = sip_tables_.max_block_size(i);
+			ArrayFile::header_val_t chunk_size = max_block_size * 4; // TODO handle this better
+			std::string name = sip_tables_.array_name(i);
+			bool new_file = true;
+			array_files_[i] = new ArrayFile(num_blocks, chunk_size, name, comm, new_file);
+			chunk_managers_[i] = new ChunkManager(chunk_size, array_files_[i]);
+		}
+	}
+}
+
+void DiskBackedBlockMap::_finalize(){
+	for (int i = 0; i < sip_tables_.num_arrays(); ++i){
+		if (chunk_managers_[i] != NULL){
+			ChunkManager* manager = chunk_managers_[i];
+			remaining_doubles_+= manager->delete_chunk_data_all();
+			delete manager;
+			delete array_files_[i];
+		}
+	}
+}
 
 //void DiskBackedBlockMap::read_block_from_disk(ServerBlock* block,
 //		const BlockId& block_id, size_t block_size) {
@@ -147,7 +183,7 @@ size_t DiskBackedBlockMap::backup_and_free_doubles(size_t requested_doubles_to_f
 				chunk->wait_all();
 				if (!chunk->valid_on_disk_){
 					ArrayFile* file = array_files_.at(array_id);
-					file->chunk_write_(*chunk);
+					file->chunk_write(*chunk);
 					chunk->valid_on_disk_=true;
 				}
 				freed_count += chunk_managers_.at(array_id)->delete_chunk_data(chunk);
@@ -288,7 +324,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(
 		if (in_memory){
 			block->wait();
 		}
-		else {
+		else {  //block is on disk, we read the chunk it belongs to before invalidating the disk copy.
 			bool valid_on_disk = block->block_data_.chunk_->valid_on_disk_;
 			check(valid_on_disk,
 					"existing block is neither in memory or on disk");
@@ -464,14 +500,20 @@ void DiskBackedBlockMap::eager_restore_chunks_from_index(int array_id, ArrayFile
 	ArrayFile::offset_val_t index[num_blocks];
 	file->read_index(index, num_blocks);
 	ChunkManager::chunk_size_t chunk_size = manager->chunk_size();
-
+	int rank = SIPMPIAttr::get_instance().company_rank();
+	std::cout << "index from " << file->file_name() << std::endl;
+	for (int i = 0; i < num_blocks; ++i){
+		std::cout << index[i] << ',';
+	}
+	std::cout << std::endl << std::flush;
 	//create a map of blocks in file that belong to this server.  Count the ones that
 	// correspond to the beginning of a chunk
 	std::map<ArrayFile::offset_val_t, block_num_t> offset_block_map;
 	int num_chunks = 0;
 	for (int i = 0; i < num_blocks; i++){
 	   offset_val_t offset = index[i];
-	   if (offset != 0 && distribution.is_my_block(i)){  //block number i has data and belongs to this server
+	   if (offset != ABSENT_BLOCK_OFFSET && distribution.is_my_block(i)){  //block number i has data and belongs to this server
+		   std::cerr << "block " << i << " with offset " << offset << " belongs to server rank " << rank << std::endl << std::flush;
 		   offset_block_map[offset]=i;
 		   if (offset % chunk_size == 0){ //block is start of chunk
 			   num_chunks++;
@@ -482,7 +524,8 @@ void DiskBackedBlockMap::eager_restore_chunks_from_index(int array_id, ArrayFile
 	//determine how many collective reads to perform.
 	int max_num_chunks;
 	MPI_Allreduce(&num_chunks, &max_num_chunks, 1, MPI_INT, MPI_MAX, file->comm_);
-
+	std::cout << "rank " << rank << " max_num_chunks = " << max_num_chunks << " num_chunks = " << num_chunks;
+	std::cout << std::endl << std::flush;
 
 	std::map<offset_val_t, block_num_t>::iterator it;
 	int read_count = 0;
@@ -491,18 +534,21 @@ void DiskBackedBlockMap::eager_restore_chunks_from_index(int array_id, ArrayFile
 		offset_val_t block_offset = it->first;
 		size_t block_num = it->second;
 		BlockId block_id = sip_tables_.block_id(array_id, block_num);
+		std::cout << "restoring block num " << block_num << " with id " << block_id << std::endl << std::flush;
 		ServerBlock* block = get_block_for_writing(block_id);
 		Chunk* chunk = block->get_chunk();
 		if (chunk->file_offset_ % chunk_size == 0){
-			 file->chunk_read_all(*chunk);
+//			 file->chunk_read_all(*chunk);
+			file->chunk_read(*chunk);
 			 chunk->valid_on_disk_=true;
 		     read_count++;
 		}
 	}
-	//noops in case other servers still need to read
-	for (int j = read_count; j != max_num_chunks; ++j){
-		file->chunk_read_all_nop();
-	}
+	std::cout << "readcount " << std::endl << std::flush;
+//	//noops in case other servers still need to read
+//	for (int j = read_count; j != max_num_chunks; ++j){
+//		file->chunk_read_all_nop();
+//	}
 }
 
 

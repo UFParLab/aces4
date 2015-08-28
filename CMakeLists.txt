@@ -355,6 +355,9 @@ add_executable(aces4 src/aces_main/main.cpp)
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
+# dump_array_file executable
+add_executable(dump_array_file src/util/dump_array_file.cpp)
+
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")

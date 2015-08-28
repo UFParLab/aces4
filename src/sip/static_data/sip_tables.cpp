@@ -17,6 +17,7 @@ namespace sip {
 
 SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input_file):
 	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader){
+	array_table_.init_calculated_values(index_table_);
 }
 
 SipTables::~SipTables() {

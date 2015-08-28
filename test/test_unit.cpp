@@ -120,7 +120,7 @@
 
 /** Just test opening, closing, and reopening the an ArrayFile.  This does write and read the index */
 TEST(Server,array_file_0){
-	std::string filename("array_file_0.test.acf");
+	std::string filename("array_file_0");
 	typedef sip::ArrayFile::offset_val_t index_val_t;
 	typedef sip::ArrayFile::header_val_t header_val_t;
 	header_val_t chunk_size = 555;
@@ -129,7 +129,7 @@ TEST(Server,array_file_0){
 	bool save_after_close = true;
 	{
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new, save_after_close );
-//	file0.set_persistent("array_file_0")
+	file0.mark_persistent(filename);
 	std::cout << "file0\n" << file0 << std::endl;
 	}
 	//file was closed when ArrayFile went out of scope
@@ -159,6 +159,7 @@ TEST(Server,array_file_1){
 	//create and write the file
 	{
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new, save_after_close );
+	file0.mark_persistent(filename);
 	index_val_t index[num_blocks];
 	std::fill(index, index + num_blocks, 0);
 	index[rank] = rank;
@@ -205,7 +206,7 @@ TEST(Server,array_file_3){
 	double val1 = rank + nprocs;
 	{
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
-
+	file0.mark_persistent(filename);
 	//initialize and write some chunks
 	double data0[chunk_size];
 
@@ -251,8 +252,8 @@ TEST(Server,array_file_3){
 //		MPI_Barrier(MPI_COMM_WORLD);
 //	}
 
-	file0.chunk_write_(chunk0);
-	file0.chunk_write_(chunk1);
+	file0.chunk_write(chunk0);
+	file0.chunk_write(chunk1);
 
 	//initialize and write the index
 	index_val_t index0[num_blocks];
@@ -397,7 +398,7 @@ TEST(Server,array_file_4){
 	double val1 = rank + nprocs;
 	{
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
-
+	file0.mark_persistent(filename);
 	//initialize and write some chunks
 	double data0[chunk_size];
 
@@ -589,7 +590,7 @@ TEST(Server,array_file_5){
 	double val2 = rank + 2*nprocs;
 	{
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
-
+	file0.mark_persistent(filename);
 	//initialize and write some chunks
 	double data0[chunk_size];
 
@@ -807,7 +808,7 @@ TEST(Server,array_file_6){
 	header_val_t num_blocks = nprocs * 6;
 
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
-	sip::ChunkManager chunk_manager(chunk_size, file0);
+	sip::ChunkManager chunk_manager(chunk_size, &file0);
 
 	int block_size[] = {5,5,4,4,7,5};
 	double val[6];
@@ -820,6 +821,7 @@ TEST(Server,array_file_6){
 	offset_val_t offset[6];
 
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true);
+	file0.mark_persistent(filename);
 
 	for (int i = 0; i < 6; i++){
 	    val[i] = rank + i*nprocs + 500;;
@@ -827,7 +829,7 @@ TEST(Server,array_file_6){
 	    double* data = chunk_manager.get_data(chunk_number[i], offset[i]);
 	    std::fill(data, data + block_size[i], val[i]);
 	    sip::Chunk* chunk = chunk_manager.chunk(chunk_number[i]);
-	    file0.chunk_write_(*chunk);  //same chunk may be written more than once by this proc.
+	    file0.chunk_write(*chunk);  //same chunk may be written more than once by this proc.
 	    chunk_manager.set_valid_on_disk(chunk_number[i],true);
 	}
 	std::cout << "offsets: " << std::endl;
@@ -914,7 +916,7 @@ TEST(Server,array_file_6){
 /**
  * Creates chunks using ChunkManager class, sets and restores persistent */
 TEST(Server,array_file_7){
-	std::string filename("array_file_7.test.acf");
+	std::string filename("array_file_7");
 
 	typedef sip::ArrayFile::offset_val_t offset_val_t;
 	typedef sip::ArrayFile::header_val_t header_val_t;
@@ -925,13 +927,16 @@ TEST(Server,array_file_7){
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 
+	bool new_file = true;
+	bool save_after_close = true;
 
 
 	header_val_t chunk_size = 10;
 	header_val_t num_blocks = nprocs * 6;
 
-	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
-	sip::ChunkManager chunk_manager(chunk_size, file0);
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, new_file, save_after_close);
+	file0.mark_persistent("file0_P_");
+	sip::ChunkManager chunk_manager(chunk_size, &file0);
 
 	int block_size[] = {5,5,4,4,7,5};
 	double val[6];
@@ -943,7 +948,6 @@ TEST(Server,array_file_7){
 	int chunk_number[6];
 	offset_val_t offset[6];
 
-	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true);
 
 	for (int i = 0; i < 6; i++){
 	    val[i] = rank + i*nprocs + 500;;
@@ -961,7 +965,7 @@ TEST(Server,array_file_7){
 	}
 	std::cout << std::endl << std::flush;
 
-	file0.set_persistent("file0_P_");
+
 	chunk_manager.collective_flush();
 
 //	//construct local index array
@@ -1036,7 +1040,7 @@ TEST(Server,array_file_7){
 
 /**
  * Creates chunks using ChunkManager class and writes to file using flush */
-TEST(Server,array_file_8){
+TEST(Server,DISABLED_array_file_8){
 	std::string filename("array_file_8.test.acf");
 
 	typedef sip::ArrayFile::offset_val_t offset_val_t;
@@ -1054,7 +1058,7 @@ TEST(Server,array_file_8){
 	header_val_t num_blocks = nprocs * 6;
 
 	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
-	sip::ChunkManager chunk_manager(chunk_size, file0);
+	sip::ChunkManager chunk_manager(chunk_size, &file0);
 
 	int block_size[] = {5,5,4,4,7,5};
 	double val[6];
@@ -1085,7 +1089,7 @@ TEST(Server,array_file_8){
 	std::cout << std::endl << std::flush;
 
 	std::string label("persistent_array_file_8");
-	file0.set_persistent(label);
+	file0.mark_persistent(label);
 	chunk_manager.collective_flush();
 
 //	//construct local index array

@@ -623,7 +623,27 @@ TEST(Sial,persistent_distributed_array_mpi){
 		add_sial_program(nm1);
 		set_aoindex_info(2,segs);
 		finalize_setup();
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
 	}
+//	else if (attr->is_server())
+//			{//for gdb
+//			    int i = 0;
+//			    char hostname[256];
+//			    gethostname(hostname, sizeof(hostname));
+//			    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//			    fflush(stdout);
+//			    while (0 == i)
+//			        sleep(5);
+//			}
+
 
 
 	std::stringstream output;
@@ -632,6 +652,15 @@ TEST(Sial,persistent_distributed_array_mpi){
 	//run first program
 	controller.initSipTables();
 	controller.run();
+//	{//for gdb
+//	    int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
 	controller.print_timers(std::cout);
 	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
 
@@ -668,7 +697,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 
 }
 
-TEST(Sial,DISABLED_cached_block_map_test) {
+TEST(Sial,cached_block_map_test) {
     std::string job("cached_block_map_test");
     int norb = 4;
     int iterations = 3;
@@ -698,7 +727,7 @@ TEST(Sial,DISABLED_cached_block_map_test) {
 }
 
 
-TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
+TEST(Sial,cached_block_map_test_no_dangling_get) {
     std::string job("cached_block_map_test_no_dangling_get");
     int norb = 4;
     int iterations = 3;

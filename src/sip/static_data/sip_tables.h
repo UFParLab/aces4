@@ -83,7 +83,7 @@ public:
 	bool is_served(int array_table_slot) const;
 	bool is_contiguous_local(int array_table_slot) const;
 	int num_arrays() const;
-	int num_blocks(int array_id) const { return array_table_.num_blocks(array_id); }
+	size_t num_blocks(int array_id) const { return array_table_.num_blocks(array_id); }
 	size_t max_block_size(int array_id) const { return array_table_.entries_.at(array_id).max_block_size_;}
 //int (symbolic constants)
 	//int int_value(int int_table_slot) const;

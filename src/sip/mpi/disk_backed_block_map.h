@@ -30,10 +30,11 @@ class ServerPersistentArrayManager;
  */
 class DiskBackedBlockMap {
 public:
-
-	static const int MIN_BLOCKS_PER_CHUNK=4;
 	typedef size_t block_num_t;
 	typedef ArrayFile::offset_val_t offset_val_t;
+
+	static const int MIN_BLOCKS_PER_CHUNK=4;
+	static const offset_val_t ABSENT_BLOCK_OFFSET;
 
 	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&);
     ~DiskBackedBlockMap();
@@ -67,24 +68,31 @@ public:
 	 * @param label
 	 */
 	void restore_persistent_array(int array_id, std::string & label){
-		ArrayFile* file = array_files_.at(array_id);
-		if (file != NULL){
-			delete file;
-		}
+
+		ArrayFile* old_file = array_files_.at(array_id);  //this is the file created based on array name
 		size_t num_blocks = sip_tables_.num_blocks(array_id);
-		ArrayFile::header_val_t chunk_size = (sip_tables_.max_block_size(array_id)) * MIN_BLOCKS_PER_CHUNK;
+		ArrayFile::header_val_t expected_chunk_size = (sip_tables_.max_block_size(array_id)) * MIN_BLOCKS_PER_CHUNK;
 
-		//TODO add more consistency checking here.  Also need to include array declaration of indices in ArrayFile.
+		//ArrayFile constructor checks that chunk size is as expected.
 
-		file = new ArrayFile(num_blocks, chunk_size, label, SIPMPIAttr::get_instance().company_communicator(), true /*new_file*/);
+		ArrayFile* file = new ArrayFile(num_blocks, expected_chunk_size, label, SIPMPIAttr::get_instance().company_communicator(), false /*new_file*/);
 		array_files_.at(array_id) = file;
 
 		//TODO at the moment, this chunk_manager should exist with correct parameters and be empty.
 		//It was created when a file was created for every distributed/served array.
 		//If this is changed, we need to revisit this and create manager if it is NULL
 		ChunkManager* manager = chunk_managers_.at(array_id);
+		//switch to ArrayFile containing saved data, delete the old one below.
+		manager->file_ = file;
 
 		eager_restore_chunks_from_index(array_id, file, chunk_managers_.at(array_id), num_blocks, data_distribution_);
+
+
+		if (old_file != NULL){
+			sial_warn(! old_file->is_persistent_ , "restoring on top of persistent array"
+					+ old_file->file_name() + "persistence lost");
+			delete old_file;
+		}
 	}
 
 
@@ -124,6 +132,7 @@ public:
 	/**
 	 * Marks the given array's ArrayFile object as persistent with the given label and
 	 * then writes the blocks of the given array to disk using a a collective flush.
+	 * This routine is also responsible for writing the files index.
 	 *
 	 * The file is closed and renamed in the ArrayFile object's destructor
 	 *
@@ -131,8 +140,14 @@ public:
 	 * @param label
 	 */
 	void save_persistent_array(int array_id, const std::string& label){
-		array_files_.at(array_id)->set_persistent(label);
-		chunk_managers_.at(array_id)->collective_flush();
+		ArrayFile* file = array_files_.at(array_id);
+		ChunkManager* manager = chunk_managers_.at(array_id);
+		size_t num_blocks = sip_tables_.num_blocks(array_id);
+		file->mark_persistent(label);
+		manager->collective_flush();
+		std::vector<ArrayFile::offset_val_t> index_vals(num_blocks,ABSENT_BLOCK_OFFSET);
+		initialize_local_index(array_id, index_vals, num_blocks);
+		file->write_index(index_vals.data(), num_blocks);
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
@@ -146,11 +161,27 @@ public:
 
 private:
 
+	/**
+	 * initialize files_ and chunk_managers_
+	 *
+	 * collectively opens a file and creates a chunk_manager for each distributed or served array.
+	 */
+	void _init();
 
-    void initialize_local_index(IdBlockMap<ServerBlock>::PerArrayMap* array_blocks, std::vector<ArrayFile::offset_val_t>& index_vals, size_t num_blocks){
-    	std::fill(index_vals.begin(), index_vals.begin() + num_blocks, 0);
+
+	/**
+	 * closes files, and deletes ArrayFile objects
+	 * and ChunkManager objects.  Persistent files should
+	 * have been handled with save_persistent_array.
+	 */
+	void _finalize();
+
+    void initialize_local_index(int array_id, std::vector<ArrayFile::offset_val_t>& index_vals, size_t num_blocks){
+    	IdBlockMap<ServerBlock>::PerArrayMap* array_blocks = block_map_.per_array_map(array_id);
     	IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
-    	for (it = array_blocks->begin(); it !=array_blocks->end(); ++it){
+    	for (it = array_blocks->begin(); it!=array_blocks->end(); ++it){
+    		BlockId block_id = it->first;
+    		std::cout << "adding block_id " << block_id << " to local index." << std::endl << std::flush;
     		int block_num = sip_tables_.block_number(it->first);
     		ServerBlock* block = it->second;
     		ArrayFile::offset_val_t offset = block->block_data_.file_offset();

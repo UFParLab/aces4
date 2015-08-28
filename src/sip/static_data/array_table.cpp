@@ -102,17 +102,17 @@ void ArrayTableEntry::init_calculated_values(const IndexTable& index_table){
 }
 
 size_t ArrayTableEntry::block_number(const BlockId& id) const{
-	std::cout << "in block_number with blockid " << id.str(Interpreter::global_interpreter->sip_tables());
+//	std::cout << "in block_number with blockid " << id.str(Interpreter::global_interpreter->sip_tables());
 
 	int res = 0;
 	for (int i = rank_-1; i >=0; i--){
-		std::cout << "i=" << i;
-		std::cout << " slice_sizes_[i]=" << slice_sizes_[i];
-		std::cout << " id.index_values(i)=" << id.index_values(i);
-		std::cout << " lower_[i]=" << lower_[i];
+//		std::cout << "i=" << i;
+//		std::cout << " slice_sizes_[i]=" << slice_sizes_[i];
+//		std::cout << " id.index_values(i)=" << id.index_values(i);
+//		std::cout << " lower_[i]=" << lower_[i];
 		res += (slice_sizes_[i] * (id.index_values(i) - lower_[i]));
 	}
-	std::cout << " returning res=" << res << std::endl << std::flush;
+//	std::cout << " returning res=" << res << std::endl << std::flush;
 	return res;
 }
 

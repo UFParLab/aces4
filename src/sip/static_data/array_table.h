@@ -177,7 +177,7 @@ public:
 		return entries_[id.array_id()].block_number(id);
 	}
 
-	int num_blocks(int array_id) const {return entries_.at(array_id).num_blocks_;}
+	size_t num_blocks(int array_id) const {return entries_.at(array_id).num_blocks_;}
 
 	BlockId number2id(int array_id, int num) const{
 		return entries_[array_id].id(array_id, num);
