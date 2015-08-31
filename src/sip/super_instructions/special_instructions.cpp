@@ -72,6 +72,9 @@ void return_h1(
 void return_ovl(
         int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
+void return_1el_ecpints(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
 void scf_atom_lowmem(
 	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
 	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
@@ -519,6 +522,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["compute_diis"]=(fp0)&compute_diis;
 	procmap_["return_h1"]=(fp0)&return_h1;
 	procmap_["return_ovl"]=(fp0)&return_ovl;
+	procmap_["return_1el_ecpints"]=(fp0)&return_1el_ecpints;
 	procmap_["scf_atom_lowmem"]=(fp0)&scf_atom_lowmem;
 	procmap_["place_scratch"]=(fp0)&place_scratch;
 	procmap_["return_pairs"]=(fp0)&return_pairs;

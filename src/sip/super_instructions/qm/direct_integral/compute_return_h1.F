@@ -13,7 +13,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine comp_return_h1(z, da1, da2, db1, db2, ncenters, 
-     *                          coords, tcoords, zz, iscr) 
+     *                          coords, tcoords, zz, iscr, zsum)
 c---------------------------------------------------------------------------
 !>  special return_h1 w
 !>

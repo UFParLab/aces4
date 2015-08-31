@@ -820,6 +820,7 @@ C
 #ifdef _DEBUG_LVL0
       Write(*,*) "Entry to comp_return_h0" 
       write(6,*)
+      Write(*,*) "Entry to comp_return_h0" 
       write(6,"(a,8I4)") "The mapping array: ",(atom(m),m=1,Nshells)
       write(6,"(a,8I4)") "The end_nfps array:",(end_nfps(m),m=1,Nshells)
       write(6,"(a,8I4)") "The ixalphas:",(ixalphas(m),m=1,Nshells)
