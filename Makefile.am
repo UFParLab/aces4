@@ -463,8 +463,8 @@ SIOX_FILES=\
 ./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/cast_indices_to_simple.siox\
 ./src/sialx/test/aoladder.siox\
-./src/sialx/test/put_accumulate_stress.sialx\
-./src/sialx/test/disk_backing_test.sialx\
+./src/sialx/test/put_accumulate_stress.siox\
+./src/sialx/test/disk_backing_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
