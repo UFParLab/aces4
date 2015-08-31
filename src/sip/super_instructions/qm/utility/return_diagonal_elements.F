@@ -28,54 +28,77 @@
       real(C_DOUBLE), intent(out)::data_0(1:size_0) 
       integer(C_INT), intent(out)::ierr  
       integer(C_INT) :: n1,n2
-      integer :: i
 
-      if (rank_0 .eq. 2 .and.
-     *    index_values_0(1).eq.index_values_0(2)) then
+      TYPE(C_PTR) :: n_ao_segs, aosegs
+      integer, pointer :: pn_ao_segs(:), paosegs(:)
+      integer(C_INT) offset_1, offset_2, offset_3, offset_4
+      integer(C_INT) offset_5, offset_6
+      integer(C_INT) start_1, start_2, start_3, start_4, start_5,start_6
+      integer(C_INT) i, i1, i2, i3, i4, one
+c Get the mo segment ranges
+      call predefined_int_array("moa_seg_ranges"//C_NULL_CHAR, one,
+     *                           n_ao_segs, aosegs)
+      call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
+      call c_f_pointer(aosegs,paosegs,pn_ao_segs)
+
+      offset_1 = 0
+      offset_2 = 0
+      offset_3 = 0
+      offset_4 = 0
+
+      if (rank_0 .eq. 2) then
           if (extents_0(1) .ne. extents_0(2)) then
               write(*,*) "T_pq doublet is not square"
 	      call abort_job()
 	  endif
+
+	  if (index_values_0(1).gt.1) then
+	      do i = 1, index_values_0(1) - 1
+		 offset_1 = offset_1 + paosegs(i)
+	      enddo
+	  endif
 	  n1 = extents_0(1)
-	  call ret_diag_tensor2(data_0,n1)
-      elseif (rank_0 .eq. 4 .and.
-     *    index_values_0(1).eq.index_values_0(2) .and.
-     *    index_values_0(3).eq.index_values_0(4)) then
+	  call ret_diag_tensor2(data_0,offset_1+1,offset_1+n1)
+      elseif (rank_0 .eq. 4) then
           if (extents_0(1) .ne. extents_0(2) .or.
      *        extents_0(3) .ne. extents_0(4)) then
               write(*,*) "T_pqrs doublets are not square",
      *        extents_0(1),extents_0(2),extents_0(3),extents_0(4)
 	      call abort_job()
 	  endif
+	  if (index_values_0(1).gt.1) then
+	      do i = 1, index_values_0(1) - 1
+		 offset_1 = offset_1 + paosegs(i)
+	      enddo
+	  endif
+	  if (index_values_0(3).gt.1) then
+	      do i = 1, index_values_0(3) - 1
+		 offset_3 = offset_3 + paosegs(i)
+	      enddo
+	  endif
 	  n1 = extents_0(1)
 	  n2 = extents_0(3)
-C	  call ret_diag_tensor4(data_0,n1,n2)
 	  call ret_diag_tensor4(data_0,
-     *                          1,extents_0(1),
-     *                          1,extents_0(2),
-     *                          1,extents_0(3),
-     *                          1,extents_0(4))
+     *	                    offset_1+1,offset_1+n1,
+     *	                    offset_3+1,offset_3+n2)
       else
-C              write(*,*) "bad call to return_diagonal_elements"
-C	      call abort_job()
-          do i = 1,size_0
-	      data_0(i) = 0.d0
-          enddo
+              write(*,*) "bad call to return_diagonal_elements"
+	      call abort_job()
       endif
 
       return
       end
 
-      subroutine ret_diag_tensor2(tensor,n1)
+      subroutine ret_diag_tensor2(tensor,n1,n2)
       implicit none
-      integer n1
+      integer n1, n2
       double precision val
-      double precision tensor(n1,n1)
+      double precision tensor(n1:n2,n1:n2)
 
       integer p,q,r,s
 
-      do p = 1,n1
-      do q = 1,n1
+      do p = n1,n2
+      do q = n1,n2
 	  val = tensor(p,q)
 	  if (p .eq. q) then
 	      val = tensor(p,q)
@@ -89,34 +112,29 @@ C	      call abort_job()
       return
       end
 
-      subroutine ret_diag_tensor4(x, a1,a2,
-     *                      i1,i2,b1,b2,
-     *                      j1,j2)
+      subroutine ret_diag_tensor4(tensor,a1,a2,b1,b2)
       implicit none
-
-      integer a1,a2,b1,b2,i1,i2,j1,j2
-      integer atype, itype, btype, jtype
-      double precision x(a1:a2,i1:i2,b1:b2,j1:j2)
-
-      integer a,b,i,j
+      integer a1,a2,b1,b2
       double precision val
+      double precision tensor(a1:a2,a1:a2,b1:b2,b1:b2)
 
-      do j = j1,j2
-      do b = b1,b2
-         do i = i1, i2
-         do a = a1,a2
-            val = 0.0d0
-            if ((i .eq. a) .and. (j .eq. b)) then
-               val =  x(a,i,b,j)
-            else
-               val = 0.0d0
-            endif
-            x(a,i,b,j) = val
-         enddo
-         enddo
+      integer p,q,r,s
+
+      do p = a1,a2
+      do q = a1,a2
+      do r = b1,b2
+      do s = b1,b2
+	  val = 0.d0
+	  if (p.eq.q .and. r.eq.s) then
+	      val = tensor(p,q,r,s)
+	  else
+	      val = 0.0
+	  endif
+	  tensor(p,q,r,s) = val
       enddo
       enddo
-
+      enddo
+      enddo
 
       return
       end

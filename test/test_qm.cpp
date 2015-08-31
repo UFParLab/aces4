@@ -415,6 +415,37 @@ TEST(Sial_QM,lindep_test){
 		ASSERT_NEAR(-64.24332859583458, scf_energy, 1e-10);
 	}
 }
+/*
+linear CCSD test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+spherical=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf.siox
+*/
+TEST(Sial_QM,scf_rhf_aguess_test){
+	std::string job("scf_rhf_aguess_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.5843267427, scf_energy, 1e-10);
+	}
+}
 
 /*
 lambda response dipole test
@@ -537,7 +568,7 @@ TEST(Sial_QM,lccd_dropcore_test){
 		double lccd_energy = controller.scalar_value("lccd_energy");
 		ASSERT_NEAR(-75.71042854160481, lccd_energy, 1e-10);
                 double * dipole = controller.static_array("dipole");
-                double expected[] = {0.00000078371778, -0.93549859964190, -0.00000000000000};
+                double expected[] = {0.000000, -0.93525122104258496, -0.00000};
                 int i = 0;
                 for (i; i < 2; i++){
                     ASSERT_NEAR(dipole[i], expected[i], 1e-6);

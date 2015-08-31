@@ -1,6 +1,6 @@
 import "reom_rhf_defs.sialx" 
 import "reom_vars.sialx"
-#import "tran_eom.sialx"
+import "tran_eom.sialx"
 
 SIAL R_EE_EOM_CCSD_RHF
 #***********************************************************
@@ -16,12 +16,12 @@ restore_persistent RB1_a    "B1_a"
 restore_persistent t1a "t1a_old"
 restore_persistent T2aa "T2old_aa"
 restore_persistent T2ab "T2old_ab" 
-#restore_persistent VSpipi "VSpipi"
-#restore_persistent Vaaii "Vaaii"
-#restore_persistent Viaai "Viaai"
-#restore_persistent Vaaai "Vaaai"
-#restore_persistent VSaaai "VSaaai"
-#restore_persistent Vpiqj "Vpiqj"
+restore_persistent VSpipi "VSpipi"
+restore_persistent Vaaii "Vaaii"
+restore_persistent Viaai "Viaai"
+restore_persistent Vaaai "Vaaai"
+restore_persistent VSaaai "VSaaai"
+restore_persistent Vpiqj "Vpiqj"
 restore_persistent Lam1a  "l1a_old"
 restore_persistent Lam2aa "L2old_aa"
 restore_persistent Lam2ab "L2old_ab"
@@ -67,1970 +67,943 @@ endpardo a,i,b,j
 server_barrier
 
 ENDPROC READ_AMP
-#
-#    ------------------------------------------------------------------------
-#
-#    Compute the integrals and store in the served array saoint. 
-#
-#
-#    ------------------------------------------------------------------------
-#
-#    Perform the first two stages of the transformation in two N5 steps. 
-#
-     PROC TRAN_TRAN2 
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, lambda
-#
-          allocate Txxxi[mu,nu,lambda,*]
-          allocate Txxxj[mu,nu,lambda,*]
-#
-          DO sigma
-#
-             execute compute_integral_batch  aoint[mu,nu,lambda,sigma]
-#
-             DO i   
-#
-                 T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
-                 Txxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]  
-#
-             ENDDO i   
-#
-             DO j   
-#
-                 T1xxxj[mu,nu,lambda,j]  = aoint[mu,nu,lambda,sigma]*ca[sigma,j]
-                 Txxxj[mu,nu,lambda,j]  += T1xxxj[mu,nu,lambda,j]  
-#
-             ENDDO j   
-#
-          ENDDO sigma
-
-          DO i
-             T1xxxi[mu,nu,lambda,i]         = Txxxi[mu,nu,lambda,i]
-             PREPARE Vxxxi[mu,nu,lambda,i]  = T1xxxi[mu,nu,lambda,i]
-          ENDDO i
-
-          DO j
-             T1xxxj[mu,nu,lambda,j]         = Txxxj[mu,nu,lambda,j] 
-             PREPARE Vxxxj[mu,nu,lambda,j]  = T1xxxj[mu,nu,lambda,j]
-          ENDDO j
-
-          deallocate Txxxi[mu,nu,lambda,*]
-          deallocate Txxxj[mu,nu,lambda,*]
-#
-     ENDPARDO mu, nu, lambda 
-     sip_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, i
-#
-           allocate L1xxxi[mu,nu,*,i]
-#
-           DO lambda
-#
-              REQUEST Vxxxi[mu,nu,lambda,i] 
-#
-              L1xxxi[mu,nu,lambda,i] = Vxxxi[mu,nu,lambda,i]
-#
-           ENDDO lambda
-#
-           DO i1
-#
-              Txxii[mu,nu,i1,i] = 0.0
-#
-              DO lambda
-#
-                 T1xxii[mu,nu,i1,i] = L1xxxi[mu,nu,lambda,i]*ca[lambda,i1]
-                 Txxii[mu,nu,i1,i] += T1xxii[mu,nu,i1,i]
-#
-              ENDDO lambda
-#
-              PREPARE Vxxii[mu,nu,i1,i] = Txxii[mu,nu,i1,i]
-#
-           ENDDO i1
-#
-           DO a
-#
-              Txxai[mu,nu,a,i] = 0.0
-#
-              DO lambda
-#
-                 T1xxai[mu,nu,a,i] = L1xxxi[mu,nu,lambda,i]*ca[lambda,a]
-                 Txxai[mu,nu,a,i] += T1xxai[mu,nu,a,i]
-#
-              ENDDO lambda
-#
-              PREPARE Vxxai[mu,nu,a,i] = Txxai[mu,nu,a,i]
-#
-           ENDDO a
-           deallocate L1xxxi[mu,nu,*,i]
-           allocate L2xxxi[mu,*,nu,i]
-
-           DO lambda
-              REQUEST Vxxxi[mu,lambda,nu,i] 
-              L2xxxi[mu,lambda,nu,i] = Vxxxi[mu,lambda,nu,i]
-           ENDDO lambda
-
-           DO i1
-              Txixi[mu,i1,nu,i] = 0.0
-
-              DO lambda
-                 T1xixi[mu,i1,nu,i] = L2xxxi[mu,lambda,nu,i]*ca[lambda,i1]
-                 Txixi[mu,i1,nu,i] += T1xixi[mu,i1,nu,i]
-              ENDDO lambda
-
-              PREPARE Vxixi[mu,i1,nu,i] = Txixi[mu,i1,nu,i]
-           ENDDO i1
-
-           deallocate L2xxxi[mu,*,nu,i]
-           allocate L3xxxi[*,mu,nu,i]
-
-           DO lambda
-              REQUEST Vxxxi[lambda,mu,nu,i] 
-              L3xxxi[lambda,mu,nu,i] = Vxxxi[lambda,mu,nu,i]
-           ENDDO lambda
-
-           DO i1
-              Tixxi[i1,mu,nu,i] = 0.0
-
-              DO lambda
-                 T1ixxi[i1,mu,nu,i] = L3xxxi[lambda,mu,nu,i]*ca[lambda,i1]
-                 Tixxi[i1,mu,nu,i] += T1ixxi[i1,mu,nu,i]
-              ENDDO lambda
-
-              PREPARE Vixxi[i1,mu,nu,i] = Tixxi[i1,mu,nu,i]
-           ENDDO i1
-
-           deallocate L3xxxi[*,mu,nu,i]
-#
-     ENDPARDO mu, nu, i
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, nu, j
-#
-           allocate L1xxxj[mu,nu,*,j]
-#
-           DO lambda
-#
-              REQUEST Vxxxj[mu,nu,lambda,j] 
-#
-              L1xxxj[mu,nu,lambda,j] = Vxxxj[mu,nu,lambda,j]
-#
-           ENDDO lambda
-#
-           DO j1
-#
-              Txxjj[mu,nu,j1,j] = 0.0
-#
-              DO lambda
-#
-                 T1xxjj[mu,nu,j1,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,j1]
-                 Txxjj[mu,nu,j1,j] += T1xxjj[mu,nu,j1,j]
-#
-              ENDDO lambda
-#
-              PREPARE Vxxjj[mu,nu,j1,j] = Txxjj[mu,nu,j1,j]
-#
-           ENDDO j1
-#
-           DO b
-#
-              Txxbj[mu,nu,b,j] = 0.0
-#
-              DO lambda
-#
-                 T1xxbj[mu,nu,b,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,b]
-                 Txxbj[mu,nu,b,j] += T1xxbj[mu,nu,b,j]
-#
-              ENDDO lambda
-#
-              PREPARE Vxxbj[mu,nu,b,j] = Txxbj[mu,nu,b,j]
-#
-           ENDDO b
-#
-           DO i
-#
-              Txxij[mu,nu,i,j] = 0.0
-#
-              DO lambda
-#
-                 T1xxij[mu,nu,i,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,i]
-                 Txxij[mu,nu,i,j] += T1xxij[mu,nu,i,j]
-#
-              ENDDO lambda
-#
-              PREPARE Vxxij[mu,nu,i,j] = Txxij[mu,nu,i,j]
-#
-           ENDDO i
-#
-           deallocate L1xxxj[mu,nu,*,j]
-           allocate L2xxxj[mu,*,nu,j]
-
-           DO lambda
-              REQUEST Vxxxj[mu,lambda,nu,j] 
-              L2xxxj[mu,lambda,nu,j] = Vxxxj[mu,lambda,nu,j]
-           ENDDO lambda
-
-           DO j1
-              Txjxj[mu,j1,nu,j] = 0.0
-
-              DO lambda
-                 T1xjxj[mu,j1,nu,j] = L2xxxj[mu,lambda,nu,j]*ca[lambda,j1]
-                 Txjxj[mu,j1,nu,j] += T1xjxj[mu,j1,nu,j]
-              ENDDO lambda
-
-              PREPARE Vxjxj[mu,j1,nu,j] = Txjxj[mu,j1,nu,j]
-           ENDDO j1
-
-           DO i
-              Txixj[mu,i,nu,j] = 0.0
-
-              DO lambda
-                 T1xixj[mu,i,nu,j] = L2xxxj[mu,lambda,nu,j]*ca[lambda,i]
-                 Txixj[mu,i,nu,j] += T1xixj[mu,i,nu,j]
-              ENDDO lambda
-
-              PREPARE Vxixj[mu,i,nu,j] = Txixj[mu,i,nu,j]
-           ENDDO i
-
-           deallocate L2xxxj[mu,*,nu,j]
-           allocate L3xxxj[*,mu,nu,j]
-
-           DO lambda
-              REQUEST Vxxxj[lambda,mu,nu,j] 
-              L3xxxj[lambda,mu,nu,j] = Vxxxj[lambda,mu,nu,j]
-           ENDDO lambda
-
-           DO j1
-              Tjxxj[j1,mu,nu,j] = 0.0
-
-              DO lambda
-                 T1jxxj[j1,mu,nu,j] = L3xxxj[lambda,mu,nu,j]*ca[lambda,j1]
-                 Tjxxj[j1,mu,nu,j] += T1jxxj[j1,mu,nu,j]
-              ENDDO lambda
-
-              PREPARE Vjxxj[j1,mu,nu,j] = Tjxxj[j1,mu,nu,j]
-           ENDDO j1
-
-           DO i
-              Tixxj[i,mu,nu,j] = 0.0
-
-              DO lambda
-                 T1ixxj[i,mu,nu,j] = L3xxxj[lambda,mu,nu,j]*ca[lambda,i]
-                 Tixxj[i,mu,nu,j] += T1ixxj[i,mu,nu,j]
-              ENDDO lambda
-
-              PREPARE Vixxj[i,mu,nu,j] = Tixxj[i,mu,nu,j]
-           ENDDO i
-
-           deallocate L3xxxj[*,mu,nu,j]
-#
-     ENDPARDO mu, nu, j
-#
-     sip_barrier
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN2 
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#    Perform the third N5 stage of the transformation.  
-#
-     PROC TRAN_TRAN3 
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, i, i1
-#
-           allocate Lxixi[mu,i,*,i1] 
-           allocate Lxxii[mu,*,i,i1] 
-           allocate Lixxi[i,mu,*,i1] 
-#
-           DO nu 
-#
-              REQUEST Vxixi[mu,i,nu,i1]  
-              REQUEST Vxxii[mu,nu,i,i1]  
-              REQUEST Vixxi[i,mu,nu,i1]  
-#
-              Lxixi[mu,i,nu,i1] = Vxixi[mu,i,nu,i1] 
-              Lxxii[mu,nu,i,i1] = Vxxii[mu,nu,i,i1] 
-              Lixxi[i,mu,nu,i1] = Vixxi[i,mu,nu,i1] 
-#
-           ENDDO nu 
-#
-           DO p 
-#
-              Txipi[mu,i,p,i1] = 0.0  
-#
-              DO nu  
-#
-                 T1xipi[mu,i,p,i1] = Lxixi[mu,i,nu,i1]*ca[nu,p]
-                 Txipi[mu,i,p,i1] += T1xipi[mu,i,p,i1]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxipi[mu,i,p,i1] = Txipi[mu,i,p,i1]
-#
-           ENDDO p 
-#
-           DO a
-#
-              Txaii[mu,a,i,i1] = 0.0 
-              Tixai[i,mu,a,i1] = 0.0  
-#
-              DO nu 
-#
-                 T1xaii[mu,a,i,i1] = Lxxii[mu,nu,i,i1]*ca[nu,a]
-                 Txaii[mu,a,i,i1] += T1xaii[mu,a,i,i1]  
-#
-                 T1ixai[i,mu,a,i1] = Lixxi[i,mu,nu,i1]*ca[nu,a]
-                 Tixai[i,mu,a,i1] += T1ixai[i,mu,a,i1]  
-
-              ENDDO nu 
-#
-              PREPARE Vxaii[mu,a,i,i1] = Txaii[mu,a,i,i1]
-              PREPARE Vixai[i,mu,a,i1] = Tixai[i,mu,a,i1]
-#
-           ENDDO a
-#
-           DO b 
-# 
-              Txbii[mu,b,i,i1] = 0.0 
-#
-              DO nu  
-#
-                 T1xbii[mu,b,i,i1] = Lxxii[mu,nu,i,i1]*ca[nu,b]
-                 Txbii[mu,b,i,i1] += T1xbii[mu,b,i,i1]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxbii[mu,b,i,i1] = Txbii[mu,b,i,i1]
-#
-           ENDDO b 
-#
-           deallocate Lxixi[mu,i,*,i1] 
-           deallocate Lxxii[mu,*,i,i1] 
-           deallocate Lixxi[i,mu,*,i1] 
-#
-     ENDPARDO mu, i, i1
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, a, i
-#
-           allocate Lxxai[mu,*,a,i] 
-#
-           DO nu 
-#
-              REQUEST Vxxai[mu,nu,a,i]  
-              Lxxai[mu,nu,a,i] = Vxxai[mu,nu,a,i] 
-#
-           ENDDO nu 
-#
-           DO a1 
-#
-              Txaai[mu,a1,a,i] = 0.0  
-#
-              DO nu  
-#
-                 T1xaai[mu,a1,a,i] = Lxxai[mu,nu,a,i]*ca[nu,a1]
-                 Txaai[mu,a1,a,i] += T1xaai[mu,a1,a,i]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxaai[mu,a1,a,i] = Txaai[mu,a1,a,i]
-#
-           ENDDO a1 
-#
-           DO b 
-#
-              Txbai[mu,b,a,i] = 0.0 
-#
-              DO nu  
-#
-                 T1xbai[mu,b,a,i] = Lxxai[mu,nu,a,i]*ca[nu,b]
-                 Txbai[mu,b,a,i] += T1xbai[mu,b,a,i]   
-#
-              ENDDO nu  
-#
-              PREPARE Vxbai[mu,b,a,i] = Txbai[mu,b,a,i]
-#
-           ENDDO b 
-#
-           deallocate Lxxai[mu,*,a,i] 
-#
-     ENDPARDO mu, a, i
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, j, j1
-#
-           allocate Lxjxj[mu,j,*,j1] 
-           allocate Lxxjj[mu,*,j,j1] 
-           allocate Ljxxj[j,mu,*,j1] 
-#
-           DO nu 
-#
-              REQUEST Vxjxj[mu,j,nu,j1]  
-              REQUEST Vxxjj[mu,nu,j,j1]  
-              REQUEST Vjxxj[j,mu,nu,j1]  
-#
-              Lxjxj[mu,j,nu,j1] = Vxjxj[mu,j,nu,j1] 
-              Lxxjj[mu,nu,j,j1] = Vxxjj[mu,nu,j,j1] 
-              Ljxxj[j,mu,nu,j1] = Vjxxj[j,mu,nu,j1] 
-#
-           ENDDO nu 
-#
-           DO q 
-#
-              Txjqj[mu,j,q,j1] = 0.0  
-#
-              DO nu  
-#
-                 T1xjqj[mu,j,q,j1] = Lxjxj[mu,j,nu,j1]*ca[nu,q]
-                 Txjqj[mu,j,q,j1] += T1xjqj[mu,j,q,j1]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxjqj[mu,j,q,j1] = Txjqj[mu,j,q,j1]
-#
-           ENDDO q 
-#
-           DO b
-#
-              Txbjj[mu,b,j,j1] = 0.0 
-              Tjxbj[j,mu,b,j1] = 0.0  
-#
-              DO nu 
-#
-                 T1xbjj[mu,b,j,j1] = Lxxjj[mu,nu,j,j1]*ca[nu,b]
-                 Txbjj[mu,b,j,j1] += T1xbjj[mu,b,j,j1]  
-#
-                 T1jxbj[j,mu,b,j1] = Ljxxj[j,mu,nu,j1]*ca[nu,b]
-                 Tjxbj[j,mu,b,j1] += T1jxbj[j,mu,b,j1]  
-
-              ENDDO nu 
-#
-              PREPARE Vxbjj[mu,b,j,j1] = Txbjj[mu,b,j,j1]
-              PREPARE Vjxbj[j,mu,b,j1] = Tjxbj[j,mu,b,j1]
-#
-           ENDDO b
-#
-           DO a 
-#
-              Txajj[mu,a,j,j1] = 0.0  
-#
-              DO nu  
-#
-                 T1xajj[mu,a,j,j1] = Lxxjj[mu,nu,j,j1]*ca[nu,a]
-                 Txajj[mu,a,j,j1] += T1xajj[mu,a,j,j1]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxajj[mu,a,j,j1] = Txajj[mu,a,j,j1]
-#
-           ENDDO a 
-#
-           deallocate Lxjxj[mu,j,*,j1] 
-           deallocate Lxxjj[mu,*,j,j1] 
-           deallocate Ljxxj[j,mu,*,j1] 
-#
-     ENDPARDO mu, j, j1
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, b, j
-#
-           allocate Lxxbj[mu,*,b,j] 
-#
-           DO nu 
-#
-              REQUEST Vxxbj[mu,nu,b,j]  
-              Lxxbj[mu,nu,b,j] = Vxxbj[mu,nu,b,j] 
-#
-           ENDDO nu 
-#
-           DO b1 
-#
-              Txbbj[mu,b1,b,j] = 0.0  
-#
-              DO nu  
-#
-                 T1xbbj[mu,b1,b,j] = Lxxbj[mu,nu,b,j]*ca[nu,b1]
-                 Txbbj[mu,b1,b,j] += T1xbbj[mu,b1,b,j]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxbbj[mu,b1,b,j] = Txbbj[mu,b1,b,j]
-#
-           ENDDO b1 
-#
-           DO a 
-#
-              Txabj[mu,a,b,j] = 0.0  
-#
-              DO nu  
-#
-                 T1xabj[mu,a,b,j] = Lxxbj[mu,nu,b,j]*ca[nu,a]
-                 Txabj[mu,a,b,j] += T1xabj[mu,a,b,j]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxabj[mu,a,b,j] = Txabj[mu,a,b,j]
-#
-           ENDDO a 
-#
-           deallocate Lxxbj[mu,*,b,j]  
-#
-     ENDPARDO mu, b, j
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO mu, i, j
-#
-           allocate Lxixj[mu,i,*,j] 
-           allocate Lixxj[i,mu,*,j] 
-#
-           DO nu 
-#
-              REQUEST Vxixj[mu,i,nu,j]  
-              REQUEST Vixxj[i,mu,nu,j]  
-#
-              Lxixj[mu,i,nu,j] = Vxixj[mu,i,nu,j] 
-              Lixxj[i,mu,nu,j] = Vixxj[i,mu,nu,j] 
-#
-           ENDDO nu 
-#
-           DO q 
-#
-              Txiqj[mu,i,q,j] = 0.0  
-#
-              DO nu  
-#
-                 T1xiqj[mu,i,q,j] = Lxixj[mu,i,nu,j]*ca[nu,q]
-                 Txiqj[mu,i,q,j] += T1xiqj[mu,i,q,j]  
-#
-              ENDDO nu  
-#
-              PREPARE Vxiqj[mu,i,q,j] = Txiqj[mu,i,q,j]
-#
-           ENDDO q 
-#
-           DO b 
-#
-              Tixbj[i,mu,b,j] = 0.0  
-#
-              DO nu  
-#
-                 T1ixbj[i,mu,b,j] = Lixxj[i,mu,nu,j]*ca[nu,b]
-                 Tixbj[i,mu,b,j] += T1ixbj[i,mu,b,j]  
-#
-              ENDDO nu  
-#
-              PREPARE Vixbj[i,mu,b,j] = Tixbj[i,mu,b,j]
-#
-           ENDDO b 
-#
-           deallocate Lxixj[mu,i,*,j] 
-           deallocate Lixxj[i,mu,*,j] 
-#
-     ENDPARDO mu, i, j
-#
-#    ------------------------------------------------------------------------
-#    
-     sip_barrier
-#
-     ENDPROC TRAN_TRAN3 
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-     PROC TRAN_TRAN4 
-#
-#    ------------------------------------------------------------------------
-#
-     PARDO p, i, i1
-#
-           allocate Lxipi[*,i,p,i1] 
-#
-           DO mu 
-#
-              REQUEST Vxipi[mu,i,p,i1]  
-              REQUEST Vxipi[mu,i1,p,i]  
-              Lxipi[mu,i,p,i1]  = Vxipi[mu,i,p,i1] 
-              Txipi[mu,i,p,i1]  = Vxipi[mu,i1,p,i] 
-              Lxipi[mu,i,p,i1] -= Txipi[mu,i,p,i1] 
-#
-           ENDDO mu  
-#
-           DO p1 
-#
-              Tpipi[p1,i,p,i1] = 0.0  
-#
-              DO mu  
-#
-                 T1pipi[p1,i,p,i1] = Lxipi[mu,i,p,i1]*ca[mu,p1]
-                 Tpipi[p1,i,p,i1] += T1pipi[p1,i,p,i1]  
-#
-              ENDDO mu  
-#
-              PREPARE VSpipi[p1,i,p,i1] = Tpipi[p1,i,p,i1] 
-#
-           ENDDO p1 
-#
-           deallocate Lxipi[*,i,p,i1] 
-#
-     ENDPARDO p, i, i1
-#
-     PARDO a, i, i1
-#
-           allocate Lxaii[*,a,i,i1] 
-           allocate Lixai[i,*,a,i1] 
-#
-           DO mu 
-#
-              REQUEST Vxaii[mu,a,i,i1]  
-              REQUEST Vixai[i,mu,a,i1]  
-#
-              Lxaii[mu,a,i,i1] = Vxaii[mu,a,i,i1]  
-              Lixai[i,mu,a,i1] = Vixai[i,mu,a,i1] 
-#
-           ENDDO mu 
-#
-           DO a1 
-#
-              Taaii[a1,a,i,i1] = 0.0  
-#
-              DO mu  
-#
-                 T1aaii[a1,a,i,i1] = Lxaii[mu,a,i,i1]*ca[mu,a1]
-                 Taaii[a1,a,i,i1] += T1aaii[a1,a,i,i1]  
-#
-              ENDDO mu  
-#
-              PREPARE Vaaii[a1,a,i,i1] = Taaii[a1,a,i,i1]
-#
-           ENDDO a1 
-#
-           deallocate Lxaii[*,a,i,i1] 
-#
-           DO a1 
-#
-              Tiaai[i,a1,a,i1] = 0.0  
-#
-              DO mu  
-#
-                 T1iaai[i,a1,a,i1] = Lixai[i,mu,a,i1]*ca[mu,a1]
-                 Tiaai[i,a1,a,i1] += T1iaai[i,a1,a,i1]   
-#
-              ENDDO mu  
-#
-              PREPARE Viaai[i,a1,a,i1] = Tiaai[i,a1,a,i1]
-#
-           ENDDO a1 
-#
-           deallocate Lixai[i,*,a,i1] 
-#
-     ENDPARDO a, i, i1
-# 
-     PARDO a, a1, i
-#
-           allocate L1xaai[*,a,a1,i] 
-#
-           DO mu 
-#
-              REQUEST Vxaai[mu,a,a1,i]  
-#
-              L1xaai[mu,a,a1,i]  = Vxaai[mu,a,a1,i]
-#
-           ENDDO mu 
-#
-           DO a2  
-#
-              Taaai[a2,a,a1,i] = 0.0 
-#
-              DO mu 
-#
-                 T1aaai[a2,a,a1,i] = L1xaai[mu,a,a1,i]*ca[mu,a2]
-                 Taaai[a2,a,a1,i] += T1aaai[a2,a,a1,i]  
-#
-              ENDDO mu 
-#
-              T1aaai[a1,a,a2,i]           = Taaai[a2,a,a1,i] 
-              T1aaai[a1,a,a2,i]          *= -1.0  
-              PREPARE Vaaai [a2,a,a1,i]  += Taaai [a2,a,a1,i]
-              PREPARE VSaaai[a2,a,a1,i]  += Taaai [a2,a,a1,i]
-              PREPARE VSaaai[a1,a,a2,i]  += T1aaai[a1,a,a2,i]
-#
-           ENDDO a2  
-#
-           deallocate L1xaai[*,a,a1,i] 
-#
-     ENDPARDO a, a1, i
-# 
-     PARDO q, j, j1
-#
-           allocate Lxjqj[*,j,q,j1] 
-#
-           DO mu  
-#
-              REQUEST Vxjqj[mu,j,q,j1]  
-              REQUEST Vxjqj[mu,j1,q,j]  
-              Lxjqj[mu,j,q,j1]  = Vxjqj[mu,j,q,j1] 
-              Txjqj[mu,j,q,j1]  = Vxjqj[mu,j1,q,j] 
-              Lxjqj[mu,j,q,j1] -= Txjqj[mu,j,q,j1] 
-#
-           ENDDO mu  
-#
-           DO q1 
-#
-              Tqjqj[q1,j,q,j1] = 0.0 
-#
-              DO mu  
-#
-                 T1qjqj[q1,j,q,j1]      = Lxjqj[mu,j,q,j1]*ca[mu,q1]
-                 Tqjqj[q1,j,q,j1]      += T1qjqj[q1,j,q,j1] 
-#
-              ENDDO mu  
-#
-              PREPARE VSqjqj[q1,j,q,j1] = Tqjqj[q1,j,q,j1]
-#
-           ENDDO q1 
-#
-           deallocate Lxjqj[*,j,q,j1] 
-#
-     ENDPARDO q, j, j1
-#
-     PARDO b, j, j1
-#
-           allocate Lxbjj[*,b,j,j1] 
-           allocate Ljxbj[j,*,b,j1] 
-#
-           DO mu 
-#
-              REQUEST Vxbjj[mu,b,j,j1]  
-              REQUEST Vjxbj[j,mu,b,j1]  
-#
-              Lxbjj[mu,b,j,j1] = Vxbjj[mu,b,j,j1] 
-              Ljxbj[j,mu,b,j1] = Vjxbj[j,mu,b,j1] 
-#
-           ENDDO mu 
-#
-           DO b1 
-#
-              Tbbjj[b1,b,j,j1] = 0.0 
-#
-              DO mu 
-#
-                 T1bbjj[b1,b,j,j1] = Lxbjj[mu,b,j,j1]*ca[mu,b1]
-                 Tbbjj[b1,b,j,j1] += T1bbjj[b1,b,j,j1]  
-#
-              ENDDO mu  
-#
-              PREPARE Vbbjj[b1,b,j,j1] = Tbbjj[b1,b,j,j1]
-#
-           ENDDO b1 
-#
-           deallocate Lxbjj[*,b,j,j1] 
-#
-           DO b1 
-#
-              Tjbbj[j,b1,b,j1] = 0.0 
-#
-              DO mu  
-#
-                 T1jbbj[j,b1,b,j1] = Ljxbj[j,mu,b,j1]*ca[mu,b1]
-                 Tjbbj[j,b1,b,j1] += T1jbbj[j,b1,b,j1]  
-#
-              ENDDO mu  
-#
-              PREPARE Vjbbj[j,b1,b,j1] = Tjbbj[j,b1,b,j1]
-#
-           ENDDO b1 
-#
-           deallocate Ljxbj[j,*,b,j1] 
-#
-     ENDPARDO b, j, j1
-#
-     PARDO b, i, i1
-#
-           allocate Lxbii[*,b,i,i1] 
-#
-           DO mu  
-#
-              REQUEST Vxbii[mu,b,i,i1]  
-              Lxbii[mu,b,i,i1] = Vxbii[mu,b,i,i1] 
-#
-           ENDDO mu  
-#
-           DO b1 
-#
-              Tbbii[b1,b,i,i1] = 0.0 
-#
-              DO mu  
-#
-                 T1bbii[b1,b,i,i1] = Lxbii[mu,b,i,i1]*ca[mu,b1]
-                 Tbbii[b1,b,i,i1] += T1bbii[b1,b,i,i1]  
-#
-              ENDDO mu  
-#
-              PREPARE Vbbii[b1,b,i,i1] = Tbbii[b1,b,i,i1]
-#
-           ENDDO b1 
-#
-           deallocate Lxbii[*,b,i,i1] 
-#
-     ENDPARDO b, i, i1
-#
-     PARDO b, i, i1
-#
-           allocate Lxbii[*,b,i,i1] 
-#
-           DO mu 
-#
-              REQUEST Vxbii[mu,b,i,i1]  
-              Lxbii[mu,b,i,i1] = Vxbii[mu,b,i,i1]  
-#
-           ENDDO mu 
-#
-           DO j 
-#
-              Tjbii[j,b,i,i1] = 0.0 
-#
-              DO mu 
-#
-                 T1jbii[j,b,i,i1] = Lxbii[mu,b,i,i1]*ca[mu,j]
-                 Tjbii[j,b,i,i1] += T1jbii[j,b,i,i1]  
-#
-              ENDDO mu  
-#
-              PREPARE Vjbii[j,b,i,i1] = Tjbii[j,b,i,i1]
-#
-           ENDDO j 
-#
-           deallocate Lxbii[*,b,i,i1] 
-#
-     ENDPARDO b, i, i1
-#
-     PARDO b, a, i
-#
-           allocate Lxbai[*,b,a,i] 
-#
-           DO mu  
-#
-              REQUEST Vxbai[mu,b,a,i]  
-              Lxbai[mu,b,a,i] = Vxbai[mu,b,a,i] 
-#
-           ENDDO mu  
-#
-           DO b1 
-#
-              Tbbai[b1,b,a,i] = 0.0 
-#
-              DO mu  
-#
-                 T1bbai[b1,b,a,i] = Lxbai[mu,b,a,i]*ca[mu,b1]
-                 Tbbai[b1,b,a,i] += T1bbai[b1,b,a,i]  
-#
-              ENDDO mu  
-#
-              PREPARE Vbbai[b1,b,a,i] = Tbbai[b1,b,a,i]
-#
-           ENDDO b1 
-#
-           deallocate Lxbai[*,b,a,i] 
-#
-     ENDPARDO b, a, i
-#
-     PARDO q, i, j
-#
-           allocate Lxiqj[*,i,q,j] 
-#
-           DO mu  
-#
-              REQUEST Vxiqj[mu,i,q,j]  
-              Lxiqj[mu,i,q,j] = Vxiqj[mu,i,q,j] 
-#
-           ENDDO mu  
-#
-           DO p 
-#
-              Tpiqj[p,i,q,j] = 0.0 
-#
-              DO mu  
-#
-                 T1piqj[p,i,q,j] = Lxiqj[mu,i,q,j]*ca[mu,p]
-                 Tpiqj[p,i,q,j] += T1piqj[p,i,q,j]  
-#
-              ENDDO mu  
-#
-              PREPARE Vpiqj[p,i,q,j] = Tpiqj[p,i,q,j]
-#
-           ENDDO p 
-#
-           deallocate Lxiqj[*,i,q,j] 
-#
-     ENDPARDO q, i, j
-#
-     PARDO a, j, j1
-#
-           allocate Lxajj[*,a,j,j1] 
-#
-           DO mu  
-#
-              REQUEST Vxajj[mu,a,j,j1]  
-              Lxajj[mu,a,j,j1] = Vxajj[mu,a,j,j1]  
-#
-           ENDDO mu  
-#
-           DO a1 
-#
-              Taajj[a1,a,j,j1] = 0.0 
-#
-              DO mu  
-#
-                 T1aajj[a1,a,j,j1] = Lxajj[mu,a,j,j1]*ca[mu,a1]
-                 Taajj[a1,a,j,j1] += T1aajj[a1,a,j,j1]  
-#
-              ENDDO mu  
-#
-              PREPARE Vaajj[a1,a,j,j1] = Taajj[a1,a,j,j1]
-#
-           ENDDO a1 
-#
-           deallocate Lxajj[*,a,j,j1] 
-#
-     ENDPARDO a, j, j1
-#
-     PARDO b, i, j
-#
-           allocate Lixbj[i,*,b,j] 
-#
-           DO mu 
-#
-              REQUEST Vixbj[i,mu,b,j]  
-              Lixbj[i,mu,b,j] = Vixbj[i,mu,b,j] 
-#
-           ENDDO mu 
-#
-           DO a 
-#
-              Tiabj[i,a,b,j] = 0.0 
-#
-              DO mu 
-#
-                 T1iabj[i,a,b,j] = Lixbj[i,mu,b,j]*ca[mu,a]
-                 Tiabj[i,a,b,j] += T1iabj[i,a,b,j]  
-#
-              ENDDO mu 
-#
-              PREPARE Viabj[i,a,b,j] += Tiabj[i,a,b,j]
-#
-           ENDDO a 
-#
-           deallocate Lixbj[i,*,b,j] 
-#
-     ENDPARDO b, i, j
-#
-     PARDO a, b, j
-#
-           allocate Lxabj[*,a,b,j] 
-#
-           DO mu  
-#
-              REQUEST Vxabj[mu,a,b,j]  
-              Lxabj[mu,a,b,j] = Vxabj[mu,a,b,j] 
-#
-           ENDDO mu  
-#
-           DO a1 
-#
-              Taabj[a1,a,b,j] = 0.0 
-#
-              DO mu  
-#
-                 T1aabj[a1,a,b,j] = Lxabj[mu,a,b,j]*ca[mu,a1]
-                 Taabj[a1,a,b,j] += T1aabj[a1,a,b,j]  
-#
-              ENDDO mu  
-#
-              PREPARE Vaabj[a1,a,b,j] = Taabj[a1,a,b,j]
-#
-           ENDDO a1 
-#
-           deallocate Lxabj[*,a,b,j] 
-#
-     ENDPARDO a, b, j
-#
-#    ------------------------------------------------------------------------
-#
-     ENDPROC TRAN_TRAN4 
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------ 
-#
-     PROC TRAN_UHF 
-# 
-#        CALL COMP_INTEGRALS # --> compute integrals and put into served array 
-         CALL TRAN_TRAN2     # --> performs the first two stages of the 
-                             #     two-electron integral transformation.  
-         CALL TRAN_TRAN3     # --> performs the third stage   
-                             #     two-electron integral transformation.  
-         CALL TRAN_TRAN4     # --> performs the fourth stage of the  
-                             #     two-electron integral transformation.  
-#
-     ENDPROC TRAN_UHF 
 
 #    ------------------------------------------------------------------------
 #    HBAR section
 #
 #    ported from ACESIII xreom_rhf_pro.sial
 #    ------------------------------------------------------------------------
-#
-      PROC HBAR_AB
-#     ------------
-#
+
+PROC HBAR_AB
+
 #     alpha-alpha spin component first. 
 #     --------------------------------- 
-#
-      PARDO a, a1 
-#
-            tpp[a,a1] = fock_a[a,a1]       
-#
-            DO i 
-               t1pp[a,a1] = St1a[a,i]*fock_a[i,a1] 
-               tpp[a,a1] -= t1pp[a,a1] 
-            ENDDO i 
-#
-            LHBAR_aa[a,a1] += tpp[a,a1] 
-#
-      ENDPARDO a, a1 
-#
-      PARDO a, a1, a2, i  
-#
-            REQUEST              VSaaai[a1,a,a2,i]   
-            t1pp[a,a1]         = VSaaai[a1,a,a2,i]*St1a[a2,i] 
-#
-            LHBAR_aa[a,a1]                 += t1pp[a,a1] 
-#
-            DO i1  
-                t3iaai[i1,a2,a,i]         = VSaaai[a1,a,a2,i]*St1a[a1,i1]
-                PREPARE NIAAI[i1,a2,a,i] += t3iaai[i1,a2,a,i]
-             ENDDO i1  
-#
-      ENDPARDO a, a1, a2, i  
-#
-      PARDO a, a1, b, j  
-#
-            REQUEST              Vaabj[a1,a,b,j]   
-            t1pp[a,a1]         = Vaabj[a1,a,b,j]*St1b[b,j] 
-            tppqq[a,a1,j,b]    = Vaabj[a1,a,b,j]
-#
-            LHBAR_aa[a,a1]                += t1pp[a,a1] 
-            PREPARE HBAR_AIBC_aabb[a,a1,j,b] += tppqq[a,a1,j,b] 
-#
-      ENDPARDO a, a1, b, j  
-#
-      PARDO a, i1, a2, i  
-            REQUEST             T2aa[a,i,a2,i1]  
-            tai[a2,i1]        = St1a[a2,i1] 
-            t1ai[a2,i]        = St1a[a2,i] 
-#
-            tpppp[a,i,a2,i1]  = T2aa[a,i,a2,i1] 
-            t1pppp[a,i,a2,i1] = St1a[a,i]^tai[a2,i1] 
-            t2pppp[a,i,a2,i1] = St1a[a,i1]^t1ai[a2,i] 
-            tpppp[a,i,a2,i1] += t1pppp[a,i,a2,i1] 
-            tpppp[a,i,a2,i1] -= t2pppp[a,i,a2,i1] 
-#
-            DO a1 
-               REQUEST              VSpipi[a2,i1,a1,i]    
-               t1pp[a,a1]         = tpppp[a,i,a2,i1]*VSpipi[a2,i1,a1,i] 
-               t1pp[a,a1]        *= -0.5  
-               LHBAR_aa[a,a1] += t1pp[a,a1] 
-            ENDDO a1 
-#
-      ENDPARDO a, i1, a2, i  
-#
-      PARDO a, i, b, j  
-#
-            REQUEST           T2ab[a,i,b,j]  
-            tppqq[a,i,b,j]  = T2ab[a,i,b,j] 
-            t1ppqq[a,i,b,j] = St1a[a,i]^St1b[b,j] 
-            tppqq[a,i,b,j] += t1ppqq[a,i,b,j] 
-#
-            DO a1  
-#
-               REQUEST              Vpiqj[a1,i,b,j]    
-               t1pp[a,a1]         = tppqq[a,i,b,j]*Vpiqj[a1,i,b,j] 
-               t1pp[a,a1]        *= -1.0  
-               LHBAR_aa[a,a1] += t1pp[a,a1] 
-#
-            ENDDO a1  
-#
-      ENDPARDO a, i, b, j  
-#
+
+pardo a, a1 
+
+    tpp[a,a1] = fock_a[a,a1]       
+
+    do i 
+	t1pp[a,a1] = St1a[a,i]*fock_a[i,a1] 
+	tpp[a,a1] -= t1pp[a,a1] 
+    enddo i 
+
+    put HBAR_aa[a,a1] += tpp[a,a1] 
+
+endpardo a, a1 
+
+pardo a, a1, a2, i  
+
+    request VSaaai[a1,a,a2,i]   
+    t1pp[a,a1]         = VSaaai[a1,a,a2,i]*St1a[a2,i] 
+
+    put HBAR_aa[a,a1]                 += t1pp[a,a1] 
+
+endpardo a, a1, a2, i  
+
+pardo a, a1, b, j  
+
+    request Vaabj[a1,a,b,j]   
+    t1pp[a,a1]         = Vaabj[a1,a,b,j]*St1b[b,j] 
+    tppqq[a,a1,j,b]    = Vaabj[a1,a,b,j]
+
+    put HBAR_aa[a,a1]                += t1pp[a,a1] 
+    prepare HBAR_AIBC_aabb[a,a1,j,b] += tppqq[a,a1,j,b] 
+
+endpardo a, a1, b, j  
+
+pardo a, i1, a2, i  
+    request T2aa[a,i,a2,i1]  
+    tai[a2,i1]        = St1a[a2,i1] 
+    t1ai[a2,i]        = St1a[a2,i] 
+
+    tpppp[a,i,a2,i1]  = T2aa[a,i,a2,i1] 
+    t1pppp[a,i,a2,i1] = St1a[a,i]^tai[a2,i1] 
+    t2pppp[a,i,a2,i1] = St1a[a,i1]^t1ai[a2,i] 
+    tpppp[a,i,a2,i1] += t1pppp[a,i,a2,i1] 
+    tpppp[a,i,a2,i1] -= t2pppp[a,i,a2,i1] 
+
+    do a1 
+	request VSpipi[a2,i1,a1,i]    
+	t1pp[a,a1]         = tpppp[a,i,a2,i1]*VSpipi[a2,i1,a1,i] 
+	t1pp[a,a1]        *= -0.5  
+	put HBAR_aa[a,a1] += t1pp[a,a1] 
+    enddo a1 
+
+endpardo a, i1, a2, i  
+
+pardo a, i, b, j  
+
+    request T2ab[a,i,b,j]  
+    tppqq[a,i,b,j]  = T2ab[a,i,b,j] 
+    t1ppqq[a,i,b,j] = St1a[a,i]^St1b[b,j] 
+    tppqq[a,i,b,j] += t1ppqq[a,i,b,j] 
+
+    do a1  
+
+	request Vpiqj[a1,i,b,j]    
+	t1pp[a,a1]         = tppqq[a,i,b,j]*Vpiqj[a1,i,b,j] 
+	t1pp[a,a1]        *= -1.0  
+	put HBAR_aa[a,a1] += t1pp[a,a1] 
+
+    enddo a1  
+
+endpardo a, i, b, j  
+
 #     alpha-alpha spin component done. 
 #     -------------------------------- 
-#
+
 #     beta-beta spin component next. 
 #     ------------------------------ 
-#
+
 #     beta-beta spin component done. 
 #     ------------------------------ 
 
-      sip_barrier 
-      DO a 
-      DO a1 
-         PUT HBAR_aa[a,a1] += LHBAR_aa[a,a1] 
-      ENDDO a1 
-      ENDDO a 
-      sip_barrier 
-      DO a 
-      DO a1 
-         GET HBAR_aa[a,a1] 
-         LHBAR_aa[a,a1] = HBAR_aa[a,a1] 
-      ENDDO a1 
-      ENDDO a 
-#
-      ENDPROC HBAR_AB
-#     ---------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_IJ
+#server_barrier 
+#do a 
+#do a1 
+#PUT HBAR_aa[a,a1] += LHBAR_aa[a,a1] 
+#enddo a1 
+#enddo a 
+server_barrier 
+do a 
+do a1 
+GET HBAR_aa[a,a1] 
+LHBAR_aa[a,a1] = HBAR_aa[a,a1] 
+enddo a1 
+enddo a 
+server_barrier 
+
+ENDPROC HBAR_AB
+
+PROC HBAR_IJ
 #     ------------
-#
+
 #     alpha-alpha spin component first. 
 #     --------------------------------- 
-#
-      PARDO i, i1 
-#
-            tpp[i1,i] = fock_a[i1,i] 
-#
-            DO a 
-               t1pp[i1,i] = fock_a[i1,a]*St1a[a,i] 
-               tpp[i1,i] += t1pp[i1,i] 
-            ENDDO a 
-#
-            DO a 
-            DO i2 
-               REQUEST      VSpipi[a,i2,i,i1]  
-               t1pp[i1,i] = VSpipi[a,i2,i,i1]*St1a[a,i2]  
-               tpp[i1,i] += t1pp[i1,i] 
-            ENDDO i2 
-            ENDDO a 
-#
-            DO b 
-            DO j 
-               REQUEST      Vpiqj[i,i1,b,j]  
-               t1pp[i1,i] = Vpiqj[i,i1,b,j]*St1b[b,j]  
-               tpp[i1,i] += t1pp[i1,i] 
-            ENDDO j 
-            ENDDO b 
-#
-            DO a 
-            DO a1 
-            DO i2 
-               REQUEST             T2aa[a,i,a1,i2]  
-               REQUEST             VSpipi[a,i1,a1,i2]   
-#
-               tpp[a1,i2]        = St1a[a1,i2]
-               t1pp[a1,i]        = St1a[a1,i] 
-#
-               tpppp[a,i,a1,i2]  = T2aa[a,i,a1,i2]
-               t1pppp[a,i,a1,i2] = St1a[a,i]^tpp[a1,i2] 
-               t2pppp[a,i,a1,i2] = St1a[a,i2]^t1pp[a1,i] 
-               tpppp[a,i,a1,i2] += t1pppp[a,i,a1,i2] 
-               tpppp[a,i,a1,i2] -= t2pppp[a,i,a1,i2] 
-#
-               t1pp[i1,i]        = tpppp[a,i,a1,i2]*VSpipi[a,i1,a1,i2] 
-               t1pp[i1,i]       *= 0.5 
-               tpp[i1,i]        += t1pp[i1,i] 
-            ENDDO i2 
-            ENDDO a1 
-            ENDDO a 
-#
-            DO a 
-            DO b 
-            DO j 
-               REQUEST           T2ab[a,i,b,j]  
-               REQUEST           Vpiqj[a,i1,b,j]   
-#
-               tppqq[a,i,b,j]  = T2ab[a,i,b,j]
-               t1ppqq[a,i,b,j] = St1a[a,i]^St1b[b,j] 
-               tppqq[a,i,b,j] += t1ppqq[a,i,b,j] 
-#
-               t1pp[i1,i]      = tppqq[a,i,b,j]*Vpiqj[a,i1,b,j] 
-               tpp[i1,i]      += t1pp[i1,i] 
-            ENDDO j 
-            ENDDO b 
-            ENDDO a 
-#
-            LHBAR_ii[i1,i] = tpp[i1,i] 
-#
-      ENDPARDO i, i1 
-#
-#     done alpha-alpha spin component. 
-#     -------------------------------- 
-#
-      sip_barrier 
-      DO i 
-      DO i1 
-         PUT HBAR_ii[i,i1] += LHBAR_ii[i,i1] 
-      ENDDO i1 
-      ENDDO i 
-      sip_barrier 
-      DO i 
-      DO i1 
-         GET              HBAR_ii[i,i1] 
-         LHBAR_ii[i,i1] = HBAR_ii[i,i1]  
-      ENDDO i1 
-      ENDDO i 
-#
-#     done beta-beta spin component. 
-#     ------------------------------ 
-#
-      ENDPROC HBAR_IJ
-#     ---------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_IB
-#     ------------
-#
-#     alpha-alpha spin component first. 
-#     --------------------------------- 
-#
-      PARDO i, a 
-#
-            tpp[i,a] = fock_a[i,a] 
-#
-            DO a1 
-            DO i1 
-               REQUEST     VSpipi[a,i,a1,i1]  
-               t1pp[i,a] = VSpipi[a,i,a1,i1]*St1a[a1,i1] 
-               tpp[i,a] += t1pp[i,a] 
-            ENDDO i1 
-            ENDDO a1 
-#
-            DO b 
-            DO j 
-               REQUEST     Vpiqj[a,i,b,j]  
-               t1pp[i,a] = Vpiqj[a,i,b,j]*St1b[b,j] 
-               tpp[i,a] += t1pp[i,a] 
-            ENDDO j 
-            ENDDO b 
-#
-            LHBAR_ia[i,a] = tpp[i,a] 
-#
-      ENDPARDO i, a 
-#
-#     done alpha-alpha spin component. 
-#     -------------------------------- 
-#
-#     beta-beta spin component next. 
-#     ------------------------------ 
-#
-      PARDO j, b 
-#
-            tqq[j,b] = fock_a[j,b] 
-#
-            DO b1 
-            DO j1 
-               REQUEST     VSqjqj[b,j,b1,j1]  
-               t1qq[j,b] = VSqjqj[b,j,b1,j1]*St1b[b1,j1] 
-               tqq[j,b] += t1qq[j,b] 
-            ENDDO j1 
-            ENDDO b1 
-#
-            DO a 
-            DO i 
-               REQUEST     Vpiqj[a,i,b,j]  
-               t1qq[j,b] = Vpiqj[a,i,b,j]*St1a[a,i] 
-               tqq[j,b] += t1qq[j,b] 
-            ENDDO i 
-            ENDDO a 
-#
-            LHBAR_jb[j,b] = tqq[j,b] 
-#
-      ENDPARDO j, b 
-#
+
+pardo i, i1 
+
+    tpp[i1,i] = fock_a[i1,i] 
+
+    do a 
+	t1pp[i1,i] = fock_a[i1,a]*St1a[a,i] 
+	tpp[i1,i] += t1pp[i1,i] 
+    enddo a 
+
+    do a 
+    do i2 
+	request VSpipi[a,i2,i,i1]  
+	t1pp[i1,i] = VSpipi[a,i2,i,i1]*St1a[a,i2]  
+	tpp[i1,i] += t1pp[i1,i] 
+    enddo i2 
+    enddo a 
+
+    do b 
+    do j 
+	request Vpiqj[i,i1,b,j]  
+	t1pp[i1,i] = Vpiqj[i,i1,b,j]*St1b[b,j]  
+	tpp[i1,i] += t1pp[i1,i] 
+    enddo j 
+    enddo b 
+
+    do a 
+    do a1 
+    do i2 
+	request T2aa[a,i,a1,i2]  
+	request VSpipi[a,i1,a1,i2]   
+
+	tpp[a1,i2]        = St1a[a1,i2]
+	t1pp[a1,i]        = St1a[a1,i] 
+
+	tpppp[a,i,a1,i2]  = T2aa[a,i,a1,i2]
+	t1pppp[a,i,a1,i2] = St1a[a,i]^tpp[a1,i2] 
+	t2pppp[a,i,a1,i2] = St1a[a,i2]^t1pp[a1,i] 
+	tpppp[a,i,a1,i2] += t1pppp[a,i,a1,i2] 
+	tpppp[a,i,a1,i2] -= t2pppp[a,i,a1,i2] 
+
+	t1pp[i1,i]        = tpppp[a,i,a1,i2]*VSpipi[a,i1,a1,i2] 
+	t1pp[i1,i]       *= 0.5 
+	tpp[i1,i]        += t1pp[i1,i] 
+    enddo i2 
+    enddo a1 
+    enddo a 
+
+    do a 
+    do b 
+    do j 
+	request T2ab[a,i,b,j]  
+	request Vpiqj[a,i1,b,j]   
+
+	tppqq[a,i,b,j]  = T2ab[a,i,b,j]
+	t1ppqq[a,i,b,j] = St1a[a,i]^St1b[b,j] 
+	tppqq[a,i,b,j] += t1ppqq[a,i,b,j] 
+
+	t1pp[i1,i]      = tppqq[a,i,b,j]*Vpiqj[a,i1,b,j] 
+	tpp[i1,i]      += t1pp[i1,i] 
+    enddo j 
+    enddo b 
+    enddo a 
+
+    put HBAR_ii[i1,i] = tpp[i1,i] 
+    #LHBAR_ii[i1,i] = tpp[i1,i] 
+
+endpardo i, i1 
+
 #     done alpha-alpha spin component. 
 #     -------------------------------- 
 
-      sip_barrier 
-      DO a 
-      DO i 
-         PUT HBAR_ia[i,a] += LHBAR_ia[i,a] 
-      ENDDO i 
-      ENDDO a 
-      DO b 
-      DO j 
-         PUT HBAR_jb[j,b] += LHBAR_jb[j,b] 
-      ENDDO j 
-      ENDDO b 
-      sip_barrier 
-      DO a 
-      DO i 
-         GET HBAR_ia[i,a] 
-         LHBAR_ia[i,a] = HBAR_ia[i,a]  
-      ENDDO i 
-      ENDDO a 
-      DO b 
-      DO j 
-         GET HBAR_jb[j,b] 
-         LHBAR_jb[j,b] = HBAR_jb[j,b]  
-      ENDDO j 
-      ENDDO b 
-#
-      ENDPROC HBAR_IB
-#     ---------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_IJKL  
+#     beta-beta spin component next. 
+#     ------------------------------ 
+
+pardo j, j1 
+
+    tqq[j1,j] = fock_a[j1,j] 
+
+    do b 
+	t1qq[j1,j] = fock_a[j1,b]*St1b[b,j] 
+	tqq[j1,j] += t1qq[j1,j] 
+    enddo b 
+
+    do b 
+    do j2 
+	request VSqjqj[b,j2,j,j1]  
+	t1qq[j1,j] = VSqjqj[b,j2,j,j1]*St1b[b,j2]  
+	tqq[j1,j] += t1qq[j1,j] 
+    enddo j2 
+    enddo b 
+
+    do a 
+    do i 
+	request Vpiqj[a,i,j,j1]  
+	t1qq[j1,j] = Vpiqj[a,i,j,j1]*St1a[a,i]  
+	tqq[j1,j] += t1qq[j1,j] 
+    enddo i 
+    enddo a 
+
+    do b 
+    do b1 
+    do j2 
+	request T2bb[b,j,b1,j2]  
+	request VSqjqj[b,j1,b1,j2]   
+
+	tqq[b1,j2]        = St1b[b1,j2]
+	t1qq[b1,j]        = St1b[b1,j] 
+
+	tqqqq[b,j,b1,j2]  = T2bb[b,j,b1,j2]
+	t1qqqq[b,j,b1,j2] = St1b[b,j]^tqq[b1,j2] 
+	t2qqqq[b,j,b1,j2] = St1b[b,j2]^t1qq[b1,j] 
+	tqqqq[b,j,b1,j2] += t1qqqq[b,j,b1,j2] 
+	tqqqq[b,j,b1,j2] -= t2qqqq[b,j,b1,j2] 
+
+	t1qq[j1,j]        = tqqqq[b,j,b1,j2]*VSqjqj[b,j1,b1,j2] 
+	t1qq[j1,j]       *= 0.5 
+	tqq[j1,j]        += t1qq[j1,j] 
+    enddo j2 
+    enddo b1 
+    enddo b 
+
+    do a 
+    do b 
+    do i 
+	request T2ab[a,i,b,j]  
+	request Vpiqj[a,i,b,j1]   
+
+	tppqq[a,i,b,j]  = T2ab[a,i,b,j]
+	t1ppqq[a,i,b,j] = St1a[a,i]^St1b[b,j] 
+	tppqq[a,i,b,j] += t1ppqq[a,i,b,j] 
+
+	t1qq[j1,j]      = tppqq[a,i,b,j]*Vpiqj[a,i,b,j1] 
+	tqq[j1,j]      += t1qq[j1,j] 
+    enddo i 
+    enddo b 
+    enddo a 
+
+    put HBAR_jj[j1,j] = tqq[j1,j] 
+    #LHBAR_jj[j1,j] = tqq[j1,j] 
+
+endpardo j, j1 
+
+#server_barrier 
+#do i 
+#do i1 
+#PUT HBAR_ii[i,i1] += LHBAR_ii[i,i1] 
+#enddo i1 
+#enddo i 
+#do j 
+#do j1 
+#PUT HBAR_jj[j,j1] += LHBAR_jj[j,j1] 
+#enddo j1 
+#enddo j 
+server_barrier 
+do i 
+do i1 
+GET              HBAR_ii[i,i1] 
+LHBAR_ii[i,i1] = HBAR_ii[i,i1]  
+enddo i1 
+enddo i 
+do j 
+do j1 
+GET              HBAR_jj[j,j1] 
+LHBAR_jj[j,j1] = HBAR_jj[j,j1]  
+enddo j1 
+enddo j 
+server_barrier 
+
+#     done beta-beta spin component. 
+#     ------------------------------ 
+
+ENDPROC HBAR_IJ
+
+PROC HBAR_IB
+#     ------------
+
+#     alpha-alpha spin component first. 
+#     --------------------------------- 
+
+pardo i, a 
+
+    tpp[i,a] = fock_a[i,a] 
+
+    do a1 
+    do i1 
+	request VSpipi[a,i,a1,i1]  
+	t1pp[i,a] = VSpipi[a,i,a1,i1]*St1a[a1,i1] 
+	tpp[i,a] += t1pp[i,a] 
+    enddo i1 
+    enddo a1 
+
+    do b 
+    do j 
+	request Vpiqj[a,i,b,j]  
+	t1pp[i,a] = Vpiqj[a,i,b,j]*St1b[b,j] 
+	tpp[i,a] += t1pp[i,a] 
+    enddo j 
+    enddo b 
+
+    put HBAR_ia[i,a] = tpp[i,a] 
+
+endpardo i, a 
+
+#     done alpha-alpha spin component. 
+#     -------------------------------- 
+
+#     beta-beta spin component next. 
+#     ------------------------------ 
+
+pardo j, b 
+
+    tqq[j,b] = fock_a[j,b] 
+
+    do b1 
+    do j1 
+	request VSqjqj[b,j,b1,j1]  
+	t1qq[j,b] = VSqjqj[b,j,b1,j1]*St1b[b1,j1] 
+	tqq[j,b] += t1qq[j,b] 
+    enddo j1 
+    enddo b1 
+
+    do a 
+    do i 
+	request Vpiqj[a,i,b,j]  
+	t1qq[j,b] = Vpiqj[a,i,b,j]*St1a[a,i] 
+	tqq[j,b] += t1qq[j,b] 
+    enddo i 
+    enddo a 
+
+    put HBAR_jb[j,b] = tqq[j,b] 
+
+endpardo j, b 
+
+#     done alpha-alpha spin component. 
+#     -------------------------------- 
+
+server_barrier 
+do a 
+do i 
+GET HBAR_ia[i,a] 
+LHBAR_ia[i,a] = HBAR_ia[i,a]  
+enddo i 
+enddo a 
+do b 
+do j 
+GET HBAR_jb[j,b] 
+LHBAR_jb[j,b] = HBAR_jb[j,b]  
+enddo j 
+enddo b 
+server_barrier 
+
+ENDPROC HBAR_IB
+
+PROC HBAR_IJKL  
 #     --------------
-#
+
 #     (alpha,alpha,alpha,alpha) spin component. 
 #     ----------------------------------------- 
-#
-      PARDO i, i2, i1, i3 
-#
-            REQUEST             VSpipi[i,i1,i2,i3]  
-            tpppp[i,i1,i2,i3] = VSpipi[i,i1,i2,i3] 
-#
-            DO a
-               REQUEST              VSpipi[i1,i,a,i2]   
-               t1pppp[i,i1,i2,i3] = VSpipi[i1,i,a,i2]*St1a[a,i3] 
-               tpppp[i,i1,i2,i3] += t1pppp[i,i1,i2,i3] 
-            ENDDO a
-#
-            DO a
-               REQUEST              VSpipi[i3,i,a,i2]   
-               t1pppp[i,i1,i2,i3] = VSpipi[i3,i,a,i2]*St1a[a,i1] 
-               tpppp[i,i1,i2,i3] -= t1pppp[i,i1,i2,i3] 
-            ENDDO a
-#
-            DO a 
-            DO a1 
-               REQUEST              VSpipi[a,i,a1,i2]  
-               REQUEST              T2aa[a,i1,a1,i3]  
-#
-               tpp[a1,i3]         = St1a[a1,i3] 
-               t1pp[a1,i1]        = St1a[a1,i1] 
-#
-               t1pppp[a,i1,a1,i3]  = T2aa[a,i1,a1,i3] 
-               t2pppp[a,i1,a1,i3] = St1a[a,i1]^tpp[a1,i3]  
-               t3pppp[a,i1,a1,i3] = St1a[a,i3]^t1pp[a1,i1]  
-               t1pppp[a,i1,a1,i3] += t2pppp[a,i1,a1,i3] 
-               t1pppp[a,i1,a1,i3] -= t3pppp[a,i1,a1,i3] 
-#
-               t4pppp[i,i1,i2,i3] = VSpipi[a,i,a1,i2]*t1pppp[a,i1,a1,i3] 
-               t4pppp[i,i1,i2,i3] *= 0.5 
-               tpppp[i,i1,i2,i3]  += t4pppp[i,i1,i2,i3] 
-            ENDDO a1 
-            ENDDO a 
-#
-            PREPARE HBAR_iiii[i,i1,i2,i3] = tpppp[i,i1,i2,i3] 
-#
-      ENDPARDO i, i2, i1, i3 
-#
+
+pardo i, i2, i1, i3 
+
+    request VSpipi[i,i1,i2,i3]  
+    tpppp[i,i1,i2,i3] = VSpipi[i,i1,i2,i3] 
+
+    do a
+	request VSpipi[i1,i,a,i2]   
+	t1pppp[i,i1,i2,i3] = VSpipi[i1,i,a,i2]*St1a[a,i3] 
+	tpppp[i,i1,i2,i3] += t1pppp[i,i1,i2,i3] 
+    enddo a
+
+    do a
+	request VSpipi[i3,i,a,i2]   
+	t1pppp[i,i1,i2,i3] = VSpipi[i3,i,a,i2]*St1a[a,i1] 
+	tpppp[i,i1,i2,i3] -= t1pppp[i,i1,i2,i3] 
+    enddo a
+
+    do a 
+    do a1 
+	request VSpipi[a,i,a1,i2]  
+	request T2aa[a,i1,a1,i3]  
+
+	tpp[a1,i3]         = St1a[a1,i3] 
+	t1pp[a1,i1]        = St1a[a1,i1] 
+
+	t1pppp[a,i1,a1,i3]  = T2aa[a,i1,a1,i3] 
+	t2pppp[a,i1,a1,i3] = St1a[a,i1]^tpp[a1,i3]  
+	t3pppp[a,i1,a1,i3] = St1a[a,i3]^t1pp[a1,i1]  
+	t1pppp[a,i1,a1,i3] += t2pppp[a,i1,a1,i3] 
+	t1pppp[a,i1,a1,i3] -= t3pppp[a,i1,a1,i3] 
+
+	t4pppp[i,i1,i2,i3] = VSpipi[a,i,a1,i2]*t1pppp[a,i1,a1,i3] 
+	t4pppp[i,i1,i2,i3] *= 0.5 
+	tpppp[i,i1,i2,i3]  += t4pppp[i,i1,i2,i3] 
+    enddo a1 
+    enddo a 
+
+    prepare HBAR_iiii[i,i1,i2,i3] = tpppp[i,i1,i2,i3] 
+
+endpardo i, i2, i1, i3 
+
 #     done (alpha,alpha,alpha,alpha) spin component. 
 #     ---------------------------------------------- 
-#
+
 #     (beta,beta,beta,beta) spin component. 
 #     ------------------------------------- 
-#
+
 #     done (beta,beta,beta,beta) spin component. 
 #     ------------------------------------------ 
-#
+
 #     (alpha,alpha,beta,beta) spin component. 
 #     --------------------------------------- 
-#
-      PARDO i, i1, j2, j3 
-#
-            REQUEST             Vpiqj[i,i1,j2,j3]  
-            tppqq[i,i1,j2,j3] = Vpiqj[i,i1,j2,j3] 
-#
-            DO b
-               REQUEST              Vpiqj[i1,i,b,j2]   
-               t1ppqq[i,i1,j2,j3] = Vpiqj[i1,i,b,j2]*St1b[b,j3] 
-               tppqq[i,i1,j2,j3] += t1ppqq[i,i1,j2,j3] 
-            ENDDO b
-#
-            DO a
-               REQUEST              Vpiqj[a,i,j2,j3]   
-               t1ppqq[i,i1,j2,j3] = Vpiqj[a,i,j2,j3]*St1a[a,i1] 
-               tppqq[i,i1,j2,j3] += t1ppqq[i,i1,j2,j3] 
-            ENDDO a
-#
-            DO a 
-            DO b 
-               REQUEST             Vpiqj[a,i,b,j2]  
-               REQUEST             T2ab[a,i1,b,j3]  
-#
-               t1ppqq[a,i1,b,j3]  = T2ab[a,i1,b,j3] 
-               t2ppqq[a,i1,b,j3]  = St1a[a,i1]^St1b[b,j3]  
-               t1ppqq[a,i1,b,j3] += t2ppqq[a,i1,b,j3] 
-#
-               t3ppqq[i,i1,j2,j3] = Vpiqj[a,i,b,j2]*t1ppqq[a,i1,b,j3] 
-               tppqq[i,i1,j2,j3] += t3ppqq[i,i1,j2,j3] 
-            ENDDO b 
-            ENDDO a 
-#
-            PREPARE HBAR_iijj[i,i1,j2,j3] = tppqq[i,i1,j2,j3] 
-#
-      ENDPARDO i, i1, j2, j3 
-#
+
+pardo i, i1, j2, j3 
+
+    request Vpiqj[i,i1,j2,j3]  
+    tppqq[i,i1,j2,j3] = Vpiqj[i,i1,j2,j3] 
+
+    do b
+	request Vpiqj[i1,i,b,j2]   
+	t1ppqq[i,i1,j2,j3] = Vpiqj[i1,i,b,j2]*St1b[b,j3] 
+	tppqq[i,i1,j2,j3] += t1ppqq[i,i1,j2,j3] 
+    enddo b
+
+    do a
+	request Vpiqj[a,i,j2,j3]   
+	t1ppqq[i,i1,j2,j3] = Vpiqj[a,i,j2,j3]*St1a[a,i1] 
+	tppqq[i,i1,j2,j3] += t1ppqq[i,i1,j2,j3] 
+    enddo a
+
+    do a 
+    do b 
+	request Vpiqj[a,i,b,j2]  
+	request T2ab[a,i1,b,j3]  
+
+	t1ppqq[a,i1,b,j3]  = T2ab[a,i1,b,j3] 
+	t2ppqq[a,i1,b,j3]  = St1a[a,i1]^St1b[b,j3]  
+	t1ppqq[a,i1,b,j3] += t2ppqq[a,i1,b,j3] 
+
+	t3ppqq[i,i1,j2,j3] = Vpiqj[a,i,b,j2]*t1ppqq[a,i1,b,j3] 
+	tppqq[i,i1,j2,j3] += t3ppqq[i,i1,j2,j3] 
+    enddo b 
+    enddo a 
+
+    prepare HBAR_iijj[i,i1,j2,j3] = tppqq[i,i1,j2,j3] 
+
+endpardo i, i1, j2, j3 
+
 #     done (alpha,alpha,beta,beta) spin component. 
 #     -------------------------------------------- 
-#
-      ENDPROC HBAR_IJKL 
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_AIBC   
+
+ENDPROC HBAR_IJKL 
+
+PROC HBAR_AIBC   
 #     --------------
-#
+
 #     There are four spin cases to compute:
 #     1. H^{ai}_{bc) --> HBAR_AIBC_aaaa  
 #     2. H^{AI}_{BC) --> HBAR_AIBC_bbbb  
 #     3. H^{Ai}_{Bc) --> HBAR_AIBC_bbaa  
 #     4. H^{aI}_{bC) --> HBAR_AIBC_aabb  
-#
+
 #     Note that since I 'always' store arrays in (11|22) form the 
 #     notation, although valid, is slightly confusing. The 
 #     storage pattern is therefore array(a,b,i,c).   
-#
+
 #    ------------------------------------------------------------------------
-#
+
 #     AAAA spin combination. 
 #     ---------------------- 
-#
+
 #     BBBB spin combination. 
 #     ---------------------- 
-#
+
 #     AABB spin combination. 
 #     ---------------------- 
-#
-      PARDO i1, a1, b2, j 
-#
-            REQUEST Vpiqj[a1,i1,b2,j]  
-#
-            DO a 
-               t1ppqq[a,a1,j,b2]                  = Vpiqj[a1,i1,b2,j]*St1a[a,i1] 
-               t1ppqq[a,a1,j,b2]                 *= -1.0  
-               PREPARE HBAR_AIBC_aabb[a,a1,j,b2] += t1ppqq[a,a1,j,b2] 
-            ENDDO a 
-#
-      ENDPARDO i1, a1, b2, j 
-#
+
+pardo i1, a1, b2, j 
+
+    request Vpiqj[a1,i1,b2,j]  
+
+    do a 
+	t1ppqq[a,a1,j,b2]                  = Vpiqj[a1,i1,b2,j]*St1a[a,i1] 
+	t1ppqq[a,a1,j,b2]                 *= -1.0  
+	prepare HBAR_AIBC_aabb[a,a1,j,b2] += t1ppqq[a,a1,j,b2] 
+    enddo a 
+
+endpardo i1, a1, b2, j 
+
 #     BBAA spin combination. 
 #     ---------------------- 
-#
-      ENDPROC HBAR_AIBC   
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_JKIA   
+
+ENDPROC HBAR_AIBC   
+
+PROC HBAR_JKIA   
 #     --------------
-#
+
 #     There are four spin cases to compute:
 #     1. H^{jk}_{ia) --> HBAR_JKIA_aaaa  
 #     2. H^{JK}_{IA) --> HBAR_JKIA_bbbb  
 #     3. H^{Jk}_{Ia) --> HBAR_JKIA_bbaa  
 #     4. H^{jK}_{iA) --> HBAR_JKIA_aabb  
-#
+
 #     Note that since I 'always' store arrays in (11|22) form the 
 #     notation, although valid, is slightly confusing. The 
 #     storage pattern is therefore array(a,b,i,c).   
-#
+
 #    ------------------------------------------------------------------------
-#
+
 #     AAAA spin combination. 
 #     ---------------------- 
-#
-      PARDO i, i1, i2, a 
-#
-            REQUEST            VSpipi[i,i1,a,i2]   
-            tpppp[i,i1,a,i2] = VSpipi[i,i1,a,i2] 
-#
-            DO a1 
-               REQUEST             VSpipi[a1,i1,a,i2]   
-               t1pppp[i,i1,a,i2] = VSpipi[a1,i1,a,i2]*St1a[a1,i] 
-               tpppp[i,i1,a,i2] += t1pppp[i,i1,a,i2] 
-            ENDDO a1 
-#
-            t1pppp[i1,i,i2,a]                 = tpppp[i,i1,a,i2] 
-            PREPARE HBAR_JKIA_aaaa[i1,i,i2,a] = t1pppp[i1,i,i2,a] 
-#
-      ENDPARDO i, i1, i2, a 
-#
+
+pardo i, i1, i2, a 
+
+    request VSpipi[i,i1,a,i2]   
+    tpppp[i,i1,a,i2] = VSpipi[i,i1,a,i2] 
+
+    do a1 
+	request VSpipi[a1,i1,a,i2]   
+	t1pppp[i,i1,a,i2] = VSpipi[a1,i1,a,i2]*St1a[a1,i] 
+	tpppp[i,i1,a,i2] += t1pppp[i,i1,a,i2] 
+    enddo a1 
+
+    t1pppp[i1,i,i2,a]                 = tpppp[i,i1,a,i2] 
+    prepare HBAR_JKIA_aaaa[i1,i,i2,a] = t1pppp[i1,i,i2,a] 
+
+endpardo i, i1, i2, a 
+
 #     BBBB spin combination. 
 #     ---------------------- 
-#
+
 #     AABB spin combination. 
 #     ---------------------- 
-#
-      PARDO i, i1, j2, b 
-#
-            REQUEST            Vpiqj[i,i1,b,j2]   
-            tppqq[i,i1,b,j2] = Vpiqj[i,i1,b,j2] 
-#
-            DO a1 
-               REQUEST             Vpiqj[a1,i1,b,j2]   
-               t1ppqq[i,i1,b,j2] = Vpiqj[a1,i1,b,j2]*St1a[a1,i] 
-               tppqq[i,i1,b,j2] += t1ppqq[i,i1,b,j2] 
-            ENDDO a1 
-#
-            t1ppqq[i1,i,j2,b]                 = tppqq[i,i1,b,j2] 
-            PREPARE HBAR_JKIA_aabb[i1,i,j2,b] = t1ppqq[i1,i,j2,b] 
-#
-      ENDPARDO i, i1, j2, b 
-#
+
+pardo i, i1, j2, b 
+
+    request Vpiqj[i,i1,b,j2]   
+    tppqq[i,i1,b,j2] = Vpiqj[i,i1,b,j2] 
+
+    do a1 
+	request Vpiqj[a1,i1,b,j2]   
+	t1ppqq[i,i1,b,j2] = Vpiqj[a1,i1,b,j2]*St1a[a1,i] 
+	tppqq[i,i1,b,j2] += t1ppqq[i,i1,b,j2] 
+    enddo a1 
+
+    t1ppqq[i1,i,j2,b]                 = tppqq[i,i1,b,j2] 
+    prepare HBAR_JKIA_aabb[i1,i,j2,b] = t1ppqq[i1,i,j2,b] 
+
+endpardo i, i1, j2, b 
+
 #     BBAA spin combination. 
 #     ---------------------- 
-#
-      ENDPROC HBAR_JKIA   
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_IAJK   
+
+ENDPROC HBAR_JKIA   
+
+PROC HBAR_IAJK   
 #     --------------
-#
+
 #     There are four spin cases to compute:
 #     1. H^{ia)_{jk} --> HBAR_IAJK_aaaa  
 #     1. H^{IA)_{JK} --> HBAR_IAJK_bbbb  
 #     1. H^{Ia)_{Jk} --> HBAR_IAJK_bbaa  
 #     1. H^{iA)_{jK} --> HBAR_IAJK_aabb  
-#
+
 #     Note that since I 'always' store arrays in (11|22) form the 
 #     notation, although valid, is slightly confusing. The 
 #     storage pattern is therefore array(a,b,i,c).   
-#
+
 #    ------------------------------------------------------------------------
-#
+
 #     Form the two-particle intermediates needed. 
 #     ------------------------------------------- 
-#
-      PARDO i1, a1, a, i
-#
-            REQUEST             Viaai[i1,a1,a,i]  # +
-            REQUEST             Vaaii[a,a1,i1,i]  # -
-            Tiaai[i1,a1,a,i]  = Vaaii[a,a1,i1,i]
-            Tiaai[i1,a1,a,i] -= Viaai[i1,a1,a,i]
-            Tiaai[i1,a1,a,i] *= -1.0
-#
-            DO i2
-            DO a2
-               REQUEST               T2aa[a,i2,a2,i] 
-               REQUEST               VSpipi[a1,i1,a2,i2]  # +
-#
-               T1iaai[i1,a1,a,i]   = VSpipi[a1,i1,a2,i2]*T2aa[a,i2,a2,i]
-               Tiaai[i1,a1,a,i]   -= T1iaai[i1,a1,a,i]
-            ENDDO a2
-            ENDDO i2
-#
-            DO j
-            DO b
-               REQUEST             T2ab[a,i,b,j] 
-               REQUEST             Vpiqj[a1,i1,b,j]   # +
-#
-               T1iaai[i1,a1,a,i] = Vpiqj[a1,i1,b,j]*T2ab[a,i,b,j]
-               Tiaai[i1,a1,a,i] += T1iaai[i1,a1,a,i]
-            ENDDO b
-            ENDDO j
-#
-            PREPARE WHIAAI[i1,a1,a,i] = Tiaai[i1,a1,a,i]
-#
-      ENDPARDO i1, a1, a, i
-#
-      PARDO j1, b1, b, j
-#
-            REQUEST             Vjbbj[j1,b1,b,j]  # +
-            REQUEST             Vbbjj[b,b1,j1,j]  # -
-            Tjbbj[j1,b1,b,j]  = Vbbjj[b,b1,j1,j]
-            Tjbbj[j1,b1,b,j] -= Vjbbj[j1,b1,b,j]
-            Tjbbj[j1,b1,b,j] *= -1.0
-#
-            DO j2
-            DO b2
-               REQUEST             T2bb[b,j2,b2,j] 
-               REQUEST             VSqjqj[b1,j1,b2,j2]  # +
-#
-               T1jbbj[j1,b1,b,j] = VSqjqj[b1,j1,b2,j2]*T2bb[b,j2,b2,j]
-               Tjbbj[j1,b1,b,j] -= T1jbbj[j1,b1,b,j]
-            ENDDO b2
-            ENDDO j2
-#
-            DO i
-            DO a
-               REQUEST             T2ab[a,i,b,j] 
-               REQUEST             Vpiqj[a,i,b1,j1]   # +
-#
-               T1jbbj[j1,b1,b,j] = Vpiqj[a,i,b1,j1]*T2ab[a,i,b,j]
-               Tjbbj[j1,b1,b,j] += T1jbbj[j1,b1,b,j]
-            ENDDO a
-            ENDDO i
-#
-            PREPARE WHJBBJ[j1,b1,b,j] = Tjbbj[j1,b1,b,j]
-#
-      ENDPARDO j1, b1, b, j 
-#
-      PARDO i, i1, b, b1
-#
-            REQUEST             Vbbii[b,b1,i,i1] 
-            Tiibb[i,i1,b,b1]  = Vbbii[b,b1,i,i1]
-            Tiibb[i,i1,b,b1] *= -1.0
-#
-            DO a
-            DO j
-               REQUEST             T2ab[a,i1,b,j] 
-               REQUEST             Vpiqj[a,i,b1,j]    
-#
-               T1iibb[i,i1,b,b1] = T2ab[a,i1,b,j]*Vpiqj[a,i,b1,j]
-               Tiibb[i,i1,b,b1] += T1iibb[i,i1,b,b1]
-            ENDDO j
-            ENDDO a
-#
-            PREPARE WHIIBB[i,i1,b,b1] = Tiibb[i,i1,b,b1]
-#
-      ENDPARDO i, i1, b, b1 
-#
-      PARDO j1, j, a, a1
-#
-            REQUEST             Vaajj[a,a1,j1,j] 
-            Tjjaa[j1,j,a,a1]  = Vaajj[a,a1,j1,j]
-            Tjjaa[j1,j,a,a1] *= -1.0
-#
-            DO b
-            DO i
-               REQUEST             T2ab[a,i,b,j] 
-               REQUEST             Vpiqj[a1,i,b,j1]  
-#
-               T1jjaa[j1,j,a,a1] = T2ab[a,i,b,j]*Vpiqj[a1,i,b,j1]
-               Tjjaa[j1,j,a,a1] += T1jjaa[j1,j,a,a1]
-            ENDDO i
-            ENDDO b
-#
-            PREPARE WHJJAA[j1,j,a,a1] = Tjjaa[j1,j,a,a1]
-#
-      ENDPARDO j1, j, a, a1 
-#
-      PARDO i, a, b, j
-#
-            REQUEST          Viabj[i,a,b,j] 
-            Tiabj[i,a,b,j] = Viabj[i,a,b,j]
-#
-            DO a1
-            DO i1
-               REQUEST             T2ab[a1,i1,b,j] 
-               REQUEST             VSpipi[a,i,a1,i1]    # +
-#
-               T1iabj[i,a,b,j]   = VSpipi[a,i,a1,i1]*T2ab[a1,i1,b,j]
-               Tiabj[i,a,b,j]   += T1iabj[i,a,b,j]
-            ENDDO i1
-            ENDDO a1
-#
-            DO b1
-            DO j1
-               REQUEST           T2bb[b1,j1,b,j] 
-               REQUEST           Vpiqj[a,i,b1,j1]     # +
-#
-               T1iabj[i,a,b,j] = Vpiqj[a,i,b1,j1]*T2bb[b1,j1,b,j]
-               Tiabj[i,a,b,j] += T1iabj[i,a,b,j]
-            ENDDO j1
-            ENDDO b1
-#
-            PREPARE WHIABJ[i,a,b,j] = Tiabj[i,a,b,j]
-#
-      ENDPARDO i, a, b, j 
-#
-      PARDO j, b, a, i
-#
-            REQUEST          Viabj[i,a,b,j] 
-            Tjbai[j,b,a,i] = Viabj[i,a,b,j]
-#
-            DO b1
-            DO j1
-               REQUEST           T2ab[a,i,b1,j1] 
-               REQUEST           VSqjqj[b,j,b1,j1]    # +
-#
-               T1jbai[j,b,a,i] = VSqjqj[b,j,b1,j1]*T2ab[a,i,b1,j1]
-               Tjbai[j,b,a,i] += T1jbai[j,b,a,i]
-            ENDDO j1
-            ENDDO b1
-#
-            DO a1
-            DO i1
-               REQUEST           T2aa[a1,i1,a,i] 
-               REQUEST           Vpiqj[a1,i1,b,j]     # +
-#
-               T1jbai[j,b,a,i] = Vpiqj[a1,i1,b,j]*T2aa[a1,i1,a,i]
-               Tjbai[j,b,a,i] += T1jbai[j,b,a,i]
-            ENDDO i1
-            ENDDO a1
-#
-            PREPARE WHJBAI[j,b,a,i] = Tjbai[j,b,a,i]
-#
-      ENDPARDO j, b, a, i 
-#
-      sip_barrier 
-#
+
+pardo i1, a1, a, i
+
+    request Viaai[i1,a1,a,i]  # +
+    request Vaaii[a,a1,i1,i]  # -
+    Tiaai[i1,a1,a,i]  = Vaaii[a,a1,i1,i]
+    Tiaai[i1,a1,a,i] -= Viaai[i1,a1,a,i]
+    Tiaai[i1,a1,a,i] *= -1.0
+
+    do i2
+    do a2
+	request T2aa[a,i2,a2,i] 
+	request VSpipi[a1,i1,a2,i2]  # +
+
+	T1iaai[i1,a1,a,i]   = VSpipi[a1,i1,a2,i2]*T2aa[a,i2,a2,i]
+	Tiaai[i1,a1,a,i]   -= T1iaai[i1,a1,a,i]
+    enddo a2
+    enddo i2
+
+    do j
+    do b
+	request T2ab[a,i,b,j] 
+	request Vpiqj[a1,i1,b,j]   # +
+
+	T1iaai[i1,a1,a,i] = Vpiqj[a1,i1,b,j]*T2ab[a,i,b,j]
+	Tiaai[i1,a1,a,i] += T1iaai[i1,a1,a,i]
+    enddo b
+    enddo j
+
+    prepare WHIAAI[i1,a1,a,i] = Tiaai[i1,a1,a,i]
+
+endpardo i1, a1, a, i
+
+pardo i, i1, b, b1
+
+    request Vbbii[b,b1,i,i1] 
+    Tiibb[i,i1,b,b1]  = Vbbii[b,b1,i,i1]
+    Tiibb[i,i1,b,b1] *= -1.0
+
+    do a
+    do j
+	request T2ab[a,i1,b,j] 
+	request Vpiqj[a,i,b1,j]    
+
+	T1iibb[i,i1,b,b1] = T2ab[a,i1,b,j]*Vpiqj[a,i,b1,j]
+	Tiibb[i,i1,b,b1] += T1iibb[i,i1,b,b1]
+    enddo j
+    enddo a
+
+    prepare WHIIBB[i,i1,b,b1] = Tiibb[i,i1,b,b1]
+
+endpardo i, i1, b, b1 
+
+pardo j1, j, a, a1
+
+    request Vaajj[a,a1,j1,j] 
+    Tjjaa[j1,j,a,a1]  = Vaajj[a,a1,j1,j]
+    Tjjaa[j1,j,a,a1] *= -1.0
+
+    do b
+    do i
+	request T2ab[a,i,b,j] 
+	request Vpiqj[a1,i,b,j1]  
+
+	T1jjaa[j1,j,a,a1] = T2ab[a,i,b,j]*Vpiqj[a1,i,b,j1]
+	Tjjaa[j1,j,a,a1] += T1jjaa[j1,j,a,a1]
+    enddo i
+    enddo b
+
+    prepare WHJJAA[j1,j,a,a1] = Tjjaa[j1,j,a,a1]
+
+endpardo j1, j, a, a1 
+
+pardo i, a, b, j
+
+    request Viabj[i,a,b,j] 
+    Tiabj[i,a,b,j] = Viabj[i,a,b,j]
+
+    do a1
+    do i1
+	request T2ab[a1,i1,b,j] 
+	request VSpipi[a,i,a1,i1]    # +
+
+	T1iabj[i,a,b,j]   = VSpipi[a,i,a1,i1]*T2ab[a1,i1,b,j]
+	Tiabj[i,a,b,j]   += T1iabj[i,a,b,j]
+    enddo i1
+    enddo a1
+
+    do b1
+    do j1
+	request T2bb[b1,j1,b,j] 
+	request Vpiqj[a,i,b1,j1]     # +
+
+	T1iabj[i,a,b,j] = Vpiqj[a,i,b1,j1]*T2bb[b1,j1,b,j]
+	Tiabj[i,a,b,j] += T1iabj[i,a,b,j]
+    enddo j1
+    enddo b1
+
+    prepare WHIABJ[i,a,b,j] = Tiabj[i,a,b,j]
+
+endpardo i, a, b, j 
+
+pardo j, b, a, i
+
+    request Viabj[i,a,b,j] 
+    Tjbai[j,b,a,i] = Viabj[i,a,b,j]
+
+    do b1
+    do j1
+	request T2ab[a,i,b1,j1] 
+	request VSqjqj[b,j,b1,j1]    # +
+
+	T1jbai[j,b,a,i] = VSqjqj[b,j,b1,j1]*T2ab[a,i,b1,j1]
+	Tjbai[j,b,a,i] += T1jbai[j,b,a,i]
+    enddo j1
+    enddo b1
+
+    do a1
+    do i1
+	request T2aa[a1,i1,a,i] 
+	request Vpiqj[a1,i1,b,j]     # +
+
+	T1jbai[j,b,a,i] = Vpiqj[a1,i1,b,j]*T2aa[a1,i1,a,i]
+	Tjbai[j,b,a,i] += T1jbai[j,b,a,i]
+    enddo i1
+    enddo a1
+
+    prepare WHJBAI[j,b,a,i] = Tjbai[j,b,a,i]
+
+endpardo j, b, a, i 
+
+server_barrier 
+
 #     AAAA spin combination. 
 #     ---------------------- 
-#
-      PARDO a, i, i1, i2
-#
-            REQUEST             VSpipi[i,i1,a,i2] 
-            Tiiai[i,i1,a,i2]  = VSpipi[i,i1,a,i2]
-#
-            DO i3
-               REQUEST             HBAR_iiii[i,i1,i3,i2] 
-               T1iiai[i,i1,a,i2] = HBAR_iiii[i,i1,i3,i2]*St1a[a,i3]
-               Tiiai[i,i1,a,i2] -= T1iiai[i,i1,a,i2]
-            ENDDO i3
-#
-            PREPARE HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
-#
-      ENDPARDO a, i, i1, i2
-#
-      PARDO i, i1, a, i2
-#
-            Tiiai[i,i1,a,i2]  = 0.0  
-            TSiiai[i,i2,a,i1] = 0.0
-#
-            DO a1
-#
-               REQUEST              T2aa[a,i1,a1,i2] 
-               REQUEST              WHIAAI[i,a1,a,i2] 
-#
-               T1iiai[i,i1,a,i2]  = T2aa[a,i1,a1,i2]*LHBAR_ia[i,a1]
-               Tiiai[i,i1,a,i2]  -= T1iiai[i,i1,a,i2]
-#
-               T1iiai[i,i1,a,i2]  = WHIAAI[i,a1,a,i2]*St1a[a1,i1]
-               T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]
-#
-               Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2]
-               TSiiai[i,i2,a,i1] -= T2iiai[i,i2,a,i1]
-#
-            ENDDO a1
-#
-            PREPARE HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
-            PREPARE HBAR_IAJK_aaaa[i,i2,a,i1] += TSiiai[i,i2,a,i1]
-#
-      ENDPARDO i, i1, a, i2
-#
-      PARDO i, a, a1, a2
-#
-            REQUEST VSaaai[a2,a,a1,i]  # +
-#
-            DO i1
-               t1pp[a2,i1] = St1a[a2,i1] 
-               DO i2
-#
-                  REQUEST               T2aa[a1,i1,a2,i2] 
-                  tpp[a2,i2]          = St1a[a2,i2] 
-#
-                  tpppp[a1,i1,a2,i2]  = T2aa[a1,i1,a2,i2] 
-                  t1pppp[a1,i1,a2,i2] = St1a[a1,i1]^tpp[a2,i2] 
-                  t2pppp[a1,i1,a2,i2] = St1a[a1,i2]^t1pp[a2,i1] 
-                  tpppp[a1,i1,a2,i2] += t1pppp[a1,i1,a2,i2] 
-                  tpppp[a1,i1,a2,i2] -= t2pppp[a1,i1,a2,i2] 
-#
-                  T1iiai[i,i1,a,i2]   = tpppp[a1,i1,a2,i2]*VSaaai[a2,a,a1,i]
-                  T1iiai[i,i1,a,i2]  *= 0.5
-                  PREPARE HBAR_IAJK_aaaa[i,i1,a,i2] += T1iiai[i,i1,a,i2]
-#
-               ENDDO i2
-            ENDDO i1
-#
-      ENDPARDO i, a, a1, a2
-#
-      PARDO i, i1, a, i2
-#
-            Tiiai[i,i1,a,i2]  = 0.0  
-            TSiiai[i,i2,a,i1] = 0.0
-#
-            DO a1
-#
-               DO i3
-#
-                  REQUEST               T2aa[a,i2,a1,i3] 
-                  REQUEST               VSpipi[i1,i,a1,i3]    # +
-#
-                  T1iiai[i,i1,a,i2]   = VSpipi[i1,i,a1,i3]*T2aa[a,i2,a1,i3]
-                  T2iiai[i,i2,a,i1]   = T1iiai[i,i1,a,i2]
-                  Tiiai[i,i1,a,i2]   += T1iiai[i,i1,a,i2]
-                  TSiiai[i,i2,a,i1]  -= T2iiai[i,i2,a,i1]
-#
-               ENDDO i3
-#
-            ENDDO a1
-#
-            PREPARE HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
-            PREPARE HBAR_IAJK_aaaa[i,i2,a,i1] += TSiiai[i,i2,a,i1]
-#
-      ENDPARDO i, i1, a, i2
-#
-      PARDO i, i1, a, i2
-#
-            Tiiai[i,i1,a,i2]  = 0.0  
-            TSiiai[i,i2,a,i1] = 0.0
-#
-            DO b
-            DO j
-#
-               REQUEST              T2ab[a,i2,b,j] 
-               REQUEST              Vpiqj[i1,i,b,j]     # +
-#
-               T1iiai[i,i1,a,i2]  = Vpiqj[i1,i,b,j]*T2ab[a,i2,b,j]
-               Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2]
-#
-               T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]
-               TSiiai[i,i2,a,i1] -= T2iiai[i,i2,a,i1]
-#
-            ENDDO j
-            ENDDO b
-#
-            PREPARE HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
-            PREPARE HBAR_IAJK_aaaa[i,i2,a,i1] += TSiiai[i,i2,a,i1]
-#
-      ENDPARDO i, i1, a, i2
-#
+
+pardo a, i, i1, i2
+
+    request VSpipi[i,i1,a,i2] 
+    Tiiai[i,i1,a,i2]  = VSpipi[i,i1,a,i2]
+
+    do i3
+	request HBAR_iiii[i,i1,i3,i2] 
+	T1iiai[i,i1,a,i2] = HBAR_iiii[i,i1,i3,i2]*St1a[a,i3]
+	Tiiai[i,i1,a,i2] -= T1iiai[i,i1,a,i2]
+    enddo i3
+
+    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
+
+endpardo a, i, i1, i2
+
+pardo i, i1, a, i2
+
+    Tiiai[i,i1,a,i2]  = 0.0  
+    TSiiai[i,i2,a,i1] = 0.0
+
+    do a1
+
+	request T2aa[a,i1,a1,i2] 
+	request WHIAAI[i,a1,a,i2] 
+
+	T1iiai[i,i1,a,i2]  = T2aa[a,i1,a1,i2]*LHBAR_ia[i,a1]
+	Tiiai[i,i1,a,i2]  -= T1iiai[i,i1,a,i2]
+
+	T1iiai[i,i1,a,i2]  = WHIAAI[i,a1,a,i2]*St1a[a1,i1]
+	T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]
+
+	Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2]
+	TSiiai[i,i2,a,i1] -= T2iiai[i,i2,a,i1]
+
+    enddo a1
+
+    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
+    prepare HBAR_IAJK_aaaa[i,i2,a,i1] += TSiiai[i,i2,a,i1]
+
+endpardo i, i1, a, i2
+
+pardo i, a, a1, a2
+
+    request VSaaai[a2,a,a1,i]  # +
+
+    do i1
+    t1pp[a2,i1] = St1a[a2,i1] 
+	do i2
+
+	    request T2aa[a1,i1,a2,i2] 
+	    tpp[a2,i2]          = St1a[a2,i2] 
+
+	    tpppp[a1,i1,a2,i2]  = T2aa[a1,i1,a2,i2] 
+	    t1pppp[a1,i1,a2,i2] = St1a[a1,i1]^tpp[a2,i2] 
+	    t2pppp[a1,i1,a2,i2] = St1a[a1,i2]^t1pp[a2,i1] 
+	    tpppp[a1,i1,a2,i2] += t1pppp[a1,i1,a2,i2] 
+	    tpppp[a1,i1,a2,i2] -= t2pppp[a1,i1,a2,i2] 
+
+	    T1iiai[i,i1,a,i2]   = tpppp[a1,i1,a2,i2]*VSaaai[a2,a,a1,i]
+	    T1iiai[i,i1,a,i2]  *= 0.5
+	    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += T1iiai[i,i1,a,i2]
+
+	enddo i2
+    enddo i1
+
+endpardo i, a, a1, a2
+
+pardo i, i1, a, i2
+
+    Tiiai[i,i1,a,i2]  = 0.0  
+    TSiiai[i,i2,a,i1] = 0.0
+
+    do a1
+    do i3
+
+	request T2aa[a,i2,a1,i3] 
+	request VSpipi[i1,i,a1,i3]    # +
+
+	T1iiai[i,i1,a,i2]   = VSpipi[i1,i,a1,i3]*T2aa[a,i2,a1,i3]
+	T2iiai[i,i2,a,i1]   = T1iiai[i,i1,a,i2]
+	Tiiai[i,i1,a,i2]   += T1iiai[i,i1,a,i2]
+	TSiiai[i,i2,a,i1]  -= T2iiai[i,i2,a,i1]
+
+    enddo i3
+    enddo a1
+
+    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
+    prepare HBAR_IAJK_aaaa[i,i2,a,i1] += TSiiai[i,i2,a,i1]
+
+endpardo i, i1, a, i2
+
+pardo i, i1, a, i2
+
+    Tiiai[i,i1,a,i2]  = 0.0  
+    TSiiai[i,i2,a,i1] = 0.0
+
+    do b
+    do j
+
+	request T2ab[a,i2,b,j] 
+	request Vpiqj[i1,i,b,j]     # +
+
+	T1iiai[i,i1,a,i2]  = Vpiqj[i1,i,b,j]*T2ab[a,i2,b,j]
+	Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2]
+
+	T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]
+	TSiiai[i,i2,a,i1] -= T2iiai[i,i2,a,i1]
+
+    enddo j
+    enddo b
+
+    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += Tiiai[i,i1,a,i2]
+    prepare HBAR_IAJK_aaaa[i,i2,a,i1] += TSiiai[i,i2,a,i1]
+
+endpardo i, i1, a, i2
+
 #     AABB spin combination. 
 #     ---------------------- 
-#
-      PARDO i, i1, b, j
-#
-            REQUEST           Vpiqj[i,i1,b,j] 
-            Tiibj[i,i1,b,j] = Vpiqj[i,i1,b,j]
-#
-            DO a
-#
-               REQUEST            T2ab[a,i1,b,j] 
-               REQUEST            WHIABJ[i,a,b,j] 
-#
-               T1iibj[i,i1,b,j] = T2ab[a,i1,b,j]*LHBAR_ia[i,a]
-               Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
-#
-               T1iibj[i,i1,b,j] = WHIABJ[i,a,b,j]*St1a[a,i1]
-               Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
-#
-               DO b1
-#
-                  REQUEST             T2ab[a,i1,b1,j] 
-                  REQUEST             Vbbai[b1,b,a,i]   
-#
-                  tppqq[a,i1,b1,j]  = T2ab[a,i1,b1,j] 
-                  t1ppqq[a,i1,b1,j] = St1a[a,i1]^St1b[b1,j] 
-                  tppqq[a,i1,b1,j] += t1ppqq[a,i1,b1,j] 
-#
-                  T1iibj[i,i1,b,j]  = Vbbai[b1,b,a,i]*tppqq[a,i1,b1,j]
-                  Tiibj[i,i1,b,j]  += T1iibj[i,i1,b,j]
-#
-               ENDDO b1
-#
-               DO i2
-#
-                  REQUEST            T2ab[a,i2,b,j] 
-                  REQUEST            VSpipi[i1,i,a,i2]   # +
-#
-                  T1iibj[i,i1,b,j] = VSpipi[i1,i,a,i2]*T2ab[a,i2,b,j]
-                  Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
-#
-               ENDDO i2
-#
-               DO j1
-#
-                  REQUEST            T2ab[a,i1,b,j1] 
-                  REQUEST            Vpiqj[a,i,j,j1]      # +
-#
-                  T1iibj[i,i1,b,j] = Vpiqj[a,i,j,j1]*T2ab[a,i1,b,j1]
-                  Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
-#
-               ENDDO j1
-#
-            ENDDO a
-#
-            DO j1
-#
-               REQUEST            HBAR_iijj[i,i1,j1,j] 
-#
-               T1iibj[i,i1,b,j] = HBAR_iijj[i,i1,j1,j]*St1b[b,j1]
-               Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
-#
-            ENDDO j1
-#
-            DO b1
-#
-               REQUEST            WHIIBB[i,i1,b,b1] 
-               T1iibj[i,i1,b,j] = WHIIBB[i,i1,b,b1]*St1b[b1,j]
-               Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
-#
-               DO j2
-#
-                  REQUEST            T2bb[b1,j2,b,j] 
-                  REQUEST            Vpiqj[i1,i,b1,j2]    # +
-#
-                  T1iibj[i,i1,b,j] = Vpiqj[i1,i,b1,j2]*T2bb[b1,j2,b,j]
-                  Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
-#
-               ENDDO j2
-#
-            ENDDO b1
-#
-            PREPARE HBAR_IAJK_aabb[i,i1,b,j] = Tiibj[i,i1,b,j]
-#
-      ENDPARDO i, i1, b, j
-#
+
+pardo i, i1, b, j
+
+    request Vpiqj[i,i1,b,j] 
+    Tiibj[i,i1,b,j] = Vpiqj[i,i1,b,j]
+
+    do a
+
+	request T2ab[a,i1,b,j] 
+	request WHIABJ[i,a,b,j] 
+
+	T1iibj[i,i1,b,j] = T2ab[a,i1,b,j]*LHBAR_ia[i,a]
+	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
+
+	T1iibj[i,i1,b,j] = WHIABJ[i,a,b,j]*St1a[a,i1]
+	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
+
+	do b1
+
+	    request T2ab[a,i1,b1,j] 
+	    request Vbbai[b1,b,a,i]   
+
+	    tppqq[a,i1,b1,j]  = T2ab[a,i1,b1,j] 
+	    t1ppqq[a,i1,b1,j] = St1a[a,i1]^St1b[b1,j] 
+	    tppqq[a,i1,b1,j] += t1ppqq[a,i1,b1,j] 
+
+	    T1iibj[i,i1,b,j]  = Vbbai[b1,b,a,i]*tppqq[a,i1,b1,j]
+	    Tiibj[i,i1,b,j]  += T1iibj[i,i1,b,j]
+
+	enddo b1
+
+	do i2
+
+	    request T2ab[a,i2,b,j] 
+	    request VSpipi[i1,i,a,i2]   # +
+
+	    T1iibj[i,i1,b,j] = VSpipi[i1,i,a,i2]*T2ab[a,i2,b,j]
+	    Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
+
+	enddo i2
+
+	do j1
+
+	    request T2ab[a,i1,b,j1] 
+	    request Vpiqj[a,i,j,j1]      # +
+
+	    T1iibj[i,i1,b,j] = Vpiqj[a,i,j,j1]*T2ab[a,i1,b,j1]
+	    Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
+
+	enddo j1
+
+    enddo a
+
+    do j1
+
+	request HBAR_iijj[i,i1,j1,j] 
+
+	T1iibj[i,i1,b,j] = HBAR_iijj[i,i1,j1,j]*St1b[b,j1]
+	Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
+
+    enddo j1
+
+    do b1
+
+	request WHIIBB[i,i1,b,b1] 
+	T1iibj[i,i1,b,j] = WHIIBB[i,i1,b,b1]*St1b[b1,j]
+	Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
+
+	do j2
+
+	    request T2bb[b1,j2,b,j] 
+	    request Vpiqj[i1,i,b1,j2]    # +
+
+	    T1iibj[i,i1,b,j] = Vpiqj[i1,i,b1,j2]*T2bb[b1,j2,b,j]
+	    Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
+
+	enddo j2
+
+    enddo b1
+
+    prepare HBAR_IAJK_aabb[i,i1,b,j] = Tiibj[i,i1,b,j]
+
+endpardo i, i1, b, j
+
 #     BBAA spin combination. 
 #     ---------------------- 
-#
+
 #     BBBB spin combination. 
 #     ---------------------- 
-#
-      sip_barrier 
-#
-      ENDPROC HBAR_IAJK   
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_AJIB     
+
+server_barrier 
+
+ENDPROC HBAR_IAJK   
+
+PROC HBAR_AJIB     
 #     --------------
-#
+
 #     There are four spin cases to compute:
 #     1. H^{aj)_{ib} --> HBAR_AJIB_aaaa  
 #     2. H^{AJ)_{IB} --> HBAR_AJIB_bbbb  
@@ -2038,688 +1011,669 @@ ENDPROC READ_AMP
 #     4. H^{Aj)_{Ib} --> HBAR_AJIB_bbaa  
 #     5. H^{Aj)_{iB} --> HBAR_AJIB_iibb   
 #     6. H^{aJ)_{Ib} --> HBAR_AJIB_jjaa   
-#
+
 #     Note that since I 'always' store arrays in (11|22) form the 
 #     notation, although valid, is slightly confusing. The 
 #     storage pattern is therefore array(a,b,i,c).   
-#
+
 #    ------------------------------------------------------------------------
-#
+
 #     AAAA spin combination. 
 #     ---------------------- 
-#
-      PARDO i1, a1, a, i
-#
-            REQUEST                              Viaai[i1,a1,a,i]  
-            REQUEST                              Vaaii[a,a1,i1,i]  
-            Tiaai[i1,a1,a,i]                   = Vaaii[a,a1,i1,i]
-            Tiaai[i1,a1,a,i]                  -= Viaai[i1,a1,a,i]
-            Tiaai[i1,a1,a,i]                  *= -1.0
-            PREPARE HBAR_AJIB_aaaa[i1,a1,a,i] += Tiaai[i1,a1,a,i]
-#
-      ENDPARDO i1, a1, a, i
-#
-      PARDO i, i1, a1, i2  
-#
-            REQUEST VSpipi[a1,i1,i,i2] 
-#
-            DO a
-               T1iaai[i1,a1,a,i]                  = VSpipi[a1,i1,i,i2]*St1a[a,i2]
-               T1iaai[i1,a1,a,i]                 *= -1.0  
-               PREPARE HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
-            ENDDO a
-#
-      ENDPARDO i, i1, a1, i2
-#
-      PARDO i1, a1, a, a2  
-#
-            REQUEST  VSaaai[a2,a,a1,i1] 
-#
-            DO i 
-               T2iaai[i,a,a1,i1]                  = VSaaai[a2,a,a1,i1]*St1a[a2,i]
-               T1iaai[i1,a1,a,i]                  = T2iaai[i,a,a1,i1]
-               PREPARE HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
-            ENDDO i
-#
-      ENDPARDO i1, a1, a, a2  
-#
-      PARDO i, a, a2, i2  
-#
-            REQUEST               T2aa[a2,i,a,i2]  
-            tai[a,i2]           = St1a[a,i2]
-            T1aiai[a2,i,a,i2]   = St1a[a2,i]^tai[a,i2]
-            T1aiai[a2,i,a,i2]  += T2aa[a2,i,a,i2]
-#
-            DO a1 
-            DO i1
-#
-               REQUEST                              VSpipi[a2,i2,a1,i1]  
-               Taiai[a1,i2,a2,i1]                 = VSpipi[a2,i2,a1,i1]
-               T1iaai[i1,a1,a,i]                  = T1aiai[a2,i,a,i2]*Taiai[a1,i2,a2,i1]
-               T1iaai[i1,a1,a,i]                 *= -1.0  
-               PREPARE HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
-#
-            ENDDO i1
-            ENDDO a1
-#
-      ENDPARDO i, a, a2, i2
-#
-      PARDO i1, a1, b, j
-#
-            REQUEST Vpiqj[a1,i1,b,j]  
-#
-            DO a
-            DO i
-#
-               REQUEST                              T2ab[a,i,b,j]  
-               T1iaai[i1,a1,a,i]                  = Vpiqj[a1,i1,b,j]*T2ab[a,i,b,j]
-               PREPARE HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
-#
-            ENDDO i
-            ENDDO a
-#
-      ENDPARDO i1, a1, b, j
-#
+
+pardo i1, a1, a, i
+
+    request Viaai[i1,a1,a,i]  
+    request Vaaii[a,a1,i1,i]  
+    Tiaai[i1,a1,a,i]                   = Vaaii[a,a1,i1,i]
+    Tiaai[i1,a1,a,i]                  -= Viaai[i1,a1,a,i]
+    Tiaai[i1,a1,a,i]                  *= -1.0
+    prepare HBAR_AJIB_aaaa[i1,a1,a,i] += Tiaai[i1,a1,a,i]
+
+endpardo i1, a1, a, i
+
+pardo i, i1, a1, i2  
+
+    request VSpipi[a1,i1,i,i2] 
+
+    do a
+	T1iaai[i1,a1,a,i]                  = VSpipi[a1,i1,i,i2]*St1a[a,i2]
+	T1iaai[i1,a1,a,i]                 *= -1.0  
+	prepare HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
+    enddo a
+
+endpardo i, i1, a1, i2
+
+pardo i1, a1, a, a2  
+
+    request VSaaai[a2,a,a1,i1] 
+
+    do i 
+	T2iaai[i,a,a1,i1]                  = VSaaai[a2,a,a1,i1]*St1a[a2,i]
+	T1iaai[i1,a1,a,i]                  = T2iaai[i,a,a1,i1]
+	prepare HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
+    enddo i
+
+endpardo i1, a1, a, a2  
+
+pardo i, a, a2, i2  
+
+    request T2aa[a2,i,a,i2]  
+    tai[a,i2]           = St1a[a,i2]
+    T1aiai[a2,i,a,i2]   = St1a[a2,i]^tai[a,i2]
+    T1aiai[a2,i,a,i2]  += T2aa[a2,i,a,i2]
+
+    do a1 
+    do i1
+
+	request VSpipi[a2,i2,a1,i1]  
+	Taiai[a1,i2,a2,i1]                 = VSpipi[a2,i2,a1,i1]
+	T1iaai[i1,a1,a,i]                  = T1aiai[a2,i,a,i2]*Taiai[a1,i2,a2,i1]
+	T1iaai[i1,a1,a,i]                 *= -1.0  
+	prepare HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
+
+    enddo i1
+    enddo a1
+
+endpardo i, a, a2, i2
+
+pardo i1, a1, b, j
+
+    request Vpiqj[a1,i1,b,j]  
+
+    do a
+    do i
+
+	request T2ab[a,i,b,j]  
+	T1iaai[i1,a1,a,i]                  = Vpiqj[a1,i1,b,j]*T2ab[a,i,b,j]
+	prepare HBAR_AJIB_aaaa[i1,a1,a,i] += T1iaai[i1,a1,a,i]
+
+    enddo i
+    enddo a
+
+endpardo i1, a1, b, j
+
 #     BBBB spin combination. 
 #     ---------------------- 
-#
+
 #     AABB spin combination. 
 #     ---------------------- 
-#
-      PARDO i, a, b, j
-#
-            REQUEST                           Viabj[i,a,b,j] 
-            Tiabj[i,a,b,j]                  = Viabj[i,a,b,j]
-            PREPARE HBAR_AJIB_aabb[i,a,b,j]+= Tiabj[i,a,b,j]
-#
-      ENDPARDO i, a, b, j 
-#
-      PARDO i, a, b, b1  
-#
-            REQUEST Vbbai[b1,b,a,i]  
-#
-            DO j
-#
-               Tjbai[j,b,a,i]                   = Vbbai[b1,b,a,i]*St1b[b1,j]
-               T2jbai[j,b,a,i]                  = Tjbai[j,b,a,i]
-               Tiabj[i,a,b,j]                   = Tjbai[j,b,a,i]  
-               PREPARE NJBAI[j,b,a,i]          += T2jbai[j,b,a,i]
-               PREPARE HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
-#
-            ENDDO j
-#
-      ENDPARDO i, a, b, b1  
-#
-      PARDO b, i, a, j
-#
-            Tiabj[i,a,b,j]  = 0.0  
-#
-            DO j1
-#
-               REQUEST           Vpiqj[a,i,j,j1]  
-               T1iabj[i,a,b,j] = Vpiqj[a,i,j,j1]*St1b[b,j1]
-               Tiabj[i,a,b,j] -= T1iabj[i,a,b,j]
-#
-            ENDDO j1
-#
-            PREPARE HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
-#
-      ENDPARDO b, i, a, j 
-#
-      PARDO j, b, b1, j1
-#
-            REQUEST              T2bb[b1,j,b,j1]  
-#
-            tbj[b,j1]          = St1b[b,j1]
-            T2bjbj[b1,j,b,j1]  = St1b[b1,j]^tbj[b,j1]
-            T2bjbj[b1,j,b,j1] += T2bb[b1,j,b,j1]
-#
-            DO i
-            DO a
-#
-               REQUEST                            Vpiqj[a,i,b1,j1]  
-               Tiabj[i,a,b,j]                   = T2bjbj[b1,j,b,j1]*Vpiqj[a,i,b1,j1]
-               Tiabj[i,a,b,j]                  *= -1.0  
-               PREPARE HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
-#
-            ENDDO a
-            ENDDO i
-#
-      ENDPARDO j, b, b1, j1 
-#
-      PARDO i1, a1, b, j
-#
-            REQUEST T2ab[a1,i1,b,j]  
-#
-            DO a
-            DO i
-#
-               REQUEST                            VSpipi[a1,i1,a,i]  
-               Tiabj[i,a,b,j]                   = T2ab[a1,i1,b,j]*VSpipi[a1,i1,a,i]
-               PREPARE HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
-#
-            ENDDO i
-            ENDDO a
-#
-      ENDPARDO i1, a1, b, j 
-#
+
+pardo i, a, b, j
+
+    request Viabj[i,a,b,j] 
+    Tiabj[i,a,b,j]                  = Viabj[i,a,b,j]
+    prepare HBAR_AJIB_aabb[i,a,b,j]+= Tiabj[i,a,b,j]
+
+endpardo i, a, b, j 
+
+pardo i, a, b, b1  
+
+    request Vbbai[b1,b,a,i]  
+
+    do j
+
+	Tjbai[j,b,a,i]                   = Vbbai[b1,b,a,i]*St1b[b1,j]
+	T2jbai[j,b,a,i]                  = Tjbai[j,b,a,i]
+	Tiabj[i,a,b,j]                   = Tjbai[j,b,a,i]  
+	prepare NJBAI[j,b,a,i]          += T2jbai[j,b,a,i]
+	prepare HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
+
+    enddo j
+
+endpardo i, a, b, b1  
+
+pardo b, i, a, j
+
+    Tiabj[i,a,b,j]  = 0.0  
+
+    do j1
+
+	request Vpiqj[a,i,j,j1]  
+	T1iabj[i,a,b,j] = Vpiqj[a,i,j,j1]*St1b[b,j1]
+	Tiabj[i,a,b,j] -= T1iabj[i,a,b,j]
+
+    enddo j1
+
+    prepare HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
+
+endpardo b, i, a, j 
+
+pardo j, b, b1, j1
+
+    request T2bb[b1,j,b,j1]  
+
+    tbj[b,j1]          = St1b[b,j1]
+    T2bjbj[b1,j,b,j1]  = St1b[b1,j]^tbj[b,j1]
+    T2bjbj[b1,j,b,j1] += T2bb[b1,j,b,j1]
+
+    do i
+    do a
+
+	request Vpiqj[a,i,b1,j1]  
+	Tiabj[i,a,b,j]                   = T2bjbj[b1,j,b,j1]*Vpiqj[a,i,b1,j1]
+	Tiabj[i,a,b,j]                  *= -1.0  
+	prepare HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
+
+    enddo a
+    enddo i
+
+endpardo j, b, b1, j1 
+
+pardo i1, a1, b, j
+
+    request T2ab[a1,i1,b,j]  
+
+    do a
+    do i
+
+	request VSpipi[a1,i1,a,i]  
+	Tiabj[i,a,b,j]                   = T2ab[a1,i1,b,j]*VSpipi[a1,i1,a,i]
+	prepare HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
+
+    enddo i
+    enddo a
+
+endpardo i1, a1, b, j 
+
 #     BBAA spin combination. 
 #     ---------------------- 
-#
+
 #     ABAB spin combination. 
 #     ---------------------- 
-#
-      PARDO i1, b1, b, i
-#
-            REQUEST                              Vbbii[b,b1,i1,i]  
-            Tiibb[i1,i,b,b1]                   = Vbbii[b,b1,i1,i]
-            Tiibb[i1,i,b,b1]                  *= -1.0
-            PREPARE HBAR_AJIB_iibb[i1,i,b,b1] += Tiibb[i1,i,b,b1]
-#
-      ENDPARDO i1, b1, b, i
-#
-      PARDO b1, b, a1, i1  
-#
-            REQUEST Vbbai[b1,b,a1,i1]  
-#
-            DO i
-               T1iibb[i1,i,b,b1]                  = Vbbai[b1,b,a1,i1]*St1a[a1,i]
-               T2iibb[i1,i,b,b1]                  = T1iibb[i1,i,b,b1]  
-               T2iibb[i1,i,b,b1]                 *= -1.0 
-               PREPARE NIIBB[i1,i,b,b1]          += T1iibb[i1,i,b,b1]
-               PREPARE HBAR_AJIB_iibb[i1,i,b,b1] += T2iibb[i1,i,b,b1]
-            ENDDO i
-#
-      ENDPARDO b1, b, a1, i1  
-#
-      PARDO i1, b1, b, i
-#
-            Tiibb[i1,i,b,b1] = 0.0 
-#
-            DO j1
-               REQUEST             Vpiqj[i,i1,b1,j1]  
-               T1iibb[i1,i,b,b1] = Vpiqj[i,i1,b1,j1]*St1b[b,j1]
-               Tiibb[i1,i,b,b1] += T1iibb[i1,i,b,b1] 
-            ENDDO j1
-#
-            PREPARE HBAR_AJIB_iibb[i1,i,b,b1] += Tiibb[i1,i,b,b1]
-#
-      ENDPARDO i1, b1, b, i
-#
-      PARDO i, b, j1, a1  
-#
-            REQUEST              T2ab[a1,i,b,j1]  
-            Taibj[a1,i,b,j1]   = St1a[a1,i]^St1b[b,j1]
-            T1aibj[a1,i,b,j1]  = T2ab[a1,i,b,j1]
-            T1aibj[a1,i,b,j1] += Taibj[a1,i,b,j1]
-#
-            DO i1
-            DO b1
-#
-               REQUEST                              Vpiqj[a1,i1,b1,j1]  
-               T1iibb[i1,i,b,b1]                  = T1aibj[a1,i,b,j1]*Vpiqj[a1,i1,b1,j1]
-               PREPARE HBAR_AJIB_iibb[i1,i,b,b1] += T1iibb[i1,i,b,b1]
-#
-            ENDDO b1
-            ENDDO i1
-#
-      ENDPARDO i, b, j1, a1  
-#
+
+pardo i1, b1, b, i
+
+    request Vbbii[b,b1,i1,i]  
+    Tiibb[i1,i,b,b1]                   = Vbbii[b,b1,i1,i]
+    Tiibb[i1,i,b,b1]                  *= -1.0
+    prepare HBAR_AJIB_iibb[i1,i,b,b1] += Tiibb[i1,i,b,b1]
+
+endpardo i1, b1, b, i
+
+pardo b1, b, a1, i1  
+
+    request Vbbai[b1,b,a1,i1]  
+
+    do i
+	T1iibb[i1,i,b,b1]                  = Vbbai[b1,b,a1,i1]*St1a[a1,i]
+	T2iibb[i1,i,b,b1]                  = T1iibb[i1,i,b,b1]  
+	T2iibb[i1,i,b,b1]                 *= -1.0 
+	prepare NIIBB[i1,i,b,b1]          += T1iibb[i1,i,b,b1]
+	prepare HBAR_AJIB_iibb[i1,i,b,b1] += T2iibb[i1,i,b,b1]
+    enddo i
+
+endpardo b1, b, a1, i1  
+
+pardo i1, b1, b, i
+
+    Tiibb[i1,i,b,b1] = 0.0 
+
+    do j1
+	request Vpiqj[i,i1,b1,j1]  
+	T1iibb[i1,i,b,b1] = Vpiqj[i,i1,b1,j1]*St1b[b,j1]
+	Tiibb[i1,i,b,b1] += T1iibb[i1,i,b,b1] 
+    enddo j1
+
+    prepare HBAR_AJIB_iibb[i1,i,b,b1] += Tiibb[i1,i,b,b1]
+
+endpardo i1, b1, b, i
+
+pardo i, b, j1, a1  
+
+    request T2ab[a1,i,b,j1]  
+    Taibj[a1,i,b,j1]   = St1a[a1,i]^St1b[b,j1]
+    T1aibj[a1,i,b,j1]  = T2ab[a1,i,b,j1]
+    T1aibj[a1,i,b,j1] += Taibj[a1,i,b,j1]
+
+    do i1
+    do b1
+
+	request Vpiqj[a1,i1,b1,j1]  
+	T1iibb[i1,i,b,b1]                  = T1aibj[a1,i,b,j1]*Vpiqj[a1,i1,b1,j1]
+	prepare HBAR_AJIB_iibb[i1,i,b,b1] += T1iibb[i1,i,b,b1]
+
+    enddo b1
+    enddo i1
+
+endpardo i, b, j1, a1  
+
 #     BABA spin combination. 
 #     ---------------------- 
-#
-      PARDO j1, a1, a, b1  
-#
-            REQUEST Vaabj[a1,a,b1,j1]  
-#
-            DO j
-               T2jjaa[j1,j,a,a1]                  = Vaabj[a1,a,b1,j1]*St1b[b1,j]
-               PREPARE NJJAA[j1,j,a,a1]          += T2jjaa[j1,j,a,a1]
-            ENDDO j
-#
-      ENDPARDO j1, a1, a, b1  
-#
-      ENDPROC HBAR_AJIB     
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-      PROC HBAR_ABCI    
+
+pardo j1, a1, a, b1  
+
+    request Vaabj[a1,a,b1,j1]  
+
+    do j
+	T2jjaa[j1,j,a,a1]                  = Vaabj[a1,a,b1,j1]*St1b[b1,j]
+	prepare NJJAA[j1,j,a,a1]          += T2jjaa[j1,j,a,a1]
+    enddo j
+
+endpardo j1, a1, a, b1  
+
+ENDPROC HBAR_AJIB     
+
+PROC HBAR_ABCI    
 #     --------------
-#
+
 #     There are four spin cases to compute:
 #     1. H^{ab)_{ci} --> HBAR_ABCI_aaaa  
 #     2. H^{AB)_{CI} --> HBAR_ABCI_bbbb  
 #     3. H^{aB)_{cI} --> HBAR_ABCI_aabb  
 #     4. H^{Ab)_{Ci} --> HBAR_ABCI_bbaa  
-#
+
 #     Note that since I 'always' store arrays in (11|22) form the 
 #     notation, although valid, is slightly confusing. The 
 #     storage pattern is therefore array(a,b,i,c).   
-#
+
 #    ------------------------------------------------------------------------
-#
+
 #     AAAA spin component. 
 #     -------------------- 
-#
+
 #     BBBB spin component. 
 #     -------------------- 
-#
+
 #     AABB spin component. 
 #     -------------------- 
-#
-      PARDO a, a1, b, j 
-#
-            REQUEST                             Vaabj[a,a1,b,j]   
-            PREPARE HBAR_ABCI_aabb[a,a1,b,j] += Vaabj[a,a1,b,j] 
-#
-      ENDPARDO a, a1, b, j 
-#
-      PARDO a, a1, a3, i2
-#
-            REQUEST VSaaai[a,a1,a3,i2]  
-#
-            DO b
-            DO j
-#
-               REQUEST                             T2ab[a3,i2,b,j] 
-               Tppqq[a1,a,b,j]                   = VSaaai[a,a1,a3,i2]*T2ab[a3,i2,b,j]
-               PREPARE HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
-#
-            ENDDO j
-            ENDDO b
-#
-      ENDPARDO a, a1, a3, i2
-#
-      PARDO a, a1, b, j
-#
-            REQUEST Vaabj[a,a1,b,j] 
-#
-            DO b1
-            DO j1
-#
-               REQUEST                               T2bb[b1,j1,b,j] 
-               Tppqq[a1,a,b1,j1]                   = Vaabj[a,a1,b,j]*T2bb[b1,j1,b,j]
-               PREPARE HBAR_ABCI_aabb[a1,a,b1,j1] += Tppqq[a1,a,b1,j1]
-#
-            ENDDO j1
-            ENDDO b1
-#
-      ENDPARDO a, a1, b, j
-#
-      PARDO a1, a, j, b
-#
-            Tppqq[a1,a,b,j] = 0.0
-#
-            DO i
-#
-               REQUEST            T2ab[a1,i,b,j] 
-               REQUEST            WHIABJ[i,a,b,j] 
-               REQUEST            NJBAI[j,b,a,i] 
-#
-               T1ppqq[a1,a,b,j] = T2ab[a1,i,b,j]*LHBAR_ia[i,a]
-               Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
-#
-               T2ppqq[a1,a,b,j] = WHIABJ[i,a,b,j]*St1a[a1,i]
-               Tppqq[a1,a,b,j] -= T2ppqq[a1,a,b,j]
-#
-               T3ppqq[a1,a,b,j] = NJBAI[j,b,a,i]*St1a[a1,i]
-               Tppqq[a1,a,b,j] -= T3ppqq[a1,a,b,j]
-#
-            ENDDO i
-#
-            PREPARE HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
-#
-      ENDPARDO a1, a, j, b
-#
-      PARDO a, a1, j, j1
-#
-            REQUEST             WHJJAA[j1,j,a1,a] 
-            REQUEST             NJJAA[j1,j,a1,a] 
-            tqqpp[j1,j,a1,a]  = WHJJAA[j1,j,a1,a] 
-            tqqpp[j1,j,a1,a] -= NJJAA[j1,j,a1,a] 
-#
-            DO b
-               Tppqq[a1,a,b,j]                   = tqqpp[j1,j,a1,a]*St1b[b,j1]
-               PREPARE HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
-            ENDDO b
-#
-      ENDPARDO a, a1, j, j1
-#
-      PARDO a1, b, j1, i 
-#
-            REQUEST              T2ab[a1,i,b,j1] 
-            t1ppqq[a1,i,b,j1]  = St1a[a1,i]^St1b[b,j1]  
-            t1ppqq[a1,i,b,j1] += T2ab[a1,i,b,j1]  
-            t0pqqp[a1,b,j1,i] = t1ppqq[a1,i,b,j1]
 
-            DO a
-            DO j
+pardo a, a1, b, j 
+
+    request Vaabj[a,a1,b,j]   
+    prepare HBAR_ABCI_aabb[a,a1,b,j] += Vaabj[a,a1,b,j] 
+
+endpardo a, a1, b, j 
+
+pardo a, a1, a3, i2
+
+    request VSaaai[a,a1,a3,i2]  
+
+    do b
+    do j
+
+	request T2ab[a3,i2,b,j] 
+	Tppqq[a1,a,b,j]                   = VSaaai[a,a1,a3,i2]*T2ab[a3,i2,b,j]
+	prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
+
+    enddo j
+    enddo b
+
+endpardo a, a1, a3, i2
+
+pardo a, a1, b, j
+
+    request Vaabj[a,a1,b,j] 
+
+    do b1
+    do j1
+
+	request T2bb[b1,j1,b,j] 
+	Tppqq[a1,a,b1,j1]                   = Vaabj[a,a1,b,j]*T2bb[b1,j1,b,j]
+	prepare HBAR_ABCI_aabb[a1,a,b1,j1] += Tppqq[a1,a,b1,j1]
+
+    enddo j1
+    enddo b1
+
+endpardo a, a1, b, j
+
+pardo a1, a, j, b
+
+    Tppqq[a1,a,b,j] = 0.0
+
+    do i
+
+	request T2ab[a1,i,b,j] 
+	request WHIABJ[i,a,b,j] 
+	request NJBAI[j,b,a,i] 
+
+	T1ppqq[a1,a,b,j] = T2ab[a1,i,b,j]*LHBAR_ia[i,a]
+	Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
+
+	T2ppqq[a1,a,b,j] = WHIABJ[i,a,b,j]*St1a[a1,i]
+	Tppqq[a1,a,b,j] -= T2ppqq[a1,a,b,j]
+
+	T3ppqq[a1,a,b,j] = NJBAI[j,b,a,i]*St1a[a1,i]
+	Tppqq[a1,a,b,j] -= T3ppqq[a1,a,b,j]
+
+    enddo i
+
+    prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
+
+endpardo a1, a, j, b
+
+pardo a, a1, j, j1
+
+    request WHJJAA[j1,j,a1,a] 
+    request NJJAA[j1,j,a1,a] 
+    tqqpp[j1,j,a1,a]  = WHJJAA[j1,j,a1,a] 
+    tqqpp[j1,j,a1,a] -= NJJAA[j1,j,a1,a] 
+
+    do b
+	Tppqq[a1,a,b,j]                   = tqqpp[j1,j,a1,a]*St1b[b,j1]
+	prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
+    enddo b
+
+endpardo a, a1, j, j1
+
+pardo a1, b, j1, i 
+
+    request T2ab[a1,i,b,j1] 
+    t1ppqq[a1,i,b,j1]  = St1a[a1,i]^St1b[b,j1]  
+    t1ppqq[a1,i,b,j1] += T2ab[a1,i,b,j1]  
+    t0pqqp[a1,b,j1,i] = t1ppqq[a1,i,b,j1]
+
+    do a
+    do j
 #   
-               REQUEST                             HBAR_JKIA_aabb[j1,j,i,a] 
-#####          Tppqq(a1,a,b,j)                   = t1ppqq(a1,i,b,j1)*Vpiqj(a,i,j,j1)
-####           Tppqq(a1,a,b,j)                   = t1ppqq(a1,i,b,j1)*HBAR_JKIA_aabb(j1,j,i,a)
-               tqpqp[j1,i,j,a]   = HBAR_JKIA_aabb[j1,j,i,a]
-               Tppqq[a1,a,b,j] = t0pqqp[a1,b,j1,i]*tqpqp[j1,i,j,a] 
-               PREPARE HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
-#
-            ENDDO j 
-            ENDDO a 
-#
-      ENDPARDO a1, b, j1, i 
-#
-      PARDO a, b1, b, i
-#
-            REQUEST Vbbai[b,b1,a,i]   
-#
-            DO j
-            DO a1
-               REQUEST                              T2ab[a1,i,b,j] 
-               Tppqq[a1,a,b1,j]                   = T2ab[a1,i,b,j]*Vbbai[b,b1,a,i]
-               Tppqq[a1,a,b1,j]                  *= -1.0
-               PREPARE HBAR_ABCI_aabb[a1,a,b1,j] += Tppqq[a1,a,b1,j]
-            ENDDO a1
-            ENDDO j
-#
-      ENDPARDO a, b1, b, i
-#
+	request HBAR_JKIA_aabb[j1,j,i,a] 
+	tqpqp[j1,i,j,a]   = HBAR_JKIA_aabb[j1,j,i,a]
+	Tppqq[a1,a,b,j] = t0pqqp[a1,b,j1,i]*tqpqp[j1,i,j,a] 
+	prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
+
+    enddo j 
+    enddo a 
+
+endpardo a1, b, j1, i 
+
+pardo a, b1, b, i
+
+    request Vbbai[b,b1,a,i]   
+
+    do j
+    do a1
+	request T2ab[a1,i,b,j] 
+	Tppqq[a1,a,b1,j]                   = T2ab[a1,i,b,j]*Vbbai[b,b1,a,i]
+	Tppqq[a1,a,b1,j]                  *= -1.0
+	prepare HBAR_ABCI_aabb[a1,a,b1,j] += Tppqq[a1,a,b1,j]
+    enddo a1
+    enddo j
+
+endpardo a, b1, b, i
+
 # debug
 # debug
-#
+
 #     Done AABB spin component. 
 #     ------------------------- 
-#
+
 #     BBAA spin component. 
 #     -------------------- 
-#
+
 #     Done AABB spin component. 
 #     ------------------------- 
-#
-      sip_barrier
-#
-      ENDPROC HBAR_ABCI    
-#
-      PROC AO4VIR
-#     ----------- 
-#
-      create Mxj
-      create Mxi
-#
-      sip_barrier
-#
-      PARDO j,sigma
-#
-            t1xj[sigma,j]=0.0
-#
-            do b
-               txj[sigma,j]=St1b[b,j]*ca[sigma,b]
-               t1xj[sigma,j]+=txj[sigma,j]
-            enddo b
+
+server_barrier
+
+ENDPROC HBAR_ABCI    
+
+PROC AO4VIR
+
+server_barrier
+
+pardo j,sigma
+
+    t1xj[sigma,j]=0.0
+
+    do b
+	txj[sigma,j]=St1b[b,j]*ca[sigma,b]
+	t1xj[sigma,j]+=txj[sigma,j]
+    enddo b
 # 
-            put Mxj[sigma,j]=t1xj[sigma,j]
+    put Mxj[sigma,j]=t1xj[sigma,j]
+
+endpardo j, sigma
+
+#pardo i, sigma
 #
-      ENDPARDO j, sigma
+#    t1xi[sigma,i]=0.0
 #
-      PARDO i, sigma
+#    do a
+#	txi[sigma,i]=St1a[a,i]*ca[sigma,a]
+#	t1xi[sigma,i]+=txi[sigma,i]
+#    enddo a
 #
-            t1xi[sigma,i]=0.0
+#    put Mxi[sigma,i]=t1xi[sigma,i]
 #
-            do a
-               txi[sigma,i]=St1a[a,i]*ca[sigma,a]
-               t1xi[sigma,i]+=txi[sigma,i]
-            enddo a
-#
-            put Mxi[sigma,i]=t1xi[sigma,i]
-#
-      ENDPARDO i, sigma
-#
-      sip_barrier
-#
+#endpardo i, sigma
+
+server_barrier
+
 #    Contract AOINT with half back transformed Amplitudes
 #    ----------------------------------------------------
+
+pardo mu,lambda,nu
+
+    allocate Lxxxj[mu,lambda,nu,*]
+#    allocate Lxxxi[mu,lambda,nu,*]
+
+    do sigma
+
+	execute compute_integral_batch aoint[mu,lambda,nu,sigma]
+
+	do j
+
+	    get Mxj[sigma,j]
+
+	    tmxxxj[mu,lambda,nu,j]=aoint[mu,lambda,nu,sigma]*Mxj[sigma,j]
+	    Lxxxj[mu,lambda,nu,j]+=tmxxxj[mu,lambda,nu,j]
+
+	enddo j
+###
+#	do i
 #
-      PARDO mu,lambda,nu
+#	    get Mxi[sigma,i]
 #
-      allocate Lxxxj[mu,lambda,nu,*]
-      allocate Lxxxi[mu,lambda,nu,*]
+#	    tmxxxi[mu,lambda,nu,i]=aoint[mu,lambda,nu,sigma]*Mxi[sigma,i]
+#	    Lxxxi[mu,lambda,nu,i]+=tmxxxi[mu,lambda,nu,i]
 #
-      DO sigma
-#
-         execute compute_integral_batch aoint[mu,lambda,nu,sigma]
-#
-         DO j
-#
-            get Mxj[sigma,j]
-#
-            tmxxxj[mu,lambda,nu,j]=aoint[mu,lambda,nu,sigma]*Mxj[sigma,j]
-            Lxxxj[mu,lambda,nu,j]+=tmxxxj[mu,lambda,nu,j]
-#
-         ENDDO j
-####
-         DO i
-#
-            get Mxi[sigma,i]
-#
-            tmxxxi[mu,lambda,nu,i]=aoint[mu,lambda,nu,sigma]*Mxi[sigma,i]
-            Lxxxi[mu,lambda,nu,i]+=tmxxxi[mu,lambda,nu,i]
-#
-         ENDDO i
-####
-      enddo sigma
-#
-      DO j
-         prepare Mxxxj[mu,lambda,nu,j]=Lxxxj[mu,lambda,nu,j]
-      ENDDO j
-      DO i
-         prepare Mxxxi[mu,lambda,nu,i]=Lxxxi[mu,lambda,nu,i]
-      ENDDO i
-#
-      deallocate Lxxxi[mu,lambda,nu,*]
-      deallocate Lxxxj[mu,lambda,nu,*]
-#
-      ENDPARDO mu,lambda,nu
-#
-      sip_barrier
-#
+#	enddo i
+###
+    enddo sigma
+
+    do j
+	prepare Mxxxj[mu,lambda,nu,j]=Lxxxj[mu,lambda,nu,j]
+    enddo j
+#    do i
+#	prepare Mxxxi[mu,lambda,nu,i]=Lxxxi[mu,lambda,nu,i]
+#    enddo i
+
+#    deallocate Lxxxi[mu,lambda,nu,*]
+    deallocate Lxxxj[mu,lambda,nu,*]
+
+endpardo mu,lambda,nu
+
+server_barrier
+
 #  2ND STAGE OF TRANSFORMATION
 #  --------------------------- 
+
+pardo mu, nu, j 
+
+    allocate Lxxbj[mu,nu,*,j]
+
+    do lambda  
+
+	request Mxxxj[mu,nu,lambda,j] 
+
+	do b
+
+	    tmxxbj[mu,nu,b,j]=Mxxxj[mu,nu,lambda,j]*ca[lambda,b]
+	    lxxbj[mu,nu,b,j]+=tmxxbj[mu,nu,b,j]
+
+	enddo b
+    enddo lambda  
+
+    do b
+	prepare Mxxbj[mu,nu,b,j]=lxxbj[mu,nu,b,j]
+    enddo b
+
+    deallocate Lxxbj[mu,nu,*,j]
+
+endpardo mu, nu, j 
+
+#pardo mu, nu, i 
 #
-      PARDO mu, nu, j 
+#    allocate Lxxai[mu,nu,*,i]
 #
-            allocate Lxxbj[mu,nu,*,j]
+#    do lambda  
 #
-            DO lambda  
+#	request Mxxxi[mu,nu,lambda,i] 
 #
-               request Mxxxj[mu,nu,lambda,j] 
+#	do a
 #
-               DO b
+#	    tmxxai[mu,nu,a,i]=Mxxxi[mu,nu,lambda,i]*ca[lambda,a]
+#	    lxxai[mu,nu,a,i]+=tmxxai[mu,nu,a,i]
 #
-                  tmxxbj[mu,nu,b,j]=Mxxxj[mu,nu,lambda,j]*ca[lambda,b]
-                  lxxbj[mu,nu,b,j]+=tmxxbj[mu,nu,b,j]
+#	enddo a
+#    enddo lambda  
 #
-               ENDDO b
-            ENDDO lambda  
+#    do a
+#	prepare Mxxai[mu,nu,a,i]=lxxai[mu,nu,a,i]
+#    enddo a
 #
-            DO b
-               prepare Mxxbj[mu,nu,b,j]=lxxbj[mu,nu,b,j]
-            ENDDO b
+#    deallocate Lxxai[mu,nu,*,i]
 #
-            deallocate Lxxbj[mu,nu,*,j]
-#
-      ENDPARDO mu, nu, j 
-#
-      PARDO mu, nu, i 
-#
-            allocate Lxxai[mu,nu,*,i]
-#
-            DO lambda  
-#
-               request Mxxxi[mu,nu,lambda,i] 
-#
-               DO a
-#
-                  tmxxai[mu,nu,a,i]=Mxxxi[mu,nu,lambda,i]*ca[lambda,a]
-                  lxxai[mu,nu,a,i]+=tmxxai[mu,nu,a,i]
-#
-               ENDDO a
-            ENDDO lambda  
-#
-            DO a
-               prepare Mxxai[mu,nu,a,i]=lxxai[mu,nu,a,i]
-            ENDDO a
-#
-            deallocate Lxxai[mu,nu,*,i]
-#
-      ENDPARDO mu, nu, i 
-#
-      sip_barrier
-#
-#  END 2ND STAGE OF TRANSFORMATION
+#endpardo mu, nu, i 
+
+server_barrier
+
+#  end 2ND STAGE OF TRANSFORMATION
 #  ------------------------------- 
+
+pardo mu, b, j
+
+    allocate Lxabj[mu,*,b,j]
+
+    do lambda
+
+	request Mxxbj[mu,lambda,b,j] 
+
+	do a
+
+	    tmxabj[mu,a,b,j]=Mxxbj[mu,lambda,b,j]*ca[lambda,a]
+	    lxabj[mu,a,b,j]+=tmxabj[mu,a,b,j]
+
+	enddo a
+
+    enddo lambda
+
+    do a
+	prepare Mxabj[mu,a,b,j]=lxabj[mu,a,b,j]
+    enddo a
+
+    deallocate Lxabj[mu,*,b,j]
+
+endpardo mu, b, j
+
+#pardo mu, a, i
 #
-      pardo mu, b, j
+#    allocate Lxbai[mu,*,a,i]
 #
-         allocate Lxabj[mu,*,b,j]
+#    do lambda
 #
-         do lambda
+#	request Mxxai[mu,lambda,a,i] 
 #
-            request Mxxbj[mu,lambda,b,j] 
+#	do b
 #
-            do a
+#	    tmxbai[mu,b,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,b]
+#	    lxbai[mu,b,a,i]+=tmxbai[mu,b,a,i]
 #
-               tmxabj[mu,a,b,j]=Mxxbj[mu,lambda,b,j]*ca[lambda,a]
-               lxabj[mu,a,b,j]+=tmxabj[mu,a,b,j]
+#	enddo b
 #
-            enddo a
+#    enddo lambda
 #
-         enddo lambda
+#    do b
+#	prepare Mxbai[mu,b,a,i]=lxbai[mu,b,a,i]
+#    enddo b
 #
-         do a
-            prepare Mxabj[mu,a,b,j]=lxabj[mu,a,b,j]
-         enddo a
+#    deallocate Lxbai[mu,*,a,i]
 #
-         deallocate Lxabj[mu,*,b,j]
+#endpardo mu, a, i
+
+#pardo mu, a, i
 #
-      endpardo mu, b, j
+#    allocate Lxaai[mu,*,a,i]
 #
-      pardo mu, a, i
+#    do lambda
 #
-            allocate Lxbai[mu,*,a,i]
+#	request Mxxai[mu,lambda,a,i] 
 #
-            do lambda
+#	do a1
 #
-               request Mxxai[mu,lambda,a,i] 
+#	tmxaai[mu,a1,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,a1]
+#	lxaai[mu,a1,a,i]+=tmxaai[mu,a1,a,i]
 #
-               do b
+#	enddo a1
 #
-                  tmxbai[mu,b,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,b]
-                  lxbai[mu,b,a,i]+=tmxbai[mu,b,a,i]
+#    enddo lambda
 #
-               enddo b
+#    do a1
+#	prepare Mxaai[mu,a1,a,i]=lxaai[mu,a1,a,i]
+#    enddo a1
 #
-            enddo lambda
+#    deallocate Lxaai[mu,*,a,i]
 #
-            do b
-               prepare Mxbai[mu,b,a,i]=lxbai[mu,b,a,i]
-            enddo b
+#endpardo mu, a, i
+
+#pardo mu, b, j
 #
-            deallocate Lxbai[mu,*,a,i]
+#    allocate Lxbbj[mu,*,b,j]
 #
-      endpardo mu, a, i
+#    do lambda
 #
-      pardo mu, a, i
+#	request Mxxbj[mu,lambda,b,j] 
 #
-            allocate Lxaai[mu,*,a,i]
+#	do b1
 #
-            do lambda
+#	tmxbbj[mu,b1,b,j]=Mxxbj[mu,lambda,b,j]*ca[lambda,b1]
+#	lxbbj[mu,b1,b,j]+=tmxbbj[mu,b1,b,j]
 #
-               request Mxxai[mu,lambda,a,i] 
+#	enddo b1
 #
-               do a1
+#    enddo lambda
 #
-                  tmxaai[mu,a1,a,i]=Mxxai[mu,lambda,a,i]*ca[lambda,a1]
-                  lxaai[mu,a1,a,i]+=tmxaai[mu,a1,a,i]
+#    do b1
+#	prepare Mxbbj[mu,b1,b,j]=lxbbj[mu,b1,b,j]
+#    enddo b1
 #
-               enddo a1
+#    deallocate Lxbbj[mu,*,b,j]
 #
-            enddo lambda
-#
-            do a1
-               prepare Mxaai[mu,a1,a,i]=lxaai[mu,a1,a,i]
-            enddo a1
-#
-            deallocate Lxaai[mu,*,a,i]
-#
-      endpardo mu, a, i
-#
-      pardo mu, b, j
-#
-            allocate Lxbbj[mu,*,b,j]
-#
-            do lambda
-#
-               request Mxxbj[mu,lambda,b,j] 
-#
-               do b1
-#
-                  tmxbbj[mu,b1,b,j]=Mxxbj[mu,lambda,b,j]*ca[lambda,b1]
-                  lxbbj[mu,b1,b,j]+=tmxbbj[mu,b1,b,j]
-#
-               enddo b1
-#
-            enddo lambda
-#
-            do b1
-               prepare Mxbbj[mu,b1,b,j]=lxbbj[mu,b1,b,j]
-            enddo b1
-#
-            deallocate Lxbbj[mu,*,b,j]
-#
-      endpardo mu, b, j
-#
-      sip_barrier
-#
-#  END 3RD STAGE OF TRANSFORMATION
+#endpardo mu, b, j
+
+server_barrier
+
+#  end 3RD STAGE OF TRANSFORMATION
 #  ------------------------------- 
-#
-      pardo a, b, j
-#
-         allocate Laabj[*,a,b,j]
-#
-         do mu
-#
-            request Mxabj[mu,a,b,j] 
-#
-            do a1
-#
-               tmaabj[a1,a,b,j]=Mxabj[mu,a,b,j]*ca[mu,a1]
-               Laabj[a1,a,b,j]+=tmaabj[a1,a,b,j]
-#
-            enddo a1
-#
-         enddo mu
-#
-         do a1
-            prepare HBAR_ABCI_aabb[a1,a,b,j]+=Laabj[a1,a,b,j]
-         enddo a1
-#
-         deallocate Laabj[*,a,b,j]
-#
-      endpardo a, b, j
-#
+
+pardo a, b, j
+
+    allocate Laabj[*,a,b,j]
+
+    do mu
+
+	request Mxabj[mu,a,b,j] 
+
+	do a1
+
+	    tmaabj[a1,a,b,j]=Mxabj[mu,a,b,j]*ca[mu,a1]
+	    Laabj[a1,a,b,j]+=tmaabj[a1,a,b,j]
+
+	enddo a1
+
+    enddo mu
+
+    do a1
+	prepare HBAR_ABCI_aabb[a1,a,b,j]+=Laabj[a1,a,b,j]
+    enddo a1
+
+    deallocate Laabj[*,a,b,j]
+
+endpardo a, b, j
+
 #    ALPHA-ALPHA spin combination
-#
-      ENDPROC AO4VIR
-#     -----------------
-#
-#    ------------------------------------------------------------------------
-#
-#    ------------------------------------------------------------------------
-#
-#    BEGIN MAIN HBAR PROGRAM 
-#
+
+ENDPROC AO4VIR
 
 PROC form_H
 
@@ -2747,52 +1701,86 @@ PROC form_H
 
 print "-- Entering Hbar formation"
 
-     sip_barrier 
-     allocate LHBAR_ii[*,*] 
-     allocate LHBAR_ia[*,*] 
-     allocate LHBAR_jb[*,*] 
-     allocate LHBAR_aa[*,*] 
-     sip_barrier 
-#
-     CALL HBAR_AB # COMPARES WITH ACES  
-     CALL HBAR_IJ # COMPARES WITH ACES  
-     CALL HBAR_IB # COMPARES WITH ACES 
-     sip_barrier 
-     delete HBAR_ii 
-    #delete HBAR_ia 
-    #delete HBAR_jb 
-# 
-     CALL HBAR_IJKL 
-     CALL HBAR_JKIA 
-     sip_barrier 
-     CALL HBAR_IAJK
-#
-     CALL HBAR_AIBC 
-     CALL HBAR_AJIB 
-     sip_barrier
-     CALL HBAR_ABCI 
-#
-     call AO4VIR
-     sip_barrier
+server_barrier
+allocate LHBAR_ii[*,*]
+allocate LHBAR_ia[*,*]
+allocate LHBAR_jb[*,*]
+allocate LHBAR_aa[*,*]
+pardo i,i1
+    Tii[i,i1] = 0.0
+    put HBAR_ii[i,i1] = Tii[i,i1]
+endpardo i,i1
+pardo i,a
+    Tia[i,a] = 0.0
+    put HBAR_ia[i,a] = Tia[i,a]
+endpardo i,a
+pardo j,b
+    Tjb[j,b] = 0.0
+    put HBAR_jb[j,b] = Tjb[j,b]
+endpardo j,b
+pardo a,a1
+    Taa[a,a1] = 0.0
+    put HBAR_aa[a,a1] = Taa[a,a1]
+endpardo a,a1
+server_barrier
 
-     PARDO a, a1, a2, i 
-           REQUEST                             HBAR_AIBC_aabb[a,a1,i,a2]  
-           REQUEST                             HBAR_AIBC_aabb[a,a2,i,a1]  
-           tpppp[a,a1,i,a2]                  = HBAR_AIBC_aabb[a,a1,i,a2] 
-           t1pppp[a,a1,i,a2]                 = HBAR_AIBC_aabb[a,a2,i,a1] 
-           tpppp[a,a1,i,a2]                 -= t1pppp[a,a1,i,a2] 
-           PREPARE HBAR_AIBC_aaaa[a,a1,i,a2] = tpppp[a,a1,i,a2] 
-     ENDPARDO a, a1, a2, i 
+print "Forming H_ab"
+CALL HBAR_AB
+server_barrier
+print "Forming H_ij"
+CALL HBAR_IJ
+server_barrier
+print "Forming H_ib"
+CALL HBAR_IB
+server_barrier
 
-     PARDO a, a1, a2, i 
-           REQUEST                             HBAR_ABCI_aabb[a,a1,a2,i]  
-           REQUEST                             HBAR_ABCI_aabb[a2,a1,a,i]  
-           tpppp[a,a1,a2,i]                  = HBAR_ABCI_aabb[a,a1,a2,i] 
-           t1pppp[a,a1,a2,i]                 = HBAR_ABCI_aabb[a2,a1,a,i] 
-           tpppp[a,a1,a2,i]                 -= t1pppp[a,a1,a2,i] 
-           PREPARE HBAR_ABCI_aaaa[a,a1,a2,i] = tpppp[a,a1,a2,i] 
-     ENDPARDO a, a1, a2, i 
-     sip_barrier
+delete HBAR_ii
+delete HBAR_ia
+delete HBAR_jb
+
+print "Forming H_ijkl"
+CALL HBAR_IJKL
+server_barrier
+print "Forming H_jkia"
+CALL HBAR_JKIA
+server_barrier
+print "Forming H_iajk"
+CALL HBAR_IAJK
+server_barrier
+
+print "Forming H_iabc"
+CALL HBAR_AIBC
+server_barrier
+print "Forming H_ajib"
+CALL HBAR_AJIB
+server_barrier ## keep this barrier
+print "Forming H_abci"
+CALL HBAR_ABCI 
+server_barrier
+
+call AO4VIR
+
+server_barrier
+print "Finishing H_aibc"
+pardo a, a1, a2, i
+    request                             HBAR_AIBC_aabb[a,a1,i,a2]
+    request                             HBAR_AIBC_aabb[a,a2,i,a1]
+    tpppp[a,a1,i,a2]                  = HBAR_AIBC_aabb[a,a1,i,a2]
+    t1pppp[a,a1,i,a2]                 = HBAR_AIBC_aabb[a,a2,i,a1]
+    tpppp[a,a1,i,a2]                 -= t1pppp[a,a1,i,a2]
+    prepare HBAR_AIBC_aaaa[a,a1,i,a2] = tpppp[a,a1,i,a2]
+endpardo a, a1, a2, i
+
+print "Finishing H_abci"
+pardo a, a1, a2, i
+    request                             HBAR_ABCI_aabb[a,a1,a2,i]
+    request                             HBAR_ABCI_aabb[a2,a1,a,i]
+    tpppp[a,a1,a2,i]                  = HBAR_ABCI_aabb[a,a1,a2,i]
+    t1pppp[a,a1,a2,i]                 = HBAR_ABCI_aabb[a2,a1,a,i]
+    tpppp[a,a1,a2,i]                 -= t1pppp[a,a1,a2,i]
+    prepare HBAR_ABCI_aaaa[a,a1,a2,i] = tpppp[a,a1,a2,i]
+endpardo a, a1, a2, i
+server_barrier
 
 ENDPROC form_H
 
@@ -3306,6 +2294,18 @@ endpardo a2,i,a1,i2
 server_barrier 
 
 pardo a, i1, a2, i
+WHERE i < i1
+    request VCACT2AA[a,i,a2,i1] 
+    do a1
+	request VSpipi[a2,i1,a1,i] 
+	taa[a,a1]        = VCACT2AA[a,i,a2,i1]*VSpipi[a2,i1,a1,i]
+	taa[a,a1]       *= -1.0
+	LFae_a[a,a1] += taa[a,a1]
+    enddo a1
+endpardo a, i1, a2, i
+
+pardo a, i1, a2, i
+WHERE i == i1
     request VCACT2AA[a,i,a2,i1] 
     do a1
 	request VSpipi[a2,i1,a1,i] 
@@ -3335,11 +2335,22 @@ pardo i, i1, i2, a
 endpardo i, i1, i2, a
 
 pardo i, a1, i2, a
+WHERE a == a1
     request VCACT2AA[a,i,a1,i2] 
     do i1
 	request VSpipi[a,i1,a1,i2] 
 	tii[i1,i]        = VCACT2AA[a,i,a1,i2]*VSpipi[a,i1,a1,i2]
 	tii[i1,i]       *= 0.5
+	LFmi_a[i1,i] += tii[i1,i]
+    enddo i1
+endpardo i, a1, i2, a
+
+pardo i, a1, i2, a
+WHERE a < a1
+    request VCACT2AA[a,i,a1,i2] 
+    do i1
+	request VSpipi[a,i1,a1,i2] 
+	tii[i1,i]        = VCACT2AA[a,i,a1,i2]*VSpipi[a,i1,a1,i2]
 	LFmi_a[i1,i] += tii[i1,i]
     enddo i1
 endpardo i, a1, i2, a
@@ -3370,6 +2381,17 @@ pardo j, j1, j2, b
 endpardo j, j1, j2, b
 
 pardo j, b1, j2, b
+WHERE b < b1
+    request VCACT2AA[b,j,b1,j2] 
+    do j1
+	request VSqjqj[b,j1,b1,j2] 
+	tjj[j1,j]        = VCACT2AA[b,j,b1,j2]*VSqjqj[b,j1,b1,j2]
+	LFmi_b[j1,j] += tjj[j1,j]
+    enddo j1
+endpardo j, b1, j2, b
+
+pardo j, b1, j2, b
+WHERE b == b1
     request VCACT2AA[b,j,b1,j2] 
     do j1
 	request VSqjqj[b,j1,b1,j2] 
@@ -3654,6 +2676,40 @@ create D2aa
 server_barrier 
 
 pardo a, a1, i2, i3
+WHERE i2 < i3
+
+    request VCACT2AA[a,i2,a1,i3] 
+    request T2AA[a,i2,a1,i3] 
+
+    tpp[a1,i3]          = St1a[a1,i3]
+    t1pp[a1,i2]         = St1a[a1,i2]
+    T2aiai[a,i2,a1,i3]  = St1a[a,i2]^tpp[a1,i3]
+    T3aiai[a,i2,a1,i3]  = St1a[a,i3]^t1pp[a1,i2]
+    T2aiai[a,i2,a1,i3] -= T3aiai[a,i2,a1,i3]
+    T2aiai[a,i2,a1,i3] += T2AA[a,i2,a1,i3]
+
+    do i
+    do i1
+	request HBAR_iiii[i2,i,i3,i1] 
+	GET                             Niiii[i2,i,i3,i1]
+
+	T1aiai[a,i,a1,i1]             = HBAR_iiii[i2,i,i3,i1]*VCACT2AA[a,i2,a1,i3]
+	T1aiai[a,i,a1,i1]            *= 0.25
+	Taiai[a,i,a1,i1]              = T1aiai[a,i,a1,i1]
+#   
+	T1aiai[a,i,a1,i1]             = Niiii[i2,i,i3,i1]*T2aiai[a,i2,a1,i3]
+	T1aiai[a,i,a1,i1]            *= 0.25
+	Taiai[a,i,a1,i1]             += T1aiai[a,i,a1,i1]
+
+	PUT D2aa[a,i,a1,i1] += Taiai[a,i,a1,i1]
+
+    enddo i1
+    enddo i
+
+endpardo a, a1, i2, i3
+
+pardo a, a1, i2, i3
+WHERE i2 == i3
 
     request VCACT2AA[a,i2,a1,i3] 
     request T2AA[a,i2,a1,i3] 
@@ -4418,6 +3474,8 @@ pardo a1, a2, i1
 
     allocate Laiai[a1,*,a2,i1]
 
+    if a1 == a2
+
 	do i
 	    request VCACT2AA[a1,i,a2,i1] 
 	    Laiai[a1,i,a2,i1] = VCACT2AA[a1,i,a2,i1]
@@ -4432,6 +3490,25 @@ pardo a1, a2, i1
 	    enddo i
 	enddo a
 
+    endif
+
+    if a1 < a2
+
+    do i
+	request VCACT2AA[a1,i,a2,i1] 
+	Laiai[a1,i,a2,i1] = VCACT2AA[a1,i,a2,i1]
+    enddo i
+
+    do a
+	request HBAR_AIBC_aaaa[a,a1,i1,a2] 
+	do i
+	    tai[a,i]  = HBAR_AIBC_aaaa[a,a1,i1,a2]*Laiai[a1,i,a2,i1]
+	    PUT VCHACT1A[a,i] += tai[a,i]
+	enddo i
+    enddo a
+
+    endif
+
     deallocate Laiai[a1,*,a2,i1]
 
 endpardo a1, a2, i1
@@ -4440,6 +3517,8 @@ endpardo a1, a2, i1
 pardo a1, i1, i2
 
     allocate Laiii[a1,i2,*,i1]
+
+    if i1 == i2
 
 	do i
 	    request HBAR_JKIA_aaaa[i1,i,i2,a1] 
@@ -4454,6 +3533,26 @@ pardo a1, i1, i2
 		PUT VCHACT1A[a,i] += tai[a,i]
 	    enddo i
 	enddo a
+
+    endif
+
+    if i1 < i2
+
+	do i
+	    request HBAR_JKIA_aaaa[i1,i,i2,a1] 
+	    Laiii[a1,i2,i,i1] = HBAR_JKIA_aaaa[i1,i,i2,a1]
+	enddo i
+
+	do a
+	    request VCACT2AA[a,i1,a1,i2] 
+	    do i
+		tai[a,i]  = Laiii[a1,i2,i,i1]*VCACT2AA[a,i1,a1,i2]
+		tai[a,i] *= -1.0
+		PUT VCHACT1A[a,i] += tai[a,i]
+	    enddo i
+	enddo a
+
+    endif
 
     deallocate Laiii[a1,i2,*,i1]
 
@@ -4517,50 +3616,41 @@ pardo a,i,a1,i1
 endpardo a,i,a1,i1
 server_barrier
      PARDO  a, a1, i, i1
-	  REQUEST            VCHACT2AA[a,i,a1,i1]
-	  Taiai[a,i,a1,i1] = VCHACT2AA[a,i,a1,i1]
+     where a == a1
+          REQUEST            VCHACT2AA[a,i,a1,i1]
+          Raiai[a,i,a1,i1] = VCHACT2AA[a,i,a1,i1]
+          execute anti_symm_v Raiai[a,i,a1,i1]
 #
-	  R3aiai[a1,i,a,i1] = 0.0
-	  Raiai[a,i,a1,i1]  = 0.0
+          put DRNaiai[a,i,a1,i1] += Raiai[a,i,a1,i1]
+     ENDPARDO a, a1, i, i1
 #
-	  if a == a1
-	     Raiai[a,i,a1,i1]   = Taiai[a,i,a1,i1]
-	     execute anti_symm_v Raiai[a,i,a1,i1]
-	  endif
+     PARDO  a, a1, i, i1
+     where a < a1
+          REQUEST            VCHACT2AA[a,i,a1,i1]
 #
-	  if a < a1
-	     Raiai[a,i,a1,i1]   = Taiai[a,i,a1,i1]
-	     R3aiai[a1,i,a,i1]  = Taiai[a,i,a1,i1]
-	     R3aiai[a1,i,a,i1] *= -1.0
-	  endif
+	  Raiai[a,i,a1,i1]   = VCHACT2AA[a,i,a1,i1]
+	  R3aiai[a1,i,a,i1]  = VCHACT2AA[a,i,a1,i1]
+	  R3aiai[a1,i,a,i1] *= -1.0
 #
-	  put DRNaiai[a,i,a1,i1] += Raiai[a,i,a1,i1]
-	  put DRNaiai[a1,i,a,i1] += R3aiai[a1,i,a,i1]
+          put DRNaiai[a,i,a1,i1] += Raiai[a,i,a1,i1]
+          put DRNaiai[a1,i,a,i1] += R3aiai[a1,i,a,i1]
      ENDPARDO a, a1, i, i1
 server_barrier
      PARDO a, a1, i, i1
-#
+     where i == i1
            get DRNaiai[a,i,a1,i1]
-           Taiai[a,i,a1,i1] = DRNaiai[a,i,a1,i1]
+           Raiai[a,i,a1,i1] = DRNaiai[a,i,a1,i1]
+           execute anti_symm_o Raiai[a,i,a1,i1]
 #
-           R2aiai[a,i1,a1,i]=0.0
-           Raiai[a,i,a1,i1]=0.0
+           put D2RNaiai[a,i,a1,i1]+=Raiai[a,i,a1,i1]
+     ENDPARDO  a, a1, i, i1
 #
-           if i == i1
-#
-              Raiai[a,i,a1,i1]=Taiai[a,i,a1,i1]
-              execute anti_symm_o Raiai[a,i,a1,i1]
-#
-           endif
-#
-           if i < i1
-#
-              Raiai[a,i,a1,i1]=Taiai[a,i,a1,i1]
-              R2aiai[a,i1,a1,i]=Taiai[a,i,a1,i1]
-              R2aiai[a,i1,a1,i]*=-1.0
-#
-           endif
-
+     PARDO a, a1, i, i1
+     where i < i1
+           get DRNaiai[a,i,a1,i1]
+           Raiai[a,i,a1,i1]  = DRNaiai[a,i,a1,i1]
+           R2aiai[a,i1,a1,i] = DRNaiai[a,i,a1,i1]
+           R2aiai[a,i1,a1,i] *=-1.0
 #
            put D2RNaiai[a,i,a1,i1]+=Raiai[a,i,a1,i1]
            put D2RNaiai[a,i1,a1,i]+=R2aiai[a,i1,a1,i]
@@ -4577,21 +3667,6 @@ delete DRNaiai
 delete D2RNaiai
 server_barrier
 
-sum1 = 0.0
-pardo a,i,a1,i1
-    request VCHACT2AA[a,i,a1,i1]
-    request VCHACT2AA[a,i1,a1,i]
-    Taiai[a,i,a1,i1]  = VCHACT2AA[a,i,a1,i1]
-    Taiai[a,i,a1,i1] += VCHACT2AA[a,i1,a1,i]
-    T1aiai[a,i,a1,i1] = Taiai[a,i,a1,i1]
-
-    etemp = Taiai[a,i,a1,i1]*T1aiai[a,i,a1,i1]
-    sum1 += etemp
-endpardo a,i,a1,i1
-server_barrier
-sum2 = 0.0
-collective sum2 += sum1
-print sum2
 ENDPROC SYMMETRHC_A
 
 PROC place_HB
@@ -4645,21 +3720,26 @@ do ksub
 
     call AOLADDER_NEW
     call R2ABLIN_NEW # OK
-#    call R2AALIN_NEW # OK
+    call R2AALIN_NEW # OK
     call R1ANEW # OK
 
     server_barrier
 
-#    call SYMMETRHC_A
+    call SYMMETRHC_A
 
-    pardo a,i,a1,i1
-        request VCHACT2AB[a,i,a1,i1]
-        request VCHACT2AB[a,i1,a1,i]
-	Taiai[a,i,a1,i1]  = VCHACT2AB[a,i,a1,i1]
-	T1aiai[a,i,a1,i1] = VCHACT2AB[a,i1,a1,i]
-	Taiai[a,i,a1,i1] -= T1aiai[a,i,a1,i1]
-	prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
-    endpardo a,i,a1,i1
+#    server_barrier
+#    sum1 = 0.0
+#    pardo a,i,a1,i1
+#	request VCHACT2AA[a,i,a1,i1]
+#	Taiai[a,i,a1,i1]  = VCHACT2AA[a,i,a1,i1]
+#	etemp = Taiai[a,i,a1,i1]*VCHACT2AA[a,i,a1,i1]
+#	sum1 += etemp
+#    endpardo a,i,a1,i1
+#    server_barrier
+#    sum2 = 0.0
+#    collective sum2 += sum1
+#    print "r2aa checksum"
+#    print sum2
 
     call place_HB
     server_barrier
@@ -4707,8 +3787,52 @@ do ksub
 enddo ksub
 endpardo a,i
 #
+pardo a,i,a1,i1
+where a < a1
+where i < i1
+do ksub
+    request HB2_aa[ksub,a,i,a1,i1]
+    Tkaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a,i,a1,i1]
+    do ksub1
+	request LB2_aa[ksub1,a,i,a1,i1]
+	Tkk[ksub1,ksub] = LB2_aa[ksub1,a,i,a1,i1]*Tkaiai[ksub,a,i,a1,i1]
+	Tkk[ksub1,ksub] *= 2.0
+	LGmat[ksub1,ksub] += Tkk[ksub1,ksub]
+    enddo ksub1
+enddo ksub
+endpardo a,i,a1,i1
 #
 pardo a,i,a1,i1
+where a < a1
+where i == i1
+do ksub
+    request HB2_aa[ksub,a,i,a1,i1]
+    Tkaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a,i,a1,i1]
+    do ksub1
+	request LB2_aa[ksub1,a,i,a1,i1]
+	Tkk[ksub1,ksub] = LB2_aa[ksub1,a,i,a1,i1]*Tkaiai[ksub,a,i,a1,i1]
+	LGmat[ksub1,ksub] += Tkk[ksub1,ksub]
+    enddo ksub1
+enddo ksub
+endpardo a,i,a1,i1
+#
+pardo a,i,a1,i1
+where a == a1
+where i < i1
+do ksub
+    request HB2_aa[ksub,a,i,a1,i1]
+    Tkaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a,i,a1,i1]
+    do ksub1
+	request LB2_aa[ksub1,a,i,a1,i1]
+	Tkk[ksub1,ksub] = LB2_aa[ksub1,a,i,a1,i1]*Tkaiai[ksub,a,i,a1,i1]
+	LGmat[ksub1,ksub] += Tkk[ksub1,ksub]
+    enddo ksub1
+enddo ksub
+endpardo a,i,a1,i1
+#
+pardo a,i,a1,i1
+where a == a1
+where i == i1
 do ksub
     request HB2_aa[ksub,a,i,a1,i1]
     Tkaiai[ksub,a,i,a1,i1] = HB2_aa[ksub,a,i,a1,i1]
@@ -5529,50 +4653,6 @@ server_barrier
 #
 ENDPROC all_GS
 
-PROC place_RB2aa_VCHACT2AA
-server_barrier
-Tk[ksub] = 1.0
-pardo a,i,a1,i1
-    request RB2_aa[ksub,a,i,a1,i1]
-    Taiai[a,i,a1,i1] = Tk[ksub]*RB2_aa[ksub,a,i,a1,i1]
-    prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
-endpardo a,i,a1,i1
-server_barrier
-ENDPROC place_RB2aa_VCHACT2AA
-
-PROC place_VCHACT2AA_RB2aa
-server_barrier
-Tk[ksub] = 1.0
-pardo a,i,a1,i1
-    request VCHACT2AA[a,i,a1,i1]
-    Tkaiai[ksub,a,i,a1,i1] = Tk[ksub]*VCHACT2AA[a,i,a1,i1]
-    prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-endpardo a,i,a1,i1
-server_barrier
-ENDPROC place_VCHACT2AA_RB2aa
-
-PROC place_LB2aa_VCHACT2AA
-server_barrier
-Tk[ksub] = 1.0
-pardo a,i,a1,i1
-    request LB2_aa[ksub,a,i,a1,i1]
-    Taiai[a,i,a1,i1] = Tk[ksub]*LB2_aa[ksub,a,i,a1,i1]
-    prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
-endpardo a,i,a1,i1
-server_barrier
-ENDPROC place_LB2aa_VCHACT2AA
-
-PROC place_VCHACT2AA_LB2aa
-server_barrier
-Tk[ksub] = 1.0
-pardo a,i,a1,i1
-    request VCHACT2AA[a,i,a1,i1]
-    Tkaiai[ksub,a,i,a1,i1] = Tk[ksub]*VCHACT2AA[a,i,a1,i1]
-    prepare LB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-endpardo a,i,a1,i1
-server_barrier
-ENDPROC place_VCHACT2AA_LB2aa
-
 PROC update_vecs
 #
 server_barrier
@@ -5581,8 +4661,8 @@ server_barrier
 call move_by_one_RK1
 call move_by_one_LK1
 
-#call move_by_one_RK2aa
-#call move_by_one_LK2aa
+call move_by_one_RK2aa
+call move_by_one_LK2aa
 
 call move_by_one_RK2ab
 call move_by_one_LK2ab
@@ -5591,8 +4671,8 @@ server_barrier
 call form_new_RK1
 call form_new_LK1
 
-#call form_new_RK2aa
-#call form_new_LK2aa
+call form_new_RK2aa
+call form_new_LK2aa
 
 call form_new_RK2ab
 call form_new_LK2ab
@@ -5605,154 +4685,45 @@ server_barrier
 call update_RB1
 call update_LB1
 
-#call update_RB2aa
-#call update_LB2aa
+call update_RB2aa
+call update_LB2aa
 
 call update_RB2ab
 call update_LB2ab
 
 server_barrier
+sum1 = 0.0
+pardo a,i,kstate
+    request cRk1_a[kstate,a,i]
+    Tkai[kstate,a,i] = cRk1_a[kstate,a,i]
+    etemp = Tkai[kstate,a,i] * cRk1_a[kstate,a,i]
+    sum1 += etemp
+endpardo a,i,kstate
 
-pardo a,i,a1,i1,ksub
-    request RB2_ab[ksub,a,i,a1,i1]
-    request RB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1]  = RB2_ab[ksub,a,i,a1,i1]
-    T1kaiai[ksub,a,i,a1,i1] = RB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
-    prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-endpardo a,i,a1,i1,ksub
+pardo a,i,a1,i1,kstate
+    request cRk2_aa[kstate,a,i,a1,i1]
+    Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
+    etemp = Tkaiai[kstate,a,i,a1,i1]*cRk2_aa[kstate,a,i,a1,i1]
+    sum1 += etemp
+endpardo a,i,a1,i1,kstate
 
-pardo a,i,a1,i1,ksub
-    request LB2_ab[ksub,a,i,a1,i1]
-    request LB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1]  = LB2_ab[ksub,a,i,a1,i1]
-    T1kaiai[ksub,a,i,a1,i1] = LB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
-    prepare LB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-endpardo a,i,a1,i1,ksub
+pardo a,i,b,j,kstate
+    request cRk2_ab[kstate,a,i,b,j]
+    Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
+    etemp = Tkaibj[kstate,a,i,b,j]*cRk2_ab[kstate,a,i,b,j]
+    sum1 += etemp
+endpardo a,i,b,j,kstate
 server_barrier
-
-#do ksub
-#
-#pardo a,i,a1,i1
-#    prepare VCHACT2AA[a,i,a1,i1] = 0.0
-#endpardo a,i,a1,i1
-#server_barrier
-#call place_RB2aa_VCHACT2AA
-#server_barrier
-#call SYMMETRHC_A
-#server_barrier
-#call place_VCHACT2AA_RB2aa
-#
-#server_barrier
-#pardo a,i,a1,i1
-#    prepare VCHACT2AA[a,i,a1,i1] = 0.0
-#endpardo a,i,a1,i1
-#server_barrier
-#call place_LB2aa_VCHACT2AA
-#server_barrier
-#call SYMMETRHC_A
-#server_barrier
-#call place_VCHACT2AA_LB2aa
-#enddo ksub
-
-#server_barrier
-#sum1 = 0.0
-#pardo a,i,kstate
-#    request cRk1_a[kstate,a,i]
-#    Tkai[kstate,a,i] = cRk1_a[kstate,a,i]
-#    etemp = Tkai[kstate,a,i] * cRk1_a[kstate,a,i]
-#    sum1 += etemp
-#endpardo a,i,kstate
-
-#pardo a,i,a1,i1,kstate
-#    request cRk2_aa[kstate,a,i,a1,i1]
-#    Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
-#    etemp = Tkaiai[kstate,a,i,a1,i1]*cRk2_aa[kstate,a,i,a1,i1]
-#    sum1 += etemp
-#endpardo a,i,a1,i1,kstate
-#
-#pardo a,i,b,j,kstate
-#    request cRk2_ab[kstate,a,i,b,j]
-#    Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
-#    etemp = Tkaibj[kstate,a,i,b,j]*cRk2_ab[kstate,a,i,b,j]
-#    sum1 += etemp
-#endpardo a,i,b,j,kstate
-#server_barrier
-#sum2 = 0.0
-#collective sum2 += sum1
-#etemp3 = (scalar)eom_roots
-#rms_orb_conv = (sum2/etemp3)**(0.5)
-#server_barrier
-#assert_same rms_orb_conv
+sum2 = 0.0
+collective sum2 += sum1
+etemp3 = (scalar)eom_roots
+rms_orb_conv = (sum2/etemp3)**(0.5)
+server_barrier
+assert_same rms_orb_conv
 #
 ENDPROC update_vecs
 
 PROC form_guess
-
-#server_barrier
-#execute get_my_rank rank
-#if rank == 0.0
-##
-#do a
-#    do i
-#
-#    tai[a,i]=0.0
-#
-#    do a1
-#	where a==a1
-#
-#	get         DDaa[a,a1]
-#	tia[i,a1] = 1.0
-#	taa[a1,a] = DDaa[a,a1]
-#	execute return_diagonal_elements taa[a1,a]
-#
-#	t2ai[a,i] = tia[i,a1]*taa[a1,a]
-#	tai[a,i] += t2ai[a,i]
-#
-#    enddo a1
-#
-#    do i1
-#	where i==i1
-#
-#	get          DDii[i1,i]
-#	t2ia[i1,a] = 1.0
-#	tii[i,i1]  = DDii[i1,i]
-#	execute return_diagonal_elements Tii[i,i1]
-#
-#	t2ai[a,i]  = tii[i,i1]*t2ia[i1,a]
-#	t2ai[a,i] *= -1.0
-#	tai[a,i]  += t2ai[a,i]
-#
-#    enddo i1
-#
-#
-#    SHDiag[a,i] = tai[a,i]
-#
-#    enddo i
-#enddo a
-##
-#    execute cis_unit_guess C1_a SHDiag
-##
-#    do ksub
-#	do a
-#	    do i
-#		prepare RB1_a[ksub,a,i] = C1_a[ksub,a,i]
-#	    enddo i
-#	enddo a
-#    enddo ksub
-##
-#endif
-##
-#server_barrier
-#pardo a,i
-#do kstate
-#    request RB1_a[kstate,a,i]
-#    Tkai[kstate,a,i] = RB1_a[kstate,a,i]
-#    prepare R1k1_a[kstate,a,i] = Tkai[kstate,a,i]
-#enddo kstate
-#endpardo a,i
-#server_barrier
 
 server_barrier
 
@@ -7734,30 +6705,23 @@ do kiter
 
     etemp = 0.0
     etemp2 = 0.0
-    max_e_conv = 0.0
     do kstate
         etemp1 = SEk0[kstate]
         etemp2 = SEkold[kstate]
         etemp1 -= etemp2
         etemp2 = etemp1**2.0
         etemp += etemp2
-	etemp1 = (etemp2)**(0.5)
-	if etemp1 > max_e_conv
-	    max_e_conv = etemp1
-        endif
     enddo kstate
     etemp3 = (scalar)eom_roots
     rms_e_conv = (etemp/etemp3)**0.5
     do kstate
         SEkold[kstate] = SEk0[kstate]
     enddo kstate
-    print max_e_conv
     print rms_e_conv
     print rms_orb_conv
     server_barrier
     assert_same rms_e_conv
-    assert_same max_e_conv
-    if max_e_conv < eom_tol
+    if rms_e_conv < eom_tol
         exit
     endif
     server_barrier
@@ -7777,7 +6741,6 @@ print "EOM-CCSD has converged"
 # props
 # -----------------
 # scale so <R|R>=1.0 
-call update_vecs
 call norm_lr_vec
 call form_r0
 

@@ -68,7 +68,9 @@ c  ATOMIC COORDINATES
       call c_f_pointer(coords, pcoords, pdim_coords) 
 c ----------------------------------------------------------------------
 
-      call return_nn_repulsion(data_0, ncenters, pcoords, pcharge) 
+      energy = 0.0
+      call return_nn_repulsion(energy, ncenters, pcoords, pcharge) 
+      data_0(1) = energy
 
       return
       end

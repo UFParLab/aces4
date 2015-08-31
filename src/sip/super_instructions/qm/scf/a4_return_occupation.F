@@ -107,7 +107,7 @@ C-------------------------------------------------------------------------
 
       double precision z
 C
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       Write(*,"(a,(1x,4i4))") "The input ranges", a1, a2, b1, b2
       Write(*,"(a,(1x,2i4))") "The offsets: ", offset_1, offset_2
@@ -115,7 +115,7 @@ C      write(6,"(a)") "Checking the overlap map"
 C      call output(array1,1,a1,1,a2,a1,a2,1)
 C      write(6,"(a)") "End checking the overlap map"
 C      endif 
-C#endif 
+#endif 
 C
 C Determine the raw index of the corresponding to the maximum overlap
 C (absoulte sense) in a column. The orbital corrsponding to that row is
@@ -129,24 +129,24 @@ C occupied.
             Z = MAX(Z, Dabs(array1(a+offset_1,b+offset_2)))
          Enddo 
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       Write(*,"(a,I4,1x,a,F12.8)") "The largest of column", a, "is", Z
       Write(*,*)
 C      endif 
-C#endif 
+#endif 
          Do c = c1, c2
             If (Z .EQ. Dabs(array1(c+offset_1,b+offset_2))) 
      &                     array2(b) = 1.0D0
          Enddo
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(*,"(a)") "The new occupation vector"
       Write(*,"(6(1x,F4.1))") (array2(c),c=c1,c2)
       Write(*,*)
 C      endif
-C#endif
+#endif
 
       Enddo
 
