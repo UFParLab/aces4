@@ -23,6 +23,7 @@ set(QM_SOURCE_FILES
     qm/qm-generic/energy_denominator_rhf.F;
     qm/qm-generic/energy_numerator_rhf.F;
     qm/utility/return_diagonal.F;
+    qm/utility/print_block_and_index.F;
     qm/utility/inverse_lu_decomposition.F;
     qm/utility/lu_decomposition.F;
     qm/utility/return_diagonal_elements.F;
