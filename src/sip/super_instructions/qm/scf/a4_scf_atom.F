@@ -585,7 +585,7 @@ C
      *                     N_bfns_total)
                                          
       else 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,"(a)") " At the entry to compute atom scf"
       Write(6,"(a)") " N_bfns_total,ncenters,spherical"
       Write(6,"(a)") " nshells,npcoeffs,diis_start,maxhist,nlindep_tol"
@@ -607,7 +607,7 @@ C#ifdef _DEBUG_LVL0
      *                        extents_4(1),extents_4(2)
      *
 CSSS      write(6,"(6(1x,F12.6))")(data_4(i),i=1,size_4)
-C#endif
+#endif
          call compute_atomscf(data_0,data_1,data_2,data_3,data_4,
      *                        data_5,
      *
@@ -775,9 +775,9 @@ C
 C
       target_atom = INT(data_5)
 
-      Write(*,*) "Entry to comp_return_h0" 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,*)
+      Write(*,*) "Entry to comp_return_h0" 
       write(6,"(a,8I4)") "The mapping array: ",(atom(m),m=1,Nshells)
       write(6,"(a,8I4)") "The end_nfps array:",(end_nfps(m),m=1,Nshells)
       write(6,"(a,8I4)") "The ixalphas:",(ixalphas(m),m=1,Nshells)
@@ -790,7 +790,7 @@ C#ifdef _DEBUG_LVL0
       n = 2*m
       enddo
 
-C#endif
+#endif
 
       call comp_return_h0(H0T,ng1,ng2,nh1,nh2,scr,iscr,
      *
@@ -882,7 +882,7 @@ c-----------------------------------------------------------------------
            write(66,*) ' Correct range :', nc1, nc2, 'Computed range:', 
      *                 '1', n_basis   
          endif 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,*)
       write(6,"(a)") "The umap array"
       write(6,"(8I4)") (umap(m),m=nc1,nc2)
@@ -892,7 +892,7 @@ C#ifdef _DEBUG_LVL0
       Write(*,"(a)") "The begining and end _anfps arrays"
       write(6,"(8(1x,I4))") (beg_anfps(m),m=1, Nshells)
       write(6,"(8(1x,I4))") (end_anfps(m),m=1, Nshells)
-C#endif
+#endif
 
 
       call do_atomscf(da,db,kin,nai,ovl,target_atom,
@@ -1185,13 +1185,13 @@ C      call c_f_pointer(cscr1, scr1, [nscr1])
 C      call c_f_pointer(cscr2, scr2, [nscr2])
 C      call c_f_pointer(cscr3, scr3, [nscr3])
 C
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       Write(6,"(a)") "The overlap and one-electron hamiltonian"
       Write(6,"(a,2I3)") "The nocca and noccb", nocc_a,nocc_b
       write(6,"(5F15.9)") ((aovl(m,n), m=1,n_basis),n=1,n_basis)
       write(6,*)
       write(6,"(5F15.9)") ((h0(m,n), m=1,n_basis),n=1,n_basis)
-C#endif
+#endif
 
       call eig_sqr_inv(aovl,sos,n_basis,
      *                 scr1,10*N_basis,scr2,scr3,ierr,nlindep)
@@ -1556,14 +1556,14 @@ c-----------------------------------------------------------------------
 c     Put the density matrix into the full matrix   
 c-----------------------------------------------------------------------
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       Write(6,"(a)") "The intermediate density matrices"
       Write(6,"(6F12.7)") ((HFD_a(m,n), m=1,N_basis),
      *                                  n=1,N_basis)
       Write(*,*) 
       Write(6,"(6F12.7)") ((HFD_b(m,n), m=1,N_basis),
      *                                  n=1,N_basis)
-C#endif 
+#endif 
 
       do n = 1, n_basis
       do m = 1, n_basis
@@ -1576,14 +1576,14 @@ c        Finb(map(m),map(n)) = FTb(m,n)
       enddo 
       enddo 
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       Write(6,"(a)") "The final density matrices"
       Write(6,"(6F12.7)") ((Da(m,n), m=1,N_bfns_total),
      *                               n=1,N_bfns_total)
       Write(*,*) 
       Write(6,"(6F12.7)") ((Db(m,n), m=1,N_bfns_total),
      *                               n=1,N_bfns_total)
-C#endif 
+#endif 
 
 C      call delete_scratch_array(cscr1)
 C      call delete_scratch_array(cscr2)
@@ -2657,13 +2657,13 @@ c
       double precision HFDOLD_A(n_basis,n_basis) 
       double precision HFDOLD_B(n_basis,n_basis) 
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      write(*,*)
 C      Write(*,"(a)") "At entry hfdensity_copy the density matrices"
 C      write(*,"(5F15.8)") ((HFD_A(b,a),a=1,n_basis),b=1,n_basis)
 C      Write(*,*)
 C      write(*,"(5F15.8)") ((HFD_B(b,a),a=1,n_basis),b=1,n_basis)
-C#endif 
+#endif 
 
       do a = 1, n_basis 
       do b = 1, n_basis 
@@ -3100,7 +3100,7 @@ c-----------------------------------------------------------------------
       call lookup_shell(end_nfps, nshells, db1, n1)
       call lookup_shell(end_nfps, nshells, db2, n2)
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,*)
       Write(6,"(a)") "The end_nfps and shell indices"
       Write(6,"(4(1x,I4))")(end_nfps(i),i=1,Nshells)
@@ -3108,7 +3108,7 @@ C#ifdef _DEBUG_LVL0
       Write(6,"(4(1x,F15.10))")(alphas(i),i=1,db2-db1)
       Write(6,"(4(1x,I4))")(ixalphas(i),i=1,Nshells)
       Write(6,"(4(1x,I4))")(ixpcoeffs(i),i=1,Nshells)
-C#endif 
+#endif 
       
 c-------------------------------------------------------------------------
 c   Build an array of coordinates per atom.
@@ -3138,7 +3138,7 @@ c-------------------------------------------------------------------------
             acharge(1) = charge(iatom) 
          endif 
       enddo
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       do m=1,ncenters
       Write(*,"(a,4F10.6)") "Atom charge and coords: ", acharge(m),
      *                       xn(m),yn(m),zn(m)
@@ -3147,7 +3147,7 @@ C#ifdef _DEBUG_LVL0
       write(6,"(a,i3)") "The target atom: ", target_atom
       write(6,"(a,i3)") "The number of contracted functions: ", 
      *                   n_c_funcs
-C#endif
+#endif
 c-------------------------------------------------------------------------
 c   Calculate the integrals over the necessary shell blocks.
 c-------------------------------------------------------------------------
@@ -3281,10 +3281,10 @@ c ------------------------------------------------------------------------
             endif 
          enddo   ! m shells
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       write(6,"(a)") "The one-electron Hamiltonian ints (per atom)"
       write(6,"(5(1x,F15.9))") ((zsum(a,b),a=da1,da2),b=db1,db2)
-C#endif 
+#endif 
       return
       end
 
@@ -3423,13 +3423,13 @@ c-----------------------------------------------------------------------
       double precision HFD_B(n_basis,n_basis)
       double precision tempa, tempb
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      Write(6,"(a)") "The CA and CB arrays in hfdensity"
 C      Write(6,"(a,2I3)") "The nocca and noccb", nocc_a,nocc_b
 C      write(6,"(5F15.9)") ((Ca(i,j), i=1,n_basis),j=1,n_basis)
 C      write(6,*) 
 C      write(6,"(5F15.9)") ((CB(i,j), i=1,n_basis),j=1,n_basis)
-C#endif
+#endif
       do m = 1, n_basis
       do n = 1, n_basis
          tempa = 0.0

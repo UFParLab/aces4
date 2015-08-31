@@ -84,14 +84,14 @@ C
 
       IF (OCCNUMS_FILE) THEN
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(*,*)
       write(*,"(a)") "The occupation number file is present"
       write(*,"(a)") "The occupations are read from OCCNUMS file"
       write(*,*)
 C      endif
-C#endif 
+#endif 
          OPEN(UNIT=IUNIT, FILE="OCCNUMS", FORM="FORMATTED")
          READ(IUNIT,10,END=19) Itmp1(1)
          READ(IUNIT,10,END=19) Itmp1(2)
@@ -145,7 +145,7 @@ C#endif
  10   FORMAT(16I5)
  19   CLOSE(IUNIT)
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(*,*)
       If (IUHF .EQ. 0) THEN
@@ -160,7 +160,7 @@ C      if (me .eq. master) then
       Write(*,*)
       Endif 
 C      endif
-C#endif
+#endif
 
       return
       end

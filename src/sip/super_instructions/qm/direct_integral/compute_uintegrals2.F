@@ -17,7 +17,7 @@ C  in the file COPYRIGHT.
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend,
      *                 ca, cb, nc1,nc2, nd1, nd2,
-     *                 fa,fb) 
+     *                 fa,fb)
 c---------------------------------------------------------------------------
 !>   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
 !>   following 'types' of integrals based on atomic labels.

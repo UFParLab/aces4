@@ -1,0 +1,26 @@
+sial TEST
+predefined int norb
+predefined int baocc
+predefined int eavirt
+moaindex aces_defs_pa = baocc: eavirt
+static oed_ovl[aces_defs_pa,aces_defs_pa]
+special return_1el_ecpints w
+special compute_int_scratchmem uuu
+#
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+
+      Temp Txx[mu,nu]
+
+      scalar zmax
+      scalar imax
+
+#
+      execute compute_int_scratchmem oed_ovl zmax imax
+ 
+      print "Entering return_1el_ecpints" 
+      Pardo mu, nu
+            execute return_1el_ecpints Txx[mu,nu]
+      endpardo mu, nu
+
+endsial TEST

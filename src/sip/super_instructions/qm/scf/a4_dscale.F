@@ -4,7 +4,7 @@ C-----------------------------------------------------------------
 !>
 !> This SIP does something closer to the serial blas routine dscale does.
 !> That C is A = C(i) A(*,i)  where A is a vector and C is scalar array.
-!> Primarily used in scf_rhf and scf_rhf.
+!> Primarily used in scf_rhf and scf_uhf.
 !> This must be invoked from the SIALX as
 !> execute  A4_dscale A(a,b) B(a) C where A is a anytype of blocked 
 !> array, B is static and array and C is 0.0 or 1.0 indicating 
@@ -159,7 +159,7 @@ C-------------------------------------------------------------------------
       double precision yyy(bb1:eb1)
       double precision z
 C
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
 C      if (me .eq. master) then
       write(6,"(a)") "Checking the input arrays"
       Write(6,*) "The input dimensions"
@@ -170,7 +170,7 @@ C      if (me .eq. master) then
       Write(*,"(6(1x,F3.1))") (yyy(i),i=bb1,eb1)
       write(6,"(a)") "End checking input array"
 C      endif 
-C#endif 
+#endif 
    
       Do j = ba2, ea2
          Z = yyy(j+off_2) 

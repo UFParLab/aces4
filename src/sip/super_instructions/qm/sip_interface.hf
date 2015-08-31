@@ -11,5 +11,4 @@
       use, intrinsic :: ISO_C_BINDING
       end function current_line
       end interface
-   
-    
+
