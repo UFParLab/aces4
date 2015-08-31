@@ -326,6 +326,10 @@ void a4_dscale(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
 	int& ierr);
 
+void print_block_and_index(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+//##############################
 }
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
@@ -336,6 +340,8 @@ void a4_dscale(
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void read_block_from_text_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 //void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void write_block_to_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void read_block_from_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -504,6 +510,8 @@ void SpecialInstructionManager::init_procmap(){
 //	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
+	procmap_["write_block_to_file"]=(fp0)&write_block_to_file;
+	procmap_["read_block_from_file"]=(fp0)&read_block_from_file;
 	procmap_["read_block_from_text_file"]=(fp0)&read_block_from_text_file;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
 	procmap_["list_block_map"]=(fp0)&list_block_map;
@@ -569,6 +577,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
     procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
+    procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

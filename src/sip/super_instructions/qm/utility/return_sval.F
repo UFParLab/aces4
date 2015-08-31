@@ -43,8 +43,11 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(in)::size_1
       integer(C_INT), intent(in)::extents_1(1:rank_1)
       real(C_DOUBLE), intent(out)::data_1(1:size_1) 
+      real(C_DOUBLE) :: sval
 
       integer(C_INT), intent(out)::ierr 
+
+      sval = 0.0
 
       if (rank_0 .gt. 2) then
          print *,'Error: return_sval at line '!,current_line
@@ -70,16 +73,18 @@ c        call abort_job()
      *                    simple indeces'
          endif 
 
-         call doreturn2(data_0, data_1,
+         call doreturn2(data_0, sval,
      *              1, extents_0(1), 1, extents_0(2)) 
+	 data_1(1) = sval
 
          return 
       endif 
 
       if (rank_0 .eq. 1) then 
 
-         call doreturn1(data_0, data_1,
+         call doreturn1(data_0, sval,
      *              1, extents_0(1)) 
+	 data_1(1) = sval
 
          return 
       endif 

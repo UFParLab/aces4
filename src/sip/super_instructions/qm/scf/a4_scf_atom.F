@@ -80,6 +80,7 @@ C The target atom index to do the atomic SCF calc.
       integer(C_INT), intent(in)::size_5
       integer(C_INT), intent(in)::extents_5(1:rank_5)
       real(C_DOUBLE), intent(in)::data_5(1:size_5)
+      real(C_DOUBLE) :: dtarget_atom
 
       integer(C_INT), intent(out)::ierr
       integer(C_INT)  nscr
@@ -278,8 +279,8 @@ c ----------------------------------------------------------------------
      *                                   ntot_alpha, ixalphas)
       call c_f_pointer(ntot_alpha, pntot_alpha,[1])
       call c_f_pointer(ixalphas, pixalphas, pntot_alpha)
-      write(6,*) ' IXALPHAS', pntot_alpha(1), (pixalphas(i), i=1,
-     *                                         pntot_alpha(1))
+C      write(6,*) ' IXALPHAS', pntot_alpha(1), (pixalphas(i), i=1,
+C     *                                         pntot_alpha(1))
 c ----------------------------------------------------------------------
 c  COEFFICIENTS
       call predefined_scalar_array("pcoeffs"//C_NULL_CHAR,
@@ -295,8 +296,8 @@ c ----------------------------------------------------------------------
      *                                   ntot_pcoeff, ixpcoeffs)
       call c_f_pointer(ntot_pcoeff, pntot_pcoeff,[1])
       call c_f_pointer(ixpcoeffs, pixpcoeffs, pntot_pcoeff)
-      write(6,*) ' IXPCOEFFS', pntot_pcoeff(1), (pixpcoeffs(i), i=1,
-     *                                         pntot_pcoeff(1))
+C      write(6,*) ' IXPCOEFFS', pntot_pcoeff(1), (pixpcoeffs(i), i=1,
+cf/a4_scf_atom.F     *                                         pntot_pcoeff(1))
 c ----------------------------------------------------------------------
 c  ATOMIC COORDINATES
 
@@ -444,7 +445,7 @@ C
       call c_f_pointer(cptr_ccend_pack,fptr_ccend_pack,
      *                 [pcoeffs_pack_dim])
 
-      call integer_scratch_array(ncenters,cptr_acharge)
+      call scratch_array(ncenters,cptr_acharge)
       call c_f_pointer(cptr_acharge,fptr_acharge,[ncenters])
 C
 C Load of scratch arrays are being use in compute atomscf. Only
@@ -456,8 +457,9 @@ C all these scratch arrays are designated as work1,work2,work3,..
 C The CPP pointer is cptr_work1,.... and the FORTRAN pointer is 
 C fptr_work1,....
 C 
+      dtarget_atom = data_5(1)
       call get_num_bfns_patom(atom,end_nfps,n_basis,nshells,
-     *                        data_5)
+     *                        dtarget_atom)
 
       Nbasis_total2 = N_bfns_total * N_bfns_total
       Nbasis_patom2 = n_basis      * N_basis 
@@ -590,12 +592,12 @@ C
       Write(6,"(a)") " N_bfns_total,ncenters,spherical"
       Write(6,"(a)") " nshells,npcoeffs,diis_start,maxhist,nlindep_tol"
       Write(6,"(a)") " vmax,omax,norbmax,n_c_funcs,target_atom,max_iter"
-      Write(6,"(12i3,F6.1)")
+      Write(6,"(12I3,F6.1)")
      *                        N_bfns_total,
      *                        ncenters,
      *                        spherical,nshells,npcoeffs,
      *                        diis_start,maxhist,nlindep_tol,
-     *                        vmax,omax,norbmax,n_c_funcs,data_5,
+     *                        vmax,omax,norbmax,n_c_funcs,dtarget_atom,
      *                        max_iter
       Write(*,*) 
       Write(*,"(a)") " The extents of arrays passed in from SIAL"
@@ -609,7 +611,7 @@ C
 CSSS      write(6,"(6(1x,F12.6))")(data_4(i),i=1,size_4)
 #endif
          call compute_atomscf(data_0,data_1,data_2,data_3,data_4,
-     *                        data_5,
+     *                        dtarget_atom,
      *
      *                        1,extents_0(1),1,extents_0(2),
      *                        1,extents_1(1),1,extents_1(2),
@@ -656,11 +658,51 @@ CSSS      write(6,"(6(1x,F12.6))")(data_4(i),i=1,size_4)
      *                        vmax,omax,norbmax)
 
       endif 
+
+      call delete_integer_scratch_array(cptr_iscr)
+      call delete_scratch_array(cptr_scr)
+      call delete_scratch_array(cptr_alphas_pack)
+      call delete_scratch_array(cptr_pcoeffs_pack)
+      call delete_integer_scratch_array(cptr_ccbeg_pack)
+      call delete_integer_scratch_array(cptr_ccend_pack)
+      call delete_scratch_array(cptr_acharge)
+      call delete_scratch_array(cptr_work1)
+      call delete_scratch_array(cptr_work2)
+      call delete_scratch_array(cptr_work3)
+      call delete_scratch_array(cptr_work4)
+      call delete_scratch_array(cptr_work5)
+      call delete_scratch_array(cptr_work6)
+      call delete_scratch_array(cptr_work7)
+      call delete_scratch_array(cptr_work8)
+      call delete_scratch_array(cptr_work9)
+      call delete_scratch_array(cptr_work10)
+      call delete_scratch_array(cptr_work11)
+      call delete_scratch_array(cptr_work12)
+      call delete_scratch_array(cptr_work13)
+      call delete_scratch_array(cptr_work14)
+      call delete_scratch_array(cptr_work15)
+      call delete_scratch_array(cptr_work16)
+      call delete_scratch_array(cptr_work17)
+      call delete_scratch_array(cptr_work18)
+      call delete_scratch_array(cptr_work19)
+      call delete_scratch_array(cptr_work20)
+      call delete_scratch_array(cptr_diis1)
+      call delete_scratch_array(cptr_diis2)
+      call delete_scratch_array(cptr_diis3)
+      call delete_scratch_array(cptr_diis4)
+      call delete_scratch_array(cptr_diis5)
+      call delete_scratch_array(cptr_diis6)
+      call delete_scratch_array(cptr_diis7)
+      call delete_scratch_array(cptr_scr1)
+      call delete_scratch_array(cptr_scr2)
+      call delete_scratch_array(cptr_scr3)
+
+
       return
       end
 
 C
-      subroutine compute_atomscf(da,db,kin,nai,ovl,data_5,
+      subroutine compute_atomscf(da,db,kin,nai,ovl,dtarget_atom,
      *
      *                           na1,na2,nb1,nb2,nc1,nc2,nd1,nd2,
      *                           ne1,ne2,nf1,nf2,ng1,ng2,nh1,nh2,
@@ -731,7 +773,7 @@ c
       double precision scr(*),coeffs(*),alphas(*)
       double precision alphas_pack(npcoeffs*Nshells)
       double precision pcoeffs_pack(npcoeffs*Nshells)
-      double precision data_5
+      double precision dtarget_atom
       double precision scr1(10*n_basis),scr2(n_basis*N_basis)
       double precision scr3(n_basis)
 
@@ -773,9 +815,10 @@ C
 C   
       open(66,file='summary.out') 
 C
-      target_atom = INT(data_5)
+      target_atom = INT(dtarget_atom)
 
 #ifdef _DEBUG_LVL0
+      Write(*,*) "Entry to comp_return_h0" 
       write(6,*)
       Write(*,*) "Entry to comp_return_h0" 
       write(6,"(a,8I4)") "The mapping array: ",(atom(m),m=1,Nshells)
@@ -1075,8 +1118,8 @@ C
                nocc_a = 1
                nocc_b = 0
             Else
-               nocc_b = charge(m)/2 
-               nocc_a = charge(m) - nocc_b 
+               nocc_b = int(charge(m))/2 
+               nocc_a = int(charge(m)) - nocc_b 
             Endif 
          endif 
       enddo 
@@ -1198,7 +1241,7 @@ C
 
       if (ierr .ne. 0) call abort_job()
 
-      write(*,"(a,i3,a)") " Dropping ",nlindep," linear dependencies"
+C      write(*,"(a,i3,a)") " Dropping ",nlindep," linear dependencies"
 
       do m = 1, n_basis  
       do n = 1, n_basis  
@@ -1393,8 +1436,8 @@ c---------------------------------------------------------------------------
                call form_ss1fock(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
-               Write(6,*) "After SS1"
-               write(6,"(6(F10.5))") (scr(nfirst-1+i),i=1,nints)
+C               Write(6,*) "After SS1"
+C               write(6,"(6(F10.5))") (scr(nfirst-1+i),i=1,nints)
                call form_ss2fock(scr(nfirst), n_basis,
      *                        aa1,aa2,bb1,bb2,cc1,cc2,dd1,dd2,
      *                        HFD_A,HFD_B,FA,FB)
@@ -1444,28 +1487,28 @@ c-----------------------------------------------------------------------
 c       Compute the new HF energy  
 c-----------------------------------------------------------------------
 
-        Write(*,*) "Entering HF energy"
+C        Write(*,*) "Entering HF energy"
         call hfenergy(HFD_A,HFD_B,FA,FB,h0,n_basis) 
 
 c-----------------------------------------------------------------------
 c       Compute the DIIS coefficients  
 c-----------------------------------------------------------------------
 
-        Write(*,*) "Entering gen_hist"
+C        Write(*,*) "Entering gen_hist"
         call gen_hist(iter,maxhist,diis_start,n_basis,nvirt_a,
      *                nocc_a,nvirt_b,nocc_b,ca,cb,FA,FB,Fai,Fbj,Ea,Eb)
 
         if ((iter .lt. maxhist+diis_start-1) .and. 
      *      (iter .gt. diis_start)) then 
            nhist = iter - (diis_start-1)  
-         Write(*,*) "do_diis1"
+C         Write(*,*) "do_diis1"
            call do_diis(nhist,nvirt_a,nocc_a,nvirt_b,nocc_b,n_basis,
      *                  Fai,Ea, Fbj,Eb, FA, FB) 
         endif 
 
         if (iter .ge. maxhist+diis_start-1) then 
            nhist = maxhist   
-           Write(*,*) "do_diis2"
+C           Write(*,*) "do_diis2"
            call do_diis(nhist,nvirt_a,nocc_a,nvirt_b,nocc_b,n_basis,
      *                  Fai,Ea, Fbj,Eb, FA, FB) 
            call move_hist(nhist,diis_start,n_basis,Fa,Fb,Ea,Eb) 
@@ -1475,7 +1518,7 @@ c-----------------------------------------------------------------------
 c       Transpose the new Fock Matrix   
 c-----------------------------------------------------------------------
 
-        Write(*,*) "fock_transpose"
+C        Write(*,*) "fock_transpose"
         call fock_transpose(FA,FB,Qxx,FTa,FTb,n_basis) 
 
 c-----------------------------------------------------------------------
@@ -1493,7 +1536,7 @@ c-----------------------------------------------------------------------
 c       Back Transform the coefficient array  
 c-----------------------------------------------------------------------
 
-        Write(*,*) "bakc_transpose"
+C        Write(*,*) "back_transpose"
         call c_backtran(Qxx,ca,cb,cba,cbb,n_basis) 
 
 c-----------------------------------------------------------------------
@@ -1504,14 +1547,14 @@ c-----------------------------------------------------------------------
 c       Compute the new HF density  
 c-----------------------------------------------------------------------
 
-        Write(*,*) "hf_density"
+C        Write(*,*) "hf_density"
         call hfdensity(ca,cb,HFD_A,HFD_B,n_basis,nocc_a,nocc_b) 
 
 c-----------------------------------------------------------------------
 c       Check for convergence    
 c-----------------------------------------------------------------------
 
-        Write(*,*) "check_convergence"
+c        Write(*,*) "check_convergence"
         call check_conv(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,n_basis,doit)  
         if (doit .eq. 1) go to 100 
 
@@ -1519,7 +1562,7 @@ c-----------------------------------------------------------------------
 c Copy the HF Density into the old Density. 
 c-----------------------------------------------------------------------
 
-        Write(*,*) "density copy"
+C        Write(*,*) "density copy"
         call hfdensity_copy(HFD_A,HFD_B,HFDOLD_A,HFDOLD_B,n_basis)  
 
 
@@ -1797,7 +1840,7 @@ c-----------------------------------------------------------------------
       enddo  
 
       etotal = 0.5d0*(ea + eb) 
-      write(6,*) ' Total SCF energy(-NN) = ', etotal 
+c      write(6,*) ' Total SCF energy(-NN) = ', etotal 
 
       return 
       end 
@@ -2658,11 +2701,11 @@ c
       double precision HFDOLD_B(n_basis,n_basis) 
 
 #ifdef _DEBUG_LVL0
-C      write(*,*)
-C      Write(*,"(a)") "At entry hfdensity_copy the density matrices"
-C      write(*,"(5F15.8)") ((HFD_A(b,a),a=1,n_basis),b=1,n_basis)
-C      Write(*,*)
-C      write(*,"(5F15.8)") ((HFD_B(b,a),a=1,n_basis),b=1,n_basis)
+      write(*,*)
+      Write(*,"(a)") "At entry hfdensity_copy the density matrices"
+      write(*,"(5F15.8)") ((HFD_A(b,a),a=1,n_basis),b=1,n_basis)
+      Write(*,*)
+      write(*,"(5F15.8)") ((HFD_B(b,a),a=1,n_basis),b=1,n_basis)
 #endif 
 
       do a = 1, n_basis 
@@ -3062,7 +3105,6 @@ c Interface added but should be included instead
 
       integer (C_INT) one
 
-      integer iscr(*), end_nfps(nshells),indx_cc(*)
       integer da1,da2,db1,db2
       integer m1,m2,n1,n2, ncenters,npcoeffs,nshells
       integer N_bfns_total,n_c_funcs
@@ -3075,6 +3117,7 @@ c Interface added but should be included instead
       integer ccbeg(n_c_funcs),ccend(n_c_funcs)
       integer ccbeg_pack(n_c_funcs),ccend_pack(n_c_funcs)
       integer a,b,newcenters,nfirst,nints
+      integer iscr(*), end_nfps(nshells),indx_cc(*)
 C
       double precision scr(*)
       double precision zsum(da1:da2,db1:db2)
@@ -3187,6 +3230,7 @@ c  KIN (type=2) integrals next.
 c ------------------------------------------------------------------------ 
 
 C
+#ifdef _DEBUG_LVL0
       Write(6,*) "@-entry to KIN BATCH"
       Write(6,"((a,4(1x,i4)))") "The bra/ket shell index m, n", m,n
       Write(6,"(a,2(1x,I4))") "The Nalpha_pack and Npcoeff_pack:",
@@ -3212,6 +3256,7 @@ C
       Write(6,*)
       Write(6,"(3(1x,F10.5))") x1, y1, z1
       Write(6,"(3(1x,F10.5))") x2, y2, z2
+#endif
 
               call oed__gener_kin_batch(imax, zmax, nalpha_pack, 
      *                 npcoeff_pack,
@@ -3300,11 +3345,6 @@ c---------------------------------------------------------------------------
 
       implicit none
 
-      double precision ca(na1:na2,nb1:nb2)
-      double precision cb(nc1:nc2,nd1:nd2)
-      double precision da(ne1:ne2,nf1:nf2)
-      double precision db(ng1:ng2,nh1:nh2)
-
       integer a,b
       integer na1,na2,nb1,nb2,nc1,nc2,nd1,nd2
       integer ne1,ne2,nf1,nf2,ng1,ng2,nh1,nh2
@@ -3313,6 +3353,11 @@ c---------------------------------------------------------------------------
       integer N_MO_alpha_total,N_MO_beta_total
       integer N_bfns_total
       integer nbasis_from_file,ierror
+
+      double precision ca(na1:na2,nb1:nb2)
+      double precision cb(nc1:nc2,nd1:nd2)
+      double precision da(ne1:ne2,nf1:nf2)
+      double precision db(ng1:ng2,nh1:nh2)
 
       logical aExist,bExist
 
@@ -3424,11 +3469,11 @@ c-----------------------------------------------------------------------
       double precision tempa, tempb
 
 #ifdef _DEBUG_LVL0
-C      Write(6,"(a)") "The CA and CB arrays in hfdensity"
-C      Write(6,"(a,2I3)") "The nocca and noccb", nocc_a,nocc_b
-C      write(6,"(5F15.9)") ((Ca(i,j), i=1,n_basis),j=1,n_basis)
-C      write(6,*) 
-C      write(6,"(5F15.9)") ((CB(i,j), i=1,n_basis),j=1,n_basis)
+      Write(6,"(a)") "The CA and CB arrays in hfdensity"
+      Write(6,"(a,2I3)") "The nocca and noccb", nocc_a,nocc_b
+      write(6,"(5F15.9)") ((Ca(i,j), i=1,n_basis),j=1,n_basis)
+      write(6,*) 
+      write(6,"(5F15.9)") ((CB(i,j), i=1,n_basis),j=1,n_basis)
 #endif
       do m = 1, n_basis
       do n = 1, n_basis
@@ -3449,18 +3494,18 @@ C      write(6,"(5F15.9)") ((CB(i,j), i=1,n_basis),j=1,n_basis)
       end
 
       subroutine get_num_bfns_patom(atom,end_nfps,n_basis,Nshells,
-     *                              data_5)
+     *                              dtarget_atom)
       implicit none
 
       integer n_basis, target_atom, Nshells 
       integer n,m,m1,m2
       integer atom(Nshells),end_nfps(Nshells)
-      double precision data_5
+      double precision dtarget_atom
 
       m1 = 1
       m2 = Nshells
       n_basis = 0
-      target_atom = INT(data_5)
+      target_atom = INT(dtarget_atom)
 
       do m = m1, m2
 

@@ -3,17 +3,16 @@
 ! --------------------------------------------------------------------------
 !> @author Jason N Byrd QTP.
 !> @brief
-!> returns element by element t1= t1/t2 and is antysymmetric so certain diagonals are zero
+!> prints the elements of a block with indices
 !>
 !> @details
-!>  define: special invert_diagonal_asym uu
+!>  define: special print_block_and_index r
 !>
-!>  Usage: execute invert_diagonal_asym T1 T2
+!>  Usage: execute print_block_and_index T1
 ! --------------------------------------------------------------------------
 
-      subroutine invert_diagonal_asym(
+      subroutine print_block_and_index(
      * array_0, rank_0, index_values_0, size_0, extents_0, data_0,
-     * array_1, rank_1, index_values_1, size_1, extents_1, data_1,
      * ierr) BIND(C)
       use, intrinsic :: ISO_C_BINDING
       implicit none
@@ -27,13 +26,6 @@
       integer(C_INT), intent(in)::size_0
       integer(C_INT), intent(in)::extents_0(1:rank_0)
       real(C_DOUBLE), intent(out)::data_0(1:size_0)
-
-      integer(C_INT), intent(in)::array_1
-      integer(C_INT), intent(in)::rank_1
-      integer(C_INT), intent(in)::index_values_1(1:rank_1)
-      integer(C_INT), intent(in)::size_1
-      integer(C_INT), intent(in)::extents_1(1:rank_1)
-      real(C_DOUBLE), intent(out)::data_1(1:size_1)
 
       integer(C_INT), intent(out)::ierr
 
@@ -54,10 +46,19 @@ c Get the mo segment ranges
       call c_f_pointer(aosegs,paosegs,pn_ao_segs)
 
 c Find the offset index ranges
+      offset_1 = 0
       offset_2 = 0
       offset_3 = 0
       offset_4 = 0
       offset_5 = 0
+
+      if (rank_0 .eq. 4) then
+
+      if (index_values_0(1).gt.1) then
+          do i = 1, index_values_0(1) - 1
+             offset_1 = offset_1 + paosegs(i)
+          enddo
+      endif
       if (index_values_0(2).gt.1) then
           do i = 1, index_values_0(2) - 1
              offset_2 = offset_2 + paosegs(i)
@@ -73,24 +74,12 @@ c Find the offset index ranges
              offset_4 = offset_4 + paosegs(i)
           enddo
       endif
-      if (index_values_0(5).gt.1) then
-          do i = 1, index_values_0(5) - 1
-             offset_5 = offset_5 + paosegs(i)
-          enddo
-      endif
 
-      if(rank_0 .ne. rank_1) then
-	  write(*,*) "invert diagonal ranks not same"
-	  call abort_job()
-      endif
-
-      if (rank_0 .eq. 5) then
-      call do_return_inv5_as(1, extents_0(1),
-     *                    offset_2+1, extents_0(2)+offset_2,
-     *                    offset_3+1, extents_0(3)+offset_3,
-     *                    offset_4+1, extents_0(4)+offset_4,
-     *                    offset_5+1, extents_0(5)+offset_5,
-     *                    data_0,data_1,ierr)
+      call do_print_4block(offset_1+1, extents_0(1)+offset_1,
+     *                     offset_2+1, extents_0(2)+offset_2,
+     *                     offset_3+1, extents_0(3)+offset_3,
+     *                     offset_4+1, extents_0(4)+offset_4,
+     *                     data_0)
       else
 	  write(*,*) "bad call to invert_diagonal_asym"
 	  call abort_job()
@@ -103,40 +92,28 @@ c Find the offset index ranges
       return
       end
 
-      subroutine do_return_inv5_as(a1,a2,b1,b2,c1,c2,d1,d2,e1,e2, 
-     *                          array1,array2,ierr)
+      subroutine do_print_4block(a1,a2,b1,b2,c1,c2,d1,d2, 
+     *                          array1)
       implicit none
       integer ierr
       integer a, a1, a2
       integer b, b1, b2
       integer c, c1, c2 
       integer d, d1, d2 
-      integer e, e1, e2
-      double precision array1(a1:a2,b1:b2,c1:c2,d1:d2,e1:e2) 
-      double precision array2(a1:a2,b1:b2,c1:c2,d1:d2,e1:e2) 
+      double precision array1(a1:a2,b1:b2,c1:c2,d1:d2) 
       double precision val, div
 
 
-      do e = e1,e2
       do d = d1,d2
       do c = c1,c2
       do b = b1,b2
       do a = a1,a2
-          if (b .ne. d .and. c .ne. e) then
-	      div = array2(a,b,c,d,e)
-              if (div .ne. 0.d0) then
-		  val = array1(a,b,c,d,e)/div
-		  array1(a,b,c,d,e) = val
-	      endif
-	  else
-	      array1(a,b,c,d,e) = 0.d0
-          endif
+	  write(6,100) a,b,c,d,array1(a,b,c,d)
       enddo 
       enddo 
       enddo 
       enddo 
-      enddo 
-  100 format(3I3,24E14.6)
+  100 format(4I3,1F24.14)
 
       return
       end

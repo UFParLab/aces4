@@ -1,3 +1,15 @@
+
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief
+!> returns element by element t1= t1/t2
+!>
+!> @details
+!>  define: special invert_diagonal uu
+!>
+!>  Usage: execute invert_diagonal T1 T2
+! --------------------------------------------------------------------------
+
       subroutine invert_diagonal(
      * array_0, rank_0, index_values_0, size_0, extents_0, data_0,
      * array_1, rank_1, index_values_1, size_1, extents_1, data_1,
@@ -5,11 +17,6 @@
       use, intrinsic :: ISO_C_BINDING
       implicit none
 
-c--------------------------------------------------------------------------
-c Usage: execute invert_diagonal T1 T2
-C returns element by element t1= t1/t2
-c
-c--------------------------------------------------------------------------
       include 'sip_interface.f'
 
 ! output array --> array_0
@@ -75,17 +82,10 @@ c--------------------------------------------------------------------------
       do b = b1,b2
       do a = a1,a2
           div = array2(a,b,c)
-C	  if (div .eq. 0.d0) then
-C	      write(*,*) "--ZERO denominator in invert diagonal"
-C	      write(*,100) a,b,c,div
-C	      ierr = 1
-C	      return
-C          endif
           if (div .ne. 0.d0) then
 	      val = array1(a,b,c)/div
 	      array1(a,b,c) = val
 	  endif
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
       enddo 
       enddo 
@@ -115,17 +115,10 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       do b = b1,b2
       do a = a1,a2
           div = array2(a,b,c,d,e)
-C	  if (div .eq. 0.d0) then
-C	      write(*,*) "--ZERO denominator in invert diagonal"
-C	      write(*,100) a,b,c,d,e,div
-C	      ierr = 1
-C	      return
-C          endif
           if (div .ne. 0.d0) then
 	      val = array1(a,b,c,d,e)/div
 	      array1(a,b,c,d,e) = val
 	  endif
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       enddo 
       enddo 
       enddo 

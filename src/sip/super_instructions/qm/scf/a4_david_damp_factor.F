@@ -43,11 +43,14 @@ C The output is the damp factor (a scalar)
 
       integer(C_INT), intent(out)::ierr
 
+      real(C_DOUBLE) :: damp
 c---------------------------------------------------------------------------
       ierr = 0
 
       pa1 = 1
-      call damp_factor(data_0, data_1, pa1, extents_0(1))
+      damp = data_1(1)
+      call damp_factor(data_0, damp, pa1, extents_0(1))
+      data_1(1) = damp
 
       return
       end

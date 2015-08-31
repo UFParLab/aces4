@@ -63,6 +63,7 @@ import "scf_rhf_defs.sialx"
       index   jjter1 = 1: 1
       index   jjter2 = 2: 2
       index   ithree = 1: 3
+      index   ixyz   = 1: 3
 #
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -517,6 +518,15 @@ import "scf_rhf_defs.sialx"
       INT IZERO
       INT master 
 
+      temp DAOINT[mu,nu]
+      static dipole[ixyz]
+      static NucDip[ixyz]
+      static Dip02[ixyz]
+      served Dxx_scf[mu,nu]
+      scalar dsum
+      scalar AbsDip
+      scalar ncount2
+
 #-----------------------------------------------------------------------------
  
       PROC HFDENS
@@ -881,24 +891,24 @@ import "scf_rhf_defs.sialx"
 
 #bgn_debug
        sip_barrier 
-       if rank==0.0
-       esuma = 0.0
-       esumb = 0.0
-       DO mu
-       DO nu
-          get Fpq_a[mu,nu]
-          get Fpq_b[mu,nu]
-#          execute dump_amp Fpq_a(mu,nu)
-          etemp  = Fpq_a[mu,nu] * Fpq_a[mu,nu]
-          esuma += etemp
-          etemp  = Fpq_b[mu,nu] * Fpq_b[mu,nu]
-          esumb += etemp
-       ENDDO nu
-       ENDDO mu
-       print "checksum of focka and fockb"
-       print esuma
-       print esumb
-       endif
+#       if rank==0.0
+#       esuma = 0.0
+#       esumb = 0.0
+#       DO mu
+#       DO nu
+#          get Fpq_a[mu,nu]
+#          get Fpq_b[mu,nu]
+##          execute dump_amp Fpq_a(mu,nu)
+#          etemp  = Fpq_a[mu,nu] * Fpq_a[mu,nu]
+#          esuma += etemp
+#          etemp  = Fpq_b[mu,nu] * Fpq_b[mu,nu]
+#          esumb += etemp
+#       ENDDO nu
+#       ENDDO mu
+#       print "checksum of focka and fockb"
+#       print esuma
+#       print esumb
+#       endif
 
 #
        ENDPROC FOCK_MATRIX_FAST   
@@ -974,6 +984,9 @@ import "scf_rhf_defs.sialx"
 # The oed_ovl get overwritten by density matrix duiring the FOck
 # built. Save it to OVLP for level shifting.
 #
+       sip_barrier
+       execute get_my_rank rank
+       if rank == 0.0
        DO mu
        DO nu
              execute return_ovl Txx[mu,nu]
@@ -992,6 +1005,7 @@ import "scf_rhf_defs.sialx"
          PUT OVLP_INV[mu,nu] = txx[mu,nu]
        ENDDO nu
        ENDDO mu
+       endif
 
        sip_barrier
 
@@ -1103,25 +1117,25 @@ import "scf_rhf_defs.sialx"
 
 #bgn_debug
        sip_barrier
-       execute get_my_rank rank
-       if rank==0.0
-          esuma = 0.0
-          esumb = 0.0
-          DO mu
-          DO nu
-              get FTpq_a[mu,nu]
-              get FTpq_b[mu,nu]
-              etemp  = FTpq_a[mu,nu] * FTpq_a[mu,nu]
-              esuma += etemp
-              etemp  = FTpq_b[mu,nu] * FTpq_b[mu,nu]
-              esumb += etemp
-           ENDDO nu
-           ENDDO mu
-       endif
-       print "The checksum of FOCK_A"
-       print esuma
-       print "The checksum of FOCK_B"
-       print esumb
+#       execute get_my_rank rank
+#       if rank==0.0
+#          esuma = 0.0
+#          esumb = 0.0
+#          DO mu
+#          DO nu
+#              get FTpq_a[mu,nu]
+#              get FTpq_b[mu,nu]
+#              etemp  = FTpq_a[mu,nu] * FTpq_a[mu,nu]
+#              esuma += etemp
+#              etemp  = FTpq_b[mu,nu] * FTpq_b[mu,nu]
+#              esumb += etemp
+#           ENDDO nu
+#           ENDDO mu
+#       endif
+#       print "The checksum of FOCK_A"
+#       print esuma
+#       print "The checksum of FOCK_B"
+#       print esumb
 #end_debug
 #
        ENDPROC FOCK_TRANSPOSE 
@@ -1423,18 +1437,18 @@ import "scf_rhf_defs.sialx"
             ENDDO nu
             ENDDO mu
 #bgn_debug
-       execute get_my_rank rank
-       if rank==0.0
-       esuma = 0.0
-       DO mu
-       DO nu
-          etemp  = oed_ovl[mu,nu] * oed_ovl[mu,nu]
-          esumb += etemp
-       ENDDO nu
-       ENDDO mu
-       endif
-       print "cheking overlap ints"
-       print esuma
+#       execute get_my_rank rank
+#       if rank==0.0
+#       esuma = 0.0
+#       DO mu
+#       DO nu
+#          etemp  = oed_ovl[mu,nu] * oed_ovl[mu,nu]
+#          esumb += etemp
+#       ENDDO nu
+#       ENDDO mu
+#       endif
+#       print "cheking overlap ints"
+#       print esuma
 #end_debug
 
 #JNB: i changed this...
@@ -1503,21 +1517,21 @@ import "scf_rhf_defs.sialx"
 #         sip_barrier
 #
 #bgn_debug
-      esuma = 0.0
-      esumb = 0.0
-      DO mu
-      DO nu
-            get IDHFA[mu,nu]
-            get IDHFB[mu,nu]
-            tmp = IDHFA[mu,nu] * IDHFA[mu,nu]
-            esuma += tmp
-            tmp = IDHFB[mu,nu] * IDHFB[mu,nu]
-            esumb += tmp
-      ENDDO nu
-      ENDDO mu
-      print "The checksums of atomic densties"
-      print esuma
-      print esumb
+#      esuma = 0.0
+#      esumb = 0.0
+#      DO mu
+#      DO nu
+#            get IDHFA[mu,nu]
+#            get IDHFB[mu,nu]
+#            tmp = IDHFA[mu,nu] * IDHFA[mu,nu]
+#            esuma += tmp
+#            tmp = IDHFB[mu,nu] * IDHFB[mu,nu]
+#            esumb += tmp
+#      ENDDO nu
+#      ENDDO mu
+#      print "The checksums of atomic densties"
+#      print esuma
+#      print esumb
 #end_debug
 #
 # The density at this point is not idempotent. All the atoms that
@@ -1584,21 +1598,21 @@ import "scf_rhf_defs.sialx"
       ENDIF
 
 #bgn_debug
-      esuma = 0.0
-      esumb = 0.0
-      do mu
-      do nu
-         get DHFa[mu,nu]
-         get DHFb[mu,nu]
-         tmp = DHFa[mu,nu] * DHFa[mu,nu]
-         esuma += tmp
-         tmp = DHFb[mu,nu] * DHFb[mu,nu]
-         esumb += tmp
-      enddo nu
-      enddo mu
-      print "The checksum of alpha and beta density"
-      print esuma
-      print esumb
+#      esuma = 0.0
+#      esumb = 0.0
+#      do mu
+#      do nu
+#         get DHFa[mu,nu]
+#         get DHFb[mu,nu]
+#         tmp = DHFa[mu,nu] * DHFa[mu,nu]
+#         esuma += tmp
+#         tmp = DHFb[mu,nu] * DHFb[mu,nu]
+#         esumb += tmp
+#      enddo nu
+#      enddo mu
+#      print "The checksum of alpha and beta density"
+#      print esuma
+#      print esumb
 #end_debug
 #
       ENDPROC IGUESS
@@ -1683,12 +1697,14 @@ import "scf_rhf_defs.sialx"
        DO d1
           n1 += 1
           if n1 == TARGET
-#
+	      server_barrier
                 PARDO mu, nu
                    GET              Fpq_a[mu,nu]
-                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_a[mu,nu]
                    PUT Fa[mu,nu,d1] = txx[mu,nu]
+                ENDPARDO mu, nu
+                PARDO mu, nu
+                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_b[mu,nu]
                    PUT Fb[mu,nu,d1] = txx[mu,nu]
                 ENDPARDO mu, nu
@@ -1700,6 +1716,7 @@ import "scf_rhf_defs.sialx"
                    GET FFbj[b,j]
                    PUT Fbj[b,j,d1] = FFbj[b,j]
                 ENDPARDO b, j
+	      server_barrier
                 exit
 
           endif # d1 = kiter
@@ -1718,14 +1735,17 @@ import "scf_rhf_defs.sialx"
           n1 += 1
           if n1 == TARGET
 #bgn_debug                
-              print "The target in GEN_6HISTORY"
-              print  n1
+#              print "The target in GEN_6HISTORY"
+#              print  n1
 #end_debug
+	       server_barrier
                 PARDO mu, nu
                    GET              Fpq_a[mu,nu]
-                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_a[mu,nu]
                    PUT Fa[mu,nu,d1] = txx[mu,nu]
+                ENDPARDO mu, nu
+                PARDO mu, nu
+                   GET              Fpq_b[mu,nu]
                    txx[mu,nu]     = Fpq_b[mu,nu]
                    PUT Fb[mu,nu,d1] = txx[mu,nu]
                 ENDPARDO mu, nu
@@ -1737,6 +1757,7 @@ import "scf_rhf_defs.sialx"
                    GET FFbj[b,j]
                    PUT Fbj[b,j,d1] = FFbj[b,j]
                 ENDPARDO b, j
+		server_barrier
                 exit
 
           endif # d1 = kiter
@@ -1758,90 +1779,38 @@ import "scf_rhf_defs.sialx"
 #      Move histories 
 #      -------------- 
 #
-       PARDO mu, nu 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder
-             GET          Fa[mu,nu,d1] 
-             tpq[mu,nu] = Fa[mu,nu,d1] 
-             n2 = 0
-          DO d2 
-             n2 += 1
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1
-                tpqx[mu,nu,d2]   = tpq[mu,nu] 
-                PUT Fa[mu,nu,d2] = tpqx[mu,nu,d2] 
-             endif 
-          ENDDO d2 
-            endif 
-          ENDDO d1 
-       ENDPARDO mu, nu 
+      DO d1 
+      DO d2 
+      where d1 <= worder
+      where d1 == d2 + 1
+       sip_barrier 
+	  PARDO mu, nu 
+		 GET          Fa[mu,nu,d1] 
+		 tpq[mu,nu] = Fa[mu,nu,d1] 
+		 PUT Fa[mu,nu,d2] = tpq[mu,nu] 
+	  ENDPARDO mu, nu 
 #
-       PARDO a, i 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder 
-             GET        Fai[a,i,d1] 
-             tai[a,i] = Fai[a,i,d1] 
-             n2 = 0 
-          DO d2 
-             n2 += 1 
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1
-                taix[a,i,d2]   = tai[a,i] 
-                PUT Fai[a,i,d2] = taix[a,i,d2] 
-             endif 
-          ENDDO d2 
-            endif 
-          ENDDO d1 
-       ENDPARDO a,i  
+	  PARDO a, i 
+		 GET        Fai[a,i,d1] 
+		 tai[a,i] = Fai[a,i,d1] 
+		 PUT Fai[a,i,d2] = tai[a,i] 
+	  ENDPARDO a,i  
 #
-       PARDO mu, nu 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder 
-             GET          Fb[mu,nu,d1] 
-             tpq[mu,nu] = Fb[mu,nu,d1] 
-             n2 = 0 
-          DO d2 
-             n2 += 1 
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1 
-                tpqx[mu,nu,d2]   = tpq[mu,nu] 
-                PUT Fb[mu,nu,d2] = tpqx[mu,nu,d2] 
-             endif 
-          ENDDO d2 
-             endif 
-          ENDDO d1 
-       ENDPARDO mu, nu 
+	  PARDO mu, nu 
+		 GET          Fb[mu,nu,d1] 
+		 tpq[mu,nu] = Fb[mu,nu,d1] 
+		 PUT Fb[mu,nu,d2] = tpq[mu,nu] 
+	   ENDPARDO mu, nu 
 #
-       PARDO b, j 
-          n1 = 0
-          DO d1 
-             n1 += 1
-             if n1 <= worder
-             GET        Fbj[b,j,d1] 
-             tbj[b,j] = Fbj[b,j,d1] 
-             n2 = 0 
-          DO d2 
-             n2 += 1 
-             icheck = n1 
-             icheck-= n2 
-             if icheck == 1
-                tbjx[b,j,d2]   = tbj[b,j] 
-                PUT Fbj[b,j,d2] = tbjx[b,j,d2] 
-             endif 
-          ENDDO d2 
-             endif 
-          ENDDO d1 
-       ENDPARDO b,j  
-                
+	   PARDO b, j 
+		 GET        Fbj[b,j,d1] 
+		 tbj[b,j] = Fbj[b,j,d1] 
+		 PUT Fbj[b,j,d2] = tbj[b,j] 
+	  ENDPARDO b,j  
+       sip_barrier 
+      ENDDO d2 
+      ENDDO d1 
+       sip_barrier 
        sip_barrier 
 #
        ENDPROC MOVE6    
@@ -1991,54 +1960,54 @@ import "scf_rhf_defs.sialx"
 
          sip_barrier
 #bgn_debug
-     esuma = 0.0
-     esumb = 0.0
-     DO mu
-     Do nu
-     GET FpqA_Prev[mu,nu]
-     GET Fpq_a[mu,nu]
-     tmp = Fpqa_Prev[mu,nu] * FpqA_Prev[mu,nu]
-     esuma += tmp
-     tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
-     esumb += tmp
-     ENDDO nu
-     ENDDO mu
-     print "The checksum of prev. alpha Fock matrix"
-     print esuma
-     print "The checksum of prev. beta Fock matrix"
-     print esumb
-     esuma = 0.0
-     esumb = 0.0
-     DO mu
-     Do nu
-     GET POLD_a[mu,nu]
-     GET POLD_b[mu,nu]
-     tmp = POLD_a[mu,nu] * POLD_a[mu,nu]
-     esuma += tmp
-     tmp =   POLD_b[mu,nu] *  POLD_b[mu,nu]
-     esumb += tmp
-     ENDDO nu
-     ENDDO mu
-     print "The checksum of prev. density matrix"
-     print esuma
-     print "The checksum of prev. denisity matrix"
-     print esumb
-     esuma = 0.0
-     esumb = 0.0
-     DO mu
-     Do nu
-     GET PNEW_a[mu,nu]
-     GET PNEW_b[mu,nu]
-     tmp = PNEW_a[mu,nu] * PNEW_a[mu,nu]
-     esuma += tmp
-     tmp =   PNEW_b[mu,nu] *  PNEW_b[mu,nu]
-     esumb += tmp
-     ENDDO nu
-     ENDDO mu
-     print "The checksum of new density matrix"
-     print esuma
-     print "The checksum of new denisity matrix"
-     print esumb
+#     esuma = 0.0
+#     esumb = 0.0
+#     DO mu
+#     Do nu
+#     GET FpqA_Prev[mu,nu]
+#     GET Fpq_a[mu,nu]
+#     tmp = Fpqa_Prev[mu,nu] * FpqA_Prev[mu,nu]
+#     esuma += tmp
+#     tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
+#     esumb += tmp
+#     ENDDO nu
+#     ENDDO mu
+#     print "The checksum of prev. alpha Fock matrix"
+#     print esuma
+#     print "The checksum of prev. beta Fock matrix"
+#     print esumb
+#     esuma = 0.0
+#     esumb = 0.0
+#     DO mu
+#     Do nu
+#     GET POLD_a[mu,nu]
+#     GET POLD_b[mu,nu]
+#     tmp = POLD_a[mu,nu] * POLD_a[mu,nu]
+#     esuma += tmp
+#     tmp =   POLD_b[mu,nu] *  POLD_b[mu,nu]
+#     esumb += tmp
+#     ENDDO nu
+#     ENDDO mu
+#     print "The checksum of prev. density matrix"
+#     print esuma
+#     print "The checksum of prev. denisity matrix"
+#     print esumb
+#     esuma = 0.0
+#     esumb = 0.0
+#     DO mu
+#     Do nu
+#     GET PNEW_a[mu,nu]
+#     GET PNEW_b[mu,nu]
+#     tmp = PNEW_a[mu,nu] * PNEW_a[mu,nu]
+#     esuma += tmp
+#     tmp =   PNEW_b[mu,nu] *  PNEW_b[mu,nu]
+#     esumb += tmp
+#     ENDDO nu
+#     ENDDO mu
+#     print "The checksum of new density matrix"
+#     print esuma
+#     print "The checksum of new denisity matrix"
+#     print esumb
 #end_debug
 
       ENDPROC CREATE_PMATRIX
@@ -2507,15 +2476,15 @@ import "scf_rhf_defs.sialx"
        ENDDO q
        sip_barrier
 #bgn_debug
-     esuma = 0.0
-     do p
-     do p1
-        tmp = Fpqa_MO_VSHIFT[p,p1] * Fpqa_MO_VSHIFT[p,p1]
-        esuma += tmp
-     enddo p1
-     enddo p
-     print "The checksum of the Level shifts Fock matrix"
-     print esuma
+#     esuma = 0.0
+#     do p
+#     do p1
+#        tmp = Fpqa_MO_VSHIFT[p,p1] * Fpqa_MO_VSHIFT[p,p1]
+#        esuma += tmp
+#     enddo p1
+#     enddo p
+#     print "The checksum of the Level shifts Fock matrix"
+#     print esuma
 #end_debug
      ENDPROC BUILT_MO_FOCK
 #    ---------------------
@@ -2622,21 +2591,21 @@ import "scf_rhf_defs.sialx"
 
       sip_barrier
 ##bgn_debug
-     esuma = 0.0
-     esumb = 0.0
-     do mu
-     do nu
-        get Fpq_a[mu,nu]
-        get Fpq_b[mu,nu]
-        tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
-        esuma += tmp
-        tmp = Fpq_b[mu,nu] * Fpq_b[mu,nu]
-        esumb += tmp
-     enddo nu
-     enddo mu
-     Print "checksum of the level shited and Alpha and Beta Fock matrices"
-     print esuma
-     print esumb
+#     esuma = 0.0
+#     esumb = 0.0
+#     do mu
+#     do nu
+#        get Fpq_a[mu,nu]
+#        get Fpq_b[mu,nu]
+#        tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
+#        esuma += tmp
+#        tmp = Fpq_b[mu,nu] * Fpq_b[mu,nu]
+#        esumb += tmp
+#     enddo nu
+#     enddo mu
+#     Print "checksum of the level shited and Alpha and Beta Fock matrices"
+#     print esuma
+#     print esumb
 #end_debug
 
       DELETE Fpqa_MO
@@ -2645,6 +2614,48 @@ import "scf_rhf_defs.sialx"
       DELETE SCb
 
      ENDPROC BUILT_AO_FOCK
+
+    PROC form_Dscf
+
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+        prepare Dxx_scf[mu,nu] = Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+        do i
+            T1xx[mu,nu] = Ca[mu,i]*Ca[nu,i]
+            Txx[mu,nu] += T1xx[mu,nu]
+        enddo i
+        Txx[mu,nu] *= -2.0
+        prepare Dxx_scf[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+
+    do ixyz
+        ncount2 = (scalar)ixyz
+        dsum = 0.0
+        esum = 0.0
+        pardo mu,nu
+            request Dxx_scf[mu,nu]
+            ncount1 = 0.0
+            execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+            NucDip[ixyz] = ncount1
+            Txx[mu,nu] = Dxx_scf[mu,nu]
+            etemp = Txx[mu,nu]*DAOINT[mu,nu]
+            esum += etemp
+        endpardo mu,nu
+        server_barrier
+        collective dsum += esum
+        server_barrier
+        dsum += NucDip[ixyz]
+        dipole[ixyz] = dsum
+    enddo ixyz
+
+    server_barrier
+
+    ENDPROC form_Dscf
 #    ---------------------
 #
 ############################################################################## 
@@ -2679,7 +2690,11 @@ import "scf_rhf_defs.sialx"
 
       iter_count = 0
       prnt_count = 0
-      diis_end   = 150
+
+# use scf_ variables for controlling diis
+      diis_start = scf_beg
+      diis_order = scf_hist
+      diis_end   = scf_iter
 
       START_HISTORY  = DIIS_START
       START_HISTORY -= DIIS_ORDER
@@ -2967,6 +2982,7 @@ import "scf_rhf_defs.sialx"
          iter_count += 1
          prnt_count += 1
 
+         print " "
          print "The iteration number"
          print iter_count
 
@@ -3228,11 +3244,11 @@ import "scf_rhf_defs.sialx"
          ENDIF 
 
 #bgn_debug
-         print "Some varibles during the SCF iterations"
-         print diis_start
-         print iter_count
-         print diis_end
-         print DIIS_ORDER
+#         print "Some varibles during the SCF iterations"
+#         print diis_start
+#         print iter_count
+#         print diis_end
+#         print DIIS_ORDER
 #end_debug
 
          IF ITER_COUNT > 1
@@ -3244,8 +3260,8 @@ import "scf_rhf_defs.sialx"
          IF ITER_COUNT <= DIIS_END
 
 #bgn_debug 
-          print "The DIIS order"
-          print DIIS_ORDER
+#          print "The DIIS order"
+#          print DIIS_ORDER
 #end_debug
 
             CALL DIISN
@@ -3349,8 +3365,8 @@ import "scf_rhf_defs.sialx"
          sip_barrier
 #
 #bgn_debug
-        print "The maximum density difference"
-        print done
+#        print "The maximum density difference"
+#        print done
 #end_debug
 
 #JNB:
@@ -3490,7 +3506,14 @@ import "scf_rhf_defs.sialx"
       totenerg = scf_energy
       print scf_energy
 
+	call form_Dscf
+	print " "
+	print "SCF dipole moments"
+	print dipole
+
       set_persistent scf_energy "scf_energy"
+      set_persistent dipole "scf_dipole"
+      set_persistent NucDip "nuclear_dipole"
       sip_barrier
 #                         
                            ENDSIAL SCF_RHF

@@ -1,11 +1,20 @@
-c--------------------------------------------------------------------------
-c The diagonal elements of a four index array are extracted.
-c--------------------------------------------------------------------------
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief
+!> The diagonal, occupied, elements of a four index array are extracted using storage pattern VOVO
+!
+!> @details
+!> sialx definition: special anti_symm_o u
+!>
+!> sialx usage: execute anti_symm_o Taiai[a,i,a1,i1]
+! --------------------------------------------------------------------------
+
       subroutine anti_symm_o(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c  ierr) BIND(C)
       use, intrinsic :: ISO_C_BINDING
       implicit none
+      include 'sip_interface.f'
       integer(C_INT), intent(in)::array_slot_0
       integer(C_INT), intent(in)::rank_0
       integer(C_INT), intent(in)::index_values_0(1:rank_0)
@@ -14,14 +23,53 @@ c--------------------------------------------------------------------------
       real(C_DOUBLE), intent(inout)::data_0(1:size_0)
 
       integer(C_INT), intent(out)::ierr
-      integer i, j, n, current_line, junk
+c mosegments
+      TYPE(C_PTR) :: n_ao_segs, aosegs
+      integer, pointer :: pn_ao_segs(:), paosegs(:)
+      integer(C_INT) offset_1, offset_2, offset_3, offset_4
+      integer(C_INT) offset_5, offset_6
+      integer(C_INT) start_1, start_2, start_3, start_4, start_5,start_6
+      integer(C_INT) i, i1, i2, i3, i4, one
+
+      ierr = 0
+
+c Get the mo segment ranges
+      call predefined_int_array("moa_seg_ranges"//C_NULL_CHAR, one,
+     *                           n_ao_segs, aosegs)
+      call c_f_pointer(n_ao_segs,pn_ao_segs,[1])
+      call c_f_pointer(aosegs,paosegs,pn_ao_segs)
+
+      offset_1 = 0
+      offset_2 = 0
+      offset_3 = 0
+      offset_4 = 0
       
       if ( rank_0 .eq. 4) then
+      if (index_values_0(1).gt.1) then
+          do i = 1, index_values_0(1) - 1
+             offset_1 = offset_1 + paosegs(i)
+          enddo
+      endif
+      if (index_values_0(2).gt.1) then
+          do i = 1, index_values_0(2) - 1
+             offset_2 = offset_2 + paosegs(i)
+          enddo
+      endif
+      if (index_values_0(3).gt.1) then
+          do i = 1, index_values_0(3) - 1
+             offset_3 = offset_3 + paosegs(i)
+          enddo
+      endif
+      if (index_values_0(4).gt.1) then
+          do i = 1, index_values_0(4) - 1
+             offset_4 = offset_4 + paosegs(i)
+          enddo
+      endif
       call dosymmforce4o(data_0,
-     *                 1,extents_0(1),
-     *                 1,extents_0(2),
-     *                 1,extents_0(3),
-     *                 1,extents_0(4))
+     *                 offset_1+1,offset_1+extents_0(1),
+     *                 offset_2+1,offset_2+extents_0(2),
+     *                 offset_3+1,offset_3+extents_0(3),
+     *                 offset_4+1,offset_4+extents_0(4))
       else
 	  print *, "anti_symm_o requires rank 4 temp block"
 	  call abort_job()

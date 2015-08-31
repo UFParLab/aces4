@@ -1,13 +1,19 @@
 c--------------------------------------------------------------------------
-!> special gen_eigen_calc uuuu
-!>   Calculates the generalized eigenvalues and eigenvectors of a 2-d 
+!> @author Jason N Byrd QTP.
+!>   @brief Calculates the generalized eigenvalues and eigenvectors of a 2-d 
 !>   non-symmetric square matrix.
+!
+!> @details
+!> special gen_eigen_calc uuuu
 !>
-!>   execute eig Array1 Array2 Array3 Array4
+!>  execute eig Array1 Array2 Array3 Array4
 !>
 !>   where Array1 is the input matrix that is to be diagonalized.
+!>
 !>         Array2 returns the matrix whose columns are the left eigenvectors of Array1.
+!>
 !>         Array3 returns the matrix whose columns are the right eigenvectors of Array1.
+!>
 !>         Array4 returns the eigenvalues.
 !>
 !>   All must be "static" arrays.
@@ -112,6 +118,25 @@ C     *                   scr1,scr2,scr3,scr4,scr5,nscr5,ierr)
       return
       end
 
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief Wrapper routine to DGEEV.
+!>
+!> @details
+!>  DGEEV computes for an N-by-N real nonsymmetric matrix A, the
+!>  eigenvalues and, optionally, the left and/or right eigenvectors.
+!>
+!>  The right eigenvector v(j) of A satisfies
+!>                   A * v(j) = lambda(j) * v(j)
+!>  where lambda(j) is its eigenvalue.
+!>  The left eigenvector u(j) of A satisfies
+!>                u(j)**H * A = lambda(j) * u(j)**H
+!>  where u(j)**H denotes the conjugate transpose of u(j).
+!>
+!>  The computed eigenvectors are normalized to have Euclidean norm
+!>  equal to 1 and largest component real.
+! --------------------------------------------------------------------------
+
       subroutine dgeev_wrapper(Amat,Lvec,Rvec,eigval,nn,
      *           Bmat,alphar,alphai,beta,work,nw,info)
       use, intrinsic :: ISO_C_BINDING 
@@ -133,18 +158,6 @@ C     *                   scr1,scr2,scr3,scr4,scr5,nscr5,ierr)
       integer i,j,k
 *  =======
 *
-*  DGEEV computes for an N-by-N real nonsymmetric matrix A, the
-*  eigenvalues and, optionally, the left and/or right eigenvectors.
-*
-*  The right eigenvector v(j) of A satisfies
-*                   A * v(j) = lambda(j) * v(j)
-*  where lambda(j) is its eigenvalue.
-*  The left eigenvector u(j) of A satisfies
-*                u(j)**H * A = lambda(j) * u(j)**H
-*  where u(j)**H denotes the conjugate transpose of u(j).
-*
-*  The computed eigenvectors are normalized to have Euclidean norm
-*  equal to 1 and largest component real.
 *
 *  Arguments
 *  =========
@@ -289,6 +302,34 @@ C sort eigenvalues
       return
       end
 
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief Wrapper routine to DGGEV.
+!>
+!> @details
+!>  DGGEV computes for a pair of N-by-N real nonsymmetric matrices (A,B)
+!>  the generalized eigenvalues, and optionally, the left and/or right
+!>  generalized eigenvectors.
+!>
+!>  A generalized eigenvalue for a pair of matrices (A,B) is a scalar
+!>  lambda or a ratio alpha/beta = lambda, such that A - lambda*B is
+!>  singular. It is usually represented as the pair (alpha,beta), as
+!>  there is a reasonable interpretation for beta=0, and even for both
+!>  being zero.
+!>
+!>  The right eigenvector v(j) corresponding to the eigenvalue lambda(j)
+!>  of (A,B) satisfies
+!>
+!>                   A * v(j) = lambda(j) * B * v(j).
+!>
+!>  The left eigenvector u(j) corresponding to the eigenvalue lambda(j)
+!>  of (A,B) satisfies
+!>
+!>                   u(j)**H * A  = lambda(j) * u(j)**H * B .
+!>
+!>  where u(j)**H is the conjugate-transpose of u(j).
+! --------------------------------------------------------------------------
+
       subroutine dggev_wrapper(Amat,Lvec,Rvec,eigval,nn,
      *           Bmat,alphar,alphai,beta,work,nw,info)
       use, intrinsic :: ISO_C_BINDING 
@@ -310,27 +351,6 @@ C sort eigenvalues
       integer i,j,k
 
 *  =====================================================================
-*  DGGEV computes for a pair of N-by-N real nonsymmetric matrices (A,B)
-*  the generalized eigenvalues, and optionally, the left and/or right
-*  generalized eigenvectors.
-*
-*  A generalized eigenvalue for a pair of matrices (A,B) is a scalar
-*  lambda or a ratio alpha/beta = lambda, such that A - lambda*B is
-*  singular. It is usually represented as the pair (alpha,beta), as
-*  there is a reasonable interpretation for beta=0, and even for both
-*  being zero.
-*
-*  The right eigenvector v(j) corresponding to the eigenvalue lambda(j)
-*  of (A,B) satisfies
-*
-*                   A * v(j) = lambda(j) * B * v(j).
-*
-*  The left eigenvector u(j) corresponding to the eigenvalue lambda(j)
-*  of (A,B) satisfies
-*
-*                   u(j)**H * A  = lambda(j) * u(j)**H * B .
-*
-*  where u(j)**H is the conjugate-transpose of u(j).
 *  =====================================================================
 *  ALPHAR  (output) DOUBLE PRECISION array, dimension (N)
 *  ALPHAI  (output) DOUBLE PRECISION array, dimension (N)

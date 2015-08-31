@@ -89,6 +89,7 @@ special compute_aabb_batch ww
 special get_my_rank w
 #special scf_atom u
 #special print_rel_info rr
+special compute_dipole_integrals wur
 
 endsial scf_rhf_defs
 

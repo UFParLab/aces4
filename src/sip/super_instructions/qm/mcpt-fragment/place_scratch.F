@@ -178,13 +178,13 @@ C            endif
 
          if (data_2(1) .eq. 2.0) then 
             do i = 1, index_values_0(1) - 1
-                if (i .le. pn_aocc(1)) then
+                if (i .le. pn_frag_aocc(1)) then
                     if (pfrag_aocc(i) .eq. wfrag) then
                         offset_1  = offset_1 + pmoasegs(i)
                     endif
                 endif
-                if (i .gt. pn_aocc(1)) then
-                    if (pfrag_avirt(i-pn_aocc(1)) .eq. wfrag) then
+                if (i .gt. pn_frag_aocc(1)) then
+                    if (pfrag_avirt(i-pn_frag_aocc(1)) .eq. wfrag) then
                         offset_1  = offset_1 + pmoasegs(i)
                     endif
                 endif
@@ -192,13 +192,13 @@ C            endif
          endif 
 
          do i = 1, index_values_0(2) - 1
-             if (i .le. pn_aocc(1)) then
+             if (i .le. pn_frag_aocc(1)) then
                  if (pfrag_aocc(i) .eq. wfrag) then
                      offset_2  = offset_2 + pmoasegs(i)
                  endif
              endif
-             if (i .gt. pn_aocc(1)) then
-                 if (pfrag_avirt(i-pn_aocc(1)) .eq. wfrag) then
+             if (i .gt. pn_frag_aocc(1)) then
+                 if (pfrag_avirt(i-pn_frag_aocc(1)) .eq. wfrag) then
                      offset_2  = offset_2 + pmoasegs(i)
                  endif
              endif

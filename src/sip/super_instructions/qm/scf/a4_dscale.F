@@ -117,14 +117,14 @@ C Get the MO alpha/beta segment ranges
             if (index_values_0(2).gt.1) then
                do i = 1, index_values_0(2) - 1
                   offset_2 = offset_2 + F_nmoasegs(i)
-                  Write(*,*) "A segs", F_nmoasegs(i)
+C                  Write(*,*) "A segs", F_nmoasegs(i)
                enddo
              endif
          elseif (type .eq. "Beta ") then
             if (index_values_0(2).gt.1) then
                do i = 1, index_values_0(2) - 1
                   offset_2 = offset_2 + F_nmobsegs(i)
-                  Write(*,*) "B segs", F_nmobsegs(i)
+C                  Write(*,*) "B segs", F_nmobsegs(i)
                enddo
              endif
          endif 
