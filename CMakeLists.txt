@@ -453,9 +453,9 @@ else() # Single Node Version Tests
     add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
 
-    add_dependencies(test_basic_sial gtest gtest_main test_contollers)
-    add_dependencies(test_sial       gtest gtest_main test_contollers)
-    add_dependencies(test_qm         gtest gtest_main test_contollers)
+    add_dependencies(test_basic_sial gtest gtest_main test_controllers)
+    add_dependencies(test_sial       gtest gtest_main test_controllers)
+    add_dependencies(test_qm         gtest gtest_main test_controllers)
 
 endif()
 
