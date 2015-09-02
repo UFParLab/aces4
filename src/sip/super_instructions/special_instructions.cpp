@@ -326,6 +326,9 @@ void a4_dscale(
 void print_block_and_index(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
+void form_diagonal_unit_matrix(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
 //##############################
 }
 
@@ -574,6 +577,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
+    procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
