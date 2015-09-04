@@ -17,7 +17,7 @@
 #include "sip_timer.h"
 #include "sialx_timer.h"
 
-class ProfileInterpreterTestControllerParallel;
+class ProfileInterpreterTestController;
 
 namespace sip {
 class ProfileTimerStore;
@@ -87,7 +87,7 @@ private:
 	SialxTimer& sialx_timer_;
 	TimerMap_t profile_timer_map_; 				//! Key -> Set of program counters
 
-	friend class ::ProfileInterpreterTestControllerParallel;
+	friend class ::ProfileInterpreterTestController;
 	DISALLOW_COPY_AND_ASSIGN(ProfileTimer);
 
 };

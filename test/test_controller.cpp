@@ -22,10 +22,6 @@
 
 #include "block.h"
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
-
 #ifdef HAVE_MPI
 //#include "sip_server.h"
 //#include "sip_mpi_attr.h"
@@ -251,6 +247,8 @@ std::string TestController::expectedOutput() {
 	buffer << t.rdbuf();
 	return buffer.str();
 }
+
+
 
 
 RaceDetectionTestController::RaceDetectionTestController(int num_workers,

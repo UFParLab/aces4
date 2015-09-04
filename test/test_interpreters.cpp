@@ -48,32 +48,32 @@
 bool VERBOSE_TEST = true;
 
 
-TEST(ProfileInterpreter, test1){
-	if (attr->global_rank() == 0){
-		std::string job("contraction_small_test");
-		int norb = 1;
-		{
-			init_setup(job.c_str());
-			set_constant("norb",norb);
-			std::string tmp = job + ".siox";
-			const char* nm= tmp.c_str();
-			add_sial_program(nm);
-			int segs[]  = {40};
-			set_aoindex_info(1,segs);
-			finalize_setup();
-		}
-		std::stringstream output;
-		ProfileInterpreterTestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-		controller.initSipTables();
-		controller.run();
-
-		sip::ProfileTimer::Key key = controller.key_for_pc(16);	// PC for Contraction line.
-		std::pair<double, long> time_count_pair = controller.profile_timer_store_->get_from_store(key);
-		ASSERT_EQ(time_count_pair.second, 1);
-		ASSERT_GT(time_count_pair.first, 0.0);
-	}
-
-}
+//TEST(ProfileInterpreter, test1){
+//	if (attr->global_rank() == 0){
+//		std::string job("contraction_small_test");
+//		int norb = 1;
+//		{
+//			init_setup(job.c_str());
+//			set_constant("norb",norb);
+//			std::string tmp = job + ".siox";
+//			const char* nm= tmp.c_str();
+//			add_sial_program(nm);
+//			int segs[]  = {40};
+//			set_aoindex_info(1,segs);
+//			finalize_setup();
+//		}
+//		std::stringstream output;
+//		ProfileInterpreterTestController controller(job, true, VERBOSE_TEST, "", output);
+//		controller.initSipTables();
+//		controller.run();
+//
+//		sip::ProfileTimer::Key key = controller.key_for_pc(16);	// PC for Contraction line.
+//		std::pair<double, long> time_count_pair = controller.profile_timer_store_->get_from_store(key);
+//		ASSERT_EQ(time_count_pair.second, 1);
+//		ASSERT_GT(time_count_pair.first, 0.0);
+//	}
+//
+//}
 
 TEST(BlockConsistencyInterpreter, test1){
 

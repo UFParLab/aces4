@@ -370,8 +370,8 @@ AM_FFLAGS=\
 # tests
 #######################################################################
 
-TESTS = 			test_qm test_unit test_basic_sial test_sial test_interpreters
-check_PROGRAMS = 	test_qm test_unit test_basic_sial test_sial	test_interpreters
+TESTS = 			test_qm test_qm_aux test_unit test_basic_sial test_sial test_interpreters
+check_PROGRAMS = 	test_qm test_qm_aux test_unit test_basic_sial test_sial	test_interpreters
 
 if WORKING_MPI
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
@@ -396,6 +396,10 @@ test_basic_sial_SOURCES = \
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
     test/test_qm.cpp
+    
+test_qm_aux_SOURCES = \
+	$(ACES_SOURCEFILES) \
+    test/test_qm_aux.cpp
 
 test_interpreters_SOURCES = \
 	$(ACES_SOURCEFILES) \
@@ -415,6 +419,7 @@ TEST_LDADD_VARS = \
 test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
+test_qm_aux_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 test_interpreters_LDADD = $(TEST_LDADD_VARS)
 
@@ -425,6 +430,7 @@ test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
 test/eom_test.dat\
+test/eom_water_dimer_test.dat\
 test/eom_lccsd_test.dat\
 test/eom_lccd_test.dat\
 test/eom_mp2_test.dat\
@@ -500,6 +506,7 @@ TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_qm_aux_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_interpreters_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
@@ -656,7 +663,9 @@ SIOX_FILES=\
 ./src/sialx/qm/rccpt1p2_prop.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
-./src/sialx/qm/rccsdpt_aab.siox
+./src/sialx/qm/rccsdpt_aab.siox\
+./src/sialx/qm/scf_rhf.siox\
+./src/sialx/qm/scf_rhf_defs.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -799,7 +808,9 @@ EXTRA_DIST += \
 ./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\
 ./src/sialx/qm/rccsdpt_aab_defs.sialx\
-./src/sialx/qm/rccsdpt_aab.sialx
+./src/sialx/qm/rccsdpt_aab.sialx\
+./src/sialx/qm/scf_rhf.sialx\
+./src/sialx/qm/scf_rhf_defs.sialx
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\

@@ -10,7 +10,6 @@
 #include "test_constants.h"
 
 
-
 namespace sip{
 class SipTables;
 class WorkerPersistentArrayManager;
@@ -59,6 +58,9 @@ public:
 	setup::SetupReader::SialProgList *progs_;
 
 };
+
+
+
 
 class RaceDetectionTestController : public TestController{
 public:

@@ -14,7 +14,7 @@ AbstractControlFlowInterpreter::AbstractControlFlowInterpreter(int worker_rank,
 				int num_workers,
 				const SipTables& sipTables) :
 				worker_rank_(worker_rank),
-				num_workers_(num_workers_),
+				num_workers_(num_workers),
 				sip_tables_(sipTables),
 				op_table_(sip_tables_.op_table_),
 				data_manager_(sipTables),
