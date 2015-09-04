@@ -57,17 +57,21 @@ public:
 	size_t block_number(const BlockId& id) const;
 
 
-	BlockId id(int array_id, int block_number) const{
+	BlockId num2id(int array_id, int block_number) const{
 		index_value_array_t index_array;
-		int i = MAX_RANK-1;
-		for (i ;i >= rank_; i--){
-			index_array[i] = unused_index_value;
-		}
+//		int i = MAX_RANK-1;
+//		for (i ;i >= rank_; i--){
+//			index_array[i] = unused_index_value;
+//		}
 		int num = block_number;
-		for (i; i >= 0; i--){
+		for (int i = 0; i < rank_; i++){
 			int q = num/slice_sizes_[i];
+			std::cerr << "num, q, slice_sizes_[i]=" << num << "," << q << "," << slice_sizes_[i] << std::endl;
 			index_array[i] = q + lower_[i];
 			num -= (q*slice_sizes_[i]);
+		}
+		for (int j = rank_; j< MAX_RANK; j++){
+			index_array[j] = unused_index_value;
 		}
 		return BlockId(array_id, index_array);
 	}
@@ -180,7 +184,7 @@ public:
 	size_t num_blocks(int array_id) const {return entries_.at(array_id).num_blocks_;}
 
 	BlockId number2id(int array_id, int num) const{
-		return entries_[array_id].id(array_id, num);
+		return entries_[array_id].num2id(array_id, num);
 	}
 
 	friend std::ostream& operator<<(std::ostream&, const ArrayTable &);

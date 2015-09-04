@@ -484,6 +484,7 @@ private:
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
 	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
+	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 };

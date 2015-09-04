@@ -1040,7 +1040,7 @@ TEST(Server,array_file_7){
 
 /**
  * Creates chunks using ChunkManager class and writes to file using flush */
-TEST(Server,DISABLED_array_file_8){
+TEST(Server,array_file_8){
 	std::string filename("array_file_8.test.acf");
 
 	typedef sip::ArrayFile::offset_val_t offset_val_t;

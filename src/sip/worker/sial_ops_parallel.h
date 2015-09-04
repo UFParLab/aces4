@@ -187,7 +187,7 @@ private:
 
 	bool nearlyEqual(double a, double  b, double epsilon);
 
-
+	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

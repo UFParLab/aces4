@@ -18,6 +18,11 @@ int DataDistribution::block_cyclic_distribution_server_rank(
 		const sip::BlockId& bid) const {
 	// Convert rank-dimensional index to 1-dimensional index
 	size_t block_position = sip_tables_.block_number(bid);
+	validate_block_position(bid, block_position);
+	long block_position_2 = block_position_in_array(bid);
+	validate_block_position(bid, block_position_2);
+	std::cout << bid << " block_position: " << block_position << " block_position_2 " << block_position_2 << std::endl << std::flush;
+//	check(block_position==block_position_2, "inconsistent block position for block " + bid.str(sip_tables_));
 //	validate_block_position(bid, block_position);
 	// Cyclic distribution
 	int server_global_rank = server_rank_from_hash(block_position);
@@ -52,22 +57,23 @@ bool DataDistribution::is_my_block(size_t block_number) const{
 	return server_rank_from_hash(block_number) == sip_mpi_attr_.global_rank();
 }
 
-//void DataDistribution::validate_block_position(const sip::BlockId& bid,
-//		long block_num) const {
-//	int array_id = bid.array_id();
-//	int array_rank = sip_tables_.array_rank(array_id);
-//	std::stringstream ss1;
-//	ss1 << " Block num is -ve : " << block_num << " Block Id : " << bid;
-//	if (block_num < 0) {
-//		for (int pos = array_rank - 1; pos >= 0; pos--) {
-//			int index_slot = sip_tables_.selectors(array_id)[pos];
-//			int num_segments = sip_tables_.num_segments(index_slot);
-//			std::cerr << " index_slot : " << index_slot << " pos : " << pos
-//					<< " nseg : " << num_segments << std::endl;
-//		}
-//		sip::check(block_num >= 0, ss1.str(), current_line());
-//	}
-//}
+void DataDistribution::validate_block_position(const sip::BlockId& bid,
+		long block_num) const {
+	int array_id = bid.array_id();
+	int array_rank = sip_tables_.array_rank(array_id);
+	std::stringstream ss1;
+	ss1 << " Block num is -ve : " << block_num << " Block Id : " << bid << std::endl << std::flush;
+	std::cout << ss1.str();
+	if (block_num < 0) {
+		for (int pos = array_rank - 1; pos >= 0; pos--) {
+			int index_slot = sip_tables_.selectors(array_id)[pos];
+			int num_segments = sip_tables_.num_segments(index_slot);
+			std::cerr << " index_slot : " << index_slot << " pos : " << pos
+					<< " nseg : " << num_segments << std::endl;
+		}
+		sip::check(block_num >= 0, ss1.str(), current_line());
+	}
+}
 
 int DataDistribution::server_rank_from_hash(std::size_t hash) const {
 	// Cyclic distribution
@@ -86,21 +92,22 @@ int DataDistribution::server_rank_from_hash(std::size_t hash) const {
 	return server_global_rank;
 }
 
-//long DataDistribution::block_position_in_array(const sip::BlockId& bid) const {
-//	int array_rank = sip_tables_.array_rank(bid);
-//	int array_id = bid.array_id();
-//	// Convert rank-dimensional index to 1-dimensional index
-//	long block_num = 0;
-//	long tmp = 1;
-//	for (int pos = array_rank - 1; pos >= 0; pos--) {
-//		int index_slot = sip_tables_.selectors(array_id)[pos];
-//		int num_segments = sip_tables_.num_segments(index_slot);
-//		sip::check(num_segments >= 0, "num_segments is -ve", current_line());
-//		block_num += bid.index_values(pos) * tmp;
-//		tmp *= num_segments;
-//	}
-//	return block_num;
-//}
+long DataDistribution::block_position_in_array(const sip::BlockId& bid) const {
+	int array_rank = sip_tables_.array_rank(bid);
+	int array_id = bid.array_id();
+	// Convert rank-dimensional index to 1-dimensional index
+	long block_num = 0;
+	long tmp = 1;
+	for (int pos = array_rank - 1; pos >= 0; pos--) {
+		int index_slot = sip_tables_.selectors(array_id)[pos];
+		int num_segments = sip_tables_.num_segments(index_slot);
+		sip::check(num_segments >= 0, "num_segments is -ve", current_line());
+		block_num += bid.index_values(pos) * tmp;
+		tmp *= num_segments;
+	}
+	std::cout << bid << "position according to block_pos_in_array " << block_num << std::endl << std::flush;
+	return block_num;
+}
 
 //void DataDistribution::generate_server_blocks_list(int global_server_rank,
 //		int array_id, std::list<BlockId>& all_blocks,

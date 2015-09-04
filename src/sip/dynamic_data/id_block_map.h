@@ -21,7 +21,8 @@ template <typename BLOCK_TYPE> class IdBlockMap;
 template <typename BLOCK_TYPE> std::ostream& operator<<( std::ostream&, const IdBlockMap<BLOCK_TYPE>& );
 template <typename BLOCK_TYPE> std::ostream& operator<<(std::ostream&, const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap*);
 
-
+template <typename BLOCK_TYPE>
+void list_blocks(const SipTables&, const IdBlockMap<BLOCK_TYPE>&, std::vector<std::pair<BlockId,size_t > >& );
 
 template <typename BLOCK_TYPE>
 class IdBlockMap {
@@ -296,7 +297,7 @@ public:
 
     friend class Interpreter;
 	friend std::ostream& operator<< <> (std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
-
+	friend void list_blocks <> (const SipTables& , const IdBlockMap<BLOCK_TYPE>& , std::vector<std::pair<BlockId,size_t > > &);
 private:
 
 	BlockMapVector block_map_;
@@ -304,6 +305,21 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(IdBlockMap<BLOCK_TYPE>);
 };
 
+template <typename BLOCK_TYPE>
+void list_blocks(const SipTables& sip_tables, const IdBlockMap<BLOCK_TYPE>& obj, std::vector<std::pair<BlockId,size_t > >& vec) {
+	typename IdBlockMap<BLOCK_TYPE>::size_type size = obj.size();
+	for (unsigned i = 0; i < size; ++i){
+		const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map_ptr = obj.block_map_.at(i);
+		if (map_ptr != NULL && !map_ptr->empty()){
+			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::const_iterator it;
+			for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
+				BlockId id = it->first;
+				size_t block_num = sip_tables.block_number(id);
+				vec.push_back(std::pair<BlockId,size_t>(id,block_num));
+			}
+		}
+	}
+}
 
 /**
  * returns an os stream with the block contained in the id_block_map

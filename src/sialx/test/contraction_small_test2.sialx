@@ -1,6 +1,7 @@
 sial contraction_small
 	special print_block r
 	special fill_block_cyclic wr
+	special list_blocks_with_number
 	predefined int bavirt
 	predefined int eavirt
 	predefined int baocc
@@ -58,5 +59,6 @@ sial contraction_small
 			enddo i
 		enddo a1
 	enddo lambda
+	execute list_blocks_with_number
 
 endsial contraction_small

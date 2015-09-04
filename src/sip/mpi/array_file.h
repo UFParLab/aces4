@@ -327,16 +327,47 @@ public:
 				MPI_OFFSET_VAL_T, "native", MPI_INFO_NULL);
 		check(err == MPI_SUCCESS, "setting view to write index failed");
 		MPI_Status status;
+
+
+//		if(comm_rank() == 0){
+//			std::cerr << "local index for rank 0: ";
+//			for (int i = 0; i < size; ++i){
+//				std::cerr <<index[i] << ',';
+//			}
+//			std::cerr << std::endl << std::flush;
+//			MPI_Barrier(comm_);
+//			MPI_Barrier(comm_);
+//		}
+//		else {
+//			MPI_Barrier(comm_);
+//			std::cerr << "local index for rank 1: ";
+//			for (int i = 0; i < size; ++i){
+//				std::cerr <<index[i] << ',';
+//			}
+//			std::cerr << std::endl << std::flush;
+//			MPI_Barrier(comm_);
+//		}
+
 		if (comm_rank() == 0) {
 			int err = MPI_Reduce(MPI_IN_PLACE, index, num_blocks_,
-					MPI_OFFSET_VAL_T, MPI_SUM, 0, comm_);
+					MPI_OFFSET_VAL_T, MPI_MAX, 0, comm_);
 			check(err == MPI_SUCCESS, "failure reducing file index at root");
 			err = MPI_File_write_at(fh_, 0, index, num_blocks_,
 					MPI_OFFSET_VAL_T, &status);
 			check(err == MPI_SUCCESS, "failure writing file index");
+
+			std::cerr << "combined index : ";
+			for (int i = 0; i < size; ++i){
+				std::cerr <<index[i] << ',';
+			}
+			std::cerr << std::endl << std::flush;
+
+
+
+
 		} else {
 			int err = MPI_Reduce(index, NULL, num_blocks_, MPI_OFFSET_VAL_T,
-					MPI_SUM, 0, comm_);
+					MPI_MAX, 0, comm_);
 			check(err == MPI_SUCCESS, "failure reducing file index at root");
 		}
 		set_view_for_data();

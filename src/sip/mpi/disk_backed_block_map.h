@@ -177,16 +177,20 @@ private:
 	void _finalize();
 
     void initialize_local_index(int array_id, std::vector<ArrayFile::offset_val_t>& index_vals, size_t num_blocks){
+    	std::cerr << "in initialize_local_index:  num_blocks=" << num_blocks << std::endl;
     	IdBlockMap<ServerBlock>::PerArrayMap* array_blocks = block_map_.per_array_map(array_id);
+    	check (array_blocks->size()<=num_blocks, "mismatch between number of blocks in map and num_blocks");
     	IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
     	for (it = array_blocks->begin(); it!=array_blocks->end(); ++it){
     		BlockId block_id = it->first;
-    		std::cout << "adding block_id " << block_id << " to local index." << std::endl << std::flush;
+    		std::cerr << "adding block_id " << block_id << " to local index." << std::endl << std::flush;
     		int block_num = sip_tables_.block_number(it->first);
+    		std::cerr <<" adding offset for block " << block_num << std::endl;
     		ServerBlock* block = it->second;
     		ArrayFile::offset_val_t offset = block->block_data_.file_offset();
     		index_vals.at(block_num) = offset;
     	}
+    	std::cerr << std::flush;
     }
 
 

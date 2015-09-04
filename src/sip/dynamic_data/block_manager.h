@@ -19,12 +19,14 @@
 #include "block.h"
 #include "cached_block_map.h"
 
+void list_blocks_with_number();
 
 namespace sip {
 class SipTables;
 class SialOpsParallel;
 class ContiguousLocalArrayManager;
 class SialOpsSequential;
+
 
 
 class BlockManager {
@@ -153,6 +155,7 @@ public:
 
 #endif
 
+	const CachedBlockMap& block_map() const {return block_map_;}
 
 	friend std::ostream& operator<<(std::ostream&, const BlockManager&);
 
@@ -261,7 +264,7 @@ private:
 	friend class SialOpsParallel;
 	friend class ContiguousLocalArrayManager;
 
-
+	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

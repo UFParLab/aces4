@@ -28,10 +28,10 @@ ArrayTableEntry::ArrayTableEntry():
 ArrayTableEntry::ArrayTableEntry(std::string name, int rank, ArrayType_t array_type,
 		int index_selectors[MAX_RANK], int scalar_selector) :name_(name),
 		rank_(rank), array_type_(array_type), scalar_selector_(scalar_selector)
-,max_block_size_(0)//will be reinitialized in init_calculated_values method
-,min_block_size_(0)//will be reinitialized in init_calculated_valuesmethod
-,num_blocks_(0)//will be reinitialized in init_calculated_values method
-{
+		,max_block_size_(0)//will be reinitialized in init_calculated_values method
+		,min_block_size_(0)//will be reinitialized in init_calculated_valuesmethod
+		,num_blocks_(0)//will be reinitialized in init_calculated_values method
+		{
 	for (int i = 0; i < MAX_RANK; ++i) {
 		this->index_selectors_[i] = index_selectors[i];
 	}
@@ -108,6 +108,7 @@ void ArrayTableEntry::init_calculated_values(const IndexTable& index_table){
 		index_table.segment_info(index_slot, min, max, num_segments, lower);
 		min_block *= min;
 		max_block *= max;
+		num_blocks *= num_segments;
 		slice_sizes_[pos] = slice_size;
 		slice_size *= num_segments;
 		lower_[pos] = lower;
@@ -130,6 +131,12 @@ size_t ArrayTableEntry::block_number(const BlockId& id) const{
 		res += (slice_sizes_[i] * (id.index_values(i) - lower_[i]));
 	}
 //	std::cout << " returning res=" << res << std::endl << std::flush;
+
+	BlockId testid = num2id(id.array_id(),res);
+	std::cerr << "in block number:  original id " << id << std::endl;
+	std::cerr << "id calculated from block number " << testid << std::endl;
+	std::cerr << "block number " << res << std::endl << std::flush;
+	check(id == testid, "block_number test failed");
 	return res;
 }
 
