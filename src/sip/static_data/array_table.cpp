@@ -27,7 +27,11 @@ ArrayTableEntry::ArrayTableEntry():
 
 ArrayTableEntry::ArrayTableEntry(std::string name, int rank, ArrayType_t array_type,
 		int index_selectors[MAX_RANK], int scalar_selector) :name_(name),
-		rank_(rank), array_type_(array_type), scalar_selector_(scalar_selector) {
+		rank_(rank), array_type_(array_type), scalar_selector_(scalar_selector)
+,max_block_size_(0)//will be reinitialized in init_calculated_values method
+,min_block_size_(0)//will be reinitialized in init_calculated_valuesmethod
+,num_blocks_(0)//will be reinitialized in init_calculated_values method
+{
 	for (int i = 0; i < MAX_RANK; ++i) {
 		this->index_selectors_[i] = index_selectors[i];
 	}
@@ -85,16 +89,28 @@ void ArrayTableEntry::init_calculated_values(const IndexTable& index_table){
 	size_t min_block = 1;
 	size_t max_block = 1;
 	size_t slice_size = 1;
-	for (int pos=0; pos<rank_; pos++){
+//	for (int pos=0; pos<rank_; pos++){
+//		int index_slot = index_selectors_[pos];
+//		int min, max, num_segments, lower;
+//		index_table.segment_info(index_slot, min, max, num_segments, lower);
+//		min_block *= min;
+//		max_block *= max;
+//		num_blocks *= num_segments;
+//		slice_sizes_.push_back(slice_size);
+//		slice_size *= num_segments;
+//		lower_.push_back(lower);
+//	}
+	slice_sizes_.resize(rank_,-1);
+	lower_.resize(rank_,-1);
+	for (int pos = rank_-1; pos >= 0; pos--){
 		int index_slot = index_selectors_[pos];
 		int min, max, num_segments, lower;
 		index_table.segment_info(index_slot, min, max, num_segments, lower);
 		min_block *= min;
 		max_block *= max;
-		num_blocks *= num_segments;
-		slice_sizes_.push_back(slice_size);
+		slice_sizes_[pos] = slice_size;
 		slice_size *= num_segments;
-		lower_.push_back(lower);
+		lower_[pos] = lower;
 	}
 	num_blocks_ = num_blocks;
 	max_block_size_ = max_block;
@@ -105,7 +121,8 @@ size_t ArrayTableEntry::block_number(const BlockId& id) const{
 //	std::cout << "in block_number with blockid " << id.str(Interpreter::global_interpreter->sip_tables());
 
 	int res = 0;
-	for (int i = rank_-1; i >=0; i--){
+//	for (int i = rank_-1; i >=0; i--){
+	for (int i = 0; i < rank_; i++){
 //		std::cout << "i=" << i;
 //		std::cout << " slice_sizes_[i]=" << slice_sizes_[i];
 //		std::cout << " id.index_values(i)=" << id.index_values(i);
@@ -145,12 +162,12 @@ std::ostream& operator<<(std::ostream& os,
         os << ", max_block_size=" << entry.max_block_size_;
         os << ", min_block_size=" << entry.min_block_size_;
         os << ",slice_sizes_(for id linearization)=[";
-        for (std::vector<int>::const_iterator iter = entry.slice_sizes_.begin(); iter != entry.slice_sizes_.end(); ++iter){
+        for (std::vector<long>::const_iterator iter = entry.slice_sizes_.begin(); iter != entry.slice_sizes_.end(); ++iter){
         	os << *iter << (iter != entry.slice_sizes_.end()-1 ? "," : "");
         }
         os << ']';
         os << ",lower_=[";
-        for (std::vector<int>::const_iterator iter = entry.lower_.begin(); iter != entry.lower_.end(); ++iter){
+        for (std::vector<long>::const_iterator iter = entry.lower_.begin(); iter != entry.lower_.end(); ++iter){
         	os << *iter << (iter != entry.lower_.end()-1 ? "," : "");
         }
         os << ']';

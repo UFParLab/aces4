@@ -111,8 +111,8 @@ private:
 	size_t num_blocks_;
 	size_t max_block_size_;
 	size_t min_block_size_;
-	std::vector<int> slice_sizes_;
-	std::vector<int> lower_;
+	std::vector<long> slice_sizes_;
+	std::vector<long> lower_;
 
 	/** the name of the array in the SIAL program */
 	std::string name_;
