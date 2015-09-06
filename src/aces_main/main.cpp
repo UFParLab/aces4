@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);
-#endif _GNU_SOURCE
+#endif // _GNU_SOURCE
 #endif // __GNU_LIBRARY__
 #endif // __GLIBC__
 
@@ -173,6 +173,7 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader::SialProgList &progs = setup_reader.sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
 
+#ifdef HAVE_MPI
 		job.resize(job.size()-4); //remove the ".dat" from the job string
 		std::ofstream timer_output;
 		if (sip_mpi_attr.is_company_master()) {
@@ -182,6 +183,8 @@ int main(int argc, char* argv[]) {
 				timer_output.open((std::string("worker_data_for_").append(job).append(".csv")).c_str());
 			}
 		}
+#endif
+
 #ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
 	sip::WorkerPersistentArrayManager persistent_worker;
@@ -275,7 +278,9 @@ int main(int argc, char* argv[]) {
 			timeinfo = localtime (&rawtime);
 			std::cout << "Current local time and date:" << asctime(timeinfo);)
 			runner.gather_and_print_statistics(worker_stat_os);
+#ifdef HAVE_MPI
 			MPI_Barrier(MPI_COMM_WORLD);
+#endif
 			//print server stats
 
 

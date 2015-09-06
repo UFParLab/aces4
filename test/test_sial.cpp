@@ -154,61 +154,50 @@ TEST(Sial,pardo_loop_corner_case) {
 //}
 
 TEST(Sial,broadcast_static){
-	{
-	std::string job("broadcast_static");
-	int norb = 3;
-	int segs[] = {2,3,2};
-	int root = 0;
-	if (attr->global_rank() == 0) {
-		init_setup(job.c_str());
-		set_constant("norb", norb);
-		set_constant("root", root);
-		std::string tmp = job + ".siox";
-		const char* nm = tmp.c_str();
-		add_sial_program(nm);
-		set_aoindex_info(3, segs);
-		finalize_setup();
-	}
-	std::stringstream output;
+    std::string job("broadcast_static");
+    int norb = 3;
+    int segs[] = {2,3,2};
+    int root = 0;
+    if (attr->global_rank() == 0) {
+        init_setup(job.c_str());
+        set_constant("norb", norb);
+        set_constant("root", root);
+        std::string tmp = job + ".siox";
+        const char* nm = tmp.c_str();
+        add_sial_program(nm);
+        set_aoindex_info(3, segs);
+        finalize_setup();
+    }
+    std::stringstream output;
 
-	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-	controller.initSipTables();
-	controller.run();
-	if (attr->is_worker()) {
-	double * a = controller.static_array("a");
-	int expected[] = {1, 2, 1, 2, 3, 1, 2,
-			3, 4, 4, 5, 6, 3, 4,
-			1, 2, 1, 2, 3, 1, 2,
-			3, 4, 4, 5, 6, 3, 4,
-			5, 6, 7, 8, 9, 5, 6,
-			1, 2, 1, 2, 3, 1, 2,
-			3, 4, 4, 5, 6, 3, 4};
-	int side = 2+3+2; //size of one side, from seg sizes in segs array above
-	int size = side*side;
-	int i = 0;
-	for (i; i < size; ++i){
-		ASSERT_DOUBLE_EQ(expected[i], a[i]);
-	}
-}
-    if (attr-> is_worker()){
-    	controller.worker_->gather_and_print_statistics(std::cerr);
-    	barrier();
+    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    controller.initSipTables();
+    controller.run();
+    if (attr->is_worker()) {
+        double * a = controller.static_array("a");
+        int expected[] = {1, 2, 1, 2, 3, 1, 2,
+            3, 4, 4, 5, 6, 3, 4,
+            1, 2, 1, 2, 3, 1, 2,
+            3, 4, 4, 5, 6, 3, 4,
+            5, 6, 7, 8, 9, 5, 6,
+            1, 2, 1, 2, 3, 1, 2,
+            3, 4, 4, 5, 6, 3, 4};
+        int side = 2+3+2; //size of one side, from seg sizes in segs array above
+        int size = side*side;
+        int i = 0;
+        for (i; i < size; ++i){
+            ASSERT_DOUBLE_EQ(expected[i], a[i]);
+        }
+    }
+    barrier();
+    if (attr->is_worker()){
+        std::cerr << "done with worker" << std::endl << std::flush;
+        barrier();
     }
     else {
-    	barrier();
-    	controller.server_->gather_and_print_statistics(std::cerr);
+        barrier();
+        std::cerr << "done with server" << std::endl << std::flush;
     }
-
-	}
-	barrier();
-	if (attr->is_worker()){
-    std::cerr << "done with worker" << std::endl << std::flush;
-    barrier();
-	}
-	else {
-	    barrier();
-	    std::cerr << "done with server" << std::endl << std::flush;
-	}
 
 }
 
@@ -656,14 +645,6 @@ TEST(Sial,persistent_distributed_array_mpi){
 		}
 	}
 //	controller.print_timers(std::cout);
-    if (attr-> is_worker()){
-    	controller.worker_->gather_and_print_statistics(std::cerr);
-    	barrier();
-    }
-    else {
-    	barrier();
-    	controller.server_->gather_and_print_statistics(std::cerr);
-    }
     barrier();
 
 }
@@ -772,14 +753,6 @@ TEST(Sial,pardo_with_where){
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
-    if (attr-> is_worker()){
-    	controller.worker_->gather_and_print_statistics(std::cerr);
-    	barrier();
-    }
-    else {
-    	barrier();
-    	controller.server_->gather_and_print_statistics(std::cerr);
-    }
     barrier();
 }
 
@@ -825,14 +798,6 @@ TEST(Sial,put_accumulate_stress){
 			}
 		}
 	}
-    if (attr-> is_worker()){
-     	controller.worker_->gather_and_print_statistics(std::cerr);
-    	barrier();
-    }
-    else {
-    	barrier();
-    	controller.server_->gather_and_print_statistics(std::cerr);
-    }
     barrier();
 }
 
@@ -892,13 +857,6 @@ TEST(Sip,disk_backing_test) {
 	barrier();
 	std::cout << "global rank " << attr->global_rank() << "attr->is_worker()" << attr->is_worker();
 	std::cout << std::endl << std::flush;
-	if (attr->is_worker()) {
-		controller.worker_->gather_and_print_statistics(std::cout);
-		barrier();
-	} else {
-		barrier();
-		controller.server_->gather_and_print_statistics(std::cout);
-	}
 	barrier();
     sip::GlobalState::reinitialize();
 }
@@ -956,13 +914,6 @@ TEST(Sip,disk_backing_put_acc_stress) {
 	barrier();
 	std::cout << "global rank " << attr->global_rank() << "attr->is_worker()" << attr->is_worker();
 	std::cout << std::endl << std::flush;
-	if (attr->is_worker()) {
-		controller.worker_->gather_and_print_statistics(std::cerr);
-		barrier();
-	} else {
-		barrier();
-		controller.server_->gather_and_print_statistics(std::cerr);
-	}
 	barrier();
     sip::GlobalState::reinitialize();
 	std::cerr << "at end of disk_backing_put_acc_stress" << std::endl << std::flush;
@@ -1032,15 +983,6 @@ TEST(Sip,disk_backing_test_default_limit) {
 	std::cout << "global rank " << attr->global_rank() << " attr->is_worker() "
 			<< attr->is_worker();
 	std::cout << std::endl << std::flush;
-	if (attr->is_server()) {
-		controller.server_->gather_and_print_statistics(std::cout);
-		std::cout << std::flush;
-		barrier();
-	} else {
-		barrier();
-		controller.worker_->gather_and_print_statistics(std::cout);
-		std::cout << std::flush;
-	}
 	barrier();
 	sip::GlobalState::reinitialize();
 }

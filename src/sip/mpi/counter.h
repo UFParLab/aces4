@@ -16,9 +16,11 @@
 #include <limits>
 #include "sip.h"
 #include "sip_tables.h"
+
 #ifdef HAVE_MPI
 #include "sip_mpi_attr.h"
 #endif
+
 namespace sip {
 template<typename T, typename R> class Timer;
 template<typename T, typename R> std::ostream& operator<<(std::ostream&,
@@ -65,7 +67,7 @@ protected:
 template<typename T>
 class NoopCounter{
 public:
-        NoopCounter(const MPI_Comm&){}
+        NoopCounter(){}
         void inc(T delta = 0){}
         void dec(T delta = 0){}
         T get_value(){}
@@ -101,6 +103,10 @@ protected:
         }
         DISALLOW_COPY_AND_ASSIGN(SingleNodeCounter);
 };
+
+
+#ifdef HAVE_MPI
+
 
 class MPICounter: public Counter<MPICounter> {
 public:
@@ -184,40 +190,81 @@ private:
         DISALLOW_COPY_AND_ASSIGN(MPICounter);
 };
 
+#endif
+
 template<typename T>
 class CounterList {
 public:
-        explicit CounterList(size_t size, bool filter = true) :
-                        size_(size), list_(size,0), filter_(filter) {
-        }
-        ~CounterList() {
-        }
-        void inc(int index, size_t delta = 1) {
-                list_[index] += delta;
-        }
-        size_t get_value(int index) {
-                return list_[index];
-        }
-        void reset() {
-                std::fill(list_.begin(), list_.end(), 0);
-        }
-        void gather() {
-                static_cast<T*>(this)->gather_impl();
-        }
-        void reduce() {
-                static_cast<T*>(this)->reduce_impl();
-        }
-        friend std::ostream& operator<<(std::ostream& os,
-                        const CounterList<T>& obj){
-        return static_cast<const T&>(obj).stream_out(os);
-    }
+	explicit CounterList(size_t size, bool filter = true) :
+		size_(size), list_(size,0), filter_(filter) {}
+
+	~CounterList() {}
+
+	void inc(int index, size_t delta = 1) {
+		list_[index] += delta;
+	}
+
+	size_t get_value(int index) {
+		return list_[index];
+	}
+
+	void reset() {
+		std::fill(list_.begin(), list_.end(), 0);
+	}
+
+	void gather() {
+		static_cast<T*>(this)->gather_impl();
+	}
+
+	void reduce() {
+		static_cast<T*>(this)->reduce_impl();
+	}
+
+	friend std::ostream& operator<<(std::ostream& os,
+					const CounterList<T>& obj){
+		return static_cast<const T&>(obj).stream_out(os);
+	}
+
 protected:
-        std::vector<size_t> list_;
-        size_t size_;
-        bool filter_;
-        DISALLOW_COPY_AND_ASSIGN(CounterList);
+	std::vector<size_t> list_;
+	size_t size_;
+	bool filter_;
+	DISALLOW_COPY_AND_ASSIGN(CounterList);
 };
 
+
+
+class SingleNodeCounterList : public CounterList<SingleNodeCounterList>{
+public :
+	SingleNodeCounterList(size_t size):
+		CounterList<SingleNodeCounterList>(size) {}
+	friend class CounterList<SingleNodeCounterList>;
+	friend std::ostream& operator<<(std::ostream& os,
+	                        const CounterList<SingleNodeCounterList>& obj);
+protected:
+	void reduce_impl() {}
+
+	void gather_impl() {}
+
+	std::ostream& stream_out(std::ostream& os) const{
+
+		int i = 0;
+		std::vector<size_t>::const_iterator it = list_.begin();
+		while (i < size_) {
+				os << i << ',' << *it << std::endl;
+				++i;
+				++it;
+		}
+		return os;
+	}
+
+private:
+	DISALLOW_COPY_AND_ASSIGN(SingleNodeCounterList);
+};
+
+
+
+#ifdef HAVE_MPI
 
 class MPICounterList: public CounterList<MPICounterList> {
 public:
@@ -317,6 +364,7 @@ private:
         DISALLOW_COPY_AND_ASSIGN(MPICounterList);
 };
 
+#endif //HAVE_MPI
 
 
 /** Enhanced "counter" that can be decremented (and may have a value < 0) and remembers its maximum */
@@ -421,6 +469,7 @@ protected:
 //      DISALLOW_COPY_AND_ASSIGN(MaxCounter);
 //};
 
+#ifdef HAVE_MPI
 
 class MPIMaxCounter: public MaxCounter<MPIMaxCounter,long long> {
 public:
@@ -523,6 +572,8 @@ protected:
 private:
         DISALLOW_COPY_AND_ASSIGN(MPIMaxCounter);
 };
+
+#endif // HAVE_MPI
 
 //class MaxCounterList {
 //public:
@@ -784,6 +835,9 @@ public:
 
 };
 
+
+#ifdef HAVE_MPI
+
 class MPITimerList: public TimerList<MPITimerList, double> {
 public:
         MPITimerList(const MPI_Comm& comm, size_t size) :
@@ -798,23 +852,12 @@ public:
         friend std::ostream& operator<<(
                         std::ostream& os, const TimerList<MPITimerList, double>& obj);
 
-protected:
         double get_time_impl() {
                 return MPI_Wtime();
         }
         double diff_impl(double start, double end) {
                 return end - start;
         }
-
-        const MPI_Comm& comm_;
-        std::vector<double> gathered_total_;
-        std::vector<double> gathered_max_;
-        std::vector<unsigned long> gathered_num_epoch_;
-        std::vector<double> reduced_mean_;
-        std::vector<double> reduced_max_;
-        std::vector<unsigned long> reduced_num_epoch_;
-        bool gather_done_;
-        bool reduce_done_;
 
         void gather_impl() {
                 int rank; //this rank is relative to comm_
@@ -984,13 +1027,25 @@ protected:
                 }
         }
 
+protected:
+        const MPI_Comm& comm_;
+        std::vector<double> gathered_total_;
+        std::vector<double> gathered_max_;
+        std::vector<unsigned long> gathered_num_epoch_;
+        std::vector<double> reduced_mean_;
+        std::vector<double> reduced_max_;
+        std::vector<unsigned long> reduced_num_epoch_;
+        bool gather_done_;
+        bool reduce_done_;
+
 };
+
+#endif // HAVE_MPI
 
 template<typename R>
 class NoopTimerList {
 public:
         NoopTimerList(size_t size) {}
-        NoopTimerList(const MPI_Comm& comm, size_t size){}
         void start(size_t index) {
         }
         R get_time() {
@@ -1042,6 +1097,9 @@ public:
         }
         ~LinuxTimer() {
         }
+        friend class Timer<LinuxTimer, time_t>;
+        friend std::ostream& operator<<(
+                                std::ostream& os, const Timer<LinuxTimer, time_t>& obj);
 protected:
         time_t get_time_impl() {
                 time_t now;
@@ -1066,6 +1124,9 @@ protected:
                 return os;
         }
 };
+
+
+#ifdef HAVE_MPI
 
 class MPITimer: public Timer<MPITimer, double> {
 public:
@@ -1201,6 +1262,8 @@ protected:
 private:
         DISALLOW_COPY_AND_ASSIGN(MPITimer);
 };
+
+#endif //HAVE_MPI
 
 } /* namespace sip */
 

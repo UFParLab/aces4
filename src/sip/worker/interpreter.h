@@ -28,12 +28,13 @@
 #include "config.h"
 #include "worker_persistent_array_manager.h"
 #include "sial_math.h"
+#include "tracer.h"
+#include "counter.h"
+#include "sip_mpi_attr.h"
 
 
 #ifdef HAVE_MPI
 #include "sial_ops_parallel.h"
-#include "counter.h"
-#include "tracer.h"
 #else
 #include "sial_ops_sequential.h"
 #endif //HAVE_MPI
@@ -180,13 +181,13 @@ public:
 
 	void gather_and_print_statistics(std::ostream& os){
 	    tracer_->gather();
-	    sial_ops_.wait_time_.reduce();
+	    sial_ops_.reduce();
 	    if (SIPMPIAttr::get_instance().is_company_master()){
 	    	os << "Worker Statistics"<<std::endl << std::endl;
 	    	os << *tracer_;
 	    	os << std::endl;
 	    	os << "Worker wait_time_" << std::endl;
-	    	sial_ops_.wait_time_.print_op_table_stats(os, sip_tables_);
+	    	sial_ops_.print_op_table_stats(os, sip_tables_);
 	    	os << std::endl << std::flush;
 	    }
 	}

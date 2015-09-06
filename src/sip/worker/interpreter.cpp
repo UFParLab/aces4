@@ -72,11 +72,8 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-#ifdef HAVE_MPI
 	tracer_ = new Tracer(sip_tables);
-#else
-	tracer_ = new TracerSequential(sip_tables);
-#endif
+
 
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 	timer_pc_ = 0;
