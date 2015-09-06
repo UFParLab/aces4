@@ -371,6 +371,9 @@ contiguous local Dipole_Oscillator_Norm[kstate]
 # Declare temp 
 # --------------- 
 #
+temp Raiai[a,i,a1,i1]
+temp R2aiai[a,i,a1,i1]
+temp R3aiai[a,i,a1,i1]
 temp  Tk[ksub]
 temp  taibj[a,i,b,j]
 temp Tiaia[i,a,i1,a1]

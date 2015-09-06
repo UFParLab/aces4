@@ -103,13 +103,12 @@ c Get the ao segment ranges
      *                           n_ao_segs, aosegs)  
       call c_f_pointer(n_ao_segs,pn_ao_segs,[1]) 
       call c_f_pointer(aosegs,paosegs,pn_ao_segs) 
-c     write(6,*) ' NAO_SEGS', pn_ao_segs(1), (paosegs(i), i=1, 
-c    *                                             pn_ao_segs(1))  
 
 c   Set scratch space 
 
       nscr  = zmax ! 5000000 
       niscr = imax ! 5000000
+     
       call scratch_array(nscr, cscr) 
       call c_f_pointer(cscr, scr, [nscr]) 
 
@@ -126,8 +125,6 @@ c Find the offset index ranges
       if (index_values(1) .gt. 1) offset_1 = paosegs(index_values(1)-1) 
       if (index_values(2) .gt. 1) offset_2 = paosegs(index_values(2)-1) 
 
-c     write(6,*) ' OFFSETS = ', index_values(1), offset_1 
-c     write(6,*) ' OFFSETS = ', index_values(2), offset_2 
       call comp_return_h1(data, 1+offset_1, extents(1)+offset_1,
      *           1+offset_2, extents(2)+offset_2, ncenters, 
      *           coords, tcoords, scr, iscr)
