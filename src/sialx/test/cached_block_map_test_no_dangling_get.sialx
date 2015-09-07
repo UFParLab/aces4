@@ -1,5 +1,6 @@
-sial cached_block_map_test
+sial cached_block_map_test_no_dangling_get
     special list_block_map
+    special one_arg_no_op r
     predefined int norb
     predefined int iterations
     aoindex i = 1:norb
@@ -36,13 +37,14 @@ sial cached_block_map_test
         
         pardo i, j, k, l
             get b[i, j, k, l]
+            execute one_arg_no_op b[i,j,k,l]
         endpardo i,j,k,l
         
         print "done getting b"
         
         pardo i, j, k, l
             get c[i, j, k, l]
-
+            execute one_arg_no_op c[i,j,k,l]
         endpardo i,j,k,l
         
         print "done getting c"
@@ -67,4 +69,4 @@ sial cached_block_map_test
     enddo iter
     
     
-endsial cached_block_map_test
+endsial cached_block_map_test_no_dangling_get

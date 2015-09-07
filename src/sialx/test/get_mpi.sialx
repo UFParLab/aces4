@@ -21,6 +21,7 @@ sial get_mpi
 	print j
 		a[i,j] = 42.0
 		put b[i,j] = a[i,j]
+		put c[i,j] = 0.0
 		put c[i,j] += a[i,j]
 		put c[i,j] += a[i,j]
 	endpardo i, j

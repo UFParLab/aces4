@@ -94,6 +94,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/sial_printer.cpp\
 ./src/sip/worker/sial_math.h\
 ./src/sip/worker/sial_math.cpp\
+./src/sip/worker/tracer.h\
+./src/sip/worker/tracer.cpp\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
@@ -132,7 +134,11 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
 ./src/sip/mpi/server_timer.h\
 ./src/sip/mpi/server_timer.cpp\
-./src/sip/dynamic_data/mpi_state.h
+./src/sip/dynamic_data/mpi_state.h\
+./src/sip/dynamic_data/distributed_block_consistency.cpp\
+./src/sip/dynamic_data/distributed_block_consistency.h\
+./src/sip/mpi/async_ops.cpp\
+./src/sip/mpi/async_ops.h
 
 
 endif
@@ -198,12 +204,12 @@ AM_CPPFLAGS = \
 
 if WORKING_MPI
 TESTS = test_qm test_qm_aux test_sial test_unit test_basic_sial
-check_PROGRAMS = test_qm test_unit test_basic_sial test_sial
+check_PROGRAMS = test_qm test_qm_aux test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
 TESTS = test_basic_sial test_sial test_qm test_qm_aux
-check_PROGRAMS = test_basic_sial test_sial test_qm 
+check_PROGRAMS = test_basic_sial test_sial test_qm test_qm_aux
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
@@ -470,6 +476,8 @@ SIOX_FILES=\
 ./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/cast_indices_to_simple.siox\
 ./src/sialx/test/aoladder.siox\
+./src/sialx/test/put_accumulate_stress.siox\
+./src/sialx/test/disk_backing_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\

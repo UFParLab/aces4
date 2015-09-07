@@ -78,6 +78,8 @@ c array defining which atoms are in which fragment
 c array defining the number of atoms per fragment 
       TYPE(C_PTR) :: pnatoms_frag
       integer(C_INT), pointer :: natoms_frag(:)
+
+      ierr = 0
 c
 c ---------------------------------------------------------------------- 
 c Get predefined data 

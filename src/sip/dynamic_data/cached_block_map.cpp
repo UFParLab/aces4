@@ -11,7 +11,7 @@ namespace sip {
 
 CachedBlockMap::CachedBlockMap(int num_arrays)
 	: block_map_(num_arrays), cache_(num_arrays), policy_(cache_),
-	  max_allocatable_bytes_(sip::GlobalState::get_max_data_memory_usage()),
+	  max_allocatable_bytes_(sip::GlobalState::get_max_worker_data_memory_usage()),
 	  allocated_bytes_(0), pending_delete_bytes_(0){
 }
 
@@ -55,7 +55,8 @@ void CachedBlockMap::free_up_bytes_in_cache(std::size_t bytes_in_block) {
                 throw std::out_of_range("No blocks to remove from cache or pending deletes");
             }
         } else {
-            BlockId block_id = policy_.get_next_block_for_removal();
+        	Block* scratch;
+            BlockId block_id = policy_.get_next_block_for_removal(scratch);
             Block* tmp_block_ptr = cache_.get_and_remove_block(block_id);
             allocated_bytes_ -= tmp_block_ptr->size() * sizeof(double);
             delete tmp_block_ptr;

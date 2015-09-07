@@ -10,9 +10,12 @@
 
 #include <bitset>
 #include <new>
+
 #include "id_block_map.h"
 #include "sip_mpi_constants.h"
-#include "mpi_state.h"
+#include "async_ops.h"
+#include "distributed_block_consistency.h"
+//#include <gtest/gtest_prod.h>
 
 namespace sip {
 
@@ -20,7 +23,15 @@ class SIPServer;
 class DiskBackedArraysIO;
 class DiskBackedBlockMap;
 
+
+
 /**
+ * TODO  Update these comments!!!
+ *
+ * These methods should be called by the DiskBackedBlockManager.
+ *
+ *
+ *
  * Maintains a Block in the memory of a server.
  * Each block maintains its status. The status informs the client of a
  * ServerBlock instance of how to treat it.
@@ -79,41 +90,54 @@ class DiskBackedBlockMap;
  * 111 -> No Action				-> 111
  *
  */
+class ServerBlock;
+
+class DiskBackingState{
+private:
+//	void set_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = true; }
+	void set_valid_on_disk() { disk_status_[VALID_ON_DISK] = true; }
+	void set_in_memory() { disk_status_[IN_MEMORY] = true; }
+	void set_on_disk() { disk_status_[ON_DISK] = true; }
+
+//	void unset_dirty() { disk_status_[DiskBackingState::DIRTY_IN_MEMORY] = false; }
+	void unset_valid_on_disk() { disk_status_[VALID_ON_DISK] = false; }
+	void unset_in_memory() { disk_status_[IN_MEMORY] = false; }
+	void unset_on_disk() { disk_status_[ON_DISK] = false; }
+
+//	bool is_dirty() { return disk_status_[DiskBackingState::DIRTY_IN_MEMORY]; }
+	bool is_valid_on_disk() {return disk_status_[VALID_ON_DISK]; }
+	bool is_in_memory() { return disk_status_[IN_MEMORY]; }
+	bool is_on_disk() { return disk_status_[ON_DISK]; }
+
+	DiskBackingState(){
+		disk_status_[IN_MEMORY] = false;
+		disk_status_[ON_DISK] = false;
+//		disk_status_[DIRTY_IN_MEMORY] = false;
+		disk_status_[VALID_ON_DISK] = false;
+	}
+	enum ServerBlockStatus {
+		IN_MEMORY		= 0,	// Block is on host
+		ON_DISK			= 1,	// Block is on device (GPU)
+//		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
+		VALID_ON_DISK = 2,      // BLock is up-to-date on disk
+	};
+	std::bitset<3> disk_status_;
+	friend ServerBlock;
+	friend DiskBackedBlockMap;
+	friend DiskBackedArraysIO;
+	DISALLOW_COPY_AND_ASSIGN(DiskBackingState);
+};
+
 class ServerBlock {
 public:
 	typedef double * dataPtr;
 	typedef ServerBlock* ServerBlockPtr;
 
-	/**
-	 * Constructs a block, allocating size number
-	 * of double precision numbers; optionally
-	 * initializes all elements to 0 (default true).
-	 * @param size
-	 * @param init
-	 */
-	explicit ServerBlock(int size, bool init=true);
-	/**
-	 * Constructs a block with a given pointer to
-	 * double precision numbers and size. data
-	 * parameter can be NULL.
-	 * @param size
-	 * @param data can be NULL
-	 */
-	explicit ServerBlock(int size, dataPtr data);
+
 
 	~ServerBlock();
 
-	void set_dirty() { disk_status_[ServerBlock::DIRTY_IN_MEMORY] = true; }
-	void set_in_memory() { disk_status_[ServerBlock::IN_MEMORY] = true; }
-	void set_on_disk() { disk_status_[ServerBlock::ON_DISK] = true; }
 
-	void unset_dirty() { disk_status_[ServerBlock::DIRTY_IN_MEMORY] = false; }
-	void unset_in_memory() { disk_status_[ServerBlock::IN_MEMORY] = false; }
-	void unset_on_disk() { disk_status_[ServerBlock::ON_DISK] = false; }
-
-	bool is_dirty() { return disk_status_[ServerBlock::DIRTY_IN_MEMORY]; }
-	bool is_in_memory() { return disk_status_[ServerBlock::IN_MEMORY]; }
-	bool is_on_disk() { return disk_status_[ServerBlock::ON_DISK]; }
 
 	/**
 	 * Updates and checks the consistency of a server block.
@@ -121,98 +145,69 @@ public:
 	 * @param worker
 	 * @return false if brought into inconsistent state by operation
 	 */
-	bool update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker);
+	bool update_and_check_consistency(SIPMPIConstants::MessageType_t operation, int worker, int section){
+			return race_state_.update_and_check_consistency(operation, worker, section);
+}
 
-	/**
-	 * Resets consistency status of block to (NONE, OPEN).
-	 */
-	void reset_consistency_status ();
-
-	dataPtr get_data() { return data_; }
+    dataPtr get_data() { return data_; }
 	void set_data(dataPtr data) { data_ = data; }
 
-	int size() { return size_; }
+	size_t size() { return size_; }
 
     dataPtr accumulate_data(size_t size, dataPtr to_add); /*! for all elements, this->data += to_add->data */
-    dataPtr fill_data(size_t size, double value);
-    dataPtr increment_data(size_t size, double delta);
-    dataPtr scale_data(size_t size, double factor);
+    dataPtr fill_data(double value);
+    dataPtr increment_data(double delta);
+    dataPtr scale_data(double factor);
 
-    void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
-    void allocate_in_memory_data(bool init=true); 	/*! Allocs mem for FP data, optionally initializes to 0*/
+//    void free_in_memory_data();						/*! Frees FP data allocated in memory, sets status */
+//    void allocate_in_memory_data(bool init); 	/*! Allocs mem for FP data, optionally initializes to 0*/
 
-    MPIState& state() { return state_; }
 
-	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
+	void wait(){ async_state_.wait_all();}
+	void wait_for_writes(){ async_state_.wait_for_writes();}
+
+//	static std::size_t allocated_bytes();	        /*! maximum allocatable mem less used mem (for FP data only) */
 
 	friend std::ostream& operator<< (std::ostream& os, const ServerBlock& block);
 
-private:
-    const int size_;/**< Number of elements in block */
-	dataPtr data_;	/**< Pointer to block of data */
-    MPIState state_;/**< For blocks busy in async MPI communication */
-
-	enum ServerBlockStatus {
-		IN_MEMORY		= 0,	// Block is on host
-		ON_DISK			= 1,	// Block is on device (GPU)
-		DIRTY_IN_MEMORY	= 2,	// Block dirty on host
-	};
-	std::bitset<3> disk_status_;
-
-
-	/**	 Structures and methods to check for block consistency during GET, PUT, PUT+ operations
-	 * from different workers in a pardo section
+//TODO this is only public because "friending the test class doesn't seem to work"
+	/**
+	 * Constructs a block, allocating size number
+	 * of double precision numbers; optionally
+	 * initializes all elements to 0
+	 * @param size
+	 * @param init
 	 */
-
-	enum ServerBlockMode {
-		NONE = 2,			// Block not being worked on
-		READ = 3, 			// GET/REQUEST done on block
-		WRITE = 4, 			// PUT/PREPARE done on block
-		ACCUMULATE = 5, 	// PUT+/PREPARE+ done on block
-		SINGLE_WORKER = 6,	// PUT/PUT+ and GET done by same worker
-		INVALID_MODE = 999
-	};
-
-	/** Can convert OPEN to ONE_WORKER and ONE_WORKER to MULTIPLE_WORKER */
-	enum ServerBlockWorker {
-		OPEN = -3,				// Block not worked on
-		ONE_WORKER = -2,		// Just one worker worked on block, UNUSED - actual rank is stored
-		MULTIPLE_WORKER = -1,	// More than one worker worked on block
-		INVALID_WORKER = -999
-	};
+	explicit ServerBlock(size_t size, bool init);
+private:
 
 	/**
-	 * The set of consistent states that a block can be in are shown.
-	 * Each row denote a starting state. A state is shown as <ServerBlockMode><ServerBlockWorker>
-	 * w is an arbitrary rank. w1 is another arbitrary rank not equal to w.
-	 * Each column is an action on a block, the state of the block
-	 * is changed to that shown in the row.
-	 * In the table, for ServerBlockMode
-	 * N = NONE, R = READ, W = WRITE, A = ACCUMULATE, S = SINGLE_WORKER
-	 * For ServerBlockWorker
-	 * O = OPEN, w = worker rank (ONE_WORKER),  w1 = some other worker, M = MULTIPLE_WORKER
-	 *
-	 * The positions denoted with 'X' are error conditions.
-	 *
-	 *
-	 *    		  GET,w    PUT,w    PUT_ACC,w   GET,w1     PUT,w1  PUT_ACC,w1
-	 *		NO      Rw      Ww         Aw         Rw1        Ww1     Aw1
-	 *		Rw      Rw      Sw         Sw         RM          X       X
-	 *		RM      RM       X          X          RM         X       X
-	 *		Ww      Sw      Sw         Sw          X          X       X
-	 *		Aw      Sw      Sw         Aw          X          X       AM
-	 *		AM       X       X         AM          X          X       AM
-	 *		Sw      Sw      Sw         Sw          X          X       X
+	 * Constructs a block with a given pointer to
+	 * double precision numbers and size. data
+	 * parameter can be NULL.
+	 * @param size
+	 * @param data can be NULL
 	 */
+	explicit ServerBlock(size_t size, dataPtr data);
 
-	std::pair<ServerBlockMode, int> consistency_status_; /*! State of block */
+    const size_t size_;/**< Number of elements in block */
+	dataPtr data_;	/**< Pointer to block of data */
+	ServerBlockAsyncManager async_state_; /** handles async communication operations */
+    DiskBackingState disk_state_;
+    DistributedBlockConsistency race_state_;
 
-	const static std::size_t field_members_size_;
-	static std::size_t allocated_bytes_;
+
+//	const static std::size_t field_members_size_;
+//	static std::size_t allocated_bytes_;
 
 	friend DiskBackedArraysIO;
 	friend DiskBackedBlockMap;
 	friend IdBlockMap<ServerBlock>;
+	friend class PendingAsyncManager;
+//	FRIEND_TEST(Sial_Unit,ServerBlockLRUArrayPolicy);
+//	friend class Sial_Unit_ServerBlockLRUArrayPolicy_Test;
+
+	DISALLOW_COPY_AND_ASSIGN(ServerBlock);
 };
 
 } /* namespace sip */

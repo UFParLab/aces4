@@ -17,37 +17,37 @@ namespace sip {
 
 class ServerTimer {
 public:
-	/**
-	 * The types of timer supported per sialx line
-	 */
-	enum TimerKind_t {
-		TOTALTIME = 0,		/*! Total time */
-		BLOCKWAITTIME = 1,	/*! Sum of reads, writes & searching through DS */
-		READTIME = 2,		/*! Reading from disk */
-		WRITETIME = 3,		/*! Writing to disk */
-		NUMBER_TIMER_KINDS_
-	};
-
-	ServerTimer(int sialx_lines);
-	~ServerTimer();
-
-	void start_timer(int line_number, TimerKind_t kind); /*! Starts timer for a sialx line */
-	void pause_timer(int line_number, TimerKind_t kind); /*! Pauses timer for a sialx line. */
-	void print_timers(std::vector<std::string> line_to_str); /*! For each slot, the total time and the average time is printed */
-
-private:
-
-/** Underlying timer either Linux, PAPI or TAU timers */
-#ifdef HAVE_TAU
-	typedef TAUSIPTimers TimerType_t;
-#elif defined HAVE_PAPI
-	typedef PAPISIPTimers TimerType_t;
-#else
-	typedef LinuxSIPTimers TimerType_t;
-#endif
-
-	TimerType_t delegate_;
-	const int sialx_lines_;
+//	/**
+//	 * The types of timer supported per sialx line
+//	 */
+//	enum TimerKind_t {
+//		TOTALTIME = 0,		/*! Total time */
+//		BLOCKWAITTIME = 1,	/*! Sum of reads, writes & searching through DS */
+//		READTIME = 2,		/*! Reading from disk */
+//		WRITETIME = 3,		/*! Writing to disk */
+//		NUMBER_TIMER_KINDS_
+//	};
+//
+//	ServerTimer(int sialx_lines);
+//	~ServerTimer();
+//
+//	void start_timer(int line_number, TimerKind_t kind); /*! Starts timer for a sialx line */
+//	void pause_timer(int line_number, TimerKind_t kind); /*! Pauses timer for a sialx line. */
+//	void print_timers(std::vector<std::string> line_to_str); /*! For each slot, the total time and the average time is printed */
+//
+//private:
+//
+///** Underlying timer either Linux, PAPI or TAU timers */
+//#ifdef HAVE_TAU
+//	typedef TAUSIPTimers TimerType_t;
+//#elif defined HAVE_PAPI
+//	typedef PAPISIPTimers TimerType_t;
+//#else
+//	typedef LinuxSIPTimers TimerType_t;
+//#endif
+//
+//	TimerType_t delegate_;
+//	const int sialx_lines_;
 };
 
 } /* namespace sip */

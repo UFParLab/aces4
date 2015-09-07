@@ -341,7 +341,8 @@ GENERAL_SOURCE_FILES=\
 ./general/enable_all_rank_print.cpp\
 ./general/disable_all_rank_print.cpp\
 ./general/read_block_from_text_file.cpp\
-./general/abort_job.F
+./general/abort_job.F\
+./general/one_arg_no_op.cpp
 
 
 libinstr_la_SOURCES=\

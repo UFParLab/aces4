@@ -318,7 +318,8 @@ set(GENERAL_SOURCE_FILES
     general/disable_all_rank_print.cpp;
     general/get_first_block_element.cpp;
     general/read_block_from_text_file.cpp;
-    general/abort_job.F)
+    general/abort_job.F;
+    general/one_arg_no_op.cpp)
 
 
 set(SRCS 

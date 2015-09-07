@@ -278,7 +278,7 @@ void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 }
 
 
-
+//TODO save offset in ServerBlock
 MPI_Offset DiskBackedArraysIO::calculate_block_offset(const BlockId& bid){
 
 	// Return the cached offset if available
@@ -356,6 +356,11 @@ MPI_File DiskBackedArraysIO::create_uninitialized_file_for_array(int array_id) {
 	return mpif;
 }
 
+
+//TODO clean up
+//writes invalid blocks of disk, if not in block map,
+// writes zeros
+//TODO eliminate write of zeros.
 void DiskBackedArraysIO::write_persistent_array_blocks(
 		MPI_File mpif,
 		std::list<BlockId> my_blocks,
@@ -385,35 +390,42 @@ void DiskBackedArraysIO::write_persistent_array_blocks(
 				array_blocks->find(bid);
 		if (array_blocks->end() != found_it) {
 
-			bool to_write_dirty_block = false;
+//			bool to_write_dirty_block = false;
 
 			ServerBlock* sb = found_it->second;
-			bool dirty = sb->is_dirty();
-			bool on_disk = sb->is_on_disk();
-			bool in_memory = sb->is_in_memory();
-			// Error cases
-			if (!on_disk && !in_memory)
-				sip::fail("Invalid block state ! - neither on disk or memory");
-			else if (dirty && on_disk && !in_memory)
-				sip::fail("Invalid block state ! - dirty but not in memory ");
-			else
-			// Don't write anything to disk
-			if (!dirty && on_disk)
-				to_write_dirty_block = false;
-			else
-			// Write the block to disk
-			if (dirty)
-				to_write_dirty_block = true;
-			else if (!on_disk && in_memory)
-				to_write_dirty_block = true;
-
-
-			if (to_write_dirty_block)
+//			bool dirty = sb->disk_state_.is_dirty();
+//			bool dirty = !sb->disk_state_.is_valid_on_disk();
+//			bool on_disk = sb->disk_state_.is_on_disk();
+//			bool in_memory = sb->disk_state_.is_in_memory();
+//			// Error cases
+//			if (!on_disk && !in_memory)
+//				sip::fail("Invalid block state ! - neither on disk or memory");
+//			else if (dirty && on_disk && !in_memory)
+//				sip::fail("Invalid block state ! - dirty but not in memory ");
+//			else
+//			// Don't write anything to disk
+//			if (!dirty && on_disk)
+//				to_write_dirty_block = false;
+//			else
+//			// Write the block to disk
+//			if (dirty)
+//				to_write_dirty_block = true;
+//			else if (!on_disk && in_memory)
+//				to_write_dirty_block = true;
+//
+//
+//			if (to_write_dirty_block)
+			check(sb->disk_state_.is_in_memory() || sb->disk_state_.is_valid_on_disk(),
+					"in write_persistent_array_blocks, found server block neither in mem or valid on disk.");
+			if ( ! sb->disk_state_.is_valid_on_disk()){
 				write_block_to_file(mpif, bid, sb);
-
+			}
 		} else {
 			// Write zero block
-
+//TODO this is violating the rule that the DiskBackedBlockMap instance
+// is the only place that calls new.  Since this is immediately deleted,
+// writing zero blocks needs to
+// be removed, we won't bother with this now.
 			std::size_t block_size = sip_tables_.block_size(bid);
 			ServerBlock::dataPtr zero_data = new double[block_size]();
 			ServerBlock *zero_sb = new ServerBlock(block_size, zero_data);
@@ -440,92 +452,92 @@ void DiskBackedArraysIO::check_data_types() {
 
 /******************** BEGIN UNUSED ********************/
 
-void DiskBackedArraysIO::write_all_dirty_blocks(MPI_File fh,
-		const IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
-
-	// Write out missing blocks into the array.
-	if (array_blocks != NULL) {
-		MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-		IdBlockMap<ServerBlock>::PerArrayMap::const_iterator it =
-				array_blocks->begin();
-		for (; it != array_blocks->end(); ++it) {
-			const BlockId& bid = it->first;
-			const ServerBlock::ServerBlockPtr bptr = it->second;
-			if (bptr->is_dirty())
-				write_block_to_file(fh, bid, bptr);
-		}
-	}
-
-}
-
-void DiskBackedArraysIO::collectively_zero_out_all_disk_blocks(
-		const int array_id, MPI_File mpif) {
-	long tot_elems = sip_tables_.array_num_elems(array_id);
-	MPI_Offset end_array_offset = tot_elems * sizeof(double);
-	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-	int num_servers = sip_mpi_attr_.company_size();
-	int elems_per_server = tot_elems / num_servers;
-	if (tot_elems % num_servers != 0)
-		elems_per_server++;
-
-	double* file_buf = new double[elems_per_server](); // 0-d out buffer
-	const int server_rank = sip_mpi_attr_.company_rank();
-	MPI_Offset offset = header_offset
-			+ server_rank * elems_per_server * sizeof(double);
-	// Collectively write 0s to the file to fill in all blocks.
-	MPI_Status write_status;
-	SIPMPIUtils::check_err(
-			MPI_File_write_at_all(mpif, offset, file_buf, elems_per_server,
-			MPI_DOUBLE, &write_status),__LINE__,__FILE__);
-	SIPMPIUtils::check_err(MPI_File_sync(mpif),__LINE__,__FILE__);
-	delete[] file_buf;
-}
-
-MPI_File DiskBackedArraysIO::create_initialized_file_for_array(int array_id) {
-
-	MPI_File mpif = create_uninitialized_file_for_array(array_id);
-	collectively_zero_out_all_disk_blocks(array_id, mpif);
-
-	return mpif;
-}
-
-void DiskBackedArraysIO::collectively_copy_block_data(
-		char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array) {
-	// Open the file
-	MPI_File mpif_persistent;
-	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
-	SIPMPIUtils::check_err(MPI_File_open(server_comm, persistent_filename,
-	MPI_MODE_RDONLY, MPI_INFO_NULL, &mpif_persistent),__LINE__,__FILE__);
-	// Collectively copy from persistent file and write to array file.
-	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
-	MPI_Offset file_size;
-	SIPMPIUtils::check_err(MPI_File_get_size(mpif_persistent, &file_size),__LINE__,__FILE__);
-	sip::check((file_size - header_offset) % sizeof(double) == 0,
-			"Inconsistent persistent file !");
-	int tot_elems = (file_size - header_offset) / sizeof(double);
-	int num_servers = sip_mpi_attr_.company_size();
-	int elems_per_server = tot_elems / num_servers;
-	if (tot_elems % num_servers != 0)
-		elems_per_server++;
-
-	double* file_buf = new double[elems_per_server];
-	const int server_rank = sip_mpi_attr_.company_rank();
-	MPI_Status read_status, write_status;
-	MPI_Offset offset = header_offset
-			+ server_rank * elems_per_server * sizeof(double);
-	SIPMPIUtils::check_err(
-			MPI_File_read_at_all(mpif_persistent, offset, file_buf,
-					elems_per_server, MPI_DOUBLE, &read_status),__LINE__,__FILE__);
-	int elems_read;
-	SIPMPIUtils::check_err(
-			MPI_Get_count(&read_status, MPI_DOUBLE, &elems_read),__LINE__,__FILE__);
-	SIPMPIUtils::check_err(
-			MPI_File_write_at_all(mpif_array, offset, file_buf, elems_read,
-			MPI_DOUBLE, &write_status),__LINE__,__FILE__);
-	SIPMPIUtils::check_err(MPI_File_close(&mpif_persistent),__LINE__,__FILE__);
-
-	delete[] file_buf;
-}
+//void DiskBackedArraysIO::write_all_dirty_blocks(MPI_File fh,
+//		const IdBlockMap<ServerBlock>::PerArrayMap* array_blocks) {
+//
+//	// Write out missing blocks into the array.
+//	if (array_blocks != NULL) {
+//		MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+//		IdBlockMap<ServerBlock>::PerArrayMap::const_iterator it =
+//				array_blocks->begin();
+//		for (; it != array_blocks->end(); ++it) {
+//			const BlockId& bid = it->first;
+//			const ServerBlock::ServerBlockPtr bptr = it->second;
+//			if (bptr->disk_state_.is_dirty())
+//				write_block_to_file(fh, bid, bptr);
+//		}
+//	}
+//
+//}
+//
+//void DiskBackedArraysIO::collectively_zero_out_all_disk_blocks(
+//		const int array_id, MPI_File mpif) {
+//	long tot_elems = sip_tables_.array_num_elems(array_id);
+//	MPI_Offset end_array_offset = tot_elems * sizeof(double);
+//	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+//	int num_servers = sip_mpi_attr_.company_size();
+//	int elems_per_server = tot_elems / num_servers;
+//	if (tot_elems % num_servers != 0)
+//		elems_per_server++;
+//
+//	double* file_buf = new double[elems_per_server](); // 0-d out buffer
+//	const int server_rank = sip_mpi_attr_.company_rank();
+//	MPI_Offset offset = header_offset
+//			+ server_rank * elems_per_server * sizeof(double);
+//	// Collectively write 0s to the file to fill in all blocks.
+//	MPI_Status write_status;
+//	SIPMPIUtils::check_err(
+//			MPI_File_write_at_all(mpif, offset, file_buf, elems_per_server,
+//			MPI_DOUBLE, &write_status),__LINE__,__FILE__);
+//	SIPMPIUtils::check_err(MPI_File_sync(mpif),__LINE__,__FILE__);
+//	delete[] file_buf;
+//}
+//
+//MPI_File DiskBackedArraysIO::create_initialized_file_for_array(int array_id) {
+//
+//	MPI_File mpif = create_uninitialized_file_for_array(array_id);
+//	collectively_zero_out_all_disk_blocks(array_id, mpif);
+//
+//	return mpif;
+//}
+//
+//void DiskBackedArraysIO::collectively_copy_block_data(
+//		char persistent_filename[MAX_FILE_NAME_SIZE], MPI_File mpif_array) {
+//	// Open the file
+//	MPI_File mpif_persistent;
+//	const MPI_Comm server_comm = sip_mpi_attr_.company_communicator();
+//	SIPMPIUtils::check_err(MPI_File_open(server_comm, persistent_filename,
+//	MPI_MODE_RDONLY, MPI_INFO_NULL, &mpif_persistent),__LINE__,__FILE__);
+//	// Collectively copy from persistent file and write to array file.
+//	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
+//	MPI_Offset file_size;
+//	SIPMPIUtils::check_err(MPI_File_get_size(mpif_persistent, &file_size),__LINE__,__FILE__);
+//	sip::check((file_size - header_offset) % sizeof(double) == 0,
+//			"Inconsistent persistent file !");
+//	int tot_elems = (file_size - header_offset) / sizeof(double);
+//	int num_servers = sip_mpi_attr_.company_size();
+//	int elems_per_server = tot_elems / num_servers;
+//	if (tot_elems % num_servers != 0)
+//		elems_per_server++;
+//
+//	double* file_buf = new double[elems_per_server];
+//	const int server_rank = sip_mpi_attr_.company_rank();
+//	MPI_Status read_status, write_status;
+//	MPI_Offset offset = header_offset
+//			+ server_rank * elems_per_server * sizeof(double);
+//	SIPMPIUtils::check_err(
+//			MPI_File_read_at_all(mpif_persistent, offset, file_buf,
+//					elems_per_server, MPI_DOUBLE, &read_status),__LINE__,__FILE__);
+//	int elems_read;
+//	SIPMPIUtils::check_err(
+//			MPI_Get_count(&read_status, MPI_DOUBLE, &elems_read),__LINE__,__FILE__);
+//	SIPMPIUtils::check_err(
+//			MPI_File_write_at_all(mpif_array, offset, file_buf, elems_read,
+//			MPI_DOUBLE, &write_status),__LINE__,__FILE__);
+//	SIPMPIUtils::check_err(MPI_File_close(&mpif_persistent),__LINE__,__FILE__);
+//
+//	delete[] file_buf;
+//}
 
 /******************** END OF UNUSED ********************/
 

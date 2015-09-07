@@ -119,8 +119,15 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/server_persistent_array_manager.h;
         src/sip/mpi/server_persistent_array_manager.cpp;
         src/sip/mpi/server_timer.h;
-        src/sip/mpi/server_timer.cpp;        
-        src/sip/dynamic_data/mpi_state.h)
+        src/sip/mpi/server_timer.cpp; 
+        src/sip/mpi/async_ops.h;
+        src/sip/mpi/async_ops.cpp; 
+        src/sip/mpi/counter.h;
+        src/sip/mpi/counter.cpp;      
+        src/sip/dynamic_data/mpi_state.h;
+        src/sip/dynamic_data/distributed_block_consistency.h;
+        src/sip/dynamic_data/distributed_block_consistency.cpp      
+ )
 else ()
     set(ACES_MPI_FILES "")
 endif()
@@ -190,6 +197,8 @@ set(ACES_WORKER_FILES
     src/sip/worker/sial_printer.cpp;
     src/sip/worker/sial_math.h;
     src/sip/worker/sial_math.cpp;
+    src/sip/worker/tracer.h;
+    src/sip/worker/tracer.cpp;
     src/sip/sip_interface.h;
     src/sip/sip_interface.cpp;
     src/sip/tensor_algebra/tensor_ops_c_prototypes.h;
@@ -364,7 +373,7 @@ else()
 	add_dependencies(print_siptables tensordil superinstructions)
 endif()
 
-add_dependencies(superinstructions aces4_core tensordil)
+add_dependencies(superinstructions aces4_sip tensordil)
 
 #----------------------------------------------------------------------
 # Add Tests
@@ -418,12 +427,13 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_test(NAME test_qm           COMMAND mpirun -np 2 test_qm)
     add_test(NAME test_unit         COMMAND mpirun -np 2 test_unit)
 
-    add_dependencies(test_basic_sial   gtest gtest_main test_contollers)
-    add_dependencies(test_sial         gtest gtest_main test_contollers)
-    #add_dependencies(test_mpi_qm       gtest gtest_main test_contollers)
-    add_dependencies(test_qm           gtest gtest_main test_contollers)
-    add_dependencies(test_qm_aux       gtest gtest_main test_contollers)
-    add_dependencies(test_unit         gtest gtest_main test_contollers)
+
+
+    add_dependencies(test_basic_sial   gtest gtest_main test_controllers)
+    add_dependencies(test_sial         gtest gtest_main test_controllers)
+    add_dependencies(test_qm_aux       gtest gtest_main test_controllers)
+    add_dependencies(test_qm           gtest gtest_main test_controllers)
+    add_dependencies(test_unit         gtest gtest_main test_controllers)
 
 else() # Single Node Version Tests
     add_executable(test_basic_sial   test/test_basic_sial.cpp    
@@ -455,10 +465,10 @@ else() # Single Node Version Tests
     add_test(NAME test_sial         COMMAND test_sial)
     add_test(NAME test_qm           COMMAND test_qm)
 
-    add_dependencies(test_basic_sial gtest gtest_main test_contollers)
-    add_dependencies(test_sial       gtest gtest_main test_contollers)
-    add_dependencies(test_qm         gtest gtest_main test_contollers)
-    add_dependencies(test_qm_aux     gtest gtest_main test_contollers)
+    add_dependencies(test_basic_sial gtest gtest_main test_controllers)
+    add_dependencies(test_sial       gtest gtest_main test_controllers)
+    add_dependencies(test_qm         gtest gtest_main test_controllers)
+    add_dependencies(test_qm_aux     gtest gtest_main test_controllers)
 
 endif()
 
@@ -559,11 +569,15 @@ set(SIAL_FILES
     src/sialx/test/index_scalar_cast.sialx;
     src/sialx/test/contig_local3.sialx;
     src/sialx/test/cached_block_map_test.sialx;
+    src/sialx/test/cached_block_map_test_no_dangling_get.sialx;
     src/sialx/test/pardo_with_where.sialx;
     src/sialx/test/pardo_load_balance_test.sialx;
     src/sialx/test/read_block_test.sialx;
     src/sialx/test/cast_indices_to_simple.sialx;
     src/sialx/test/aoladder.sialx;
+    src/sialx/test/put_accumulate_stress.sialx;
+    src/sialx/test/disk_backing_test.sialx;
+    src/sialx/test/disk_backing_put_acc_stress.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
