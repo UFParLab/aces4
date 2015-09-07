@@ -28,6 +28,9 @@
 #include "config.h"
 #include "worker_persistent_array_manager.h"
 #include "sial_math.h"
+#include "tracer.h"
+#include "counter.h"
+#include "sip_mpi_attr.h"
 
 
 #ifdef HAVE_MPI
@@ -39,25 +42,25 @@
 class TestControllerParallel;
 class TestController;
 
+
 namespace sip {
 
 class LoopManager;
 class SialPrinter;
 class Tracer;
-
 class Interpreter {
 public:
 
 
-	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	Interpreter(const SipTables&, SialxTimer* timers, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
+	Interpreter(const SipTables&,  SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(const SipTables&,  WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(const SipTables&,  SialPrinter* printer);
 	~Interpreter();
 
 
 	/** Static pointer to the current Interpreter.  This is
 	 * initialized in the Interpreter constructor and reset to NULL
-	 * in its destructor.  There should be at most on Interpreter instance
+	 * in its destructor.  There should be at most one Interpreter instance
 	 * at any given time.
 	 */
 	static Interpreter* global_interpreter;
@@ -176,6 +179,18 @@ public:
 	 */
 	void post_sial_program();
 
+	void gather_and_print_statistics(std::ostream& os){
+	    tracer_->gather();
+	    sial_ops_.reduce();
+	    if (SIPMPIAttr::get_instance().is_company_master()){
+	    	os << "Worker Statistics"<<std::endl << std::endl;
+	    	os << *tracer_;
+	    	os << std::endl;
+	    	os << "Worker wait_time_" << std::endl;
+	    	sial_ops_.print_op_table_stats(os, sip_tables_);
+	    	os << std::endl << std::flush;
+	    }
+	}
 
 
 	int arg0(){ return op_table_.arg0(pc); }
@@ -193,11 +208,9 @@ public:
 	 *
 	 */
 	int line_number() {
-		if (pc < op_table_.size())
 			return op_table_.line_number(pc);
-		else
-			return -1;// Past the end of the program. Probably being called by a test.
 	}
+
 	int get_pc(){
 		return pc;
 	}
@@ -262,8 +275,8 @@ private:
 
 	/** auxillary field needed by sialx timers.
 	 * If value is positive, then the timer corresponding to the line is on.
-	 * Should be initialized to value <= 0 **/
-	int timer_line_;
+	 * Should be initialized to  0  and timer 0 should be started right before the loop**/
+	int timer_pc_;
 
 	/** Manages per-line timers.
 	 *
@@ -275,9 +288,9 @@ private:
 
 	const OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 
-	/** Data structure to hold timers.  Owned by
-	 * calling program.  May be NULL */
-	SialxTimer* sialx_timers_;
+//	/** Data structure to hold timers.  Owned by
+//	 * calling program.  May be NULL */
+//	SialxTimer* sialx_timers_;
 
 	/**
 	 * Owned by main program
@@ -363,19 +376,11 @@ private:
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
-//	void handle_assignment_op(int pc);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
 	void handle_contraction_op(int pc);
-//	void handle_where_op(int pc);
-//	bool evaluate_where_clause(int pc);
-//	bool evaluate_double_relational_expr(int pc);
-//	bool evaluate_int_relational_expr(int pc);
-//	void handle_collective_sum_op(int source_array_slot, int dest_array_slot);
-//	void handle_sum_op(int pc, double factor);
 	void handle_block_add(int pc);
 	void handle_block_subtract(int pc);
-//	void handle_self_multiply_op(int pc);
 	void handle_slice_op(int pc);
 	void handle_insert_op(int pc);
 
@@ -476,6 +481,7 @@ private:
 
 
 	Tracer* tracer_;
+
 
 	friend class ::TestControllerParallel;
 	friend class ::TestController;

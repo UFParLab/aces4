@@ -1,0 +1,43 @@
+sial put_accumulate_stress
+
+    special one_arg_no_op r
+	predefined int norb 
+	predefined int kmax
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	index k = 1:kmax
+
+	local a[i,j]
+	local aa[i,j]
+
+	distributed c[i,j]
+	
+	create c
+	allocate a[*,*]
+	allocate aa[*,*]
+	
+
+	do i
+		do j
+			pardo k
+			a[i,j] = (scalar)i
+			aa[i,j] = (scalar)j
+			put c[i,j] += a[i,j]
+			put c[i,j] += aa[i,j]
+			put c[i,j] += a[i,j]
+			put c[i,j] += aa[i,j]
+			endpardo k
+		enddo j
+	enddo i
+
+	sip_barrier
+	
+	do i
+	  do j
+	  get c[i,j]
+	  a[i,j] = c[i,j]
+	  enddo j
+	  enddo i
+	
+# block c[i,j] should have all elements equal to kmax(2i+2j)
+endsial put_accumulate_stress

@@ -22,6 +22,7 @@ set(QM_SOURCE_FILES
     qm/qm-generic/energy_ty_denominator_rhf.F;
     qm/qm-generic/energy_denominator_rhf.F;
     qm/qm-generic/energy_numerator_rhf.F;
+    qm/utility/form_diagonal_unit_matrix.F;
     qm/utility/return_diagonal.F;
     qm/utility/print_block_and_index.F;
     qm/utility/inverse_lu_decomposition.F;
@@ -317,7 +318,8 @@ set(GENERAL_SOURCE_FILES
     general/disable_all_rank_print.cpp;
     general/get_first_block_element.cpp;
     general/read_block_from_text_file.cpp;
-    general/abort_job.F)
+    general/abort_job.F;
+    general/one_arg_no_op.cpp)
 
 
 set(SRCS 

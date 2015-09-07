@@ -326,6 +326,9 @@ void a4_dscale(
 void print_block_and_index(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
+void form_diagonal_unit_matrix(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
 //##############################
 }
 
@@ -355,6 +358,7 @@ void get_first_block_element(int& array_slot_0, int& rank_0, int * index_values_
 // Special Super Instructions Just For Testing
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void one_arg_no_op(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 namespace sip{
 
@@ -568,12 +572,14 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
+    procmap_["one_arg_no_op"]=(fp0)&one_arg_no_op;
     procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
     procmap_["a4_david_damp_factor"]=(fp0)&a4_david_damp_factor;
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
     procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
+    procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

@@ -35,6 +35,9 @@ public:
    ~AsyncAcks();
 
 	//TODO  figure out a good size for this (probably not as big as 2^16)
+   //TODO  I think that MPI allows a max number of outstanding messages to be 64,
+   //which includes the posted async requests, and synchronous receives.
+   //There should be a way to change the value in MPI.
 	static const size_t MAX_POSTED_ASYNC = 32;
 
 	/** called by sial_ops implementations that expect an ack from a server
@@ -102,10 +105,10 @@ private:
 	void remove_completed_requests(int outcount,
 			int array_of_indices[]);
 
-	DISALLOW_COPY_AND_ASSIGN(AsyncAcks);
+
 
 	friend std::ostream& operator<<(std::ostream&, const AsyncAcks &);
-
+	DISALLOW_COPY_AND_ASSIGN(AsyncAcks);
 };
 
 } /* namespace sip */

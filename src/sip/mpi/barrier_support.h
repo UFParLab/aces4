@@ -41,7 +41,7 @@
 #include "sip_interface.h"
 
 namespace sip {
-
+class SIPServer;
 class BarrierSupport {
 public:
 
@@ -127,7 +127,7 @@ public:
 	 * @param transaction_number
 	 * @return
 	 */
-	void decode_tag(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& transaction_number){
+	static void decode_tag(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& transaction_number){
 		message_type = extract_message_type(mpi_tag);
 		transaction_number = extract_transaction_number(mpi_tag);
 	}
@@ -151,7 +151,7 @@ public:
 	}
 
 	/**
-	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and session number as the given tag
+	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and transaction number as the given tag
 	 * Called by the server
 	 *
 	 * Requires:  the given tag is a PUT_ACCUMULATE tag.
@@ -165,7 +165,7 @@ public:
 	}
 
 	/**
-	 * Constructs a PUT_DATA tag with the same section number and session number as the given tag
+	 * Constructs a PUT_DATA tag with the same section number and transaction number as the given tag
 	 * Called by the server
 	 *
 	 * Requires:  the given tag is a PUT tag.
@@ -353,6 +353,7 @@ private:
 	 */
 	unsigned int transaction_number_;
 
+	friend class SIPServer;
 	DISALLOW_COPY_AND_ASSIGN(BarrierSupport);
 
 };

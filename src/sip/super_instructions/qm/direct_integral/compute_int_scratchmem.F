@@ -115,7 +115,7 @@ c ----------------------------------------------------------------------
       integer(C_INT):: nshells, ncenters, intSpherical  
       integer(C_INT):: one, two, m1, m2
       integer(C_INT):: my_imax, my_zmax 
-      logical(C_INT):: calc_2der, spherical 
+      logical:: calc_2der, spherical 
 
       integer i, nalphas, npcoeffs  
 

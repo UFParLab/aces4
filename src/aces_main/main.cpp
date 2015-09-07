@@ -3,7 +3,7 @@
 #include "io_utils.h"
 #include "setup_reader.h"
 #include "assert.h"
-#include "sialx_timer.h"
+//#include "sialx_timer.h"
 #include "sip_tables.h"
 #include "interpreter.h"
 #include "setup_interface.h"
@@ -12,6 +12,8 @@
 #include "worker_persistent_array_manager.h"
 #include "block.h"
 #include "global_state.h"
+#include "tracer.h"
+#include "counter.h"
 
 #include <vector>
 #include <sstream>
@@ -21,6 +23,7 @@
 #include <unistd.h>
 #include <fenv.h>
 #include <ctime>
+#include <fstream>
 
 #include <execinfo.h>
 #include <signal.h>
@@ -53,7 +56,7 @@ int main(int argc, char* argv[]) {
     feenableexcept(FE_DIVBYZERO);
     feenableexcept(FE_OVERFLOW);
     feenableexcept(FE_INVALID);
-#endif _GNU_SOURCE
+#endif // _GNU_SOURCE
 #endif // __GNU_LIBRARY__
 #endif // __GLIBC__
 
@@ -72,15 +75,15 @@ int main(int argc, char* argv[]) {
 	std::cout<<sip_mpi_attr<<std::endl;
 #endif
 
-#ifdef HAVE_TAU
-	TAU_INIT(&argc, &argv);
-	#ifdef HAVE_MPI
-	  TAU_PROFILE_SET_NODE(sip_mpi_attr.global_rank());
-	#else
-	  TAU_PROFILE_SET_NODE(0);
-	#endif
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
+//#ifdef HAVE_TAU
+//	TAU_INIT(&argc, &argv);
+//	#ifdef HAVE_MPI
+//	  TAU_PROFILE_SET_NODE(sip_mpi_attr.global_rank());
+//	#else
+//	  TAU_PROFILE_SET_NODE(0);
+//	#endif
+//	TAU_STATIC_PHASE_START("SIP Main");
+//#endif
 
 //TODO  move this to  a test suite.
 //	// Check sizes of data types.
@@ -96,14 +99,14 @@ int main(int argc, char* argv[]) {
 	// Default directory for compiled sialx files is "."
 	char *sialx_file_dir = ".";
 
-	std::size_t memory = 2147483648;	// Default memory usage : 2 GB
-
+	std::size_t worker_memory = 2147483648;	// Default memory usage : 2 GB
+	std::size_t server_memory = 2147483648;
 	// Read about getopt here : http://www.gnu.org/software/libc/manual/html_node/Getopt.html
 	// d: name of .dat file.
 	// s: directory to look for siox files
 	// m: approximate memory to be used. Actual usage will be more than this.
 	// h & ? are for help. They require no arguments
-	const char *optString = "d:s:m:h?";
+	const char *optString = "d:s:m:h:w:v:?";
 	int c;
 	while ((c = getopt(argc, argv, optString)) != -1){
 		switch (c) {
@@ -120,21 +123,41 @@ int main(int argc, char* argv[]) {
 			std::stringstream ss(memory_string);
 			double memory_in_gb;
 			ss >> memory_in_gb;
-			memory = memory_in_gb * 1024 * 1024 * 1024;
+			worker_memory = memory_in_gb * 1024 * 1024 * 1024;
+			server_memory = worker_memory;
+		}
+			break;
+		case 'w':{
+			std::string memory_string(optarg);
+			std::stringstream ss(memory_string);
+			double memory_in_gb;
+			ss >> memory_in_gb;
+			worker_memory = memory_in_gb * 1024 * 1024 * 1024;
+		}
+			break;
+		case 'v':{
+			std::string memory_string(optarg);
+			std::stringstream ss(memory_string);
+			double memory_in_gb;
+			ss >> memory_in_gb;
+			server_memory = memory_in_gb * 1024 * 1024 * 1024;
 		}
 			break;
 		case 'h':case '?':
 		default:
 			std::cerr << "Usage : "<< argv[0] <<" -d <init_data_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>" << std::endl;
 			std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
-			std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
+			std::cerr << "\tm is the approximate memory to use for workers and servers. Actual usage will be more." << std::endl;
+			std::cerr << "\tw is the approximate memory for workers. Actual usage will be more." << std::endl;
+			std::cerr << "\tvr is the approximate memory for servers. Actual usage will be more." << std::endl;
 			std::cerr << "\t-? or -h to display this usage dialogue" << std::endl;
 			return 1;
 		}
 	}
 
 	// Set Approx Max memory usage
-	sip::GlobalState::set_max_data_memory_usage(memory);
+	sip::GlobalState::set_max_worker_data_memory_usage(worker_memory);
+	sip::GlobalState::set_max_server_data_memory_usage(server_memory);//small enough for disk back use in eom test
 
 	//create setup_file
 	std::string job(init_file);
@@ -151,14 +174,31 @@ int main(int argc, char* argv[]) {
 	setup::SetupReader::SialProgList::iterator it;
 
 #ifdef HAVE_MPI
+		job.resize(job.size()-4); //remove the ".dat" from the job string
+		std::ofstream timer_output;
+		if (sip_mpi_attr.is_company_master()) {
+			if (sip_mpi_attr.is_server()) {
+				timer_output.open((std::string("server_data_for_").append(job).append(".csv")).c_str());
+			} else {
+				timer_output.open((std::string("worker_data_for_").append(job).append(".csv")).c_str());
+			}
+		}
+#endif
+
+#ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
 	sip::WorkerPersistentArrayManager persistent_worker;
+	std::ostream& server_stat_os = std::cout;
+	std::ostream& worker_stat_os = std::cout;
 #else
 	sip::WorkerPersistentArrayManager persistent_worker;
+	std::ostream& worker_stat_os = std::cout;
 #endif //HAVE_MPI
 
 
 	for (it = progs.begin(); it != progs.end(); ++it) {
+//		sip::SimpleTimer setup;
+//		setup.start();
 		std::string sialfpath;
 		sialfpath.append(sialx_file_dir);
 		sialfpath.append("/");
@@ -166,13 +206,13 @@ int main(int argc, char* argv[]) {
 
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
-#ifdef HAVE_TAU
-		//TAU_REGISTER_EVENT(tau_event, it->c_str());
-		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
-		//TAU_STATIC_PHASE_START(it->c_str());
-		TAU_PHASE_CREATE_DYNAMIC(tau_dtimer, it->c_str(), "", TAU_USER);
-		TAU_PHASE_START(tau_dtimer);
-#endif
+//#ifdef HAVE_TAU
+//		//TAU_REGISTER_EVENT(tau_event, it->c_str());
+//		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
+//		//TAU_STATIC_PHASE_START(it->c_str());
+//		TAU_PHASE_CREATE_DYNAMIC(tau_dtimer, it->c_str(), "", TAU_USER);
+//		TAU_PHASE_START(tau_dtimer);
+//#endif
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(setup_reader, siox_file);
@@ -181,27 +221,43 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
-		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
+//		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
 #ifdef HAVE_MPI
 		sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
 
 		// TODO Broadcast from worker master to all servers & workers.
 		if (sip_mpi_attr.is_server()){
-			sip::ServerTimer server_timer(sipTables.max_timer_slots());
-			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server, server_timer);
+//			sip::ServerTimer server_timer(sipTables.op_table_size());
+			sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
 			server.run();
-			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server);
+			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server;);
+
+			sip::MPITimer save_persistent_timer(sip_mpi_attr.company_communicator());
+
+			save_persistent_timer.start();
 			persistent_server.save_marked_arrays(&server);
-			server_timer.print_timers(lno2name);
+			save_persistent_timer.pause();
+
+			//print worker stats before barrier
+			MPI_Barrier(MPI_COMM_WORLD);
+
+			server.gather_and_print_statistics(server_stat_os);
+			//print persistent array stats
+			save_persistent_timer.gather();
+		  if(sip_mpi_attr.is_company_master()){
+			server_stat_os << std::endl << "Save persistent array times" << std::endl;
+			server_stat_os << save_persistent_timer << std::endl << std::flush;
+		  }
 		} else
 #endif
 
 		//interpret current program on worker
 		{
 
-			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+//			sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
+//			sip::SialxTimer sialxTimer(sipTables.op_table_size());
 
-			sip::Interpreter runner(sipTables, &sialxTimer, &persistent_worker);
+			sip::Interpreter runner(sipTables,  &persistent_worker);
 
 			SIP_MASTER(std::cout << "SIAL PROGRAM OUTPUT for "<< sialfpath << std::endl;
                         time_t rawtime;
@@ -214,21 +270,26 @@ int main(int argc, char* argv[]) {
 			persistent_worker.save_marked_arrays(&runner);
 			SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker;)
 			SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED" << std::endl;
+
+			//print worker stats before barrier
 			time_t rawtime;
 			struct tm * timeinfo;
 			time (&rawtime);
 			timeinfo = localtime (&rawtime);
 			std::cout << "Current local time and date:" << asctime(timeinfo);)
-
-			sialxTimer.print_timers(lno2name);
+			runner.gather_and_print_statistics(worker_stat_os);
+#ifdef HAVE_MPI
+			MPI_Barrier(MPI_COMM_WORLD);
+#endif
+			//print server stats
 
 
 		}// end of worker or server
 
-#ifdef HAVE_TAU
-		//TAU_STATIC_PHASE_STOP(it->c_str());
-  		TAU_PHASE_STOP(tau_dtimer);
-#endif
+//#ifdef HAVE_TAU
+//		//TAU_STATIC_PHASE_STOP(it->c_str());
+//  		TAU_PHASE_STOP(tau_dtimer);
+//#endif
 
 #ifdef HAVE_MPI
       sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
@@ -236,9 +297,9 @@ int main(int argc, char* argv[]) {
 	} //end of loop over programs
 
 
-#ifdef HAVE_TAU
-		TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
+//#ifdef HAVE_TAU
+//		TAU_STATIC_PHASE_STOP("SIP Main");
+//#endif
 
 
 #ifdef HAVE_MPI

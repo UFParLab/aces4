@@ -12,12 +12,12 @@
 
 #include "config.h"
 #include "sip.h"
-#include "sip_mpi_utils.h"
 #include "print_timers.h"
 
 #include <ctime>
 
 #ifdef HAVE_MPI
+#include "sip_mpi_utils.h"
 #include <mpi.h>
 #endif // HAVE_MPI
 

@@ -29,7 +29,7 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(in)::index_values_1(1:rank_1)
       integer(C_INT), intent(in)::size_1
       integer(C_INT), intent(in)::extents_1(1:rank_1)
-      real(C_DOUBLE), intent(out)::data_1(1:size_1) 
+      real(C_DOUBLE), intent(in)::data_1(1:size_1) 
 
 ! scalar array_2 --> fragment 2  
       integer(C_INT), intent(in)::array_2
@@ -37,7 +37,7 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(in)::index_values_2(1:rank_2)
       integer(C_INT), intent(in)::size_2
       integer(C_INT), intent(in)::extents_2(1:rank_2)
-      real(C_DOUBLE), intent(out)::data_2(1:size_2) 
+      real(C_DOUBLE), intent(in)::data_2(1:size_2) 
 
 ! scalar array_3 --> pair distance threshold  
       integer(C_INT), intent(in)::array_3
@@ -45,7 +45,7 @@ c--------------------------------------------------------------------------
       integer(C_INT), intent(in)::index_values_3(1:rank_3)
       integer(C_INT), intent(in)::size_3
       integer(C_INT), intent(in)::extents_3(1:rank_3)
-      real(C_DOUBLE), intent(out)::data_3(1:size_3) 
+      real(C_DOUBLE), intent(in)::data_3(1:size_3) 
 
 ! scalar array_4 --> indicator whether to perform pair cal or not   
       integer(C_INT), intent(in)::array_4
@@ -78,6 +78,8 @@ c array defining which atoms are in which fragment
 c array defining the number of atoms per fragment 
       TYPE(C_PTR) :: pnatoms_frag
       integer(C_INT), pointer :: natoms_frag(:)
+
+      ierr = 0
 c
 c ---------------------------------------------------------------------- 
 c Get predefined data 
@@ -111,6 +113,8 @@ c  ATOMIC COORDINATES
       call return_dmin(ifrag,jfrag,nfrags,natoms_frag,watom_frag,
      *                 pcoords,r_thresh, data_4(1)) 
 
+
+      ierr = 0
       return
       end
 

@@ -35,30 +35,31 @@ namespace sip {
 
 Interpreter* Interpreter::global_interpreter = NULL;
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		SialPrinter* printer) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 		NULL), sial_ops_(data_manager_,
-		NULL, sialx_timer, sipTables) {
+		NULL,  sipTables)
+{
 	_init(sipTables);
 }
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sialx_timer, sipTables) {
+				persistent_array_manager,  sipTables){
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
+		sip_tables_(sipTables),  printer_(NULL), data_manager_(
 				sipTables), op_table_(sip_tables_.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sialx_timer, sipTables) {
+				persistent_array_manager,  sipTables){
 	_init(sipTables);
 }
 
@@ -72,9 +73,11 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	tracer_ = new Tracer(this, sip_tables, std::cout);
+	tracer_ = new Tracer(sip_tables);
+
+
 	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
-	timer_line_=0;
+	timer_pc_ = 0;
 	iteration_=0;
 #ifdef HAVE_CUDA
 	int devid;
@@ -127,13 +130,16 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
+	tracer_->init_trace();
 	while (pc < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc);
 		sip::check(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
-		tracer_->trace(pc, opcode);
-		timer_trace(pc, opcode, current_line());
+//		tracer_->trace(pc, opcode);
+//		sialx_timers_->start_timer(pc_start, SialxTimer::TOTALTIME);
+//		timer_pc_ = pc_start;
+
 
 		SIP_LOG(
 				std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
@@ -455,7 +461,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case sip_barrier_op: {
-			sial_ops_.sip_barrier();
+			sial_ops_.sip_barrier(pc);
 			iteration_ = 0;
 			++pc;
 		}
@@ -510,7 +516,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case get_op: { //TODO  check this.  Have compiler put block info in instruction?
 			sip::BlockId id = get_block_id_from_selector_stack();
-			sial_ops_.get(id);
+			sial_ops_.get(id, pc);
 			++pc;
 		}
 			break;
@@ -518,7 +524,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_accumulate(lhs_id, rhs_block);
+			sial_ops_.put_accumulate(lhs_id, rhs_block, pc);
 			++pc;
 		}
 			break;
@@ -526,7 +532,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_replace(lhs_id, rhs_block);
+			sial_ops_.put_replace(lhs_id, rhs_block, pc);
 			++pc;
 		}
 			break;
@@ -534,7 +540,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			BlockId lhs_id = get_block_id_from_selector_stack();
 			double rhs_value = expression_stack_.top();
 			expression_stack_.pop();
-			sial_ops_.put_initialize(lhs_id, rhs_value);
+			sial_ops_.put_initialize(lhs_id, rhs_value, pc);
 			++pc;
 		}
 			break;
@@ -542,7 +548,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			double rhs_value = expression_stack_.top();
 			expression_stack_.pop();
-			sial_ops_.put_increment(lhs_id, rhs_value);
+			sial_ops_.put_increment(lhs_id, rhs_value, pc);
 			++pc;
 		}
 			break;
@@ -550,17 +556,17 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			double rhs_value = expression_stack_.top();
 			expression_stack_.pop();
-			sial_ops_.put_scale(lhs_id, rhs_value);
+			sial_ops_.put_scale(lhs_id, rhs_value, pc);
 			++pc;
 		}
 			break;
 		case create_op: {
-			sial_ops_.create_distributed(arg0());
+			sial_ops_.create_distributed(arg0(), pc);
 			++pc;
 		}
 			break;
 		case delete_op: {
-			sial_ops_.delete_distributed(arg0());
+			sial_ops_.delete_distributed(arg0(), pc);
 			++pc;
 		}
 			break;
@@ -1108,14 +1114,14 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			int array_slot = arg1();
 			int string_slot = arg0();
 			;
-			sial_ops_.set_persistent(this, array_slot, string_slot);
+			sial_ops_.set_persistent(this, array_slot, string_slot, pc);
 			++pc;
 		}
 			break;
 		case restore_persistent_op: {
 			int array_slot = arg1();
 			int string_slot = arg0();
-			sial_ops_.restore_persistent(this, array_slot, string_slot);
+			sial_ops_.restore_persistent(this, array_slot, string_slot, pc);
 			++pc;
 		}
 			break;
@@ -1152,9 +1158,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		//TODO  only call where necessary
 		contiguous_blocks_post_op();
+		tracer_->trace_op(pc, opcode);
+		timer_trace(pc, opcode, current_line());
 	}			// while
 				//interpreter loop finished.  Ensure all timers turned off.
-	timer_trace(pc, invalid_op, -99);
+//	timer_trace(pc, invalid_op, -99);
+	tracer_->stop_trace();
+
 } //interpret
 
 void Interpreter::post_sial_program() {
@@ -1210,47 +1220,50 @@ void Interpreter::post_sial_program() {
 //
 //}
 
+
 void Interpreter::timer_trace(int pc, opcode_t opcode, int line) {
-	if (sialx_timers_ == NULL)
-		return;
-	if (timer_line_ > 0) { //a timer is on
-		if (timer_line_ == line) { //still on same line, no change to timer
-			return;
-		}
-		sialx_timers_->pause_timer(timer_line_, SialxTimer::TOTALTIME); //have moved to different line, so pause the current timer
-	}
-	//only start a timer for the interesting op_codes.
-	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
-	switch (opcode) {  //everything falls through
-	case execute_op:
-	case sip_barrier_op:
-	case broadcast_static_op:
-	case allocate_op:
-	case deallocate_op:
-	case get_op:
-	case put_accumulate_op:
-	case put_replace_op:
-	case create_op:
-	case delete_op:
-	case collective_sum_op:
-	case assert_same_op:
-	case block_copy_op:
-	case block_permute_op:
-	case block_fill_op:
-	case block_scale_op:
-	case block_accumulate_scalar_op:
-	case block_add_op:
-	case block_subtract_op:
-	case block_contract_op:
-	case block_contract_to_scalar_op:
-	case set_persistent_op:
-	case restore_persistent_op:
-		sialx_timers_->start_timer(line, SialxTimer::TOTALTIME);
-		timer_line_ = line;
-		break;
-	default:
-		timer_line_ = 0;
-	}
+//	if (sialx_timers_ == NULL)
+//		return;
+////	if (timer_line_ > 0) { //a timer is on
+////		if (timer_line_ == line) { //still on same line, no change to timer
+////			return;
+////		}
+//		sialx_timers_->pause_timer(timer_pc_, SialxTimer::TOTALTIME);
+//		sialx_timers_->start_timer(pc, SialxTimer::TOTALTIME);
+//		timer_pc_ = pc;
+//	}
+//	//only start a timer for the interesting op_codes.
+//	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
+//	switch (opcode) {  //everything falls through
+//	case execute_op:
+//	case sip_barrier_op:
+//	case broadcast_static_op:
+//	case allocate_op:
+//	case deallocate_op:
+//	case get_op:
+//	case put_accumulate_op:
+//	case put_replace_op:
+//	case create_op:
+//	case delete_op:
+//	case collective_sum_op:
+//	case assert_same_op:
+//	case block_copy_op:
+//	case block_permute_op:
+//	case block_fill_op:
+//	case block_scale_op:
+//	case block_accumulate_scalar_op:
+//	case block_add_op:
+//	case block_subtract_op:
+//	case block_contract_op:
+//	case block_contract_to_scalar_op:
+//	case set_persistent_op:
+//	case restore_persistent_op:
+//		sialx_timers_->start_timer(line, SialxTimer::TOTALTIME);
+//		timer_line_ = line;
+//		break;
+//	default:
+//		timer_line_ = 0;
+//	}
 }
 
 void Interpreter::handle_user_sub_op(int pc) {
@@ -2082,7 +2095,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 				data_manager_.contiguous_array_manager_.get_block_for_reading(
 						id, read_block_list_) :
 //				sial_ops_.get_block_for_reading(id);
-				sial_ops_.get_block_for_reading(id, current_line());
+				sial_ops_.get_block_for_reading(id, pc);
 	}
 		break;
 	case 'w': {
@@ -2090,7 +2103,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
 						id, write_back_list_) :
-				sial_ops_.get_block_for_writing(id, is_scope_extent);
+				sial_ops_.get_block_for_writing(id, is_scope_extent, pc);
 	}
 		break;
 	case 'u': {
@@ -2098,7 +2111,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_updating(
 						id, write_back_list_) :
-				sial_ops_.get_block_for_updating(id);
+				sial_ops_.get_block_for_updating(id, pc);
 	}
 		break;
 	default:
