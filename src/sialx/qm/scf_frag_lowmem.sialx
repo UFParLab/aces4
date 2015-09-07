@@ -1,4 +1,4 @@
-import "trans_frag_defs.sialx" 
+import "mcpt2_defs.sialx" 
 import "mcpt2_vars.sialx"
 #
                            SIAL SCF_FRAGMENT 
