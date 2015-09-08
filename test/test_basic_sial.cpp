@@ -26,9 +26,6 @@
 
 #include "block.h"
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
 
 #ifdef HAVE_MPI
 #include "test_controller_parallel.h"
@@ -1584,10 +1581,6 @@ int main(int argc, char **argv) {
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
 	barrier();
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
 
 //	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
 //	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
@@ -1598,9 +1591,6 @@ int main(int argc, char **argv) {
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
 	barrier();
 #ifdef HAVE_MPI
 	MPI_Finalize();

@@ -59,12 +59,12 @@ TestControllerParallel::TestControllerParallel(std::string job,
 		job_(job), verbose_(verbose), comment_(comment), sial_output_(
 				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
-				NULL), server_(NULL), worker_(NULL), printer_(NULL), server_timer_(NULL), sialx_timers_(NULL) {
+				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
 	barrier();
 //	sip::GlobalState::reinitialize();
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
-		setup_reader_ = new setup::SetupReader(setup_file);
+		setup_reader_ = new setup::SetupReader(setup_file); 
 		progs_ = &setup_reader_->sial_prog_list();
 	} else {
 		setup_reader_ = setup::SetupReader::get_empty_reader();
@@ -108,12 +108,6 @@ TestControllerParallel::~TestControllerParallel() {
 		delete setup_reader_;
 	if (sip_tables_)
 		delete sip_tables_;
-	if (sialx_timers_)
-		delete sialx_timers_;
-#ifdef HAVE_MPI
-	if (server_timer_)
-		delete server_timer_;
-#endif
 }
 
 
@@ -126,11 +120,8 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	setup::BinaryInputFile siox_file(siox_path);
 	//remove objects left from previous sial programs to avoid memory leaks
 	if (worker_) delete worker_;
-	if (sialx_timers_)
-		delete sialx_timers_;
 #ifdef HAVE_MPI
 	if (server_) delete server_;
-	if (server_timer_) delete server_timer_;
 #endif
 	if (sip_tables_) delete sip_tables_;
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);

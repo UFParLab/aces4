@@ -72,9 +72,7 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
-./src/sip/dynamic_data/cached_block_map.cpp\
-./src/sip/dynamic_data/sip_timer.h\
-./src/sip/dynamic_data/sip_timer.cpp
+./src/sip/dynamic_data/cached_block_map.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -82,8 +80,6 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
-./src/sip/worker/sialx_timer.cpp\
-./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/global_state.h\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
@@ -132,8 +128,6 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
-./src/sip/mpi/server_timer.h\
-./src/sip/mpi/server_timer.cpp\
 ./src/sip/dynamic_data/mpi_state.h\
 ./src/sip/dynamic_data/distributed_block_consistency.cpp\
 ./src/sip/dynamic_data/distributed_block_consistency.h\
@@ -148,7 +142,7 @@ if WORKING_NVCC
     ACES_SOURCEFILES += ./src/sip/cuda/gpu_super_instructions.cu ./src/sip/cuda/cuda_check.h
 endif
 
-AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(PAPI_LIBS) $(TAU_LIBS) $(NVCCLDFLAGS)
+AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(NVCCLDFLAGS)
 
 aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
@@ -190,9 +184,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/test/gtest-1.7.0/include
 
 AM_CPPFLAGS = \
-    $(ACES4_CPP_FLAGS)\
-    $(PAPI_INCLUDE)\
-    $(TAU_CPP)
+    $(ACES4_CPP_FLAGS)
 
 
 

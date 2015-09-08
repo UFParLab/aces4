@@ -19,10 +19,6 @@
 #include "sip_mpi_utils.h"
 #include "sip_mpi_attr.h"
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
-
 TEST(Sial_Unit,BlockLRUArrayPolicy){
 
 	sip::index_value_array_t index_values;
@@ -123,11 +119,6 @@ int main(int argc, char **argv) {
 
 	MPI_Init(&argc, &argv);
 
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
-
 	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
 	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
 	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
@@ -148,11 +139,7 @@ int main(int argc, char **argv) {
 	testing::InitGoogleTest(&argc, argv);
 	int result = RUN_ALL_TESTS();
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
-
-	 MPI_Finalize();
+	MPI_Finalize();
 
 	return result;
 

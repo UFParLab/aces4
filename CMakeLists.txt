@@ -25,35 +25,18 @@ if (HAVE_MPI)
     find_package(MPI REQUIRED)
 endif()
 
-##################
-# HAVE_TAU Option - TAU timers to be used instead of Linux / PAPI timers
-##################
-option(HAVE_TAU "Whether to use TAU timers for SIAL programs" OFF)
-
-# Check if TAU available on system
-if (HAVE_TAU)
-    find_package(TAU REQUIRED)
-endif()
-
-####################
-# HAVE_PAPI Options - PAPI Timers to be used instead of Linux Timers
-####################
-option(HAVE_PAPI "Whether to use PAPI high resolution timers" OFF)
-
-# Check if PAPI available on system
-if (HAVE_PAPI)
-    find_package(PAPI REQUIRED)
-endif()
 
 ####################
 # HAVE_CUDA Options - Whether to use CUDA accelerated super instructions
+# Disabled for the time being
 ####################
-option(HAVE_CUDA "Whether to use CUDA accelerated super instructions" OFF)
 
-# Check if CUDA available on system
-if (HAVE_CUDA)
-    find_package(CUDA REQUIRED)
-endif()
+#option(HAVE_CUDA "Whether to use CUDA accelerated super instructions" OFF)
+
+## Check if CUDA available on system
+#if (HAVE_CUDA)
+#    find_package(CUDA REQUIRED)
+#endif()
 
 ####################
 # SIP_DEVEL Options - Whether to enable extra logging for the entire SIP
@@ -118,8 +101,6 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/disk_backed_block_map.cpp;
         src/sip/mpi/server_persistent_array_manager.h;
         src/sip/mpi/server_persistent_array_manager.cpp;
-        src/sip/mpi/server_timer.h;
-        src/sip/mpi/server_timer.cpp; 
         src/sip/mpi/async_ops.h;
         src/sip/mpi/async_ops.cpp; 
         src/sip/mpi/counter.h;
@@ -174,8 +155,6 @@ set(ACES_DATA_FILES
     src/sip/dynamic_data/lru_array_policy.h;
     src/sip/dynamic_data/cached_block_map.h;
     src/sip/dynamic_data/cached_block_map.cpp;
-    src/sip/dynamic_data/sip_timer.h;
-	src/sip/dynamic_data/sip_timer.cpp;
     src/sip/dynamic_data/contiguous_local_array_manager.h;
     src/sip/dynamic_data/contiguous_local_array_manager.cpp;)
 #need only header files for templates--these include .cpp
@@ -185,8 +164,6 @@ set(ACES_WORKER_FILES
     src/sip/worker/loop_manager.h;
     src/sip/worker/interpreter.cpp;
     src/sip/worker/interpreter.h;
-    src/sip/worker/sialx_timer.cpp;
-    src/sip/worker/sialx_timer.h;
     src/sip/worker/global_state.h;
     src/sip/worker/global_state.cpp;
     src/sip/worker/siox_reader.h;
@@ -238,20 +215,6 @@ set (TOLINK_LIBRARIES
     superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
 
-# Append TAU include & library paths
-if (TAU_FOUND)
-    # TAU needs these defines to compile properly
-    add_definitions(-DPROFILING_ON)
-    add_definitions(-DTAU_DOT_H_LESS_HEADERS)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TAU_INCLUDE_PATH})
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${TAU_LIBRARY})
-endif()
-
-# Append PAPI include & library paths
-if (PAPI_FOUND)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PAPI_INCLUDE_PATH})
-    set(TOLINK_LIBRARIES ${TOLINK_LIBRARIES} ${PAPI_LIBRARY})
-endif()
 
 # CUDA Super instructions
 if (CUDA_FOUND)
@@ -293,7 +256,7 @@ endif()
 ##############
 # Setup Tests
 ##############
-
+set(gtest_disable_pthreads ON CACHE BOOL "Disable uses of pthreads in gtest.") 
 add_subdirectory (test/gtest-1.7.0)
 enable_testing()
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})

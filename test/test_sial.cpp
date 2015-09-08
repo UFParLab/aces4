@@ -24,10 +24,6 @@
 
 #include "block.h"
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
-
 #ifdef HAVE_MPI
 #include "sip_server.h"
 #include "server_persistent_array_manager.h"
@@ -1021,10 +1017,6 @@ int main(int argc, char **argv) {
     attr = &sip_mpi_attr;
 #endif
     barrier();
-#ifdef HAVE_TAU
-    TAU_PROFILE_SET_NODE(0);
-    TAU_STATIC_PHASE_START("SIP Main");
-#endif
 
     //	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
     //	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
@@ -1049,9 +1041,6 @@ int main(int argc, char **argv) {
 
     std::cout << "Rank  " << attr->global_rank() << " Finished RUN_ALL_TEST() " << std::endl << std::flush;
 
-#ifdef HAVE_TAU
-    TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
     barrier();
 #ifdef HAVE_MPI
     MPI_Finalize();
