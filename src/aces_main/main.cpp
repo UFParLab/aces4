@@ -37,10 +37,6 @@
 #endif
 
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
-
 /**
  * http://stackoverflow.com/questions/3151779/how-its-better-to-invoke-gdb-from-program-to-print-its-stacktrace/4611112#4611112
  */
@@ -75,15 +71,6 @@ int main(int argc, char* argv[]) {
 	std::cout<<sip_mpi_attr<<std::endl;
 #endif
 
-//#ifdef HAVE_TAU
-//	TAU_INIT(&argc, &argv);
-//	#ifdef HAVE_MPI
-//	  TAU_PROFILE_SET_NODE(sip_mpi_attr.global_rank());
-//	#else
-//	  TAU_PROFILE_SET_NODE(0);
-//	#endif
-//	TAU_STATIC_PHASE_START("SIP Main");
-//#endif
 
 //TODO  move this to  a test suite.
 //	// Check sizes of data types.
@@ -206,13 +193,6 @@ int main(int argc, char* argv[]) {
 
 		sip::GlobalState::set_program_name(*it);
 		sip::GlobalState::increment_program();
-//#ifdef HAVE_TAU
-//		//TAU_REGISTER_EVENT(tau_event, it->c_str());
-//		//TAU_EVENT(tau_event, sip::GlobalState::get_program_num());
-//		//TAU_STATIC_PHASE_START(it->c_str());
-//		TAU_PHASE_CREATE_DYNAMIC(tau_dtimer, it->c_str(), "", TAU_USER);
-//		TAU_PHASE_START(tau_dtimer);
-//#endif
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(setup_reader, siox_file);
@@ -286,20 +266,12 @@ int main(int argc, char* argv[]) {
 
 		}// end of worker or server
 
-//#ifdef HAVE_TAU
-//		//TAU_STATIC_PHASE_STOP(it->c_str());
-//  		TAU_PHASE_STOP(tau_dtimer);
-//#endif
 
 #ifdef HAVE_MPI
       sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 #endif
 	} //end of loop over programs
 
-
-//#ifdef HAVE_TAU
-//		TAU_STATIC_PHASE_STOP("SIP Main");
-//#endif
 
 
 #ifdef HAVE_MPI

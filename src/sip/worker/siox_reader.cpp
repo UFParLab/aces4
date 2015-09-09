@@ -55,11 +55,11 @@ double * SioxReader::contiguous_array_data(std::string name){
 
 void SioxReader::read_and_check_header(){
 	int magic = file . read_int();
-	sip::check(magic == SIOX_MAGIC, std::string("siox file has the wrong magic number"));
+	CHECK(magic == SIOX_MAGIC, std::string("siox file has the wrong magic number"));
 	int version = file . read_int(); //version
-	sip::check(version == SIOX_VERSION, "siox file has the wrong version number");
+	CHECK(version == SIOX_VERSION, "siox file has the wrong version number");
 	int max_dim = file . read_int(); //release
-	sip::check(max_dim == MAX_RANK, "siox file has the inconsistent value for MAX_RANK number");
+	CHECK(max_dim == MAX_RANK, "siox file has the inconsistent value for MAX_RANK number");
 	}
 
 void SioxReader::read_int_table(){

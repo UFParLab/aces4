@@ -411,7 +411,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 		}
 	}
 	catch (const std::out_of_range& oor) {
-        sial_warn(false, std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
+        warn(std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;
@@ -445,7 +445,7 @@ SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(in
 		std::cout << oor.what() << std::endl;
 		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
 		std::cout << "special instruction " << it->second << " at slot " << function_slot << " not installed" << std::endl;
-		sip::check(false, std::string(" terminating get_instruction_ptr "));
+		CHECK(false, std::string(" terminating get_instruction_ptr "));
 		return NULL;
 	}
 }
@@ -481,7 +481,7 @@ const std::string SpecialInstructionManager::get_signature(int function_slot) co
 		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
 		std::cout << "special instruction " << it->second << ", at slot " << function_slot << " not installed" << std::endl;
 		std::cout << *this << std::endl;
-		sip::check(false, std::string(" terminating get_signature"));
+		CHECK(false, std::string(" terminating get_signature"));
 		return std::string("should not get here");
 	}
 }

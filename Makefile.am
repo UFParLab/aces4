@@ -72,9 +72,7 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
-./src/sip/dynamic_data/cached_block_map.cpp\
-./src/sip/dynamic_data/sip_timer.h\
-./src/sip/dynamic_data/sip_timer.cpp
+./src/sip/dynamic_data/cached_block_map.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
@@ -82,8 +80,6 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
-./src/sip/worker/sialx_timer.cpp\
-./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/global_state.h\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
@@ -102,6 +98,8 @@ ACES_SOURCEFILES=\
 ./src/sip/cuda/gpu_super_instructions.h\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\
+./src/sip/mpi/rank_distribution.h \
+./src/sip/mpi/rank_distribution.cpp \
 $(ACES_SETUPFILES)\
 $(ACES_CORE_FILES)\
 $(ACES_DATA_FILES)
@@ -109,8 +107,6 @@ $(ACES_DATA_FILES)
 # MPI
 if WORKING_MPI
 ACES_SOURCEFILES +=\
-./src/sip/mpi/rank_distribution.h \
-./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \
 ./src/sip/mpi/data_distribution.h\
 ./src/sip/mpi/sip_mpi_utils.h\
@@ -132,8 +128,6 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
-./src/sip/mpi/server_timer.h\
-./src/sip/mpi/server_timer.cpp\
 ./src/sip/dynamic_data/mpi_state.h\
 ./src/sip/dynamic_data/distributed_block_consistency.cpp\
 ./src/sip/dynamic_data/distributed_block_consistency.h\
@@ -148,7 +142,7 @@ if WORKING_NVCC
     ACES_SOURCEFILES += ./src/sip/cuda/gpu_super_instructions.cu ./src/sip/cuda/cuda_check.h
 endif
 
-AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(PAPI_LIBS) $(TAU_LIBS) $(NVCCLDFLAGS)
+AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(NVCCLDFLAGS)
 
 aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
@@ -190,9 +184,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/test/gtest-1.7.0/include
 
 AM_CPPFLAGS = \
-    $(ACES4_CPP_FLAGS)\
-    $(PAPI_INCLUDE)\
-    $(TAU_CPP)
+    $(ACES4_CPP_FLAGS)
 
 
 
@@ -202,30 +194,18 @@ AM_CPPFLAGS = \
 
 
 
+check_PROGRAMS =    test_unit test_basic_sial test_sial test_qm test_qm_aux 
+TESTS =             test_unit test_basic_sial test_sial test_qm
+
 if WORKING_MPI
-TESTS = test_qm test_qm_aux test_sial test_unit test_basic_sial
-check_PROGRAMS = test_qm test_qm_aux test_unit test_basic_sial test_sial
-LOG_COMPILER = mpirun 	# Run mpi test with mpirun
-AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
-else
-TESTS = test_basic_sial test_sial test_qm test_qm_aux
-check_PROGRAMS = test_basic_sial test_sial test_qm test_qm_aux
-#TESTS = test_simple
-#check_PROGRAMS = test_simple
+LOG_COMPILER = mpirun   # Run mpi test with mpirun
+AM_LOG_FLAGS = -np 2        # Run locally with 2 mpi ranks
 endif
+
 
 test_unit_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_unit.cpp
-
-#test_mpi_qm_SOURCES = \
-#	$(ACES_SOURCEFILES)\
-#	test/test_controller_parallel.h\
-#	test/test_controller_parallel.cpp\
-#	test/test_constants.h\
-#	test/test_constants.cpp\
-#	test/test_mpi_qm.cpp
-
 
 test_sial_SOURCES = \
     $(ACES_SOURCEFILES) \
@@ -283,9 +263,9 @@ test_unit_LDADD = $(TEST_LDADD_VARS)
 test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_aux_LDADD = $(TEST_LDADD_VARS)
-#test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
+
 # Add any initialization files needed by tests here.
 TEST_SUPPORT_FILES=\
 test/ccsdpt_test.dat\
@@ -328,8 +308,6 @@ copy-data-files.stamp:
 #	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
 #	test_qm_LDADD += $(PTHREAD_LIBS)
 #	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
-#	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
-#	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
 #	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
 #	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
 #endif
@@ -363,7 +341,6 @@ test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_aux_LDFLAGS = $(TEST_LDFLAGS_VARS)
-#test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 

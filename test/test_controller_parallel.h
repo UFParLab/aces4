@@ -7,8 +7,6 @@
 #include <iostream>
 #include "setup_reader.h"
 #include "test_constants.h"
-#include "sialx_timer.h"
-#include "server_timer.h"
 
 
 
@@ -80,8 +78,6 @@ public:
 	sip::Interpreter* worker_;
 	std::ostream& sial_output_;
 	sip::SialPrinterForTests* printer_;
-	sip::SialxTimer* sialx_timers_;
-	sip::ServerTimer* server_timer_;
 	bool this_test_enabled_;
 	bool expect_success_;
 	int prog_number_;
