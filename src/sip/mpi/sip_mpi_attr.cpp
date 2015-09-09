@@ -131,7 +131,7 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 	} else {
 		company_comm_ = worker_comm_;
 	}
-	sip::check(company_comm_ != MPI_COMM_NULL, "Company Communicator is MPI_COMM_NULL !");
+	CHECK(company_comm_ != MPI_COMM_NULL, "Company Communicator is MPI_COMM_NULL !");
 
 	SIPMPIUtils::check_err(MPI_Comm_rank(company_comm_, &company_rank_));
 	SIPMPIUtils::check_err(MPI_Comm_size(company_comm_, &company_size_));

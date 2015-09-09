@@ -48,8 +48,8 @@ bool TwoWorkerOneServerRankDistribution::is_local_worker_to_communicate(int rank
 
 ConfigurableRankDistribution::ConfigurableRankDistribution(int num_workers, int num_servers)
 	:num_workers_(num_workers), num_servers_(num_servers), is_server_vector_(num_workers+num_servers, false) {
-	check (num_workers_ >= 1, "Number of workers must be more than 1");
-	check (num_workers_ >= 1, "Number of servers must be more than 1");
+	CHECK (num_workers_ >= 1, "Number of workers must be more than 1");
+	CHECK (num_workers_ >= 1, "Number of servers must be more than 1");
 
 	int num_processes = num_workers + num_servers;
 	if (num_workers >= num_servers){	// More workers than server

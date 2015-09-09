@@ -93,7 +93,7 @@ long DataDistribution::block_position_in_array(const sip::BlockId& bid) const {
 	for (int pos = array_rank - 1; pos >= 0; pos--) {
 		int index_slot = sip_tables_.selectors(array_id)[pos];
 		int num_segments = sip_tables_.num_segments(index_slot);
-		sip::check(num_segments >= 0, "num_segments is -ve", current_line());
+		CHECK_WITH_LINE(num_segments >= 0, "num_segments is -ve", current_line());
 		block_num += bid.index_values(pos) * tmp;
 		tmp *= num_segments;
 	}

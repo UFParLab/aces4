@@ -411,7 +411,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 		}
 	}
 	catch (const std::out_of_range& oor) {
-        sial_warn(false, std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
+        warn(std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;

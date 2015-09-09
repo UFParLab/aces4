@@ -107,7 +107,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 				++j) {
 			/* keep looking until matching index found */
 		}
-		sip::check(j < lhs_rank, "illegal transpose");
+		CHECK(j < lhs_rank, "illegal transpose");
 		permutation[j] = i;
 	}
 	for (int i = lhs_rank; i < MAX_RANK; ++i) {
@@ -132,7 +132,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 	tracer_->init_trace();
 	while (pc < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc);
-		sip::check(write_back_list_.empty() && read_block_list_.empty(),
+		CHECK(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
 //		tracer_->trace(pc, opcode);
@@ -1227,7 +1227,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 		return;
 	}
 
-	sip::check(false,
+	CHECK(false,
 			"Implementation restriction:  At most 6 arguments to a super instruction supported.  This can be increased if necessary");
 }
 
@@ -1734,7 +1734,7 @@ sip::BlockId Interpreter::get_block_id_from_selector_stack() {
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_rank(array_id);
 	if (sip_tables_.is_contiguous_local(array_id)) {
-		check(selector.rank_ == rank,
+		CHECK_WITH_LINE(selector.rank_ == rank,
 				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",
 				line_number());
 		int upper[MAX_RANK];
@@ -1775,7 +1775,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 	Block::BlockPtr block;
 	if (sip_tables_.is_contiguous_local(array_id)) {
 		int rank = sip_tables_.array_rank(selector.array_id_);
-		check(selector.rank_ == rank,
+		CHECK_WITH_LINE(selector.rank_ == rank,
 				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",
 				line_number());
 		int upper[MAX_RANK];
@@ -1838,7 +1838,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 	id = block_id(selector);
 	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-	sial_check(!is_contiguous || contiguous_allowed,
+	SIAL_CHECK(!is_contiguous || contiguous_allowed,
 			"using contiguous block in a context that doesn't support it",
 			line_number());
 	switch (intent) {
@@ -1891,8 +1891,8 @@ void Interpreter::handle_block_add(int pc) {
 	double *ddata = dblock->get_data();
 
 	// Make sure selectors are the same for l & r;
-	sip::check(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
-	sip::check(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
+	CHECK_WITH_LINE(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
+	CHECK_WITH_LINE(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
 
 	bool compatible_l_r_indices = true;
 	for (int i=0; i<l_selector.rank_; ++i){
@@ -1952,8 +1952,8 @@ void Interpreter::handle_block_subtract(int pc) {
 	double *ddata = dblock->get_data();
 
 	// Make sure selectors are the same for l & r;
-	sip::check(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
-	sip::check(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
+	CHECK_WITH_LINE(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
+	CHECK_WITH_LINE(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
 
 	bool compatible_l_r_indices = true;
 	for (int i=0; i<l_selector.rank_; ++i){

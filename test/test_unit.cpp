@@ -66,17 +66,17 @@ TEST(SialUnitLRU,BlockLRUArrayPolicy){
 	policy.touch(bid4);
 	policy.touch(bid5);
 
-	sip::check(policy.get_next_block_for_removal(blk).array_id() == 0, "Block to remove should be from array 0");
+	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 0);
 	block_map.get_and_remove_block(bid0);
-	sip::check(policy.get_next_block_for_removal(blk).array_id() == 1, "Block to remove should be from array 1");
+	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 1);
 	block_map.get_and_remove_block(bid1);
-	sip::check(policy.get_next_block_for_removal(blk).array_id() == 2, "Block to remove should be from array 2");
+	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 2);
 	block_map.get_and_remove_block(bid2);
-	sip::check(policy.get_next_block_for_removal(blk).array_id() == 3, "Block to remove should be from array 3");
+	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 3);
 	block_map.get_and_remove_block(bid3);
-	sip::check(policy.get_next_block_for_removal(blk).array_id() == 4, "Block to remove should be from array 4");
+	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 4);
 	block_map.get_and_remove_block(bid4);
-	sip::check(policy.get_next_block_for_removal(blk).array_id() == 5, "Block to remove should be from array 5");
+	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 5);
 	block_map.get_and_remove_block(bid5);
 
 }
@@ -114,17 +114,17 @@ TEST(SialUnitLRU,ServerBlockLRUArrayPolicy){
 	policy.touch(bid4);
 	policy.touch(bid5);
 
-	sip::check(policy.get_next_block_for_removal(sb).array_id() == 0, "Block to remove should be from array 0");
+	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 0);
 	server_block_map.get_and_remove_block(bid0);
-	sip::check(policy.get_next_block_for_removal(sb).array_id() == 1, "Block to remove should be from array 1");
+	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 1);
 	server_block_map.get_and_remove_block(bid1);
-	sip::check(policy.get_next_block_for_removal(sb).array_id() == 2, "Block to remove should be from array 2");
+	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 2);
 	server_block_map.get_and_remove_block(bid2);
-	sip::check(policy.get_next_block_for_removal(sb).array_id() == 3, "Block to remove should be from array 3");
+	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 3);
 	server_block_map.get_and_remove_block(bid3);
-	sip::check(policy.get_next_block_for_removal(sb).array_id() == 4, "Block to remove should be from array 4");
+	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 4);
 	server_block_map.get_and_remove_block(bid4);
-	sip::check(policy.get_next_block_for_removal(sb).array_id() == 5, "Block to remove should be from array 5");
+	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 5);
 	server_block_map.get_and_remove_block(bid5);
 
 }
