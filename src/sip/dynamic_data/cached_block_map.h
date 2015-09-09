@@ -144,6 +144,9 @@ private:
 	/** Bytes in blocks that can be deleted when a pending mpi request is resolved.  (These are often temp blocks used as the source for put) */
 	std::size_t pending_delete_bytes_;
 
+	/** Whether the memory limit has been set once by set_max_allocatable_bytes */
+	bool set_mem_limit_once_;
+
 	friend class TestControllerParallel;
 
 	DISALLOW_COPY_AND_ASSIGN(CachedBlockMap);

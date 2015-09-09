@@ -249,28 +249,10 @@ AX_LAPACK(AC_MSG_RESULT([found LAPACK library $LAPACK_LIBS]),
 #AC_SUBST(PTHREAD_LIBS)
 
 
-# PAPI
-dnl Location of PAPI
-have_papi=no
-AC_ARG_WITH(papi,AC_HELP_STRING([--with-papi=PATH],[Location of PAPI]),
-    [AC_SUBST(PAPI_LIBS,[${withval}/lib/libpapi.a]), 
-    AC_SUBST(PAPI_INCLUDE,[-I${withval}/include]), 
-    have_papi="xyes", 
-    AC_DEFINE(HAVE_PAPI,1,[Define if you have a PAPI library.])],
-	AC_MSG_WARN([Not using PAPI!! The timers may not be accurate!]))
-
 # DEVELEOPMENT / LOGGING MODE
 AC_ARG_ENABLE(development, AS_HELP_STRING([--enable-development], [Enable development mode; extra logging and checks]),
 	[AC_DEFINE(SIP_DEVEL, 1, [Development mode, extra logging and checking])], [])
 
-# TAU
-have_tau=no
-AC_ARG_WITH(tau,AC_HELP_STRING([--with-tau=PATH],[Location of TAU]),
-    [AC_SUBST(TAU_LIBS,["-L${withval}/x86_64/lib/ -lTAU"]), 
-    AC_SUBST(TAU_CPP,["-I${withval}/include -DPROFILING_ON -DTAU_DOT_H_LESS_HEADERS"]), 
-    have_tau="xyes", 
-    AC_DEFINE(HAVE_TAU,1,[Define if you have a TAU library.])],
-	AC_MSG_WARN([Not using TAU!]))
 
 
 # Defines C macros to properly mangle the names of C/C++ identifiers, 

@@ -32,7 +32,7 @@ void get_predefined_array(const char*aname, int& num_dims, int *dims, double *va
 	return;
 	}
 	catch (const std::out_of_range& oor) {
-	    sip::check(false, "predefined array " + std::string("aname") + " not in predefined array map");
+	    CHECK(false, "predefined array " + std::string("aname") + " not in predefined array map");
 	    return;
 	  }
 }

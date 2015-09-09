@@ -11,7 +11,6 @@
 #include "id_block_map.h"
 #include "disk_backed_arrays_io.h"
 #include "lru_array_policy.h"
-#include "server_timer.h"
 #include "counter.h"
 
 namespace sip {

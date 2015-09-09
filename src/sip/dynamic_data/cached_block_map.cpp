@@ -12,7 +12,8 @@ namespace sip {
 CachedBlockMap::CachedBlockMap(int num_arrays)
 	: block_map_(num_arrays), cache_(num_arrays), policy_(cache_),
 	  max_allocatable_bytes_(sip::GlobalState::get_max_worker_data_memory_usage()),
-	  allocated_bytes_(0), pending_delete_bytes_(0){
+	  allocated_bytes_(0), pending_delete_bytes_(0),
+	  set_mem_limit_once_(false){
 }
 
 CachedBlockMap::~CachedBlockMap() {
@@ -172,9 +173,8 @@ IdBlockMap<Block>::PerArrayMap* CachedBlockMap::get_and_remove_per_array_map(int
 }
 
 void CachedBlockMap::set_max_allocatable_bytes(std::size_t size){
-    static bool done_once = false;
-    if (!done_once){
-        done_once = true;
+    if (!set_mem_limit_once_){
+    	set_mem_limit_once_ = true;
         max_allocatable_bytes_ = size;
     } else {
         sip::fail("Already set memory limit once !");

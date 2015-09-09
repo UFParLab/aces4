@@ -7,8 +7,6 @@ noinst_LTLIBRARIES=libinstr.la
 	#-I$(top_srcdir)/src/sip/
 	
 libinstr_la_CPPFLAGS=\
- $(PAPI_INCLUDE)\
- $(TAU_CPP)\
 -I$(srcdir)/qm\
 -I$(srcdir)/qm/erd\
 -I$(srcdir)/qm/oed\

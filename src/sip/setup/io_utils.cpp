@@ -115,7 +115,7 @@ std::string BinaryInputStream::read_string() {
 	int length = read_int();
 	char *chars = new char[length+1];
 	stream_-> read(chars, length);
-    sip::check(stream_->good(), std::string("malformed input "));
+    CHECK(stream_->good(), std::string("malformed input "));
 	chars[length]= '\0';
 	std::string s(chars);
 	delete [] chars;
@@ -125,14 +125,14 @@ std::string BinaryInputStream::read_string() {
 int BinaryInputStream::read_int() {
 	int value;
 	stream_->read( reinterpret_cast<char *>(&value), sizeof(value));
-	sip::check(stream_->good(), std::string( "error in read_int of input "));
+	CHECK(stream_->good(), std::string( "error in read_int of input "));
 	return value;
 }
 
 double BinaryInputStream::read_double() {
 	double value;
 	stream_->read( reinterpret_cast<char *>(&value), sizeof(value));
-	sip::check(stream_->good(), std::string( "error in read_double of input "));
+	CHECK(stream_->good(), std::string( "error in read_double of input "));
 	return value;
 }
 
@@ -141,7 +141,7 @@ int * BinaryInputStream::read_int_array(int * size) {
 	int * values = new int[sizec];
 	stream_->read( reinterpret_cast<char *>(values), sizeof(int) * sizec);
 	*size = sizec;
-	sip::check(stream_->good(), std::string( "error in read_int_array of input "));
+	CHECK(stream_->good(), std::string( "error in read_int_array of input "));
 	return values;
 }
 
@@ -149,7 +149,7 @@ double * BinaryInputStream::read_double_array(int *size){
 	int sizec = read_int();
 	double * values = new double[sizec];
 	stream_->read( reinterpret_cast<char *>(values), sizeof(double) * sizec);
-	sip::check(stream_->good(), std::string( "error in read_double_array of input "));
+	CHECK(stream_->good(), std::string( "error in read_double_array of input "));
 	*size = sizec;
 	return values;
 }
@@ -161,7 +161,7 @@ std::string * BinaryInputStream::read_string_array(int * size){
 		strings[i] = read_string();
 	}
 	*size = sizec;
-	sip::check(stream_->good(), std::string( "error in read_int_array of input "));
+	CHECK(stream_->good(), std::string( "error in read_int_array of input "));
 	return strings;
 }
 
