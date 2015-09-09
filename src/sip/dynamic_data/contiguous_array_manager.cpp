@@ -125,7 +125,7 @@ Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 
 	SIP_LOG(
 			std::cout<<"Contiguous Block of array "<<sip_tables_.array_name(array_id)<<std::endl);
-	sip::check(
+	CHECK(
 			block_ptr->shape() == sip_tables_.contiguous_array_shape(array_id),
 			std::string("array ") + sip_tables_.array_name(array_id)
 					+ std::string(

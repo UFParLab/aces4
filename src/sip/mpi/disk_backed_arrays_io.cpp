@@ -305,7 +305,7 @@ void DiskBackedArraysIO::array_file_name(int array_id, char filename[MAX_FILE_NA
 	const std::string& arr_name_str = sip_tables_.array_name(array_id);
 	const char * program_name = program_name_str.c_str();
 	const char * arr_name = arr_name_str.c_str();
-	sip::check(program_name_str.length() > 1,
+	CHECK(program_name_str.length() > 1,
 			"Program name length is too short - " + program_name_str
 					+ " !");
 	// Each array is saved in a file called:

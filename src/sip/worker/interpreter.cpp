@@ -1264,7 +1264,7 @@ void Interpreter::handle_contraction(int drank,
 
 	get_contraction_ptrn_(drank, lrank, rrank, &aces_pattern[0],
 			contraction_pattern, ierr);
-	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
+	CHECK_WITH_LINE(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
 			line_number());
 //    INPUT:
 //    ! - nthreads - number of threads requested;

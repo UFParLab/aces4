@@ -63,7 +63,7 @@ void DataDistribution::validate_block_position(const sip::BlockId& bid,
 			std::cerr << " index_slot : " << index_slot << " pos : " << pos
 					<< " nseg : " << num_segments << std::endl;
 		}
-		sip::check(block_num >= 0, ss1.str(), current_line());
+		CHECK_WITH_LINE(block_num >= 0, ss1.str(), current_line());
 	}
 }
 
@@ -77,7 +77,7 @@ int DataDistribution::server_rank_from_hash(std::size_t hash) const {
 	{
 		std::stringstream ss2;
 		ss2 << " Server rank slot is -ve : " << server_rank_slot;
-		sip::check(server_rank_slot >= 0, ss2.str(), current_line());
+		CHECK_WITH_LINE(server_rank_slot >= 0, ss2.str(), current_line());
 	}
 
 	int server_global_rank = server_ranks.at(server_rank_slot);

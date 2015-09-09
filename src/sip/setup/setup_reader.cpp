@@ -211,13 +211,13 @@ bool SetupReader::aces_validate(){
 }
 void SetupReader::read_and_check_magic() {
 	int fmagic = stream_.read_int();
-	sip::check(fmagic == sip::SETUP_MAGIC,
+	CHECK(fmagic == sip::SETUP_MAGIC,
 			std::string("setup data file has incorrect magic number"));
 }
 
 void SetupReader::read_and_check_version() {
 	int fversion = stream_.read_int();
-	sip::check(fversion == sip::SETUP_VERSION,
+	CHECK(fversion == sip::SETUP_VERSION,
 			std::string("setup data file has incorrect version"));
 }
 
@@ -289,7 +289,7 @@ void SetupReader::read_predefined_arrays(){
 		std::pair<int, sip::Block::BlockPtr> rank_blockptr_pair(rank, new sip::Block(shape, data));
 		std::pair<NamePredefinedContiguousArrayMap::iterator, bool> ret =
 				name_to_predefined_contiguous_array_map_.insert(make_pair(name, rank_blockptr_pair));
-		sip::check(ret.second, "Trying to read another array by name : " + name);
+		CHECK(ret.second, "Trying to read another array by name : " + name);
 
 	}
 }
@@ -316,7 +316,7 @@ void SetupReader::read_predefined_integer_arrays(){
 		//predef_int_arr_[name] = std::pair<int, std::pair<int *, int *> >(rank, dataPair);
 		std::pair<PredefIntArrMap::iterator, bool> ret =
 				predef_int_arr_.insert (make_pair(name, predef_int_array));
-		sip::check(ret.second, "Trying to read another array by name : " + name);
+		CHECK(ret.second, "Trying to read another array by name : " + name);
 
 	}
 }
