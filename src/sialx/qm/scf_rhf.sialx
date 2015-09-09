@@ -1006,6 +1006,8 @@ import "scf_rhf_defs.sialx"
        ENDDO nu
        ENDDO mu
        endif
+       broadcast_from 0 oed_ovl
+       broadcast_from 0 OVLP
 
        sip_barrier
 
@@ -1294,7 +1296,7 @@ import "scf_rhf_defs.sialx"
       IF COREH == 1
 
 #bgn_debug
-         print "The core Hamiltonian guess block"
+#         print "The core Hamiltonian guess block"
 #end_debug
 
 # Generate the core-Hamiltonian guess
@@ -1306,7 +1308,7 @@ import "scf_rhf_defs.sialx"
             PUT Fpq_b[mu,nu] = Txx[mu,nu]
          ENDPARDO mu, nu
          sip_barrier
-         print "The core Hamiltonian guess block" 
+#         print "The core Hamiltonian guess block" 
 
          CALL OVER_HALF
          sip_barrier
@@ -1463,11 +1465,11 @@ import "scf_rhf_defs.sialx"
                      
 		     etemp = (scalar)katom
 
-                     print "Printing atom number at entry to scf_atom"
-                     print etemp
+#                     print "Printing atom number at entry to scf_atom"
+#                     print etemp
                      execute a4_scf_atom  fockrohf_a fockrohf_b oed_kin oed_nai oed_ovl etemp
-                     print "Printing atom number exit from scf_atom"
-                     print etemp
+#                     print "Printing atom number exit from scf_atom"
+#                     print etemp
 
                      DO mu
                      DO nu
@@ -3149,19 +3151,20 @@ import "scf_rhf_defs.sialx"
       print deps
       print DEAVG_OLD
 #end_debug
-                  ICOUNT = 0
                   DO ITHREE
-                     ICOUNT += 1
-                     IF ICOUNT == 1
+                     IF ITHREE == 1
                         DAMP_PARMS[ITHREE] = DE
                      ENDIF
-                     IF ICOUNT == 2
+                     IF ITHREE == 2
                         DAMP_PARMS[ITHREE] = DEP
                      ENDIF
-                     IF ICOUNT == 3
+                     IF ITHREE == 3
                         DAMP_PARMS[ITHREE] = DEAVG
                      ENDIF
                   ENDDO ITHREE
+
+		  print DAMP_PARMS
+		  print DAMP_FACTOR
 
                  EXECUTE A4_DAVID_DAMP_FACTOR DAMP_PARMS DAMP_FACTOR
 #bgn_debug                
