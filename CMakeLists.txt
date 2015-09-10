@@ -206,11 +206,13 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
+    ${CMAKE_SOURCE_DIR}/jsoncpp;
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
+    jsoncpp;
     ${MPI_LIBRARIES};
     superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
@@ -288,7 +290,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays_2.txt ${CMAKE
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 
 #----------------------------------------------------------------------
-# Build aces4 & print_siptables executable
+# Build aces4 & other executables
 #----------------------------------------------------------------------
 
 include_directories(${INCLUDE_DIRS})
@@ -306,6 +308,12 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
 # All Super instructions are in this directory
 add_subdirectory(src/sip/super_instructions)
 
+# Add Jsoncpp library
+add_library(jsoncpp;
+    jsoncpp/jsoncpp.cpp;
+    jsoncpp/json/json.h;
+    jsoncpp/json/json-forwards.h)
+
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_DEFINITIONS}")
@@ -316,6 +324,9 @@ add_executable(aces4 src/aces_main/main.cpp)
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
+# print_init_file executable
+add_executable(print_init_file src/util/print_init_file.cpp)
+
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
@@ -323,17 +334,23 @@ set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
+target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
 
 # Dependencies
 if(HAVE_CUDA)
 	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
+	add_dependencies(print_init_file tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_sip tensordil)

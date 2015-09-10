@@ -7,11 +7,20 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 print_siptables
+bin_PROGRAMS=\
+aces4\
+print_siptables\
+print_init_file
 
+# Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
+
+# External Project jsoncpp
+noinst_LIBRARIES += libjsoncpp.a
+libjsoncpp_a_SOURCES = ./jsoncpp/jsoncpp.cpp ./jsoncpp/json/json.h ./jsoncpp/json/json-forwards.h
+
 
 EXTRA_DIST+=\
 README.md\
@@ -152,15 +161,27 @@ print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
 
+print_init_file_SOURCES=\
+    $(ACES_SOURCEFILES)\
+    ./src/util/print_init_file.cpp
+
 aces4_LDADD = \
 	libtensordil.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
 print_siptables_LDADD=\
 	libtensordil.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
+
+print_init_file_LDADD=\
+    libtensordil.a \
+    libjsoncpp.a \
+    src/sip/super_instructions/libinstr.la\
+    $(AM_LDADD_LIBS)	
 	
 aces4_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
@@ -180,6 +201,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\
 -I${top_srcdir}/src/sip/cuda\
+-I${top_srcdir}/jsoncpp\
 -I${top_srcdir}/test\
 -I${top_srcdir}/test/gtest-1.7.0/include
 
@@ -255,6 +277,7 @@ TEST_LDADD_VARS = \
 	test/libgtest.la \
 	test/libgtest_main.la \
 	libtensordil.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS) 
 #	$(PTHREAD_LIBS) 
