@@ -201,7 +201,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 
 	//handle section number updates
 	SIP_LOG(
-			std::cout << "S " << sip_mpi_attr_.global_rank() << " : get for block " << block_id.str(sip_tables_) << ", size = " << block_size << ", sent from = " << mpi_source << ", at line = " << line_number(pc) << std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank() << " : get for block " << block_id.str(sip_tables_) << ", size = " << block->size() << ", sent from = " << mpi_source << ", at line = " << line_number(pc_) << std::endl;)
 
 	if(section < state_.section_number_){
 		std::cout << "illegal section number "<< section
@@ -256,7 +256,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 
 	//handle section number updates
 	SIP_LOG(
-			std::cout << "S " << sip_mpi_attr_.global_rank() << " : get for block " << block_id.str(sip_tables_) << ", size = " << block_size << ", sent from = " << mpi_source << ", at line = " << line_number(pc_) << std::endl;)
+			std::cout << "S " << sip_mpi_attr_.global_rank() << " : get for block " << block_id.str(sip_tables_) << ", size = " << block->size() << ", sent from = " << mpi_source << ", at line = " << line_number(pc_) << std::endl;)
 
 	if(section < state_.section_number_){
 		std::cout << "illegal section number "<< section

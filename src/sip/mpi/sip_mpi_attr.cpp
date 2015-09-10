@@ -147,7 +147,9 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 	delete [] worker_ranks;
 	delete [] server_ranks;
 
-	my_servers_ = rank_distribution.local_servers_to_communicate(global_rank_);
+    if (rank_distribution.is_local_worker_to_communicate(global_rank_)){
+    	my_servers_ = rank_distribution.local_servers_to_communicate(global_rank_);
+    }
 
 }
 

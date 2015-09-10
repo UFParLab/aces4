@@ -6,6 +6,7 @@
  */
 
 #include <distributed_block_consistency.h>
+#include <iostream>
 
 namespace sip {
 
