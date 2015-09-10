@@ -457,6 +457,59 @@ TEST(CachedBlockMap, insert_after_cached_delete){
 	}
 }
 
+// Tests for TwoWorkerOneServerRankDistribution
+
+TEST(TwoWorkerOneServerRankDistribution, test1){
+    const int num_processes = 6;
+    const int num_workers = 4;
+    const int num_servers = 2;
+    bool reference_is_server_array[num_processes] = {
+            false,  // 0
+            false,  // 1
+            true,   // 2
+            false,  // 3
+            false,  // 4
+            true    // 5
+    };
+    bool local_worker_to_communicate[num_processes] = {
+            true,   // 0
+            false,  // 1
+            false,  // 2
+            true,   // 3
+            false,  // 4
+            false   // 5
+    };
+
+    sip::TwoWorkerOneServerRankDistribution rd (num_workers + num_servers);
+    std::vector<bool> is_server_vector;
+    for (int i=0; i<num_processes; ++i)
+        is_server_vector.push_back(rd.is_server(i));
+
+    for (int i=0; i<num_processes; ++i){
+        ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+    }
+
+    for (int i=0; i<num_processes; ++i){
+        ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+    }
+
+    int local_servers_to_communicate[num_processes][num_processes] = { -1 };
+    local_servers_to_communicate[0][0] = 2;
+    local_servers_to_communicate[3][0] = 5;
+
+    for (int i=0; i<num_processes; ++i){
+        if (rd.is_local_worker_to_communicate(i)){
+            std::vector<int> servers = rd.local_servers_to_communicate(i);
+            ASSERT_EQ(servers.size(), 1);
+            for (int j=0; j<servers.size(); ++j){
+                ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+            }
+        }
+    }
+}
+
+
+// Tests for ConfigurableRankDistribution
 
 TEST(ConfigurableRankDistribution, test1){
 	const int num_processes = 10;
