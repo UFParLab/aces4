@@ -45,7 +45,7 @@
 	#ifdef HAVE_MPI
 		#define SIP_MASTER(x) if(sip::SIPMPIAttr::get_instance().global_rank() == 0) {x;}
 	#else
-		#define SIP_MASTER(x) {x}
+		#define SIP_MASTER(x) {x;}
 	#endif // HAVE_MPI
 
 	#define SIP_LOG(x) ;
