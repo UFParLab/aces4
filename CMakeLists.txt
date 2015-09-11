@@ -307,11 +307,13 @@ configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COP
 configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_water_dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -401,6 +403,7 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_executable(test_sial  	        test/test_sial.cpp)
     #add_executable(test_mpi_qm          test/test_mpi_qm.cpp)
     add_executable(test_qm              test/test_qm.cpp)
+    add_executable(test_qm_aux          test/test_qm_aux.cpp)
     add_executable(test_unit            test/test_unit.cpp)
 
     # Link test executable against gtest & gtest_main
@@ -408,18 +411,21 @@ if (HAVE_MPI) # Multi Node Version Tests
     set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     #set_target_properties(test_mpi_qm       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_qm_aux       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     #target_link_libraries(test_mpi_qm       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_qm_aux       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     #set_target_properties(test_mpi_qm       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_qm_aux       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND mpirun -np 2 test_basic_sial)
@@ -432,6 +438,7 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_dependencies(test_sial         gtest gtest_main test_contollers)
     #add_dependencies(test_mpi_qm       gtest gtest_main test_contollers)
     add_dependencies(test_qm           gtest gtest_main test_contollers)
+    add_dependencies(test_qm_aux       gtest gtest_main test_contollers)
     add_dependencies(test_unit         gtest gtest_main test_contollers)
 
 else() # Single Node Version Tests
@@ -442,19 +449,23 @@ else() # Single Node Version Tests
 
     add_executable(test_sial  	     test/test_sial.cpp)
     add_executable(test_qm           test/test_qm.cpp)
+    add_executable(test_qm_aux       test/test_qm_aux.cpp)
 
     # Link test executable against gtest & gtest_main
     set_target_properties(test_basic_sial PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_sial       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
     set_target_properties(test_qm         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+    set_target_properties(test_qm_aux     PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
     target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
     target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+    target_link_libraries(test_qm_aux       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
     set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
     set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+    set_target_properties(test_qm_aux       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
     add_test(NAME test_sial         COMMAND test_sial)
@@ -463,6 +474,7 @@ else() # Single Node Version Tests
     add_dependencies(test_basic_sial gtest gtest_main test_contollers)
     add_dependencies(test_sial       gtest gtest_main test_contollers)
     add_dependencies(test_qm         gtest gtest_main test_contollers)
+    add_dependencies(test_qm_aux     gtest gtest_main test_contollers)
 
 endif()
 
@@ -601,7 +613,10 @@ set(SIAL_FILES
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/lr_eom_linccsd_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
-    src/sialx/qm/rccsd_rhf_defs.sialx)
+    src/sialx/qm/rccsd_rhf_defs.sialx;
+    src/sialx/qm/scf_rhf.sialx; 
+    src/sialx/qm/scf_rhf_defs.sialx)
+    
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
 set(SIAL_COMPILER java -jar ${SIAL_COMPILER_JAR})

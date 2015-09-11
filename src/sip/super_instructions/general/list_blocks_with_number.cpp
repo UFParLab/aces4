@@ -15,7 +15,6 @@
 
 void list_blocks_with_number(){
 	sip::Interpreter* interpreter = sip::Interpreter::global_interpreter;
-	sip::DataDistribution dist = interpreter->sial_ops_.data_distribution_;
 	std::ostream& out = interpreter->printer()->get_ostream();
 	out <<"LISTING Blocks with their number" << std::endl;
 	std::vector<std::pair<sip::BlockId,size_t> > vec;
@@ -23,12 +22,9 @@ void list_blocks_with_number(){
 	out << "size of block vector " << vec.size() << std::endl;
 	std::vector<std::pair<sip::BlockId,size_t> >::iterator it;
 	for (it = vec.begin(); it != vec.end(); ++it){
-		out << it->first << ":" << it->second << "," << dist.block_position_in_array(it->first) << std::endl;
+		out << it->first << ":" << it->second  << std::endl;
 	}
     out << std::endl;
-//   std::cout <<"LISTING CURRENT BLOCKS" << std::endl;
-//   std::cout <<  sip::Interpreter::global_interpreter->data_manager_.block_manager_;
-//   std::cout << std::endl;
 
 }
 

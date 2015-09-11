@@ -180,6 +180,9 @@ public:
 		return map_ptr;
 	}
 
+	PerArrayMap* per_array_map_or_null(int array_id){
+		return block_map_.at(array_id);
+	}
 	/**
 	 * Public utility method to get the total bytes in all the blocks (block data_) in a PerArrayMap
 	 * @param map_ptr
@@ -272,6 +275,20 @@ public:
 		delete map_ptr;
 		return tot_byes_inserted;
 	}
+
+
+	/**
+	 * Simply inserts the given PerArrayMap, replacing the reference to the previous (if any) map.
+	 * It is the callers responsibility to handle resources owned by the replaced map.
+	 *
+	 */
+	PerArrayMap* update_per_array_map(int array_id, PerArrayMap* new_map){
+		PerArrayMap* old_map = block_map_.at(array_id);
+		block_map_.at(array_id) = new_map;
+		return old_map;
+	}
+
+
 
 
 	/**

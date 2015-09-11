@@ -197,13 +197,13 @@ AM_CPPFLAGS = \
 
 
 if WORKING_MPI
-TESTS = test_qm test_sial test_unit test_basic_sial
-check_PROGRAMS = test_qm  test_unit test_basic_sial test_sial
+TESTS = test_qm test_qm_aux test_sial test_unit test_basic_sial
+check_PROGRAMS = test_qm test_unit test_basic_sial test_sial
 LOG_COMPILER = mpirun 	# Run mpi test with mpirun
 AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
 else
-TESTS = test_basic_sial test_sial test_qm
-check_PROGRAMS = test_basic_sial test_sial test_qm
+TESTS = test_basic_sial test_sial test_qm test_qm_aux
+check_PROGRAMS = test_basic_sial test_sial test_qm 
 #TESTS = test_simple
 #check_PROGRAMS = test_simple
 endif
@@ -254,6 +254,16 @@ test_qm_SOURCES = \
     test/test_constants.h\
     test/test_constants.cpp\
     test/test_qm.cpp
+    
+test_qm_aux_SOURCES = \
+	$(ACES_SOURCEFILES) \
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+	test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
+    test/test_qm_aux.cpp
 
 TEST_LDADD_VARS = \
 	test/libgtest.la \
@@ -266,6 +276,7 @@ TEST_LDADD_VARS = \
 test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_sial_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
+test_qm_aux_LDADD = $(TEST_LDADD_VARS)
 #test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
@@ -276,6 +287,7 @@ test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
 test/eom_test.dat\
+test/eom_water_dimer_test.dat\
 test/eom_lccsd_test.dat\
 test/eom_lccd_test.dat\
 test/eom_mp2_test.dat\
@@ -344,6 +356,7 @@ TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_qm_aux_LDFLAGS = $(TEST_LDFLAGS_VARS)
 #test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
@@ -486,7 +499,9 @@ SIOX_FILES=\
 ./src/sialx/qm/rccpt1p2_prop.siox\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
-./src/sialx/qm/rccsdpt_aab.siox
+./src/sialx/qm/rccsdpt_aab.siox\
+./src/sialx/qm/scf_rhf.siox\
+./src/sialx/qm/scf_rhf_defs.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -620,7 +635,9 @@ EXTRA_DIST += \
 ./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\
 ./src/sialx/qm/rccsdpt_aab_defs.sialx\
-./src/sialx/qm/rccsdpt_aab.sialx
+./src/sialx/qm/rccsdpt_aab.sialx\
+./src/sialx/qm/scf_rhf.sialx\
+./src/sialx/qm/scf_rhf_defs.sialx
 
 #./src/sialx/qm/scf_mp2_rhf.sialx\
 #./src/sialx/qm/scf_mp2_defs.sialx\

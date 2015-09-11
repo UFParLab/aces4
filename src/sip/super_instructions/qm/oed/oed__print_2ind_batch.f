@@ -44,7 +44,7 @@ C             ...include files and declare variables.
 C
 C
          INTEGER     N1,N2,N3
-         INTEGER     I,J,K,L
+         INTEGER     I,J,K,L,N
          INTEGER     UNITID
 
          DOUBLE PRECISION  BATCH  (1:N1,1:N2,1:N3)

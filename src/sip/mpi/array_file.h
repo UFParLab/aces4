@@ -120,7 +120,7 @@ public:
 			}
 		}
 
-		std::cout << "creating file " << file_name() << std::endl <<std::flush;
+//		std::cout << "creating file " << file_name() << std::endl <<std::flush;
 		write_header(); //currently, the header contains the number of blocks, chunk size, and number of servers
 
 		}
@@ -129,7 +129,7 @@ public:
 			int err = MPI_File_open(comm_, const_cast<char *>(file_name().c_str()),
 					 MPI_MODE_RDWR, MPI_INFO_NULL,
 					&fh_);
-			std::cout << "opening " << file_name() << std::endl << std::flush;
+//			std::cout << "opening " << file_name() << std::endl << std::flush;
 			check(err == MPI_SUCCESS, "failure opening existing array file " + file_name() + " at server");
 			read_header();
 			check(num_blocks == num_blocks_, "number of blocks in reopened file is different than expected");
@@ -146,16 +146,16 @@ public:
 	 * This is a collective operation
 	 */
 	~ArrayFile() {
-		std::cout << "in ~ArrayFile for " << *this << std::endl;
+//		std::cout << "in ~ArrayFile for " << *this << std::endl;
 		MPI_File_close(&fh_);
-		std::cout << "closed file " << file_name() << std::endl <<std::flush;
+//		std::cout << "closed file " << file_name() << std::endl <<std::flush;
 		if (is_persistent_){
-			std::cout << "renaming file " <<file_name() << std::endl <<std::flush;
+//			std::cout << "renaming file " <<file_name() << std::endl <<std::flush;
 			rename_persistent();
 		}
 		else {
 			if (!save_after_close_) {
-				std::cout << "deleting file " << file_name() << std::endl <<std::flush;
+//				std::cout << "deleting file " << file_name() << std::endl <<std::flush;
 				delete_file();
 			}
 		}
@@ -220,7 +220,7 @@ public:
 		MPI_Offset displacement = (NUM_VALS_IN_HEADER * sizeof(header_val_t))
 				+ (num_blocks_ * sizeof(offset_val_t));
 		//TODO add padding for alignment?
-		std::cout << "displacement to data view=" << displacement << std::endl;
+//DEBUG		std::cout << "displacement to data view=" << displacement << std::endl;
 		int err = MPI_File_set_view(fh_, displacement, MPI_DOUBLE, MPI_DOUBLE,
 				"native", MPI_INFO_NULL);
 		check(err == MPI_SUCCESS, "setting view to write data failed");
@@ -270,7 +270,8 @@ public:
 	}
 
 	/**
-	 * Reads the data for the given chunk from disk
+	 * Reads the data for the given chunk from disk.
+	 * Precondition:  chunk memory has been allocated
 	 *
 	 * This is not a collective operation
 	 *
@@ -287,6 +288,7 @@ public:
 
 	/**
 	 * Reads the data for the given chunk from disk
+	 * Precondition:  chunk memory has been allocated
 	 *
 	 * This is a collective operation
 	 *
@@ -356,11 +358,11 @@ public:
 					MPI_OFFSET_VAL_T, &status);
 			check(err == MPI_SUCCESS, "failure writing file index");
 
-			std::cerr << "combined index : ";
-			for (int i = 0; i < size; ++i){
-				std::cerr <<index[i] << ',';
-			}
-			std::cerr << std::endl << std::flush;
+//			std::cerr << "combined index : ";
+//			for (int i = 0; i < size; ++i){
+//				std::cerr <<index[i] << ',';
+//			}
+//			std::cerr << std::endl << std::flush;
 
 
 
@@ -446,7 +448,7 @@ public:
 		int err = std::remove(const_cast<char *>(new_name.c_str()));
 		//note that here the error is that the remove succeeded.
 		check_and_warn(err != 0, std::string("Deleted existing persistent file ") + new_name);
-		std::cout << "renaming " << name << " to " << new_name << std::endl << std::flush;
+//		std::cout << "renaming " << name << " to " << new_name << std::endl << std::flush;
 		err = std::rename(const_cast<char*>(name.c_str()),
 				const_cast<char*>(new_name.c_str()));
 		if (err != 0){

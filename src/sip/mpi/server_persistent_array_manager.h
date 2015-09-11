@@ -69,7 +69,7 @@ public:
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void restore_persistent(SIPServer* runner, int array_id, int string_slot);
+	void restore_persistent(SIPServer* runner, int array_id, int string_slot, int pc);
 
 
 	friend std::ostream& operator<< (std::ostream&, const ServerPersistentArrayManager&);
@@ -93,7 +93,7 @@ private:
      * @param array_id
      * @param string_slot
      */
-	void restore_persistent_distributed(SIPServer* runner, int array_id, int string_slot);
+	void restore_persistent_distributed(SIPServer* runner, int array_id, int string_slot, int pc);
 
 	/** inserts label, map pair into map of saved distributed arrays.
 	 * Warns if label has already been used.

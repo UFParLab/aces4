@@ -59,14 +59,9 @@ public:
 
 	BlockId num2id(int array_id, int block_number) const{
 		index_value_array_t index_array;
-//		int i = MAX_RANK-1;
-//		for (i ;i >= rank_; i--){
-//			index_array[i] = unused_index_value;
-//		}
 		int num = block_number;
 		for (int i = 0; i < rank_; i++){
 			int q = num/slice_sizes_[i];
-			std::cerr << "num, q, slice_sizes_[i]=" << num << "," << q << "," << slice_sizes_[i] << std::endl;
 			index_array[i] = q + lower_[i];
 			num -= (q*slice_sizes_[i]);
 		}

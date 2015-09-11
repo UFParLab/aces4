@@ -33,135 +33,210 @@ public:
 	typedef size_t block_num_t;
 	typedef ArrayFile::offset_val_t offset_val_t;
 
-	static const int MIN_BLOCKS_PER_CHUNK=4;
+	static const int BLOCKS_PER_CHUNK;
 	static const offset_val_t ABSENT_BLOCK_OFFSET;
 
 	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&, const DataDistribution&);
     ~DiskBackedBlockMap();
 
-	// Get blocks for reading, writing, updating
+	/**
+	 * Interface with server loop.
+	 * Returns block that will not be modified.
+	 * Precondition:  Block exists in map and in memory or on disk.
+	 * If necessary, the block is retrieved from disk.
+	 * This routine waits for pending write operations on block to complete.
+	 *
+	 * @param block_id
+	 * @param pc
+	 * @return  pointer to block with initialized memory.
+	 */
 	ServerBlock* get_block_for_reading(const BlockId& block_id, int pc);
-	ServerBlock* get_block_for_writing(const BlockId& block_id);
-//	ServerBlock* get_block_for_updating(const BlockId& block_id);
-	ServerBlock* get_block_for_accumulate(const BlockId& block_id);
-	ServerBlock* get_block_for_lazy_restore(const BlockId& block_id);
 
-	// Allocate and deallocate the given number of double precision values.
-	// This is used to allocate temporary buffers for asynchronous operations
-	// These should be used instead of new and delete in order so they are included in memory accounting
+	/**
+	 * Interface with server loop.
+	 * Returns block that will be overwritten by operation.
+	 * If the block does not exist, it will be created and data memory assigned and allocated.
+	 * Newly allocated memory is not initialized.
+	 * Waits for all pending asynchronous operations.
+	 * Invalidates disk copy
+	 *
+	 * @param block_id
+	 * @param pc
+	 * @return  pointer to block with possibly uninitialized memory.
+	 */
+	ServerBlock* get_block_for_writing(const BlockId& block_id);
+
+	/**
+	 * Interface with server loop.
+	 * Returns block that will be updated by operation.
+	 * If the block does not exist, it will be created and data memory assigned and allocated.
+	 * Newly allocated memory is initialized to 0
+	 * Does NOT wait for pending asynchronous operations.
+	 * Invalidates disk copy
+	 *
+	 * @param block_id
+	 * @return  poiter to block with initialized memory
+	 */
+	ServerBlock* get_block_for_accumulate(const BlockId& block_id);
+
+
+
+
+	/**
+	 * Allocate the given number of double precision values and update memory usage accounting.
+	 * This should be called instead of new to allocate temporary data for asynchronous operations.
+	 *
+	 * If not enough memory is available, the routine will backup blocks on disk and free their
+	 * memory.
+	 *
+	 * @param size
+	 * @param initialize   if true, allocated data will be initialized to 0
+	 * @return
+	 */
 	double* allocate_data(size_t size, bool initialize);//
-	//Sets the pointer to NULL
+
+	/**
+	 * Frees data that was allocated using allocate_data.
+	 * Sets the caller's data pointer to null.
+	 * Updates memory accounting.
+	 *
+	 * @param data
+	 * @param size
+	 */
 	void  free_data(double*& data, size_t size);
 
-	// Get entire arrays for save, restore operations
-//	IdBlockMap<ServerBlock>::PerArrayMap* get_and_remove_per_array_map(int array_id);
+
+
+
+	/**
+	 * Manages the entries for entire arrays in the block map.
+	 */
+
+/**
+ * Inserts the given map into the delegate block map at the slot belonging to the
+ * indicated array.  Just delegates to IdBlockMap delegate's.
+ *
+ * NOTE:  Currently unused.  But could be used if functionality that keeps persistent arrays
+ * in memory between sial programs is restored.
+ *
+ * @param array_id
+ * @param map_ptr
+ */
 	void insert_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr);
-	void delete_per_array_map_and_blocks(int array_id);
+
+	/**
+	 * Returns a pointer to the block map for the indicated array.
+	 *
+	 * Just delegates to IdBlockMap delegate's method.
+	 *
+	 * @param array_id
+	 * @return
+	 */
 	IdBlockMap<ServerBlock>::PerArrayMap* per_array_map(int array_id);
 
-	/*!
-	 * Restores the indicated persistent array from the file whose name was formed from the indicated label.
-	 *
-	 * This is a collective operation.
-	 *
-	 * @param array_id
-	 * @param label
-	 */
-	void restore_persistent_array(int array_id, std::string & label){
-
-		ArrayFile* old_file = array_files_.at(array_id);  //this is the file created based on array name
-		size_t num_blocks = sip_tables_.num_blocks(array_id);
-		ArrayFile::header_val_t expected_chunk_size = (sip_tables_.max_block_size(array_id)) * MIN_BLOCKS_PER_CHUNK;
-
-		//ArrayFile constructor checks that chunk size is as expected.
-
-		ArrayFile* file = new ArrayFile(num_blocks, expected_chunk_size, label, SIPMPIAttr::get_instance().company_communicator(), false /*new_file*/);
-		array_files_.at(array_id) = file;
-
-		//TODO at the moment, this chunk_manager should exist with correct parameters and be empty.
-		//It was created when a file was created for every distributed/served array.
-		//If this is changed, we need to revisit this and create manager if it is NULL
-		ChunkManager* manager = chunk_managers_.at(array_id);
-		//switch to ArrayFile containing saved data, delete the old one below.
-		manager->file_ = file;
-
-		eager_restore_chunks_from_index(array_id, file, chunk_managers_.at(array_id), num_blocks, data_distribution_);
-
-
-		if (old_file != NULL){
-			sial_warn(! old_file->is_persistent_ , "restoring on top of persistent array"
-					+ old_file->file_name() + "persistence lost");
-			delete old_file;
-		}
-	}
-
-
-	/*!
-	 * Reads all of the given file's chunks which belong to this server.
-	 *
-	 * Precondition:  the number of servers is unchanged from when the file was written.
-	 *
-	 * @param file
-	 * @param manager
-	 * @param num_blocks
-	 * @param distribution
-	 */
-	void eager_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution);
-
-
-
-
-	void lazy_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution);
 	/**
-	 * writes all chunks of given array to disk.  This is a collective operation.
+	 * Deletes the indicated array.
+	 *
+	 * All blocks for array are removed from the policy object, all blocks are deleted and
+	 * their map is removed from the block map (via a call to the delegate IdBlockMap).
+	 * Memory accounting is updated.    The backing disk file is not modified or deleted.
 	 * @param array_id
 	 */
-	void flush_array(int array_id){
-		chunk_managers_.at(array_id)->collective_flush();
-	}
+	void delete_per_array_map_and_blocks(int array_id);
 
-//	/**
-//	 * Marks the given array's ArrayFile object as persistent with the given label.
-//	 * @param array_id
-//	 * @param array_label
-//	 */
-//	void set_persistent(const int array_id, const std::string& array_label){
-//		array_files_.at(array_id)->set_persistent(array_label);
-//	}
+
+
+
+
+	/** Routines for persistent arrays
+	 *
+	 */
 
 	/**
 	 * Marks the given array's ArrayFile object as persistent with the given label and
 	 * then writes the blocks of the given array to disk using a a collective flush.
 	 * This routine is also responsible for writing the files index.
 	 *
-	 * The file is closed and renamed in the ArrayFile object's destructor
+	 * This routine is called by the persistent array manager on completion of the server loop.
+	 *
+	 * The file is closed and renamed with a filename derived from the label
+	 * in the ArrayFile object's destructor.
 	 *
 	 * @param array_id
 	 * @param label
 	 */
-	void save_persistent_array(int array_id, const std::string& label){
-		ArrayFile* file = array_files_.at(array_id);
-		ChunkManager* manager = chunk_managers_.at(array_id);
-		size_t num_blocks = sip_tables_.num_blocks(array_id);
-		file->mark_persistent(label);
-		manager->collective_flush();
-		std::vector<ArrayFile::offset_val_t> index_vals(num_blocks,ABSENT_BLOCK_OFFSET);
-		initialize_local_index(array_id, index_vals, num_blocks);
-		file->write_index(index_vals.data(), num_blocks);
-	}
+	void save_persistent_array(int array_id, const std::string& label);
+
+
+	/**
+	 * Restores the indicated persistent array from the
+	 * file whose name was formed from the indicated label.
+	 *
+	 * If restoration is eager, a new file is created and the old file is deleted.
+	 * If the array has undergone disk backing, traverse blocks and restore those first.
+	 *
+	 * TODO   Currently, this routine requires that the number of servers when the file
+	 * was save is the same as the number of servers now.
+	 *
+	 * TODO  Only eager restoration is currently implemented.
+	 *
+	 * @param array_id  "destination" array
+	 * @param label     label used to save array in previous sial program
+	 * @param eager     if true, all blocks of array are collectively restored.  Otherwise,
+	 *                     chunks are read in when accessed.
+	 */
+	void restore_persistent_array(int array_id, std::string & label, bool eager, int pc);
+
+
+
+	/**
+	 * writes all chunks of given array to disk.  This is a collective operation.
+	 * @param array_id
+	 */
+	void flush_array(int array_id);
 
 	friend std::ostream& operator<<(std::ostream& os, const DiskBackedBlockMap& obj);
 	friend class SIPServer;
-	std::ostream& gather_statistics(std::ostream& out){
-		return out;
-	}
-//unneeded, set in constructor
-//	/** Sets max_allocatable_bytes_ */
-//    void set_max_allocatable_bytes(std::size_t size);
+
+	/**
+	 * Encapsulates timers and printers for this class.
+	 *
+	 * If owned classes have their own timers,
+	 * this gather_and_print_statistics should invoke theirs.
+	 */
+	struct Stats{
+		MPIMaxCounter allocated_doubles_;
+		MPICounter blocks_to_disk_;
+		MPICounter num_restored_arrays_with_disk_backing_;
+
+		explicit Stats(const MPI_Comm& comm):
+			allocated_doubles_(comm),
+			blocks_to_disk_(comm),
+			num_restored_arrays_with_disk_backing_(comm){
+		}
+
+		std::ostream& gather_and_print_statistics(std::ostream& os){
+		allocated_doubles_.gather();
+		blocks_to_disk_.gather();
+		num_restored_arrays_with_disk_backing_.reduce();
+		if (SIPMPIAttr::get_instance().is_company_master()){
+		os << std::endl << "allocated_doubles_" << std::endl;
+		os << allocated_doubles_ ;
+		os << std::endl << "blocks_to_disk_" << std::endl;
+		os << blocks_to_disk_ ;
+		os << std::endl << "num_restored_arrays_with_disk_backing_" << std::endl;
+		os << num_restored_arrays_with_disk_backing_ ;
+		}
+		return os;
+		}
+	};
+
 
 private:
 
 	/**
+	 * Called by DiskBackedBlockMap constructor
+	 *
 	 * initialize files_ and chunk_managers_
 	 *
 	 * collectively opens a file and creates a chunk_manager for each distributed or served array.
@@ -170,33 +245,20 @@ private:
 
 
 	/**
-	 * closes files, and deletes ArrayFile objects
-	 * and ChunkManager objects.  Persistent files should
-	 * have been handled with save_persistent_array.
+	 * Called by DiskBackedBlockMap destructor
+	 *
+	 * Deletes ArrayFile and ChunkManager objects.  The former closes the file.  Non-persistent
+	 * files are deleted, persistent files are renamed.
+	 *
+	 * Precondition:  save_persistent_array has been called for each persistent array.
 	 */
 	void _finalize();
 
-    void initialize_local_index(int array_id, std::vector<ArrayFile::offset_val_t>& index_vals, size_t num_blocks){
-    	std::cerr << "in initialize_local_index:  num_blocks=" << num_blocks << std::endl;
-    	IdBlockMap<ServerBlock>::PerArrayMap* array_blocks = block_map_.per_array_map(array_id);
-    	check (array_blocks->size()<=num_blocks, "mismatch between number of blocks in map and num_blocks");
-    	IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
-    	for (it = array_blocks->begin(); it!=array_blocks->end(); ++it){
-    		BlockId block_id = it->first;
-    		std::cerr << "adding block_id " << block_id << " to local index." << std::endl << std::flush;
-    		int block_num = sip_tables_.block_number(it->first);
-    		std::cerr <<" adding offset for block " << block_num << std::endl;
-    		ServerBlock* block = it->second;
-    		ArrayFile::offset_val_t offset = block->block_data_.file_offset();
-    		index_vals.at(block_num) = offset;
-    	}
-    	std::cerr << std::flush;
-    }
-
-
     /**
      * Creates a new block belonging to the indicated array with the given size.
-     * Updates the memory counters.  The blocks data array is allocated if necessary.
+     * Assigns memory for data from chunk, and ensures that the memory has been allocated.
+     * If initialize, the memory is initialized to 0
+     * Memory usage counters are updated.
      *
      * @param array_id
      * @param block_size
@@ -206,8 +268,93 @@ private:
 
     ServerBlock* create_block(int array_id, size_t block_size, bool initialize);
 
+    /**
+     * Gets block for restore.  If the block is not already in the map, it is created
+     * and added to the map.
+     *
+     * @param block_id
+     * @param array_id
+     * @param block_size
+     * @return
+     */
+    ServerBlock* get_block_for_restore(BlockId block_id, int array_id, size_t block_size);
 
     /**
+     * Reads chunk containing the indicated block from disk.
+     *
+     * Returns the number of doubles allocated.
+     *
+     * @param block
+     * @param block_id
+     * @return
+     */size_t read_chunk_from_disk(ServerBlock* block, const BlockId& block_id);
+
+
+    /**
+     * Frees the requested number of doubles by writing chunk data to disk and updating
+     * the "valid_on_disk" flag for those chunks.
+     *
+     * Returns the actual number of doubles freed.  The caller is responsible for using
+     * the returned value for memory accounting.
+     *
+     * @param requested_doubles_to_free
+     * @return
+     */
+	size_t backup_and_free_doubles(size_t requested_doubles_to_free);
+
+
+
+	/**
+	 * Traverse the map for the given array and construct an index of block offsets.
+	 * For blocks owned by this server, the value is the offset (relative to the beginning of
+	 * the data part) of the file.  For unformed blocks, or blocks not owned by this server,
+	 * the value is ABSENT_BLOCK_OFFSET
+	 *
+	 * @param array_id
+	 * @param index_vals
+	 * @param num_blocks
+	 */
+    void initialize_local_index(int array_id, std::vector<ArrayFile::offset_val_t>& index_vals, size_t num_blocks);
+
+
+	/*!
+	 * Collectively reads all of the given file's chunks which belong to this server.
+	 *
+	 * Precondition:  the number of servers is unchanged from when the file was written.
+	 * TODO relax this requirement
+	 *
+	 * @param file
+	 * @param manager
+	 * @param num_blocks
+	 * @param distribution
+	 */
+	void eager_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution);
+
+
+	/**
+	 * UNTESTED!!!!
+	 * Creates an entry in the block map and assigns chunk data for each block, which is marked,
+	 * valid on disk.  The chunk is read when one of its blocks is accessed.
+	 *
+	 * @param array_id
+	 * @param file
+	 * @param manager
+	 * @param num_blocks
+	 * @param distribution
+	 */
+	void lazy_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution);
+	/**
+	 * UNTESTED!!!
+	 * Like get_block_for_writing
+	 * If block does not exist, it will be created and
+	 * data memory will be assigned, but not allocated.
+	 * @param block_id
+	 * @return
+	 */
+	ServerBlock* get_block_for_lazy_restore(const BlockId& block_id);
+
+    /**
+     * UNTESTED!!!
      * Creates a new block belonging to the indicated array with the given size.
      * Updates the memory counters.
      *
@@ -221,18 +368,6 @@ private:
 
      ServerBlock* create_block_for_lazy_restore(int array_id, size_t block_size);
 
-    size_t read_chunk_from_disk(ServerBlock* block, const BlockId& block_id);
-
-
-
-    // Attempts to free the requested number of doubles (i.e. increase remaining
-    // by at least requested_doubles_to_free
-    // by writing block data to disk.  Returns the actual size freed.
-    // The caller is responsible for using the returned value to update remaining_doubles_
-    // This method updates the state of blocks that are freed on disk
-	size_t backup_and_free_doubles(size_t requested_doubles_to_free);
-
-	//ServerBlock* get_or_create_block(const BlockId& block_id, size_t block_size, bool initialize);
 
     const SipTables &sip_tables_;
 	const SIPMPIAttr & sip_mpi_attr_;
@@ -242,12 +377,12 @@ private:
     // after the block_map_ has been constructed, 
     // policy_ must appear after the declaration
     // of block_map_ here. 
-//	DiskBackedArraysIO disk_backed_arrays_io_;	/*! interface to disk io for blocks */
 
-	IdBlockMap<ServerBlock> block_map_;			/*! interface to memory block map */
-    LRUArrayPolicy<ServerBlock> policy_;		/*! block replacement policy */
+	IdBlockMap<ServerBlock> block_map_;			
+    LRUArrayPolicy<ServerBlock> policy_;		
 	std::vector<ArrayFile*> array_files_;
 	std::vector<ChunkManager*> chunk_managers_;
+	std::vector<bool> disk_backing_;  //indicates whether array has been involved in disk backing
 
 
     /** Maximum number of bytes before spilling over to disk */
@@ -257,15 +392,31 @@ private:
 	/** Remaining number of double precision numbers that can be allocated
 	 * without exceeding max_allocatable_bytes_
 	 *
+	 * There are a few places where this value can be negative.
+	 *
 	 * This value is updated whenever memory is allocated or released in allocating the
 	 * data portion of a block, or the temp buffer for an asynchronous operation.
 	 */
-	std::size_t remaining_doubles_;
-	MPIMaxCounter allocated_doubles_; //init to mem size, and subtract to record min.
-	MPICounter blocks_to_disk_;
+	long remaining_doubles_;
 
+	Stats stats_;
 
 };
+
+
+//Inlined functions
+
+inline void DiskBackedBlockMap::insert_per_array_map(int array_id, IdBlockMap<ServerBlock>::PerArrayMap* map_ptr){
+	block_map_.insert_per_array_map(array_id, map_ptr);
+}
+
+inline IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map(int array_id){
+		return block_map_.per_array_map(array_id);
+	}
+
+inline void DiskBackedBlockMap::flush_array(int array_id){
+	chunk_managers_.at(array_id)->collective_flush();
+}
 
 } /* namespace sip */
 

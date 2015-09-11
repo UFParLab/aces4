@@ -175,6 +175,17 @@ public:
     dataPtr fill_data(double value);
     dataPtr increment_data(double delta);
     dataPtr scale_data(double factor);
+    dataPtr copy_data(ServerBlock* source_block){
+    	double* data = block_data_.get_data();
+    	double* source_data = source_block->get_data();
+    	check(size() == source_block->size(), "mismatched sizes in server block copy");
+    	check(data != NULL, "attempting to copy into block with null data_");
+    	check(source_data != NULL, "attempting to accumulate from null dataPtr");
+    	for (size_t i = 0; i < size(); ++i){
+    			data[i] = source_data[i];
+    	}
+    	return data;
+    }
 
 	void wait(){ async_state_.wait_all();}
 	void wait_for_writes(){ async_state_.wait_for_writes();}

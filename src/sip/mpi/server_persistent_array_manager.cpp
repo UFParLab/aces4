@@ -40,7 +40,7 @@ namespace sip {
 	}
 
 
-	void ServerPersistentArrayManager::restore_persistent(SIPServer* runner, int array_id, int string_slot){
+	void ServerPersistentArrayManager::restore_persistent(SIPServer* runner, int array_id, int string_slot, int pc){
 //		SIP_LOG(std::cout << "restore_persistent: array= " <<
 //				runner->array_name(array_id) << ", label=" <<
 //				runner->string_literal(string_slot) << std::endl;)
@@ -48,14 +48,15 @@ namespace sip {
 		sip::check ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
 							" Tried to restore a scalar or contiguous array. Something went very wrong in the server.");
 
-		restore_persistent_distributed(runner, array_id, string_slot);
+		restore_persistent_distributed(runner, array_id, string_slot, pc);
 	}
 
 
 	void ServerPersistentArrayManager::restore_persistent_distributed(SIPServer* runner,
-			int array_id, int string_slot) {
+			int array_id, int string_slot, int pc) {
 		std::string label = runner->sip_tables()->string_literal(string_slot);
-		runner->disk_backed_block_map_.restore_persistent_array(array_id, label);
+		bool eager = true;
+		runner->disk_backed_block_map_.restore_persistent_array(array_id, label, eager, pc);
 	}
 
 //TODO  don't need array_blocks parameter any more

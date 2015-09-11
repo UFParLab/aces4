@@ -102,9 +102,12 @@ protected:
 	DISALLOW_COPY_AND_ASSIGN(SingleNodeCounter);
 };
 
+
+
+
 class MPICounter: public Counter<MPICounter> {
 public:
-	MPICounter(const MPI_Comm& comm) :
+	explicit MPICounter(const MPI_Comm& comm) :
 			comm_(comm), gathered_vals_(0), reduced_val_(0), gather_done_(
 					false), reduce_done_(false) {
 	}
@@ -115,6 +118,9 @@ protected:
 	const MPI_Comm& comm_;
 	std::vector<size_t> gathered_vals_;
 	size_t reduced_val_;
+	bool gather_done_;
+	bool reduce_done_;
+
 	std::ostream& stream_out(std::ostream& os) const {
 		if (!gather_done_ && !reduce_done_) {
 			//print own data
@@ -145,8 +151,8 @@ protected:
 		return os;
 	}
 	void gather_impl() {
-		check(sizeof(MPI_UNSIGNED_LONG) == sizeof(size_t),
-				"mismatch in  mpi and c++ type ");
+//		check(sizeof(MPI_UNSIGNED_LONG) == sizeof(size_t),
+//				"mismatch in  mpi and c++ type ");
 		int rank;
 		int comm_size;
 		MPI_Comm_rank(comm_, &rank);
@@ -159,7 +165,7 @@ protected:
 			MPI_Gather(&value_, 1, MPI_UNSIGNED_LONG, gathered_vals_.data(), 1,
 					MPI_UNSIGNED_LONG, 0, comm_);
 		} else {
-			gathered_vals_[0] = value_;
+			gathered_vals_.at(0) = value_;
 		}
 	}
 	void reduce_impl() {
@@ -178,8 +184,7 @@ protected:
 			reduce_done_ = true;
 		}
 	}
-	bool gather_done_;
-	bool reduce_done_;
+
 private:
 	DISALLOW_COPY_AND_ASSIGN(MPICounter);
 };
@@ -325,7 +330,7 @@ private:
 template<typename T, typename D>
 class MaxCounter {
 public:
-	MaxCounter(D init = 0) :
+	explicit MaxCounter(D init = 0) :
 			value_(init), max_(init) {
 	}
 
@@ -468,7 +473,7 @@ protected:
 			gathered_max_[0] = max_;
 		}
 	}
-	void reduce_iml(){
+	void reduce_impl(){
 		int rank;
 		int comm_size;
 		MPI_Comm_rank(comm_, &rank);

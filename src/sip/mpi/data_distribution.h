@@ -19,6 +19,9 @@ namespace sip {
 
 /**
  * Decides distribution of block (statically)
+ *
+ * TODO server ranks should always be relative to server communicator.
+ * need to change sial_ops_parallel to use an intercommunicator.
  */
 class DataDistribution {
 public:
@@ -47,19 +50,19 @@ public:
 //											std::list<BlockId>& all_blocks,
 //											const SipTables& sip_tables) const;
 
-	long block_position_in_array(const sip::BlockId& bid) const;
+//	long block_position_in_array(const sip::BlockId& bid) const;
 private:
 
 	const SipTables& sip_tables_;
 	SIPMPIAttr& sip_mpi_attr_;
 
 
-	void validate_block_position(const sip::BlockId& bid, long block_num) const;
+//	void validate_block_position(const sip::BlockId& bid, long block_num) const;
 	int server_rank_from_hash(std::size_t hash) const;
 
 
-	bool increment_indices(int rank, index_value_array_t& upper,
-			index_value_array_t& lower, index_value_array_t& current) const;
+//	bool increment_indices(int rank, index_value_array_t& upper,
+//			index_value_array_t& lower, index_value_array_t& current) const;
 
 };
 
