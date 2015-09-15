@@ -58,8 +58,6 @@ scalar rank
 int myrank
 int root
 #
-static ca[mu,p]
-static fock_a[p,p1]
 static SEk[ksub]
 static SEkold[kstate]
 static SEk0[kstate]

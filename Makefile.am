@@ -303,6 +303,7 @@ test/eom_mp2_test.dat\
 test/lindep_test.dat\
 test/rlambda_test.dat\
 test/lccd_test.dat\
+test/lccd_frozencore_test.dat\
 test/lccsd_test.dat\
 test/expected_output/helloworld1.txt\
 test/expected_output/local_arrays_wild.txt\

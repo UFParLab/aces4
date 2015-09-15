@@ -85,8 +85,6 @@
       static Xijk[NT,i7] 
       distributed t1as_old[a,ii] 
       temp tps[a,ii] 
-      static ca[mu,p] 
-      static fock_a[p,p1] 
 #
       temp dpppp[p,p1,p2,p3] 
       temp tpppp[p,p1,p2,p3] 

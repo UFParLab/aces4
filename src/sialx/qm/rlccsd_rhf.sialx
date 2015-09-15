@@ -56,8 +56,6 @@
 # Declare static arrays 
 # --------------------- 
 #
-      static ca[mu,p] 
-      static fock_a[p,p1] 
 # 
 # Declare distributed arrays 
 # --------------------- 

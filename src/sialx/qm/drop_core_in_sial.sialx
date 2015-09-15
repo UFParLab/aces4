@@ -1,7 +1,7 @@
 import "scf_defs.sialx"
 SIAL drop_core_in_sial
       aoindex mu     = 1: norb
-      moaindex i = baocc: eaocc
+      moaindex i = 1: eaocc
       scalar rank
       static tc[mu,i]
       contiguous local lcca[mu,i]

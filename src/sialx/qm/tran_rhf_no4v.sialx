@@ -100,7 +100,6 @@ import "tran_rhf_no4v_defs.sialx"
       served Vpiqj[p,i,q,j]
 
       static ZZ[mu,nu] 
-      static ca[mu,p] 
 #
 # Declare temporary arrays 
 # ------------------------ 

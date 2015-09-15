@@ -50,9 +50,6 @@ scalar srank
 int myrank
 int root
 #
-static ca[mu,p]
-static fock_a[p,p1]
-
 temp  tpipi [p,i,p1,i1]
 temp  tiaia [i,a,i1,a1]
 temp  tjbjb [j,b,j1,b1]
