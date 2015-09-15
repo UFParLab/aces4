@@ -70,8 +70,6 @@
       distributed FTa[p,p1] 
 
       static zz[mu,nu] 
-      static ca[mu,p] 
-      static fock_a[p,p1] 
 #
 # Arrays used in the DIIS 
 # -----------------------

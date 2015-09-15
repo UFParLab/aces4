@@ -63,8 +63,6 @@ import "reom_rhf_defs.sialx"
       scalar ecis_d
       scalar kroot
 #
-      static ca[mu,p] 
-      static fock_a[p,p1] 
       static Ek[kstate]
       static Ekd[kstate]
       contiguous local CIS_D_EE_Energy[kstate]

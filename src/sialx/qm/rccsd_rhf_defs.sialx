@@ -29,10 +29,15 @@ predefined  scalar cc_conv
 scalar has_singles
 scalar is_ccpt
 
-#these are predefined in the index table         
-moaindex aces_defs_pa = baocc: eavirt  
-mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC.
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC.
+static fock_a[aces_defs_pa, aces_defs_pa]
+static fock_b[aces_defs_pb, aces_defs_pb]
+static fockrohf_a[aces_defs_mu,aces_defs_mu]
+static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 scalar scf_energy  
 scalar totenerg
