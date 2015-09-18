@@ -303,7 +303,7 @@ bool TestControllerParallel::runServer() {
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< prog_name_ << "TERMINATED SERVER" << std::endl << std::flush;
 		}
-		spam_->save_marked_arrays(server_);
+		spam_->save_marked_arrays(server_, NULL);
 	}
 	sial_output_ << std::flush;
 	return this_test_enabled_;

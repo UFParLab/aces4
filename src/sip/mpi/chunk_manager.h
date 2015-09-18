@@ -227,6 +227,14 @@ public:
 	size_t collective_restore();
 
 	/**
+	 * Restores all chunks for this array that are not in memory from disk.
+	 * Returns number of doubles that were allocated.
+	 *
+	 * This is a not a collective operation
+	 */
+	size_t restore();
+
+	/**
 	 * Determines the maximum number of chunks on any server.
 	 *
 	 * This is a collective operation

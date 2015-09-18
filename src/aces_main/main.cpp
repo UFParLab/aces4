@@ -230,9 +230,10 @@ int main(int argc, char* argv[]) {
 			SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server;);
 
 			sip::MPITimer save_persistent_timer(sip_mpi_attr.company_communicator());
+			sip::MPITimerList save_persistent_timers(sip_mpi_attr.company_communicator(), sipTables.num_arrays());
 
 			save_persistent_timer.start();
-			persistent_server.save_marked_arrays(&server);
+			persistent_server.save_marked_arrays(&server, &save_persistent_timers);
 			save_persistent_timer.pause();
 
 			//print worker stats before barrier
@@ -241,9 +242,11 @@ int main(int argc, char* argv[]) {
 			server.gather_and_print_statistics(server_stat_os);
 			//print persistent array stats
 			save_persistent_timer.gather();
+			save_persistent_timers.gather();
 		  if(sip_mpi_attr.is_company_master()){
-			server_stat_os << std::endl << "Save persistent array times" << std::endl;
+			server_stat_os << std::endl << "Save persistent array times, total and per array" << std::endl;
 			server_stat_os << save_persistent_timer << std::endl << std::flush;
+			server_stat_os << save_persistent_timers << std::endl << std::flush;
 		  }
 		} else
 #endif

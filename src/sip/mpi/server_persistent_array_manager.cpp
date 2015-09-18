@@ -11,7 +11,7 @@
 
 namespace sip {
 
-	ServerPersistentArrayManager::ServerPersistentArrayManager() {}
+	ServerPersistentArrayManager::ServerPersistentArrayManager(){}
 
 	ServerPersistentArrayManager::~ServerPersistentArrayManager() {}
 
@@ -23,7 +23,7 @@ namespace sip {
 	}
 
 
-	void ServerPersistentArrayManager::save_marked_arrays(SIPServer* runner) {
+	void ServerPersistentArrayManager::save_marked_arrays(SIPServer* runner, MPITimerList* save_persistent_timers) {
 		ArrayIdLabelMap::iterator it;
 		for (it = persistent_array_map_.begin();
 				it != persistent_array_map_.end(); ++it) {
@@ -34,7 +34,9 @@ namespace sip {
 					" Tried to save a scalar or contiguous array. Something went very wrong in the server.");
 
 			IdBlockMap<ServerBlock>::PerArrayMap* per_array_map = runner->per_array_map(array_id);
+			if (save_persistent_timers != NULL) save_persistent_timers->start(array_id);
 			save_distributed(runner, array_id, label, per_array_map);
+			if (save_persistent_timers != NULL) save_persistent_timers->pause(array_id);
 		}
 		persistent_array_map_.clear();
 	}
@@ -47,7 +49,6 @@ namespace sip {
 
 		sip::check ( !runner->sip_tables()->is_scalar(array_id) && !runner->sip_tables()->is_contiguous(array_id),
 							" Tried to restore a scalar or contiguous array. Something went very wrong in the server.");
-
 		restore_persistent_distributed(runner, array_id, string_slot, pc);
 	}
 

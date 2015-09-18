@@ -527,6 +527,7 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 
 	//set terminated flag;
 	terminated_ = true;
+	disk_backed_block_map_.stats_.finalize(&disk_backed_block_map_);
 
 }
 
@@ -653,6 +654,7 @@ std::ostream& SIPServer::Stats::gather_and_print_statistics(std::ostream& os, SI
 	handle_op_timer_.reduce();
 	num_ops_.gather();
 	server->async_ops_.pending_counter_.gather();
+
 	if (server->sip_mpi_attr_.is_company_master()){
 		os << "\n\nServer statistics"<< std::endl << std::endl;
 		std::ios saved_format(NULL);

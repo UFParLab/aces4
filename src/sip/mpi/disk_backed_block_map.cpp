@@ -66,7 +66,7 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 				sip::GlobalState::get_max_server_data_memory_usage()), max_allocatable_doubles_(
 				max_allocatable_bytes_ / sizeof(double))
 , remaining_doubles_(max_allocatable_doubles_)
-,stats_(sip_mpi_attr.company_communicator())
+,stats_(sip_mpi_attr.company_communicator(), this)
 {
    _init();
 }
@@ -99,11 +99,12 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id,
 		if (in_memory){
 			block->wait_for_writes();
 		}
-		else {
-			bool valid_on_disk = block->block_data_.chunk_->valid_on_disk_;
-			check(valid_on_disk,
-					"existing block is neither in memory or on disk");
+		else if (block->block_data_.chunk_->valid_on_disk_){
 			read_chunk_from_disk(block, block_id);
+		}
+		else {
+			check(false,
+					"existing block is neither in memory or on disk" + block_id.str(sip_tables_));
 		}
 	}
 	policy_.touch(block_id);
@@ -119,8 +120,6 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(
 
 	if (block == NULL) {
 		//create new uninitialized block
-		SIP_LOG(
-				std::stringstream msg; msg << "S "; msg << sip_mpi_attr_.global_rank(); msg << " : getting uninitialized block " << block_id << ".  Creating zero block for writing"<< std::endl; std::cout << msg.str() << std::flush);
 		size_t block_size = sip_tables_.block_size(block_id);
 		block = create_block(block_id.array_id(), block_size, false);
 		block_map_.insert_block(block_id, block);
@@ -129,12 +128,13 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(
 		if (in_memory){
 			block->wait();
 		}
-		else {  //block is on disk, we read the chunk it belongs to before invalidating the disk copy.
+		else if (block->block_data_.chunk_->valid_on_disk_){
+			    //block is on disk, we read the chunk it belongs to before invalidating the disk copy.
 			    //we need to do this because of other blocks in the chunk
-			bool valid_on_disk = block->block_data_.chunk_->valid_on_disk_;
-			check(valid_on_disk,
-					"existing block is neither in memory or on disk");
 			read_chunk_from_disk(block, block_id);
+		}
+		else {
+			check(false, "existing block is neither in memory or on disk " + block_id.str(sip_tables_));
 		}
 	}
 	block->block_data_.chunk_->valid_on_disk_=false;
@@ -154,13 +154,6 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(
 
 	if (block == NULL) {
 		//create block with data initialized to zero and insert in map
-		SIP_LOG(
-		std::stringstream msg;
-		msg << "S " << sip_mpi_attr_.global_rank();
-		msg << " : getting uninitialized block " << block_id
-		<< ".  Creating zero block for accumulating " << std::endl;
-		std::cout << msg.str() << std::flush;)
-
 		size_t block_size = sip_tables_.block_size(block_id);
 		block = create_block(block_id.array_id(), block_size,  true); //blocks for accumulate must be initialize to zero
 		block_map_.insert_block(block_id, block);
@@ -169,11 +162,16 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(
 		//note that we do not wait for pending ops to complete when block is to be used in accumulate
 		//if here, the block exists.  If not in memory, read data from disk
 		bool in_memory = (block->block_data_.get_data() != NULL);
-		bool valid_on_disk = block->block_data_.chunk_->valid_on_disk_;
-		check(in_memory || valid_on_disk,
-				"existing block is neither in memory or on disk");
-		if (!in_memory ){
-				read_chunk_from_disk(block, block_id);
+		if (in_memory){
+			block->wait();
+		}
+		else if (block->block_data_.chunk_->valid_on_disk_){
+			    //block is on disk, we read the chunk it belongs to before invalidating the disk copy.
+			    //we need to do this because of other blocks in the chunk
+			read_chunk_from_disk(block, block_id);
+		}
+		else {
+			check(false, "existing block is neither in memory or on disk " + block_id.str(sip_tables_));
 		}
 	}
 	block->block_data_.chunk_->valid_on_disk_ = false;
@@ -188,7 +186,7 @@ double* DiskBackedBlockMap::allocate_data(size_t size, bool initialize){
 	double* data = NULL;
 	bool allocated = false;
 	while (!allocated) {
-		freed = backup_and_free_doubles(to_free); //free_doubles simply returns 0 if to_free <= 0
+		freed = backup_and_free_doubles(to_free); //returns 0 if to_free <= 0
 		try {
 			if (initialize){
 			data = new double[size]();
@@ -206,7 +204,7 @@ double* DiskBackedBlockMap::allocate_data(size_t size, bool initialize){
 			//Just free more blocks and try again
 			//However, if freed < to_free, then just give up
 			if (freed < to_free){
-				fail(" Could not requested amount of memory and allocate failed");
+				fail(" Could not free requested amount of memory and allocate failed");
 			}
 			to_free = size; //in case it was zero
 		}
@@ -222,6 +220,9 @@ void DiskBackedBlockMap::free_data(double*& data, size_t size){
 	stats_.allocated_doubles_.inc(-size);
 }
 
+IdBlockMap<ServerBlock>::PerArrayMap* DiskBackedBlockMap::per_array_map_or_null(int array_id){
+	return block_map_.per_array_map_or_null(array_id);
+}
 
 void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id) {
 	 // remove from block replacement policy object
@@ -256,19 +257,18 @@ void DiskBackedBlockMap::save_persistent_array(int array_id, const std::string& 
 void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & label, bool eager, int pc){
 
 	//get the existing file, map, and chunk_manager for this array.
-	ArrayFile* old_file = array_files_.at(array_id);  //this is the file created based on array name
+	ArrayFile* old_file = array_files_.at(array_id);  //this is the file that was created during initialization
 	IdBlockMap<ServerBlock>::PerArrayMap* old_map = block_map_.per_array_map_or_null(array_id);
 	ChunkManager* old_manager = chunk_managers_.at(array_id);
 	if (old_map != NULL && old_map->size() > 0){
 		//blocks have already been created for this array.
 		//If any have been backed to disk, using the old file and old manager,
 		//restore them now and update memory accounting.
-		if (disk_backing_.at(array_id)){
 			stats_.num_restored_arrays_with_disk_backing_.inc();
-		    size_t allocated = old_manager->collective_restore();
+		    size_t allocated = old_manager->restore();
 	        remaining_doubles_ -= allocated;
 		    stats_.allocated_doubles_.inc(allocated);
-		}
+
 	}
 
 	//Create a new ArrayFile object, map, and chunk manager

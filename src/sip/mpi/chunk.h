@@ -25,7 +25,11 @@ class ServerBlock;
 /** Entries in ChunkMap.  Each entry represents a chunk
  *
  *This is a fairly passive container, its state is controlled by the containing ChunkList class.
- *In particular, the lifetime of the data array is managed elsewhere.
+ *In particular, the lifetime of the data array is managed there.
+ *
+ *Invariant:  data_ != NULL => chunk memory contains valid data
+ *Invariant:  data_ != NULL \/ valid_on_disk_
+ *Invariant:  block \in blocks_ <=> block.chunk_ = this
  */
 class Chunk {
 
@@ -78,7 +82,7 @@ public:
 	}
 
 private:
-	data_ptr_t data_;  //pointer to beginning of chunk
+	data_ptr_t data_;  //pointer to beginning of chunk memory, may be NULL
 	offset_val_t file_offset_; //offset is in units of doubles starting at 0.
 	                           //We can start at 0 because any accesses to chunk data on
 	                           //disk should be in a file view with displacement set to

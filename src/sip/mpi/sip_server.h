@@ -339,7 +339,7 @@ public:
 
 	std::ostream& gather_and_print_statistics(std::ostream& os){
 		stats_.gather_and_print_statistics(os, this);
-		disk_backed_block_map_.stats_.gather_and_print_statistics(os);
+		disk_backed_block_map_.stats_.gather_and_print_statistics(os, &disk_backed_block_map_);
 		return os;
 	}
 

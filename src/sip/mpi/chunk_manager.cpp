@@ -205,6 +205,20 @@ for (int i = chunks_read; i < max; ++i){
 return doubles_allocated;
 }
 
+size_t ChunkManager::restore(){
+size_t doubles_allocated = 0;
+chunks_t::iterator rit;
+int chunks_read = 0;
+for (rit = chunks_.begin(); rit != chunks_.end(); ++rit){
+	if ( (*rit)->data_ == NULL){
+		doubles_allocated += reallocate_chunk_data(*rit);
+		file_->chunk_read(**rit);
+		chunks_read ++;
+	}
+}
+return doubles_allocated;
+}
+
 
 //This is a collective operation
 int ChunkManager::max_num_chunks() const{

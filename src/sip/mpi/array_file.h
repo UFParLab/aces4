@@ -18,6 +18,7 @@
 #include "sip.h"
 #include "chunk.h"
 #include "data_distribution.h"
+#include "counter.h"
 
 namespace sip {
 
@@ -33,15 +34,15 @@ class ChunkManager;
  *
  *
  * <header> ::= <header_val_t num_blocks> <header_val_t chunk_size> <header_val_t num_servers>
- * <index> ::=  <MPI_Offset><MPI_Offset>*  where the length of this list is num_blocks
+ * <index> ::=  <MPI_Offset>*  where the length of this list is num_blocks
  * <data> ::= <double>*
+ *
  *
  * Each server is allocated disk space in chunk_size sized chunks (chunk_size is in units of
  * double) in a round robin fashion.
  *
  * Invariant:  file view is set for reading data.  Thus methods that change the view must
- * reset it to the view for data.  Since read or write header is called in the constructor,
- * the invariant is established by the constructor.
+ * reset it to the view for data.
  *
  */
 class ArrayFile {
@@ -92,10 +93,9 @@ public:
 	ArrayFile(header_val_t num_blocks, header_val_t chunk_size, const std::string& name,
 			const MPI_Comm& comm, bool new_file, bool save_after_close = false) :
 			num_blocks_(num_blocks), chunk_size_(chunk_size), name_(name), is_persistent_(
-					false), save_after_close_(save_after_close), label_(std::string(name)), comm_(comm) {
+					false), save_after_close_(save_after_close), label_(std::string(name)), comm_(comm), stats_(comm) {
 
 		check_implementation_limits();
-
 
 		if (new_file){
 			//open file, creating if necessary.
@@ -107,10 +107,6 @@ public:
 			//a file with this name already exists.  It might contain persistent data
 			//or it might just be left over from an aborted previous job.
 			//In any case, we will try to create a unique name.
-			//If the existing file contains persistent data, then this new file will
-			// be deleted when the existing file is restored, and the existing file
-			// will be deleted at the end of the sial program unless it has been marked
-			// as persistent again.
 			name_ = name + std::string("_");
 			err = MPI_File_open(comm_, const_cast<char *>(file_name().c_str()),
 					 MPI_MODE_CREATE | MPI_MODE_EXCL | MPI_MODE_RDWR, MPI_INFO_NULL,
@@ -119,17 +115,20 @@ public:
 				check(fail, "error creating new files " + name + " and " + name_);
 			}
 		}
-
+//if(comm_rank() == 0){
 //		std::cout << "creating file " << file_name() << std::endl <<std::flush;
+//}
 		write_header(); //currently, the header contains the number of blocks, chunk size, and number of servers
 
 		}
 		else {
 			//file must exist.  Read and broadcast header and check that values are as expected.
-			int err = MPI_File_open(comm_, const_cast<char *>(file_name().c_str()),
+			int err = MPI_File_open(comm_, const_cast<char *>(persistent_file_name().c_str()),
 					 MPI_MODE_RDWR, MPI_INFO_NULL,
 					&fh_);
-//			std::cout << "opening " << file_name() << std::endl << std::flush;
+//if(comm_rank() == 0){
+//	std::cout << "opening " << file_name() << std::endl << std::flush;
+//}
 			check(err == MPI_SUCCESS, "failure opening existing array file " + file_name() + " at server");
 			read_header();
 			check(num_blocks == num_blocks_, "number of blocks in reopened file is different than expected");
@@ -146,16 +145,25 @@ public:
 	 * This is a collective operation
 	 */
 	~ArrayFile() {
-//		std::cout << "in ~ArrayFile for " << *this << std::endl;
+//if(comm_rank()==0){
+//	std::cout << "in ~ArrayFile for " << *this << std::endl;
+//}
+
 		MPI_File_close(&fh_);
-//		std::cout << "closed file " << file_name() << std::endl <<std::flush;
+//if(comm_rank()==0){
+//	std::cout << "closed file " << file_name() << std::endl <<std::flush;
+//}
 		if (is_persistent_){
-//			std::cout << "renaming file " <<file_name() << std::endl <<std::flush;
+//if(comm_rank()==0){
+//	std::cout << "renaming file " <<file_name() << std::endl <<std::flush;
+//}
 			rename_persistent();
 		}
 		else {
 			if (!save_after_close_) {
-//				std::cout << "deleting file " << file_name() << std::endl <<std::flush;
+//if(comm_rank()==0){
+//	std::cout << "deleting file " << file_name() << std::endl <<std::flush;
+//}
 				delete_file();
 			}
 		}
@@ -165,11 +173,11 @@ public:
 	/**
 	 * This is a collective operation to set the view to write unsigned values.
 	 * Then the communicator's master writes it.
-	 * Followed by a collective sync.
 	 */
 	void write_header() {
 		int err = MPI_File_set_view(fh_, 0, MPI_OFFSET_VAL_T, MPI_OFFSET_VAL_T,
 				"native", MPI_INFO_NULL);
+		check(err == MPI_SUCCESS, "failure setting view in write_header for file " + file_name());
 		if (comm_rank() == 0) {
 			header_val_t header[NUM_VALS_IN_HEADER];
 			header[0] = num_blocks_;
@@ -241,6 +249,7 @@ public:
 		int err = MPI_File_write_at(fh_, offset, chunk.data_, chunk_size_,
 				MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "write_chunk failed");
+		stats_.chunks_written_.inc();
 	}
 
 
@@ -252,13 +261,14 @@ public:
 	 *
 	 * @param chunk
 	 */
-	void chunk_write_all(const Chunk & chunk) const {
+	void chunk_write_all(const Chunk & chunk) {
 		MPI_Offset offset = chunk.file_offset_;
 //DEBUG		std::cout << "rank " << comm_rank() << " collective writing chunk at offset " << offset << std::endl << std::flush;
 		MPI_Status status;
 		int err = MPI_File_write_at_all(fh_, offset, chunk.data_, chunk_size_,
 				MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "chunk_write_all write failed");
+		stats_.chunks_written_.inc();
 	}
 
 
@@ -284,6 +294,7 @@ public:
 		int err = MPI_File_read_at(fh_, offset, chunk.data_, chunk_size_,
 				MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "chunk_read failed");
+		stats_.chunks_restored_.inc();
 	}
 
 	/**
@@ -300,6 +311,7 @@ public:
 		int err = MPI_File_read_at_all(fh_, offset, chunk.data_, chunk_size_,
 				MPI_DOUBLE, &status);
 		check(err == MPI_SUCCESS, "chunk_read_all failed");
+		stats_.chunks_restored_.inc();
 	}
 
 	/**
@@ -408,6 +420,10 @@ public:
 
 	void mark_persistent(const std::string& label) {
 		check(is_persistent_==false, "calling set_persistent on already persistent file");
+
+if(comm_rank() == 0){
+	std::cout << "marking array with name " << name_ << " persistent with label " << label << std::endl<< std::flush;
+}
 		is_persistent_ = true;
 		label_ = label;
 	}
@@ -460,6 +476,30 @@ public:
 		return false;
 	}
 
+
+	struct Stats {
+		MPICounter chunks_written_;
+		MPICounter chunks_restored_;
+
+		explicit Stats(const MPI_Comm& comm) :
+				chunks_written_(comm), chunks_restored_(comm) {
+		}
+
+		std::ostream& gather_and_print_statistics(std::ostream& os, ArrayFile* parent) {
+			chunks_written_.gather();
+			chunks_restored_.gather();
+			if (SIPMPIAttr::get_instance().is_company_master()) {
+				os << "chunks_written"<< std::endl;
+				os << chunks_written_;
+				os << "chunks_restored"<< std::endl;
+				os << chunks_restored_ << std::endl;
+			}
+			return os;
+		}
+	};
+
+
+
 	friend ChunkManager;
 	friend std::ostream& operator<<(std::ostream& os, const ArrayFile& obj);
 
@@ -474,6 +514,7 @@ private:
 	std::string label_;
 	const MPI_Comm& comm_;
 	bool save_after_close_;  //used in tests.
+	Stats stats_;
 
 	std::string file_name() const{
 		std::stringstream ss;
@@ -488,6 +529,7 @@ private:
 	}
 
 	void delete_file(){
+		//server master deletes file from the file system
 		if (comm_rank() == 0){
 		std::string name = file_name();
 		int err = std::remove(const_cast<char *>(name.c_str()));
