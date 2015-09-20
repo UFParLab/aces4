@@ -123,11 +123,76 @@ void basic_pardo_test(int max_dims, int lower[], int upper[],
 	}
 }
 
+
+void basic_pardo_test_with_pragma(int max_dims, int lower[], int upper[],
+		bool expect_success = true) {
+	assert(max_dims <= 6);
+//	if (attr->global_rank() == 0)
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+//	for (int num_dims = 1; num_dims <= 6; ++num_dims) {
+	int num_dims = 3;
+		std::stringstream job_ss;
+		job_ss << "pardo_loop_with_pragma";
+		std::string job = job_ss.str();
+
+		//total number of iters for this sial program
+		int num_iters = 1;
+		for (int j = 0; j < num_dims; ++j) {
+			num_iters *= ((upper[j] - lower[j]) + 1);
+		}
+
+		//create .dat file
+		if (attr->global_rank() == 0) {
+			init_setup(job.c_str());
+			//add values for upper and lower bounds
+			for (int i = 0; i < num_dims; ++i) {
+				std::stringstream lower_ss, upper_ss;
+				lower_ss << "lower" << i;
+				upper_ss << "upper" << i;
+				set_constant(lower_ss.str().c_str(), lower[i]);
+				set_constant(upper_ss.str().c_str(), upper[i]);
+			}
+			std::string tmp = job + ".siox";
+			const char* nm = tmp.c_str();
+			add_sial_program(nm);
+			finalize_setup();
+		}
+
+		TestControllerParallel controller(job, true, VERBOSE_TEST,
+				"This is a test of " + job, std::cout, expect_success);
+		controller.initSipTables();
+		controller.run();
+		if (attr->global_rank() == 0) {
+			double total = controller.worker_->scalar_value("total");
+			if (VERBOSE_TEST) {
+				std::cout << "num_iters=" << num_iters << ", total=" << total
+						<< std::endl;
+			}
+			EXPECT_EQ(num_iters, int(total));
+		}
+//	}
+}
+
 TEST(Sial,pardo_loop) {
 	int MAX_DIMS = 6;
 	int lower[] = { 3, 2, 4, 1, 99, -1 };
 	int upper[] = { 7, 6, 5, 1, 101, 2 };
 	basic_pardo_test(6, lower, upper);
+}
+
+TEST(Sial,pardo_loop_with_pragma) {
+	int MAX_DIMS = 6;
+	int lower[] = { 3, 2, 4, 1, 99, -1 };
+	int upper[] = { 7, 6, 5, 1, 101, 2 };
+	basic_pardo_test_with_pragma(6, lower, upper);
 }
 
 TEST(Sial,pardo_loop_corner_case) {

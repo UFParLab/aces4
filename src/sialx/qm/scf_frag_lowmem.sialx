@@ -1,209 +1,48 @@
-#  Copyright (c) 2003-2010 University of Florida
-import "scf_frag_defs_lowmem.sialx"
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  The GNU General Public License is included in this distribution
-#  in the file COPYRIGHT.
+import "mcpt2_defs.sialx" 
+import "mcpt2_vars.sialx"
 #
                            SIAL SCF_FRAGMENT 
-#
-# ----------------------------------------------------------------------------
-#
-# Declare indeces 
-# --------------- 
-#
-      index   kiter  = 1: scf_iter  
-      index   katom  = 1: nfrags # Nfrags  
-      index   jatom  = 1: nfrags # Nfrags  
 
-      index   jfrag  = 1: nfrags # Nfragments   
-      index  jjfrag  = 1: nfrags # Nfragments   
-      index   kfrag  = 1: nfrags # Nfragments   
-      index  kkfrag  = 1: nfrags # Nfragments 
-
-      index   ao_scratch    = 1: max_aoseg    # maximum ao segment size 
-      index   alpha_scratch = 1: max_alphaseg # maximum alpha segment size 
-      index   beta_scratch  = 1: max_betaseg  # maximum beta segment size 
-
-      aoindex mu = 1: norb 
-      aoindex nu = 1: norb 
-      aoindex lambda = 1: norb 
-      aoindex sigma  = 1: norb 
-#
-      moaindex i = baocc: eaocc  
-      moaindex i1= baocc: eaocc  
-#
-      mobindex j = bbocc: ebocc  
-      mobindex j1= bbocc: ebocc  
-#
-      moaindex a = bavirt: eavirt   
-      moaindex a1= bavirt: eavirt   
-# 
-      mobindex b = bavirt: eavirt   
-      mobindex b1= bavirt: eavirt   
-#
-      moaindex p = baocc: eavirt
-      moaindex p1= baocc: eavirt
-#
-      mobindex q = bbocc: ebvirt
-      mobindex q1= bbocc: ebvirt
-#
-      temp Txx[mu,nu] 
-      temp txp[mu,p]  
-      temp txq[mu,q]  
-      temp tpp[p,p1]  
-      temp tqq[q,q1]  
-      distributed Da[mu,nu] 
-      distributed Db[mu,nu] 
-      distributed Nai_d[mu,nu] 
-      static atom[katom,jatom] 
-      temp tatom[katom,jatom] 
-      distributed DCa[mu,p] 
-      distributed DCb[mu,q] 
-      distributed Dfock_a[p,p1] 
-      distributed Dfock_b[q,q1] 
-
-     #static Ca(mu,p) 
-     #static Cb(mu,q) 
-     #static Fock_a(p, p1) 
-     #static Fock_b(q, q1) 
-     #static oed_ovl(mu,nu) 
-      distributed Doed_ovl[mu,nu] 
-
-      local wAO_frag[mu]
-      local wOccA_frag[i]
-      local wOccB_frag[j]
-      local wVirtA_frag[a]
-      local wVirtB_frag[b]
-      local wMoA_frag[p] 
-
-      distributed DwAO_frag[mu]
-      distributed DwOccA_frag[i]
-      distributed DwOccB_frag[j]
-      distributed DwVirtA_frag[a]
-      distributed DwVirtB_frag[b]
-      distributed DwMoA_frag[p] 
-
-      temp x1[mu]
-      temp x2[nu]
-      temp x3[lambda]
-      temp x4[sigma]
-      temp xi[i]
-      temp xi1[i]
-      temp xi2[i]
-      temp xj[j]
-      temp xj1[j]
-      temp xa[a]
-      temp xa1[a]
-      temp xa2[a]
-      temp xb[b]
-      temp xb1[b]
-      temp xp[p] 
-
-# Static Scratch arrays 
-# --------------------- 
-      static scratch1[ao_scratch,ao_scratch] 
-      static scratch2[ao_scratch,ao_scratch] 
-      static scratch3[ao_scratch,ao_scratch] 
-      static scratch4[ao_scratch,ao_scratch] 
-      static scratch5[ao_scratch,ao_scratch] 
-
-      contiguous local scr_1[ao_scratch,ao_scratch] 
-      contiguous local scr_2[ao_scratch,ao_scratch] 
-      contiguous local scr_3[ao_scratch,ao_scratch] 
-      contiguous local scr_4[ao_scratch,ao_scratch] 
-      contiguous local scr_5[ao_scratch,ao_scratch] 
-
-#
-# Declare scalars 
-# --------------- 
-#
-      scalar etemp 
-      scalar one 
-      scalar two 
-      scalar rank 
-      scalar imax  
-      scalar zmax  
-      scalar esum 
-      scalar n_frags 
-      scalar fcount 
-      scalar icount 
-      scalar jcount 
-      scalar pcount 
-      int ikatom
-      scalar i_aostart  
-      scalar i_aoend   
-      scalar j_aostart  
-      scalar j_aoend   
-      scalar i_vstart 
-      scalar i_vend  
-      scalar j_vstart 
-      scalar j_vend  
-      scalar a_vstart 
-      scalar a_vend  
-      scalar b_vstart 
-      scalar b_vend  
-      scalar m  
-      scalar m1 
-      scalar n  
-      scalar n1 
-      scalar n2 
-      scalar l  
-      scalar s  
-
-      scalar stype 
-
-#
-# ---------------------------------------------------------------------------- 
-#
       PROC SET_FRAG_PARMS    
 #     ------------------- 
 #
 #     Determine the number of fragments  
 #     --------------------------------- 
       execute set_frag n_frags
-     #print_scalar nfrags
-      allocate wAO_frag[*] 
-      allocate wOccA_frag[*] 
-      allocate wOccB_frag[*] 
-      allocate wVirtA_frag[*] 
-      allocate wVirtB_frag[*] 
 
-      PARDO jfrag 
+      do kfrag
+      do jfrag
+	  where jfrag <= kfrag
+	  icount = (scalar)kfrag
+	  jcount = (scalar)jfrag
 
-	 icount = (scalar)jfrag
+          execute return_pairs icount jcount elst_thresh pair_flag 
+	  elst_dist[kfrag,jfrag] = 0.0
+	  elst_dist[jfrag,kfrag] = 0.0
 
-         i_aostart = icount 
-         i_aoend   = 1.0  
-         execute frag_index_range i_aostart i_aoend 
+          if pair_flag > zero
+	  elst_dist[kfrag,jfrag] = (scalar)kfrag
+	  elst_dist[jfrag,kfrag] = (scalar)jfrag
+	  endif
+
+          execute return_pairs icount jcount r_thresh pair_flag 
+	  rcut_dist[kfrag,jfrag] = 0.0
+	  rcut_dist[jfrag,kfrag] = 0.0
+
+          if pair_flag > zero
+	  rcut_dist[kfrag,jfrag] = (scalar)kfrag
+	  rcut_dist[jfrag,kfrag] = (scalar)jfrag
+	  endif
+
+      enddo jfrag
+      enddo kfrag
+
+      do jfrag
 #
-         m = 0.0  
-         DO mu   
-            m += 1.0  
-            if m >= i_aostart 
-            if m <= i_aoend 
-               x1[mu] = icount 
-               PUT DwAO_frag[mu] = x1[mu]  
-            endif 
-            endif 
-         ENDDO mu   
-#
-      ENDPARDO jfrag 
-
-      PARDO jfrag
-
-	 icount = (scalar)jfrag
-	 print icount
-
+	  icount = (scalar)jfrag
+          i_aostart = icount
+          i_aoend   = 1.0
+          execute frag_index_range i_aostart i_aoend
          i_vstart  = icount
          i_vend    = 6.0
          execute frag_index_range i_vstart i_vend
@@ -211,7 +50,15 @@ import "scf_frag_defs_lowmem.sialx"
          a_vend    = 7.0
          execute frag_index_range a_vstart a_vend
 
-#
+          m = 0.0
+          do mu
+              m += 1.0
+              if m >= i_aostart
+              if m <= i_aoend
+              SwAO_frag[(index)mu] = (scalar)jfrag
+              endif
+              endif
+          enddo mu
          DO i
             m = 0.0
             do i1
@@ -222,13 +69,10 @@ import "scf_frag_defs_lowmem.sialx"
             enddo i1
             if m >= i_vstart
             if m <= i_vend
-               xi[i] = icount 
-               PUT DwOccA_frag[i] = xi[i]  
+               SwOccA_frag[(index)i] = (scalar)jfrag
             endif
             endif
          ENDDO i
-#
-         jcount = 0.0
          DO a
             m = 0.0
             do a1
@@ -239,90 +83,14 @@ import "scf_frag_defs_lowmem.sialx"
             enddo a1
             if m >= a_vstart
             if m <= a_vend
-               xa[a] = icount 
-               PUT DwVirtA_frag[a] = xa[a]  
+               SwVirtA_frag[(index)a] = (scalar)jfrag
             endif
             endif
          ENDDO a
+      enddo jfrag
 
-      ENDPARDO jfrag
-
-      PARDO jfrag
-
-	 icount = (scalar)jfrag
-
-         i_vstart  = icount
-         i_vend    = 9.0
-         execute frag_index_range i_vstart i_vend
-         a_vstart  = icount
-         a_vend    = 10.0
-         execute frag_index_range a_vstart a_vend
-#
-         DO j
-            m = 0.0
-            do j1
-               m += 1.0
-               if j == j1
-                  exit
-               endif
-            enddo j1
-            if m >= i_vstart
-            if m <= i_vend
-               xj[j] = icount 
-               PUT DwOccB_frag[j] = xj[j]  
-            endif
-            endif
-         ENDDO j
-#
-         DO b
-            m = 0.0
-            do b1
-               m += 1.0
-               if b == b1
-                  exit
-               endif
-            enddo b1
-            if m >= a_vstart
-            if m <= a_vend
-               xb[b] = icount 
-               PUT DwVirtB_frag[b] = xb[b]  
-            endif
-            endif
-         ENDDO b
-
-      ENDPARDO jfrag
       sip_barrier
-      DO mu 
-         GET            DwAO_frag[mu] 
-         wAO_frag[mu] = DwAO_frag[mu] 
-      ENDDO mu 
-      DO a 
-         GET              DwVirta_frag[a] 
-         wVirtA_frag[a] = DwVirta_frag[a] 
-      ENDDO a 
-      DO b 
-         GET              DwVirtb_frag[b] 
-         wVirtB_frag[b] = DwVirtb_frag[b] 
-      ENDDO b 
-      DO i 
-         GET             DwOcca_frag[i] 
-         wOccA_frag[i] = DwOcca_frag[i] 
-      ENDDO i 
-      DO j 
-         GET             DwOccb_frag[j] 
-         wOccB_frag[j] = DwOccb_frag[j] 
-      ENDDO j 
-
-#
-      ENDPROC SET_FRAG_PARMS
-#     ---------------------- 
-#
-# ---------------------------------------------------------------------------- 
-#
-
-
-#
-# ---------------------------------------------------------------------------- 
+      ENDPROC SET_FRAG_PARMS    
 #
       PROC IGUESS   
 #     ----------- 
@@ -336,31 +104,20 @@ import "scf_frag_defs_lowmem.sialx"
       sip_barrier 
       print "Done computing scratch memory" 
 #
-#     Initialize ENTIRE Fock and coefficient arrays to 0 
-     #PARDO p, p1
-     #   tpp(p,p1)         = 0.0 
-     #   PUT Dfock_a(p,p1) = tpp(p,p1)
-     #ENDPARDO p, p1 
-       
-     #PARDO mu, p    
-     #   txp(mu,p)     = 0.0  
-     #   PUT DCa(mu,p) = txp(mu,p)
-     #ENDPARDO mu, p    
-#
+      sip_barrier 
+      allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
 
     PARDO katom  
 	icount = (scalar)katom
 
-	print icount # etemp 
-
-        allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
-        allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
-        allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
-        allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+#	print icount # etemp 
 
 	print "Starting computing fragment scf" 
-#execute scf_atom icount Ca Cb Fock_a Fock_b oed_ovl  
-	#execute scf_atom_lowmem icount scratch1 scratch2 scratch3 scratch4 
 	execute scf_atom_lowmem icount scr_1[1:max_aoseg,1:max_aoseg] scr_2[1:max_aoseg,1:max_aoseg] scr_3[1:max_aoseg,1:max_aoseg] scr_4[1:max_aoseg,1:max_aoseg]
 	print "Done computing fragment scf" 
 #
@@ -368,81 +125,53 @@ import "scf_frag_defs_lowmem.sialx"
 
 	stype = 1.0 # HF coefficients  
 	DO mu
-	 x1[mu] = wAO_frag[mu]
-	 execute return_sval x1[mu]  m
-	 if m == icount
-	DO a
-	 xa[a]      = wVirtA_frag[a]
-	 execute return_sval xa[a]  l
-	 if l == icount
-	    txp[mu,a]      = 0.0  
-	    #execute place_scratch txp[mu,a]  scratch1 stype icount 
-	    execute place_scratch txp[mu,a]  scr_1[1:max_aoseg,1:max_aoseg] stype icount 
-	    PUT DCa[mu,a] += txp[mu,a]
-	 endif
-	ENDDO a
-	DO i
-	 xi[i]      = wOccA_frag[i]
-	 execute return_sval xi[i]  s
-	 if s == icount
-	    txp[mu,i]      = 0.0  
-	    execute place_scratch txp[mu,i]  scr_1[1:max_aoseg,1:max_aoseg] stype icount  
-	    PUT DCa[mu,i] += txp[mu,i]
-	 endif
-	ENDDO i
-	 endif
+	where (int)SwAO_frag[(index)mu] == katom
+	    DO a
+	    where (int)SwVirtA_frag[(index)a] == katom
+		txp[mu,a]      = 0.0  
+		execute place_scratch txp[mu,a]  scr_1[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT DCa[mu,a] += txp[mu,a]
+	    ENDDO a
+	    DO i
+	    where (int)SwOccA_frag[(index)i] == katom
+		txp[mu,i]      = 0.0  
+		execute place_scratch txp[mu,i]  scr_1[1:max_aoseg,1:max_aoseg] stype icount  
+		PUT DCa[mu,i] += txp[mu,i]
+	    ENDDO i
 	ENDDO mu
 	print "Done placing coefficients"
 
 	stype = 2.0 # Fock matrix  
 	DO a   
-	 xa[a]      = wVirtA_frag[a]
-	 execute return_sval xa[a]  l   
-	 if l == icount 
-	DO a1
-	 xa1[a1]      = wVirtA_frag[a1]
-	 execute return_sval xa1[a1]  m   
-	 if m == icount 
-	    tpp[a,a1]          = 0.0  
-	    execute place_scratch tpp[a,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
-	    PUT Dfock_a[a,a1] += tpp[a,a1] 
-	 endif 
-	ENDDO a1
-	DO i1
-	 xi1[i1]      = wOccA_frag[i1]
-	 execute return_sval xi1[i1]  m   
-	 if m == icount 
-	    tpp[a,i1]          = 0.0  
-	    execute place_scratch tpp[a,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
-	    PUT Dfock_a[a,i1] += tpp[a,i1] 
-	 endif 
-	ENDDO i1
-	 endif 
+	where (int)SwVirtA_frag[(index)a] == katom
+	    DO a1
+	    where (int)SwVirtA_frag[(index)a1] == katom
+		tpp[a,a1]          = 0.0  
+		execute place_scratch tpp[a,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[a,a1] += tpp[a,a1] 
+	    ENDDO a1
+	    DO i1
+	    where (int)SwOccA_frag[(index)i1] == katom
+		tpp[a,i1]          = 0.0  
+		execute place_scratch tpp[a,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[a,i1] += tpp[a,i1] 
+	    ENDDO i1
 	ENDDO a   
 
 	DO i   
-	 xi[i]      = wOccA_frag[i]
-	 execute return_sval xi[i]  l   
-	 if l == icount 
-	DO i1
-	 xi1[i1]      = wOccA_frag[i1]
-	 execute return_sval xi1[i1]  m
-	 if m == icount
-	    tpp[i,i1]          = 0.0  
-	    execute place_scratch tpp[i,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
-	    PUT Dfock_a[i,i1] += tpp[i,i1]
-	 endif
-	ENDDO i1
-	DO a1
-	 xa1[a1]      = wVirtA_frag[a1]
-	 execute return_sval xa1[a1]  m
-	 if m == icount
-	    tpp[i,a1]          = 0.0  
-	    execute place_scratch tpp[i,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
-	    PUT Dfock_a[i,a1] += tpp[i,a1]
-	 endif
-	ENDDO a1
-	 endif
+	where (int)SwOccA_frag[(index)i] == katom
+	    DO i1
+	    where (int)SwOccA_frag[(index)i1] == katom
+		tpp[i,i1]          = 0.0  
+		execute place_scratch tpp[i,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[i,i1] += tpp[i,i1]
+	    ENDDO i1
+	    DO a1
+	    where (int)SwVirtA_frag[(index)a1] == katom
+		tpp[i,a1]          = 0.0  
+		execute place_scratch tpp[i,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[i,a1] += tpp[i,a1]
+	    ENDDO a1
 	ENDDO i
 
 #                 DO p 
@@ -454,34 +183,33 @@ import "scf_frag_defs_lowmem.sialx"
 #                 ENDDO p 
 	print "Done placing fock_matrix"
 
-        deallocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
-        deallocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
-        deallocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
-        deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
 
     ENDPARDO katom   
+      sip_barrier 
+      deallocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
 #
       ENDPROC IGUESS   
-#     -------------- 
+
+# -----------------------------------------------------------------------------
+# 
+#     START OF MAIN PROGRAM  
 #
 # -----------------------------------------------------------------------------
-#
-#     Compute the fragment SCF  
-#     ------------------------- 
-#
-      execute disable_debug_print 
-      print "Setting fragment parameters" 
-      CALL SET_FRAG_PARMS    
-      print "Done Setting fragment parameters" 
+
+      CALL SET_FRAG_PARMS   
       sip_barrier 
-      CALL IGUESS  
-      sip_barrier
+      print "Done setting fragment parameters" 
+      print "Performing monomer SCF"
+      call IGUESS
+      sip_barrier 
 
       set_persistent Dca "ca" 
       set_persistent DFock_a "fock_a"
-      
-#      set_persistent ca "ca" 
-#      set_persistent Fock_a "fock_a"
 
 # -----------------------------------------------------------------------------
 #

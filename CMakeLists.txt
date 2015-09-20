@@ -133,6 +133,7 @@ set(ACES_DATA_FILES
     src/sip/static_data/opcode.cpp;
     src/sip/static_data/op_table.h;
     src/sip/static_data/op_table.cpp;
+    src/sip/static_data/create_map.h;
     src/sip/dynamic_data/block_id.h;
     src/sip/dynamic_data/block_id.cpp;
     src/sip/dynamic_data/block_shape.h;
@@ -160,6 +161,10 @@ set(ACES_DATA_FILES
 set(ACES_WORKER_FILES
     src/sip/worker/loop_manager.cpp;
     src/sip/worker/loop_manager.h;
+    src/sip/worker/fragment_loop_manager.cpp;
+    src/sip/worker/fragment_loop_manager.h;
+    src/sip/worker/pardo_loop_factory.cpp;
+    src/sip/worker/pardo_loop_factory.h;
     src/sip/worker/interpreter.cpp;
     src/sip/worker/interpreter.h;
     src/sip/worker/global_state.h;
@@ -273,6 +278,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ 
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -445,6 +451,7 @@ set(SIAL_FILES
     src/sialx/test/no_arg_user_sub.sialx;
     src/sialx/test/helloworld.sialx;
     src/sialx/test/pardo_loop.sialx;
+    src/sialx/test/pardo_loop_with_pragma.sialx;
     src/sialx/test/subindex_test.sialx;
     src/sialx/test/local_arrays.sialx;
     src/sialx/test/scalarTable.sialx;
@@ -531,13 +538,10 @@ set(SIAL_FILES
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
-    src/sialx/qm/scf_frag_defs_lowmem.sialx;
     src/sialx/qm/drop_core_in_sial.sialx;
-    src/sialx/qm/frag_2order_corr_lowmem.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
-    src/sialx/qm/mcpt2_singles_lowmem.sialx;
-    src/sialx/qm/mcpt2_doubles_lowmem.sialx;
-    src/sialx/qm/trans_frag_defs.sialx;
+    src/sialx/qm/mcpt2_vars.sialx;
+    src/sialx/qm/mcpt2_defs.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;

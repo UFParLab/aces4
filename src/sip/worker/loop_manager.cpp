@@ -8,8 +8,13 @@
 #include "loop_manager.h"
 #include <sstream>
 #include "interpreter.h"
+#include "create_map.h"
+#include "fragment_loop_manager.h"
 
 namespace sip {
+
+
+
 LoopManager::LoopManager() :
 		to_exit_(false) {
 }
@@ -343,6 +348,53 @@ std::string StaticTaskAllocParallelPardoLoop::to_string() const {
 
 std::ostream& operator<<(std::ostream& os,
 		const StaticTaskAllocParallelPardoLoop &obj) {
+	os << obj.to_string();
+	return os;
+}
+
+
+TestStaticTaskAllocParallelPardoLoop::TestStaticTaskAllocParallelPardoLoop(
+		int num_indices, const int (&index_id)[MAX_RANK],
+		DataManager & data_manager, const SipTables & sip_tables,
+		SIPMPIAttr & sip_mpi_attr) : StaticTaskAllocParallelPardoLoop(
+				num_indices, index_id, data_manager, sip_tables, sip_mpi_attr
+				)
+		{
+
+	std::cerr << *this << std::endl << std::flush;
+
+
+}
+
+TestStaticTaskAllocParallelPardoLoop::~TestStaticTaskAllocParallelPardoLoop(){}
+
+std::string TestStaticTaskAllocParallelPardoLoop::to_string() const {
+	std::stringstream ss;
+	ss << "Test Static Task Allocation Parallel Pardo Loop:  num_indices="
+			<< num_indices_ << std::endl;
+	ss << "index_ids_=[";
+	for (int i = 0; i < num_indices_; ++i) {
+		ss << (i == 0 ? "" : ",") << sip_tables_.index_name(index_id_[i]);
+	}
+	ss << "] lower_seg_=[";
+	for (int i = 0; i < num_indices_; ++i) {
+		ss << (i == 0 ? "" : ",") << lower_seg_[i];
+	}
+	ss << "] upper_bound_=[";
+	for (int i = 0; i < num_indices_; ++i) {
+		ss << (i == 0 ? "" : ",") << upper_bound_[i];
+	}
+	ss << "] current= [";
+	for (int i = 0; i < num_indices_; ++i) {
+		ss << (i == 0 ? "" : ",")
+				<< data_manager_.index_value_to_string(index_id_[i]);
+	}
+	ss << "]";
+	return ss.str();
+}
+
+std::ostream& operator<<(std::ostream& os,
+		const TestStaticTaskAllocParallelPardoLoop &obj) {
 	os << obj.to_string();
 	return os;
 }

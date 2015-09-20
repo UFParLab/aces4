@@ -66,6 +66,8 @@ int kend
 # Declare static
 # --------------- 
 #
+static SHDiag[a,i]
+static C1_A[ksub,a,i]
 static SEk[ksub]
 static SEkold[kstate]
 static SEk0[kstate]
@@ -83,6 +85,11 @@ static LDipole[ixyz]
 # Declare distributed
 # --------------- 
 #
+distributed FwC[a,i]
+distributed FFock_oo[i,j]
+distributed FFock_vv[a,b]
+distributed Fca_o[mu,i]
+distributed Fca_v[mu,a]
 distributed T1A[a,i]
 distributed T1B[a,i]
 distributed Lam1A[i,a]
@@ -144,10 +151,17 @@ distributed DHF[mu,nu]
 
 distributed ao_dens[mu,nu]
 
+distributed MOI_HBAR_ia[i,a]
+distributed MOI_HBAR_aa[a,a1]
+distributed MOI_HBAR_ii[i1,i]
 #
 # Declare served 
 # --------------- 
 #
+served MOI_HBAR_AJIB[i,a,b,j]
+served MOI_HBAR_IAJK[i,i1,b,j]
+served MOI_HBAR_ABCI[a,a1,a2,i]
+
 served T2AA[a,i,a1,i1]
 served T2AB[a,i,b,j]
 served T2BB[b,j,b1,j1]
@@ -285,6 +299,11 @@ served L2BB[i,a,i1,a1]
 # Declare local 
 # --------------- 
 #
+local Lxiqj[mu,i,q,j] 
+local Lixai[i,mu,a,i1] 
+local L1xaai[mu,a,a1,i]  
+local Lxipi[mu,i,p,i1]
+local Lxaii[mu,a,i,i1]
 local liaia[i,a,i1,a1]
 local laiai[a,i,a1,i1]
 local laiai2[a,i,a1,i1]
@@ -369,6 +388,13 @@ contiguous local Dipole_Oscillator_Norm[kstate]
 # Declare temp 
 # --------------- 
 #
+temp Taaai[a,a1,a2,i]
+temp T1aaai[a,a1,a2,i]
+temp Tpiqj[p,i,q,j]
+temp T1piqj[p,i,q,j]
+temp  T1aaii[a,a2,i,i2]
+temp T1pipi[p,i,p1,i1] 
+temp  tpipi [p,i,p1,i1]
 temp Raiai[a,i,a1,i1]
 temp R2aiai[a,i,a1,i1]
 temp R3aiai[a,i,a1,i1]
@@ -694,5 +720,6 @@ scalar etemp0
 scalar eetemp
 scalar ediff
 scalar ispdim
+scalar max_e_conv
 
 endsial eom_vars
