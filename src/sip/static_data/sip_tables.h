@@ -37,7 +37,6 @@ class TestControllerParallel;
 namespace sip {
 class SegmentTable;
 class ContiguousArrayManager;
-class DiskBackedArraysIO;
 class Tracer;
 }
 
@@ -84,7 +83,8 @@ public:
 	bool is_served(int array_table_slot) const;
 	bool is_contiguous_local(int array_table_slot) const;
 	int num_arrays() const;
-
+	size_t num_blocks(int array_id) const { return array_table_.num_blocks(array_id); }
+	size_t max_block_size(int array_id) const { return array_table_.entries_.at(array_id).max_block_size_;}
 //int (symbolic constants)
 	//int int_value(int int_table_slot) const;
 	std::string int_name(int int_table_slot) const;
@@ -97,6 +97,12 @@ public:
 	std::string index_name(int index_table_slot) const;
 	IndexType_t index_type(int index_table_slot) const;
 	BlockShape shape(const BlockId&) const;
+	size_t block_number(const BlockId& id) const {
+		return array_table_.id2number(id);
+	}
+	BlockId block_id(int array_id, size_t block_number) const{
+		return array_table_.number2id(array_id, block_number);
+	}
 
 
 	/**
@@ -119,7 +125,7 @@ public:
 	 * @param
 	 * @return
 	 */
-	int block_size(const BlockId&) const;
+	size_t block_size(const BlockId&) const;
 
 	/**
 	 * Returns number of elements in a given block specified by the
@@ -128,7 +134,7 @@ public:
 	 * @param index_vals
 	 * @return
 	 */
-	int block_size(const int array_id, const index_value_array_t& index_vals) const;
+	size_t block_size(const int array_id, const index_value_array_t& index_vals) const;
 
 	/**
 	 * Returns the offset of a block in its array
@@ -136,14 +142,14 @@ public:
 	 * @param bid
 	 * @return
 	 */
-	long block_offset_in_array(const BlockId& bid) const;
+	size_t block_offset_in_array(const BlockId& bid) const;
 
 	/**
 	 * Number of elements in array
 	 * @param array_id
 	 * @return
 	 */
-	long array_num_elems(const int array_id) const;
+	size_t array_num_elems(const int array_id) const;
 
 	int lower_seg(int index_table_slot) const;
 	int num_segments(int index_table_slot) const;
@@ -186,7 +192,7 @@ private:
 	 * @param array_id
 	 * @param index_vals
 	 */
-	long block_indices_offset_in_array(const int array_id, const index_value_array_t& index_vals) const;
+	size_t block_indices_offset_in_array(const int array_id, const index_value_array_t& index_vals) const;
 
 
 	std::vector<int> blocks_in_array();
@@ -208,7 +214,6 @@ private:
 	friend class Interpreter;
 	friend class DataManager;
 	friend class ContiguousArrayManager;
-	friend class DiskBackedArraysIO;
 	friend class ::TestController;
 	friend class Tracer;
 	friend class ::TestControllerParallel;

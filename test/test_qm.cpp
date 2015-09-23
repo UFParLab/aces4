@@ -15,8 +15,8 @@
 #include "block.h"
 
 
-//bool VERBOSE_TEST = false;
-bool VERBOSE_TEST = true;
+bool VERBOSE_TEST = false;
+//bool VERBOSE_TEST = true;
 
 // old ccsd(t) test.... difficult to deal with because the ZMAT source is gone
 TEST(Sial_QM,DISABLED_ccsdpt_test){
@@ -75,6 +75,17 @@ TEST(Sial_QM,second_ccsdpt_test){
 	std::string job("second_ccsdpt_test");
 
 	std::stringstream output;
+//	if (attr->is_server())
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //

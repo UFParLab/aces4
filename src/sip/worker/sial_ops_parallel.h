@@ -97,12 +97,6 @@ public:
 	Block::BlockPtr get_block_for_updating(const BlockId& id, int pc);
 
 
-	void reduce() { wait_time_.reduce(); }
-
-	void print_op_table_stats(std::ostream& os,
-						const SipTables& sip_tables) const {
-		wait_time_.print_op_table_stats_impl(os, sip_tables);
-	}
 
 	/** mpi related types and variable */
 	//TODOD is this the right place for this?
@@ -193,7 +187,7 @@ private:
 
 	bool nearlyEqual(double a, double  b, double epsilon);
 
-
+	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

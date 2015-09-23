@@ -53,7 +53,7 @@ public:
 	 *  should only be marked at servers. Scalars and contiguous arrays are
 	 *  only at workers. We won't bother trying to avoid a few unnecessary tests.
 	 */
-	void save_marked_arrays(SIPServer* runner) ;
+	void save_marked_arrays(SIPServer* runner, MPITimerList* save_persistent_timers);
 
 	/**
 	 * Invoked by worker or server to implement restore_persistent command
@@ -65,14 +65,17 @@ public:
 	 * The runner parameter provides access to the sip_tables to
 	 * get the label and check array types.
 	 *
+	 * This does not do timing since this corresponds to a sial op in the server loop
+	 *
 	 * @param runner
 	 * @param array_id
 	 * @param string_slot
 	 */
-	void restore_persistent(SIPServer* runner, int array_id, int string_slot);
+	void restore_persistent(SIPServer* runner, int array_id, int string_slot, int pc);
 
 
 	friend std::ostream& operator<< (std::ostream&, const ServerPersistentArrayManager&);
+
 
 private:
 
@@ -93,7 +96,7 @@ private:
      * @param array_id
      * @param string_slot
      */
-	void restore_persistent_distributed(SIPServer* runner, int array_id, int string_slot);
+	void restore_persistent_distributed(SIPServer* runner, int array_id, int string_slot, int pc);
 
 	/** inserts label, map pair into map of saved distributed arrays.
 	 * Warns if label has already been used.

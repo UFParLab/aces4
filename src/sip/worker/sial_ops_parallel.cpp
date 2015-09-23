@@ -695,6 +695,7 @@ void SialOpsParallel::end_program() {
 	//implicit sip_barrier
 	//this is required to ensure that there are no pending messages
 	//at the server when the end_program message arrives.
+
 	int end_prog_pc = sip_tables_.op_table_size();
 	sip_barrier(end_prog_pc);
     const std::vector<int>& server_ranks = sip_mpi_attr_.my_servers();

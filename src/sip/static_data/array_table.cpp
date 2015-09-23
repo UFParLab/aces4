@@ -7,14 +7,17 @@
 
 #include "array_table.h"
 #include "sip_tables.h"
+#include "interpreter.h"
 
 namespace sip {
 
-//const int ArrayTableEntry::unused_index_slot = -1;//chosen to throw out of bound exception if accessed.
-
 ArrayTableEntry::ArrayTableEntry():
-		name_(""), rank_(-1), array_type_(temp_array_t),
-		scalar_selector_(-1){
+		name_(""), rank_(-1), array_type_(temp_array_t)
+		,scalar_selector_(-1)
+		,max_block_size_(0)//will be reinitialized in init_calculated_values method
+		,min_block_size_(0)//will be reinitialized in init_calculated_valuesmethod
+		,num_blocks_(0)//will be reinitialized in init_calculated_values method
+		{
 	for (int i = 0; i < MAX_RANK; ++i) {
 			this->index_selectors_[i] = unused_index_slot;
 	}
@@ -22,7 +25,11 @@ ArrayTableEntry::ArrayTableEntry():
 
 ArrayTableEntry::ArrayTableEntry(std::string name, int rank, ArrayType_t array_type,
 		int index_selectors[MAX_RANK], int scalar_selector) :name_(name),
-		rank_(rank), array_type_(array_type), scalar_selector_(scalar_selector) {
+		rank_(rank), array_type_(array_type), scalar_selector_(scalar_selector)
+		,max_block_size_(0)//will be reinitialized in init_calculated_values method
+		,min_block_size_(0)//will be reinitialized in init_calculated_valuesmethod
+		,num_blocks_(0)//will be reinitialized in init_calculated_values method
+		{
 	for (int i = 0; i < MAX_RANK; ++i) {
 		this->index_selectors_[i] = index_selectors[i];
 	}
@@ -42,6 +49,37 @@ void ArrayTableEntry::init(setup::InputStream &file){
 	scalar_selector_ = file.read_int();
 }
 
+void ArrayTableEntry::init_calculated_values(const IndexTable& index_table){
+	size_t num_blocks = 1;
+	size_t min_block = 1;
+	size_t max_block = 1;
+	size_t slice_size = 1;
+	slice_sizes_.resize(rank_,-1);
+	lower_.resize(rank_,-1);
+	for (int pos = rank_-1; pos >= 0; pos--){
+		int index_slot = index_selectors_[pos];
+		int min, max, num_segments, lower;
+		index_table.segment_info(index_slot, min, max, num_segments, lower);
+		min_block *= min;
+		max_block *= max;
+		num_blocks *= num_segments;
+		slice_sizes_[pos] = slice_size;
+		slice_size *= num_segments;
+		lower_[pos] = lower;
+	}
+	num_blocks_ = num_blocks;
+	max_block_size_ = max_block;
+	min_block_size_ = min_block;
+}
+
+size_t ArrayTableEntry::block_number(const BlockId& id) const{
+	int res = 0;
+	for (int i = 0; i < rank_; i++){
+		res += (slice_sizes_[i] * (id.index_values(i) - lower_[i]));
+	}
+	return res;
+}
+
 
 std::ostream& operator<<(std::ostream& os,
                 const sip::ArrayTableEntry& entry) {
@@ -53,6 +91,19 @@ std::ostream& operator<<(std::ostream& os,
         }
         os << ',' << entry.array_type_;
         os << ',' << entry.scalar_selector_;
+        os << ", num_block_=" << entry.num_blocks_;
+        os << ", max_block_size=" << entry.max_block_size_;
+        os << ", min_block_size=" << entry.min_block_size_;
+        os << ",slice_sizes_(for id linearization)=[";
+        for (std::vector<long>::const_iterator iter = entry.slice_sizes_.begin(); iter != entry.slice_sizes_.end(); ++iter){
+        	os << *iter << (iter != entry.slice_sizes_.end()-1 ? "," : "");
+        }
+        os << ']';
+        os << ",lower_=[";
+        for (std::vector<long>::const_iterator iter = entry.lower_.begin(); iter != entry.lower_.end(); ++iter){
+        	os << *iter << (iter != entry.lower_.end()-1 ? "," : "");
+        }
+        os << ']';
         return os;
 }
 
@@ -72,20 +123,6 @@ void ArrayTable::init(setup::InputStream &file) {
 	}
 }
 
-//void ArrayTable::init_num_blocks(){
-//	int n = entries_.size();
-//	SipTables& sip_tables = SipTables::instance();
-//	for (unsigned array_id = 0; array_id < n; array_id++){
-//		// Calculate total number of blocks
-//		int num_blocks = 1;
-//		for (int pos=0; pos<rank(array_id); pos++){
-//			int index_slot = sip_tables.selectors(array_id)[pos];
-//			int num_segments = sip_tables.num_segments(index_slot);
-//			num_blocks *= num_segments;
-//		}
-//		entries_[array_id].num_blocks_ = num_blocks;
-//	}
-//}
 
 int ArrayTable::array_slot(const std::string & name) const {
 	std::map<std::string, int>::const_iterator it = array_name_slot_map_.find(name);

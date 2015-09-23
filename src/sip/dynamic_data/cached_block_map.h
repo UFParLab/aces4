@@ -14,6 +14,7 @@
 
 namespace sip {
 
+//void list_blocks(const SipTables& sip_tables, const IdBlockMap<Block>& obj, std::vector<std::pair<BlockId,size_t> > vec);
 class BlockId;
 /**
  * Block Map that caches blocks with a LRU array block replacement policy.
@@ -125,7 +126,9 @@ public:
 	 */
     bool wait_and_clean_any_pending();
 
-
+    void c_list_blocks(const SipTables& sip_tables, std::vector<std::pair<BlockId,size_t > >& vec) const{
+    	list_blocks(sip_tables,block_map_, vec);
+    }
 private:
 
 	/* A block can be in at most one data structure:  block_map_, cache_, or pending_delete_*/

@@ -180,13 +180,17 @@ public:
 
 	void gather_and_print_statistics(std::ostream& os){
 	    tracer_->gather();
-	    sial_ops_.reduce();
+
+	    sial_ops_.wait_time_.reduce();
+
 	    if (SIPMPIAttr::get_instance().is_company_master()){
 	    	os << "Worker Statistics"<<std::endl << std::endl;
 	    	os << *tracer_;
+
 	    	os << std::endl;
 	    	os << "Worker wait_time_" << std::endl;
-	    	sial_ops_.print_op_table_stats(os, sip_tables_);
+	    	sial_ops_.wait_time_.print_op_table_stats(os, sip_tables_);
+
 	    	os << std::endl << std::flush;
 	    }
 	}
@@ -484,6 +488,7 @@ private:
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
 	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
+	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 	void permute_rhs_to_lhs(const BlockSelector& lhs_selector,

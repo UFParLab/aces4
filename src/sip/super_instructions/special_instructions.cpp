@@ -359,6 +359,7 @@ void get_first_block_element(int& array_slot_0, int& rank_0, int * index_values_
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 void one_arg_no_op(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void list_blocks_with_number();
 
 namespace sip{
 
@@ -573,6 +574,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
     procmap_["one_arg_no_op"]=(fp0)&one_arg_no_op;
+    procmap_["list_blocks_with_number"]=(fp0)&list_blocks_with_number;
     procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
     procmap_["a4_david_damp_factor"]=(fp0)&a4_david_damp_factor;
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;

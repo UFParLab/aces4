@@ -17,6 +17,7 @@ namespace sip {
 
 SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input_file):
 	setup_reader_(setup_reader), siox_reader_(*this, input_file, setup_reader){
+	array_table_.init_calculated_values(index_table_);
 }
 
 SipTables::~SipTables() {
@@ -135,7 +136,7 @@ sip::IndexType_t SipTables::index_type(int index_table_slot) const {
 	return index_table_.index_type(index_table_slot);
 }
 
-int SipTables::block_size(const int array_id,
+size_t SipTables::block_size(const int array_id,
 		const index_value_array_t& index_vals) const {
 	int seg_sizes[MAX_RANK];
 	calculate_seq_sizes(array_id, index_vals, seg_sizes);
@@ -145,12 +146,14 @@ int SipTables::block_size(const int array_id,
 	return num_elems;
 }
 
-int SipTables::block_size(const BlockId& bid) const{
+size_t SipTables::block_size(const BlockId& bid) const{
 	const int array_id = bid.array_id_;
 	const index_value_array_t & index_vals = bid.index_values_;
-	int num_elems = block_size(array_id, index_vals);
+	size_t num_elems = block_size(array_id, index_vals);
 	return num_elems;
 }
+
+
 
 
 void SipTables::calculate_seq_sizes(const int array_table_slot,
@@ -174,13 +177,13 @@ void SipTables::calculate_seq_sizes(const int array_table_slot,
 	std::fill(seg_sizes + rank, seg_sizes + MAX_RANK, 1);
 }
 
-long SipTables::block_offset_in_array(const BlockId& bid) const{
+size_t SipTables::block_offset_in_array(const BlockId& bid) const{
 	const int array_id = bid.array_id_;
 	const index_value_array_t &index_vals = bid.index_values_;
 	return block_indices_offset_in_array(array_id, index_vals);
 }
 
-long SipTables::array_num_elems(const int array_id) const{
+size_t SipTables::array_num_elems(const int array_id) const{
 	/* Index values are constructed for the upper limit of the array indices
 	 * and passed to a helper method to count the "offset"
 	 */
@@ -200,11 +203,11 @@ long SipTables::array_num_elems(const int array_id) const{
 }
 
 
-long SipTables::block_indices_offset_in_array(const int array_id,
+size_t SipTables::block_indices_offset_in_array(const int array_id,
 		const index_value_array_t& index_vals) const {
 	/*
 	 * This method assumes that the blocks are laid out on disk
-	 * in column-major oredring. i.e. A[0,0] is followed by A[1,0].
+	 * in column-major ordering. i.e. A[0,0] is followed by A[1,0].
 	 */
 
 	/* This method iterates over all the indices, incrementing
@@ -239,7 +242,7 @@ long SipTables::block_indices_offset_in_array(const int array_id,
 	// Get the upper & lower ranges, increment the "current_seg_vals"
 	// till it reaches the "block_seg_vals".
 	// Sum up the block sizes into "tot_fp_elems"
-	long tot_fp_elems = 0;
+	size_t tot_fp_elems = 0;
     bool more_iters = at_least_one_iter;
 
     while (more_iters) {

@@ -403,11 +403,13 @@ int main(int argc, char* argv[]) {
 		server.run();
 		SIP_LOG(std::cout<<"PBM after program at Server "<< sip_mpi_attr.global_rank()<< " : " << sialfpath << " :"<<std::endl<<persistent_server;);
 
-		sip::MPITimer save_persistent_timer(sip_mpi_attr.company_communicator());
+			sip::MPITimer save_persistent_timer(sip_mpi_attr.company_communicator());
+			sip::MPITimerList save_persistent_timers(sip_mpi_attr.company_communicator(), sipTables.num_arrays());
 
-		save_persistent_timer.start();
-		persistent_server.save_marked_arrays(&server);
-		save_persistent_timer.pause();
+			save_persistent_timer.start();
+			persistent_server.save_marked_arrays(&server, &save_persistent_timers);
+			save_persistent_timer.pause();
+
 
 		//print worker stats before barrier
 		MPI_Barrier(MPI_COMM_WORLD);

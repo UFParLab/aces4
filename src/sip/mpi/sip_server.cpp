@@ -24,14 +24,8 @@ SIPServer::SIPServer(SipTables& sip_tables, DataDistribution& data_distribution,
 				sip_mpi_attr), persistent_array_manager_(
 				persistent_array_manager), terminated_(false),
 				last_seen_worker_(0),
-				pc_(0)
-,op_timer_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()+1)
-,get_block_timer_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()+1)
-,idle_timer_(sip_mpi_attr.company_communicator())
-,pending_timer_(sip_mpi_attr.company_communicator())
-,total_timer_(sip_mpi_attr.company_communicator())
-,num_ops_(sip_mpi_attr.company_communicator())
-,handle_op_timer_(sip_mpi_attr.company_communicator())
+				pc_(0),
+				stats_(sip_mpi_attr.company_communicator(), sip_tables.op_table_size()+1)
 				{
 	mpi_type_.initialize_mpi_scalar_op_type();
 	SIPServer::global_sipserver = this;
@@ -42,7 +36,7 @@ SIPServer::~SIPServer() {
 }
 
 void SIPServer::run() {
-	total_timer_.start();
+	stats_.total_timer_.start();
 	int my_rank = sip_mpi_attr_.global_rank();
 
 //	{//for gdb
@@ -56,7 +50,7 @@ void SIPServer::run() {
 //	}
 
 	while (!terminated_) {
-		idle_timer_.start();
+		stats_.idle_timer_.start();
 		MPI_Status status;
 
 			int flag = 0;
@@ -67,11 +61,11 @@ void SIPServer::run() {
 				&flag, &status), __LINE__, __FILE__);
 				//if not found, try to handle a pending async message
 			    if (!flag){
-			    	pending_timer_.start();
-			    	idle_timer_.pause();
+			    	stats_.pending_timer_.start();
+			    	stats_.idle_timer_.pause();
 			    	async_ops_.try_pending();
-			    	idle_timer_.start();
-			    	pending_timer_.pause();
+			    	stats_.idle_timer_.start();
+			    	stats_.pending_timer_.pause();
 			    }
 			    //TODO this is a spin loop, do we want to sleep between checks?
 			}
@@ -82,10 +76,10 @@ void SIPServer::run() {
 								&status), __LINE__, __FILE__);
 			}
 		//a message has arrived
-		num_ops_.inc();
-		handle_op_timer_.start();
-		idle_timer_.pause();
-		double op_start_time = op_timer_.get_time(); //recorder the current time
+			stats_.num_ops_.inc();
+			stats_.handle_op_timer_.start();
+			stats_.idle_timer_.pause();
+		double op_start_time = stats_.op_timer_.get_time(); //recorder the current time
 		//handle the short message
 		int mpi_tag = status.MPI_TAG;
 		int mpi_source = status.MPI_SOURCE;
@@ -166,12 +160,12 @@ void SIPServer::run() {
 		}
 
 		//update the timer
-		double current_time = op_timer_.get_time();
-		double elapsed = op_timer_.diff(op_start_time, current_time);
-		op_timer_.inc(pc_, elapsed);
-		handle_op_timer_.pause();
+		double current_time = stats_.op_timer_.get_time();
+		double elapsed = stats_.op_timer_.diff(op_start_time, current_time);
+		stats_.op_timer_.inc(pc_, elapsed);
+		stats_.handle_op_timer_.pause();
 	}
-	total_timer_.pause();
+	stats_.total_timer_.pause();
 	//after loop.  Could cleanup here, but will not receive more messages.
 }
 
@@ -190,10 +184,10 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 	last_seen_worker_ = mpi_source;
 
     //retrieve the block
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_reading(block_id,
 			pc_);
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
 
 	//create async op to handle the reply
 	async_ops_.add_get_reply(mpi_source, get_tag, block_id, block, pc_);
@@ -240,9 +234,9 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 
 
     //retrieve the block for writing
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
 
     //create async_op to handle message with the data
     int put_data_tag = BarrierSupport::make_mpi_tag(SIPMPIConstants::PUT_DATA,
@@ -297,10 +291,10 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 	last_seen_worker_ = mpi_source;
 
     //retrieve the block for accumulate
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_accumulate(
 			block_id);
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
 
     //create async op to handle message with data
 	int put_accumulate_data_tag;
@@ -390,9 +384,9 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag) {
 	state_.check_section_number_invariant(
 			section);
 
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
 
     //send ack
 	SIPMPIUtils::check_err(
@@ -430,7 +424,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 	state_.check_section_number_invariant(
 			section);
 
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_accumulate(block_id);
 
 
@@ -438,7 +432,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 	//get_block_for_accumulate does not wait,
 	// so wait for pending to complete
 	block->wait();
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
 
     //send ack
 	SIPMPIUtils::check_err(
@@ -475,9 +469,9 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag) {
 	last_seen_worker_ = mpi_source;
 	state_.check_section_number_invariant(section);
 
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	ServerBlock* block = disk_backed_block_map_.get_block_for_writing(block_id);
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
     //send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, put_scale_tag,
@@ -516,9 +510,9 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : ending program " << ", sent from = " << mpi_source << std::endl;)
 
 	//handle any remaining async ops
-	get_block_timer_.start(pc_);
+	stats_.get_block_timer_.start(pc_);
 	async_ops_.wait_all();
-	get_block_timer_.pause(pc_);
+	stats_.get_block_timer_.pause(pc_);
 	//send ack
 	SIPMPIUtils::check_err(
 			MPI_Send(0, 0, MPI_INT, mpi_source, end_program_tag,
@@ -526,6 +520,7 @@ void SIPServer::handle_END_PROGRAM(int mpi_source, int end_program_tag) {
 
 	//set terminated flag;
 	terminated_ = true;
+	disk_backed_block_map_.stats_.finalize(&disk_backed_block_map_);
 
 }
 
@@ -592,7 +587,7 @@ void SIPServer::handle_RESTORE_PERSISTENT(int mpi_source,
 					MPI_COMM_WORLD), __LINE__, __FILE__);
 
 	//upcall
-	persistent_array_manager_->restore_persistent(this, array_id, string_slot);
+	persistent_array_manager_->restore_persistent(this, array_id, string_slot,  pc_);
 
 	SIP_LOG(
 			std::cout << "S " << sip_mpi_attr_.global_rank() << " : restored persistent array " << sip_tables_.array_name(array_id) << ", id = " << array_id << ", sent from = " << mpi_source << ", at line = " << line_number(pc_) << std::endl;)
@@ -638,5 +633,53 @@ std::ostream& operator<<(std::ostream& os, const MPI_Status& status) {
 	return os;
 }
 
+std::ostream& SIPServer::Stats::gather_and_print_statistics(std::ostream& os, SIPServer* server){
+//		op_timer_.gather();
+	op_timer_.reduce();
+//		get_block_timer_.gather(); //indexed by pc
+	get_block_timer_.reduce();
+//		idle_timer_.gather();
+	idle_timer_.reduce();
+//		total_timer_.gather();
+	total_timer_.reduce();
+	pending_timer_.gather();
+	pending_timer_.reduce();
+	handle_op_timer_.reduce();
+	num_ops_.gather();
+	server->async_ops_.pending_counter_.gather();
+
+	if (server->sip_mpi_attr_.is_company_master()){
+		os << "\n\nServer statistics"<< std::endl << std::endl;
+		std::ios saved_format(NULL);
+		saved_format.copyfmt(os);
+		os << "Server Utilization Summary (approximate percent time)" << std::endl;
+		os << "directly processing ops,"<< std::setiosflags(std::ios::fixed) << std::setprecision(0) <<(handle_op_timer_.get_mean()/total_timer_.get_mean())*100  << std::endl;
+		os << "handling async ops,"<< std::setiosflags(std::ios::fixed) << std::setprecision(0)  << (pending_timer_.get_mean()/total_timer_.get_mean())*100 << std::endl;
+		os << "idle," << std::setiosflags(std::ios::fixed) << std::setprecision(0) << (idle_timer_.get_mean()/total_timer_.get_mean())*100 <<  std::endl;
+		os.copyfmt(saved_format);
+		os << std::endl;
+		os << "Server op_timer_" << std::endl;
+		//os << op_timer_ << std::endl;
+		op_timer_.print_op_table_stats(os, server->sip_tables_);
+		os << std::endl << "Server get_block_timer_" << std::endl;
+		//os << get_block_timer_ << std::endl;
+		get_block_timer_.print_op_table_stats(os, server->sip_tables_);
+		os << std::endl << "total_timer_" << std::endl;
+		os << total_timer_ ;
+		os << std::endl << "handle_op_timer_" << std::endl;
+		os << handle_op_timer_;
+		os << std::endl << "idle_timer_" << std::endl;
+		os << idle_timer_ ;
+		os << std::endl << "pending_timer_" << std::endl;
+		os << pending_timer_ ;
+		os << std::endl << "num_ops_" << std::endl;
+		os << num_ops_ ;
+		os << std::endl << "async_ops_pending_" << std::endl;
+		os << server->async_ops_.pending_counter_ ;
+	}
+
+	os << std::endl << std::flush;
+	return os;
+}
 
 } /* namespace sip */

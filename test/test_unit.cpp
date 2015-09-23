@@ -7,1087 +7,1284 @@
 
 #include <cstdio>
 #include <algorithm>
-#include <vector>
-#include <stdexcept>
-#include <map>
-#include <istream>
-#include "config.h"
 
+#include "mpi.h"
 #include "gtest/gtest.h"
 
-#include "array_constants.h"
-#include "id_block_map.h"
-#include "block_id.h"
-#include "block.h"
-#include "lru_array_policy.h"
-#include "sip_mpi_attr.h"
-#include "cached_block_map.h"
-#include "global_state.h"
-#include "rank_distribution.h"
 
+#include "array_file.h"
+#include "chunk_manager.h"
+#include "chunk.h"
 
-#ifdef HAVE_MPI
-#include "mpi.h"
-#include "server_block.h"
-#include "sip_mpi_utils.h"
-#endif
 
 #ifdef HAVE_TAU
 #include <TAU.h>
 #endif
 
-TEST(SialUnitLRU,BlockLRUArrayPolicy){
+//TEST(Sial_Unit,DISABLED_BlockLRUArrayPolicy){
+//
+//	sip::index_value_array_t index_values;
+//	std::fill(index_values, index_values+MAX_RANK, sip::unused_index_value);
+//
+//	sip::BlockId bid0(0, index_values);
+//	sip::BlockId bid1(1, index_values);
+//	sip::BlockId bid2(2, index_values);
+//	sip::BlockId bid3(3, index_values);
+//	sip::BlockId bid4(4, index_values);
+//	sip::BlockId bid5(5, index_values);
+//
+//	sip::Block *blk = NULL;
+//
+//	sip::IdBlockMap<sip::Block> block_map(6);
+//	block_map.insert_block(bid0, blk);
+//	block_map.insert_block(bid1, blk);
+//	block_map.insert_block(bid2, blk);
+//	block_map.insert_block(bid3, blk);
+//	block_map.insert_block(bid4, blk);
+//	block_map.insert_block(bid5, blk);
+//
+//	sip::LRUArrayPolicy<sip::Block> policy(block_map);
+//	policy.touch(bid0);
+//	policy.touch(bid1);
+//	policy.touch(bid2);
+//	policy.touch(bid3);
+//	policy.touch(bid4);
+//	policy.touch(bid5);
+//
+//	sip::Block* b;
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 0, "Block to remove should be from array 0");
+//	block_map.get_and_remove_block(bid0);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 1, "Block to remove should be from array 1");
+//	block_map.get_and_remove_block(bid1);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 2, "Block to remove should be from array 2");
+//	block_map.get_and_remove_block(bid2);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 3, "Block to remove should be from array 3");
+//	block_map.get_and_remove_block(bid3);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 4, "Block to remove should be from array 4");
+//	block_map.get_and_remove_block(bid4);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 5, "Block to remove should be from array 5");
+//	block_map.get_and_remove_block(bid5);
+//
+//}
+//
+//
+//TEST(Sial_Unit,DISABLED_ServerBlockLRUArrayPolicy){
+//
+//	sip::index_value_array_t index_values;
+//	std::fill(index_values, index_values+MAX_RANK, sip::unused_index_value);
+//
+//	sip::BlockId bid0(0, index_values);
+//	sip::BlockId bid1(1, index_values);
+//	sip::BlockId bid2(2, index_values);
+//	sip::BlockId bid3(3, index_values);
+//	sip::BlockId bid4(4, index_values);
+//	sip::BlockId bid5(5, index_values);
+//
+//	// Allocate dummy data for ServerBlock so that ServerBlock
+//	// Specific LRUArrayPolicy processes it correctly.
+//	sip::ServerBlock *sb = new sip::ServerBlock(1, true);
+//
+//	sip::IdBlockMap<sip::ServerBlock> server_block_map(6);
+//	server_block_map.insert_block(bid0, sb);
+//	server_block_map.insert_block(bid1, sb);
+//	server_block_map.insert_block(bid2, sb);
+//	server_block_map.insert_block(bid3, sb);
+//	server_block_map.insert_block(bid4, sb);
+//	server_block_map.insert_block(bid5, sb);
+//
+//	sip::LRUArrayPolicy<sip::ServerBlock> policy(server_block_map);
+//	policy.touch(bid0);
+//	policy.touch(bid1);
+//	policy.touch(bid2);
+//	policy.touch(bid3);
+//	policy.touch(bid4);
+//	policy.touch(bid5);
+//
+//	sip::ServerBlock* b;
+//
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 0, "Block to remove should be from array 0");
+//	server_block_map.get_and_remove_block(bid0);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 1, "Block to remove should be from array 1");
+//	server_block_map.get_and_remove_block(bid1);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 2, "Block to remove should be from array 2");
+//	server_block_map.get_and_remove_block(bid2);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 3, "Block to remove should be from array 3");
+//	server_block_map.get_and_remove_block(bid3);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 4, "Block to remove should be from array 4");
+//	server_block_map.get_and_remove_block(bid4);
+//	sip::check(policy.get_next_block_for_removal(b).array_id() == 5, "Block to remove should be from array 5");
+//	server_block_map.get_and_remove_block(bid5);
+//
+//}
+//
 
-	sip::index_value_array_t index_values;
-	std::fill(index_values, index_values+MAX_RANK, sip::unused_index_value);
-
-	sip::BlockId bid0(0, index_values);
-	sip::BlockId bid1(1, index_values);
-	sip::BlockId bid2(2, index_values);
-	sip::BlockId bid3(3, index_values);
-	sip::BlockId bid4(4, index_values);
-	sip::BlockId bid5(5, index_values);
-
-	sip::Block *blk = NULL;
-
-	sip::IdBlockMap<sip::Block> block_map(6);
-	block_map.insert_block(bid0, blk);
-	block_map.insert_block(bid1, blk);
-	block_map.insert_block(bid2, blk);
-	block_map.insert_block(bid3, blk);
-	block_map.insert_block(bid4, blk);
-	block_map.insert_block(bid5, blk);
-
-	sip::LRUArrayPolicy<sip::Block> policy(block_map);
-	policy.touch(bid0);
-	policy.touch(bid1);
-	policy.touch(bid2);
-	policy.touch(bid3);
-	policy.touch(bid4);
-	policy.touch(bid5);
-
-	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 0);
-	block_map.get_and_remove_block(bid0);
-	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 1);
-	block_map.get_and_remove_block(bid1);
-	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 2);
-	block_map.get_and_remove_block(bid2);
-	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 3);
-	block_map.get_and_remove_block(bid3);
-	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 4);
-	block_map.get_and_remove_block(bid4);
-	ASSERT_EQ(policy.get_next_block_for_removal(blk).array_id(), 5);
-	block_map.get_and_remove_block(bid5);
+/** Just test opening, closing, and reopening the an ArrayFile.  This does write and read the index */
+TEST(Server,array_file_0){
+	std::string filename("array_file_0");
+	typedef sip::ArrayFile::offset_val_t index_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+	header_val_t chunk_size = 555;
+	header_val_t num_blocks = 999;
+	bool is_new = true;
+	bool save_after_close = true;
+	{
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new, save_after_close );
+	file0.mark_persistent(filename);
+	std::cout << "file0\n" << file0 << std::endl;
+	}
+	//file was closed when ArrayFile went out of scope
+	//reopen it.
+	{
+	is_new = false;
+	sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new);
+	std::cout << "file1\n" << file1 << std::endl;
+	}
 
 }
 
-#ifdef HAVE_MPI // ServerBlocks are valid only in the MPI Build
-TEST(SialUnitLRU,ServerBlockLRUArrayPolicy){
 
-	sip::index_value_array_t index_values;
-	std::fill(index_values, index_values+MAX_RANK, sip::unused_index_value);
+/** Test opening, closing, and reopening the ArrayFile, plus writing and reading the index.*/
+TEST(Server,array_file_1){
+	typedef sip::ArrayFile::offset_val_t index_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+	std::string filename("array_file_1.test.acf");
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	header_val_t chunk_size = 5;
+	header_val_t num_blocks = nprocs * 2;
+	bool is_new = true;
+	bool save_after_close = true;
+	//create and write the file
+	{
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new, save_after_close );
+	file0.mark_persistent(filename);
+	index_val_t index[num_blocks];
+	std::fill(index, index + num_blocks, 0);
+	index[rank] = rank;
+	index[nprocs+rank] = rank*2;
+	file0.write_index(index, num_blocks);
+	}
 
-	sip::BlockId bid0(0, index_values);
-	sip::BlockId bid1(1, index_values);
-	sip::BlockId bid2(2, index_values);
-	sip::BlockId bid3(3, index_values);
-	sip::BlockId bid4(4, index_values);
-	sip::BlockId bid5(5, index_values);
+	//file was closed when ArrayFile went out of scope
+	//reopen it.
+	{
+	is_new = false;
+	sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new);
+	index_val_t index2[num_blocks];
+	std::fill(index2, index2 + num_blocks,0);
+	file1.read_index(index2, num_blocks);
+	ASSERT_EQ(rank, index2[rank]);
+	ASSERT_EQ(rank*2, index2[nprocs+rank]);
 
-	// Allocate dummy data for ServerBlock so that ServerBlock
-	// Specific LRUArrayPolicy processes it correctly.
-	sip::ServerBlock *sb = new sip::ServerBlock(1, false);
-
-	sip::IdBlockMap<sip::ServerBlock> server_block_map(6);
-	server_block_map.insert_block(bid0, sb);
-	server_block_map.insert_block(bid1, sb);
-	server_block_map.insert_block(bid2, sb);
-	server_block_map.insert_block(bid3, sb);
-	server_block_map.insert_block(bid4, sb);
-	server_block_map.insert_block(bid5, sb);
-
-	sip::LRUArrayPolicy<sip::ServerBlock> policy(server_block_map);
-	policy.touch(bid0);
-	policy.touch(bid1);
-	policy.touch(bid2);
-	policy.touch(bid3);
-	policy.touch(bid4);
-	policy.touch(bid5);
-
-	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 0);
-	server_block_map.get_and_remove_block(bid0);
-	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 1);
-	server_block_map.get_and_remove_block(bid1);
-	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 2);
-	server_block_map.get_and_remove_block(bid2);
-	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 3);
-	server_block_map.get_and_remove_block(bid3);
-	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 4);
-	server_block_map.get_and_remove_block(bid4);
-	ASSERT_EQ(policy.get_next_block_for_removal(sb).array_id(), 5);
-	server_block_map.get_and_remove_block(bid5);
+	}
 
 }
-#endif // HAVE_MPI
+
+/** Test opening, closing, and reopening the ArrayFile, plus writing and reading the index, and some chunks*/
+TEST(Server,array_file_3){
+	std::string filename("array_file_3.test.acf");
+
+	typedef sip::ArrayFile::offset_val_t index_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 
+	header_val_t chunk_size = 5;
+	header_val_t num_blocks = nprocs * 2;
 
-// Tests for CachedBlockMap
+	MPI_Offset offset0 = rank*chunk_size;
+	MPI_Offset offset1 = (nprocs + rank) *chunk_size;
 
-// Sanity test
-TEST(CachedBlockMap, only_insert){
-	const int size_in_mb = 10;
-	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
+	//create and write the file
+	double val0 = rank;
+	double val1 = rank + nprocs;
+	{
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
+	file0.mark_persistent(filename);
+	//initialize and write some chunks
+	double data0[chunk_size];
 
-	const int num_segments = 5;
-	const int rank = 2;
-	const int segment_size = 70;
+	std::fill(data0, data0+chunk_size, val0);
 
-	// Should not crash
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
+	double data1[chunk_size];
+	std::fill(data1, data1+chunk_size, val1);
+
+	for(int i = 0; i != chunk_size; ++i){
+		ASSERT_EQ(val0, data0[i]);
+		ASSERT_EQ(val1, data1[i]);
+	}
+//	sip::Chunk chunk0(data0, chunk_size, offset0, false);
+//	sip::Chunk chunk1(data1, chunk_size, offset1, false);
+	sip::Chunk chunk0(data0, offset0, false);
+	sip::Chunk chunk1(data1, offset1, false);
+
+//	//print the chunk values for ranks 0 and 1
+//	if (rank == 0){
+//		std::cout << "\nrank " << rank << " data0:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data0[i] << ',';
+//		}
+//		std::cout << "\ndata1:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data1[i] << ',';
+//		}
+//		std::cout << "\n--------------" << std::endl << std::flush;
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	} else if (rank == 1){
+//		MPI_Barrier(MPI_COMM_WORLD);
+//		std::cout << "\nrank " << rank << " data0:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data0[i] << ',';
+//		}
+//		std::cout << "\ndata1:"  << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data1[i] << ',';
+//		}
+//		std::cout << "\n++++++++++++++++++=" << std::endl << std::flush;
+//	}
+//	else{
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	}
+
+	file0.chunk_write(chunk0);
+	file0.chunk_write(chunk1);
+
+	//initialize and write the index
+	index_val_t index0[num_blocks];
+	std::fill(index0, index0 + num_blocks, 0);
+	index0[rank] = offset0;
+	index0[nprocs+rank] = offset1;
+	file0.write_index(index0, num_blocks);
+
+//	file0.sync();
+//	//try reading the file as one big chunk
+//	if (rank==0){
+//		size_t num_doubles = chunk_size * num_blocks;
+//	double * datas = new double[num_doubles];
+//	MPI_Offset file_start =0;
+//	file0.read_doubles(datas, num_doubles, file_start);
+//	std::cout << std::endl << "printing data part of file" << std::endl;
+//	for (int i = 0; i < num_doubles; ++i){
+//		std::cout << datas[i] << ',';
+//	}
+//	std::cout << std::endl << std::flush;
+//	}
+
+
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(rank == 0){
+		std::cout << "@@@@@@@@@@@ part one done" << std::endl;
+
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	//file was closed when ArrayFile went out of scope
+	//reopen it.
+	{
+
+		sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, false);
+
+		//read the index
+		index_val_t index1[num_blocks];
+		std::fill(index1, index1 + num_blocks,0);
+		file1.read_index(index1, num_blocks);
+		ASSERT_EQ(offset0, index1[rank]);
+		ASSERT_EQ(offset1, index1[nprocs+rank]);
+
+//		if (rank == 0){
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+//
+//		file1.sync();
+//		//try reading the file as one big chunk
+//		if (rank==0){
+//			size_t num_doubles = chunk_size * num_blocks;
+//		double * datas = new double[num_doubles];
+//		MPI_Offset file_start =0;
+//		file1.read_doubles(datas, num_doubles, file_start);
+//		std::cout << std::endl << "printing data part of file" << std::endl;
+//		for (int i = 0; i < num_doubles; ++i){
+//			std::cout << datas[i] << ',';
+//		}
+//		std::cout << std::endl << std::flush;
+//		}
+
+		double datar0[chunk_size];
+		double datar1[chunk_size];
+//		sip::Chunk chunkr0(datar0, chunk_size, index1[rank], true);
+//		sip::Chunk chunkr1(datar1, chunk_size, index1[nprocs+rank], true);
+		sip::Chunk chunkr0(datar0, index1[rank], true);
+		sip::Chunk chunkr1(datar1, index1[nprocs+rank], true);
+		file1.chunk_read(chunkr0);
+		file1.chunk_read(chunkr1);
+
+//		//output the chunk values for ranks 0 and 1
+//		if (rank == 0){
+//			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar0[i] << ',';
+//			}
+//			std::cout << " datar1:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar0[i] << ',';
+//			}
+//			std::cout << " datar1:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar1[i] << ',';
+//			}
+//
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+		for(int i = 0; i != chunk_size; ++i){
+			ASSERT_EQ(val0, datar0[i]);
+			ASSERT_EQ(val1, datar1[i]);
 		}
 	}
+
 }
 
 
-// Sanity test
-TEST(CachedBlockMap, insert_more_than_2gb){
-	const int size_in_gb = 3;
-	const std::size_t size_in_bytes = size_in_gb * 1024L * 1024L * 1024L;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
 
-	const int num_segments = 4;
-	const int rank = 4;
-	const int segment_size = 35;
+/** Same as array_file_3 except that it uses collective IO*/
+TEST(Server,array_file_4){
+	std::string filename("array_file_4.test.acf");
 
-	// Should not crash
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			for (int k=1; k <= num_segments; ++k){
-				for (int l=1; l <= num_segments; ++l){
-					sip::index_value_array_t indices;
-					indices[0] = i;
-					indices[1] = j;
-					indices[2] = k;
-					indices[3] = l;
-					for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-					sip::BlockId block_id(0, indices);
-					sip::segment_size_array_t segment_sizes;
-					for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-					for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-					sip::BlockShape shape(segment_sizes, rank);
-					sip::Block::BlockPtr block = new sip::Block(shape);
-					cached_block_map.insert_block(block_id, block);
-				}
+	typedef sip::ArrayFile::offset_val_t index_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+	header_val_t chunk_size = 5;
+	header_val_t num_blocks = nprocs * 2;
+
+	MPI_Offset offset0 = rank*chunk_size;
+	MPI_Offset offset1 = (nprocs + rank) *chunk_size;
+
+	//create and write the file
+	double val0 = rank;
+	double val1 = rank + nprocs;
+	{
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
+	file0.mark_persistent(filename);
+	//initialize and write some chunks
+	double data0[chunk_size];
+
+	std::fill(data0, data0+chunk_size, val0);
+
+	double data1[chunk_size];
+	std::fill(data1, data1+chunk_size, val1);
+
+	for(int i = 0; i != chunk_size; ++i){
+		ASSERT_EQ(val0, data0[i]);
+		ASSERT_EQ(val1, data1[i]);
+	}
+//	sip::Chunk chunk0(data0, chunk_size, offset0, false);
+//	sip::Chunk chunk1(data1, chunk_size, offset1, false);
+	sip::Chunk chunk0(data0, offset0, false);
+	sip::Chunk chunk1(data1, offset1, false);
+
+//	//print the chunk values for ranks 0 and 1
+//	if (rank == 0){
+//		std::cout << "\nrank " << rank << " data0:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data0[i] << ',';
+//		}
+//		std::cout << "\ndata1:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data1[i] << ',';
+//		}
+//		std::cout << "\n--------------" << std::endl << std::flush;
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	} else if (rank == 1){
+//		MPI_Barrier(MPI_COMM_WORLD);
+//		std::cout << "\nrank " << rank << " data0:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data0[i] << ',';
+//		}
+//		std::cout << "\ndata1:"  << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data1[i] << ',';
+//		}
+//		std::cout << "\n++++++++++++++++++=" << std::endl << std::flush;
+//	}
+//	else{
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	}
+
+	file0.chunk_write_all(chunk0);
+	file0.chunk_write_all(chunk1);
+
+	//initialize and write the index
+	index_val_t index0[num_blocks];
+	std::fill(index0, index0 + num_blocks, 0);
+	index0[rank] = offset0;
+	index0[nprocs+rank] = offset1;
+	file0.write_index(index0, num_blocks);
+
+//	file0.sync();
+//	//try reading the file as one big chunk
+//	if (rank==0){
+//		size_t num_doubles = chunk_size * num_blocks;
+//	double * datas = new double[num_doubles];
+//	MPI_Offset file_start =0;
+//	file0.read_doubles(datas, num_doubles, file_start);
+//	std::cout << std::endl << "printing data part of file" << std::endl;
+//	for (int i = 0; i < num_doubles; ++i){
+//		std::cout << datas[i] << ',';
+//	}
+//	std::cout << std::endl << std::flush;
+//	}
+
+
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(rank == 0){
+		std::cout << "@@@@@@@@@@@ part one done" << std::endl;
+
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	//file was closed when ArrayFile went out of scope
+	//reopen it.
+	{
+
+		sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, false);
+
+		//read the index
+		index_val_t index1[num_blocks];
+		std::fill(index1, index1 + num_blocks,0);
+		file1.read_index(index1, num_blocks);
+		ASSERT_EQ(offset0, index1[rank]);
+		ASSERT_EQ(offset1, index1[nprocs+rank]);
+
+//		if (rank == 0){
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+//
+//		file1.sync();
+//		//try reading the file as one big chunk
+//		if (rank==0){
+//			size_t num_doubles = chunk_size * num_blocks;
+//		double * datas = new double[num_doubles];
+//		MPI_Offset file_start =0;
+//		file1.read_doubles(datas, num_doubles, file_start);
+//		std::cout << std::endl << "printing data part of file" << std::endl;
+//		for (int i = 0; i < num_doubles; ++i){
+//			std::cout << datas[i] << ',';
+//		}
+//		std::cout << std::endl << std::flush;
+//		}
+
+		double datar0[chunk_size];
+		double datar1[chunk_size];
+//		sip::Chunk chunkr0(datar0, chunk_size, index1[rank], true);
+//		sip::Chunk chunkr1(datar1, chunk_size, index1[nprocs+rank], true);
+		sip::Chunk chunkr0(datar0, index1[rank], true);
+		sip::Chunk chunkr1(datar1, index1[nprocs+rank], true);
+		file1.chunk_read_all(chunkr0);
+		file1.chunk_read_all(chunkr1);
+
+//		//output the chunk values for ranks 0 and 1
+//		if (rank == 0){
+//			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar0[i] << ',';
+//			}
+//			std::cout << " datar1:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar0[i] << ',';
+//			}
+//			std::cout << " datar1:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar1[i] << ',';
+//			}
+//
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+		for(int i = 0; i != chunk_size; ++i){
+			ASSERT_EQ(val0, datar0[i]);
+			ASSERT_EQ(val1, datar1[i]);
+		}
+	}
+
+}
+
+/** Tests collective operations, with extra chunk at rank 0 to test noop commands.*/
+TEST(Server,array_file_5){
+	std::string filename("array_file_5.test.acf");
+
+	typedef sip::ArrayFile::offset_val_t index_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+	header_val_t chunk_size = 5;
+	header_val_t num_blocks = nprocs * 2 + 1;
+
+	MPI_Offset offset0 = rank*chunk_size;
+	MPI_Offset offset1 = (nprocs + rank) *chunk_size;
+	MPI_Offset offset2 = ((2*nprocs) + rank) * chunk_size;
+
+	//create and write the file
+	double val0 = rank;
+	double val1 = rank + nprocs;
+	double val2 = rank + 2*nprocs;
+	{
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
+	file0.mark_persistent(filename);
+	//initialize and write some chunks
+	double data0[chunk_size];
+
+	std::fill(data0, data0+chunk_size, val0);
+
+	double data1[chunk_size];
+	std::fill(data1, data1+chunk_size, val1);
+
+
+
+	for(int i = 0; i != chunk_size; ++i){
+		ASSERT_EQ(val0, data0[i]);
+		ASSERT_EQ(val1, data1[i]);
+	}
+//	sip::Chunk chunk0(data0, chunk_size, offset0, false);
+//	sip::Chunk chunk1(data1, chunk_size, offset1, false);
+	sip::Chunk chunk0(data0, offset0, false);
+	sip::Chunk chunk1(data1, offset1, false);
+
+
+//	//print the chunk values for ranks 0 and 1
+//	if (rank == 0){
+//		std::cout << "\nrank " << rank << " data0:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data0[i] << ',';
+//		}
+//		std::cout << "\ndata1:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data1[i] << ',';
+//		}
+//		std::cout << "\n--------------" << std::endl << std::flush;
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	} else if (rank == 1){
+//		MPI_Barrier(MPI_COMM_WORLD);
+//		std::cout << "\nrank " << rank << " data0:" << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data0[i] << ',';
+//		}
+//		std::cout << "\ndata1:"  << std::endl;
+//		for (int i = 0; i < chunk_size; ++i){
+//			std::cout << data1[i] << ',';
+//		}
+//		std::cout << "\n++++++++++++++++++=" << std::endl << std::flush;
+//	}
+//	else{
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	}
+
+	file0.chunk_write_all(chunk0);
+	file0.chunk_write_all(chunk1);
+
+	if (rank==0){
+		double data2[chunk_size];
+		std::fill(data2, data2+chunk_size, val2);
+//		sip::Chunk chunk2(data2, chunk_size, offset2, false);
+		sip::Chunk chunk2(data2, offset2, false);
+		file0.chunk_write_all(chunk2);
+	}
+	else {
+		file0.chunk_write_all_nop();
+	}
+
+	//initialize and write the index
+	index_val_t index0[num_blocks];
+	std::fill(index0, index0 + num_blocks, 0);
+	index0[rank] = offset0;
+	index0[nprocs+rank] = offset1;
+	if (rank == 0){
+		index0[nprocs*2 + rank] = offset2;
+	}
+	file0.write_index(index0, num_blocks);
+
+//	file0.sync();
+//	//try reading the file as one big chunk
+//	if (rank==0){
+//		size_t num_doubles = chunk_size * num_blocks;
+//	double * datas = new double[num_doubles];
+//	MPI_Offset file_start =0;
+//	file0.read_doubles(datas, num_doubles, file_start);
+//	std::cout << std::endl << "printing data part of file" << std::endl;
+//	for (int i = 0; i < num_doubles; ++i){
+//		std::cout << datas[i] << ',';
+//	}
+//	std::cout << std::endl << std::flush;
+//	}
+
+
+	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(rank == 0){
+		std::cout << "@@@@@@@@@@@ part one done" << std::endl;
+
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	//file was closed when ArrayFile went out of scope
+	//reopen it.
+	{
+
+		sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, false);
+
+		//read the index
+		index_val_t index1[num_blocks];
+		std::fill(index1, index1 + num_blocks,0);
+		file1.read_index(index1, num_blocks);
+		ASSERT_EQ(offset0, index1[rank]);
+		ASSERT_EQ(offset1, index1[nprocs+rank]);
+
+//		if (rank == 0){
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+//
+//		file1.sync();
+//		//try reading the file as one big chunk
+//		if (rank==0){
+//			size_t num_doubles = chunk_size * num_blocks;
+//		double * datas = new double[num_doubles];
+//		MPI_Offset file_start =0;
+//		file1.read_doubles(datas, num_doubles, file_start);
+//		std::cout << std::endl << "printing data part of file" << std::endl;
+//		for (int i = 0; i < num_doubles; ++i){
+//			std::cout << datas[i] << ',';
+//		}
+//		std::cout << std::endl << std::flush;
+//		}
+
+		double datar0[chunk_size];
+		double datar1[chunk_size];
+//		sip::Chunk chunkr0(datar0, chunk_size, index1[rank], true);
+//		sip::Chunk chunkr1(datar1, chunk_size, index1[nprocs+rank], true);
+		sip::Chunk chunkr0(datar0, index1[rank], true);
+		sip::Chunk chunkr1(datar1, index1[nprocs+rank], true);
+		file1.chunk_read_all(chunkr0);
+		file1.chunk_read_all(chunkr1);
+		if(rank == 0){
+			double datar2[chunk_size];
+//			sip::Chunk chunkr2(datar2, chunk_size, index1[nprocs*2 + rank], true);
+			sip::Chunk chunkr2(datar2, index1[nprocs*2 + rank], true);
+			file1.chunk_read_all(chunkr2);
+			for(int i = 0; i != chunk_size; ++i){
+				ASSERT_EQ(val0, datar0[i]);
+				ASSERT_EQ(val1, datar1[i]);
+				ASSERT_EQ(val2, datar2[i]);
 			}
 		}
-	}
-}
-
-// Max mem set to a low number so
-// as to trigger a out_of_range exception
-TEST(CachedBlockMap, exceed_insert){
-	const int size_in_mb = 0.15;
-	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
-
-	const int num_segments = 5;
-	const int rank = 2;
-	const int segment_size = 100;
-
-	// Should throw exception
-	int count = 0;
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			ASSERT_THROW(cached_block_map.insert_block(block_id, block), std::out_of_range);
-			// Even if the exception is thrown at least once, this test passes.
-		}
-	}
-}
-
-// Checking if cached_delete-ed blocks
-// are available again.
-TEST(CachedBlockMap, cached_delete){
-	const int size_in_mb = 10;
-	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
-
-	const int num_segments = 5;
-	const int rank = 2;
-	const int segment_size = 70;
-
-	// Should not crash
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
-		}
-	}
-
-	// Cached Delete the blocks
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			cached_block_map.cached_delete_block(block_id);
-		}
-	}
-
-	// Check if deleted blocks are available
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			ASSERT_TRUE(cached_block_map.block(block_id) != NULL);
-		}
-	}
-
-}
-
-// deleted blocks should not be
-// available again.
-TEST(CachedBlockMap, regular_delete){
-	const int size_in_mb = 10;
-	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
-
-	const int num_segments = 5;
-	const int rank = 2;
-	const int segment_size = 70;
-
-	// Should not crash
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
-		}
-	}
-
-	// Delete the blocks
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			cached_block_map.delete_block(block_id);
-		}
-	}
-
-	// Check if deleted blocks are available
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			ASSERT_TRUE(cached_block_map.block(block_id) == NULL);
-		}
-	}
-}
-
-
-// Seeing if free space after block inserts & deletes
-TEST(CachedBlockMap, insert_after_freeing_up_space){
-	const int size_in_mb = 8;
-	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
-
-	const int num_segments = 10;
-	const int rank = 2;
-	const int segment_size = 100;
-
-	// Should not crash
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
-		}
-	}
-
-	// Delete the blocks
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			cached_block_map.delete_block(block_id);
-		}
-	}
-
-	// Insert blocks again
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
-		}
-	}
-}
-
-// Seeing if free space after block inserts & cached deletes
-TEST(CachedBlockMap, insert_after_cached_delete){
-	const int size_in_mb = 8;
-	const std::size_t size_in_bytes = size_in_mb * 1024 * 1024;
-	sip::CachedBlockMap cached_block_map(1);
-	cached_block_map.set_max_allocatable_bytes(size_in_bytes);
-
-	const int num_segments = 10;
-	const int rank = 2;
-	const int segment_size = 100;
-
-	// Should not crash
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
-		}
-	}
-
-	// Delete the blocks
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			cached_block_map.cached_delete_block(block_id);
-		}
-	}
-
-	// Insert blocks again
-	for (int i=1; i <= num_segments; ++i){
-		for (int j=1; j <= num_segments; ++j){
-			sip::index_value_array_t indices;
-			indices[0] = i;
-			indices[1] = j;
-			for (int f=rank; f < MAX_RANK; f++) indices[f] = sip::unused_index_value;
-			sip::BlockId block_id(0, indices);
-			sip::segment_size_array_t segment_sizes;
-			for (int s=0; s < rank; s++) segment_sizes[s] = segment_size;
-			for (int s=rank; s<MAX_RANK; s++) segment_sizes[s] = sip::unused_index_segment_size;
-			sip::BlockShape shape(segment_sizes, rank);
-			sip::Block::BlockPtr block = new sip::Block(shape);
-			cached_block_map.insert_block(block_id, block);
-		}
-	}
-}
-
-// Tests for TwoWorkerOneServerRankDistribution
-
-TEST(TwoWorkerOneServerRankDistribution, test1){
-    const int num_processes = 6;
-    const int num_workers = 4;
-    const int num_servers = 2;
-    bool reference_is_server_array[num_processes] = {
-            false,  // 0
-            false,  // 1
-            true,   // 2
-            false,  // 3
-            false,  // 4
-            true    // 5
-    };
-    bool local_worker_to_communicate[num_processes] = {
-            true,   // 0
-            false,  // 1
-            false,  // 2
-            true,   // 3
-            false,  // 4
-            false   // 5
-    };
-
-    sip::TwoWorkerOneServerRankDistribution rd (num_workers + num_servers);
-    std::vector<bool> is_server_vector;
-    for (int i=0; i<num_processes; ++i)
-        is_server_vector.push_back(rd.is_server(i));
-
-    for (int i=0; i<num_processes; ++i){
-        ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-    }
-
-    for (int i=0; i<num_processes; ++i){
-        ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-    }
-
-    int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-    local_servers_to_communicate[0][0] = 2;
-    local_servers_to_communicate[3][0] = 5;
-
-    for (int i=0; i<num_processes; ++i){
-        if (rd.is_local_worker_to_communicate(i)){
-            std::vector<int> servers = rd.local_servers_to_communicate(i);
-            ASSERT_EQ(servers.size(), 1);
-            for (int j=0; j<servers.size(); ++j){
-                ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-            }
-        }
-    }
-}
-
-
-// Tests for ConfigurableRankDistribution
-
-TEST(ConfigurableRankDistribution, test1){
-	const int num_processes = 10;
-	const int num_workers = 9;
-	const int num_servers = 1;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			false,	// 4
-			false,	// 5
-			false,	// 6
-			false,	// 7
-			false,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			false,	// 4
-			false,	// 5
-			false,	// 6
-			false,	// 7
-			false,	// 8
-			false	// 9
-	};
-
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-	}
-
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 9;
-
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_EQ(servers.size(), 1);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
+		else {
+			file1.chunk_read_all_nop();
+			for(int i = 0; i != chunk_size; ++i){
+				ASSERT_EQ(val0, datar0[i]);
+				ASSERT_EQ(val1, datar1[i]);
 			}
 		}
+
+//		//output the chunk values for ranks 0 and 1
+//		if (rank == 0){
+//			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar0[i] << ',';
+//			}
+//			std::cout << " datar1:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar0[i] << ',';
+//			}
+//			std::cout << " datar1:" << file1 << std::endl;
+//			for (int i = 0; i < chunk_size; ++i){
+//				std::cout << datar1[i] << ',';
+//			}
+//
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+
 	}
+
 }
 
-TEST(ConfigurableRankDistribution, test2){
-	const int num_processes = 10;
-	const int num_workers = 8;
-	const int num_servers = 2;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			true,	// 4
-			false,	// 5
-			false,	// 6
-			false,	// 7
-			false,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			false,	// 4
-			true,	// 5
-			false,	// 6
-			false,	// 7
-			false,	// 8
-			false	// 9
-	};
+/**
+ * Creates chunks using ChunkManager class and writes to file using non-collective ops*/
+TEST(Server,array_file_6){
+	std::string filename("array_file_6.test.acf");
 
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+	typedef sip::ArrayFile::offset_val_t offset_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
 
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+
+
+	header_val_t chunk_size = 10;
+	header_val_t num_blocks = nprocs * 6;
+
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
+	sip::ChunkManager chunk_manager(chunk_size, &file0);
+
+	int block_size[] = {5,5,4,4,7,5};
+	double val[6];
+
+
+	{
+
+	//allocate and initialize data as if for serverblocks and write chunks to disk
+	int chunk_number[6];
+	offset_val_t offset[6];
+
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true);
+	file0.mark_persistent(filename);
+
+	for (int i = 0; i < 6; i++){
+	    val[i] = rank + i*nprocs + 500;;
+	    chunk_manager.assign_block_data_from_chunk(block_size[i], true, chunk_number[i], offset[i]);
+	    double* data = chunk_manager.get_data(chunk_number[i], offset[i]);
+	    std::fill(data, data + block_size[i], val[i]);
+	    sip::Chunk* chunk = chunk_manager.chunk(chunk_number[i]);
+	    file0.chunk_write(*chunk);  //same chunk may be written more than once by this proc.
+	    chunk_manager.set_valid_on_disk(chunk_number[i],true);
 	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+	std::cout << "offsets: " << std::endl;
+	for (int i = 0; i < 6; ++i){
+		std::cout <<  offset[i] << ',';
 	}
+	std::cout << "\nchunk_numbers: " << std::endl;
+	for (int i = 0; i < 6; ++i){
+		std::cout <<  chunk_number[i] << ',';
+	}
+	std::cout << std::endl << std::flush;
 
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 4;
-	local_servers_to_communicate[5][0] = 9;
+//	//construct local index array
+//	offset_val_t index[num_blocks];
+//	std::fill(index, index + num_blocks, 0);
+//	for (int i = rank; i < num_blocks; i+= nprocs){
+//		index[i] = offset[i];
+//	}
+//	file0.write_index(index, num_blocks);
 
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_EQ(servers.size(), 1);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
+//	//print the chunk managers for ranks 0 and 1
+//	if (rank == 0){
+//		std::cout << "\nrank " << rank <<  std::endl;
+//		std::cout << chunk_manager;
+//		std::cout << "\n--------------" << std::endl << std::flush;
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	} else if (rank == 1){
+//		MPI_Barrier(MPI_COMM_WORLD);
+//		std::cout << "\nrank " << rank <<  std::endl;
+//		std::cout << chunk_manager;
+//		std::cout << "\n++++++++++++++++++=" << std::endl << std::flush;
+//	}
+//	else{
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	}
+
+	file0.sync();
+	//delete all the data arrays, then restore them.
+
+	size_t deleted = chunk_manager.delete_chunk_data_all();
+	std::cout << std::flush;
+
+
+	std::cout << "Number of doubles deleted at rank " <<  rank << ": " << deleted << std::endl << std::flush;
+
+
+	std::cerr << "starting loop to read in data" << std::endl << std::flush;
+	//now get the data for each block, which will require reading it from the file,
+	size_t reallocated = 0;
+	for (int i = 0; i < 6; i++){
+		double * data = chunk_manager.get_data(chunk_number[i], offset[i]);
+		if (data == NULL){
+		    sip::Chunk* chunk = chunk_manager.chunk(chunk_number[i]);
+		    reallocated += chunk_manager.reallocate_chunk_data(chunk);
+		    std::cout << "getting ready to read chunk " << chunk_number[i] << ":  " << chunk << std::endl << std::flush;
+		    file0.chunk_read(*chunk);
+			data = chunk_manager.get_data(chunk_number[i], offset[i]);
+
 		}
-	}
-}
-
-TEST(ConfigurableRankDistribution, test3){
-	const int num_processes = 10;
-	const int num_workers = 7;
-	const int num_servers = 3;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			false,	// 1
-			false,	// 2
-			true,	// 3
-			false,	// 4
-			false,	// 5
-			true,	// 6
-			false,	// 7
-			false,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			true,	// 4
-			false,	// 5
-			false,	// 6
-			true,	// 7
-			false,	// 8
-			false	// 9
-	};
-
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-	}
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 3;
-	local_servers_to_communicate[4][0] = 6;
-	local_servers_to_communicate[7][0] = 9;
-
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_EQ(servers.size(), 1);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
+		std::cout << "data[0] for block " << i << "="<< data[0] << std::endl;
+		for (int k = 0; k < block_size[i]; ++k){
+			ASSERT_EQ(val[i], data[k]);
 		}
+
 	}
-}
+	std::cout << "Number of doubles reallocated " <<  reallocated << std::endl << std::flush;
 
-TEST(ConfigurableRankDistribution, test4){
-	const int num_processes = 10;
-	const int num_workers = 6;
-	const int num_servers = 4;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			false,	// 1
-			true,	// 2
-			false,	// 3
-			false,	// 4
-			true,	// 5
-			false,	// 6
-			true,	// 7
-			false,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			true,	// 3
-			false,	// 4
-			false,	// 5
-			true,	// 6
-			false,	// 7
-			true,	// 8
-			false	// 9
-	};
 
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+	std::cerr << "finished loop to read in data" << std::endl << std::flush;
 
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	chunk_manager.delete_chunk_data_all();
+
 	}
 
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+
+
+} //end of test Server.array_file_6
+
+
+/**
+ * Creates chunks using ChunkManager class, sets and restores persistent */
+TEST(Server,array_file_7){
+	std::string filename("array_file_7");
+
+	typedef sip::ArrayFile::offset_val_t offset_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+	bool new_file = true;
+	bool save_after_close = true;
+
+
+	header_val_t chunk_size = 10;
+	header_val_t num_blocks = nprocs * 6;
+
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, new_file, save_after_close);
+	file0.mark_persistent("file0_P_");
+	sip::ChunkManager chunk_manager(chunk_size, &file0);
+
+	int block_size[] = {5,5,4,4,7,5};
+	double val[6];
+
+
+	{
+
+	//allocate and initialize data as if for serverblocks and write chunks to disk
+	int chunk_number[6];
+	offset_val_t offset[6];
+
+
+	for (int i = 0; i < 6; i++){
+	    val[i] = rank + i*nprocs + 500;;
+	    chunk_manager.assign_block_data_from_chunk(block_size[i], true, chunk_number[i], offset[i]);
+	    double* data = chunk_manager.get_data(chunk_number[i], offset[i]);
+	    std::fill(data, data + block_size[i], val[i]);
 	}
+	std::cout << "offsets: " << std::endl;
+	for (int i = 0; i < 6; ++i){
+		std::cout <<  offset[i] << ',';
+	}
+	std::cout << "\nchunk_numbers: " << std::endl;
+	for (int i = 0; i < 6; ++i){
+		std::cout <<  chunk_number[i] << ',';
+	}
+	std::cout << std::endl << std::flush;
 
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 2;
-	local_servers_to_communicate[3][0] = 5;
-	local_servers_to_communicate[6][0] = 7;
-	local_servers_to_communicate[8][0] = 9;
 
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_EQ(servers.size(), 1);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
+	chunk_manager.collective_flush();
+
+//	//construct local index array
+//	offset_val_t index[num_blocks];
+//	std::fill(index, index + num_blocks, 0);
+//	for (int i = rank; i < num_blocks; i+= nprocs){
+//		index[i] = offset[i];
+//	}
+//	file0.write_index(index, num_blocks);
+
+//	//print the chunk managers for ranks 0 and 1
+//	if (rank == 0){
+//		std::cout << "\nrank " << rank <<  std::endl;
+//		std::cout << chunk_manager;
+//		std::cout << "\n--------------" << std::endl << std::flush;
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	} else if (rank == 1){
+//		MPI_Barrier(MPI_COMM_WORLD);
+//		std::cout << "\nrank " << rank <<  std::endl;
+//		std::cout << chunk_manager;
+//		std::cout << "\n++++++++++++++++++=" << std::endl << std::flush;
+//	}
+//	else{
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	}
+
+	file0.sync();
+	//delete all the data arrays, then restore them.
+
+	size_t deleted = chunk_manager.delete_chunk_data_all();
+	std::cout << std::flush;
+
+
+	std::cout << "Number of doubles deleted at rank " <<  rank << ": " << deleted << std::endl << std::flush;
+
+
+	std::cerr << "starting loop to read in data" << std::endl << std::flush;
+	//now get the data for each block, which will require reading it from the file,
+	size_t reallocated = 0;
+	for (int i = 0; i < 6; i++){
+		double * data = chunk_manager.get_data(chunk_number[i], offset[i]);
+		if (data == NULL){
+		    sip::Chunk* chunk = chunk_manager.chunk(chunk_number[i]);
+		    reallocated += chunk_manager.reallocate_chunk_data(chunk);
+		    std::cout << "getting ready to read chunk " << chunk_number[i] << ":  " << chunk << std::endl << std::flush;
+		    file0.chunk_read(*chunk);
+			data = chunk_manager.get_data(chunk_number[i], offset[i]);
+
 		}
-	}
-}
-
-TEST(ConfigurableRankDistribution, test5){
-	const int num_processes = 10;
-	const int num_workers = 5;
-	const int num_servers = 5;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			true,	// 1
-			false,	// 2
-			true,	// 3
-			false,	// 4
-			true,	// 5
-			false,	// 6
-			true,	// 7
-			false,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			true,	// 2
-			false,	// 3
-			true,	// 4
-			false,	// 5
-			true,	// 6
-			false,	// 7
-			true,	// 8
-			false	// 9
-	};
-
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-	}
-
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 1;
-	local_servers_to_communicate[2][0] = 3;
-	local_servers_to_communicate[4][0] = 5;
-	local_servers_to_communicate[6][0] = 7;
-	local_servers_to_communicate[8][0] = 9;
-
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_EQ(servers.size(), 1);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
+		std::cout << "data[0] for block " << i << "="<< data[0] << std::endl;
+		for (int k = 0; k < block_size[i]; ++k){
+			ASSERT_EQ(val[i], data[k]);
 		}
+
 	}
-}
+	std::cout << "Number of doubles reallocated " <<  reallocated << std::endl << std::flush;
 
-TEST(ConfigurableRankDistribution, test6){
-	const int num_processes = 10;
-	const int num_workers = 4;
-	const int num_servers = 6;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			true,	// 1
-			true,	// 2
-			false,	// 3
-			true,	// 4
-			true,	// 5
-			false,	// 6
-			true,	// 7
-			false,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			true,	// 3
-			false,	// 4
-			false,	// 5
-			true,	// 6
-			false,	// 7
-			true,	// 8
-			false	// 9
-	};
 
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
+	std::cerr << "finished loop to read in data" << std::endl << std::flush;
 
-	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
-		std::cout << *it << "\t" ;
-	}
-	std::cout << std::endl;
-	for (int i=0; i<num_processes; ++i){
-		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
-	}
-	std::cout << std::endl;
 
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	chunk_manager.delete_chunk_data_all();
+
 	}
 
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
+
+
+} //end of test Server.array_file_7
+
+/**
+ * Creates chunks using ChunkManager class and writes to file using flush */
+TEST(Server,array_file_8){
+	std::string filename("array_file_8.test.acf");
+
+	typedef sip::ArrayFile::offset_val_t offset_val_t;
+	typedef sip::ArrayFile::header_val_t header_val_t;
+
+	int nprocs;
+	int rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+
+
+	header_val_t chunk_size = 10;
+	header_val_t num_blocks = nprocs * 6;
+
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true, true);
+	sip::ChunkManager chunk_manager(chunk_size, &file0);
+
+	int block_size[] = {5,5,4,4,7,5};
+	double val[6];
+
+
+	{
+
+	//allocate and initialize data as if for serverblocks and write chunks to disk
+	int chunk_number[6];
+	offset_val_t offset[6];
+
+	sip::ArrayFile file0(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true);
+
+	for (int i = 0; i < 6; i++){
+	    val[i] = rank + i*nprocs + 500;;
+	    chunk_manager.assign_block_data_from_chunk(block_size[i], true, chunk_number[i], offset[i]);
+	    double* data = chunk_manager.get_data(chunk_number[i], offset[i]);
+	    std::fill(data, data + block_size[i], val[i]);
+	}
+	std::cout << "offsets: " << std::endl;
+	for (int i = 0; i < 6; ++i){
+		std::cout <<  offset[i] << ',';
+	}
+	std::cout << "\nchunk_numbers: " << std::endl;
+	for (int i = 0; i < 6; ++i){
+		std::cout <<  chunk_number[i] << ',';
+	}
+	std::cout << std::endl << std::flush;
+
+	std::string label("persistent_array_file_8");
+	file0.mark_persistent(label);
+	chunk_manager.collective_flush();
+
+//	//construct local index array
+//	offset_val_t index[num_blocks];
+//	std::fill(index, index + num_blocks, 0);
+//	for (int i = rank; i < num_blocks; i+= nprocs){
+//		index[i] = offset[i];
+//	}
+//	file0.write_index(index, num_blocks);
+
+//	//print the chunk managers for ranks 0 and 1
+//	if (rank == 0){
+//		std::cout << "\nrank " << rank <<  std::endl;
+//		std::cout << chunk_manager;
+//		std::cout << "\n--------------" << std::endl << std::flush;
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	} else if (rank == 1){
+//		MPI_Barrier(MPI_COMM_WORLD);
+//		std::cout << "\nrank " << rank <<  std::endl;
+//		std::cout << chunk_manager;
+//		std::cout << "\n++++++++++++++++++=" << std::endl << std::flush;
+//	}
+//	else{
+//		MPI_Barrier(MPI_COMM_WORLD);
+//	}
+
+//	file0.sync();
+//	//delete all the data arrays, then restore them.
+//
+//	size_t deleted = chunk_manager.delete_chunk_data_all();
+//	std::cout << std::flush;
+//
+//
+//	std::cout << "Number of doubles deleted at rank " <<  rank << ": " << deleted << std::endl << std::flush;
+//
+//
+//	std::cerr << "starting loop to read in data" << std::endl << std::flush;
+//	//now get the data for each block, which will require reading it from the file,
+//	size_t reallocated = 0;
+//	for (int i = 0; i < 6; i++){
+//		double * data = chunk_manager.get_data(chunk_number[i], offset[i]);
+//		if (data == NULL){
+//		    sip::Chunk& chunk = chunk_manager.chunk(chunk_number[i]);
+//		    reallocated += chunk_manager.reallocate_chunk_data(chunk);
+//		    std::cout << "getting ready to read chunk " << chunk_number[i] << ":  " << chunk << std::endl << std::flush;
+//		    file0.chunk_read(chunk);
+//			data = chunk_manager.get_data(chunk_number[i], offset[i]);
+//
+//		}
+//		std::cout << "data[0] for block " << i << "="<< data[0] << std::endl;
+//		for (int k = 0; k < block_size[i]; ++k){
+//			ASSERT_EQ(val[i], data[k]);
+//		}
+//
+//	}
+//	std::cout << "Number of doubles reallocated " <<  reallocated << std::endl << std::flush;
+//
+//
+//	std::cerr << "finished loop to read in data" << std::endl << std::flush;
+//
+//
+//
+//
+//	MPI_Barrier(MPI_COMM_WORLD);
+	chunk_manager.delete_chunk_data_all();
+//
+//	}
+
 	}
 
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 1;
-	local_servers_to_communicate[0][1] = 2;
-	local_servers_to_communicate[3][0] = 4;
-	local_servers_to_communicate[3][1] = 5;
-	local_servers_to_communicate[6][0] = 7;
-	local_servers_to_communicate[8][0] = 9;
+} //end of test Server.array_file_8
 
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_GT(servers.size(), 0);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
-		}
-	}
-}
+//	} //end of scope for file writing
+//
+//	MPI_Barrier(MPI_COMM_WORLD);
+//	if(rank == 0){
+//		std::cout << "@@@@@@@@@@@ part one done" << std::endl << std::flush;
+//
+//	}
+//	MPI_Barrier(MPI_COMM_WORLD);
+//
+//
+//	//file was closed when ArrayFile went out of scope
+//	//reopen it.
+//	{
+//
+//
+//		sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, true);
+//		sip::ChunkManager chunk_manager(chunk_size, file1);
+//
+//
+//		//read the index
+//		offset_val_t index1[num_blocks];
+//		std::fill(index1, index1 + num_blocks,0);
+//		file1.read_index(index1, num_blocks);
+//
+//
+//
+//		offset_val_t offset0 = chunk_manager.chunk_offset(0);
+//		offset_val_t offset1 = chunk_manager.chunk_offset(1);
+//
+//		ASSERT_EQ(offset0, index1[rank]);
+//		ASSERT_EQ(offset1, index1[nprocs+rank]);
+//
+//		if (rank == 0){
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		} else if (rank == 1){
+//			MPI_Barrier(MPI_COMM_WORLD);
+//			std::cout << "\nrank " << rank << " file1 state after reading index:" << file1 << std::endl;
+//			std::cout << "index: ";
+//			for (int i = 0; i < num_blocks; ++i){
+//				std::cout << index1[i] << ',';
+//			}
+//		} else {
+//			MPI_Barrier(MPI_COMM_WORLD);
+//		}
+////
+//		file1.sync();
+//		//try reading the file as one big chunk
+//		if (rank==0){
+//			size_t num_doubles = chunk_size * num_blocks;
+//		double * datas = new double[num_doubles];
+//		MPI_Offset file_start =0;
+//		file1.read_doubles(datas, num_doubles, file_start);
+//		std::cout << std::endl << "printing data part of file" << std::endl;
+//		for (int i = 0; i < num_doubles; ++i){
+//			std::cout << datas[i] << ',';
+//		}
+//		std::cout << std::endl << std::flush;
+//		}
+//
+//		double datar0[chunk_size];
+//		double datar1[chunk_size];
+//		sip::Chunk chunkr0(datar0, chunk_size, index1[rank], true);
+//		sip::Chunk chunkr1(datar1, chunk_size, index1[nprocs+rank], true);
+//		file1.chunk_read_all(chunkr0);
+//		file1.chunk_read_all(chunkr1);
+//		if(rank == 0){
+//			double datar2[chunk_size];
+//			sip::Chunk chunkr2(datar2, chunk_size, index1[nprocs*2 + rank], true);
+//			file1.chunk_read_all(chunkr2);
+//			for(int i = 0; i != chunk_size; ++i){
+//				ASSERT_EQ(val0, datar0[i]);
+//				ASSERT_EQ(val1, datar1[i]);
+//				ASSERT_EQ(val2, datar2[i]);
+//			}
+//		}
+//		else {
+//			file1.chunk_read_all_nop();
+//			for(int i = 0; i != chunk_size; ++i){
+//				ASSERT_EQ(val0, datar0[i]);
+//				ASSERT_EQ(val1, datar1[i]);
+//			}
+//		}
+//
+////		//output the chunk values for ranks 0 and 1
+////		if (rank == 0){
+////			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+////			for (int i = 0; i < chunk_size; ++i){
+////				std::cout << datar0[i] << ',';
+////			}
+////			std::cout << " datar1:" << file1 << std::endl;
+////			for (int i = 0; i < chunk_size; ++i){
+////				std::cout << datar1[i] << ',';
+////			}
+////			MPI_Barrier(MPI_COMM_WORLD);
+////		} else if (rank == 1){
+////			MPI_Barrier(MPI_COMM_WORLD);
+////			std::cout << "rank " << rank << " datar0:" << file1 << std::endl;
+////			for (int i = 0; i < chunk_size; ++i){
+////				std::cout << datar0[i] << ',';
+////			}
+////			std::cout << " datar1:" << file1 << std::endl;
+////			for (int i = 0; i < chunk_size; ++i){
+////				std::cout << datar1[i] << ',';
+////			}
+////
+////		} else {
+////			MPI_Barrier(MPI_COMM_WORLD);
+////		}
+//
+//	}
 
-TEST(ConfigurableRankDistribution, test7){
-	const int num_processes = 10;
-	const int num_workers = 3;
-	const int num_servers = 7;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			true,	// 1
-			true,	// 2
-			true,	// 3
-			false,	// 4
-			true,	// 5
-			true,	// 6
-			false,	// 7
-			true,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			true,	// 4
-			false,	// 5
-			false,	// 6
-			true,	// 7
-			false,	// 8
-			false	// 9
-	};
 
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
-
-	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
-		std::cout << *it << "\t" ;
-	}
-	std::cout << std::endl;
-	for (int i=0; i<num_processes; ++i){
-		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
-	}
-	std::cout << std::endl;
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-	}
-
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 1;
-	local_servers_to_communicate[0][1] = 2;
-	local_servers_to_communicate[0][2] = 3;
-	local_servers_to_communicate[4][0] = 5;
-	local_servers_to_communicate[4][1] = 6;
-	local_servers_to_communicate[7][0] = 8;
-	local_servers_to_communicate[7][1] = 9;
-
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_GT(servers.size(), 0);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
-		}
-	}
-}
-
-
-TEST(ConfigurableRankDistribution, test8){
-	const int num_processes = 10;
-	const int num_workers = 2;
-	const int num_servers = 8;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			true,	// 1
-			true,	// 2
-			true,	// 3
-			true,	// 4
-			false,	// 5
-			true,	// 6
-			true,	// 7
-			true,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			false,	// 4
-			true,	// 5
-			false,	// 6
-			false,	// 7
-			false,	// 8
-			false	// 9
-	};
-
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
-
-	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
-		std::cout << *it << "\t" ;
-	}
-	std::cout << std::endl;
-	for (int i=0; i<num_processes; ++i){
-		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
-	}
-	std::cout << std::endl;
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-	}
-
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 1;
-	local_servers_to_communicate[0][1] = 2;
-	local_servers_to_communicate[0][2] = 3;
-	local_servers_to_communicate[0][3] = 4;
-	local_servers_to_communicate[5][0] = 6;
-	local_servers_to_communicate[5][1] = 7;
-	local_servers_to_communicate[5][2] = 8;
-	local_servers_to_communicate[5][3] = 9;
-
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_GT(servers.size(), 0);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
-		}
-	}
-}
-
-TEST(ConfigurableRankDistribution, test9){
-	const int num_processes = 10;
-	const int num_workers = 1;
-	const int num_servers = 9;
-	bool reference_is_server_array[num_processes] = {
-			false,	// 0
-			true,	// 1
-			true,	// 2
-			true,	// 3
-			true,	// 4
-			true,	// 5
-			true,	// 6
-			true,	// 7
-			true,	// 8
-			true	// 9
-	};
-	bool local_worker_to_communicate[num_processes] = {
-			true,	// 0
-			false,	// 1
-			false,	// 2
-			false,	// 3
-			false,	// 4
-			false,	// 5
-			false,	// 6
-			false,	// 7
-			false,	// 8
-			false	// 9
-	};
-
-	sip::ConfigurableRankDistribution rd (num_workers, num_servers);
-	const std::vector<bool> is_server_vector = rd.get_is_server_vector();
-
-	for (std::vector<bool>::const_iterator it = is_server_vector.begin(); it!=is_server_vector.end(); ++it){
-		std::cout << *it << "\t" ;
-	}
-	std::cout << std::endl;
-	for (int i=0; i<num_processes; ++i){
-		std::cout << rd.is_local_worker_to_communicate(i) << "\t";
-	}
-	std::cout << std::endl;
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(reference_is_server_array[i], is_server_vector[i]);
-	}
-
-	for (int i=0; i<num_processes; ++i){
-		ASSERT_EQ(local_worker_to_communicate[i], rd.is_local_worker_to_communicate(i) );
-	}
-
-	int local_servers_to_communicate[num_processes][num_processes] = { -1 };
-	local_servers_to_communicate[0][0] = 1;
-	local_servers_to_communicate[0][1] = 2;
-	local_servers_to_communicate[0][2] = 3;
-	local_servers_to_communicate[0][3] = 4;
-	local_servers_to_communicate[0][4] = 5;
-	local_servers_to_communicate[0][5] = 6;
-	local_servers_to_communicate[0][6] = 7;
-	local_servers_to_communicate[0][7] = 8;
-	local_servers_to_communicate[0][8] = 9;
-
-	for (int i=0; i<num_processes; ++i){
-		if (rd.is_local_worker_to_communicate(i)){
-			std::vector<int> servers = rd.local_servers_to_communicate(i);
-			ASSERT_GT(servers.size(), 0);
-			for (int j=0; j<servers.size(); ++j){
-				ASSERT_EQ(local_servers_to_communicate[i][j], servers[j]);
-			}
-		}
-	}
-}
 
 
 
 int main(int argc, char **argv) {
 
-#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
-	int num_procs;
-	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));
-
-//	if (num_procs < 2){
-//		std::cerr<<"Please run this test with at least 2 mpi ranks"<<std::endl;
-//		return -1;
-//	}
-	sip::AllWorkerRankDistribution all_workers_rank_dist;
-	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
-
-	sip::SIPMPIUtils::set_error_handler();
-#endif // HAVE_MPI
-	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 
 #ifdef HAVE_TAU
 	TAU_PROFILE_SET_NODE(0);
@@ -1098,8 +1295,15 @@ int main(int argc, char **argv) {
 	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
 	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 
+	int num_procs;
+	int err = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	if (err != MPI_SUCCESS){
+		std::cerr << "error obtaining number of procs in test_unit.cpp:main" << std::endl;
+		MPI_Abort(MPI_COMM_WORLD, 55);
+	}
 
 
+	MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
 	printf("Running main() from master_test_main.cpp\n");
 	testing::InitGoogleTest(&argc, argv);
@@ -1109,9 +1313,7 @@ int main(int argc, char **argv) {
 	TAU_STATIC_PHASE_STOP("SIP Main");
 #endif
 
-#ifdef HAVE_MPI
-	MPI_Finalize();
-#endif
+	 MPI_Finalize();
 
 	return result;
 

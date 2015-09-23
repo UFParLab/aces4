@@ -91,8 +91,6 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/sip_server.cpp;
         src/sip/worker/sial_ops_parallel.h;
         src/sip/worker/sial_ops_parallel.cpp;
-        src/sip/mpi/disk_backed_arrays_io.h;
-        src/sip/mpi/disk_backed_arrays_io.cpp;
         src/sip/mpi/server_block.h;
         src/sip/mpi/server_block.cpp;
         src/sip/mpi/disk_backed_block_map.h;
@@ -102,7 +100,13 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/async_ops.h;
         src/sip/mpi/async_ops.cpp; 
         src/sip/mpi/counter.h;
-        src/sip/mpi/counter.cpp;      
+        src/sip/mpi/counter.cpp;   
+        src/sip/mpi/array_file.h;
+        src/sip/mpi/array_file.cpp;
+        src/sip/mpi/chunk_manager.h;
+        src/sip/mpi/chunk_manager.cpp;  
+        src/sip/mpi/chunk.h;
+        src/sip/mpi/chunk.cpp;          
         src/sip/dynamic_data/mpi_state.h;
         src/sip/dynamic_data/distributed_block_consistency.h;
         src/sip/dynamic_data/distributed_block_consistency.cpp      
@@ -325,9 +329,16 @@ add_executable(aces4 src/aces_main/main.cpp)
 # print_siptables executable
 add_executable(print_siptables src/util/print_siptables.cpp)
 
+#<<<<<<< HEAD
 # print_init_file executable
 add_executable(print_init_file src/util/print_init_file.cpp)
 
+#||||||| merged common ancestors
+#=======
+## dump_array_file executable
+#add_executable(dump_array_file src/util/dump_array_file.cpp)
+
+#>>>>>>> put_async_new_disk_backing
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
