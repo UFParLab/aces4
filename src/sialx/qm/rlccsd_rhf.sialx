@@ -481,7 +481,9 @@
 #
       ENDPARDO i1, j1, a, b
       sip_barrier
-      delete Wminj_ab
+      pardo i,i1,j,j1
+      put Wminj_ab[i,i1,j,j1] = 0.0
+      endpardo i,i1,j,j1
 #
       ENDPROC WminjAB
 #     --------------- 

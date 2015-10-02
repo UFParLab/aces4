@@ -112,6 +112,48 @@ private:
 	Interpreter* interpreter_;
 };
 
+class Fragment_Nij_oo__PardoLoopManager: public FragmentPardoLoopManager {
+public:
+	Fragment_Nij_oo__PardoLoopManager(int num_indices,
+			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+			int num_where_clauses, Interpreter* interpreter, long& iteration);
+	virtual ~Fragment_Nij_oo__PardoLoopManager();
+private:
+	virtual bool do_update();
+	bool where_clause(int index);
+
+	bool first_time_;
+	long& iteration_;
+	int num_where_clauses_;
+
+	SIPMPIAttr & sip_mpi_attr_;
+	int company_rank_;
+	int num_workers_;
+	Interpreter* interpreter_;
+};
+
+class Fragment_Nij_o_o_PardoLoopManager: public FragmentPardoLoopManager {
+public:
+	Fragment_Nij_o_o_PardoLoopManager(int num_indices,
+			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+			int num_where_clauses, Interpreter* interpreter, long& iteration);
+	virtual ~Fragment_Nij_o_o_PardoLoopManager();
+private:
+	virtual bool do_update();
+	bool where_clause(int index);
+
+	bool first_time_;
+	long& iteration_;
+	int num_where_clauses_;
+
+	SIPMPIAttr & sip_mpi_attr_;
+	int company_rank_;
+	int num_workers_;
+	Interpreter* interpreter_;
+};
+
 class Fragment_ij_ao_vo_PardoLoopManager: public FragmentPardoLoopManager {
 public:
 	Fragment_ij_ao_vo_PardoLoopManager(int num_indices,

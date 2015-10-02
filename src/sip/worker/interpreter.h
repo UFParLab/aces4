@@ -487,6 +487,8 @@ private:
 	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
 	friend class Fragment_Nij_aa__PardoLoopManager;
 	friend class Fragment_Nij_a_a_PardoLoopManager;
+	friend class Fragment_Nij_oo__PardoLoopManager;
+	friend class Fragment_Nij_o_o_PardoLoopManager;
 	friend class Fragment_i_aa__PardoLoopManager;
 	friend class Fragment_i_vo__PardoLoopManager;
 	friend class Fragment_i_vovo__PardoLoopManager;

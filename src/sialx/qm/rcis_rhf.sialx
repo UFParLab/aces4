@@ -1622,7 +1622,9 @@ do ksub
 #
 enddo ksub
 server_barrier
-delete DRNai
+pardo a,i
+put DRNai[a,i] = 0.0
+endpardo a,i
 #
 ENDPROC normalize_RB1
 #
@@ -1776,7 +1778,10 @@ do kstate
 #
 enddo kstate
 server_barrier
-delete DRNai
+pardo a,i
+put DRNai[a,i] = 0.0
+endpardo a,i
+server_barrier
 #
 ENDPROC normalize_R1k1
 #

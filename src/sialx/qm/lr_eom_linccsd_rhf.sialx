@@ -11,8 +11,6 @@ PROC READ_AMP
 print "reading persistent arrays"
 #     -------------
 restore_persistent has_singles "has_singles"
-restore_persistent is_ccpt "is_ccpt"
-print is_ccpt
 server_barrier
 restore_persistent ca    "ca"
 restore_persistent Fock_a "fock_a"
@@ -22,45 +20,16 @@ restore_persistent T2aa "T2old_aa"
 restore_persistent T2ab "T2old_ab" 
 restore_persistent Lam2aa "L2old_aa"
 restore_persistent Lam2ab "L2old_ab"
-restore_persistent VSpipi "VSpipi"
-restore_persistent Vaaii "Vaaii"
-restore_persistent Viaai "Viaai"
-restore_persistent Vaaai "Vaaai"
-restore_persistent VSaaai "VSaaai"
-restore_persistent Vpiqj "Vpiqj"
-#restore_persistent dipole "scf_dipole"
-#set_persistent dipole "scf_dipole"
-#restore_persistent NucDip "nuclear_dipole"
-#set_persistent NucDip "nuclear_dipole"
-server_barrier
-
-if is_ccpt == 6.0
-restore_persistent FwC "MOI_wC"
-server_barrier
-print "placing wC into Fai fock"
-execute get_my_rank rank
-myrank = (int)rank
-if myrank == root
-do a
-    do i
-	get FwC[a,i]
-	Tai[a,i] = FwC[a,i]
-	Tia[i,a] = FwC[a,i]
-	fock_a[a,i] = Tai[a,i]
-	fock_a[i,a] = Tia[i,a]
-    enddo i
-enddo a
-endif
-server_barrier
-broadcast_from root fock_a
-restore_persistent MOI_HBAR_ia "MOI_HBAR_ia"
-restore_persistent MOI_HBAR_aa "MOI_HBAR_aa"
-restore_persistent MOI_HBAR_ii "MOI_HBAR_ii"
-restore_persistent MOI_HBAR_AJIB "MOI_HBAR_ajib"
-restore_persistent MOI_HBAR_IAJK "MOI_HBAR_iajk"
-restore_persistent MOI_HBAR_ABCI "MOI_HBAR_abci"
-endif
-
+#restore_persistent VSpipi "VSpipi"
+#restore_persistent Vaaii "Vaaii"
+#restore_persistent Viaai "Viaai"
+#restore_persistent Vaaai "Vaaai"
+#restore_persistent VSaaai "VSaaai"
+#restore_persistent Vpiqj "Vpiqj"
+restore_persistent dipole "scf_dipole"
+set_persistent dipole "scf_dipole"
+restore_persistent NucDip "nuclear_dipole"
+set_persistent NucDip "nuclear_dipole"
 server_barrier
 
 
@@ -75,7 +44,6 @@ endpardo a,i
 
 server_barrier
 if has_singles == 1.0
-print "reading singles"
 restore_persistent t1a "t1a_old"
 restore_persistent Lam1a  "l1a_old"
 endif
@@ -215,18 +183,6 @@ LHBAR_aa[a,a1] = HBAR_aa[a,a1]
 enddo a1 
 enddo a 
 server_barrier 
-
-if is_ccpt == 6.0
-do a 
-do a1 
-GET MOI_HBAR_aa[a1,a] 
-Taa[a1,a] = MOI_HBAR_aa[a1,a]
-Taa[a1,a] *=  1.0
-LHBAR_aa[a1,a] += Taa[a1,a]
-enddo a1 
-enddo a 
-server_barrier 
-endif
 
 ENDPROC HBAR_AB_CCPT
 
@@ -374,18 +330,13 @@ GET              HBAR_ii[i,i1]
 LHBAR_ii[i,i1] = HBAR_ii[i,i1]  
 enddo i1 
 enddo i 
+do j 
+do j1 
+GET              HBAR_jj[j,j1] 
+LHBAR_jj[j,j1] = HBAR_jj[j,j1]  
+enddo j1 
+enddo j 
 server_barrier 
-if is_ccpt == 6.0
-do i 
-do i1 
-GET MOI_HBAR_ii[i,i1] 
-Tpp[i,i1]  = MOI_HBAR_ii[i,i1]
-Tpp[i,i1] *=  1.0
-LHBAR_ii[i,i1] += MOI_HBAR_ii[i,i1]  
-enddo i1 
-enddo i 
-server_barrier 
-endif
 
 #     done beta-beta spin component. 
 #     ------------------------------ 
@@ -475,25 +426,6 @@ LHBAR_jb[j,b] = HBAR_jb[j,b]
 enddo j 
 enddo b 
 server_barrier 
-if is_ccpt == 6.0
-do a 
-do i 
-GET MOI_HBAR_ia[i,a] 
-Tpp[i,a] = MOI_HBAR_ia[i,a]
-Tpp[i,a] *= 1.0
-LHBAR_ia[i,a] += Tpp[i,a]
-enddo i 
-enddo a 
-do b 
-do j 
-GET MOI_HBAR_ia[j,b] 
-Tpp[j,b] = MOI_HBAR_ia[j,b]
-Tpp[j,b] *= 1.0
-LHBAR_jb[j,b] += MOI_HBAR_ia[j,b]  
-enddo j 
-enddo b 
-server_barrier 
-endif
 
 ENDPROC HBAR_IB_CCPT
 
@@ -1649,9 +1581,16 @@ print "Forming H_ib"
 CALL HBAR_IB_CCPT
 server_barrier
 
-delete HBAR_ii
-delete HBAR_ia
-delete HBAR_jb
+pardo i,i1
+put HBAR_ii[i,i1] = 0.0
+endpardo i,i1
+pardo i,a
+put HBAR_ia[i,a] = 0.0
+endpardo i,a
+pardo j,b
+put HBAR_jb[j,b] = 0.0
+endpardo j,b
+server_barrier
 
 print "Forming H_ijkl"
 CALL HBAR_IJKL_CCPT
@@ -1674,45 +1613,6 @@ CALL HBAR_ABCI_CCPT
 server_barrier
 
 call AO4VIR
-
-
-if is_ccpt == 6.0
-server_barrier
-print "Adding in MCPT MOI HBAR elements"
-pardo a, a1, a2, i
-    request MOI_HBAR_ABCI[a,a1,a2,i]
-    Taaai[a,a1,a2,i] = MOI_HBAR_ABCI[a,a1,a2,i]
-   # Taaai[a,a1,a2,i] *= 2.0
-    prepare HBAR_ABCI_aabb[a,a1,a2,i] += Taaai[a,a1,a2,i]
-endpardo a, a1, a2, i
-pardo i, i1, b, j
-    request MOI_HBAR_iajk[i,i1,b,j]
-    Tiibj[i,i1,b,j] = MOI_HBAR_iajk[i,i1,b,j]
-   # Tiibj[i,i1,b,j] *= 2.0
-    prepare HBAR_IAJK_aabb[i,i1,b,j] += Tiibj[i,i1,b,j]
-endpardo i, i1, b, j
-pardo a, i1, i2, i
-    request                             MOI_HBAR_iajk[i,i1,a,i2]
-    request                             MOI_HBAR_iajk[i,i2,a,i1]
-    tpppp[i,i1,a,i2]                  = MOI_HBAR_iajk[i,i1,a,i2]
-    t1pppp[i,i1,a,i2]                 = MOI_HBAR_iajk[i,i2,a,i1]
-    tpppp[i,i1,a,i2]                 -= t1pppp[i,i1,a,i2]
-   # tpppp[i,i1,a,i2] *= 2.0
-    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += tpppp[i,i1,a,i2]
-endpardo a, i1, i2, i
-
-pardo i, a, b, j
-    request MOI_HBAR_AJIB[i,a,b,j] 
-    Tiabj[i,a,b,j]  = MOI_HBAR_AJIB[i,a,b,j]
-    T1iabj[i,a,b,j] = MOI_HBAR_AJIB[i,a,b,j]
-   # Tiabj[i,a,b,j]  *= 2.0
-   # T1iabj[i,a,b,j] *= 2.0
-    prepare HBAR_AJIB_aabb[i,a,b,j] += Tiabj[i,a,b,j]
-    prepare HBAR_AJIB_aaaa[i,a,b,j] += T1iabj[i,a,b,j]
-endpardo i, a, b, j 
-
-server_barrier
-endif
 
 server_barrier
 print "Finishing H_aibc"
@@ -2138,8 +2038,12 @@ endpardo a, i, b, j
 
 server_barrier
 
-delete Faa
-delete Fab
+pardo a,a1
+put Faa[a,a1] = 0.0
+endpardo a,a1
+pardo a,b
+put Fab[a,b] = 0.0
+endpardo a,b
 
 server_barrier
 
@@ -2783,7 +2687,10 @@ pardo a, i, a1, i1
     prepare VCHACT2AA[a,i1,a1,i] += T4aiai[a,i1,a1,i]
 endpardo a, i, a1, i1 
 server_barrier 
-delete D2aa 
+pardo a,i,a1,i1
+put D2aa[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+server_barrier 
 
 ENDPROC R2AALIN_NEW_CCPT
 
@@ -3538,8 +3445,12 @@ pardo a,i,a1,i1
     prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
 endpardo a,i,a1,i1
 server_barrier
-delete DRNaiai
-delete D2RNaiai
+pardo a,i,a1,i1
+put DRNaiai[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+pardo a,i,a1,i1
+put D2RNaiai[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
 server_barrier
 ENDPROC SYMMETRHC_A
 
@@ -3594,27 +3505,24 @@ do ksub
 
     call AOLADDER_NEW
     call R2ABLIN_NEW_CCPT
-#    call R2AALIN_NEW_CCPT
+    call R2AALIN_NEW_CCPT
     call R1ANEW_CCPT
 
     server_barrier
 
-#    call SYMMETRHC_A
-
-    pardo a,i,a1,i1
-        request VCHACT2AB[a,i,a1,i1]
-        request VCHACT2AB[a,i1,a1,i]
-	Taiai[a,i,a1,i1]  = VCHACT2AB[a,i,a1,i1]
-	T1aiai[a,i,a1,i1] = VCHACT2AB[a,i1,a1,i]
-	Taiai[a,i,a1,i1] -= T1aiai[a,i,a1,i1]
-	prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
-    endpardo a,i,a1,i1
+    call SYMMETRHC_A
 
     call place_HB
     server_barrier
-    delete Fae_a
-    delete Fmi_a
-    delete Fmi_b
+    pardo a,a1
+    put Fae_a[a,a1] = 0.0
+    endpardo a,a1
+    pardo i,i1
+    put Fmi_a[i,i1] = 0.0
+    endpardo i,i1
+    pardo i,j
+    put Fmi_b[j,i] = 0.0
+    endpardo i,j
     deallocate LFae_a[*,*]
     deallocate LFmi_a[*,*]
     deallocate LFmi_b[*,*]
@@ -4289,9 +4197,9 @@ server_barrier
     endif
     norm1 *= etemp
     norm2 = (norm1)**(-0.5)
-    if norm1 < (10.0)**(-12.0)
-	norm2 = 1.0
-    endif
+#    if norm1 < (10.0)**(-12.0)
+#	norm2 = 1.0
+#    endif
 #######################
     pardo a,i
         prepare RB1_a[ksub,a,i] *= norm2
@@ -4494,9 +4402,9 @@ server_barrier
     endif
     norm1 *= etemp
     norm2 = (norm1)**(-0.5)
-    if norm1 < (10.0)**(-12.0)
-	norm2 = 1.0
-    endif
+#    if norm1 < (10.0)**(-12.0)
+#	norm2 = 1.0
+#    endif
 #######################
     pardo a,i
         prepare RB1_a[qsub,a,i] *= norm2
@@ -4534,8 +4442,8 @@ server_barrier
 call move_by_one_RK1
 call move_by_one_LK1
 
-#call move_by_one_RK2aa
-#call move_by_one_LK2aa
+call move_by_one_RK2aa
+call move_by_one_LK2aa
 
 call move_by_one_RK2ab
 call move_by_one_LK2ab
@@ -4544,8 +4452,8 @@ server_barrier
 call form_new_RK1
 call form_new_LK1
 
-#call form_new_RK2aa
-#call form_new_LK2aa
+call form_new_RK2aa
+call form_new_LK2aa
 
 call form_new_RK2ab
 call form_new_LK2ab
@@ -4558,60 +4466,41 @@ server_barrier
 call update_RB1
 call update_LB1
 
-#call update_RB2aa
-#call update_LB2aa
+call update_RB2aa
+call update_LB2aa
 
 call update_RB2ab
 call update_LB2ab
 
 server_barrier
+sum1 = 0.0
+pardo a,i,kstate
+    request cRk1_a[kstate,a,i]
+    Tkai[kstate,a,i] = cRk1_a[kstate,a,i]
+    etemp = Tkai[kstate,a,i] * cRk1_a[kstate,a,i]
+    sum1 += etemp
+endpardo a,i,kstate
 
-pardo a,i,a1,i1,ksub
-    request RB2_ab[ksub,a,i,a1,i1]
-    request RB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1]  = RB2_ab[ksub,a,i,a1,i1]
-    T1kaiai[ksub,a,i,a1,i1] = RB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
-    prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-endpardo a,i,a1,i1,ksub
+pardo a,i,a1,i1,kstate
+    request cRk2_aa[kstate,a,i,a1,i1]
+    Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
+    etemp = Tkaiai[kstate,a,i,a1,i1]*cRk2_aa[kstate,a,i,a1,i1]
+    sum1 += etemp
+endpardo a,i,a1,i1,kstate
 
-pardo a,i,a1,i1,ksub
-    request LB2_ab[ksub,a,i,a1,i1]
-    request LB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1]  = LB2_ab[ksub,a,i,a1,i1]
-    T1kaiai[ksub,a,i,a1,i1] = LB2_ab[ksub,a,i1,a1,i]
-    Tkaiai[ksub,a,i,a1,i1] -= T1kaiai[ksub,a,i,a1,i1]
-    prepare LB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
-endpardo a,i,a1,i1,ksub
+pardo a,i,b,j,kstate
+    request cRk2_ab[kstate,a,i,b,j]
+    Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
+    etemp = Tkaibj[kstate,a,i,b,j]*cRk2_ab[kstate,a,i,b,j]
+    sum1 += etemp
+endpardo a,i,b,j,kstate
 server_barrier
-#sum1 = 0.0
-#pardo a,i,kstate
-#    request cRk1_a[kstate,a,i]
-#    Tkai[kstate,a,i] = cRk1_a[kstate,a,i]
-#    etemp = Tkai[kstate,a,i] * cRk1_a[kstate,a,i]
-#    sum1 += etemp
-#endpardo a,i,kstate
-#
-#pardo a,i,a1,i1,kstate
-#    request cRk2_aa[kstate,a,i,a1,i1]
-#    Tkaiai[kstate,a,i,a1,i1] = cRk2_aa[kstate,a,i,a1,i1]
-#    etemp = Tkaiai[kstate,a,i,a1,i1]*cRk2_aa[kstate,a,i,a1,i1]
-#    sum1 += etemp
-#endpardo a,i,a1,i1,kstate
-#
-#pardo a,i,b,j,kstate
-#    request cRk2_ab[kstate,a,i,b,j]
-#    Tkaibj[kstate,a,i,b,j] = cRk2_ab[kstate,a,i,b,j]
-#    etemp = Tkaibj[kstate,a,i,b,j]*cRk2_ab[kstate,a,i,b,j]
-#    sum1 += etemp
-#endpardo a,i,b,j,kstate
-#server_barrier
-#sum2 = 0.0
-#collective sum2 += sum1
-#etemp3 = (scalar)eom_roots
-#rms_orb_conv = (sum2/etemp3)**(0.5)
-#server_barrier
-#assert_same rms_orb_conv
+sum2 = 0.0
+collective sum2 += sum1
+etemp3 = (scalar)eom_roots
+rms_orb_conv = (sum2/etemp3)**(0.5)
+server_barrier
+assert_same rms_orb_conv
 #
 ENDPROC update_vecs
 
@@ -6550,43 +6439,6 @@ do ixyz
 enddo ixyz
 #
 ENDPROC back_transform_dipole
-#
-PROC energy_new
-     ecorrab = 0.0 
-     esumab  = 0.0 
-     sip_barrier 
-     pardo a,i
-         get T1a[a,i]
-	 etemp = T1a[a,i]*fock_a[i,a]
-         etemp*= 2.0  
-         esumab += etemp 
-     endpardo a,i
-     PARDO a, b, i, j 
-#
-           REQUEST Vpiqj[a,i,b,j]   
-           REQUEST Vpiqj[a,j,b,i]   
-#
-           REQUEST T2ab[a,i,b,j]   
-#
-           Taibj[a,i,b,j] = T2ab[a,i,b,j]  
-#
-           T1aibj[a,i,b,j] = Vpiqj[a,i,b,j]  
-           T2aibj[a,i,b,j] = Vpiqj[a,j,b,i]  
-           T1aibj[a,i,b,j]*= 2.0  
-           T1aibj[a,i,b,j]-= T2aibj[a,i,b,j]  
-#
-           etemp = Taibj[a,i,b,j]*T1aibj[a,i,b,j] 
-           esumab += etemp 
-#
-     ENDPARDO a, b, i, j 
-
-     sip_barrier 
-#
-     collective ecorrab += esumab
-     ecorrT = ecorrab 
-     print "Ground state energy"
-     print ecorrT
-ENDPROC energy_new
 #-------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------
@@ -6618,8 +6470,6 @@ call form_diag
 iguess=0
 print "Assuming 0.0 for initial R2 vectors"
 call form_guess
-
-call energy_new
 
 do kstate
     SEkold[kstate] = 0.0

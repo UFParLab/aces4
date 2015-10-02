@@ -89,6 +89,8 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.h\
 ./src/sip/worker/fragment_loop_manager.cpp\
 ./src/sip/worker/fragment_loop_manager.h\
+./src/sip/worker/pardo_loop_factory.cpp\
+./src/sip/worker/pardo_loop_factory.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
 ./src/sip/worker/global_state.h\
@@ -487,9 +489,12 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_frag_lowmem.siox\
 ./src/sialx/qm/drop_core_in_sial.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
-./src/sialx/qm/init_eom_mcpt.siox\
+./src/sialx/qm/tran_frag.siox\
 ./src/sialx/qm/mcpt2_vars.siox\
 ./src/sialx/qm/mcpt2_defs.siox\
+./src/sialx/qm/mcpt2_singles.siox\
+./src/sialx/qm/mcpt2_doubles.siox\
+./src/sialx/qm/mcpt2_util.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
@@ -617,9 +622,11 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_frag_lowmem.sialx\
 ./src/sialx/qm/drop_core_in_sial.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
-./src/sialx/qm/init_eom_mcpt.sialx\
+./src/sialx/qm/tran_frag.sialx\
 ./src/sialx/qm/mcpt2_vars.sialx\
 ./src/sialx/qm/mcpt2_defs.sialx\
+./src/sialx/qm/mcpt2_singles.sialx\
+./src/sialx/qm/mcpt2_doubles.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
 ./src/sialx/qm/cis_rhf.sialx\
 ./src/sialx/qm/cis_rhf_defs.sialx\

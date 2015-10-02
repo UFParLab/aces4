@@ -407,7 +407,6 @@
         ENDPARDO a1, mu, i1
  
         sip_barrier
-        delete Vxixi #(*,*,*,i)
  
         PARDO a, a1, i1
 

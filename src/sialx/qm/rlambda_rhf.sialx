@@ -1329,8 +1329,6 @@ import "rccsd_rhf_defs.sialx"
       PROC W1MINJ 
 #     ----------- 
 #
-           create W1minj_aa
-           create W1minj_ab
            server_barrier 
 #
            CALL W1minjAA 
@@ -2133,10 +2131,16 @@ import "rccsd_rhf_defs.sialx"
          ENDPARDO b, j 
          server_barrier 
 #
-         delete DSaaai
-         delete D1eafm_aa
-         delete D2eafm_aa
-         delete D1eafm_ab
+	 pardo a2,i
+             put D1eafm_aa[a1,a,a2,i] = 0.0
+	 endpardo a2,i
+	 pardo a2,i
+             put D2eafm_aa[a1,a,a2,i] = 0.0
+	 endpardo a2,i
+         PARDO b, j
+               PUT D1eafm_ab[a1,a,b,j] = 0.0
+         ENDPARDO b, j
+         server_barrier 
 #
       ENDDO a1 
       ENDDO a 
@@ -2176,10 +2180,13 @@ import "rccsd_rhf_defs.sialx"
                PREPARE W1eafm_ab[a1,a,b1,j1] += D1eafm_ab[a1,a,b1,j1]  
          ENDPARDO b1, j1  
          server_barrier 
-#
-         delete Daabj
-         delete D1eafm_aa
-         delete D1eafm_ab
+         PARDO a2, i
+               PUT D1eafm_aa[a1,a,a2,i] = 0.0
+         ENDPARDO a2, i
+         PARDO b1, j1
+               PUT D1eafm_ab[a1,a,b1,j1] = 0.0
+         ENDPARDO b1, j1
+         server_barrier 
 #
       ENDDO a  
       ENDDO a1  
@@ -2356,8 +2363,6 @@ import "rccsd_rhf_defs.sialx"
          ENDPARDO a1, j, a, i
          server_barrier
 #
-         delete Dbbai
-#
       ENDDO b
 #
          PARDO a, a1, j
@@ -2365,7 +2370,9 @@ import "rccsd_rhf_defs.sialx"
                PREPARE W1eafm_ab[a1,a,b1,j] += D3eafm_ab[a1,a,b1,j]
          ENDPARDO a, a1, j
          server_barrier
-         delete D3eafm_ab
+         PARDO a1, j, a
+               PUT D3eafm_ab[a1,a,b1,j] = 0.0
+         ENDPARDO a1, j, a
 #
       ENDDO b1
 #
@@ -3394,9 +3401,6 @@ import "rccsd_rhf_defs.sialx"
 #     AB spin combination 
 #     ------------------- 
 #
-      create Iiijb 
-      create Iiajj 
-      create Iiijj 
       server_barrier 
 #
       PARDO i, j, a, b   
@@ -3484,9 +3488,16 @@ import "rccsd_rhf_defs.sialx"
       ENDPARDO a, b, i1, j1 
 #
       server_barrier 
-      delete Iiijb 
-      delete Iiajj 
-      delete Iiijj 
+      PARDO i,i1,j,j1
+               PUT Iiijj[i,i1,j,j1] = 0.0
+      ENDPARDO i,i1,j,j1
+      PARDO i,i1,j,b
+               PUT Iiijb[i,i1,j,b] = 0.0
+      ENDPARDO i,i1,j,b
+      PARDO i,a,j,j1
+               PUT Iiajj[i,a,j,j1] = 0.0
+      ENDPARDO i,a,j,j1
+      server_barrier 
 # 
 # ------------------------------------------------------------------------------- 
 #
@@ -3502,7 +3513,6 @@ import "rccsd_rhf_defs.sialx"
 #     First piece
 #     -----------
 #
-      create Xiiia
       server_barrier
       PARDO i, i2, a1, a2
 #
@@ -3543,13 +3553,13 @@ import "rccsd_rhf_defs.sialx"
 #
       ENDPARDO a, a2, a3, i3 
       server_barrier
-      delete Xiiia
+      pardo i,i3,i2,a2
+               PUT Xiiia[i,i3,i2,a2] = 0.0
+      endpardo i,i3,i2,a2
 #
 # 'Fix' on 9/29/08 
 # ---------------- 
 #
-      create Xiiii  
-      create Xiiia  
       server_barrier 
 #
       PARDO i, i2, a1, a2  
@@ -3601,11 +3611,14 @@ import "rccsd_rhf_defs.sialx"
 #     Second piece
 #     ------------
 #
-      create Xiajj
-      create Xiibj
       server_barrier
-      delete Xiiia 
-      delete Xiiii 
+      pardo i,i1,i2,a
+         put Xiiia[i,i1,i2,a] = 0.0
+      endpardo i,i1,i2,a
+      pardo i,i1,i2,i3
+         put Xiiii[i,i1,i2,i3] = 0.0
+      endpardo i,i1,i2,i3
+      server_barrier
       PARDO i, j2, a1, b1
 #
             REQUEST L2old_ab[i,a1,j2,b1]  
@@ -3690,14 +3703,16 @@ import "rccsd_rhf_defs.sialx"
       ENDPARDO a, b, b1, i1  
 #
       server_barrier
-      delete Xiajj
-      delete Xiibj
+      pardo i,a,j,j1
+          put Xiajj[i,a,j,j1] = 0.0
+      endpardo i,a,j,j1
+      pardo i,i1,b,j
+          put Xiibj[i,i1,b,j] = 0.0
+      endpardo i,i1,b,j
 #
 # Fix the final abomination 
 # ------------------------- 
 #
-      create Xiijj 
-      create Xiajj 
       server_barrier 
 #
       PARDO i1, j1, a1, b1  
@@ -3746,8 +3761,12 @@ import "rccsd_rhf_defs.sialx"
       ENDPARDO a, i1, j1, j2
 #
       server_barrier 
-      delete Xiijj 
-      delete Xiajj 
+      pardo i,i1,j,j1
+          put Xiijj[i,i1,j,j1] = 0.0
+      endpardo i,i1,j,j1
+      pardo i,a,j,j1
+          put Xiajj[i,a,j,j1] = 0.0
+      endpardo i,a,j,j1
 #
 # -------------------------------------------------------------------------------
 #
@@ -4562,9 +4581,15 @@ import "rccsd_rhf_defs.sialx"
 #
 # Clean up temporary arrays
 # -------------------------
-         delete l1a_new
-         delete Gae_a
-         delete Gmi_a
+	 pardo i,a
+             put l1a_new[i,a] = 0.0
+	 endpardo i,a
+	 pardo a,a1
+             put Gae_a[a,a1] = 0.0
+	 endpardo a,a1
+	 pardo i,i1
+             put Gmi_a[i,i1] = 0.0
+	 endpardo i,i1
 #
 #        Reset eold --> enew
 #        -------------------
