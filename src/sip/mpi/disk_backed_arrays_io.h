@@ -191,6 +191,6 @@
 //
 //};
 
-} /* namespace sip */
+//} /* namespace sip */
 
 #endif /* DISK_BACKED_ARRAYS_IO_H_ */

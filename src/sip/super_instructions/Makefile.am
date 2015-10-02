@@ -340,7 +340,8 @@ GENERAL_SOURCE_FILES=\
 ./general/disable_all_rank_print.cpp\
 ./general/read_block_from_text_file.cpp\
 ./general/abort_job.F\
-./general/one_arg_no_op.cpp
+./general/one_arg_no_op.cpp\
+./general/list_blocks_with_number.cpp
 
 
 libinstr_la_SOURCES=\
