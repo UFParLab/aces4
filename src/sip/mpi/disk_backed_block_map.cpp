@@ -263,7 +263,7 @@ void DiskBackedBlockMap::save_persistent_array(int array_id, const std::string& 
 	std::vector<ArrayFile::offset_val_t> index_vals(num_blocks,ABSENT_BLOCK_OFFSET);
 	initialize_local_index(array_id, index_vals, num_blocks);
 	//write index to file (reduce local indices, server master writes)
-	file->write_index(index_vals.data(), num_blocks);
+	file->write_index(&index_vals.front(), num_blocks);
 }
 
 
