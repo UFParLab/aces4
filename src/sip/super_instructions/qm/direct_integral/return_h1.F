@@ -44,7 +44,7 @@ c     real(C_DOUBLE) scr(10000000)  !!! NEED TO MALLOC VFL
       TYPE(C_PTR) :: ciscr
 
       TYPE(C_PTR) :: cptr_zsum
-      real(C_DOUBLE), pointer :: fptr_zsum 
+      real(C_DOUBLE), pointer :: fptr_zsum(:)
 
 c Nuclear coordinates 
 c --------------------------------------------------------------------------- 
@@ -131,8 +131,8 @@ c Find the offset index ranges
       if (index_values(2) .gt. 1) offset_2 = paosegs(index_values(2)-1) 
 
 
-      zsum_length1 = (extents(1)+offset_1) - (1+offset_1)
-      zsum_length2 = (extents(2)+offset_2) - (1+offset_2)
+      zsum_length1 = (extents(1)+offset_1) 
+      zsum_length2 = (extents(2)+offset_2)
       zsum_length  = zsum_length1 * zsum_length2
 
       call scratch_array(zsum_length, cptr_zsum) 
@@ -140,7 +140,7 @@ c Find the offset index ranges
 
       call comp_return_h1(data, 1+offset_1, extents(1)+offset_1,
      *           1+offset_2, extents(2)+offset_2, ncenters, 
-     *           coords, tcoords, scr, iscr, fptr_zsum)
+     *           coords, tcoords, scr, iscr,fptr_zsum)
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)

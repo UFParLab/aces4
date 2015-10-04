@@ -61,7 +61,6 @@ c     real(C_DOUBLE) scr(5000000)
 
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
-c
       integer(C_INT) i, one, two   
 
 c aosegments 
@@ -208,7 +207,6 @@ c     niscr = 5000000
       if (index_values_0(2).gt.1) offset_2=paosegs(index_values_0(2)-1) 
       if (index_values_0(3).gt.1) offset_3=paosegs(index_values_0(3)-1) 
       if (index_values_0(4).gt.1) offset_4=paosegs(index_values_0(4)-1)
-
 c
       call compute_integrals(1+offset_1, extents_0(1)+offset_1,
      *                         1+offset_2, extents_0(2)+offset_2,
