@@ -1583,9 +1583,16 @@ print "Forming H_ib"
 CALL HBAR_IB_CCPT
 server_barrier
 
-delete HBAR_ii
-delete HBAR_ia
-delete HBAR_jb
+pardo i,i1
+put HBAR_ii[i,i1] = 0.0
+endpardo i,i1
+pardo i,a
+put HBAR_ia[i,a] = 0.0
+endpardo i,a
+pardo j,b
+put HBAR_jb[j,b] = 0.0
+endpardo j,b
+server_barrier
 
 print "Forming H_ijkl"
 CALL HBAR_IJKL_CCPT
@@ -2033,8 +2040,12 @@ endpardo a, i, b, j
 
 server_barrier
 
-delete Faa
-delete Fab
+pardo a,a1
+put Faa[a,a1] = 0.0
+endpardo a,a1
+pardo a,b
+put Fab[a,b] = 0.0
+endpardo a,b
 
 server_barrier
 
@@ -2678,7 +2689,10 @@ pardo a, i, a1, i1
     prepare VCHACT2AA[a,i1,a1,i] += T4aiai[a,i1,a1,i]
 endpardo a, i, a1, i1 
 server_barrier 
-delete D2aa 
+pardo a,i,a1,i1
+put D2aa[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+server_barrier 
 
 ENDPROC R2AALIN_NEW_CCPT
 
@@ -3433,8 +3447,12 @@ pardo a,i,a1,i1
     prepare VCHACT2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
 endpardo a,i,a1,i1
 server_barrier
-delete DRNaiai
-delete D2RNaiai
+pardo a,i,a1,i1
+put DRNaiai[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+pardo a,i,a1,i1
+put D2RNaiai[a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
 server_barrier
 ENDPROC SYMMETRHC_A
 
@@ -3498,9 +3516,15 @@ do ksub
 
     call place_HB
     server_barrier
-    delete Fae_a
-    delete Fmi_a
-    delete Fmi_b
+    pardo a,a1
+    put Fae_a[a,a1] = 0.0
+    endpardo a,a1
+    pardo i,i1
+    put Fmi_a[i,i1] = 0.0
+    endpardo i,i1
+    pardo i,j
+    put Fmi_b[j,i] = 0.0
+    endpardo i,j
     deallocate LFae_a[*,*]
     deallocate LFmi_a[*,*]
     deallocate LFmi_b[*,*]
