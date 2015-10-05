@@ -25,13 +25,13 @@ int DataManager::scope_count = 0;
 
 DataManager::DataManager(const SipTables &sipTables):
      sip_tables_(sipTables),
-     scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
-     int_table_(sipTables.int_table_), /* initialize integers from sipTables */
 	 index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-     block_manager_(sipTables),
-     contiguous_local_array_manager_(sipTables, block_manager_),
+     scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
      scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
-     contiguous_array_manager_(sipTables, sipTables.setup_reader_)
+     int_table_(sipTables.int_table_), /* initialize integers from sipTables */
+     block_manager_(sipTables),
+     contiguous_array_manager_(sipTables, sipTables.setup_reader_),
+     contiguous_local_array_manager_(sipTables, block_manager_)
         {
 		for (int i = 0; i < sipTables.array_table_.entries_.size(); ++i) {
 			if (sipTables.is_scalar(i)) {
