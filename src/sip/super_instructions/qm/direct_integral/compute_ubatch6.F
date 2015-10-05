@@ -124,12 +124,15 @@ c  END_NFPS
       TYPE(C_PTR) :: pnalpha, pend_nfps
       integer, pointer :: nalpha(:)
       integer, pointer :: end_nfps(:)
+
 c ----------------------------------------------------------------------
 
       integer(C_INT) norb, nscr, niscr   
       integer(C_INT) int_length1, int_length2, int_length3
       integer(C_INT) int_length4, int_length
 c
+      double precision sa, sb
+
       one = 0 ! 1
       two = 0 ! 2
       ierr = 0 
@@ -298,6 +301,18 @@ c  Remove scratch space
       call delete_scratch_array(cptr_int) 
       call delete_integer_scratch_array(ciscr) 
 
+#ifdef _DEBUG_LVL0
+        sa = 0.0d0
+        sb = 0.0d0
+        do i=1,size_4
+           sb=sb+data_4(i) * data_4(i)
+        enddo
+        do i=1,size_3
+           sa=sa+data_3(i) * data_3(i)
+        enddo
+        write(6,"(a,F15.8)") "Checksum of Fa in ubatch6 =", sa
+        write(6,"(a,F15.8)") "Checksum of Fb in ubatch6 =", sb
+#endif 
 c     do i = 1, (extents_0(1)-1)*(extents_0(2)-1)*  
 c    *          (extents_0(3)-1)*(extents_0(4)-1)  
 c        write(6,*) 'INT6', i, data_0(i), scr(i)  

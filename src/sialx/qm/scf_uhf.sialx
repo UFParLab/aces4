@@ -1,11 +1,12 @@
-import "scf_rhf_defs.sialx"
 
-#  Copyright (c) 2003-2010 University of Florida
+import "scf_uhf_defs.sialx"
+
+#  Copyright [c] 2003-2010 University of Florida
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
+#  [at your option] any later version.
 #
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,12 +16,14 @@ import "scf_rhf_defs.sialx"
 #  The GNU General Public License is included in this distribution
 #  in the file COPYRIGHT.
 #
-                           SIAL SCF_RHF
+                           SIAL SCF_UHF
 #
 # ----------------------------------------------------------------------------
 #
-# The sial program SCF_RHF performs a RHF based SCF calculation. See section
-# MAIN program for additional comments.
+# The sial program SIAL_UHF performs a UHF based SCF calculation. Davidson 
+# damping is performed during the first scf_beg-1 iterations after which the 
+# DIIS is turned on with scf_order. At present DIIS is turned on after the 
+# third iteration and 6 histories are kept. 
 #
 # Fock matrix final arrays:
 # ------------------------- 
@@ -41,8 +44,6 @@ import "scf_rhf_defs.sialx"
 #
 # BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 #
-# Declare indices 
-# --------------- 
 #
       index   kiter  = 1: scf_iter  
       index   kbeg   = 1: scf_beg
@@ -51,19 +52,19 @@ import "scf_rhf_defs.sialx"
       index   jatom  = 1: Natoms
       index   NbfnsA = 1: eavirtorb #norb
       index   NbfnsB = 1: ebvirtorb #norb
+
+      index   ithree = 1: 3
       index   kptr1  = 1: 2
       index   kptr2  = 1: 2
       index   kone   = 1: 1
-      index   kdiis  = 1: 10 
-      index   d1     = 1: 10 
-      index   d2     = 1: 10 
-      index   d3     = 1: 10 
-      index   d4     = 1: 10 
+      index   kdiis  = 1: 30 
+      index   d1     = 1: 30 
+      index   d2     = 1: 30 
+      index   d3     = 1: 30 
+      index   d4     = 1: 30 
       index   iiter1 = 1: 1
       index   jjter1 = 1: 1
       index   jjter2 = 2: 2
-      index   ithree = 1: 3
-      index   ixyz   = 1: 3
 #
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -80,43 +81,48 @@ import "scf_rhf_defs.sialx"
       moaindex a2= bavirt: eavirt
       moaindex a3= bavirt: eavirt
 #
-      moaindex j = baocc: eaocc
-      moaindex j1= baocc: eaocc
-      moaindex j2= baocc: eaocc
-      moaindex j3= baocc: eaocc
+      mobindex j = bbocc: ebocc
+      mobindex j1= bbocc: ebocc
+      mobindex j2= bbocc: ebocc
+      mobindex j3= bbocc: ebocc
 #
-      moaindex b = bavirt: eavirt
-      moaindex b1= bavirt: eavirt
-      moaindex b2= bavirt: eavirt
-      moaindex b3= bavirt: eavirt
+      mobindex b = bbvirt: ebvirt
+      mobindex b1= bbvirt: ebvirt
+      mobindex b2= bbvirt: ebvirt
+      mobindex b3= bbvirt: ebvirt
 #
       moaindex p = baocc: eavirt
       moaindex p1= baocc: eavirt
       moaindex p2= baocc: eavirt
       moaindex p3= baocc: eavirt
 #
-      moaindex q = baocc: eavirt
-      moaindex q1= baocc: eavirt
-      moaindex q2= baocc: eavirt
-      moaindex q3= baocc: eavirt
+      mobindex q = bbocc: ebvirt
+      mobindex q1= bbocc: ebvirt
+      mobindex q2= bbocc: ebvirt
+      mobindex q3= bbocc: ebvirt
 # 
-# The distributed arrays.
-# -----------------------
+# The distributed arrays
+# ---------------------
 #
-      distributed Dhfa[mu,nu] 
-      distributed Dhfb[mu,nu] 
-      distributed IDhfa[mu,nu] 
-      distributed IDhfb[mu,nu] 
+      distributed Dhfa[mu,nu]
+      distributed Dhfb[mu,nu]
+      distributed IDhfa[mu,nu]
+      distributed IDhfb[mu,nu]
+      distributed Dhfa_old[mu,nu]
+      distributed Dhfb_old[mu,nu]
       distributed Fpq_a[mu,nu] 
-      distributed Fpq_b[mu,nu] 
+      distributed Fpq_b[mu,nu]
       distributed FTpq_a[mu,nu] 
-      distributed FTpq_b[mu,nu] 
-      distributed CBT_a[mu,p] 
+      distributed FTpq_b[mu,nu]
+      distributed CBT_a[mu,p]
       distributed CBT_b[mu,q] 
       distributed Pnew_a[mu,nu]
       distributed Pnew_b[mu,nu]
       distributed Pold_a[mu,nu]
       distributed Pold_b[mu,nu]
+      distributed Qxx[mu,nu] 
+      distributed FTa[p,p1] 
+      distributed FTb[q,q1] 
       DISTRIBUTED FpqA_NEW[mu,nu]
       DISTRIBUTED FpqB_NEW[mu,nu]
       DISTRIBUTED Dhfa_Prev[mu,nu]
@@ -131,33 +137,37 @@ import "scf_rhf_defs.sialx"
       DISTRIBUTED Fpqb_MO[q,q1]
       DISTRIBUTED SCa[mu,p]
       DISTRIBUTED SCb[mu,q]
-      DISTRIBUTED OVLP_INV[mu,nu]
       DISTRIBUTED OCA[mu,p]
+      DISTRIBUTED OCB[mu,q]
       DISTRIBUTED BCA[mu,p]
+      DISTRIBUTED BCB[mu,q]
       DISTRIBUTED OVLP_TMP_A[p,i]
       DISTRIBUTED OVLP_TMP_B[q,j]
       DISTRIBUTED INTM_A[nu,i]
       DISTRIBUTED INTM_B[nu,j]
-      distributed Qxx[mu,nu] 
-      distributed FTa[p,p1] 
-      distributed FTb[q,q1] 
-      distributed FFai[a,i] 
-      distributed FFbj[b,j] 
-      distributed OVC_T[p,mu]
-      distributed OVC[p,p1]
-      distributed fpqa_dbg[mu,nu]
-      distributed fpqb_dbg[mu,nu]
-      distributed Fa[mu,nu,kdiis] 
-      distributed Fb[mu,nu,kdiis] 
-      distributed Fbj[b,j,kdiis] 
-      distributed Fai[a,i,kdiis] 
+      DISTRIBUTED OVLP_INV[mu,nu]
       DISTRIBUTED CA_TEMP_0[mu,p]
       DISTRIBUTED CB_TEMP_0[mu,q]
       DISTRIBUTED CA_TEMP[mu,p]
       DISTRIBUTED CB_TEMP[mu,q]
+      distributed FFai[a,i] 
+      distributed FFbj[b,j] 
+      distributed Fa[mu,nu,kdiis] 
+      distributed Fb[mu,nu,kdiis] 
+      distributed Fbj[b,j,kdiis] 
+      distributed Fai[a,i,kdiis] 
+      distributed OVC_T[p,mu]
+      distributed OVC[p,p1]
 
-# The static and local arrays 
+# static and local arrays 
 
+      static dflags11[iiter1,jjter1]
+      static dflags12[iiter1,jjter2]
+      static FSpq_a[mu,nu]
+      static FSpq_b[mu,nu]
+      static atom[katom,jatom]
+      static X1[mu,nu]
+      static pinf[kiter,kptr1]
       static Spp[p,p1]
       static OVLP[mu,nu]
       static CA_Prev[mu,p]
@@ -169,16 +179,9 @@ import "scf_rhf_defs.sialx"
       static A_OCC_NUMS[NbfnsA]
       static B_OCC_NUMS[NbfnsB]
       static DAMP_PARMS[Ithree]
-      static dflags11[iiter1,jjter1]
-      static dflags12[iiter1,jjter2]
-      static FSpq_a[mu,nu] 
-      static FSpq_b[mu,nu] 
-      static atom[katom]
-      static X1[mu,nu] 
-      static pinf[kiter,kptr1]
       static BB[kdiis,kdiis] 
 #
-# The temporary arrays 
+# Temporary arrays 
 # ------------------------ 
 #
       temp Ixi[mu,i] 
@@ -187,11 +190,16 @@ import "scf_rhf_defs.sialx"
       temp I1xj[mu,j] 
       temp Tpq[mu,nu] 
       temp T1pq[mu,nu] 
+      temp T2pq[mu,nu] 
       temp Txi[mu,i] 
       temp Txi_t[mu,i] 
+      temp Txp[mu,p] 
+      temp T1xp[mu,p] 
       temp T1xi[mu,i] 
       temp Txj[mu,j] 
       temp Txj_t[mu,j] 
+      temp Txq[mu,q] 
+      temp T1xq[mu,q] 
       temp T1xj[mu,j] 
       temp Txx[mu,nu] 
       temp TAxx[mu,nu] 
@@ -222,17 +230,40 @@ import "scf_rhf_defs.sialx"
       temp T1ii[i,i1] 
       temp Tjj[j,j1] 
       temp T1jj[j,j1] 
-      temp Txp[mu,p] 
-      temp T1xp[mu,p] 
       temp Tpp[p,p1] 
       temp T1pp[p,p1] 
-      temp Txq[mu,q] 
-      temp T1xq[mu,q] 
       temp Tqq[q,q1] 
       temp T1qq[q,q1] 
+      temp Taa[a,a1]
+      temp Tbb[b,b1] 
+      temp Tia[i,a] 
+      temp Tjb[j,b] 
+      temp Txa[mu,a]
+      temp Txb[mu,b]
+      temp Tix[i,mu]
+      temp Tjx[j,mu]
+      temp Jxi[mu,i1]
+      temp Jxj[mu,j1]
+      temp Ixa[mu,a1]
+      temp Ixb[mu,b1]
+      temp Ixx[mu,nu]
+      temp I1xx[nu,mu]
+      temp Ixp[mu,p]
+      temp Jxq[mu,q]
+      temp Tpi[p,i]
+      temp Tqj[q,j]
+      temp tai[a,i] 
+      temp t1ai[a,i] 
+      temp tbj[b,j] 
+      temp t1bj[b,j] 
+      temp tatom[katom,jatom]
       temp aoint[mu,nu,lambda,sigma]
       temp tpinf[kiter,kptr1]
-      temp tatom[katom,jatom]
+      temp tpqx[mu,nu,d2]   
+      temp taix[a,i,d2]   
+      temp tbjx[b,j,d2]   
+      temp tdd[d1,d2] 
+      temp t1dd[d1,d2] 
       temp tpx[p,mu]
       temp tpxt[p,mu]
       temp Tppt[p,p1]
@@ -240,28 +271,12 @@ import "scf_rhf_defs.sialx"
       Temp TXX_a[mu,nu]
       Temp TXX_b[mu,nu]
       Temp ToccA[nbfnsA]
+      Temp ToccB[nbfnsB]
       Temp Tf12[iiter1,jjter2]
-      temp tai[a,i] 
-      temp t1ai[a,i] 
-      temp tbj[b,j] 
-      temp t1bj[b,j] 
-      temp Tpi[p,i]
-      temp Tqj[q,j]
-      temp tpqx[mu,nu,d2]   
-      temp taix[a,i,d2]   
-      temp tbjx[b,j,d2]   
-      temp tdd[d1,d2] 
-      temp t1dd[d1,d2] 
-      temp Ixp[mu,p]
-      temp Jxq[mu,q]
-      temp Ixx[mu,nu]
 #
-# Scalars 
+# Scalars
 #
-      scalar repulsion
-      scalar num_lindep
-      scalar shifta
-      scalar shiftb
+      scalar dens_check 
       scalar b11
       scalar b12
       scalar b13
@@ -272,6 +287,7 @@ import "scf_rhf_defs.sialx"
       scalar b18
       scalar b19
       scalar b110 
+#
       scalar b22
       scalar b23
       scalar b24
@@ -281,6 +297,7 @@ import "scf_rhf_defs.sialx"
       scalar b28
       scalar b29
       scalar b210 
+
       scalar b33
       scalar b34
       scalar b35
@@ -289,6 +306,7 @@ import "scf_rhf_defs.sialx"
       scalar b38
       scalar b39
       scalar b310 
+
       scalar b44
       scalar b45
       scalar b46
@@ -296,26 +314,34 @@ import "scf_rhf_defs.sialx"
       scalar b48
       scalar b49
       scalar b410 
+
+      scalar b55
       scalar b56
       scalar b57
       scalar b58
       scalar b59
       scalar b510 
+
       scalar b66 
       scalar b67 
       scalar b68 
       scalar b69 
       scalar b610  
+
       scalar b77 
       scalar b78 
       scalar b79 
       scalar b710  
+
       scalar b88 
       scalar b89 
       scalar b810  
+
       scalar b99 
       scalar b910  
+
       scalar b1010 
+
       scalar c1
       scalar c2
       scalar c3
@@ -326,106 +352,8 @@ import "scf_rhf_defs.sialx"
       scalar c8
       scalar c9
       scalar c10 
-      scalar Tb11
-      scalar Tb12
-      scalar Tb13
-      scalar Tb14
-      scalar Tb15
-      scalar Tb16
-      scalar Tb17
-      scalar Tb18
-      scalar Tb19
-      scalar Tb110 
-      scalar Tb21
-      scalar Tb22
-      scalar Tb23
-      scalar Tb24
-      scalar Tb25
-      scalar Tb26
-      scalar Tb27
-      scalar Tb28
-      scalar Tb29
-      scalar Tb210 
-      scalar Tb31
-      scalar Tb32
-      scalar Tb33
-      scalar Tb34
-      scalar Tb35
-      scalar Tb36
-      scalar Tb37
-      scalar Tb38
-      scalar Tb39
-      scalar Tb310 
-      scalar Tb41
-      scalar Tb42
-      scalar Tb43
-      scalar Tb44
-      scalar Tb45
-      scalar Tb46
-      scalar Tb47
-      scalar Tb48
-      scalar Tb49
-      scalar Tb410 
-      scalar Tb51
-      scalar Tb52
-      scalar Tb53
-      scalar Tb54
-      scalar Tb55
-      scalar Tb56
-      scalar Tb57
-      scalar Tb58
-      scalar Tb59
-      scalar Tb510 
-      scalar Tb61 
-      scalar Tb62 
-      scalar Tb63 
-      scalar Tb64 
-      scalar Tb65 
-      scalar Tb66 
-      scalar Tb67 
-      scalar Tb68 
-      scalar Tb69 
-      scalar Tb610  
-      scalar Tb71 
-      scalar Tb72 
-      scalar Tb73 
-      scalar Tb74 
-      scalar Tb75 
-      scalar Tb76 
-      scalar Tb77 
-      scalar Tb78 
-      scalar Tb79 
-      scalar Tb710  
-      scalar Tb81 
-      scalar Tb82 
-      scalar Tb83 
-      scalar Tb84 
-      scalar Tb85 
-      scalar Tb86 
-      scalar Tb87 
-      scalar Tb88 
-      scalar Tb89 
-      scalar Tb810  
-      scalar Tb91 
-      scalar Tb92 
-      scalar Tb93 
-      scalar Tb94 
-      scalar Tb95 
-      scalar Tb96 
-      scalar Tb97 
-      scalar Tb98 
-      scalar Tb99 
-      scalar Tb910  
-      scalar Tb101 
-      scalar Tb102 
-      scalar Tb103 
-      scalar Tb104 
-      scalar Tb105 
-      scalar Tb106 
-      scalar Tb107 
-      scalar Tb108 
-      scalar Tb109 
-      scalar Tb1010 
+
+      scalar e_a     
       scalar e_b     
       scalar escf_a 
       scalar escf_b 
@@ -444,57 +372,26 @@ import "scf_rhf_defs.sialx"
       scalar zero 
       scalar mone 
       scalar one
-      scalar onehalf
+      scalar onehalf 
       scalar two
       scalar three
       scalar four
       scalar ncount1 
-      scalar invtwopt2 
+      scalar rank 
+      scalar invtwopt2
       scalar scf
       scalar scf_ener
-      scalar diis_orginal_start
-      scalar DOCC_NUM
-      scalar esuma
-      scalar esumb
-      scalar tmp
-      scalar e1m_tmp
-      scalar e1p_tmp
-      scalar e2m11_tmp
-      scalar e2p11_tmp
-      scalar e2p12_tmp
-      scalar e1m
-      scalar e1p
-      scalar e211m
-      scalar e211p
-      scalar e212
-      scalar damp_denom
-      scalar damp_numra
-      scalar X
-      scalar MX
-      scalar DONE_damp
-      scalar Max_D_diff
-      scalar damp_thres
-      scalar occ_num
-      scalar e0
-      scalar e1
-      scalar e2
-      scalar de
-      scalar dep
-      scalar des
-      scalar deps
-      scalar deavg
-      scalar deavg_old
-      scalar damp_factor
-      scalar damp_constant 
-      scalar rank
-      scalar zmax
-      scalar imax
-       
+      scalar repulsion 
+
+# Parameters needed for DIIS 
+
+      scalar num_lindep 
+#      scalar start 
       INT diis_end
       INT iter_count
       INT prnt_count
       INT target
-      INT WORDER
+      INT WORDER 
       INT init_guess
       INT lShift_a1
       INT lShift_b1
@@ -512,40 +409,86 @@ import "scf_rhf_defs.sialx"
       INT constant_damping
       INT N1
       INT N2
-      INT ICHECK
+      INT ICHECK 
       INT icount
       INT Start_History
-      INT IZERO
+      INT izero 
       INT master 
 
-      temp DAOINT[mu,nu]
-      static dipole[ixyz]
-      static NucDip[ixyz]
-      static Dip02[ixyz]
-      served Dxx_scf[mu,nu]
-      scalar dsum
-      scalar AbsDip
-      scalar ncount2
+      Scalar Shifta
+      Scalar Shiftb
 
-#-----------------------------------------------------------------------------
- 
+      scalar e1m_tmp 
+      scalar e1p_tmp 
+      scalar e2m11_tmp 
+      scalar e2p11_tmp 
+      scalar e2p12_tmp 
+      scalar e1m
+      scalar e1p
+      scalar e211m
+      scalar e211p
+      scalar e212
+      scalar damp_denom
+      scalar damp_numra
+      scalar X
+      scalar MX
+      scalar Max_D_diff 
+      scalar damp_thres
+      scalar esuma
+      scalar esumb
+      scalar tmp
+      scalar occ_num
+      scalar e0
+      scalar e1
+      scalar e2
+      scalar de 
+      scalar dep
+      scalar des
+      scalar deps
+      scalar deavg 
+      scalar deavg_old
+      scalar damp_factor
+      scalar damp_constant 
+      scalar DOCC_NUM
+      scalar zmax
+      scalar imax 
+#
+# ---------------------------------------------------------------------------- 
+#
       PROC HFDENS
 #     -----------
+#
+#     The HF density is computed. Davidson damping is incorporated thus
+#     knowledge of the previous iteration is needed. 
+#     ----------------------------------------------------------------- 
+#
       PARDO nu, p
           Txp[nu,p]     = CA[nu,p]
           PUT CA_TEMP_0[nu,p] = Txp[nu,p]
       ENDPARDO nu, p
+
+      PARDO nu, q
+          Txq[nu,q]     = CB[nu,q]
+          PUT CB_TEMP_0[nu,q] = Txq[nu,q]
+      ENDPARDO nu, q
       sip_barrier
-#
+
       PARDO mu, p
             GET CA_TEMP_0[mu,p]
             TXP[mu,p] = CA_TEMP_0[mu,p]
             EXECUTE A4_DSCALE TXP[mu,p] A_OCC_NUMS ZERO
             PUT CA_TEMP[mu,p] = TXP[mu,p]
       ENDPARDO mu, p
-      sip_barrier 
 
-      PARDO mu, nu 
+      PARDO mu, q
+            GET CB_TEMP_0[mu,q]
+            TXQ[mu,q] = CB_TEMP_0[mu,Q]
+            EXECUTE A4_DSCALE TXQ[mu,q] B_OCC_NUMS ONE
+            PUT CB_TEMP[mu,q] = TXQ[mu,q]
+      ENDPARDO mu, q
+      sip_barrier
+
+      PARDO mu, nu
             Tpq[mu,nu] = 0.0
 
             DO p
@@ -554,103 +497,98 @@ import "scf_rhf_defs.sialx"
                Txp[nu,p]   = CA_TEMP[nu,p]
                T1xp[mu,p]  = CA[mu,p]
                T1pq[mu,nu] = Txp[nu,p]*T1xp[mu,p]
-               Tpq[mu,nu] += T1pq[mu,nu] 
+               Tpq[mu,nu] += T1pq[mu,nu]
 #
             ENDDO p
-#
+
             PUT Dhfa[mu,nu] = Tpq[mu,nu]
+
+            Tpq[mu,nu] = 0.0
+
+            DO q
+               GET CB_TEMP[nu,q]
+
+               Txq[nu,q]   = CB_TEMP[nu,q]
+               T1xq[mu,q]  = CB[mu,q]
+               T1pq[mu,nu] = Txq[nu,q]*T1xq[mu,q]
+               Tpq[mu,nu] += T1pq[mu,nu]
+            ENDDO q
+
             PUT Dhfb[mu,nu] = Tpq[mu,nu]
 #
-      ENDPARDO mu, nu 
-#
+      ENDPARDO mu, nu
+      sip_barrier
+           
       ENDPROC HFDENS
 #     --------------
+#
+# ---------------------------------------------------------------------------- 
 #
 # -----------------------------------------------------------------------------
 #
       PROC HFIDENS
 #     ------------
 #
-#     Procedure which computes the intial HF density
-#     ----------------------------------------------
-#
+#     Procedure which computes the HF density without Davidson damping. 
+#     ----------------------------------------------------------------- 
       PARDO nu, p
           Txp[nu,p]     = CA[nu,p]
           PUT CA_TEMP_0[nu,p] = Txp[nu,p]
       ENDPARDO nu, p
+
+      PARDO nu, q
+          Txq[nu,q]     = CB[nu,q]
+          PUT CB_TEMP_0[nu,q] = Txq[nu,q]
+      ENDPARDO nu, q
       sip_barrier
-#
+
       PARDO mu, p
             GET CA_TEMP_0[mu,p]
             TXP[mu,p] = CA_TEMP_0[mu,p]
             EXECUTE A4_DSCALE TXP[mu,p] A_OCC_NUMS ZERO
             PUT CA_TEMP[mu,p] = TXP[mu,p]
       ENDPARDO mu, p
-      sip_barrier 
 
-      PARDO mu, nu 
+      PARDO mu, q
+            GET CB_TEMP_0[mu,q]
+            TXQ[mu,q] = CB_TEMP_0[mu,Q]
+            EXECUTE A4_DSCALE TXQ[mu,q] B_OCC_NUMS ONE
+            PUT CB_TEMP[mu,q] = TXQ[mu,q]
+      ENDPARDO mu, q
+      sip_barrier
+
+      PARDO mu, nu
             Tpq[mu,nu] = 0.0
-#
+
             DO p
                GET CA_TEMP[nu,p]
-               Txp[nu,p]   = CA_TEMP[nu,p]
-               T1xp[mu,p]  = CA[mu,p] 
-               T1pq[mu,nu] = Txp[nu,p] * T1xp[mu,p]
-               Tpq[mu,nu] += T1pq[mu,nu]
 
-            ENDDO p
+               Txp[nu,p]   = CA_TEMP[nu,p]
+               T1xp[mu,p]  = CA[mu,p]
+               T1pq[mu,nu] = Txp[nu,p]*T1xp[mu,p]
+               Tpq[mu,nu] += T1pq[mu,nu]
 #
+            ENDDO p
+
             PUT Dhfa[mu,nu] = Tpq[mu,nu]
+
+            Tpq[mu,nu] = 0.0
+
+            DO q
+               GET CB_TEMP[nu,q]
+
+               Txq[nu,q]   = CB_TEMP[nu,q]
+               T1xq[mu,q]  = CB[mu,q]
+               T1pq[mu,nu] = Txq[nu,q]*T1xq[mu,q]
+               Tpq[mu,nu] += T1pq[mu,nu]
+            ENDDO q
+
             PUT Dhfb[mu,nu] = Tpq[mu,nu]
 #
-      ENDPARDO mu, nu 
-#
+      ENDPARDO mu, nu
+
       ENDPROC HFIDENS
 #     ---------------
-
-#bgn_debug
-      PROC CHECK_FOCK
-#     ---------------
-       create Fpqa_dbg
-       create Fpqb_dbg
-       sip_barrier 
-       DO mu
-       DO nu    
-         Txx[mu,nu]        = Fockrohf_a[mu,nu]
-         PUT Fpqa_dbg[mu,nu] += Txx[mu,nu]
-       ENDDO nu
-       ENDDO mu
-       DO mu
-       DO nu
-          Txx[mu,nu]        = Fockrohf_b[mu,nu]
-          PUT Fpqb_dbg[mu,nu] += Txx[mu,nu]
-       ENDDO nu
-       ENDDO mu
-       sip_barrier
-       execute get_my_rank rank
-       if rank==0.0
-       esuma = 0.0
-       esumb = 0.0
-       DO mu
-       DO nu
-          get Fpqa_dbg[mu,nu]
-          get Fpqb_dbg[mu,nu]
-#          execute dump_amp Fpqa_dbg(mu,nu)
-          etemp  = Fpqa_dbg[mu,nu] * Fpqa_dbg[mu,nu]
-          esuma += etemp
-          etemp  = Fpqb_dbg[mu,nu] * Fpqb_dbg[mu,nu]
-          esumb += etemp
-       ENDDO nu
-       ENDDO mu
-       print esuma
-       print esumb
-       endif
-       delete Fpqa_dbg
-       delete Fpqb_dbg
-      ENDPROC CHECK_FOCK
-#     ---------------
-#
-#end_debug
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -668,23 +606,30 @@ import "scf_rhf_defs.sialx"
 #      -------------------------------------------------------------- 
 #
        sip_barrier
+
+# Why is this barrier here
+
        DO mu
        DO nu
 #
           Txx[mu,nu]        = 0.0
           Fockrohf_a[mu,nu] = Txx[mu,nu]
           Fockrohf_b[mu,nu] = Txx[mu,nu]
+          Fpq_a[mu,nu]      = 0.0
+          Fpq_b[mu,nu]      = 0.0
        ENDDO nu
        ENDDO mu 
 
        sip_barrier
+
+# Why is this barrier here 
 #
 #      Add contributions containing two-particle integral contributions.
 #      -----------------------------------------------------------------
 #
 ############# CLASS 6  ############
-##  Do four-center part (mu nu |la si)->(mu nu |si la ),(nu mu|la si),(nu mu|si la)
-##                      (la si |mu nu),(si la |mu nu),(la si |nu mu),(si la |nu mu)
+##  Do four-center part [mu nu |la si]->[mu nu |si la ],[nu mu|la si],[nu mu|si la]
+##                      [la si |mu nu],[si la |mu nu],[la si |nu mu],[si la |nu mu]
 ##
         PARDO mu, nu, lambda, sigma
 ##
@@ -696,17 +641,13 @@ import "scf_rhf_defs.sialx"
                  WHERE mu     != sigma
 ##
                     execute compute_ubatch1 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 ##
         ENDPARDO mu, nu, lambda, sigma
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 ##
 #
 ############ CLASS 3  ############
-#  Do two-center part (mu mu |mu nu)->(mu nu |mu mu ),(mu mu|nu mu),(nu mu|mu mu)
-#  Do three-center part (mu mu |nu lambda)->(mu mu |lambda nu ),(nu lambda|mu mu),(lambda nu|mu mu)
+#  Do two-center part [mu mu |mu nu]->[mu nu |mu mu ],[mu mu|nu mu],[nu mu|mu mu]
+#  Do three-center part [mu mu |nu lambda]->[mu mu |lambda nu ],[nu lambda|mu mu],[lambda nu|mu mu]
 #
        PARDO mu, nu, lambda, sigma 
 #
@@ -714,17 +655,13 @@ import "scf_rhf_defs.sialx"
           WHERE lambda  < sigma
 #
                 execute compute_ubatch2 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma 
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 #
 ############ CLASS 5  ############
 ###################  CLASS A ##############
-#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
-#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#  Do three-center part [mu nu |mu la]->[mu nu |la mu ],[nu mu|mu la],[nu mu|la mu]
+#                       [mu la |mu nu],[la mu |mu nu ],[mu la |nu mu],[la mu |nu mu]
 #
 #
        PARDO mu, nu, lambda, sigma
@@ -734,35 +671,27 @@ import "scf_rhf_defs.sialx"
                 WHERE mu==lambda
 #
                    execute compute_ubatch4 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 
 ###################  CLASS B ##############
-#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
-#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#  Do three-center part [mu nu |mu la]->[mu nu |la mu ],[nu mu|mu la],[nu mu|la mu]
+#                       [mu la |mu nu],[la mu |mu nu ],[mu la |nu mu],[la mu |nu mu]
 # 
       PARDO mu, nu, lambda, sigma 
                 WHERE mu < nu
                 WHERE lambda < sigma
                 WHERE mu < sigma
-                WHERE nu == lambda
+                WHERE nu == lambda 
 #
                    execute compute_ubatch4 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 #
 # 
 ###################  CLASS C ##############
-#  Do three-center part (mu nu |mu la)->(mu nu |la mu ),(nu mu|mu la),(nu mu|la mu)
-#                       (mu la |mu nu),(la mu |mu nu ),(mu la |nu mu),(la mu |nu mu)
+#  Do three-center part [mu nu |mu la]->[mu nu |la mu ],[nu mu|mu la],[nu mu|la mu]
+#                       [mu la |mu nu],[la mu |mu nu ],[mu la |nu mu],[la mu |nu mu]
 #
        PARDO mu, nu, lambda, sigma
                 WHERE mu < nu
@@ -771,15 +700,11 @@ import "scf_rhf_defs.sialx"
                 WHERE nu == sigma
 #
                    execute compute_ubatch4 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 #
 ############ CLASS 4  ############
-#  Do two-center part (mu nu |mu nu)->(mu nu |nu mu ),(nu mu|mu nu),(nu mu|nu mu)
+#  Do two-center part [mu nu |mu nu]->[mu nu |nu mu ],[nu mu|mu nu],[nu mu|nu mu]
 #
        PARDO mu, nu, lambda, sigma
                 WHERE mu < nu
@@ -788,15 +713,12 @@ import "scf_rhf_defs.sialx"
                 WHERE mu == lambda
 #
                    execute compute_ubatch8 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 #
+#          
 ############ CLASS 2  ############
-#  Do two-center part (mu mu |nu nu)->(nu nu |mu mu )
+#  Do two-center part [mu mu |nu nu]->[nu nu |mu mu ]
 #
        PARDO mu, nu, lambda, sigma
 #
@@ -805,17 +727,14 @@ import "scf_rhf_defs.sialx"
              WHERE lambda == sigma
 #
                    execute compute_ubatch7 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma 
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 #
 ############ END CLASS 2  ############
 #
+#
 ############ CLASS 1  ############
-#  Do one-center part (mu mu |mu mu)
+#  Do one-center part [mu mu |mu mu]
 #
        PARDO mu, nu, lambda, sigma
              WHERE nu == mu
@@ -823,12 +742,8 @@ import "scf_rhf_defs.sialx"
              WHERE lambda == mu 
 #
                    execute compute_ubatch6 aoint[mu,nu,lambda,sigma] oed_kin oed_ovl fockrohf_a fockrohf_b
-
 #
        ENDPARDO mu, nu, lambda, sigma
-#bgn_debug
-#        CALL CHECK_FOCK
-#end_debug
 #
        sip_barrier
 #      
@@ -851,36 +766,15 @@ import "scf_rhf_defs.sialx"
        ENDDO mu 
 #
        sip_barrier
+#
+       execute get_my_rank rank 
 
-#bgn_debug
-#       if rank==0.0
-#       esuma = 0.0
-#       esumb = 0.0
-#       DO mu
-#       DO nu
-#          get Fpq_a(mu,nu)
-#          get Fpq_b(mu,nu)
-#          execute dump_amp Fpq_a(mu,nu)
-#          etemp  = Fpq_a(mu,nu) * Fpq_a(mu,nu)
-#          esuma += etemp
-#          etemp  = Fpq_b(mu,nu) * Fpq_b(mu,nu)
-#          esumb += etemp
-#       ENDDO nu
-#       ENDDO mu
-#       print esuma
-#       print esumb
-#       endif
-#end_debug
-
-       execute get_my_rank rank
-
-#JNB: can this be done as a pardo?
        if rank == 0.0 
        DO mu    
        DO nu   
 #
-            Txx[mu,nu] = 0.0 
-            execute return_h1 txx[mu,nu]
+             Txx[mu,nu]        = 0.0  
+             execute return_h1 txx[mu,nu]
 #
              PUT Fpq_a[mu,nu] += Txx[mu,nu] 
              PUT Fpq_b[mu,nu] += Txx[mu,nu] 
@@ -890,26 +784,27 @@ import "scf_rhf_defs.sialx"
        endif 
 
 #bgn_debug
-       sip_barrier 
-#       if rank==0.0
-#       esuma = 0.0
-#       esumb = 0.0
-#       DO mu
-#       DO nu
-#          get Fpq_a[mu,nu]
-#          get Fpq_b[mu,nu]
-##          execute dump_amp Fpq_a(mu,nu)
-#          etemp  = Fpq_a[mu,nu] * Fpq_a[mu,nu]
-#          esuma += etemp
-#          etemp  = Fpq_b[mu,nu] * Fpq_b[mu,nu]
-#          esumb += etemp
-#       ENDDO nu
-#       ENDDO mu
-#       print "checksum of focka and fockb"
-#       print esuma
-#       print esumb
-#       endif
-
+       sip_barrier
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO mu
+       DO nu
+          get Fpq_a[mu,nu]
+          get Fpq_b[mu,nu]
+#          execute dump_amp Fpq_a[mu,nu]
+          etemp  = Fpq_a[mu,nu] * Fpq_a[mu,nu]
+          esuma += etemp
+          etemp  = Fpq_b[mu,nu] * Fpq_b[mu,nu]
+          esumb += etemp
+       ENDDO nu
+       ENDDO mu
+       print "checksum of focka and fockb"
+       print  esuma
+       print  esumb
+       endif
+#end_debug
+#  
 #
        ENDPROC FOCK_MATRIX_FAST   
 #      ------------------------ 
@@ -917,11 +812,13 @@ import "scf_rhf_defs.sialx"
 # ---------------------------------------------------------------------------- 
 #
 #
+# ---------------------------------------------------------------------------- 
+#
        PROC HF_ENERGY  
 #      -------------- 
 #
-#      The HF energy is computed from the HF density (DHFa(b)) and the 
-#      Fock matrix (Fpq_a(b)). 
+#      The HF energy is computed from the HF density DHFa[b] and the 
+#      Fock matrix Fpq_a[b]. 
 #      --------------------------------------------------------------- 
 #
        energy = 0.0
@@ -929,18 +826,16 @@ import "scf_rhf_defs.sialx"
 
        execute get_my_rank rank
 
-#JNB: can this be done as a pardo?
        if rank == 0.0 
-
-          DO mu  
-          DO nu 
+       DO mu  
+       DO nu 
 #
              GET Fpq_a[mu,nu]
              GET Fpq_b[mu,nu]
-             GET DHFa[mu,nu]  
+             GET DHFa[mu,nu] 
              GET DHFb[mu,nu] 
 #
-             Txx[mu,nu]   = 0.0 
+             Txx[mu,nu]   = 0.0  
              execute return_h1 txx[mu,nu]
 #
              T1xx[mu,nu]  = Txx[mu,nu] 
@@ -955,9 +850,8 @@ import "scf_rhf_defs.sialx"
              etemp        = T1xx[mu,nu]*DHFb[mu,nu]  
              esum        += etemp 
 #
-          ENDDO nu 
-          ENDDO mu 
-
+       ENDDO nu 
+       ENDDO mu  
        endif 
 
        sip_barrier 
@@ -966,9 +860,9 @@ import "scf_rhf_defs.sialx"
        collective energy += esum 
        energy += repulsion 
 
-       assert_same energy
-       print energy
-       
+       assert_same energy 
+       print energy 
+#
        ENDPROC HF_ENERGY   
 #      ----------------- 
 #
@@ -981,23 +875,20 @@ import "scf_rhf_defs.sialx"
 #      root of the diagonal elements. 
 #      -------------------------------------------------------------- 
 #
-# The oed_ovl get overwritten by density matrix duiring the FOck
-# built. Save it to OVLP for level shifting.
+# The oed_ovl get overwritten by density matrix duiring the FOck 
+# built. Save it to OVLP for level shifting. 
 #
-       sip_barrier
-       execute get_my_rank rank
-       if rank == 0.0
        DO mu
        DO nu
              execute return_ovl Txx[mu,nu]
-             Oed_ovl[mu,nu] = Txx[mu,nu]
+             Oed_ovl[mu,nu] = Txx[mu,nu] 
              OVLP[mu,nu]    = Txx[mu,nu]
        ENDDO nu
        ENDDO mu
 
-# Barrier is needed?
-#
-       execute eigen_calc_sqr_inv oed_ovl x1 num_lindep
+# Barrier is needed??
+
+       execute eigen_calc_sqr_inv oed_ovl x1 num_lindep 
 
        DO mu
        DO nu
@@ -1005,29 +896,28 @@ import "scf_rhf_defs.sialx"
          PUT OVLP_INV[mu,nu] = txx[mu,nu]
        ENDDO nu
        ENDDO mu
-       endif
 
        sip_barrier
 
-   
 #bgn_debug
-#       esuma=0.0
-#       esumb=0.0
+#      esuma=0.0
+#      esumb=0.0
 #      do mu
 #      do nu
-#         etemp = oed_ovl(mu,nu) * oed_ovl(mu,nu)
+#         etemp = oed_ovl[mu,nu] * oed_ovl[mu,nu]
 #         esuma += etemp
-#         etemp =  x1(mu,nu) * x1(mu,nu)
+#         etemp = x1[mu,nu] * x1[mu,nu]
 #         esumb += etemp
 #      enddo nu
 #      enddo mu
-#      print "the checksum of eigenvalues of overlap"
-#      execute print_scalar esuma
+#      print "the checksum of eigenvalues of overlap" 
+#      print esuma
 #      print "the checksum of eigenvectors of overlap"
-#      execute print_scalar esumb
+#      print esumb
 #end_debug
-
-#      Form the Q-matrix --> U s**{-1/2) 
+       
+      
+#      Form the Q-matrix --> U s**{-1/2] 
 #      --------------------------------- 
 #
        PARDO mu, nu  
@@ -1036,35 +926,34 @@ import "scf_rhf_defs.sialx"
 #
           DO lambda 
 
-             GET OVLP_INV[mu,lambda]
-
+             GET OVLP_INV[mu,lambda] 
+              
              T2xx[mu,lambda] = OVLP_INV[mu,lambda]
              T3XX[lambda,nu] = oed_ovl[lambda,nu]
-
-             T1xx[mu,nu]     = T2xx[mu,lambda] * T3XX[lambda,nu]
-             Txx[mu,nu]     += T1xx[mu,nu] 
+             T1xx[mu,nu]     =  T2xx[mu,lambda] * T3XX[lambda,nu]
+             Txx[mu,nu] += T1xx[mu,nu] 
 
           ENDDO lambda  
 #
           PUT Qxx[mu,nu] = Txx[mu,nu]  
 #
        ENDPARDO mu, nu  
-#
-#bgn_debug
-#      execute get_my_rank rank
-#      sip_barrier
-#      esum=0.0
-#      if rank==0.0
-#      do mu
-#      do nu
-#         get  Qxx(mu,nu)
-#         etemp = Qxx(mu,nu) * Qxx(mu,nu)
-#         esum += etemp
-#      enddo nu
-#      enddo mu
-#      endif
-#      print "The checksum of Us^{-1/2}"
-#      print esum
+
+#bgn_debug 
+      sip_barrier 
+      esum=0.0
+      execute get_my_rank rank 
+      if rank==0.0
+      do mu
+      do nu
+         get  Qxx[mu,nu]
+         etemp = Qxx[mu,nu] * Qxx[mu,nu]
+         esum += etemp
+      enddo nu
+      enddo mu
+      endif 
+      print "The checksum of Us^{-1/2}"
+      print esum
 #end_debug
 
        ENDPROC OVER_HALF 
@@ -1078,7 +967,6 @@ import "scf_rhf_defs.sialx"
 #      Form the transposed Fock matrix --> Q+ F Q 
 #      ------------------------------------------ 
 #
-
        PARDO mu, sigma   
 #
              TAxx[mu,sigma] = 0.0 
@@ -1089,13 +977,11 @@ import "scf_rhf_defs.sialx"
                 GET Fpq_a[lambda,sigma] 
                 GET Fpq_b[lambda,sigma] 
                 GET Qxx[lambda,mu] 
-                 
-                TXX[lambda,mu]  = Qxx[lambda,mu]
 #
-                T1xx[mu,sigma]  = TXX[lambda,mu] *Fpq_a[lambda,sigma]  
+                T1xx[mu,sigma]  = Qxx[lambda,mu]*Fpq_a[lambda,sigma]  
                 TAxx[mu,sigma] += T1xx[mu,sigma] 
 #
-                T1xx[mu,sigma]  = Txx[lambda,mu]* Fpq_b[lambda,sigma]  
+                T1xx[mu,sigma]  = Qxx[lambda,mu]*Fpq_b[lambda,sigma]  
                 TBxx[mu,sigma] += T1xx[mu,sigma] 
 #
              ENDDO lambda 
@@ -1103,41 +989,39 @@ import "scf_rhf_defs.sialx"
              DO nu 
 #
                 GET Qxx[sigma,nu] 
-                T3XX[sigma,nu]  = Qxx[sigma,nu]
 #
-                T1xx[mu,nu] =        TAxx[mu,sigma]*T3xx[sigma,nu] 
+                T1xx[mu,nu] =        TAxx[mu,sigma]*Qxx[sigma,nu] 
                 PUT FTpq_a[mu,nu] += T1xx[mu,nu] 
 #
-                T2xx[mu,nu]        = TBxx[mu,sigma]*T3xx[sigma,nu] 
+                T2xx[mu,nu]        = TBxx[mu,sigma]*Qxx[sigma,nu] 
                 PUT FTpq_b[mu,nu] += T2xx[mu,nu] 
 #
              ENDDO nu 
 #
        ENDPARDO mu, sigma   
-
+#
 #bgn_debug
        sip_barrier
-#       execute get_my_rank rank
-#       if rank==0.0
-#          esuma = 0.0
-#          esumb = 0.0
-#          DO mu
-#          DO nu
-#              get FTpq_a[mu,nu]
-#              get FTpq_b[mu,nu]
-#              etemp  = FTpq_a[mu,nu] * FTpq_a[mu,nu]
-#              esuma += etemp
-#              etemp  = FTpq_b[mu,nu] * FTpq_b[mu,nu]
-#              esumb += etemp
-#           ENDDO nu
-#           ENDDO mu
-#       endif
-#       print "The checksum of FOCK_A"
-#       print esuma
-#       print "The checksum of FOCK_B"
-#       print esumb
+       execute get_my_rank rank 
+       if rank==0.0
+          esuma = 0.0
+          esumb = 0.0
+          DO mu
+          DO nu
+              get FTpq_a[mu,nu]
+              get FTpq_b[mu,nu]
+              etemp  = FTpq_a[mu,nu] * FTpq_a[mu,nu]
+              esuma += etemp
+              etemp  = FTpq_b[mu,nu] * FTpq_b[mu,nu]
+              esumb += etemp
+           ENDDO nu
+           ENDDO mu
+       endif
+       print "The checksum of FOCK_A" 
+       print esuma 
+       print "The checksum of FOCK_B" 
+       print esumb
 #end_debug
-#
        ENDPROC FOCK_TRANSPOSE 
 #      ---------------------- 
 #
@@ -1153,14 +1037,16 @@ import "scf_rhf_defs.sialx"
        DO nu  
 #
           GET             FTpq_a[mu,nu] 
-          Txx[mu,nu]    = FTpq_a[mu,nu]
+          GET             FTpq_b[mu,nu]
 #
-          FSpq_a[mu,nu] =  Txx[mu,nu]
+          FSpq_a[mu,nu] = FTpq_a[mu,nu]
+          FSpq_b[mu,nu] =  FTpq_b[mu,nu]
 #
        ENDDO nu  
        ENDDO mu   
 
-       execute eigen_calc FSpq_a ca
+       execute eigen_calc FSpq_a CA
+       execute eigen_calc FSpq_b CB
 
        ENDPROC FOCK_DIAG 
 #      ----------------- 
@@ -1198,9 +1084,9 @@ import "scf_rhf_defs.sialx"
           DO nu 
 #
              GET          Qxx[mu,nu] 
-             TXX[mu,nu] =  Qxx[mu,nu]
+             Txx[mu,nu] = Qxx[mu,nu]
 #
-             T1xq[mu,q] = Txx[mu,nu]*ca[nu,q]   
+             T1xq[mu,q] = Txx[mu,nu]*cb[nu,q]   
              Txq[mu,q] += T1xq[mu,q] 
 #
           ENDDO nu 
@@ -1213,20 +1099,30 @@ import "scf_rhf_defs.sialx"
 #      Put the transformed coefficients into static arrays 
 #      --------------------------------------------------- 
 #
+#
        DO mu 
        DO p 
-          GET        CBT_a[mu,p] 
-          Txp[mu,p] = CBT_a[mu,p]
-          ca[mu,p]  = Txp[mu,p]
+
+          GET CBT_a[mu,p] 
+          TXP[mu,p] = CBT_a[mu,p]
+          CA[mu,p]  = TXP[mu,p] 
+
        ENDDO p 
        ENDDO mu  
 
+       DO mu 
+       DO q 
+
+          GET  CBT_b[mu,q] 
+          TXQ[mu,q] = CBT_b[mu,q]
+          cb[mu,q]  = TXQ[mu,q] 
+
+       ENDDO q 
+       ENDDO mu  
        sip_barrier 
-#
+
        ENDPROC C_BTRAN 
 #      --------------- 
-#
-# ---------------------------------------------------------------------------- 
 #
       PROC MAKE_OCCUPATION
 #     --------------------
@@ -1235,79 +1131,134 @@ import "scf_rhf_defs.sialx"
 # the current orbitals
 
       CREATE INTM_A
+      CREATE INTM_B
       CREATE OVLP_TMP_A
+      CREATE OVLP_TMP_B
+
       sip_barrier
 
       PARDO nu,i
         Txi[nu,i] = 0.0
 
         DO mu
+
            Txi_t[nu,i]      = OVLP[nu,mu] * CA_Prev[mu,i]
-           Txi[nu,i]       += Txi_t[nu,i]
+           Txi[nu,i]       += Txi_t[nu,i] 
+
         ENDDO mu
 
            PUT INTM_A[nu,i] = Txi[nu,i]
+
       ENDPARDO nu, i
+
+      PARDO nu,j
+         Txj[nu,j] = 0.0
+
+         DO mu
+
+            Txj_t[nu,j]     = OVLP[nu,mu] * CB_Prev[mu,j]
+            Txj[nu,j]      += Txj_t[nu,j]
+
+         ENDDO mu
+
+            PUT INTM_B[nu,j] = Txj[nu,j]
+
+      ENDPARDO nu,j
 
       sip_barrier
 
       PARDO p,i
          DO nu
-            GET INTM_A[nu,i]
-            Txi[nu,i]            = INTM_A[nu,i]
+
+            GET INTM_A[nu,i] 
+            Txi[nu,i]            = INTM_A[nu,i] 
             Tpi[p,i]             = Txi[nu,i] * CA[nu,p]
             PUT OVLP_TMP_A[p,i] +=  Tpi[p,i]
+
         ENDDO nu
       ENDPARDO p,i
 
+      PARDO q,j
+         Do nu
+
+            GET INTM_B[nu,j]
+            Txj[nu,j]            = INTM_B[nu,j]
+            Tqj[q,j]             = Txj[nu,j] * CB[nu,q]
+            PUT OVLP_TMP_B[q,j] += Tqj[q,j]
+
+         ENDDO nu
+      ENDPARDO q,j
+
+      sip_barrier
+       
       DO p
       DO i
-         GET OVLP_TMP_A[p,i]
+
+        GET OVLP_TMP_A[p,i]
+
          Tpi[p,i] = OVLP_TMP_A[p,i]
          ORB_OVLP_A[p,i] = Tpi[p,i]
+
       ENDDO i
       ENDDO p
 
-      sip_barrier
+      DO q
+      DO j
 
-      EXECUTE  A4_RETURN_OCCUPATION ORB_OVLP_A A_OCC_NUMS
+         GET OVLP_TMP_B[q,j]
+
+         Tqj[q,j]        = OVLP_TMP_B[q,j]
+         ORB_OVLP_B[q,j] = Tqj[q,j]
+
+      ENDDO j
+      ENDDO q
+      
+      EXECUTE  A4_RETURN_OCCUPATION ORB_OVLP_A  A_OCC_NUMS
+      EXECUTE  A4_RETURN_OCCUPATION ORB_OVLP_B  B_OCC_NUMS
 
 #bgn_debug
-#      execute get_my_rank rank
 #      if rank == 0.0
 #      DO p
 #      DO p1
-#         execute dump_amp  ORB_OVLP_A(p,p1)
+#         execute dump_amp  ORB_OVLP_A[p,p1]
 #      ENDDO p1
 #      ENDDO p
+#      DO q
+#      DO q1
+#         execute dump_amp orb_ovlp_B[q,q1]
+#      ENDDO q1
+#      ENDDO q
+#      ENDIF 
 #end_debug
 
       DELETE INTM_A
+      DELETE INTM_B
       DELETE OVLP_TMP_A
+      DELETE OVLP_TMP_B
 
       ENDPROC MAKE_OCCUPATION
 #     ------------------------
 
-      PROC IGUESS
-#     -----------
-
+      PROC IGUESS   
+#     ----------- 
+#
       IF COREH == 1
 
 #bgn_debug
-         print "The core Hamiltonian guess block"
+	 print "The core Hamiltonian guess block"
 #end_debug
 
 # Generate the core-Hamiltonian guess
 
          PARDO mu, nu
-            Txx[mu,nu] = 0.0
+            Txx[mu,nu] = 0.0 
             execute return_h1 Txx[mu,nu]
             PUT Fpq_a[mu,nu] = Txx[mu,nu]
             PUT Fpq_b[mu,nu] = Txx[mu,nu]
+
          ENDPARDO mu, nu
          sip_barrier
-         print "The core Hamiltonian guess block" 
-
+#
          CALL OVER_HALF
          sip_barrier
          CALL FOCK_TRANSPOSE
@@ -1315,23 +1266,35 @@ import "scf_rhf_defs.sialx"
          CALL FOCK_DIAG
          sip_barrier
          CALL C_BTRAN
-         sip_barrier
+         sip_barrier 
 
          EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+         EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
 
          CALL HFIDENS
          sip_barrier
 
 #bgn_debug
       esuma = 0.0
+      esumb = 0.0
       do mu
       do p
-         tmp = Ca[mu,p] * Ca[mu,p]
+         get  Ca_temp[mu,p]
+         tmp = Ca_temp[mu,p] * Ca_temp[mu,p]
          esuma += tmp
       enddo p
       enddo mu
       print "Check sum of core-Hamiltonian Guess (Alpha)"
-      print  esuma
+      print esuma 
+      do mu
+      do q
+         get  Cb_temp[mu,q]
+         tmp = Cb_temp[mu,q] * Cb_temp[mu,q]
+         esumb += tmp
+      enddo q
+      enddo mu
+      print "Check sum of core-Hamiltonian Guess (Beta)"
+      print esumb
       esuma = 0.0
       esumb = 0.0
       do mu
@@ -1348,51 +1311,52 @@ import "scf_rhf_defs.sialx"
       print esuma
       print "Check sum of core-Hamiltonian density (Beta)"
       print esumb
-#end_debug
-#
-#bgn_debug
+
 # Check the orthonaormality of NEW Vectors C^tSC =1
-#      create OVC_T
-#      create OVC
-#      sip_barrier
-#      do mu
-#      do p
-#         Tpx(p,mu) = 0.0
-#         Do nu
-#            Tpxt(p,mu) = Ca(nu,p) * OVLP(nu,mu)
-#            Tpx(p,mu) += Tpxt(p,mu)
-#         enddo nu
-#         PUT OVC_T(p,mu) = Tpx(p,mu)
-#      enddo p
-#      enddo mu
-#      sip_barrier
-#      do p
-#      do p1
-#         Tpp1(p,p1) = 0.0
-#         do mu
-#            GET OVC_T(p,mu)
-#            Tppt(p,p1)  = OVC_T(p,mu) * Ca(mu,p1)
-#            Tpp1(p,p1) +=  Tppt(p,p1)
-#         enddo mu
-#        PUT OVC(p,p1) =  Tpp1(p,p1)
-#      enddo p1
-#      enddo p
-#      sip_barrier
-#      execute get_my_rank rank
-#      esum = 0.0
-#      if rank==0.0
-#      do p
-#      do p1
-#         get  OVC(p,p1)
-#         etemp = OVC(p,p1) * OVC(p,p1)
-#         esum += etemp
-#      enddo p1
-#      enddo p
-#      print "The overlap condition of the vectors C^(t)SC=1"
-#      print esum
-#      endif
+
+      create OVC_T
+      create OVC
+      sip_barrier
+      do mu
+      do p
+         Tpx[p,mu] = 0.0
+         Do nu
+            Tpxt[p,mu] = Ca[nu,p] * OVLP[nu,mu]
+            Tpx[p,mu] += Tpxt[p,mu]
+         enddo nu
+         PUT OVC_T[p,mu] = Tpx[p,mu]
+      enddo p
+      enddo mu
+      sip_barrier
+
+      do p
+      do p1
+         Tpp1[p,p1] = 0.0
+         do mu
+            GET OVC_T[p,mu]
+            Tppt[p,p1]  = OVC_T[p,mu] * Ca[mu,p1]
+            Tpp1[p,p1] +=  Tppt[p,p1]
+         enddo mu
+        PUT OVC[p,p1] =  Tpp1[p,p1]
+      enddo p1
+      enddo p
+      sip_barrier
+
+      esum = 0.0
+      execute get_my_rank rank
+      if rank==0.0
+      do p
+      do p1
+        get  OVC[p,p1]
+        etemp = OVC[p,p1] * OVC[p,p1]
+        esum += etemp
+      enddo p1
+      enddo p
+      print "The overlap condition of the vectors C^(t)SC=1"
+      print esum
+      endif
 #end_debug
-#   
+#    
       ENDIF 
 
       IF ATOMIC == 1
@@ -1400,75 +1364,40 @@ import "scf_rhf_defs.sialx"
 #bgn_debug
          print "Enter Atomic guess block"
 #end_debug
+#
+         IF NATOMS > 3
 
-         IF NATOMS >= 3
             etemp = 0.0
-#JNB: changed this
-#	    do katom
-#		etemp = (scalar)katom
-#		atom[katom] = etemp
-#	    enddo katom
-#            DO katom
-#            DO jatom
-#               IF katom == jatom
-#                  etemp             = etemp + 1.0
-#                  atom[katom,jatom] = etemp
-#               endif
-#            ENDDO jatom
-#            ENDDO katom
+            DO katom
+            DO jatom
+               IF katom == jatom
+                  etemp             = etemp + 1.0
+                  atom[katom,jatom] = etemp
+               endif
+            ENDDO jatom
+            ENDDO katom
 
             PARDO mu, nu
-               Fockrohf_a[mu,nu] = 0.0
-               Fockrohf_b[mu,nu] = 0.0
+               Txx[mu,nu]        = 0.0
+               Fockrohf_a[mu,nu] = Txx[mu,nu]
+               Fockrohf_b[mu,nu] = Txx[mu,nu]
             ENDPARDO mu, nu
 
-#JNB: check this?
             execute get_my_rank rank
-
-            DO mu
-            DO nu
-
-             Txx[mu,nu] = 0.0
-             execute return_ovl Txx[mu,nu]
-             oed_ovl[mu,nu] = Txx[mu,nu]
-             execute return_h1 Txx[mu,nu]
-             oed_nai[mu,nu] = Txx[mu,nu]
-
-            ENDDO nu
-            ENDDO mu
-#bgn_debug
-#       execute get_my_rank rank
-#       if rank==0.0
-#       esuma = 0.0
-#       DO mu
-#       DO nu
-#          etemp  = oed_ovl[mu,nu] * oed_ovl[mu,nu]
-#          esumb += etemp
-#       ENDDO nu
-#       ENDDO mu
-#       endif
-#       print "cheking overlap ints"
-#       print esuma
-#end_debug
-
-#JNB: i changed this...
-#            if rank == 0.0
 #
-               PARDO katom
-#               DO jatom
-#                  IF katom == jatom
+            if rank == 0.0
 
-#                     tatom[katom,jatom] = atom[katom,jatom]
-#                     execute return_sval tatom[katom,jatom] etemp
-                     
-		     etemp = (scalar)katom
+               PARDO katom
+               DO jatom
+                  IF katom == jatom
+
+                     tatom[katom,jatom] = atom[katom,jatom]
+                     execute return_sval tatom[katom,jatom] etemp
 
                      print "Printing atom number at entry to scf_atom"
                      print etemp
-                     execute a4_scf_atom  fockrohf_a fockrohf_b oed_kin oed_nai oed_ovl etemp
-                     print "Printing atom number exit from scf_atom"
-                     print etemp
 
+                     execute a4_scf_atom fockrohf_a fockrohf_b oed_kin oed_nai oed_ovl etemp
                      DO mu
                      DO nu
                         txx[mu,nu] = Fockrohf_a[mu,nu]
@@ -1483,65 +1412,41 @@ import "scf_rhf_defs.sialx"
                      ENDDO nu
                      ENDDO mu
 
-#                  ENDIF
-#
-#               ENDDO jatom
+                  ENDIF
+
+               ENDDO jatom
                ENDPARDO katom
 
-#            ENDIF 
+            ENDIF 
 
-         ENDIF
-
-         sip_barrier
-
-#         DO mu
-#
-#         DO nu
-#            txx[mu,nu] = Fockrohf_a[mu,nu]
-#            IF Natoms < 3
-#               txx[mu,nu] = 0.0
-#            ENDIF
-#            PUT IDHFA[mu,nu] += txx[mu,nu]
-#         ENDDO nu
-#         ENDDO mu
-#
-#         DO mu
-#         DO nu
-#            txx[mu,nu] = Fockrohf_b[mu,nu]
-#            IF Natoms < 3
-#               txx[mu,nu] = 0.0
-#            ENDIF
-#            PUT IDHFB[mu,nu] += txx[mu,nu]
-#         ENDDO nu
-#         ENDDO mu
-#         sip_barrier
-#
+         ENDIF 
+         sip_barrier 
 #bgn_debug
-#      esuma = 0.0
-#      esumb = 0.0
-#      DO mu
-#      DO nu
-#            get IDHFA[mu,nu]
-#            get IDHFB[mu,nu]
-#            tmp = IDHFA[mu,nu] * IDHFA[mu,nu]
-#            esuma += tmp
-#            tmp = IDHFB[mu,nu] * IDHFB[mu,nu]
-#            esumb += tmp
-#      ENDDO nu
-#      ENDDO mu
-#      print "The checksums of atomic densties"
-#      print esuma
-#      print esumb
+      esuma = 0.0
+      esumb = 0.0
+      DO mu
+      DO nu
+            get IDHFA[mu,nu]
+            get IDHFB[mu,nu]
+            tmp = IDHFA[mu,nu] * IDHFA[mu,nu]
+            esuma += tmp
+            tmp = IDHFB[mu,nu] * IDHFB[mu,nu]
+            esumb += tmp
+      ENDDO nu
+      ENDDO mu
+      print "The checksums of atomic densties"
+      print esuma
+      print esumb
 #end_debug
 #
 # The density at this point is not idempotent. All the atoms that
 # have even number of electrons, we have RHF type orbitals and
 # odd number of electrons have UHF type orbitals. At the moment
-# the density is block diagonal. Build a Fock matrix for the entire
+# the density is block diagonal. Build a Fock matrix for the entire 
 # molecule and diagonalize it.
-#  
+#   
 # Alpha and Beta denisties of atomic guess are UHF. Just use
-# the average of the two for RHF starting point
+# the average of the two as the starting point
 
          PARDO mu, nu
             GET               IDHFa[mu,nu]
@@ -1560,15 +1465,15 @@ import "scf_rhf_defs.sialx"
          DO nu
             GET              DHFa[mu,nu]
             GET              DHFb[mu,nu]
-            oed_ovl[mu,nu] = DHFa[mu,nu] # 13
-            oed_kin[mu,nu] = DHFb[mu,nu] # 12
+            oed_ovl[mu,nu] = DHFa[mu,nu] 
+            oed_kin[mu,nu] = DHFb[mu,nu] 
          ENDDO nu
          ENDDO mu
 
          CALL FOCK_MATRIX_FAST
          sip_barrier
 #
-#     Construct S^(-1/2) F S^(-1/2)
+#     Construct S^[-1/2] F S^[-1/2]
 #     -----------------------------
 #
          CALL FOCK_TRANSPOSE
@@ -1586,56 +1491,54 @@ import "scf_rhf_defs.sialx"
 #     Compute the new HF density
 #     ----------------------
 #
-         EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+#         EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+#         EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
 
          CALL HFIDENS
          sip_barrier
+#bgn_debug
+      esuma = 0.0
+      esumb = 0.0
+      do mu
+      do nu
+         get DHFa[mu,nu]
+         get DHFb[mu,nu]
+         tmp = DHFa[mu,nu] * DHFa[mu,nu]
+         esuma += tmp
+         tmp = DHFb[mu,nu] * DHFb[mu,nu]
+         esumb += tmp
+      enddo nu
+      enddo mu
+      print "The checksum of alpha and beta density"
+      print esuma
+      print esumb
+#end_debug
 
 #     This energy is not suppose to be all that great
 #     -----------------------------------------------
          CALL HF_ENERGY
+      
+      ENDIF 
 
-      ENDIF
-
-#bgn_debug
-#      esuma = 0.0
-#      esumb = 0.0
-#      do mu
-#      do nu
-#         get DHFa[mu,nu]
-#         get DHFb[mu,nu]
-#         tmp = DHFa[mu,nu] * DHFa[mu,nu]
-#         esuma += tmp
-#         tmp = DHFb[mu,nu] * DHFb[mu,nu]
-#         esumb += tmp
-#      enddo nu
-#      enddo mu
-#      print "The checksum of alpha and beta density"
-#      print esuma
-#      print esumb
-#end_debug
-#
-      ENDPROC IGUESS
-#     --------------
-#
-# ---------------------------------------------------------------------------- 
+      ENDPROC IGUESS   
+#     -------------- 
 #
        PROC STORE_FOCK_DENS_VEC_OLD
 #      ----------------------------
 
-       PARDO mu, nu
+       PARDO mu, nu 
 
-             GET Fpq_a[mu,nu]
-             GET Fpq_b[mu,nu]
+             GET Fpq_a[mu,nu] 
+             GET Fpq_b[mu,nu] 
 
-             GET DHFa[mu,nu]
-             GET DHFb[mu,nu]
+             GET DHFa[mu,nu] 
+             GET DHFb[mu,nu] 
 
-             PUT Fpqa_prev[mu,nu] = Fpq_a[mu,nu]
-             PUT Fpqb_prev[mu,nu] = Fpq_b[mu,nu]
+             PUT Fpqa_prev[mu,nu] = Fpq_a[mu,nu]  
+             PUT Fpqb_prev[mu,nu] = Fpq_b[mu,nu]  
 
-             PUT DHFa_Prev[mu,nu] = DHFa[mu,nu]
-             PUT DHFb_Prev[mu,nu] = DHFb[mu,nu]
+             PUT DHFa_Prev[mu,nu] = DHFa[mu,nu]  
+             PUT DHFb_Prev[mu,nu] = DHFb[mu,nu]  
 
        ENDPARDO mu, nu
 
@@ -1646,11 +1549,18 @@ import "scf_rhf_defs.sialx"
        ENDDO i
        ENDDO mu
 
-       sip_barrier
+       DO mu
+       DO j
+          Txj[mu,j] = Cb[mu,j]
+          CB_Prev[mu,j]    = Txj[mu,j]
+       ENDDO j
+       ENDDO mu
 
+       sip_barrier
+       
        ENDPROC STORE_FOCK_DENS_VEC_OLD
 #      -------------------------------
-
+#
        PROC GEN_6HISTORY  
 #      ------------------  
        PARDO a, i
@@ -1662,7 +1572,7 @@ import "scf_rhf_defs.sialx"
              PUT FFbj[b,j] = tbj[b,j]
        ENDPARDO b, j
        sip_barrier
-#
+
        PARDO mu, nu  
              GET Fpq_a[mu,nu]  
              GET Fpq_b[mu,nu]  
@@ -1675,92 +1585,82 @@ import "scf_rhf_defs.sialx"
              ENDDO i 
 #
              DO j 
-                txj[mu,j] = Fpq_b[mu,nu]*ca[nu,j] 
+                txj[mu,j] = Fpq_b[mu,nu]*cb[nu,j] 
                 DO b 
-                   tbj[b,j]      = txj[mu,j]*ca[mu,b] 
+                   tbj[b,j]      = txj[mu,j]*cb[mu,b] 
                    PUT FFbj[b,j] += tbj[b,j] 
                 ENDDO b 
              ENDDO j 
        ENDPARDO mu, nu  
        sip_barrier 
 #
-# diis_start = Iteration that start diis (based on the key-word SCF_EXPSTART
-# default is 8).
-# diis_order = Size of the DIIS extrapolation (based on the key-word
-# SCF_EXPORDER, default is 6). These are input choices and should not
-# be changed.
+# diis_start = Iteration that start diis [based on the key-word SCF_EXPSTART
+# default is 8].
+# diis_order = Size of the DIIS extrapolation [based on the key-word 
+# SCF_EXPORDER, default is 6]. These are input choices and should not
+# be changed. 
 #
        IF ITER_COUNT >= DIIS_START
-          TARGET  = DIIS_ORDER
+          TARGET  = DIIS_ORDER 
           N1 = 0
 
-       DO d1
+       DO d1 
           n1 += 1
-          if n1 == TARGET
-	      server_barrier
-                PARDO mu, nu
-                   GET              Fpq_a[mu,nu]
-                   txx[mu,nu]     = Fpq_a[mu,nu]
-                   PUT Fa[mu,nu,d1] = txx[mu,nu]
-                ENDPARDO mu, nu
-                PARDO mu, nu
-                   GET              Fpq_b[mu,nu]
-                   txx[mu,nu]     = Fpq_b[mu,nu]
-                   PUT Fb[mu,nu,d1] = txx[mu,nu]
-                ENDPARDO mu, nu
-                PARDO a, i
-                   GET FFai[a,i]
-                   PUT Fai[a,i,d1] = FFai[a,i]
-                ENDPARDO a, i
-                PARDO b, j
-                   GET FFbj[b,j]
-                   PUT Fbj[b,j,d1] = FFbj[b,j]
-                ENDPARDO b, j
-	      server_barrier
-                exit
+	  if n1 == TARGET
+#
+                PARDO mu, nu 
+                   GET              Fpq_a[mu,nu] 
+                   GET              Fpq_b[mu,nu] 
+                   txx[mu,nu]     = Fpq_a[mu,nu] 
+                   PUT Fa[mu,nu,d1] = txx[mu,nu]  
+                   txx[mu,nu]     = Fpq_b[mu,nu] 
+                   PUT Fb[mu,nu,d1] = txx[mu,nu]  
+                ENDPARDO mu, nu 
+                PARDO a, i 
+                   GET FFai[a,i] 
+                   PUT Fai[a,i,d1] = FFai[a,i]  
+                ENDPARDO a, i 
+                PARDO b, j 
+                   GET FFbj[b,j] 
+                   PUT Fbj[b,j,d1] = FFbj[b,j]  
+                ENDPARDO b, j 
+                exit 
 
-          endif # d1 = kiter
+          endif # d1 = kiter 
 
        ENDDO d1
 
        ELSE
-
+       
        IF ITER_COUNT >= START_HISTORY
           TARGET   = ITER_COUNT
           TARGET  -= START_HISTORY
           TARGET  += 1
           N1       = 0
 
-       DO d1
+       DO d1 
           n1 += 1
           if n1 == TARGET
-#bgn_debug                
-#              print "The target in GEN_6HISTORY"
-#              print  n1
-#end_debug
-	       server_barrier
-                PARDO mu, nu
-                   GET              Fpq_a[mu,nu]
-                   txx[mu,nu]     = Fpq_a[mu,nu]
-                   PUT Fa[mu,nu,d1] = txx[mu,nu]
-                ENDPARDO mu, nu
-                PARDO mu, nu
-                   GET              Fpq_b[mu,nu]
-                   txx[mu,nu]     = Fpq_b[mu,nu]
-                   PUT Fb[mu,nu,d1] = txx[mu,nu]
-                ENDPARDO mu, nu
-                PARDO a, i
-                   GET FFai[a,i]
-                   PUT Fai[a,i,d1] = FFai[a,i]
-                ENDPARDO a, i
-                PARDO b, j
-                   GET FFbj[b,j]
-                   PUT Fbj[b,j,d1] = FFbj[b,j]
-                ENDPARDO b, j
-		server_barrier
-                exit
 
-          endif # d1 = kiter
+                PARDO mu, nu 
+                   GET              Fpq_a[mu,nu] 
+                   GET              Fpq_b[mu,nu] 
+                   txx[mu,nu]     = Fpq_a[mu,nu] 
+                   PUT Fa[mu,nu,d1] = txx[mu,nu]  
+                   txx[mu,nu]     = Fpq_b[mu,nu] 
+                   PUT Fb[mu,nu,d1] = txx[mu,nu]  
+                ENDPARDO mu, nu 
+                PARDO a, i 
+                   GET FFai[a,i] 
+                   PUT Fai[a,i,d1] = FFai[a,i]  
+                ENDPARDO a, i 
+                PARDO b, j 
+                   GET FFbj[b,j] 
+                   PUT Fbj[b,j,d1] = FFbj[b,j]  
+                ENDPARDO b, j 
+                exit 
+
+          endif # d1 = kiter 
        ENDDO d1
 
        ENDIF
@@ -1768,9 +1668,10 @@ import "scf_rhf_defs.sialx"
        ENDIF
 
        sip_barrier 
-#
+
        ENDPROC GEN_6HISTORY  
 #      ---------------------  
+#
 # ---------------------------------------------------------------------------- 
 #
        PROC MOVE6    
@@ -1779,38 +1680,90 @@ import "scf_rhf_defs.sialx"
 #      Move histories 
 #      -------------- 
 #
-      DO d1 
-      DO d2 
-      where d1 <= worder
-      where d1 == d2 + 1
-       sip_barrier 
-	  PARDO mu, nu 
-		 GET          Fa[mu,nu,d1] 
-		 tpq[mu,nu] = Fa[mu,nu,d1] 
-		 PUT Fa[mu,nu,d2] = tpq[mu,nu] 
-	  ENDPARDO mu, nu 
+       PARDO mu, nu 
+          n1 = 0
+          DO d1 
+             n1 += 1
+             if n1 <= worder
+             GET          Fa[mu,nu,d1] 
+             tpq[mu,nu] = Fa[mu,nu,d1] 
+             n2 = 0 
+          DO d2 
+             n2 += 1
+             icheck = n1 
+             icheck-= n2 
+             if icheck == 1  
+                tpqx[mu,nu,d2]   = tpq[mu,nu] 
+                PUT Fa[mu,nu,d2] = tpqx[mu,nu,d2] 
+             endif 
+          ENDDO d2 
+          endif 
+          ENDDO d1 
+       ENDPARDO mu, nu 
 #
-	  PARDO a, i 
-		 GET        Fai[a,i,d1] 
-		 tai[a,i] = Fai[a,i,d1] 
-		 PUT Fai[a,i,d2] = tai[a,i] 
-	  ENDPARDO a,i  
+       PARDO a, i 
+          n1 = 0
+          DO d1 
+             n1 += 1
+             if n1 <= worder
+             GET        Fai[a,i,d1] 
+             tai[a,i] = Fai[a,i,d1] 
+             n2 = 0
+          DO d2 
+             n2 += 1
+             icheck = n1 
+             icheck-= n2 
+             if icheck == 1
+                taix[a,i,d2]   = tai[a,i] 
+                PUT Fai[a,i,d2] = taix[a,i,d2] 
+             endif 
+          ENDDO d2 
+          endif 
+          ENDDO d1 
+       ENDPARDO a,i  
 #
-	  PARDO mu, nu 
-		 GET          Fb[mu,nu,d1] 
-		 tpq[mu,nu] = Fb[mu,nu,d1] 
-		 PUT Fb[mu,nu,d2] = tpq[mu,nu] 
-	   ENDPARDO mu, nu 
+       PARDO mu, nu 
+          n1 = 0
+          DO d1 
+             n1 += 1
+             if n1 <= worder
+             GET          Fb[mu,nu,d1] 
+             tpq[mu,nu] = Fb[mu,nu,d1] 
+             n2 = 0
+          DO d2 
+             n2 += 1
+             icheck= n1 
+             icheck-= n2 
+             if icheck == 1
+                tpqx[mu,nu,d2]   = tpq[mu,nu] 
+                PUT Fb[mu,nu,d2] = tpqx[mu,nu,d2] 
+             endif 
+          ENDDO d2 
+             endif 
+          ENDDO d1 
+       ENDPARDO mu, nu 
 #
-	   PARDO b, j 
-		 GET        Fbj[b,j,d1] 
-		 tbj[b,j] = Fbj[b,j,d1] 
-		 PUT Fbj[b,j,d2] = tbj[b,j] 
-	  ENDPARDO b,j  
-       sip_barrier 
-      ENDDO d2 
-      ENDDO d1 
-       sip_barrier 
+       PARDO b, j 
+          n1 = 0 
+          DO d1 
+             n1 += 1
+             if n1 <= worder
+             GET        Fbj[b,j,d1] 
+             tbj[b,j] = Fbj[b,j,d1] 
+             n2 = 0
+          DO d2 
+             n2 += 1
+             icheck = n1 
+             icheck-= n2 
+             if icheck == 1
+                tbjx[b,j,d2]   = tbj[b,j] 
+                PUT Fbj[b,j,d2] = tbjx[b,j,d2] 
+             endif 
+          ENDDO d2 
+             endif 
+          ENDDO d1 
+       ENDPARDO b,j  
+                
        sip_barrier 
 #
        ENDPROC MOVE6    
@@ -1819,12 +1772,7 @@ import "scf_rhf_defs.sialx"
 # ---------------------------------------------------------------------------- 
 #
        PROC DIISN   
-#      ----------  
-#
-# The DIIS expansion coefficients are computed using the 5 previous iterations.
-#
-#      Zero out scalars.
-#      -----------------
+#      ------------ 
 #
        sip_barrier 
 #
@@ -1834,7 +1782,7 @@ import "scf_rhf_defs.sialx"
 #      Contributions from Fai histories. 
 #      --------------------------------- 
 #
-       WORDER = DIIS_ORDER
+       WORDER = DIIS_ORDER 
 
        n1 = 0
        DO d1 
@@ -1844,7 +1792,7 @@ import "scf_rhf_defs.sialx"
        DO d2 
           n2+= 1
        if n2 <= worder 
-          tdd[d1,d2] = 0.0 
+          tdd[d1,d2] = 0.0
           DO a  
           DO i 
              GET           Fai[a,i,d1] 
@@ -1856,17 +1804,17 @@ import "scf_rhf_defs.sialx"
              tdd[d1,d2] += t1dd[d1,d2]  
           ENDDO i 
           ENDDO a  
-          DO b  
-          DO j 
-             GET           Fbj[b,j,d1] 
-             GET           Fbj[b,j,d2] 
-             tbj[b,j]    = Fbj[b,j,d1] 
-             t1bj[b,j]   = Fbj[b,j,d2] 
-             etemp       = tbj[b,j]*t1bj[b,j] 
-             t1dd[d1,d2] = etemp 
-             tdd[d1,d2] += t1dd[d1,d2]  
-          ENDDO j 
-          ENDDO b  
+          DO b
+          DO j
+             GET           Fbj[b,j,d1]
+             GET           Fbj[b,j,d2]
+             tbj[b,j]    = Fbj[b,j,d1]
+             t1bj[b,j]   = Fbj[b,j,d2]
+             etemp       = tbj[b,j]*t1bj[b,j]
+             t1dd[d1,d2] = etemp
+             tdd[d1,d2] += t1dd[d1,d2]
+          ENDDO j
+          ENDDO b
           BB[d1,d2] = tdd[d1,d2] 
 
        endif 
@@ -1875,10 +1823,10 @@ import "scf_rhf_defs.sialx"
        ENDDO d1 
 
        execute compute_diis bb
-#    
+#
 #      Form the update Density matrix using the c-vector. 
 #      -----------------------------------------------
-
+#
        PARDO mu, nu
 #
            txx[mu,nu] = 0.0
@@ -1886,7 +1834,7 @@ import "scf_rhf_defs.sialx"
            n1 = 0
            DO d1
               n1 += 1
-           if n1 <= worder 
+           if n1 <= worder
               GET            Fa[mu,nu,d1]
               t1xx[mu,nu]  = Fa[mu,nu,d1]
               execute return_sval BB[d1,d1] etemp
@@ -1917,8 +1865,8 @@ import "scf_rhf_defs.sialx"
 #
        sip_barrier
 
-       ENDPROC DIISN   
-#      -------------  
+       ENDPROC DIISN 
+#      -------------
 
       PROC CREATE_PMATRIX
 #     -------------------
@@ -1939,7 +1887,7 @@ import "scf_rhf_defs.sialx"
              execute return_h1 txx[mu,nu]
 #
              T1xx[mu,nu]  = Txx[mu,nu]
-#
+#           
              Txx[mu,nu]  =FpqA_Prev[mu,nu]
              Txx[mu,nu] -=T1xx[mu,nu]
              PUT Pold_a[mu,nu] = Txx[mu,nu]
@@ -1950,64 +1898,64 @@ import "scf_rhf_defs.sialx"
 
              Txx[mu,nu]  =Fpq_a[mu,nu]
              Txx[mu,nu] -=T1xx[mu,nu]
-             PUT Pnew_a[mu,nu] = Txx[mu,nu]
+             PUT Pnew_a[mu,nu] = Txx[mu,nu] 
 
              Txx[mu,nu]  =Fpq_a[mu,nu]
              Txx[mu,nu] -=T1xx[mu,nu]
-             PUT Pnew_b[mu,nu] = Txx[mu,nu]
+             PUT Pnew_b[mu,nu] = Txx[mu,nu] 
 
          ENDPARDO mu,nu
 
          sip_barrier
 #bgn_debug
-#     esuma = 0.0
-#     esumb = 0.0
-#     DO mu
-#     Do nu
-#     GET FpqA_Prev[mu,nu]
-#     GET Fpq_a[mu,nu]
-#     tmp = Fpqa_Prev[mu,nu] * FpqA_Prev[mu,nu]
-#     esuma += tmp
-#     tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
-#     esumb += tmp
-#     ENDDO nu
-#     ENDDO mu
-#     print "The checksum of prev. alpha Fock matrix"
-#     print esuma
-#     print "The checksum of prev. beta Fock matrix"
-#     print esumb
-#     esuma = 0.0
-#     esumb = 0.0
-#     DO mu
-#     Do nu
-#     GET POLD_a[mu,nu]
-#     GET POLD_b[mu,nu]
-#     tmp = POLD_a[mu,nu] * POLD_a[mu,nu]
-#     esuma += tmp
-#     tmp =   POLD_b[mu,nu] *  POLD_b[mu,nu]
-#     esumb += tmp
-#     ENDDO nu
-#     ENDDO mu
-#     print "The checksum of prev. density matrix"
-#     print esuma
-#     print "The checksum of prev. denisity matrix"
-#     print esumb
-#     esuma = 0.0
-#     esumb = 0.0
-#     DO mu
-#     Do nu
-#     GET PNEW_a[mu,nu]
-#     GET PNEW_b[mu,nu]
-#     tmp = PNEW_a[mu,nu] * PNEW_a[mu,nu]
-#     esuma += tmp
-#     tmp =   PNEW_b[mu,nu] *  PNEW_b[mu,nu]
-#     esumb += tmp
-#     ENDDO nu
-#     ENDDO mu
-#     print "The checksum of new density matrix"
-#     print esuma
-#     print "The checksum of new denisity matrix"
-#     print esumb
+     esuma = 0.0
+     esumb = 0.0
+     DO mu
+     Do nu
+     GET FpqA_Prev[mu,nu]
+     GET Fpq_a[mu,nu]
+     tmp = Fpqa_Prev[mu,nu] * FpqA_Prev[mu,nu]
+     esuma += tmp
+     tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
+     esumb += tmp
+     ENDDO nu
+     ENDDO mu
+     print "The checksum of prev. alpha Fock matrix"
+     print esuma 
+     print "The checksum of prev. beta Fock matrix"
+     print esumb
+     esuma = 0.0
+     esumb = 0.0
+     DO mu
+     Do nu
+     GET POLD_a[mu,nu]
+     GET POLD_b[mu,nu]
+     tmp = POLD_a[mu,nu] * POLD_a[mu,nu]
+     esuma += tmp
+     tmp =   POLD_b[mu,nu] *  POLD_b[mu,nu]
+     esumb += tmp
+     ENDDO nu
+     ENDDO mu
+     print "The checksum of prev. density matrix"
+     print esuma 
+     print "The checksum of prev. denisity matrix"
+     print esumb
+     esuma = 0.0
+     esumb = 0.0
+     DO mu
+     Do nu
+     GET PNEW_a[mu,nu]
+     GET PNEW_b[mu,nu]
+     tmp = PNEW_a[mu,nu] * PNEW_a[mu,nu]
+     esuma += tmp
+     tmp =   PNEW_b[mu,nu] *  PNEW_b[mu,nu]
+     esumb += tmp
+     ENDDO nu
+     ENDDO mu
+     print "The checksum of new density matrix"
+     print esuma 
+     print "The checksum of new denisity matrix"
+     print esumb
 #end_debug
 
       ENDPROC CREATE_PMATRIX
@@ -2015,13 +1963,13 @@ import "scf_rhf_defs.sialx"
 
        PROC KARLS_DAMP_FACTOR
 #      ----------------------
-
+  
 #      initialise the variables at the start of each iteration
-
+ 
        etemp   =0.0
-       e1m_tmp =0.0
+       e1m_tmp =0.0  
        e1p_tmp =0.0
-       e2m11_tmp  =0.0
+       e2m11_tmp  =0.0 
        e2p11_tmp  =0.0
        e2p12_tmp  =0.0
 
@@ -2030,18 +1978,18 @@ import "scf_rhf_defs.sialx"
        e211m  =0.0
        e211p  =0.0
        e212   =0.0
-
+  
        scf_ener=0.0
-       scf=0.0
+       scf=0.0  
 
        PARDO mu, nu
 
 # The Density and the Fock matrix of previous iteration
 
-           GET DHFA_Prev[mu,nu]
-           GET DHFB_Prev[mu,nu]
+           GET DHFA_Prev[mu,nu] 
+           GET DHFB_Prev[mu,nu] 
            GET Pold_a[mu,nu]
-           GET Pold_b[mu,nu]
+           GET Pold_b[mu,nu] 
 
 
 # The Density and the Fock matrix of current iteration
@@ -2060,7 +2008,7 @@ import "scf_rhf_defs.sialx"
            e1m_tmp      += etemp
            etemp        = T1xx[mu,nu]*DHFb_Prev[mu,nu]
            e1m_tmp      += etemp
-
+ 
            etemp        = T1xx[mu,nu]*DHFa[mu,nu]
            e1p_tmp      += etemp
            etemp        = T1xx[mu,nu]*DHFb[mu,nu]
@@ -2093,7 +2041,7 @@ import "scf_rhf_defs.sialx"
            ENDPARDO mu, nu
 #bgn_debug
 #
-#VR  calculate current HF energy to cross-check
+#VR  calculate current HF energy to cross-check 
 #
           PARDO mu, nu
           GET Fpq_a[mu,nu]
@@ -2106,14 +2054,14 @@ import "scf_rhf_defs.sialx"
           T1xx[mu,nu] +=Fpq_a[mu,nu]
 
           etemp     =T1xx[mu,nu]*DHFa[mu,nu]
-          scf_ener +=etemp
-
+          scf_ener +=etemp 
+        
           T1xx[mu,nu]  =Txx[mu,nu]
           T1xx[mu,nu] +=Fpq_b[mu,nu]
 
           etemp     =T1xx[mu,nu]*DHFb[mu,nu]
           scf_ener +=etemp
-#eVR
+#eVR              
 #bgn_debug
            ENDPARDO mu, nu
 
@@ -2128,9 +2076,9 @@ import "scf_rhf_defs.sialx"
 #bgn_debug
 #VR
       scf_ener         *=0.5
-      collective scf   += scf_ener
-      scf += scf_ener
-
+      collective scf   += scf_ener      
+      scf += scf_ener 
+      
       scf += repulsion
 #eVR
 #bgn_debug
@@ -2138,7 +2086,7 @@ import "scf_rhf_defs.sialx"
       sip_barrier
 
 #bgn_debug
-      print "Paramters in Karls damping"
+      print "Paramters in Karls damping" 
       print e1m
       print e1p
       print e211m
@@ -2146,6 +2094,7 @@ import "scf_rhf_defs.sialx"
       print e212
       print scf
 #end_debug
+
       e211m *= 2.0
 
       damp_numra  = e1p
@@ -2156,14 +2105,14 @@ import "scf_rhf_defs.sialx"
       e211p *= 2.0
       e212  *= 4.0
 
-      damp_denom  = e212
+      damp_denom  = e212 
       damp_denom -= e211m
       damp_denom -= e211p
       damp_denom  = 1.0/damp_denom
 
-      X   = damp_numra
+      X   = damp_numra 
       X  *= damp_denom
-
+      
 #bgn_debug
       print "Karls Damping: numerator, denominator and damp factor"
       print damp_numra
@@ -2171,7 +2120,7 @@ import "scf_rhf_defs.sialx"
       print x
 #end_debug
 
-      IF X < 1.0
+      IF X < 1.0          
          IF X > 0.0
            MX  = 1.0
            MX -= X
@@ -2184,33 +2133,32 @@ import "scf_rhf_defs.sialx"
        MX  = 0.0
 
       ENDIF
-
+      
 #bgn_debug
 #      X = 1.0
 #      MX = 0.0
-       print "The final Karls Damping factors: x and (1-x)"
-       print x
-       print mx
+      print "The final Karls Damping factors: x and (1-x)"
+      print x
+      print mx
 #end_debug
 
-      ENDPROC KARLS_DAMP_FACTOR
+      ENDPROC KARLS_DAMP_FACTOR 
 #    --------------------------
-
       PROC APPLY_CONSTANT_DAMP
 #     ------------------------
 #
 #  Apply constant damping, Damp factor is computed using a
-#  simple formula (1/1+constant) where the constant is user
-#  choosen 
+#  simple formula [1/1+constant] where the constant is user
+#  choosen
 #
       DAMP_DENOM  = 1.0
-      DAMP_DENOM += DAMP_CONSTANT
+      DAMP_DENOM += DAMP_CONSTANT 
       DAMP_FACTOR  = 1.0/DAMP_DENOM
 #bgn_debug
      print "constant damping: damp factor"
      print damp_factor
 #end_debug
-#
+
       PARDO mu, nu
 
          TXX_a[mu,nu] = 0.0
@@ -2260,7 +2208,7 @@ import "scf_rhf_defs.sialx"
       sip_barrier
 
       ENDPROC APPLY_CONSTANT_DAMP
-#     ------------------------
+#     ---------------------------
 
      PROC APPLY_DAVID_DAMP
 #    ---------------------
@@ -2270,7 +2218,7 @@ import "scf_rhf_defs.sialx"
       DAMP_DENOM = DAMP_FACTOR
       DAMP_DENOM += 1.0
       DAMP_DENOM  = 1.0/DAMP_DENOM
-
+      
       PARDO mu, nu
 
          TXX_a[mu,nu] = 0.0
@@ -2290,7 +2238,16 @@ import "scf_rhf_defs.sialx"
          TXX_a[mu,nu] += T1xx[mu,nu]
          TXX_a[mu,nu] *= DAMP_DENOM
 
+         Txx[mu,nu]    = Fpq_b[mu,nu]
+         TXX_b[mu,nu]  = Txx[mu,nu]
+
+         T1xx[mu,nu]   = Fpqb_prev[mu,nu]
+         T1xx[mu,nu]  *= DAMP_FACTOR
+         TXX_b[mu,nu] += T1xx[mu,nu]
+         TXX_b[mu,nu] *= DAMP_DENOM
+
          PUT Fpqa_DMP[mu,nu] = TXX_a[mu,nu]
+         PUT Fpqb_DMP[mu,nu] = TXX_b[mu,nu]
 
       ENDPARDO mu, nu
       sip_barrier
@@ -2300,9 +2257,12 @@ import "scf_rhf_defs.sialx"
       PARDO mu, nu
 
          GET Fpqa_DMP[mu,nu]
-
+         GET Fpqb_DMP[mu,nu]
+    
          Txx[mu,nu] = Fpqa_DMP[mu,nu]
          PUT Fpq_a[mu,nu] = Txx[mu,nu]
+
+         Txx[mu,nu] = Fpqb_DMP[mu,nu]
          PUT Fpq_b[mu,nu] = Txx[mu,nu]
 
       ENDPARDO mu, nu
@@ -2322,12 +2282,12 @@ import "scf_rhf_defs.sialx"
          TXX_a[mu,nu] = 0.0
          TXX_b[mu,nu] = 0.0
 
-         GET Fpqa_Prev[mu,nu]
-         GET Fpqb_Prev[mu,nu]
+         GET Fpqa_Prev[mu,nu] 
+         GET Fpqb_Prev[mu,nu] 
 
          GET Fpq_a[mu,nu]
          GET Fpq_b[mu,nu]
-
+         
          Txx[mu,nu]    = Fpq_a[mu,nu]
          Txx[mu,nu]   *= X
          TXX_a[mu,nu]  = Txx[mu,nu]
@@ -2343,7 +2303,7 @@ import "scf_rhf_defs.sialx"
          T1xx[mu,nu]   = Fpqb_prev[mu,nu]
          T1xx[mu,nu]  *= MX
          TXX_b[mu,nu] += T1xx[mu,nu]
-
+        
          PUT Fpqa_DMP[mu,nu] = TXX_a[mu,nu]
          PUT Fpqb_DMP[mu,nu] = TXX_b[mu,nu]
 
@@ -2355,8 +2315,8 @@ import "scf_rhf_defs.sialx"
       PARDO mu, nu
 
          GET Fpqa_DMP[mu,nu]
-         GET Fpqb_DMP[mu,nu]
-
+         GET Fpqb_DMP[mu,nu] 
+     
          Txx[mu,nu] = Fpqa_DMP[mu,nu]
          PUT Fpq_a[mu,nu] = Txx[mu,nu]
 
@@ -2380,12 +2340,12 @@ import "scf_rhf_defs.sialx"
          TXX_a[mu,nu] = 0.0
          TXX_b[mu,nu] = 0.0
 
-         GET DHFa_Prev[mu,nu]
-         GET DHFb_Prev[mu,nu]
+         GET DHFa_Prev[mu,nu] 
+         GET DHFb_Prev[mu,nu] 
 
          GET DHFa[mu,nu]
          GET DHFb[mu,nu]
-
+         
          Txx[mu,nu]    = DHFa[mu,nu]
          Txx[mu,nu]   *= X
          TXX_a[mu,nu]  = Txx[mu,nu]
@@ -2401,7 +2361,7 @@ import "scf_rhf_defs.sialx"
          T1xx[mu,nu]   = DHFb_prev[mu,nu]
          T1xx[mu,nu]  *= MX
          TXX_b[mu,nu] += T1xx[mu,nu]
-
+        
          PUT Dpqa_DMP[mu,nu] = TXX_a[mu,nu]
          PUT Dpqb_DMP[mu,nu] = TXX_b[mu,nu]
 
@@ -2413,8 +2373,8 @@ import "scf_rhf_defs.sialx"
       PARDO mu, nu
 
          GET Dpqa_DMP[mu,nu]
-         GET Dpqb_DMP[mu,nu]
-
+         GET Dpqb_DMP[mu,nu] 
+     
          Txx[mu,nu] = Dpqa_DMP[mu,nu]
          PUT DHFa[mu,nu] = Txx[mu,nu]
 
@@ -2434,7 +2394,7 @@ import "scf_rhf_defs.sialx"
        CREATE Fpqa_MO
        CREATE Fpqb_MO
 
-       sip_barrier
+       sip_barrier 
 
        PARDO mu, nu
             GET Fpq_a[mu,nu]
@@ -2450,41 +2410,43 @@ import "scf_rhf_defs.sialx"
        PARDO mu, nu
             GET Fpq_b[mu,nu]
             do q
-               Txq[mu,q] = Fpq_b[mu,nu]*Ca[nu,q]
+               Txq[mu,q] = Fpq_b[mu,nu]*Cb[nu,q]
                 do q1
-                   Tqq[q,q1]  = Txq[mu,q]*Ca[mu,q1]
+                   Tqq[q,q1]  = Txq[mu,q]*Cb[mu,q1]
                    PUT Fpqb_MO[q,q1] += Tqq[q,q1]
                enddo q1
             enddo q
        ENDPARDO mu,nu
+
        sip_barrier
 
        DO p
           DO p1
-            GET Fpqa_MO[p,p1]
+            GET Fpqa_MO[p,p1] 
             Tpp[p,p1] = Fpqa_MO[p,p1]
-            Fpqa_MO_VSHIFT[p,p1] = Tpp[p,p1]
+            Fpqa_MO_VSHIFT[p,p1] = Tpp[p,p1] 
           ENDDO p1
        ENDDO p
 
        DO q
           DO q1
-            GET Fpqb_MO[q,q1]
+            GET Fpqb_MO[q,q1] 
             Tqq[q,q1] = Fpqb_MO[q,q1]
-            Fpqb_MO_VSHIFT[q,q1] = Tqq[q,q1]
+            Fpqb_MO_VSHIFT[q,q1] = Tqq[q,q1] 
           ENDDO q1
        ENDDO q
        sip_barrier
+
 #bgn_debug
-#     esuma = 0.0
-#     do p
-#     do p1
-#        tmp = Fpqa_MO_VSHIFT[p,p1] * Fpqa_MO_VSHIFT[p,p1]
-#        esuma += tmp
-#     enddo p1
-#     enddo p
-#     print "The checksum of the Level shifts Fock matrix"
-#     print esuma
+     esuma = 0.0
+     do p
+     do p1
+        tmp = Fpqa_MO_VSHIFT[p,p1] * Fpqa_MO_VSHIFT[p,p1]
+        esuma += tmp
+     enddo p1
+     enddo p
+     print "The checksum of the Level shifts Fock matrix"
+     print esuma
 #end_debug
      ENDPROC BUILT_MO_FOCK
 #    ---------------------
@@ -2494,12 +2456,12 @@ import "scf_rhf_defs.sialx"
 
      DO P
      DO p1
-
-        IF p1 >= naocc
-           IF p >= naocc
+      
+        IF p1 >= naocc 
+           IF p >= naocc 
               Fpqa_MO_VSHIFT[p,p1] +=  Shifta
-           ENDIF
-        ENDIF
+           ENDIF 
+        ENDIF 
 
      ENDDO p1
      ENDDO P
@@ -2507,21 +2469,22 @@ import "scf_rhf_defs.sialx"
      DO q
      DO q1
 
-        IF q1 >= nbocc
-           IF q >= nbocc
+        IF q1 >= nbocc 
+           IF q >= nbocc 
               Fpqb_MO_VSHIFT[q,q1] +=  Shiftb
-           ENDIF
-        ENDIF
+           ENDIF 
+        ENDIF 
 
      ENDDO q1
      ENDDO q
-
+        
      ENDPROC LEVEL_SHIFTAB
-#    ---------------------
+#    --------------------
 
      PROC BUILT_AO_FOCK
 #    ---------------------
 #
+      
        PARDO mu, nu
              GET Fpq_a[mu,nu]
              Txx[mu,nu] = 0.0
@@ -2537,75 +2500,75 @@ import "scf_rhf_defs.sialx"
        CREATE SCb
 
        sip_barrier
-
+           
        PARDO mu, nu
              DO p
                 Txp[mu,p]      = OVLP[mu,nu] * Ca[nu,p]
-                PUT SCa[mu,p] += Txp[mu,p]
+                PUT SCa[mu,p] += Txp[mu,p] 
              ENDDO p
        ENDPARDO mu, nu
 
        PARDO mu, nu
              DO q
-                Txq[mu,q]      = OVLP[mu,nu] * Ca[nu,q]
-                PUT SCb[mu,q] += Txq[mu,q]
+                Txq[mu,q]      = OVLP[mu,nu] * Cb[nu,q]
+                PUT SCb[mu,q] += Txq[mu,q] 
              ENDDO q
        ENDPARDO mu, nu
        sip_barrier
 
        PARDO p, p1
-#            GET Fpqa_MO(p,p1)
+#            GET Fpqa_MO[p,p1]
             DO mu
 
-               GET SCa[mu,p]
+               GET SCa[mu,p] 
                Txp[mu,p]   = SCa[mu,p]
                Ixp[mu,p1]  = Fpqa_MO_VSHIFT[p,p1] * Txp[mu,p]
 
                DO nu
-                  GET SCa[nu,p1]
+                  GET SCa[nu,p1] 
                   Txp[nu,p1]   = SCa[nu,p1]
                   Ixx[mu,nu]   = Ixp[mu,p1] * Txp[nu,p1]
 
-                  PUT Fpq_a[mu,nu] += Ixx[mu,nu]
+                  PUT Fpq_a[mu,nu] += Ixx[mu,nu] 
                ENDDO nu
             ENDDO mu
       ENDPARDO p, p1
 
       PARDO q, q1
-#            GET Fpqb_MO(q,q1)
+#            GET Fpqb_MO[q,q1]
             DO mu
-               GET SCb[mu,q]
+               GET SCb[mu,q] 
                Txq[mu,q]   = SCb[mu,q]
                Jxq[mu,q1]  = Fpqb_MO_VSHIFT[q,q1] * Txq[mu,q]
 
                DO nu
 
-                  GET SCb[nu,q1]
+                  GET SCb[nu,q1] 
                   Txq[nu,q1]   = SCb[nu,q1]
                   Ixx[mu,nu]   = Jxq[mu,q1] * Txq[nu,q1]
 
-                  PUT Fpq_b[mu,nu] += Ixx[mu,nu]
+                  PUT Fpq_b[mu,nu] += Ixx[mu,nu] 
                ENDDO nu
             ENDDO mu
       ENDPARDO q, q1
 
       sip_barrier
 ##bgn_debug
-#     esuma = 0.0
-#     esumb = 0.0
-#     do mu
-#     do nu
-#        get Fpq_a[mu,nu]
-#        get Fpq_b[mu,nu]
-#        tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
-#        esuma += tmp
-#        tmp = Fpq_b[mu,nu] * Fpq_b[mu,nu]
-#        esumb += tmp
-#     enddo nu
-#     enddo mu
-#     Print "checksum of the level shited and Alpha and Beta Fock matrices"
-#     print esuma
-#     print esumb
+     esuma = 0.0
+     esumb = 0.0
+     do mu
+     do nu
+        get Fpq_a[mu,nu]
+        get Fpq_b[mu,nu]
+        tmp = Fpq_a[mu,nu] * Fpq_a[mu,nu]
+        esuma += tmp
+        tmp = Fpq_b[mu,nu] * Fpq_b[mu,nu]
+        esumb += tmp
+     enddo nu
+     enddo mu
+     Print "checksum of the level shited and Alpha and Beta Fock matrices"
+     print esuma
+     print esumb
 #end_debug
 
       DELETE Fpqa_MO
@@ -2614,50 +2577,8 @@ import "scf_rhf_defs.sialx"
       DELETE SCb
 
      ENDPROC BUILT_AO_FOCK
-
-    PROC form_Dscf
-
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-        prepare Dxx_scf[mu,nu] = Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-        do i
-            T1xx[mu,nu] = Ca[mu,i]*Ca[nu,i]
-            Txx[mu,nu] += T1xx[mu,nu]
-        enddo i
-        Txx[mu,nu] *= -2.0
-        prepare Dxx_scf[mu,nu] += Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-
-    do ixyz
-        ncount2 = (scalar)ixyz
-        dsum = 0.0
-        esum = 0.0
-        pardo mu,nu
-            request Dxx_scf[mu,nu]
-            ncount1 = 0.0
-            execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
-            NucDip[ixyz] = ncount1
-            Txx[mu,nu] = Dxx_scf[mu,nu]
-            etemp = Txx[mu,nu]*DAOINT[mu,nu]
-            esum += etemp
-        endpardo mu,nu
-        server_barrier
-        collective dsum += esum
-        server_barrier
-        dsum += NucDip[ixyz]
-        dipole[ixyz] = dsum
-    enddo ixyz
-
-    server_barrier
-
-    ENDPROC form_Dscf
 #    ---------------------
-#
+
 ############################################################################## 
 #
 #                         START OF MAIN PROGRAM 
@@ -2667,20 +2588,15 @@ import "scf_rhf_defs.sialx"
 #     Define a few constants 
 #     ---------------------- 
 #
-# Initilize the vaiable to zmax and imax (memory of ERD and OED). Need
-# to be in a aces4_init instruction and do all the initilizations in 
-# a one place. 04/1015, Ajith Perera.
-# 
-      zmax = 0.0
-      imax = 0.0
+      zmax   = 0.0
+      imax   = 0.0
       execute compute_int_scratchmem oed_ovl zmax imax
-      print zmax
-      print imax
 
-      ecrit  = scf_conv # Energy tolerance  
+      ecrit  = scf_conv  
+      execute get_my_rank rank
 #
       zero      = 0.0 
-      izero     = 0
+      izero     = 1
       mone      = -1.0 
       one       = 1.0 
       two       = 2.0 
@@ -2692,13 +2608,9 @@ import "scf_rhf_defs.sialx"
 
       iter_count = 0
       prnt_count = 0
-
-# use scf_ variables for controlling diis
-      diis_start = scf_beg
-      diis_order = scf_hist
-      diis_end   = scf_iter
-
-      START_HISTORY  = DIIS_START
+      diis_end = 150
+ 
+      START_HISTORY  = DIIS_START 
       START_HISTORY -= DIIS_ORDER
       START_HISTORY += 1
 
@@ -2707,14 +2619,17 @@ import "scf_rhf_defs.sialx"
         DIIS_START    = DIIS_ORDER
         DIIS_START   += 1
       ENDIF
-
-      Init_guess  = Guess
-      Shifta      = (scalar) lshft_a1
+#
+# This will force any-damping to only those iterations that invlove no
+# DIIS. Notice that this can be controled by input.
+#
+      Init_guess  = Guess 
+      Shifta      = (scalar)lshft_a1
       Shifta     *= 0.01
       Shiftb      = (scalar) lshft_b1
       Shiftb     *= 0.01
       damping     = damp_type
-      damp_thres  = (scalar) damp_tol
+      damp_thres  =(scalar) damp_tol
       damp_thres *= 0.01
       kill_damp   = damp_end
       lock_orbs   = lock_orbitals
@@ -2724,14 +2639,14 @@ import "scf_rhf_defs.sialx"
       print "input parameters: diis_start,diis_order,init_guess,Shifta,Shifta"
       print "Shiftb, damping, damp_thres, kill_damp, lock_orbs, lock_occs"
       print "damp"
-      print diis_start
+      print diis_start  
       print diis_order
       print init_guess
       print Shifta
       print Shiftb
       print damping
-      print damp_thres
-      print kill_damp
+      print damp_thres 
+      print kill_damp 
       print lock_orbs
       print lock_occs
       print damp
@@ -2741,22 +2656,22 @@ import "scf_rhf_defs.sialx"
 
       If init_guess == 0
           ATOMIC = 1
-      Endif
+      Endif 
 
       If init_guess == 1
           COREH = 1
-      Endif
+      Endif 
 
       If init_guess == 9
           ATOMIC = 1
-      Endif
+      Endif 
 
-      IF NATOMS <= 2
+      IF NATOMS <= 3
          COREH  = 1
          ATOMIC = 0
       ENDIF
 #
-# The davidson damping is based on private communication from
+# The davidson damping is based on private communication from 
 # E. R. Davidson and Karls_dynamic is based on CPL, 67,348,1979.
 #
       If Damping == 1
@@ -2777,47 +2692,51 @@ import "scf_rhf_defs.sialx"
 # set the default damping method to davidson (if the user has not
 # specified any preference).
 #
-
       If Damping == 0
          David_dynamic = 1
          damp_factor  = damp_thres
          damp_factor += 0.01
-      endif
- 
+      endif 
+
       level_shift = 0
       If Shifta > 0.0
          level_shift = 1
-      Endif 
+      Endif
       If Shiftb > 0.0
          level_shift = 1
-      Endif 
+      Endif
 #
-#     Create the distributed arrays assigned for various purposes.
+#     Create the one-particle arrays needed for the computation. 
 #     ---------------------------------------------------------- 
 #
+#     Fock matrix
+#     ----------- 
       CREATE Fpq_a  
       CREATE Fpq_b  
-      CREATE IDHFa   
-      CREATE IDHFb   
       CREATE DHFa   
       CREATE DHFb   
+#
+#     Old HF density 
+#     -------------- 
+#
       CREATE DHFa_Prev
       CREATE DHFb_Prev
+
       CREATE Fpqa_DMP
       CREATE Fpqb_DMP
       CREATE Dpqa_DMP
       CREATE Dpqb_DMP
       CREATE Fpqa_Prev
       CREATE Fpqb_Prev
-      CREATE FTpq_a
-      CREATE FTpq_b
-      CREATE CBT_a
-      CREATE CBT_b
+      CREATE FTpq_a  
+      CREATE FTpq_b  
+      CREATE CBT_a 
+      CREATE CBT_b 
+
       CREATE PNEW_A
       CREATE PNEW_B
       CREATE POLD_A
       CREATE POLD_B
-
 #
 #     DIIS vectors 
 #     ------------ 
@@ -2833,88 +2752,112 @@ import "scf_rhf_defs.sialx"
 #     ------------------------------------------- 
 #
       CREATE Qxx 
+      CREATE IDhfa 
+      CREATE IDhfb 
       CREATE OVLP_INV
       CREATE OCA
+      CREATE OCB
       CREATE BCA
+      CREATE BCB
       sip_barrier 
 #
 # Initialize the static arrays of SCF vectors and occupation numbers
 # ------------------------------------------------------------------
-#
-#JNB: i changed these
       DO mu
       DO p
-          ca[mu,p] = 0.0
-          CA_Prev[mu,p] = 0.0
-          CA_TEMP[mu,p] = 0.0
+         Txp[mu,p] = 0.0
+         ca[mu,p] = Txp[mu,p]
+         CA_Prev[mu,p] = Txp[mu,p] 
+         CA_TEMP[mu,p] = Txp[mu,p]
       ENDDO p
       ENDDO mu
+
+      DO mu
+      DO q
+         Txq[mu,q] = 0.0
+         cb[mu,q]  = Txq[mu,q]
+         CB_Prev[mu,q] = Txq[mu,q] 
+         CB_TEMP[mu,q] = Txq[mu,q]
+      ENDDO q
+      ENDDO mu
+
       DO p
       DO i
-         ORB_OVLP_A[p,i] = 0.0
+         Tpi[p,i] = 0.0
+         ORB_OVLP_A[p,i] = Tpi[p,i]
       ENDDO i
       ENDDO p
 
       DO q
       DO j
-         ORB_OVLP_B[q,j] = 0.0
-      ENDDO j
-      ENDDO q
-
-      DO q
-      DO j
-         ORB_OVLP_B[q,j] = 0.0
+         Tqj[q,j] = 0.0
+         ORB_OVLP_B[q,j] = Tqj[q,j]
       ENDDO j
       ENDDO q
 
       DO p
       DO p1
-         Fpqa_MO_VSHIFT[p,p1] = 0.0
+         Tpp[p,p1] = 0.0
+         Fpqa_MO_VSHIFT[p,p1] = Tpp[p,p1]
       ENDDO p1
       ENDDO p
 
       DO q
       DO q1
-         Fpqb_MO_VSHIFT[q,q1] = 0.0
+         Tqq[q,q1] = 0.0
+         Fpqb_MO_VSHIFT[q,q1] = Tqq[q,q1]
       ENDDO q1
       ENDDO q
-    
+      
+      DO ITHREE 
+         DAMP_PARMS[ITHREE] = 0.0
+      ENDDO ITHREE
+
+      DO nbfnsA
+          ToccA[nbfnsA]        = 0.0
+          A_OCC_NUMS [nbfnsA] = ToccA[nbfnsA]
+      ENDDO nbfnsA
+
+      DO nbfnsB
+          ToccB[nbfnsB]       = 0.0
+          B_OCC_NUMS [nbfnsB] = ToccB[nbfnsB]
+      ENDDO nbfnsB
+
       DO IITER1
       DO JJTER2
-         dflags12[iiter1,jjter2] = 0.0
+         Tf12[iiter1,jjter2]     = 0.0
+         dflags12[iiter1,jjter2] = Tf12[iiter1,jjter2]
       ENDDO JJTER2
       ENDDO IITER1
-
-      DO KITER
-      DO KPTR1
+ 
+      DO KITER 
+      DO KPTR1 
          tpinf[kiter,kptr1] = 0.0
-      ENDDO KPTR1
-      ENDDO KITER
+         tpinf[kiter,kptr1] = tpinf[kiter,kptr1]
+      ENDDO KPTR1 
+      ENDDO KITER 
 
-#      DO katom
-#      DO jatom
-#         atom[katom,jatom] = 0.0
-#      ENDDO jatom
-#      ENDDO katom
+      DO katom
+      DO jatom
+             atom[katom,jatom] = 0.0
+      ENDDO jatom
+      ENDDO katom
 
       DO MU
       DO NU
-         x1[mu,nu]  = 0.0
-         FSpq_a[mu,nu] = 0.0
-         FSpq_b[mu,nu] = 0.0
+         txx[mu,nu] = 0.0
+         x1[mu,nu]  = txx[mu,nu]
+         FSpq_a[mu,nu] = txx[mu,nu]
+         FSpq_b[mu,nu] = txx[mu,nu]
       ENDDO NU
       ENDDO MU
-
-      DO nbfnsA
-          A_OCC_NUMS [nbfnsA] = 0.0
-      ENDDO nbfnsA
       sip_barrier 
 
 # No integrl screening whatsoever until these are done to comply
 # with the litrature.
-# 
-#     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
-#     ----------------------------------------------------------------------- 
+#
+#     Perform initial [aa|bb] integral computation to set Schwartz paramaters
+#     -----------------------------------------------------------------------
 #
 #      DO mu
 #      DO nu
@@ -2931,41 +2874,47 @@ import "scf_rhf_defs.sialx"
 #      ENDDO mu
 #
 # Compute the nuclear repulsion energy
-#
+
       execute compute_nn_repulsion repulsion
       print "The nuclear repulson energy"
       print repulsion
- 
-
+#
 #     Construct the initial guess of the density matrix
 #     -----------------------------------------------
-#   
-      CALL IGUESS
-#
+     CALL IGUESS
+
 # Delete the distributed arrays used in initial guess routines
-#
+
       DELETE IDHFa
       DELETE IDHFb
-      DELETE FTpq_a
-      DELETE FTpq_b
-      DELETE CBT_a
-      DELETE CBT_b
-      DELETE Fpq_a
-      DELETE Fpq_b
+      DELETE FTpq_a  
+      DELETE FTpq_b  
+      DELETE CBT_a 
+      DELETE CBT_b 
+      DELETE Fpq_a 
+      DELETE Fpq_b 
       DELETE OVLP_INV
-
 #bgn_debug
+#     esuma=0.0
+#     do mu
+#     do nu
+#        etemp = oed_ovl[mu,nu] * oed_ovl[mu,nu]
+#        esuma += etemp
+#     enddo nu
+#     enddo mu
+#     print_scalar esuma
 #     DO mu
 #     Do nu
 #        if mu == nu
-#           Txx(mu,nu) = 1.0
-#           PUT dhfa(mu,nu) = txx(mu,nu)
-#           PUT dhfb(mu,nu) = txx(mu,nu)
+#           Txx[mu,nu] = 1.0
+#           PUT dhfa[mu,nu] = txx[mu,nu]
+#           PUT dhfb[mu,nu] = txx[mu,nu]
 #         endif
 #     enddo nu
 #     enddo mu
-#     execute sip_barrier
+#     sip_barrier
 #     EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+#     EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
 #     CALL OVER_HALF
 #     execute sip_barrier
 #     create Fpq_a
@@ -2976,18 +2925,17 @@ import "scf_rhf_defs.sialx"
 #     delete Fpq_b
 #     DELETE OVLP_INV
 #end_debug
-
+#
 # Start iterations 
 # ---------------- 
 #
       DO kiter 
+
          iter_count += 1
          prnt_count += 1
 
-         print " "
          print "The iteration number"
          print iter_count
-
 #
 #        Create 1-particle arrays 
 #        ------------------------ 
@@ -2998,7 +2946,7 @@ import "scf_rhf_defs.sialx"
          CREATE CBT_b 
          CREATE FTpq_a  
          CREATE FTpq_b  
-         sip_barrier
+         sip_barrier 
 #
 #        Construct the new Fock matrix 
 #        -----------------------------
@@ -3007,8 +2955,8 @@ import "scf_rhf_defs.sialx"
          DO nu
             GET              DHFa[mu,nu]
             GET              DHFb[mu,nu]
-            oed_ovl[mu,nu] = DHFa[mu,nu] # 13
-            oed_kin[mu,nu] = DHFb[mu,nu] # 12
+            oed_ovl[mu,nu] = DHFb[mu,nu] # 13
+            oed_kin[mu,nu] = DHFa[mu,nu] # 12
          ENDDO nu
          ENDDO mu
 
@@ -3016,26 +2964,26 @@ import "scf_rhf_defs.sialx"
          DO jjter2
              execute set_flags2 dflags12[iiter1,jjter2]
          ENDDO jjter2
-         ENDDO iiter1 
-#
-         CALL FOCK_MATRIX_FAST 
+         ENDDO iiter1
+ 
+         CALL FOCK_MATRIX_FAST   
          sip_barrier 
-#
+
          CALL HF_ENERGY 
 
-# Store the current Fock and density matrix of the first iteration
-# (as F_prev) and D_prev). I am taking the Guess density, fock matrix
+# Store the current Fock and density matrix of the first iteration 
+# [as F_prev] and D_prev]. I am taking the Guess density, fock matrix 
 # and the energy as the first iteration of the SCF equations.
 
          IF ITER_COUNT == 1
             E0  = ENERGY
             CALL STORE_FOCK_DENS_VEC_OLD
-         ENDIF
-
-# DO the dynamic damping (CPL, 67, 348, 1979). Test the density difference
+         ENDIF 
+        
+# DO the dynamic damping [CPL, 67, 348, 1979]. Test the density difference
 # is above a predermined threshold and the number of iterations less than a
-# preset values. Then only do the dynamic damping. After the denisty
-# difference is below the threshold, start DIIS.
+# preset values. Then only do the dynamic damping. After the denisty 
+# difference is below the threshold, start DIIS. 
 
          MAX_D_Diff = 0.0
 
@@ -3044,76 +2992,82 @@ import "scf_rhf_defs.sialx"
          ELSE
             MAX_D_Diff = DONEB
          ENDIF
-#bgn_debug
+
+#bgn_debug         
          print "The mamximum density difference"
          print MAX_D_DIFF
-
 #end_debug
 
-# The level shifting if demanded.
-           
-         IF ITER_COUNT > 1
+# The level shifting if demanded. 
 
-            IF LEVEL_SHIFT > 0
+       IF ITER_COUNT > 1
 
-               CAN_DAMP = 0
-               IF ITER_COUNT < KILL_DAMP
-                  IF MAX_D_DIFF > DAMP_THRES
-                     CALL BUILT_MO_FOCK
-                     CALL LEVEL_SHIFTAB
-                     CALL BUILT_AO_FOCK
-                     CAN_DAMP = 1
-                  ENDIF
-               ENDIF
-#bgn_debug
+          IF LEVEL_SHIFT > 0
+             CAN_DAMP = 0
+             IF ITER_COUNT < KILL_DAMP
+                IF MAX_D_DIFF > DAMP_THRES
+                   CALL BUILT_MO_FOCK
+
+#                   EXECUTE LEVEL_SHIFT  FPQA_MO_VSHIFT  Shifta
+#                   EXECUTE LEVEL_SHIFT  FPQB_MO_VSHIFT  Shiftb
+#
+                   CALL LEVEL_SHIFTAB
+
+                   CALL BUILT_AO_FOCK
+                   CAN_DAMP = 1
+                ENDIF
+             ENDIF
+#bgn_debug         
          print "The variable: can_damp"
          print can_damp
 #end_debug
 #
-# Start DIIS only when level shifting is done (and stop level-shifting
+# Start DIIS only when level shifting is done [and stop level-shifting
 # at that point.
 
-               IF CAN_DAMP == 0
-                  LEVEL_SHIFT = 0
-                  DIIS_START   += DIIS_ORDER
-               ENDIF
-         ENDIF
+             IF CAN_DAMP == 0
+                LEVEL_SHIFT = 0
+                DIIS_START   += DIIS_ORDER
+             ENDIF
+
+           ENDIF
 #
-# Damping techniquies other than level shifting 
-
-         CAN_DAMP = 0
-
-         IF CONSTANT_DAMPING == 1
-
-            IF ITER_COUNT > 2
+# Damping techniquies other than level shifting
 #
-# Constant damp factor is computed in the APPLY_CONSTANT_DAMP 
+            CAN_DAMP = 0
+
+            IF CONSTANT_DAMPING == 1
+ 
+               IF ITER_COUNT > 2
+#
+# Constant damp factor is computed in the APPLY_CONSTANT_DAMP
 # procedure.
-               IF MAX_D_DIFF > DAMP_THRES
-                  CALL APPLY_CONSTANT_DAMP
-                  CAN_DAMP = 1
+                  IF MAX_D_DIFF > DAMP_THRES
+                     CALL APPLY_CONSTANT_DAMP
+                     CAN_DAMP = 1
+                   ENDIF 
+
+                   IF CAN_DAMP == 0
+                      CONSTANT_DAMPING  = 0
+                      DIIS_START       += DIIS_ORDER
+                   ENDIF 
+
+                   IF ITER_COUNT  >  KILL_DAMP
+                      CONSTANT_DAMPING  = 0
+                      DIIS_START       += DIIS_ORDER
+                   ENDIF
+
                ENDIF
 
-               IF CAN_DAMP == 0
-                  CONSTANT_DAMPING  = 0
-                  DIIS_START       += DIIS_ORDER
-               ENDIF 
+            ENDIF
+#
+            IF DAVID_DYNAMIC == 1
 
-               IF ITER_COUNT  >  KILL_DAMP
-                  CONSTANT_DAMPING  = 0
-                  DIIS_START       += DIIS_ORDER
-               ENDIF
-
-            ENDIF 
-         ENDIF 
-
-         IF DAVID_DYNAMIC == 1
-
-             IF ITER_COUNT == 2
+               IF ITER_COUNT == 2
 
                   E1    = E0
                   E0    = ENERGY
-                  DE    = E0 
+                  DE    = E0
                   DE   -= E1
                   DEP   = 0.0
                   DES   = DE
@@ -3121,15 +3075,20 @@ import "scf_rhf_defs.sialx"
                   DES   = SQRT DES
                   DEAVG_OLD  = DES
                   DEAVG_OLD *= 0.20
+#bgn_debug
+      print "The input three variables to compute davison damp factor"
+      print des
+      print DEAVG_OLD
+#end_debug
 
                ELSE
 
                   E2    = E1
                   E1    = E0
                   E0    = ENERGY
-                  DE    = E0 
+                  DE    = E0
                   DE   -= E1
-                  DEP   = E1 
+                  DEP   = E1
                   DEP  -= E2
 
                   DES   = DE
@@ -3137,7 +3096,7 @@ import "scf_rhf_defs.sialx"
                   DES   = SQRT DES
                   DEPS  = DEP
                   DEPS *= DEP
-                  DEPS  = SQRT DEPS
+                  DEPS  = SQRT DEPS 
                   DEAVG  = DES
                   DEAVG += DEPS
                   DEAVG += DEAVG_OLD
@@ -3147,12 +3106,12 @@ import "scf_rhf_defs.sialx"
 
 #bgn_debug
       print "The input three variables to compute davison damp factor"
-      print des
-      print deps
-      print DEAVG_OLD
+      print de 
+      print dep
+      print DEAVG
 #end_debug
                   ICOUNT = 0
-                  DO ITHREE
+                  DO ITHREE 
                      ICOUNT += 1
                      IF ICOUNT == 1
                         DAMP_PARMS[ITHREE] = DE
@@ -3163,13 +3122,16 @@ import "scf_rhf_defs.sialx"
                      IF ICOUNT == 3
                         DAMP_PARMS[ITHREE] = DEAVG
                      ENDIF
-                  ENDDO ITHREE
-
-                 EXECUTE A4_DAVID_DAMP_FACTOR DAMP_PARMS DAMP_FACTOR
-#bgn_debug                
+                  ENDDO ITHREE 
+#bgn_debug
+      print "enter the davidson damp_factor"
+#      print damp_factor
+#end_debug
+                  EXECUTE A4_DAVID_DAMP_FACTOR DAMP_PARMS DAMP_FACTOR
+#bgn_debug
       print"the davidson damp_factor"
       print damp_factor
-#end_#debug
+#end_debug
                  IF DAMP_FACTOR >= DAMP_THRES
                        CAN_DAMP = 1
                        CALL APPLY_DAVID_DAMP
@@ -3179,62 +3141,63 @@ import "scf_rhf_defs.sialx"
                         CALL APPLY_DAVID_DAMP
                      ELSE
                         DAVID_DYNAMIC = 0
-		        CAN_DAMP      = 0
+                        CAN_DAMP      = 0
                         DIIS_START   += DIIS_ORDER
-                     ENDIF 
-                 ENDIF  
-
-                 IF ITER_COUNT  >  KILL_DAMP
-                    DAVID_DYNAMIC = 0
-                    CAN_DAMP      = 0
-                    DIIS_START   += DIIS_ORDER
+                     ENDIF
                  ENDIF
 
-               ENDIF
-              ENDIF
+                 IF ITER_COUNT  >  KILL_DAMP
+                     DAVID_DYNAMIC = 0
+                     DAMPING       = 0
+                     DIIS_START   += DIIS_ORDER
+                 ENDIF 
+ 
+               ENDIF 
+            ENDIF 
 #
-           IF KARLS_DYNAMIC == 1
+            IF KARLS_DYNAMIC == 1
 
-              IF MAX_D_DIFF >= DAMP_THRES
+                IF MAX_D_DIFF >= DAMP_THRES
 
-                  CALL CREATE_PMATRIX
-                  CALL KARLS_DAMP_FACTOR
+                   CALL CREATE_PMATRIX
+                   CALL KARLS_DAMP_FACTOR
 
 # If MX > 0; there is damping. When it is zero there is no contribution
 # from the previous density. If the damping is done and we are less than
 # five iterations, continiue damping. If it is greater than 5, turn off
-# damping regardless of the density difference.
+# damping regardless of the density difference.  
 
-                  IF MX > 0.0
-                     CAN_DAMP      = 1
-#                    CALL APPLY_KARLS_DAMP_FOCK
-                     CALL APPLY_KARLS_DAMP_DENS
+                   IF MX > 0.0
+                      CAN_DAMP = 1
+#                     CALL APPLY_KARLS_DAMP_FOCK
+                      CALL APPLY_KARLS_DAMP_DENS
                    ENDIF
+                    
+                   IF ITER_COUNT > KILL_DAMP
+                      KARLS_DYNAMIC = 0
+                      CAN_DAMP      = 0
+                      DIIS_START   += DIIS_ORDER
+                   ENDIF 
+
+                ELSE
 
                    IF ITER_COUNT > KILL_DAMP
                       KARLS_DYNAMIC = 0
-	              CAN_DAMP      = 0
+                      CAN_DAMP      = 0
                       DIIS_START   += DIIS_ORDER
                    ENDIF
-
-              ELSE
-
-                   IF ITER_COUNT > KILL_DAMP
-                      KARLS_DYNAMIC = 0
-	              CAN_DAMP      = 0
-                      DIIS_START   += DIIS_ORDER
-                   ENDIF
-
-              ENDIF 
-           ENDIF
+ 
+                ENDIF 
+            ENDIF
 
 # The following ENDIF is for the ITER_COUNT > 0 loop.
 
        ENDIF
 #
 # Set up the DIIS start when the dynamic damping stops. As soon as
-# the damping stops start the DIIS. There is no turning back to
+# the damping stops start the DIIS. There is no turning back to 
 # damping after DIIS starts.
+# F[D1]*D1, F[D2]D2,...
 #
 #        Compute the DIIS when dynamic damping is finished.
 #        -------------------------------------------------
@@ -3244,49 +3207,44 @@ import "scf_rhf_defs.sialx"
                DIIS_START += 1
             ENDIF
          ENDIF 
-
 #bgn_debug
-#         print "Some varibles during the SCF iterations"
-#         print diis_start
-#         print iter_count
-#         print diis_end
-#         print DIIS_ORDER
+         print "Some varibles during the SCF iterations"
+         print diis_start
+         print iter_count
+         print diis_end
+         print DIIS_ORDER
 #end_debug
 
          IF ITER_COUNT > 1
-            CALL GEN_6HISTORY
-         ENDIF 
-         sip_barrier
 
-         IF ITER_COUNT >= DIIS_START
-         IF ITER_COUNT <= DIIS_END
-
-#bgn_debug 
-#          print "The DIIS order"
-#          print DIIS_ORDER
-#end_debug
-
-            CALL DIISN
-
-#         ENDIF 
-#         ENDIF 
-#
-# After accumulating diss_order histories from diss_start, begin to
-# drop the last one.
-#
-         ICHECK  = START_HISTORY
-         ICHECK += DIIS_ORDER
-
-         IF ITER_COUNT >= ICHECK
-
-            CALL MOVE6
+            CALL GEN_6HISTORY 
 
          ENDIF
+         sip_barrier 
 
-         ENDIF 
-         ENDIF 
+         IF ITER_COUNT >= DIIS_START 
+         IF ITER_COUNT <= DIIS_END
 
+            CALL DIISN 
+#
+# After accumulating diss_order histories from diss_start, begin to
+# drop the last one. 
+# 
+            ICHECK  = START_HISTORY
+            ICHECK += DIIS_ORDER 
+
+            IF ITER_COUNT >= ICHECK 
+
+               CALL MOVE6 
+
+            ENDIF 
+
+         ENDIF
+         ENDIF
          sip_barrier
+#
+#        DONE Compute the DIIS  
+#        --------------------- 
 #
 #        Transpose the new Fock matrix 
 #        -----------------------------
@@ -3307,31 +3265,39 @@ import "scf_rhf_defs.sialx"
          sip_barrier
 
          IF LOCK_OCCS == 1
-           EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
-           EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
+            EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+            EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
          ENDIF
 
          IF LOCK_ORBS == 1
-            IF ITER_COUNT >= DIIS_START
-
+            IF ITER_COUNT >= DIIS_START 
+        
                DO nbfnsA
                    A_OCC_NUMS [nbfnsA] = 0.0
                ENDDO nbfnsA
+
+               DO nbfnsB
+                   B_OCC_NUMS [nbfnsB] = 0.0
+               ENDDO nbfnsB
 #
                CALL MAKE_OCCUPATION
-            ENDIF
-         ENDIF
-
-         DONE = 0.0
+            ENDIF 
+         ENDIF 
 #
+         done = 0.0 
+# 
 #        Compute HF density
 #        -----------------
          CALL HFDENS
          sip_barrier
 
+# Now we have a new density. During the first-iteration, the
+# following density difference is the difference between guess
+# density and the iteration one density.
+#       
 #        Check on convergence --> largest HF density difference. 
 #        ------------------------------------------------------- 
-#
+
          DO mu 
          DO nu 
 #
@@ -3343,7 +3309,7 @@ import "scf_rhf_defs.sialx"
 #
             Txx[mu,nu]  = DHFa[mu,nu] 
             Txx[mu,nu] -= DHFa_Prev[mu,nu] 
-            execute check_dconf Txx[mu,nu] donea  
+            execute check_dconf Txx[mu,nu] donea
             if donea > done 
                done = donea 
             endif 
@@ -3364,43 +3330,38 @@ import "scf_rhf_defs.sialx"
          ENDDO nu 
          ENDDO mu 
 #
-         sip_barrier
-#
+         sip_barrier 
 #bgn_debug
-#        print "The maximum density difference"
-#        print done
+        print "The maximum density difference"
+        print done 
 #end_debug
 
-#JNB:
-#         ncount1 = 0.0
+         ncount1 = 0.0
          DO kptr1
-	 where kptr1 == 1
-#            ncount1 = ncount1 + 1.0
-#            if ncount1 == one
+            ncount1 = ncount1 + 1.0
+            if ncount1 == one
                tpinf[kiter,kptr1] = energy
                pinf[kiter,kptr1]  = tpinf[kiter,kptr1]
-#            endif
+            endif
          ENDDO kptr1
 
-#JNB:
-#            ncount1 = 0.0
+            ncount1 = 0.0
          DO kptr1
-	 where kptr1 == 2
-#            ncount1 = ncount1 + 1.0
-#            if ncount1 == two
+            ncount1 = ncount1 + 1.0
+            if ncount1 == two
                tpinf[kiter,kptr1] = done
                pinf[kiter,kptr1]  = tpinf[kiter,kptr1]
-#            endif
+            endif
          ENDDO kptr1
 #         execute print_rel_info one pinf
 
          CALL STORE_FOCK_DENS_VEC_OLD
-#
+
 #        Check on convergence using density difference. 
 #        ---------------------------------------------- 
-#
+
          IF kiter > 1 
-            IF done < ecrit 
+            IF done < scf_conv 
                DELETE FTpq_a  
                DELETE FTpq_b  
                DELETE CBT_a 
@@ -3408,7 +3369,7 @@ import "scf_rhf_defs.sialx"
                exit 
             ENDIF 
          ENDIF 
-#
+
 #        Delete one-particle arrays to be used in the next iteration. 
 #        ------------------------------------------------------------ 
 #
@@ -3430,46 +3391,54 @@ import "scf_rhf_defs.sialx"
          endif
 
          if prnt_count > 10
-            execute get_my_rank rank
             if rank == 0.0
                DO mu
                DO p
                   txp[mu,p] = ca[mu,p]
                ENDDO p
                ENDDO mu
-#               execute print_rel_info zero ca
+#            execute print_rel_info zero ca
+               DO mu
+               DO q
+                  txq[mu,q] = cb[mu,q]
+               ENDDO q
+               ENDDO mu
+#            execute print_rel_info mone cb
                prnt_count= 0
             endif 
-          endif 
+         endif
+#
+         ENDDO KITER
 
-      ENDDO kiter 
-#
-#     Release unneeded memory blocks.
-#
+#        Release unneeded memory blocks.
+      
       sip_barrier
       DELETE DHFA
       DELETE DHFB
+      DELETE DHFA_Prev
+      DELETE DHFB_Prev
 
-      CREATE FTa 
-      CREATE FTb 
-      sip_barrier 
-      PARDO mu, nu 
-            GET Fpq_a[mu,nu] 
-            DO p 
-               Txp[mu,p] = Fpq_a[mu,nu]*ca[nu,p] 
-               DO p1 
-                  Tpp[p1,p] = Txp[mu,p]*ca[mu,p1] 
-                  PUT FTa[p1,p] += Tpp[p1,p] 
-               ENDDO p1  
-            ENDDO p 
-      ENDPARDO mu, nu  
-#     
-      PARDO mu, nu 
-            GET Fpq_b[mu,nu] 
-            DO q 
-               Txq[mu,q] = Fpq_b[mu,nu]*ca[nu,q] 
-               DO q1 
-                  Tqq[q1,q] = Txq[mu,q]*ca[mu,q1] 
+      CREATE FTa
+      CREATE FTb
+      sip_barrier
+      PARDO mu, nu
+            GET Fpq_a[mu,nu]
+            DO p
+               Txp[mu,p] = Fpq_a[mu,nu]*ca[nu,p]
+               DO p1
+                  Tpp[p1,p] = Txp[mu,p]*ca[mu,p1]
+                  PUT FTa[p1,p] += Tpp[p1,p]
+               ENDDO p1
+            ENDDO p
+      ENDPARDO mu, nu
+ 
+
+      PARDO mu, nu
+            GET Fpq_b[mu,nu]
+            DO q
+               Txq[mu,q] = Fpq_b[mu,nu]*cb[nu,q]
+               DO q1
+                  Tqq[q1,q] = Txq[mu,q]*cb[mu,q1]
                   PUT FTb[q1,q] += Tqq[q1,q] 
                ENDDO q1  
             ENDDO q 
@@ -3479,46 +3448,57 @@ import "scf_rhf_defs.sialx"
 #     Put the final Fock arrays into predefined arrays 
 #     ------------------------------------------------ 
 #
-      DO p
-      DO p1
-         GET FTa[p,p1]
-         Fock_a[p,p1] = FTa[p,p1]
-      ENDDO p1
-      ENDDO p
-
-      sip_barrier
+      DO p 
+      DO p1  
+         GET FTa[p,p1] 
+         Fock_a[p,p1] = FTa[p,p1] 
+      ENDDO p1  
+      ENDDO p 
+#
+      DO q 
+      DO q1  
+         GET FTb[q,q1] 
+         Fock_b[q,q1] = FTb[q,q1] 
+      ENDDO q1  
+      ENDDO q 
+#
+      sip_barrier 
 
 #      execute print_rel_info two pinf
-#      execute print_rel_info three Fock_a
-
-#      if rank == 0.0
-#         DO mu
-#         DO p
-#            txp[mu,p] = ca[mu,p]
-#            execute dump_amp txp[mu,p]
-#         ENDDO p
-#         ENDDO mu
+#      execute print_rel_info three Fock_a  
+#      execute print_rel_info four Fock_b  
+#
+      if rank == 0.0
+         DO mu
+         DO p
+            txp[mu,p] = ca[mu,p]
+         ENDDO p
+         ENDDO mu
 #      execute print_rel_info zero ca
-#      endif
+         DO mu
+         DO q
+            txq[mu,q] = cb[mu,q]
+         ENDDO q
+         ENDDO mu
+#      execute print_rel_info mone cb
+#
+      endif
 
       set_persistent ca "ca"
+      set_persistent cb "cb"
       set_persistent Fock_a "fock_a"
-#
+      set_persistent Fock_b "fock_b"
+
       scf_energy = energy
-      totenerg = scf_energy
+      totenerg   = scf_energy 
       print scf_energy
 
-	call form_Dscf
-	print " "
-	print "SCF dipole moments"
-	print dipole
-
       set_persistent scf_energy "scf_energy"
-      set_persistent dipole "scf_dipole"
-      set_persistent NucDip "nuclear_dipole"
       sip_barrier
-#                         
-                           ENDSIAL SCF_RHF
+#
+#
+#
+                           ENDSIAL SCF_UHF
 #
 ###############################################################################
 #
