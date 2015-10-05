@@ -58,7 +58,7 @@ ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
 	//create static arrays in sial program.  All static arrays are allocated a startup
 	int num_arrays = sip_tables_.num_arrays();
 	for (int i = 0; i < num_arrays; ++i) {
-		if (sip_tables_.is_contiguous(i) && sip_tables_.array_rank(i) > 0) {
+		if (sip_tables_.is_contiguous(i) && sip_tables_.array_rank(i) > 0 && !sip_tables_.is_contiguous_local(i)) {
 			//check whether array has been predefined
 			// FIXME TODO HACK - Check current program number.
 			// The assumption is that only the first program reads predefined arrays from the
