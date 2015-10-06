@@ -12,9 +12,11 @@
 #include "gtest/gtest.h"
 
 
+#ifdef HAVE_MPI
 #include "array_file.h"
 #include "chunk_manager.h"
 #include "chunk.h"
+#endif
 
 
 #ifdef HAVE_TAU
@@ -118,6 +120,7 @@
 //}
 //
 
+#ifdef HAVE_MPI
 /** Just test opening, closing, and reopening the an ArrayFile.  This does write and read the index */
 TEST(Server,array_file_0){
 	std::string filename("array_file_0");
@@ -139,10 +142,11 @@ TEST(Server,array_file_0){
 	sip::ArrayFile file1(num_blocks, chunk_size, filename, MPI_COMM_WORLD, is_new);
 	std::cout << "file1\n" << file1 << std::endl;
 	}
-
 }
+#endif
 
 
+#ifdef HAVE_MPI
 /** Test opening, closing, and reopening the ArrayFile, plus writing and reading the index.*/
 TEST(Server,array_file_1){
 	typedef sip::ArrayFile::offset_val_t index_val_t;
@@ -181,7 +185,9 @@ TEST(Server,array_file_1){
 	}
 
 }
+#endif
 
+#ifdef HAVE_MPI
 /** Test opening, closing, and reopening the ArrayFile, plus writing and reading the index, and some chunks*/
 TEST(Server,array_file_3){
 	std::string filename("array_file_3.test.acf");
@@ -369,11 +375,11 @@ TEST(Server,array_file_3){
 			ASSERT_EQ(val1, datar1[i]);
 		}
 	}
-
 }
+#endif
 
 
-
+#ifdef HAVE_MPI
 /** Same as array_file_3 except that it uses collective IO*/
 TEST(Server,array_file_4){
 	std::string filename("array_file_4.test.acf");
@@ -561,9 +567,10 @@ TEST(Server,array_file_4){
 			ASSERT_EQ(val1, datar1[i]);
 		}
 	}
-
 }
+#endif
 
+#ifdef HAVE_MPI
 /** Tests collective operations, with extra chunk at rank 0 to test noop commands.*/
 TEST(Server,array_file_5){
 	std::string filename("array_file_5.test.acf");
@@ -785,9 +792,10 @@ TEST(Server,array_file_5){
 //		}
 
 	}
-
 }
+#endif
 
+#ifdef HAVE_MPI
 /**
  * Creates chunks using ChunkManager class and writes to file using non-collective ops*/
 TEST(Server,array_file_6){
@@ -907,12 +915,10 @@ TEST(Server,array_file_6){
 	chunk_manager.delete_chunk_data_all();
 
 	}
-
-
-
 } //end of test Server.array_file_6
+#endif
 
-
+#ifdef HAVE_MPI
 /**
  * Creates chunks using ChunkManager class, sets and restores persistent */
 TEST(Server,array_file_7){
@@ -1033,11 +1039,10 @@ TEST(Server,array_file_7){
 	chunk_manager.delete_chunk_data_all();
 
 	}
-
-
-
 } //end of test Server.array_file_7
+#endif
 
+#ifdef HAVE_MPI
 /**
  * Creates chunks using ChunkManager class and writes to file using flush */
 TEST(Server,array_file_8){
@@ -1159,8 +1164,8 @@ TEST(Server,array_file_8){
 //	}
 
 	}
-
 } //end of test Server.array_file_8
+#endif
 
 //	} //end of scope for file writing
 //
@@ -1284,12 +1289,13 @@ TEST(Server,array_file_8){
 
 int main(int argc, char **argv) {
 
+#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
 
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
+//#ifdef HAVE_TAU
+//	TAU_PROFILE_SET_NODE(0);
+//	TAU_STATIC_PHASE_START("SIP Main");
+//#endif
 
 	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
 	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
@@ -1304,16 +1310,19 @@ int main(int argc, char **argv) {
 
 
 	MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+#endif
 
 	printf("Running main() from master_test_main.cpp\n");
 	testing::InitGoogleTest(&argc, argv);
 	int result = RUN_ALL_TESTS();
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
+//#ifdef HAVE_TAU
+//	TAU_STATIC_PHASE_STOP("SIP Main");
+//#endif
 
+#ifdef HAVE_MPI
 	 MPI_Finalize();
+#endif
 
 	return result;
 

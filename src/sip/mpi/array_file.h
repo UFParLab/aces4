@@ -478,6 +478,7 @@ if(comm_rank() == 0){
 
 
 	struct Stats {
+
 		MPICounter chunks_written_;
 		MPICounter chunks_restored_;
 

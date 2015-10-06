@@ -181,7 +181,7 @@ public:
 	void gather_and_print_statistics(std::ostream& os){
 	    tracer_->gather();
 
-	    sial_ops_.wait_time_.reduce();
+	    sial_ops_.reduce();
 
 	    if (SIPMPIAttr::get_instance().is_company_master()){
 	    	os << "Worker Statistics"<<std::endl << std::endl;
@@ -189,7 +189,7 @@ public:
 
 	    	os << std::endl;
 	    	os << "Worker wait_time_" << std::endl;
-	    	sial_ops_.wait_time_.print_op_table_stats(os, sip_tables_);
+	    	sial_ops_.print_op_table_stats(os, sip_tables_);
 
 	    	os << std::endl << std::flush;
 	    }
