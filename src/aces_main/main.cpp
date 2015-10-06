@@ -353,21 +353,20 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_MPI
 	std::string job(parameters.job);
 	job.resize(job.size()-4); //remove the ".dat" from the job string
-	std::ofstream timer_output;
+	std::ofstream server_timer_output;
+	std::ofstream worker_timer_output;
 	if (sip_mpi_attr.is_company_master()) {
-		if (sip_mpi_attr.is_server()) {
-			timer_output.open((std::string("server_data_for_").append(job).append(".csv")).c_str());
-		} else {
-			timer_output.open((std::string("worker_data_for_").append(job).append(".csv")).c_str());
-		}
+			server_timer_output.open((std::string("server_data_for_").append(job).append(".csv")).c_str());
+			worker_timer_output.open((std::string("worker_data_for_").append(job).append(".csv")).c_str());
 	}
 #endif
 
 #ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
 	sip::WorkerPersistentArrayManager persistent_worker;
-	std::ostream& server_stat_os = std::cout;
-	std::ostream& worker_stat_os = std::cout;
+
+	std::ostream& server_stat_os = server_timer_output;
+	std::ostream& worker_stat_os = worker_timer_output;
 #else
 	sip::WorkerPersistentArrayManager persistent_worker;
 	std::ostream& worker_stat_os = std::cout;
@@ -453,8 +452,6 @@ int main(int argc, char* argv[]) {
 		sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 #endif
 	} //end of loop over programs
-
-
 
 #ifdef HAVE_MPI
 	sip::SIPMPIAttr::cleanup(); // Delete singleton instance
