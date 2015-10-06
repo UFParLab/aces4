@@ -14,7 +14,7 @@ PROC TRAN_TRAN2
 #
 #    ------------------------------------------------------------------------
 #
-print "Starting tran 1-2"
+print "Starting tran 1"
 pardo mu, nu, lambda
 #
     allocate Txxxi[mu,nu,lambda,*]
@@ -58,6 +58,8 @@ server_barrier
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 2"
+server_barrier
 pardo mu, nu, i
 #
     allocate L1xxxi[mu,nu,*,i]
@@ -101,6 +103,8 @@ pardo mu, nu, i
     enddo a
 #
     deallocate L1xxxi[mu,nu,*,i]
+endpardo mu, nu, i
+pardo mu, nu, i
     allocate L2xxxi[mu,*,nu,i]
 
     do lambda
@@ -120,6 +124,8 @@ pardo mu, nu, i
     enddo i1
 
     deallocate L2xxxi[mu,*,nu,i]
+endpardo mu, nu, i
+pardo mu, nu, i
     allocate L3xxxi[*,mu,nu,i]
 
     do lambda
@@ -202,6 +208,8 @@ pardo mu, nu, j
     enddo i
 #
     deallocate L1xxxj[mu,nu,*,j]
+endpardo mu, nu, j
+pardo mu, nu, j
     allocate L2xxxj[mu,*,nu,j]
 
     do lambda
@@ -232,6 +240,8 @@ pardo mu, nu, j
     enddo i
 
     deallocate L2xxxj[mu,*,nu,j]
+endpardo mu, nu, j
+pardo mu, nu, j
     allocate L3xxxj[*,mu,nu,j]
 
     do lambda
