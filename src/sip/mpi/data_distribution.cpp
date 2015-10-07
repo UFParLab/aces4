@@ -42,9 +42,9 @@ int DataDistribution::hashed_indices_based_server_rank(
 }
 
 int DataDistribution::get_server_rank(const sip::BlockId& bid) const{
-
-	//int server_global_rank = block_cyclic_distribution_server_rank(bid);
-	int server_global_rank = hashed_indices_based_server_rank(bid);
+// TODO
+	int server_global_rank = block_cyclic_distribution_server_rank(bid);
+	//int server_global_rank = hashed_indices_based_server_rank(bid);
 
     return server_global_rank;
 
