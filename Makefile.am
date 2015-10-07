@@ -497,7 +497,7 @@ SIOX_FILES=\
 ./src/sialx/qm/drop_core_in_sial.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_vars.siox\
-./src/sialx/qm/mcpt2_devs.siox\
+./src/sialx/qm/mcpt2_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
