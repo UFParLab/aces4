@@ -180,17 +180,13 @@ public:
 
 	void gather_and_print_statistics(std::ostream& os){
 	    tracer_->gather();
-
 	    sial_ops_.reduce();
-
 	    if (SIPMPIAttr::get_instance().is_company_master()){
 	    	os << "Worker Statistics"<<std::endl << std::endl;
 	    	os << *tracer_;
-
 	    	os << std::endl;
 	    	os << "Worker wait_time_" << std::endl;
 	    	sial_ops_.print_op_table_stats(os, sip_tables_);
-
 	    	os << std::endl << std::flush;
 	    }
 	}
@@ -389,6 +385,7 @@ private:
 
 
 	bool interpret_where(int num_where_clauses);
+	void skip_where_clauses(int num_where_clauses);
 
 	void loop_start(LoopManager * loop);
 	void loop_end();
@@ -488,6 +485,40 @@ private:
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
 	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
+	friend class Fragment_Nij_aa__PardoLoopManager;
+	friend class Fragment_Nij_a_a_PardoLoopManager;
+	friend class Fragment_i_aa__PardoLoopManager;
+	friend class Fragment_i_vo__PardoLoopManager;
+	friend class Fragment_i_vovo__PardoLoopManager;
+	friend class Fragment_i_aaoo__PardoLoopManager;
+	friend class Fragment_i_aovo__PardoLoopManager;
+	friend class Fragment_i_aaaa__PardoLoopManager;
+	friend class Fragment_i_aoo__PardoLoopManager;
+	friend class Fragment_ij_aaa__PardoLoopManager;
+	friend class Fragment_ij_aa_a_PardoLoopManager;
+	friend class Fragment_ij_ao_ao_PardoLoopManager;
+	friend class Fragment_ij_aa_oo_PardoLoopManager;
+	friend class Fragment_ij_aa_vo_PardoLoopManager;
+	friend class Fragment_ij_aoa_o_PardoLoopManager;
+	friend class Fragment_ij_ao_vo_PardoLoopManager;
+	friend class Fragment_ij_av_oo_PardoLoopManager;
+	friend class Fragment_ij_av_vo_PardoLoopManager;
+	friend class Fragment_ij_ao_oo_PardoLoopManager;
+	friend class Fragment_ij_oo_ao_PardoLoopManager;
+	friend class Fragment_ij_aoo_o_PardoLoopManager;
+	friend class Fragment_ij_vo_vo_PardoLoopManager;
+	friend class Fragment_Nij_vo_vo_PardoLoopManager;
+	friend class Fragment_Rij_vo_vo_PardoLoopManager;
+	friend class Fragment_NRij_vo_vo_PardoLoopManager;
+	friend class Fragment_NRij_vv_oo_PardoLoopManager;
+	friend class Fragment_NRij_vovo__PardoLoopManager;
+	friend class Fragment_NRij_ao_ao_PardoLoopManager;
+	friend class Fragment_NRij_vo_ao_PardoLoopManager;
+	friend class Fragment_NRij_aa_aa_PardoLoopManager;
+	friend class Fragment_NRij_o_ao_PardoLoopManager;
+	friend class Fragment_NR1ij_vo_vo_PardoLoopManager;
+	friend class Fragment_NR1ij_oo_vo_PardoLoopManager;
+	friend class Fragment_NR1ij_vv_vo_PardoLoopManager;
 	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);

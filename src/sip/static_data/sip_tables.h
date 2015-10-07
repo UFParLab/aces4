@@ -69,7 +69,7 @@ public:
 	size_t op_table_size() const {return op_table_.size();}
 
 //scalars and arrays
-	int array_slot(const std::string& name){return array_table_.array_slot(name);}
+	int array_slot(const std::string& name) const {return array_table_.array_slot(name);}
 	std::string array_name(int array_table_slot) const;
 	std::string scalar_name(int array_table_slot) const;
 	int array_rank(int array_table_slot) const;

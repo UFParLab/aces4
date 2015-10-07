@@ -92,6 +92,8 @@ public:
 	//immutable data for convenience
 	const BlockManager& block_manager() const { return block_manager_; }	// For printing
 
+	ContiguousArrayManager& contiguous_array_manager() { return contiguous_array_manager_; }
+
 
 private:
 

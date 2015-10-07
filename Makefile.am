@@ -60,6 +60,7 @@ ACES_DATA_FILES=\
 ./src/sip/static_data/opcode.cpp\
 ./src/sip/static_data/op_table.h\
 ./src/sip/static_data/op_table.cpp\
+./src/sip/static_data/create_map.\
 ./src/sip/dynamic_data/block_id.h\
 ./src/sip/dynamic_data/block_id.cpp\
 ./src/sip/dynamic_data/block_shape.h\
@@ -87,6 +88,10 @@ ACES_DATA_FILES=\
 ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.cpp\
 ./src/sip/worker/loop_manager.h\
+./src/sip/worker/fragment_loop_manager.cpp\
+./src/sip/worker/fragment_loop_manager.h\
+./src/sip/worker/pardo_loop_factory.cpp\
+./src/sip/worker/pardo_loop_factory.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
 ./src/sip/worker/global_state.h\
@@ -300,6 +305,7 @@ test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
+test/mcpt2_water_test.dat\
 test/eom_test.dat\
 test/eom_water_dimer_test.dat\
 test/eom_lccsd_test.dat\
@@ -402,6 +408,7 @@ SIOX_FILES=\
 ./src/sialx/test/no_arg_user_sub.siox\
 ./src/sialx/test/helloworld.siox\
 ./src/sialx/test/pardo_loop.siox\
+./src/sialx/test/pardo_loop_with_pragma.siox\
 ./src/sialx/test/subindex_test.siox\
 ./src/sialx/test/local_arrays.siox\
 ./src/sialx/test/scalarTable.siox\
@@ -487,13 +494,10 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
-./src/sialx/qm/scf_frag_defs_lowmem.siox\
 ./src/sialx/qm/drop_core_in_sial.siox\
-./src/sialx/qm/frag_2order_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
-./src/sialx/qm/mcpt2_singles_lowmem.siox\
-./src/sialx/qm/mcpt2_doubles_lowmem.siox\
-./src/sialx/qm/trans_frag_defs.siox\
+./src/sialx/qm/mcpt2_vars.siox\
+./src/sialx/qm/mcpt2_devs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
@@ -537,6 +541,7 @@ EXTRA_DIST += \
 ./src/sialx/test/no_arg_user_sub.sialx\
 ./src/sialx/test/helloworld.sialx\
 ./src/sialx/test/pardo_loop.sialx\
+./src/sialx/test/pardo_loop_with_pragma.sialx\
 ./src/sialx/test/subindex_test.sialx\
 ./src/sialx/test/local_arrays.sialx\
 ./src/sialx/test/scalarTable.sialx\
@@ -621,11 +626,9 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_frag_lowmem.sialx\
 ./src/sialx/qm/scf_frag_defs_lowmem.sialx\
 ./src/sialx/qm/drop_core_in_sial.sialx\
-./src/sialx/qm/trans_frag_defs.sialx\
-./src/sialx/qm/frag_2order_corr_lowmem.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
-./src/sialx/qm/mcpt2_singles_lowmem.sialx\
-./src/sialx/qm/mcpt2_doubles_lowmem.sialx\
+./src/sialx/qm/mcpt2_vars.sialx\
+./src/sialx/qm/mcpt2_defs.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
 ./src/sialx/qm/cis_rhf.sialx\
 ./src/sialx/qm/cis_rhf_defs.sialx\
