@@ -20,8 +20,7 @@ namespace sip {
 const PardoLoopFactory::Loop_t PardoLoopFactory::default_loop = PardoLoopFactory::BalancedTaskAllocParallelPardoLoop;
 const PardoLoopFactory::Loop_t PardoLoopFactory::test_loop = PardoLoopFactory::TestStaticTaskAllocParallelPardoLoop;
 #else
-const PardoLoopFactory::Loop_t PardoLoopFactory::default_loop = PardoLoopFactory::SequentialPardoLoop;
-const PardoLoopFactory::Loop_t PardoLoopFactory::test_loop = PardoLoopFactory::SequentialPardoLoop;
+//const PardoLoopFactory::Loop_t PardoLoopFactory::default_loop = PardoLoopFactory::SequentialPardoLoop;
 #endif
 
 
@@ -31,6 +30,7 @@ const PardoLoopFactory::Loop_t PardoLoopFactory::test_loop = PardoLoopFactory::S
 std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_variant_map= create_map<std::string, enum PardoLoopFactory::Loop_t>::create_map
 ("default_loop_manager",PardoLoopFactory::default_loop)
 ("SequentialPardoLoop",PardoLoopFactory::SequentialPardoLoop)
+("test_pardo_pragma", PardoLoopFactory::test_loop)
 #ifdef HAVE_MPI
 ("StaticTaskAllocParallelPardoLoop",PardoLoopFactory::StaticTaskAllocParallelPardoLoop)
 ("BalancedTaskAllocParallelPardoLoop",PardoLoopFactory::BalancedTaskAllocParallelPardoLoop)
@@ -66,9 +66,8 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 ("Frag{Rij}{vo}{vo}",PardoLoopFactory::Fragment_Rij_vo_vo_PardoLoopManager)
 ("Frag{NR1ij}{vo}{vo}",PardoLoopFactory::Fragment_NR1ij_vo_vo_PardoLoopManager)
 ("Frag{NR1ij}{oo}{vo}",PardoLoopFactory::Fragment_NR1ij_oo_vo_PardoLoopManager)
-("Frag{NR1ij}{vv}{vo}",PardoLoopFactory::Fragment_NR1ij_vv_vo_PardoLoopManager)
+("Frag{NR1ij}{vv}{vo}",PardoLoopFactory::Fragment_NR1ij_vv_vo_PardoLoopManager);
 #endif
-("test_pardo_pragma",PardoLoopFactory::test_loop);
 
 
 
@@ -77,9 +76,22 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
 			int num_where_clauses, Interpreter* interpreter, long& iteration){
 		int which_pardo = -1;
-		try{
-			which_pardo = pardo_variant_map.at(pragma);
-		} catch (const std::out_of_range& oor){
+//		try{
+//			which_pardo = pardo_variant_map.at(pragma);
+//		} catch (const std::out_of_range& oor){
+//#ifdef HAVE_MPI
+//			std::stringstream ss;
+//			ss << " Failed to create specified pardo manager." ;
+//			ss << " This is probably due to an incorrect pardo loop pragma.";
+//			ss << " THIS PARDO LOOP IS BEING EXECUTED USING THE DEFAULT LOOP";
+//			sial_warn(false, ss.str(), interpreter->line_number());
+//#endif //HAVE_MPI
+////if single node, and asking for non-existent loop manager, just give default without complaining
+//			which_pardo = default_loop;
+//		}
+
+		std::map<std::string, enum Loop_t>::iterator it = pardo_variant_map.find(pragma);
+		if (it == pardo_variant_map.end()){
 #ifdef HAVE_MPI
 			std::stringstream ss;
 			ss << " Failed to create specified pardo manager." ;
@@ -90,7 +102,12 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 //if single node, and asking for non-existent loop manager, just give default without complaining
 			which_pardo = default_loop;
 		}
-//		std::cout << which_pardo << std::endl;
+
+		else{
+			which_pardo = it->second;
+		}
+
+
 		switch(which_pardo){
 		case SequentialPardoLoop:
 			return new sip::SequentialPardoLoop(num_indices, index_ids, data_manager, sip_tables);
@@ -220,3 +237,5 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 	}
 
 } /* namespace sip */
+
+
