@@ -517,6 +517,7 @@ import "scf_rhf_defs.sialx"
       INT Start_History
       INT IZERO
       INT master 
+      INT ECPS
 
       temp DAOINT[mu,nu]
       static dipole[ixyz]
@@ -879,8 +880,14 @@ import "scf_rhf_defs.sialx"
        DO mu    
        DO nu   
 #
-            Txx[mu,nu] = 0.0 
+            Txx[mu,nu]  = 0.0 
+            T1xx[mu,nu] = 0.0 
+
+            If Ecps == 1
+               execute return_1el_ecpints T1xx[mu,nu]
+            Endif 
             execute return_h1 txx[mu,nu]
+            Txx[mu,nu] += T1xx[mu,nu] 
 #
              PUT Fpq_a[mu,nu] += Txx[mu,nu] 
              PUT Fpq_b[mu,nu] += Txx[mu,nu] 
@@ -940,19 +947,26 @@ import "scf_rhf_defs.sialx"
              GET DHFa[mu,nu]  
              GET DHFb[mu,nu] 
 #
-             Txx[mu,nu]   = 0.0 
+	     Txx[mu,nu]   = 0.0 
+             T1xx[mu,nu]  = 0.0 
+
              execute return_h1 txx[mu,nu]
+             If Ecps == 1
+                execute return_1el_ecpints T1xx[mu,nu]
+             Endif 
 #
-             T1xx[mu,nu]  = Txx[mu,nu] 
-             T1xx[mu,nu] += Fpq_a[mu,nu] 
+             T1xx[mu,nu]  += Txx[mu,nu] 
+             T2xx[mu,nu]   = T1xx[mu,nu]
+
+             T2xx[mu,nu] += Fpq_a[mu,nu] 
 #
-             etemp        = T1xx[mu,nu]*DHFa[mu,nu]  
+             etemp        = T2xx[mu,nu]*DHFa[mu,nu]  
              esum        += etemp 
 #
-             T1xx[mu,nu]  = Txx[mu,nu] 
-             T1xx[mu,nu] += Fpq_b[mu,nu] 
+             T2xx[mu,nu]  = T1xx[mu,nu] 
+             T2xx[mu,nu] += Fpq_b[mu,nu] 
 #
-             etemp        = T1xx[mu,nu]*DHFb[mu,nu]  
+             etemp        = T2xx[mu,nu]*DHFb[mu,nu]  
              esum        += etemp 
 #
           ENDDO nu 
@@ -1300,8 +1314,16 @@ import "scf_rhf_defs.sialx"
 # Generate the core-Hamiltonian guess
 
          PARDO mu, nu
-            Txx[mu,nu] = 0.0
+            Txx[mu,nu]  = 0.0
+            T1xx[mu,nu] = 0.0
+
+            If Ecps == 1
+               execute return_1el_ecpints T1xx[mu,nu]
+            Endif 
             execute return_h1 Txx[mu,nu]
+             
+            Txx[mu,nu] += T1xx[mu,nu]
+
             PUT Fpq_a[mu,nu] = Txx[mu,nu]
             PUT Fpq_b[mu,nu] = Txx[mu,nu]
          ENDPARDO mu, nu
@@ -1936,9 +1958,14 @@ import "scf_rhf_defs.sialx"
              GET Fpq_b[mu,nu]
 
              Txx[mu,nu]   = 0.0
+             T1xx[mu,nu]  = 0.0
+
              execute return_h1 txx[mu,nu]
+             If Ecps == 1
+                execute return_1el_ecpints T1xx[mu,nu]
+             Endif
 #
-             T1xx[mu,nu]  = Txx[mu,nu]
+             T1xx[mu,nu]  += Txx[mu,nu]
 #
              Txx[mu,nu]  =FpqA_Prev[mu,nu]
              Txx[mu,nu] -=T1xx[mu,nu]
@@ -2052,9 +2079,14 @@ import "scf_rhf_defs.sialx"
            GET Pnew_b[mu,nu]
 #
            Txx[mu,nu]   = 0.0
-           execute return_h1 txx[mu,nu]
+           T1xx[mu,nu]  = 0.0
 
-           T1xx[mu,nu]  = Txx[mu,nu]
+           execute return_h1 txx[mu,nu]
+           If Ecps == 1
+                execute return_1el_ecpints T1xx[mu,nu]
+           Endif
+
+           T1xx[mu,nu]  += Txx[mu,nu]
 
            etemp        = T1xx[mu,nu]*DHFa_Prev[mu,nu]
            e1m_tmp      += etemp
@@ -2100,18 +2132,27 @@ import "scf_rhf_defs.sialx"
           GET Fpq_b[mu,nu]
           GET DHFa[mu,nu]
           GET DHFb[mu,nu]
+
+          Txx[mu,nu]  = 0.0
+          T1xx[mu,nu] = 0.0
+
           execute return_h1 txx[mu,nu]
+          If Ecps == 1
+             execute return_1el_ecpints T1xx[mu,nu]
+          Endif
 
-          T1xx[mu,nu]  =Txx[mu,nu]
-          T1xx[mu,nu] +=Fpq_a[mu,nu]
+          T1xx[mu,nu] +=Txx[mu,nu]
+          T2xx[nu,nu]  =T1xx[mu,nu]
+ 
+          T2xx[mu,nu] +=Fpq_a[mu,nu]
 
-          etemp     =T1xx[mu,nu]*DHFa[mu,nu]
+          etemp     =T2xx[mu,nu]*DHFa[mu,nu]
           scf_ener +=etemp
 
-          T1xx[mu,nu]  =Txx[mu,nu]
+          T2xx[mu,nu]  =T1xx[mu,nu]
           T1xx[mu,nu] +=Fpq_b[mu,nu]
 
-          etemp     =T1xx[mu,nu]*DHFb[mu,nu]
+          etemp     =T2xx[mu,nu]*DHFb[mu,nu]
           scf_ener +=etemp
 #eVR
 #bgn_debug
@@ -2719,11 +2760,12 @@ import "scf_rhf_defs.sialx"
       kill_damp   = damp_end
       lock_orbs   = lock_orbitals
       lock_occs   = lock_orbocc 
+      Ecps        = Iecp_on
 
 #bgn_debug
       print "input parameters: diis_start,diis_order,init_guess,Shifta,Shifta"
       print "Shiftb, damping, damp_thres, kill_damp, lock_orbs, lock_occs"
-      print "damp"
+      print "damp, ecps"
       print diis_start
       print diis_order
       print init_guess
@@ -2735,6 +2777,7 @@ import "scf_rhf_defs.sialx"
       print lock_orbs
       print lock_occs
       print damp
+      print Ecps
 #end_debg
 
 # Set the damp type and GUESS based on user input.

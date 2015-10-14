@@ -62,9 +62,9 @@ C
       Dimension expnt_norms(nval_prims)
       Dimension imarked(ncenters)
       Dimension kfirst_tmp(kfls_ecp_length)
-      Dimension kfirst(necp_atoms,max_necp_functns)
+      Dimension kfirst(max_necp_functns,necp_atoms)
       Dimension klast_tmp(kfls_ecp_length)
-      Dimension klast(necp_atoms,max_necp_functns)
+      Dimension klast(max_necp_functns,necp_atoms)
       Dimension llmax(ncenters)
 
       integer ipseud

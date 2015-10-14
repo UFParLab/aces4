@@ -34,8 +34,8 @@ C
 C
       integer ipseud,nelecp(ntotatoms),ipseux(ntotatoms)
       integer llmax(ntotatoms),nlp(max_ecp_prims)
-      integer kfirst(necp_atoms,max_necp_functns)
-      integer klast(necp_atoms,max_necp_functns)
+      integer kfirst(max_necp_functns,necp_atoms)
+      integer klast(max_necp_functns,necp_atoms)
       double precision clp(max_ecp_prims),zlp(max_ecp_prims)
 C
       integer numcon(nshells),numpri(nshells)

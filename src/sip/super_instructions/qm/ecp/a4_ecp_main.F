@@ -50,9 +50,9 @@ C
       Dimension expnt_norms(nval_prims)
       Dimension imarked(ncenters)
       Dimension kfirst_tmp(kfls_ecp_length)
-      Dimension kfirst(necp_atoms,max_necp_functns)
+      Dimension kfirst(max_necp_functns,necp_atoms)
       Dimension klast_tmp(kfls_ecp_length)
-      Dimension klast(necp_atoms,max_necp_functns)
+      Dimension klast(max_necp_functns,necp_atoms)
       Dimension llmax(ncenters)
 
       integer ipseud
@@ -74,6 +74,11 @@ C
       Dimension tmp2(max_cofns_shell*max_cofns_shell)
       Dimension tmp3(max_cofns_shell*max_cofns_shell)
 
+      integer scr1(ncenters)
+      integer scr2(ncenters,max_nshells,max_nsubshells)
+      integer scr3(ncenters,max_nshells,max_nsubshells)
+      integer scr4(ncenters,max_nshells,max_nsubshells)
+
       Dimension charges(ncenters) 
       Dimension coords(3,ncenters)
       Dimension tcoords(3,nshells)
@@ -91,7 +96,6 @@ C
       Logical spherical
 C 
       Call A4_ecp_init()
-
       Call A4_ecp_basis_init(nshells,ncenters,max_nshells,
      &                       max_nsubshells,
      &                       max_nprims,nval_bfns,max_ncontfns,
@@ -146,6 +150,7 @@ C  Since  ACES IV do not use symmetry Igenby is a trivial array.
      &                       contr,
      & 
      &                       coords, .FALSE., spherical)
+
 #ifdef _DEBUG_LVL0
       write(6,*)
       write(6,"(a)") " Returned from A4_ecp_int_driver"   

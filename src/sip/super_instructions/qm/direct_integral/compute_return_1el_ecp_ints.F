@@ -91,7 +91,7 @@ c---------------------------------------------------------------------------
       integer da1, da2, db1, db2
       integer adim, bdim 
       double precision zsum(da1:da2, db1:db2)
-      double precision z(*)  
+      double precision z(da1:da2, db1:db2)  
       double precision zz(*)  
 
       integer ix, m, n, nfirst, nints, ncoeff, iatom, ncsum
@@ -118,7 +118,7 @@ c---------------------------------------------------------------------------
       double precision alpha_pack(max_dim_coeff), 
      *                 pcoeff_pack(max_dim_coeff)
       double precision xn(ncenters), yn(ncenters), zn(ncenters)
-      double precision x1,y1,z1,x2,y2,z2,y,sum
+      double precision x1,y1,z1,x2,y2,z2,y,sum,w
 
       integer (C_INT) one  
 C
@@ -187,8 +187,8 @@ C their generation.
       integer ipseud
       integer nelecp(ncenters)
       integer ipseux(ncenters)
-      integer kfirst(necp_atoms,max_necp_functns)
-      integer klast(necp_atoms,max_necp_functns) 
+      integer kfirst(max_necp_functns*necp_atoms)
+      integer klast(necp_atoms*max_necp_functns) 
       integer kfirst_tmp(kfls_ecp_length)
       integer klast_tmp(kfls_ecp_length) 
       integer nlp(max_ecp_prims)
@@ -446,7 +446,6 @@ C
       Write(6,"(a)") " Printing from comp_return_1el_ecpints ENDS"
       Write(6,"(a)") "----------------------------------------"
 #endif 
-     
       Call a4_ecp_main(nshells,ncenters,max_nshells,
      &                 max_nsubshells,
      &                 max_nprims,nval_bfns,max_ncontfns,
@@ -485,16 +484,42 @@ C
      &                       
      &                 spherical,ecp)
 
+C#ifdef _DEBUG_LVL0
+      w=0.0d0
+      Write(6,*)
+      Write(6,"(a)") "@-comp_return_1el_ecp_ints, The ECP integrals"
+      Write(6,"(a,1x,i3)") "The dimension of ints: ", nval_bfns
+      do i =1, nval_bfns*(nval_bfns+1)/2
+      W = w+ecpint(i)*ecpint(i)
+      enddo
+      Write(6, "(a,(1x,F20.13))") "The ecpint. check sum = ", w
+      Write(6,*)
+C#endif
+
+      i = 0
+      do b = db1,db2
+      do a = 1, b
+         i = i + 1
+         z(a,b) = ecpint(i) 
+         z(b,a) = ecpint(i) 
+      enddo
+      enddo
+
 #ifdef _DEBUG_LVL0
-      Write(6,"(a)") " Printing from a4_ecp_main ENDS"
-      Write(6,"(a)") "----------------------------------------"
+      write(6,*)
+      Write(6,"(a)") " Printing from comp_return_1el_ecp_ints ENDS"
+      Write(6,"(a)") "--------------------------------------------"
 #endif 
+
+#ifdef _NOSKIP
       do b = db1,db2
       do a = da1,da2
          i = i + 1
          zsum(a,b) = 0.d0
       enddo
       enddo
+      Write(6,"(a)") " Printing from the begining of T+V"
+      Write(6,"(a)") "----------------------------------------"
 
       ind(1) = 1
       ind(2) = 2
@@ -542,7 +567,7 @@ c-------------------------------------------------------------------------
      *                       ccbeg_pack, ccend_pack,
      *                       max_dim_coeff)
 
-C#ifdef _DEBUG_LV0
+#ifdef _DEBUG_LV0
       Write(6,*) "@-entry to ERD_batch"
       Write(6,"((a,2(1x,i4)))") "m, n:", m, n
       Write(6,"(a,2(1x,I4))") "The Nalpha_pack and Ncoeff_pack:",
@@ -567,7 +592,7 @@ C#ifdef _DEBUG_LV0
       Write(6,*)
       Write(6,"(3(1x,F10.5))") x1, y1, z1
       Write(6,"(3(1x,F10.5))") x2, y2, z2
-C#endif
+#endif
 c ------------------------------------------------------------------------ 
 c  KIN (type=2) integrals next.   
 c ------------------------------------------------------------------------ 
@@ -580,7 +605,7 @@ c ------------------------------------------------------------------------
      *                 pcoeff_pack, ccbeg_pack, ccend_pack,
      *                 spherical, .true., iscr, nints, nfirst,
      *                 zz)
-c           write(6,*) ' NINTS = ', nints 
+C           write(6,*) ' NINTS = ', nints 
             if (nints .gt. 0) then
                a2 = end_nfps(m)
                if (m .eq. 1) then
@@ -604,7 +629,6 @@ c           write(6,*) ' NINTS = ', nints
 c ------------------------------------------------------------------------ 
 c NAI (type=1) integrals first.   
 c ------------------------------------------------------------------------ 
-
               call oed__gener_nai_batch(imax, zmax, 
      *                 nalpha_pack, ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
@@ -633,10 +657,10 @@ c ------------------------------------------------------------------------
      *                 zz(nfirst),a1,a2,b1,b2,1.0d0)
 
                endif ! nints
-
         enddo   ! n shells
         enddo   ! m shells 
-
+      Write(6,"(a)") " Printing from T+V ENDS"
+      Write(6,"(a)") "----------------------------------------"
 C#ifdef _DEBUG_LVL0
 C      write(6,"(a)") 'One Hamiltonian (T+V) integrals ' 
 C      write(6,"(4(1x,F20.9))") ((zsum(a,b),a=da1,da2),b=db1,db2)
@@ -644,13 +668,13 @@ C      write(6,"(4(1x,F20.9))") ((zsum(a,b),a=da1,da2),b=db1,db2)
       do a=da1,da2
       do b=db1,db2
          i = i + 1
-         z(i) = zsum(a,b)
          sum = sum + zsum(b,a)
       enddo
       enddo
       write(6,"(a,F20.10)")" The one Hamiltonian integral checkum =",sum
       write(6,*)
 C#endif 
+#endif 
 
       return
       end

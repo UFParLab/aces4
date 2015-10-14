@@ -695,7 +695,9 @@ C
       kfls_ecp_length  = 0
       icount_1         = 0
       icount_2         = 0
-
+      max_prims_shell  = 0
+      max_conts_shell  = 0
+  
       do i = 1, ncenters 
         
          kfls_ecp_length = kfls_ecp_length + fptr_llmax(i) + 1
@@ -751,7 +753,7 @@ C Scratch arrays
       max_ncontfns = npcoeffs
       length_0     = max_nprims  * max_conts_shell
       length_1     = ncenters * max_nshells * max_nsubshells
-      length_2     = ncenters * max_ecp_angmom 
+      length_2     = ncenters * max_necp_functns
       length_3     = max_unfns_shell * max_unfns_shell
       length_4     = max_cofns_shell * max_cofns_shell
       length_5     = (nval_bfns       * (nval_bfns + 1))/2
@@ -853,8 +855,8 @@ c
       if (index_values(1) .gt. 1) offset_1 = paosegs(index_values(1)-1) 
       if (index_values(2) .gt. 1) offset_2 = paosegs(index_values(2)-1) 
 
-      zsum_length1 = (extents(1)+offset_1) - (1+offset_1)
-      zsum_length2 = (extents(2)+offset_2) - (1+offset_2)
+      zsum_length1 = (extents(1)+offset_1) 
+      zsum_length2 = (extents(2)+offset_2) 
       zsum_length  = zsum_length1 * zsum_length2
 
       call scratch_array(zsum_length, cptr_zsum)
@@ -925,14 +927,18 @@ c
      *                                   fptr_atoms,fptr_charge,
      * 
      *                                   scr,iscr,fptr_zsum)
-c
+
 c  Remove scratch space  
 
       write(6,"(a)")" Cleanning up scratch space"
       write(6,"(a)")" --------------------------"
       call delete_scratch_array(cscr)
-      call delete_integer_scratch_array(ciscr)
       call delete_scratch_array(cptr_zsum)
+      call delete_integer_scratch_array(ciscr)
+      call delete_integer_scratch_array(cptr_kfirst)
+      call delete_integer_scratch_array(cptr_klast)
+      call delete_integer_scratch_array(cptr_igenby)
+  
 
       call delete_integer_scratch_array(cptr_work1)
       call delete_integer_scratch_array(cptr_work2)
@@ -943,13 +949,13 @@ c  Remove scratch space
       call delete_integer_scratch_array(cptr_work7)
       call delete_integer_scratch_array(cptr_work8)
       call delete_integer_scratch_array(cptr_work9)
-      call delete_integer_scratch_array(cptr_work10)
-      call delete_integer_scratch_array(cptr_work11)
       call delete_integer_scratch_array(cptr_work12)
       call delete_integer_scratch_array(cptr_work13)
       call delete_integer_scratch_array(cptr_work14)
       call delete_integer_scratch_array(cptr_work15)
 
+      call delete_scratch_array(cptr_work10)
+      call delete_scratch_array(cptr_work11)
       call delete_scratch_array(cptr_work16)
       call delete_scratch_array(cptr_work17)
       call delete_scratch_array(cptr_work18)

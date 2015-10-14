@@ -46,8 +46,8 @@ C
 
       integer ipseud,nelecp(ntotatoms),ipseux(ntotatoms)
       integer llmax(ntotatoms),nlp(max_ecp_prims)
-      integer kfirst(necp_atoms,max_necp_functns)
-      integer klast(necp_atoms,max_necp_functns)
+      integer kfirst(max_necp_functns,necp_atoms)
+      integer klast(max_necp_functns,necp_atoms)
       double precision clp(max_ecp_prims),zlp(max_ecp_prims) 
 
       integer numcon(nshells),numpri(nshells)
@@ -328,7 +328,7 @@ CSSS      Enddo
 C     
       Ndim = Iloc
       If (Spherical) Ndim = Isoc 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       w=0.0d0
       Write(6,"(a)") "@-Ecpint_Driver, The ECP integrals"
       Write(6,"(a,1x,i3)") "The dimension of ints: ", Ndim
@@ -337,7 +337,7 @@ CSSS      Write(6, "(6(1x,F10.7))") (Ecpint(I), I=1, Ndim*(Ndim+1)/2)
       W = w+ecpint(i)*ecpint(i)
       enddo
       Write(6, "(a,(1x,F20.13))") "The ecpint. check sum = ", w
-C#endif
+#endif
 C
       return
       end

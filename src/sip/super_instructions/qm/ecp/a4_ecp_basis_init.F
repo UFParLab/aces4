@@ -37,9 +37,9 @@
       Dimension palphas(nval_prims),ppcoeffs(nval_ccoeffs)
       Dimension imarked(ncenters)
       Dimension kfirst_tmp(kfls_ecp_length)
-      Dimension kfirst(necp_atoms,max_necp_functns)
+      Dimension kfirst(max_necp_functns,necp_atoms)
       Dimension klast_tmp(kfls_ecp_length)
-      Dimension klast(necp_atoms,max_necp_functns)
+      Dimension klast(max_necp_functns,necp_atoms)
       Dimension llmax(ncenters)
 
       Dimension ipeoff(ncenters,max_nshells,max_nsubshells)
@@ -65,7 +65,6 @@ C The NMax refers
       write(6,"(a)") " Printing from A4_Ecp_basis_init BEGIN"
       write(6,"(a)") "--------------------------------------"
 #endif 
-
       icount=0
       do iat=1, ncenters
          if (llmax(iat) .ne. 0) then
@@ -79,6 +78,8 @@ C The NMax refers
 
 #ifdef _DEBUG_LVL0
       write(6,*)
+      Write(6,*) "necp_atoms,max_necp_functns", necp_atoms,
+     *            max_necp_functns
       write(6,"(a)") " The kifist and klast arrays"
       write(6,"(6I14)") ((kfirst(iat,ilq),iat=1,necp_atoms),
      *                                    ilq=1,max_necp_functns)
@@ -257,7 +258,6 @@ c loop over contracted basisfunctions
           Enddo
         Enddo
       Enddo
-
 
       If (nshells .NE. Nshll) Then
          Write(6,"(a,a,a)") "The basis functions with the same angular"
