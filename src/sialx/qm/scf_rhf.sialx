@@ -541,7 +541,7 @@ import "scf_rhf_defs.sialx"
       PARDO mu, p
             GET CA_TEMP_0[mu,p]
             TXP[mu,p] = CA_TEMP_0[mu,p]
-            EXECUTE A4_DSCALE TXP[mu,p] A_OCC_NUMS ZERO
+            execute a4_dscale txp[mu,p] a_occ_nums zero
             PUT CA_TEMP[mu,p] = TXP[mu,p]
       ENDPARDO mu, p
       sip_barrier 

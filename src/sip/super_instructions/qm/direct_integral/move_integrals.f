@@ -102,7 +102,7 @@ c---------------------------------------------------------------------------
 
       double precision v(va1:va2,vb1:vb2)
       double precision intblk(a1:a2,b1:b2)
-      double precision sum
+      double precision sum, s
 
       brange1 = max(vb1, b1)
       brange2 = min(vb2, b2)
@@ -115,6 +115,13 @@ c---------------------------------------------------------------------------
          enddo
          enddo
 
+CSSS         s=0.0d0
+CSSS         do a=va1,va2
+CSSS         do b=vb1,vb2
+CSSS            s = s+ v(a,b) * v(a,b)
+CSSS         enddo
+CSSS         enddo
+CSSS         Write(6, "(a,F10.5)") "S = ", S
       return
       end
 

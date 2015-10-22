@@ -1,0 +1,55 @@
+sial TEST
+predefined int norb
+predefined int baocc
+predefined int eavirt
+predefined int Natoms 
+moaindex aces_defs_pa = baocc: eavirt
+static oed_ovl[aces_defs_pa,aces_defs_pa]
+special return_1el_grdints wrwr
+special return_2el_grdints w
+special compute_int_scratchmem uuu
+#
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
+
+      index  iatom   = 1: Natoms
+
+      Temp Txx[mu,nu]
+      Temp Txxxx[mu,nu,lambda,sigma]
+      distributed D[mu,nu]
+      static gradients[iatom]
+
+      scalar zmax  
+      scalar imax
+      scalar rank
+#
+      scalar two
+     
+      two = 2.0
+
+      execute compute_int_scratchmem oed_ovl zmax imax
+      Create D
+      sip_barrier 
+
+      pardo mu, nu
+            Txx[mu,nu] = 0.0
+            put D[mu,nu] = Txx[mu,nu]
+      endpardo mu, nu
+      sip_barrier 
+
+      if rank == 0.0
+      print "Entering return_1el_grdints" 
+      Pardo mu, nu
+            get D[mu,nu]
+            execute return_1el_grdints Txx[mu,nu] D[mu,nu] gradients two
+      endpardo mu, nu
+      endif 
+
+      print "Entering return_2el_grdints" 
+      Pardo mu, nu, lambda, sigma
+            execute return_2el_grdints Txxxx[mu,nu,lambda,sigma]
+      endpardo mu, nu, lambda, sigma 
+
+endsial TEST

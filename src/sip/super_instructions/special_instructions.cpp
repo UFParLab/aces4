@@ -326,8 +326,19 @@ void a4_dscale(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
 	int& ierr);
 
+void return_1el_grdints(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+	int& ierr);
+
+void return_2el_grdints(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
 void print_block_and_index(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
 
 //##############################
 }
@@ -577,6 +588,8 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
     procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
+    procmap_["return_1el_grdints"]=(fp0)&return_1el_grdints;
+    procmap_["return_2el_grdints"]=(fp0)&return_2el_grdints;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE

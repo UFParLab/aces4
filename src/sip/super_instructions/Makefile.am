@@ -87,6 +87,10 @@ QM_SOURCE_FILES=\
 ./qm/direct_integral/compute_return_1el_ecp_ints.F\
 ./qm/direct_integral/return_1el_ecp_grdints.F\
 ./qm/direct_integral/compute_return_1el_ecp_grdints.F\
+./qm/direct_integral/return_1el_grdints.F\
+./qm/direct_integral/compute_return_1el_grdints.F\
+./qm/direct_integral/return_2el_grdints.F\
+./qm/direct_integral/compute_return_2el_grdints.F\
 ./qm/direct_integral/erd_scratch_mem_calc.F\
 ./qm/direct_integral/compute_dipole_integrals.F\
 ./qm/direct_integral/compute_int_scratchmem.F\

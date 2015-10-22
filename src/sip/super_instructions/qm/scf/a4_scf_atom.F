@@ -297,7 +297,7 @@ c ----------------------------------------------------------------------
       call c_f_pointer(ntot_pcoeff, pntot_pcoeff,[1])
       call c_f_pointer(ixpcoeffs, pixpcoeffs, pntot_pcoeff)
 C      write(6,*) ' IXPCOEFFS', pntot_pcoeff(1), (pixpcoeffs(i), i=1,
-cf/a4_scf_atom.F     *                                         pntot_pcoeff(1))
+C     *                                         pntot_pcoeff(1))
 c ----------------------------------------------------------------------
 c  ATOMIC COORDINATES
 

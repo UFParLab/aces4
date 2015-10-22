@@ -566,6 +566,7 @@ set(SIAL_FILES
     src/sialx/test/cast_indices_to_simple.sialx;
     src/sialx/test/aoladder.sialx;
     src/sialx/test/test_ecpint.sialx;
+    src/sialx/test/test_derint.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
