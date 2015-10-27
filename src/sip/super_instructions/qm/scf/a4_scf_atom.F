@@ -813,8 +813,6 @@ C
       double precision TBM(maxhist+1,maxhist+1)
       double precision CM(maxhist+1)
 C   
-      open(66,file='summary.out') 
-C
       target_atom = INT(dtarget_atom)
 
 #ifdef _DEBUG_LVL0
@@ -3359,8 +3357,6 @@ c---------------------------------------------------------------------------
       double precision db(ng1:ng2,nh1:nh2)
 
       logical aExist,bExist
-
-      open(66,file='summary.out')
 
 c-----------------------------------------------------------------------
 c   Check if a guess file exists. If yes READ the orbitals, 
