@@ -26,8 +26,10 @@ special compute_int_scratchmem uuu
       scalar rank
 #
       scalar two
+      scalar one
      
       two = 2.0
+      one = 1.0
 
       execute compute_int_scratchmem oed_ovl zmax imax
       Create D
@@ -43,7 +45,7 @@ special compute_int_scratchmem uuu
       print "Entering return_1el_grdints" 
       Pardo mu, nu
             get D[mu,nu]
-            execute return_1el_grdints Txx[mu,nu] D[mu,nu] gradients two
+            execute return_1el_grdints Txx[mu,nu] D[mu,nu] gradients one
       endpardo mu, nu
       endif 
 

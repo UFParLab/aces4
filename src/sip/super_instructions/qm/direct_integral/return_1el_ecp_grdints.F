@@ -29,8 +29,8 @@ c Interface added but should be included instead
 
 c--------------------------------------------------------------------------
 !>
-!>   return_1el_ecpints must be executed with the following syntax:
-!>   execute return_h1 h1(mu,nu)
+!>   return_1el_ecp_gradints must be executed with the following syntax:
+!>   execute return_1el_ecp_grdints h1(mu,nu)
 !>
 !>   The array h1 is blocked and as of now a temporary array.
 !>

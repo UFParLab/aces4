@@ -600,7 +600,9 @@ set(SIAL_FILES
     src/sialx/qm/scf_uhf.sialx;
     src/sialx/qm/scf_uhf_defs.sialx;
     src/sialx/qm/scf_rhf.sialx; 
-    src/sialx/qm/scf_rhf_defs.sialx)
+    src/sialx/qm/scf_rhf_defs.sialx;
+    src/sialx/qm/scf_grad_ru_hf.sialx;
+    src/sialx/qm/scf_grad_ru_hf_defs.sialx)
     
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)

@@ -14,7 +14,10 @@ C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
 C
       subroutine compute_return_1el_grdints(
-     &                              der_ints, density, type,
+     &
+     &                              der_ints, density, gradient, 
+     &                              type,
+     & 
      &                              da1, da2, db1, db2,
      &                              dc1, dc2, dd1, dd2,
      & 
@@ -42,6 +45,7 @@ c---------------------------------------------------------------------------
       integer da1, da2, db1, db2, dc1, dc2, dd1, dd2
       double precision der_ints(da1:da2, db1:db2)
       double precision density(dc1:dc2, dd1:dd2)
+      double precision gradient(3*ncenters)
       double precision scr(*) 
       integer iscr(*)
       Integer (C_INT) one
@@ -56,6 +60,7 @@ c---------------------------------------------------------------------------
       integer dercx, dercy, dercz
       integer ixderc
       integer ind(2)
+      integer flopcount 
       logical spherical
    
       integer max_dim_coeff
@@ -65,6 +70,7 @@ c---------------------------------------------------------------------------
      *                 pcoeff_pack(max_dim_coeff)
       double precision xn(ncenters), yn(ncenters), 
      *                 zn(ncenters)
+      double precision grad
       double precision x1,y1,z1,x2,y2,z2, y, sumx, sumy, sumz
       integer nalpha_pack, ncoeff_pack
 c
@@ -278,7 +284,7 @@ C----------------------------------------------------------------------
       spherical = .true.
       if (intSpherical .ne. 1) spherical = .false.
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       Write(6,"(a,8i4)") " da1,da2,db1,db2,dc1,dc2,dd1,dd2",
      &                    da1,da2,db1,db2,dc1,dc2,dd1,dd2
       Write(6,"(a,i4)") " The number of shells: ", nshells
@@ -320,7 +326,7 @@ C#ifdef _DEBUG_LVL0
       Write(6,"(10i4)") (pccend(i), i=1,picc(1)) 
       Write(6,"(a)") " map of atoms to shell"
       Write(6,"(10i4)") (atom(i), i=1,nalpha(1))
-C#endif
+#endif
 C#ifdef _DEBUG_LVL0
       sumx=0.0d0
       sumy=0.0d0
@@ -330,6 +336,9 @@ c-------------------------------------------------------------------------
 c Find the shells we need to loop over for this block of density data.
 c--------------------------------------------------------------------------
 
+      Ind(1) = 1
+      Ind(2) = 2
+C
       call lookup_shell(end_nfps, nshells, da1, m1)
       call lookup_shell(end_nfps, nshells, da2, m2)
       call lookup_shell(end_nfps, nshells, db1, n1)
@@ -427,10 +436,10 @@ c-------------------------------------------------------------------------
                endif 
 
                call oed__gener_nai_derv_batch(imax,zmax,
-     *                 nalpha_pack,ncoeff_pack,
+     *                 nalpha_Pack,ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
-     *                 ncenters, xn,yn,zn, charge, ixderc,
+     *                 ncenters, xn,yn,zn, pcharge, ixderc,
      *                 der1x, der1y, der1z,
      *                 der2x, der2y, der2z, 
      *                 dercx, dercy, dercz, alpha_pack,
@@ -452,7 +461,7 @@ c-------------------------------------------------------------------------
                   else
                      b1 = end_nfps(n-1)+1
                   endif
-
+                 
                  call move_integrals2(der_ints, da1,da2,db1,db2,
      *                 scr(nfirst),a1,a2,b1,b2)
 
@@ -460,37 +469,43 @@ c--------------------------------------------------------------------------
 c   Contract the density block with the block of integrals.
 c--------------------------------------------------------------------------
 
-c                 call cwork0222(y,
-c     *                          density,da1,da2,db1,db2,
-c     *                          da1,da2,db1,db2, ind,
-c     *                          z,da1,da2,db1,db2,
-c     *                          da1,da2,db1,db2,ind(1), ind(2),
-c     *                          flopcount)
+                 call cwork0222(grad,
+     *                          density,da1,da2,db1,db2,
+     *                          da1,da2,db1,db2,ind,
+     *                          der_ints,dc1,dc2,dd1,dd2,
+     *                          dc1,dc2,dd1,dd2,1,2,flopcount)
 
 c---------------------------------------------------------------------------
 c   Sum into the gradient.
 c---------------------------------------------------------------------------
-
-C                igrad = (iatom-1)*3 + component 
-C                gradient_data(igrad) = gradient_data(igrad) + y
+#ifdef _DEBUG_LVL0
+       if (type .eq. 1) then
+       Write(6,*)
+       Write(6,"(a)") "The nuclear attraction gradient"
+       Write(6,"(2I4,F15.10)") iatom, component, grad 
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       endif 
+#endif
+                igrad = (iatom-1)*3 + component 
+                gradient(igrad) = gradient(igrad) + grad
 
                endif ! nints 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       do b = da1, da2
       do a = db1, db2
-         if (component .eq. 1) sumx = sumx + der_ints(b,a) * 
-     &                                der_ints(b,a)
-         if (component .eq. 2) sumy = sumy + der_ints(b,a) * 
-     &                                der_ints(b,a)
-         if (component .eq. 3) sumz = sumz + der_ints(b,a) * 
-     &                                der_ints(b,a)
+         if (component .eq. 1) sumx = sumx + der_ints(a,b) * 
+     &                                der_ints(a,b)
+         if (component .eq. 2) sumy = sumy + der_ints(a,b) * 
+     &                                der_ints(a,b)
+         if (component .eq. 3) sumz = sumz + der_ints(a,b) * 
+     &                                der_ints(a,b)
       enddo
       enddo
 
-C#endif
+#endif
             enddo ! component
             enddo ! ixderc  
-
+     
          endif ! type = 1 
 
        if (type .eq. 2 .or. type .eq. 3) then 
@@ -561,7 +576,7 @@ c-------------------------------------------------------------------------
                if (type .eq. 2) then
 
                   call oed__gener_kin_derv_batch(imax,zmax,
-     *                 nalpha,ncoeff,
+     *                 nalpha_pack,ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 der1x, der1y, der1z,
@@ -573,7 +588,7 @@ c-------------------------------------------------------------------------
                else if (type .eq. 3) then
 
                   call oed__gener_ovl_derv_batch(imax,zmax,
-     *                 nalpha,ncoeff,
+     *                 nalpha_pack,ncoeff_pack,
      *                 ncsum, ncfps(m), ncfps(n), npfps(m),npfps(n),
      *                 ivangmom(m), ivangmom(n), x1,y1,z1,x2,y2,z2,
      *                 der1x, der1y, der1z,
@@ -605,26 +620,24 @@ c--------------------------------------------------------------------------
 c   Contract the density block with the block of integrals.
 c--------------------------------------------------------------------------
 
-C               call cwork0222(y,
-C     *                        density,da1,da2,db1,db2,
-C     *                        da1,da2,db1,db2, ind,
-C     *                        z,da1,da2,db1,db2,
-C     *                        da1,da2,db1,db2,ind(1), ind(2),
-C     )
-
+               call cwork0222(grad,
+     *                        density,da1,da2,db1,db2,
+     *                        da1,da2,db1,db2, ind,
+     *                        der_ints,da1,da2,db1,db2,
+     *                        da1,da2,db1,db2,1,2,flopcount)
+C
 c---------------------------------------------------------------------------
 c   Sum into the gradient.
 c---------------------------------------------------------------------------
 
-c              igrad = (iatom-1)*3 + component
-C              gradient_data(igrad) = gradient_data(igrad) + y
+              igrad = (iatom-1)*3 + component
+              gradient(igrad) = gradient(igrad) + grad 
 
              endif
 
 C#ifdef _DEBUG_LVL0
       do b = db1, db2
       do a = da1, da2
-C         write(6,"(a,2I4, F10.5)") "main", b, a, der_ints(a,b)
          if (component .eq. 1) sumx = sumx + der_ints(a,b) * 
      &                                der_ints(a,b)
          if (component .eq. 2) sumy = sumy + der_ints(a,b) * 
@@ -643,6 +656,23 @@ C#endif
          enddo   ! m shells
 
 C#ifdef _DEBUG_LVL0
+       if (type .eq. 1) then
+       Write(6,*)
+       Write(6,"(a)") "The nuclear attraction gradient"
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       else if (type .eq. 2) then
+       Write(6,*)
+       Write(6,"(a)") "The kinetic energy gradient"
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       else if (type .eq. 3) then
+       Write(6,*)
+       Write(6,"(a)") "The overlap gradient"
+       write(6,"(3(F15.10))") (Gradient(i), i=1,3*ncenters)
+       endif 
+C#endif
+
+
+#ifdef _DEBUG_LVL0
       if (type .eq. 1) then
       write(6,"(a,F20.10)")" The 1-el (nai) der. integral checksumx =",
      &sumx
@@ -667,8 +697,9 @@ C#ifdef _DEBUG_LVL0
       write(6,"(a,F20.10)")" The 1-el (ovl) der. integral checksumz =",
      &sumz
       write(6,*)
+ 
       endif
-C#endif
+#endif
 
       return
       end

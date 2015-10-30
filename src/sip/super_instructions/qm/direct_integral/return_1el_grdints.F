@@ -1,5 +1,5 @@
 C-----------------------------------------------------------------
-!> special  return_1el_grad wrwr
+!> special  return_1el_gradints wrur
 !> 
 !> Return the one-particle part of the gradient by taking the 
 !> diect prodcut of the one paticle density matrix and the 
@@ -192,10 +192,11 @@ C#ifdef _DEBUG_LVL0
       Write(*,"(4I4)")
      *                        extents_0(1),extents_0(2),
      *                        extents_1(1),extents_1(2)
-CSSS      write(6,"(6(1x,F12.6))")(data_2(i),i=1,size_4)
+      write(6,"(3(1x,F12.6))")(data_2(i),i=1,3*ncenters)
 C#endif 
 
-      call compute_return_1el_grdints(data_0, data_1, type,
+      call compute_return_1el_grdints(
+     &                                data_0, data_1, data_2, type,
      &
      &                                1+offset_01, 
      &                                extents_0(1)+offset_01,

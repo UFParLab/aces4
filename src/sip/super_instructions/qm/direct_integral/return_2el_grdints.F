@@ -1,12 +1,12 @@
 C-----------------------------------------------------------------
-!> special compute_2el_grdints w
+!> special compute_2el_grdints wr
 !>
 !> Return the two-particle derivative integrals. The space for the 
 !> deriavtive integrals is a temp array in SIAL (customarily)
 !>
 !> PARDO mu, nu, lambda, sigma
 !>
-!>      execute return_2el_grdints( aoint[mu,nu,lambda,sigma]
+!>      execute return_2el_grdints aoint[mu,nu,lambda,sigma] flag
 !>
 !> ENDPARDO mu, nu, lambda, sigma
 !>
@@ -15,6 +15,7 @@ C-----------------------------------------------------------------
 
       subroutine return_2el_grdints(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
+     c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
      c  ierr) BIND(C)
 
       use, intrinsic :: ISO_C_BINDING
@@ -32,6 +33,13 @@ c Interface added BUT should be include NOT added in the future
       integer(C_INT), intent(in)::size_0
       integer(C_INT), intent(in)::extents_0(1:rank_0)
       real(C_DOUBLE), intent(out)::data_0(1:size_0)
+
+      integer(C_INT), intent(in)::array_slot_1
+      integer(C_INT), intent(in)::rank_1
+      integer(C_INT), intent(in)::index_values_1(1:rank_1)
+      integer(C_INT), intent(in)::size_1
+      integer(C_INT), intent(in)::extents_1(1:rank_1)
+      real(C_DOUBLE), intent(in)::data_1(1:size_1)
 
       integer(C_INT), intent(out)::ierr
 
@@ -61,10 +69,9 @@ c ---------------------------------------------------------------------------
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
       integer(C_INT) i, j, one, two
-      integer(C_INT) int_length1, int_length2, int_length3
-      integer(C_INT) int_length4, int_length
       integer(C_INT) nscr, niscr
       integer der_flags(12)
+      integer Derv_component 
 
       ierr = 0 
       one  = 1
@@ -116,36 +123,29 @@ c     call TAU_STOP("start scratch_array")
 
 c     call TAU_START("start compute_uintegrals1")   
 
-      int_length1 = extents_0(1)+offset_1 
-      int_length2 = extents_0(2)+offset_2 
-      int_length3 = extents_0(3)+offset_3 
-      int_length4 = extents_0(4)+offset_4
-      int_length  = int_length1 * int_length2 * int_length3 *
-     +              int_length4
+      Derv_component = INT(data_1(1))
 
-      do i = 1, 12 
+      do j = 1, 12
+         der_flags(j) = 0
+      enddo 
 
-             do j = 1, 12
-                der_flags(j) = 0
-             enddo 
+      der_flags(Derv_component) = 1
 
-             der_flags(i) = 1
-             call compute_return_2el_grdints(
+      call compute_return_2el_grdints(
      &
-     &                         1+offset_1, extents_0(1)+offset_1,
-     &                         1+offset_2, extents_0(2)+offset_2,
-     &                         1+offset_3, extents_0(3)+offset_3,
-     &                         1+offset_4, extents_0(4)+offset_4,
+     &                        data_0, 
+     &                        1+offset_1, extents_0(1)+offset_1,
+     &                        1+offset_2, extents_0(2)+offset_2,
+     &                        1+offset_3, extents_0(3)+offset_3,
+     &                        1+offset_4, extents_0(4)+offset_4,
      &
-     &                         data_0,
-     &                         scr,
-     &                         iscr,
-     &  
-     &                         coords, tcoords,
-     &
-     &                         der_flags)
+     &                        scr,
+     &                        iscr,
+     & 
+     &                        coords, tcoords,
+     & 
+     &                        der_flags)
 
-      enddo
 
 c     call TAU_STOP("start compute_uintegrals1")   
 

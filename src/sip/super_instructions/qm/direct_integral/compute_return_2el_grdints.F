@@ -14,8 +14,9 @@ C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine compute_return_2el_grdints(
      *
+     *                             integrals,
      *                             a1,a2,b1,b2,c1,c2,d1,d2,
-     *                             integrals,scr, iscr, 
+     *                             scr, iscr, 
      *                             
      *                             coords, tcoords, 
      *

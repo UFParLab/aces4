@@ -1,0 +1,849 @@
+import "scf_grad_ru_hf_defs.sialx"
+
+#  Copyright (c) 2003-2010 University of Florida
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  The GNU General Public License is included in this distribution
+#  in the file COPYRIGHT.
+                           SIAL SCFGRAD       
+#
+# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+#
+# Declare indices 
+# --------------- 
+#
+      index Ngrads   = 1: Three_Natoms 
+      index Twelve   = 1: 12
+
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
+#
+      moaindex i = baocc: eaocc
+      moaindex i1= baocc: eaocc
+      moaindex i2= baocc: eaocc
+      moaindex i3= baocc: eaocc
+#
+      moaindex a = bavirt: eavirt
+      moaindex a1= bavirt: eavirt
+      moaindex a2= bavirt: eavirt
+      moaindex a3= bavirt: eavirt
+#
+      mobindex j = bbocc: ebocc
+      mobindex j1= bbocc: ebocc
+      mobindex j2= bbocc: ebocc
+      mobindex j3= bbocc: ebocc
+#
+      mobindex b = bbvirt: ebvirt
+      mobindex b1= bbvirt: ebvirt
+      mobindex b2= bbvirt: ebvirt
+      mobindex b3= bbvirt: ebvirt
+#
+      moaindex p = baocc: eavirt
+      moaindex p1= baocc: eavirt
+      moaindex p2= baocc: eavirt
+      moaindex p3= baocc: eavirt
+#
+      mobindex q = bbocc: ebvirt
+      mobindex q1= bbocc: ebvirt
+      mobindex q2= bbocc: ebvirt
+      mobindex q3= bbocc: ebvirt
+# 
+# Declare distributed one-particle density arrays 
+# ----------------------------------- 
+#
+      distributed Dhfa[mu,nu] 
+      distributed Dhfb[mu,nu] 
+      distributed Whfa[mu,nu] 
+      distributed Whfb[mu,nu] 
+      distributed D_gradient[Ngrads]
+
+# Static arrays 
+
+      static LDhfa[mu,nu] 
+      static LDhfb[mu,nu] 
+      static Spq[mu,nu]  
+    
+      static gradient[Ngrads]
+
+#scalar arrays 
+
+      Scalar Imax
+      Scalar zmax
+      Scalar esuma 
+      Scalar esumb
+      Scalar etemp
+
+#contiguous  local arrays
+
+#     contiguous local L_gradient[Ngrads]
+      static L_gradient[Ngrads]
+#
+# Declare temporary arrays 
+# ------------------------ 
+#
+      temp Txxxx[mu,nu,lambda,sigma] 
+      temp TSxxxx[mu,nu,lambda,sigma] 
+      temp T1xxxx[mu,nu,lambda,sigma] 
+      temp T2xxxx[mu,nu,lambda,sigma] 
+      temp T3xxxx[mu,nu,lambda,sigma] 
+      temp T4xxxx[mu,nu,lambda,sigma] 
+      temp T5xxxx[mu,nu,lambda,sigma] 
+      temp Txxxi[mu,nu,lambda,i] 
+      temp T1xxxi[mu,nu,lambda,i] 
+      temp T2xxxi[mu,nu,lambda,i] 
+      temp T3xxxi[mu,nu,lambda,i] 
+      temp T4xxxi[mu,nu,lambda,i] 
+      temp TAxxxi[mu,nu,lambda,i] 
+      temp TBxxxi[mu,nu,lambda,i] 
+      temp Txxxj[mu,nu,lambda,j] 
+      temp T1xxxj[mu,nu,lambda,j] 
+      temp T2xxxj[mu,nu,lambda,j] 
+      temp T3xxxj[mu,nu,lambda,j] 
+      temp T4xxxj[mu,nu,lambda,j] 
+      temp TAxxxj[mu,nu,lambda,j] 
+      temp TBxxxj[mu,nu,lambda,j] 
+      temp Txixx[mu,i,nu,lambda] 
+      temp Txjxx[mu,j,nu,lambda] 
+      temp Tixxx[i,mu,nu,lambda] 
+      temp Tjxxx[j,mu,nu,lambda] 
+      temp Ixi[mu,i] 
+      temp I1xi[mu,i] 
+      temp Ixj[mu,j] 
+      temp I1xj[mu,j] 
+      temp Tpq[mu,nu] 
+      temp T1pq[mu,nu] 
+      temp Txi[mu,i] 
+      temp T1xi[mu,i] 
+      temp Txj[mu,j] 
+      temp T1xj[mu,j] 
+      temp Txx[mu,nu] 
+      temp T1xx[mu,nu] 
+      temp T2xx[mu,nu] 
+      temp T3xx[mu,nu] 
+      temp T4xx[mu,nu] 
+      temp T5xx[mu,nu] 
+      temp GRAD_AO_INTS[mu,nu,lambda,sigma]
+#
+# Declare scalars 
+# --------------- 
+#
+      scalar eleven  
+      scalar rank 
+      scalar flag 
+      scalar Icount
+#
+      PROC WHFDENS
+#     ------------
+#
+      PARDO mu, nu, i 
+#
+            Ixi[nu,i] = 0.0  
+#
+            DO i1 
+#
+               I1xi[nu,i] = ca[nu,i1]*fock_a[i,i1] 
+               Ixi[nu,i] -= I1xi[nu,i] 
+#
+            ENDDO i1  
+#
+            Tpq[mu,nu]       = ca[mu,i]*Ixi[nu,i]
+            PUT Whfa[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, i  
+#
+      PARDO mu, nu, j
+#
+            Ixj[nu,j] = 0.0  
+#
+            DO j1 
+#
+               I1xj[nu,j] = cb[nu,j1]*fock_b[j,j1] 
+               Ixj[nu,j] -= I1xj[nu,j] 
+#
+            ENDDO j1  
+#
+            Tpq[mu,nu]       = cb[mu,j]*Ixj[nu,j]
+            PUT Whfb[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, j
+      sip_barrier 
+#
+      ENDPROC WHFDENS
+#     --------------
+#
+# -----------------------------------------------------------------------------
+#
+      PROC HFDENS
+#     -----------
+#
+      PARDO mu, nu, i
+#
+            Txi[nu,i]        = ca[nu,i]
+            Tpq[mu,nu]       = ca[mu,i]*Txi[nu,i]
+            PUT Dhfa[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, i
+#
+      PARDO mu, nu, j
+#
+            Txj[nu,j]        = cb[nu,j]
+            Tpq[mu,nu]       = cb[mu,j]*Txj[nu,j]
+            PUT Dhfb[mu,nu] += Tpq[mu,nu]
+#
+      ENDPARDO mu, nu, j
+      sip_barrier 
+#
+      DO mu 
+      DO nu 
+         GET Dhfa[mu,nu] 
+         GET Dhfb[mu,nu] 
+         LDhfa[mu,nu] = Dhfa[mu,nu] 
+         LDhfb[mu,nu] = Dhfb[mu,nu] 
+        #execute dump_amp ldhfa[mu,nu]
+        #execute dump_amp ldhfb[mu,nu]
+      ENDDO nu 
+      ENDDO mu 
+#
+      ENDPROC HFDENS
+#     --------------
+#
+      PROC D1TRANS
+#     ------------
+#
+# Contract with the derivative integrals
+# --------------------------------------
+#
+#      execute get_my_rank rank 
+#      if rank == 0.0 
+#
+#         DO mu 
+#         DO nu
+          PARDO mu, nu
+            Txx[mu,nu]  = 0.0
+            GET           DHFA[mu,nu]
+            GET           DHFB[mu,nu]
+            Tpq[mu,nu]  = DHFA[mu,nu]
+            Tpq[mu,nu] += DHFB[mu,nu]
+            Spq[mu,nu]  = Tpq[mu,nu] 
+            flag = 1.0
+            execute return_1el_grdints Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+            Do Ngrads
+              L_Gradient[Ngrads] = 0.0
+            Enddo Ngrads
+
+            flag = 2.0
+            execute return_1el_grdints Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+          ENDPARDO mu, nu
+
+#         ENDDO nu
+#         ENDDO mu
+          sip_barrier
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads] 
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+
+#       endif 
+#
+# -----------------------------------------------------------------------------
+#
+      ENDPROC D1TRANS
+#     ---------------
+#
+# -----------------------------------------------------------------------------
+#
+      PROC S1TRANS
+#     ------------
+#
+# Contract with the derivative integrals
+# --------------------------------------
+#
+      flag = 3.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+
+      PARDO mu, nu
+            Txx[mu,nu] = 0.0
+
+            GET           WHFa[mu,nu]
+            GET           WHFb[mu,nu]
+            Tpq[mu,nu]  = WHFa[mu,nu]
+            Tpq[mu,nu] += WHFb[mu,nu]
+            execute return_1el_grdints Txx[mu,nu] Tpq[mu,nu] L_Gradient flag
+
+            Do Ngrads
+               PUT D_Gradient[Ngrads] += L_Gradient[Ngrads]
+            Enddo Ngrads
+
+      ENDPARDO mu, nu
+      sip_barrier 
+
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+#
+# -----------------------------------------------------------------------------
+#
+      ENDPROC S1TRANS
+#     ---------------
+#
+# ---------------------------------------------------------------------------
+#
+# Procedure DPQRSSEP computes the seperable part of the two-particle
+# 'density' matrix.
+#
+      PROC DPQRSSEP
+#     -------------
+#
+#          Get 1-particle pieces
+#          ---------------------
+#
+           GET DHFa[mu,lambda]
+           GET DHFa[mu,sigma]
+           GET DHFa[mu,nu]
+           GET DHFa[nu,sigma]
+           GET DHFa[nu,lambda]
+           GET DHFa[sigma,lambda]
+#
+           GET DHFb[mu,lambda]
+           GET DHFb[mu,sigma]
+           GET DHFb[mu,nu]
+           GET DHFb[nu,sigma]
+           GET DHFb[nu,lambda]
+           GET DHFb[sigma,lambda]
+#
+#          HF only
+#          -------
+           Txx[nu,sigma]              = DHFa[nu,sigma] 
+           Txx[nu,sigma]             += DHFb[nu,sigma] 
+           T1xx[mu,lambda]            = DHFa[mu,lambda] 
+           T1xx[mu,lambda]           += DHFb[mu,lambda] 
+
+           Txxxx[mu,lambda,nu,sigma]  = T1xx[mu,lambda]^Txx[nu,sigma]
+#
+           Txx[nu,lambda]             = DHFa[nu,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFa[mu,sigma]^Txx[nu,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txx[nu,lambda]             = DHFb[nu,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFb[mu,sigma]^Txx[nu,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txx[sigma,lambda]          = DHFa[sigma,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFa[mu,nu]^Txx[sigma,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txx[sigma,lambda]          = DHFb[sigma,lambda] 
+           T1xxxx[mu,lambda,nu,sigma] = DHFb[mu,nu]^Txx[sigma,lambda]
+           T1xxxx[mu,lambda,nu,sigma]*= 0.5
+           Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+           Txxxx[mu,lambda,nu,sigma] *= 0.5
+#
+      ENDPROC DPQRSSEP
+#     ----------------
+#
+# ---------------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------------
+#
+      PROC D2TRANS
+#     ------------
+#
+      Icount = 0.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+      print "blok1"
+
+      PARDO mu, nu   
+#
+           DO lambda   
+           DO sigma 
+#
+              IF mu < lambda  
+              IF nu < sigma   
+#
+#             Get the separable part  
+#             ----------------------
+#
+#             Get 1-particle pieces
+#                ---------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LDHFb[nu,sigma] 
+                 T1xx[mu,lambda]            = LDHFa[mu,lambda] 
+                 T1xx[mu,lambda]           += LDHFb[mu,lambda] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = T1xx[mu,lambda]^Txx[nu,sigma]
+                 Txxxx[mu,lambda,nu,sigma] *= 2.0  
+#
+                 T2xx[nu,lambda]            = LDHFa[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^T2xx[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T3xx[nu,lambda]            = LDHFb[nu,lambda] 
+                 T2xxxx[mu,lambda,nu,sigma] = LDHFb[mu,sigma]^T3xx[nu,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T2xxxx[mu,lambda,nu,sigma]
+#
+                 T4xx[sigma,lambda]         = LDHFa[sigma,lambda] 
+                 T3xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^T4xx[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T3xxxx[mu,lambda,nu,sigma]
+#
+                 T5xx[sigma,lambda]         = LDHFb[sigma,lambda] 
+                 T4xxxx[mu,lambda,nu,sigma] = LDHFb[mu,nu]^T5xx[sigma,lambda]
+                 Txxxx[mu,lambda,nu,sigma] -= T4xxxx[mu,lambda,nu,sigma]
+#
+#                Compute integral block
+#                ----------------------
+
+                 Do Twelve
+
+                 flag = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] Txxxx[mu,lambda,nu,sigma] L_Gradient flag
+                  
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 Enddo Twelve
+
+              ENDIF # nu < sigma   
+              ENDIF # mu < lambda  
+#
+           ENDDO sigma 
+           ENDDO lambda   
+#
+      ENDPARDO mu, nu   
+
+      Icount = 0.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads
+      sip_barrier 
+
+      print "blok2"
+      PARDO mu, nu 
+#
+           DO lambda   
+           DO sigma 
+#
+              IF mu == lambda  
+              IF nu < sigma   
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LDHFb[nu,sigma] 
+                 T5xx[mu,lambda]            = LDHFa[mu,lambda] 
+                 T5xx[mu,lambda]           += LDHFb[mu,lambda] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = T5xx[mu,lambda]^Txx[nu,sigma]
+#
+                 T1xx[nu,lambda]            = LDHFa[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^T1xx[nu,lambda]
+                 T1xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T2xx[nu,lambda]            = LDHFb[nu,lambda] 
+                 T2xxxx[mu,lambda,nu,sigma] = LDHFb[mu,sigma]^T2xx[nu,lambda]
+                 T2xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T2xxxx[mu,lambda,nu,sigma]
+#
+                 T3xx[sigma,lambda]         = LDHFa[sigma,lambda] 
+                 T3xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^T3xx[sigma,lambda]
+                 T3xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T3xxxx[mu,lambda,nu,sigma]
+#
+                 T4xx[sigma,lambda]         = LDHFb[sigma,lambda] 
+                 T4xxxx[mu,lambda,nu,sigma] = LDHFb[mu,nu]^T4xx[sigma,lambda]
+                 T4xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T4xxxx[mu,lambda,nu,sigma]
+#
+#                Compute integral block
+#                ----------------------
+                 Do Twelve 
+
+                 flag = (scalar)Twelve
+
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] Txxxx[mu,lambda,nu,sigma] L_Gradient flag 
+#
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads 
+
+                 ENDDo Twelve 
+
+              ENDIF # nu < sigma   
+              ENDIF # mu == lambda  
+#
+           ENDDO sigma 
+           ENDDO lambda   
+#
+      ENDPARDO mu, nu 
+#
+      Icount = 0.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads 
+      sip_barrier 
+
+      print "blok3"
+      PARDO mu, nu 
+#
+           DO lambda   
+           DO sigma 
+#
+              IF mu < lambda  
+              IF nu == sigma   
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LDHFb[nu,sigma] 
+                 T5xx[mu,lambda]            = LDHFa[mu,lambda] 
+                 T5xx[mu,lambda]           += LDHFb[mu,lambda] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = T5xx[mu,lambda]^Txx[nu,sigma]
+#
+                 T1xx[nu,lambda]            = LDHFa[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^T1xx[nu,lambda]
+                 T1xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T2xx[nu,lambda]            = LDHFb[nu,lambda] 
+                 T2xxxx[mu,lambda,nu,sigma] = LDHFb[mu,sigma]^T2xx[nu,lambda]
+                 T2xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T2xxxx[mu,lambda,nu,sigma]
+#
+                 T3xx[sigma,lambda]         = LDHFa[sigma,lambda] 
+                 T3xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^T3xx[sigma,lambda]
+                 T3xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T3xxxx[mu,lambda,nu,sigma]
+#
+                 T4xx[sigma,lambda]         = LDHFb[sigma,lambda] 
+                 T4xxxx[mu,lambda,nu,sigma] = LDHFb[mu,nu]^T4xx[sigma,lambda]
+                 T4xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T4xxxx[mu,lambda,nu,sigma]
+
+                 Do Twelve 
+#
+#                Compute integral block
+#                ----------------------
+
+                 flag   = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] Txxxx[mu,lambda,nu,sigma] L_Gradient  flag
+
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 Enddo Twelve
+#
+              ENDIF # nu == sigma   
+              ENDIF # mu < lambda  
+#
+           ENDDO sigma 
+           ENDDO lambda   
+#
+      ENDPARDO mu, nu 
+#
+      Icount = 0.0
+      Do Ngrads
+         L_Gradient[Ngrads] = 0.0
+      Enddo Ngrads 
+      sip_barrier 
+#
+      print "blok3"
+      PARDO mu, nu 
+#
+           DO lambda   
+           DO sigma 
+#
+              IF mu == lambda  
+              IF nu == sigma   
+#
+#                Get the separable part  
+#                ----------------------
+#
+#                Get 1-particle pieces
+#                ---------------------
+#
+#                HF only
+#                -------
+                 Txx[nu,sigma]              = LDHFa[nu,sigma] 
+                 Txx[nu,sigma]             += LDHFb[nu,sigma] 
+                 T5xx[mu,lambda]            = LDHFa[mu,lambda] 
+                 T5xx[mu,lambda]           += LDHFb[mu,lambda] 
+
+                 Txxxx[mu,lambda,nu,sigma]  = T5xx[mu,lambda]^Txx[nu,sigma]
+#
+                 T1xx[nu,lambda]            = LDHFa[nu,lambda] 
+                 T1xxxx[mu,lambda,nu,sigma] = LDHFa[mu,sigma]^T1xx[nu,lambda]
+                 T1xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T1xxxx[mu,lambda,nu,sigma]
+#
+                 T2xx[nu,lambda]            = LDHFb[nu,lambda] 
+                 T2xxxx[mu,lambda,nu,sigma] = LDHFb[mu,sigma]^T2xx[nu,lambda]
+                 T2xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T2xxxx[mu,lambda,nu,sigma]
+#
+                 T3xx[sigma,lambda]         = LDHFa[sigma,lambda] 
+                 T3xxxx[mu,lambda,nu,sigma] = LDHFa[mu,nu]^T3xx[sigma,lambda]
+                 T3xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T3xxxx[mu,lambda,nu,sigma]
+#
+                 T4xx[sigma,lambda]         = LDHFb[sigma,lambda] 
+                 T4xxxx[mu,lambda,nu,sigma] = LDHFb[mu,nu]^T4xx[sigma,lambda]
+                 T4xxxx[mu,lambda,nu,sigma]*= 0.5
+                 Txxxx[mu,lambda,nu,sigma] -= T4xxxx[mu,lambda,nu,sigma]
+#
+                 Txxxx[mu,lambda,nu,sigma] *= 0.5
+#
+#                Compute integral block
+#                ----------------------
+                 Do Twelve
+
+                 flag   = (scalar)Twelve
+                 execute return_2el_grdints GRAD_AO_INTS[mu,nu,lambda,sigma] flag
+#
+#                Contract density with integral derivatives
+#                ------------------------------------------
+
+                 execute return_2el_gradient GRAD_AO_INTS[mu,nu,lambda,sigma] Txxxx[mu,lambda,nu,sigma] L_Gradient flag 
+#
+                 do Ngrads
+                    put D_gradient[Ngrads] += L_Gradient[Ngrads]
+                 enddo Ngrads
+
+                 ENDDo Twelve
+
+              ENDIF # nu == sigma   
+              ENDIF # mu == lambda  
+#
+           ENDDO sigma 
+           ENDDO lambda   
+#
+      ENDPARDO mu, nu 
+      sip_barrier 
+#bgn_debug
+          print "Nuclear attraction+repulsion+kinetic+overlap+2-el gradient"
+          Do Ngrads
+             get  D_Gradient[Ngrads]
+             print D_gradient[Ngrads]
+          Enddo Ngrads
+#end_debug
+
+      ENDPROC D2TRANS
+#    ----------------
+#
+############################################################################## 
+#
+#                         START OF MAIN PROGRAM 
+#
+############################################################################## 
+#
+# Calculate the values of zmafm imax
+# ---------------------------------
+#
+      zmax   = 0.0
+      imax   = 0.0
+      execute compute_int_scratchmem oed_ovl zmax imax
+#
+#      Allocate L_Gradient[*]
+
+#bgn_debug
+      print "reference, the zmax and imax"
+      print reference
+#end_debug
+
+      If Reference == 0
+         Server_barrier
+         Restore_persistent ca "ca"
+         restore_persistent Fock_a "fock_a"
+         Server_barrier
+
+#         Pardo mu, p
+#               cb[mu,p] = ca[mu,p]
+#         Endpardo mu, p 
+      Else
+         Server_barrier
+         Restore_persistent ca "ca"
+         Restore_persistent cb "cb"
+         restore_persistent Fock_a "fock_a"
+         restore_persistent Fock_b "fock_b"
+         Server_barrier
+      Endif 
+
+#bgn_debug
+       execute get_my_rank rank
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO p
+       DO p1
+          etemp  = fock_a[p,p1] * fock_a[p,p1]
+          esuma += etemp
+       ENDDO p1
+       ENDDO p
+       DO q
+       DO q1
+          etemp  = fock_b[q,q1] * fock_b[q,q1]
+          esumb += etemp
+       ENDDO q1
+       ENDDO q
+       print "checksum of focka and fockb"
+       print  esuma
+       print  esumb
+       endif
+#end_debug
+
+
+#     Compute the HF contribution to the weighted density matrix 
+#     ---------------------------------------------------------- 
+#
+      call WHFDENS
+#bgn_debug
+       execute get_my_rank rank
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO mu
+       DO nu
+          get Whfa[mu,nu]
+          get Whfb[mu,nu]
+          etemp  = Whfa[mu,nu] * whfa[mu,nu]
+          esuma += etemp
+          etemp  = Whfb[mu,nu] * Whfb[mu,nu]
+          esumb += etemp
+       ENDDO nu
+       ENDDO mu
+       print "checksum of whfa and whfb"
+       print  esuma
+       print  esumb
+       endif
+#end_debug
+
+
+#
+#     Compute the HF density 
+#     ---------------------- 
+#
+      CALL HFDENS
+      sip_barrier
+#bgn_debug
+       execute get_my_rank rank
+       if rank==0.0
+       esuma = 0.0
+       esumb = 0.0
+       DO mu
+       DO nu
+          etemp  = LDhfa[mu,nu] * LDhfa[mu,nu]
+          esuma += etemp
+          etemp  = LDhfb[mu,nu] * LDhfb[mu,nu]
+          esumb += etemp
+       ENDDO nu
+       ENDDO mu
+       print "checksum of hfdensa and hfdensb"
+       print  esuma
+       print  esumb
+       endif
+#end_debug
+
+     execute compute_nn_repulsion_grad Gradient 
+      
+     DO Ngrads
+        Put D_gradient[Ngrads] = Gradient[Ngrads]
+     Enddo Ngrads
+
+#bgn_debug
+     esuma = 0.0
+     DO Ngrads
+         get D_gradient[Ngrads]
+         esuma += D_Gradient[Ngrads] * D_Gradient[Ngrads] 
+     enddo Ngrads
+     print "checksum of nuc-nuc gradient"
+     print  esuma
+#end_debug
+
+#
+# Contract the density with the AO basis core Hamiltonian
+# -------------------------------------------------------
+#
+      CALL D1TRANS
+      CALL S1TRANS
+#
+# Contract the 'two-particle' contributions
+# -----------------------------------------
+#
+      CALL D2TRANS
+      sip_barrier 
+
+#      eleven = 11.0 
+#      execute print_rel_info eleven ca # pinf 
+#      DeAllocate L_Gradient[*]
+
+#
+                           ENDSIAL SCFGRAD       
+#
+###############################################################################

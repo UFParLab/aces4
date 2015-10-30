@@ -38,6 +38,8 @@ set(QM_SOURCE_FILES
     qm/utility/stripi.F;
     qm/utility/compute_diis.F;
     qm/utility/return_sval.F;
+    qm/utility/cwork0222.F;
+    qm/utility/return_2el_gradient.F;
     qm/mcpt-fragment/set_frag.F;
     qm/mcpt-fragment/scf_atom_lowmem.F;
     qm/mcpt-fragment/compute_int_scratchmem_lowmem.F;
@@ -60,6 +62,7 @@ set(QM_SOURCE_FILES
     qm/direct_integral/return_ovl.F;
     qm/direct_integral/compute_int_scratchmem.F;
     qm/direct_integral/compute_nn_repulsion.F;
+    qm/direct_integral/compute_nn_repulsion_grad.F;
     qm/direct_integral/compute_aabb_batch.F;
     qm/direct_integral/compute_integral_batch.F;
     qm/direct_integral/compute_dipole_integrals.F;

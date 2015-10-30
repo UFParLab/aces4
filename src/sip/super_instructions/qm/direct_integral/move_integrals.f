@@ -122,6 +122,7 @@ CSSS            s = s+ v(a,b) * v(a,b)
 CSSS         enddo
 CSSS         enddo
 CSSS         Write(6, "(a,F10.5)") "S = ", S
+
       return
       end
 

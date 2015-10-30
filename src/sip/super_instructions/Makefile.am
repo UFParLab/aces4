@@ -63,6 +63,8 @@ QM_SOURCE_FILES=\
 ./qm/utility/compute_diis.F\
 ./qm/utility/stripi.F\
 ./qm/utility/return_sval.F\
+./qm/utility/cwork0222.F\
+./qm/utility/return_2el_gradient.F\
 ./qm/mcpt-fragment/set_frag.F\
 ./qm/mcpt-fragment/scf_atom_lowmem.F\
 ./qm/mcpt-fragment/compute_int_scratchmem_lowmem.F\
@@ -95,6 +97,7 @@ QM_SOURCE_FILES=\
 ./qm/direct_integral/compute_dipole_integrals.F\
 ./qm/direct_integral/compute_int_scratchmem.F\
 ./qm/direct_integral/compute_nn_repulsion.F\
+./qm/direct_integral/compute_nn_repulsion_grad.F\
 ./qm/direct_integral/compute_aabb_batch.F\
 ./qm/direct_integral/compute_ubatch1.F\
 ./qm/direct_integral/compute_ubatch2.F\
@@ -373,7 +376,7 @@ QM_SOURCE_FILES=\
 ./qm/ecp/ecp_grdint.F\
 ./qm/ecp/ecp_int_4shell.F
 ./qm/ecp/ecp_int.F\
-.qm/ecp/ecp_grdint.F\
+./qm/ecp/ecp_grdint.F\
 ./qm/ecp/ecp_int_typ1.F\
 ./qm/ecp/ecp_int_typ2.F\
 ./qm/ecp/ecppar.F\
