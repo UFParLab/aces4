@@ -233,7 +233,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 //			// HARD CODING LOOP MANAGER FOR FRAGMENT CODE
 //			int line = get_line_number();
-//			if (sip::GlobalState::get_program_name() == "mcpt2_corr_lowmem.siox"){
+//			if (sip::JobControl::global->get_program_name() == "mcpt2_corr_lowmem.siox"){
 //				switch (line){
 //				    case 16:
 //				    case 110:

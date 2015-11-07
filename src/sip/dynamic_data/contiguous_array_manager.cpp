@@ -11,7 +11,7 @@
 #include "contiguous_array_manager.h"
 #include "sip_tables.h"
 #include "setup_reader.h"
-#include "global_state.h"
+#include "job_control.h"
 
 
 #include "sip_mpi_attr.h"

@@ -19,7 +19,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 #include "rank_distribution.h"
 #include "worker_persistent_array_manager.h"

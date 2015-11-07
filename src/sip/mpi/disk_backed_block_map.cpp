@@ -11,7 +11,7 @@
 #include <sstream>
 #include "server_block.h"
 #include "block_id.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sip_server.h"
 
 namespace sip {
@@ -55,7 +55,7 @@ template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(Serve
 }
 
 const int DiskBackedBlockMap::BLOCKS_PER_CHUNK=4;
-const DiskBackedBlockMap::offset_val_t DiskBackedBlockMap::ABSENT_BLOCK_OFFSET=-1;
+
 
 DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 		const SIPMPIAttr& sip_mpi_attr,
@@ -64,7 +64,7 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 				data_distribution), block_map_(sip_tables.num_arrays()), policy_(
 				block_map_), max_allocatable_bytes_(
 
-				sip::GlobalState::get_max_server_data_memory_usage()), max_allocatable_doubles_(
+				sip::JobControl::global->get_max_server_data_memory_usage()), max_allocatable_doubles_(
 				max_allocatable_bytes_ / sizeof(double))
 , remaining_doubles_(max_allocatable_doubles_)
 ,stats_(sip_mpi_attr.company_communicator(), this)
@@ -74,7 +74,7 @@ DiskBackedBlockMap::DiskBackedBlockMap(const SipTables& sip_tables,
 }
 
 DiskBackedBlockMap::~DiskBackedBlockMap() {
-  _finalize();
+   _finalize();
 }
 
 
@@ -253,86 +253,119 @@ void DiskBackedBlockMap::delete_per_array_map_and_blocks(int array_id) {
 
 void DiskBackedBlockMap::save_persistent_array(int array_id, const std::string& label){
 	ArrayFile* file = array_files_.at(array_id);
+	if (file->was_restored_){
+		check (label == file->label_, "marking restored array persistent with non-matching label");
+		return;
+	}
+
 	ChunkManager* manager = chunk_managers_.at(array_id);
 	size_t num_blocks = sip_tables_.num_blocks(array_id);
 	//mark the file as persistent
 	file->mark_persistent(label);
 	//save blocks with a collective operation
 	manager->collective_flush();
+	bool is_dense = false;  //hard code this for now
 	//construct the local index
-	std::vector<ArrayFile::offset_val_t> index_vals(num_blocks,ABSENT_BLOCK_OFFSET);
+	if(is_dense){
+	std::vector<ArrayFile::offset_val_t> index_vals(num_blocks,ArrayFile::ABSENT_BLOCK_OFFSET);
 	initialize_local_index(array_id, index_vals, num_blocks);
 	//write index to file (reduce local indices, server master writes)
-	file->write_index(&index_vals.front(), num_blocks);
-}
-
-
-void DiskBackedBlockMap::restore_persistent_array(int array_id, std::string & label, bool eager, int pc){
-
-	//get the existing file, map, and chunk_manager for this array.
-	ArrayFile* old_file = array_files_.at(array_id);  //this is the file that was created during initialization
-	IdBlockMap<ServerBlock>::PerArrayMap* old_map = block_map_.per_array_map_or_null(array_id);
-	ChunkManager* old_manager = chunk_managers_.at(array_id);
-	if (old_map != NULL && old_map->size() > 0){
-		//blocks have already been created for this array.
-		//If any have been backed to disk, using the old file and old manager,
-		//restore them now and update memory accounting.
-			stats_.num_restored_arrays_with_disk_backing_.inc();
-		    size_t allocated = old_manager->restore();
-	        remaining_doubles_ -= allocated;
-		    stats_.allocated_doubles_.inc(allocated);
-
-	}
-
-	//Create a new ArrayFile object, map, and chunk manager
-	size_t num_blocks = sip_tables_.num_blocks(array_id);
-	ArrayFile::header_val_t expected_chunk_size = (sip_tables_.max_block_size(array_id)) * BLOCKS_PER_CHUNK;
-	//ArrayFile constructor checks that chunk size is as expected.
-	ArrayFile* file = new ArrayFile(num_blocks, expected_chunk_size, label, SIPMPIAttr::get_instance().company_communicator(), false /*file must exist*/);
-	array_files_.at(array_id) = file;
-	ChunkManager* manager = new ChunkManager(expected_chunk_size, file);
-	chunk_managers_.at(array_id) = manager;
-	IdBlockMap<ServerBlock>::PerArrayMap* new_map = new std::map<BlockId, ServerBlock*>;
-	block_map_.update_per_array_map(array_id, new_map);
-
-	//restore chunks from the persistent file
-	if(eager){
-	eager_restore_chunks_from_index(array_id, file, manager, num_blocks, data_distribution_);
+	file->write_dense_index(index_vals);
 	}
 	else {
-		check(false, "lazy restore not yet implemented");
-	}
-
-
-	//traverse old map.  For each block in old map, check whether it was restored from persistent file.
-	//if not, copy its data.
-	if (old_map != NULL && old_map->size() > 0){
-	  IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
-		for (it = old_map->begin(); it != old_map->end(); ++it){
-			BlockId id = it->first;
-			ServerBlock* block = block_map_.block(id);
-			if (block == NULL){
-				//old existing block has not been overwritten
-				//create new block in new data structures and copy data from old
-				block = get_block_for_writing(id);
-				block->copy_data(it->second);
-			}
-		}
-	}
-
-	if (old_map != NULL) {
-		IdBlockMap<ServerBlock>::delete_blocks_from_per_array_map(old_map);
-		delete old_map;
-	}
-
-	if (old_manager != NULL) {
-		old_manager->delete_chunk_data_all();
-	    delete old_manager;
-	}
-	if (old_file != NULL) {
-		delete old_file;
+		std::vector<ArrayFile::offset_val_t> index_vals;
+	initialize_local_sparse_index(array_id, index_vals);
+	file->write_sparse_index(index_vals);
+	file->close_and_rename_persistent();
 	}
 }
+
+
+void DiskBackedBlockMap::restore_persistent_array(int array_id, const std::string & label, bool eager, int pc){
+    ArrayFile* file = array_files_.at(array_id);
+	ArrayFile::header_val_t expected_chunk_size = (sip_tables_.max_block_size(array_id)) * BLOCKS_PER_CHUNK;
+	ArrayFile::offset_val_t index_type;
+	ArrayFile::offset_val_t num_blocks;
+	std::vector<ArrayFile::offset_val_t> index_file_data;
+	file->open_persistent_file(label, index_type, num_blocks, index_file_data);
+	ChunkManager* manager = chunk_managers_.at(array_id);
+	//const std::string& label, offset_val_t& index_type, offset_val_t& num_blocks, std::vector<offset_val_t>& index
+	if(eager && index_type == ArrayFile::DENSE_INDEX){
+		eager_restore_chunks_from_index(array_id, file, index_file_data, manager, num_blocks, data_distribution_);
+	}
+	else if (index_type == ArrayFile::DENSE_INDEX){
+		check(false, "lazy restore persistent not yet implemented");
+	}
+	else if (eager && index_type == ArrayFile::SPARSE_INDEX){
+		eager_restore_chunks_from_sparse_index(array_id, file, index_file_data, manager, data_distribution_);
+	}
+	else check(false, "illegal value for index_file_data type");
+}
+
+//	//get the existing file, map, and chunk_manager for this array.
+//	ArrayFile* old_file = array_files_.at(array_id);  //this is the file that was created during initialization
+//	IdBlockMap<ServerBlock>::PerArrayMap* old_map = block_map_.per_array_map_or_null(array_id);
+//	ChunkManager* old_manager = chunk_managers_.at(array_id);
+//	if (old_map != NULL && old_map->size() > 0){
+//		//blocks have already been created for this array.
+//		//If any have been backed to disk, using the old file and old manager,
+//		//restore them now and update memory accounting.
+//			stats_.num_restored_arrays_with_disk_backing_.inc();
+//		    size_t allocated = old_manager->restore();
+//	        remaining_doubles_ -= allocated;
+//		    stats_.allocated_doubles_.inc(allocated);
+//
+//	}
+//
+//	//Create a new ArrayFile object, map, and chunk manager
+//	size_t num_blocks = sip_tables_.num_blocks(array_id);
+//	ArrayFile::header_val_t expected_chunk_size = (sip_tables_.max_block_size(array_id)) * BLOCKS_PER_CHUNK;
+//	//ArrayFile constructor checks that chunk size is as expected.
+//	ArrayFile* file = new ArrayFile(num_blocks, expected_chunk_size, label, SIPMPIAttr::get_instance().company_communicator(), false /*file must exist*/);
+//	array_files_.at(array_id) = file;
+//	ChunkManager* manager = new ChunkManager(expected_chunk_size, file);
+//	chunk_managers_.at(array_id) = manager;
+//	IdBlockMap<ServerBlock>::PerArrayMap* new_map = new std::map<BlockId, ServerBlock*>;
+//	block_map_.update_per_array_map(array_id, new_map);
+//
+//	//restore chunks from the persistent file
+//	if(eager){
+//	eager_restore_chunks_from_index(array_id, file, manager, num_blocks, data_distribution_);
+//	}
+//	else {
+//		check(false, "lazy restore not yet implemented");
+//	}
+//
+//
+//	//traverse old map.  For each block in old map, check whether it was restored from persistent file.
+//	//if not, copy its data.
+//	if (old_map != NULL && old_map->size() > 0){
+//	  IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
+//		for (it = old_map->begin(); it != old_map->end(); ++it){
+//			BlockId id = it->first;
+//			ServerBlock* block = block_map_.block(id);
+//			if (block == NULL){
+//				//old existing block has not been overwritten
+//				//create new block in new data structures and copy data from old
+//				block = get_block_for_writing(id);
+//				block->copy_data(it->second);
+//			}
+//		}
+//	}
+//
+//	if (old_map != NULL) {
+//		IdBlockMap<ServerBlock>::delete_blocks_from_per_array_map(old_map);
+//		delete old_map;
+//	}
+//
+//	if (old_manager != NULL) {
+//		old_manager->delete_chunk_data_all();
+//	    delete old_manager;
+//	}
+//	if (old_file != NULL) {
+//		delete old_file;
+//	}
+//}
 
 void DiskBackedBlockMap::_init(){
 	//create manager and open file for each distributed or served array
@@ -350,8 +383,7 @@ void DiskBackedBlockMap::_init(){
 			size_t max_block_size = sip_tables_.max_block_size(i);
 			ArrayFile::header_val_t chunk_size = max_block_size * BLOCKS_PER_CHUNK; // TODO handle this better
 			std::string name = sip_tables_.array_name(i);
-			bool new_file = true;
-			array_files_[i] = new ArrayFile(num_blocks, chunk_size, name, comm, new_file);
+			array_files_[i] = new ArrayFile(chunk_size, name, comm);
 			chunk_managers_[i] = new ChunkManager(chunk_size, array_files_[i]);
 		}
 	}
@@ -458,12 +490,31 @@ void DiskBackedBlockMap::initialize_local_index(int array_id, std::vector<ArrayF
 //	std::cerr << std::flush;
 }
 
+void DiskBackedBlockMap::initialize_local_sparse_index(int array_id, std::vector<ArrayFile::offset_val_t>& index_vals){
+	IdBlockMap<ServerBlock>::PerArrayMap* array_blocks = block_map_.per_array_map(array_id);
+	IdBlockMap<ServerBlock>::PerArrayMap::iterator it;
+	//iterate over blocks in map
+//	std::cerr << "CONSTRUCTING LOCAL SPARSE INDEX" << std::endl <<  std::endl;
+	for (it = array_blocks->begin(); it!=array_blocks->end(); ++it){
+		//get id of block and linearize it
+		BlockId block_id = it->first;
+		int block_num = sip_tables_.block_number(it->first);
+		ServerBlock* block = it->second;
+		ArrayFile::offset_val_t offset = block->block_data_.file_offset();
+		index_vals.push_back(block_num);
+		index_vals.push_back(offset);
+//		std::cerr << block_id << ", " << block_num << ", " << offset << std::endl << std::flush;
+	}
+//	std::cerr << "PRINTING LOCAL SPARSE INDEX" << std::endl <<  std::endl;
+//	std::vector<ArrayFile::offset_val_t>::iterator it2;
+//	for (it2 = index_vals.begin(); it2 != index_vals.end(); ++it2){
+//		std::cerr << *it2 << ",";
+//	}
+//	std::cerr << std::endl << std::flush;;
+}
 
 
-void DiskBackedBlockMap::eager_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution){
-	//read the index from the array file
-	ArrayFile::offset_val_t index[num_blocks];
-	file->read_index(index, num_blocks);
+void DiskBackedBlockMap::eager_restore_chunks_from_index(int array_id, ArrayFile* file, std::vector<ArrayFile::offset_val_t>& index, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution){
 	ChunkManager::chunk_size_t chunk_size = manager->chunk_size();
 	int rank = SIPMPIAttr::get_instance().company_rank();
 	//create a map of blocks in file that belong to this server.  Count the ones that
@@ -472,13 +523,63 @@ void DiskBackedBlockMap::eager_restore_chunks_from_index(int array_id, ArrayFile
 	int num_chunks = 0;
 	for (int i = 0; i < num_blocks; i++){
 	   offset_val_t offset = index[i];
-	   if (offset != ABSENT_BLOCK_OFFSET && distribution.is_my_block(i)){  //block number i has data and belongs to this server
+	   if (offset != ArrayFile::ABSENT_BLOCK_OFFSET && distribution.is_my_block(i)){  //block number i has data and belongs to this server
 		   offset_block_map[offset]=i;
 		   if (offset % chunk_size == 0){ //block is start of chunk
 			   num_chunks++;
 		   }
 	   }
 	}
+	//determine how many collective reads to perform.
+	int max_num_chunks;
+	MPI_Allreduce(&num_chunks, &max_num_chunks, 1, MPI_INT, MPI_MAX, file->comm_);
+
+	std::map<offset_val_t, block_num_t>::iterator it;
+	int read_count = 0;
+	size_t allocated_doubles = 0;
+	for (it = offset_block_map.begin(); it != offset_block_map.end(); ++it){
+		offset_val_t block_offset = it->first;
+		size_t block_num = it->second;
+		BlockId block_id = sip_tables_.block_id(array_id, block_num);
+		size_t block_size = sip_tables_.block_size(block_id);
+   	    ServerBlock* block = get_block_for_restore(block_id, array_id,block_size);
+		Chunk* chunk = block->get_chunk();
+		if (block_offset % chunk_size == 0){
+//			 file->chunk_read_all(*chunk);
+			file->chunk_read_all(*chunk);
+			chunk->valid_on_disk_=true;
+		    read_count++;
+		}
+	}
+	//noops in case other servers still need to read
+	for (int j = read_count; j != max_num_chunks; ++j){
+		file->chunk_read_all_nop();
+	}
+}
+
+void DiskBackedBlockMap::eager_restore_chunks_from_sparse_index(int array_id, ArrayFile* file, std::vector<ArrayFile::offset_val_t>& index,
+		ChunkManager* manager,
+		const DataDistribution& distribution){
+	ChunkManager::chunk_size_t chunk_size = manager->chunk_size();
+	int rank = SIPMPIAttr::get_instance().company_rank();
+	//create a map of blocks in file that belong to this server.  Count the ones that
+	// correspond to the beginning of a chunk
+	std::map<ArrayFile::offset_val_t, block_num_t> offset_block_map;
+	int num_chunks = 0;
+	int i = 0;
+	while (i < index.size()){
+	   offset_val_t block_num = index[i];
+	   offset_val_t offset = index[i+1];
+	   if (distribution.is_my_block(block_num)){
+		   offset_block_map[offset]=block_num;
+//		   std::cerr << " added to my blockMap";
+		   if (offset % chunk_size == 0){ //block is start of chunk
+			   num_chunks++;
+		   }
+	   }
+	   i += 2;
+	}
+
 	//determine how many collective reads to perform.
 	int max_num_chunks;
 	MPI_Allreduce(&num_chunks, &max_num_chunks, 1, MPI_INT, MPI_MAX, file->comm_);
@@ -541,27 +642,27 @@ ServerBlock* DiskBackedBlockMap::get_block_for_lazy_restore(const BlockId& block
 
 
 
-//UNTESTED
-void DiskBackedBlockMap::lazy_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution){
-	//read the index from the array file
-	ArrayFile::offset_val_t index[num_blocks];
-	file->read_index(index, num_blocks);
-	size_t chunk_size = manager->chunk_size();
-
-	//create two maps offset to block number for blocks belonging to this server
-	//the first map contains offsets that correspond to the beginning of a chunk
-	//the second contains offsets that are within a chunk
-
-	std::map<ArrayFile::offset_val_t, block_num_t> offset_block_map;
-	int num_chunks = 0;
-	for (int block_num = 0; block_num < num_blocks; block_num++){
-	   offset_val_t offset = index[block_num];
-	   if (offset != 0 && distribution.is_my_block(block_num)){
-		   BlockId block_id = sip_tables_.block_id(array_id, block_num);
-		   ServerBlock* block = get_block_for_lazy_restore(block_id);
-	   }
-	}
-}
+////UNTESTED
+//void DiskBackedBlockMap::lazy_restore_chunks_from_index(int array_id, ArrayFile* file, ChunkManager* manager, ArrayFile::header_val_t num_blocks, const DataDistribution& distribution){
+//	//read the index from the array file
+//	ArrayFile::offset_val_t index[num_blocks];
+//	file->read_index(index, num_blocks);
+//	size_t chunk_size = manager->chunk_size();
+//
+//	//create two maps offset to block number for blocks belonging to this server
+//	//the first map contains offsets that correspond to the beginning of a chunk
+//	//the second contains offsets that are within a chunk
+//
+//	std::map<ArrayFile::offset_val_t, block_num_t> offset_block_map;
+//	int num_chunks = 0;
+//	for (int block_num = 0; block_num < num_blocks; block_num++){
+//	   offset_val_t offset = index[block_num];
+//	   if (offset != 0 && distribution.is_my_block(block_num)){
+//		   BlockId block_id = sip_tables_.block_id(array_id, block_num);
+//		   ServerBlock* block = get_block_for_lazy_restore(block_id);
+//	   }
+//	}
+//}
 
 
 

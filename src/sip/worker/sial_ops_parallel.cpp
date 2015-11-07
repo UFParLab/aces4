@@ -90,7 +90,7 @@ void SialOpsParallel::sip_barrier(int pc) {
 //	std::cout<<"W " << sip_mpi_attr_.global_rank()
 //	     		<< " : calling update_state_at_barrier "
 //	     		<<  " at line "<< current_line()
-//	     		<< " in program " << GlobalState::get_program_name() << std::endl << std::flush;
+//	     		<< " in program " << JobControl::global->get_program_name() << std::endl << std::flush;
 	barrier_support_.update_state_at_barrier();
 
 
@@ -245,7 +245,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
      		<< " : sending PUT for block " << target_id.str(sip_tables_)
      		<< " to server "<< server_rank << " at line "<< current_line()
-     		<< " in program " << GlobalState::get_program_name() << std::endl << std::flush;);
+     		<< " in program " << JobControl::global->get_program_name() << std::endl << std::flush;);
 
 
 

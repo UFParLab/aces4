@@ -379,6 +379,7 @@ public:
         }
         ;
         void inc(D delta = 1) {
+        	//TODO why this?
                 if (std::numeric_limits<D>::max() - value_  <= delta){
                         std::cerr << "value, delta = " << value_ << ',' << delta;
                 }

@@ -1,0 +1,11 @@
+sial decreasing_segs
+	aoindex i = 1:3
+    distributed a[i]
+    temp b[i]
+    
+    pardo i
+    	b[i]=0.0
+    	put a[i] = b[i]
+    endpardo i
+    
+endsial decreasing_segs

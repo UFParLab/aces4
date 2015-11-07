@@ -16,7 +16,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
@@ -30,7 +30,7 @@
 #ifdef HAVE_MPI
 //#include "sip_server.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_mpi_attr.h"
@@ -116,8 +116,8 @@ void TestController::initSipTables(const std::string& sial_dir_name) {
 //			*sip_tables_);
 //	barrier();
 	prog_name_ = progs_->at(prog_number_++);
-	sip::GlobalState::set_program_name(prog_name_);
-	sip::GlobalState::increment_program();
+	sip::JobControl::global->set_program_name(prog_name_);
+//	sip::JobControl::global->increment_program();
 	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
 	if (!sip_tables_) delete sip_tables_;

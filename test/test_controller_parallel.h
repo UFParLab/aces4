@@ -51,6 +51,23 @@ class TestControllerParallel {
 public:
 	TestControllerParallel(std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
 			bool expect_success=true);
+
+	/** adds a restart id
+	 *
+	 * use JobControl::global->get_job_id to get the job id of the preceding job, then
+	 * use that as the value to pass here to test restart.
+	 *
+	 * @param job
+	 * @param has_dot_dat_file
+	 * @param verbose
+	 * @param comment
+	 * @param sial_output
+	 * @param restart_id
+	 * @param expect_success
+	 */
+	TestControllerParallel(std::string job,
+			bool has_dot_dat_file, bool verbose, std::string comment,
+			std::ostream& sial_output, std::string restart_id, int restart_prognum, bool expect_success=true);
 	~TestControllerParallel() ;
 
 	void initSipTables(const std::string& sial_dir_name = dir_name);

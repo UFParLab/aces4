@@ -15,6 +15,7 @@
 #include "block_manager.h"
 #include "data_distribution.h"
 #include "counter.h"
+#include "sip_mpi_utils.h"
 //#include "data_manager.h"
 //#include "worker_persistent_array_manager.h"
 

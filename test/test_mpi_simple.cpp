@@ -13,7 +13,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
@@ -28,7 +28,7 @@
 //#ifdef HAVE_MPI
 //#include "sip_server.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"
@@ -174,7 +174,7 @@ TEST(Sial,put_test) {
 
 TEST(SimpleMPI,persistent_distributed_array_mpi){
 
-	sip::GlobalState::reset_program_count();
+	sip::JobControl::global->reset_program_count();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	int my_rank = sip_mpi_attr.global_rank();
 
@@ -221,8 +221,8 @@ TEST(SimpleMPI,persistent_distributed_array_mpi){
 
 	//create worker and server
 	sip::DataDistribution data_distribution(sipTables, sip_mpi_attr);
-	sip::GlobalState::set_program_name(prog_name);
-	sip::GlobalState::increment_program();
+	sip::JobControl::global->set_program_name(prog_name);
+	sip::JobControl::global->increment_program();
 	sip::WorkerPersistentArrayManager wpam;
 	sip::ServerPersistentArrayManager spam;
 
@@ -265,8 +265,8 @@ TEST(SimpleMPI,persistent_distributed_array_mpi){
 	}
 
 	sip::DataDistribution data_distribution2(sipTables2, sip_mpi_attr);
-	sip::GlobalState::set_program_name(prog_name);
-	sip::GlobalState::increment_program();
+	sip::JobControl::global->set_program_name(prog_name);
+	sip::JobControl::global->increment_program();
 	std::cout << "rank " << my_rank << " reached second barrier in test" << std::endl << std::flush;
 	MPI_Barrier(MPI_COMM_WORLD);
 	std::cout << "rank " << my_rank << " passed second barrier in test" << std::endl << std::flush;

@@ -6,13 +6,13 @@
  */
 
 #include <cached_block_map.h>
-#include "global_state.h"
+#include "job_control.h"
 namespace sip {
 
 CachedBlockMap::CachedBlockMap(int num_arrays)
 	: block_map_(num_arrays), cache_(num_arrays), policy_(cache_),
 
-	  max_allocatable_bytes_(sip::GlobalState::get_max_worker_data_memory_usage()),
+	  max_allocatable_bytes_(sip::JobControl::global->get_max_worker_data_memory_usage()),
 	  allocated_bytes_(0), pending_delete_bytes_(0),
 	  set_mem_limit_once_(false){
 

@@ -17,8 +17,10 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
+#include "array_file.h"
+#include "aces_log.h"
 
 #include "worker_persistent_array_manager.h"
 
@@ -28,7 +30,7 @@
 #include "sip_server.h"
 #include "server_persistent_array_manager.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"
@@ -395,7 +397,7 @@ TEST(Sial,put_increment) {
 //TODO  restore functionality for single node version.  Was lost when PersistentArrayManager.h was refactored into
 //worker and server versions.
 
-TEST(Sial,persistent_scalars) {
+TEST(Sial,persistent_scalars_with_restart) {
 	std::string job("persistent_scalars");
 	double x = 3.456;
 	double y = -0.1;
@@ -413,9 +415,16 @@ TEST(Sial,persistent_scalars) {
 		finalize_setup();
 	}
 
+	std::string jobid;
+
+
 	std::stringstream output;
+
+
+	{
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
+	jobid = sip::JobControl::global->get_job_id();
 	controller.run();
 	if (attr->is_worker()) {
 		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
@@ -424,12 +433,48 @@ TEST(Sial,persistent_scalars) {
 
 		std::cout << "wpam:" << std::endl << *controller.wpam_ << std::endl
 				<< "%%%%%%%%%%%%" << std::endl;
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+	}
+	sip::AcesLog current_log(jobid, false);
+	current_log.write_prog_num(sip::JobControl::global->get_program_num());
+
 	}
 
+	sleep(5); //to ensure different job id in second program
+    int restart_prognum=0;
+    {sip::AcesLog restart_log(jobid, true);
+		if(restart_log.is_open()){
+			restart_prognum = restart_log.read_prog_num();
+			SIP_MASTER(
+			std::cout << "RESTARTING JOB at program number " << restart_prognum
+					<< " with persistent data from job " << jobid << std::endl << std::flush;
+			);
+		} else {
+			std::cerr << "restart log file is not open." << std::endl << std::flush;
+		}
+		SIP_MASTER(
+				std::cerr << "RESTARTING JOB at program number " << restart_prognum
+						<< " with persistent data from job " << jobid << std::endl << std::flush;
+				);
+    }
+	//now do the second program with a restart.  This requires a new controller.
+	TestControllerParallel restart_controller(job, true, VERBOSE_TEST, "", output, jobid,
+			restart_prognum);
 	//Now do the second program
 	//get siox name from setup, load and print the sip tables
-	controller.initSipTables();
-	controller.run();
+	restart_controller.initSipTables();
+	std::cerr << "jobid, retstart_jobid, prognum" << sip::JobControl::global->get_job_id() << ","
+			<< sip::JobControl::global->get_restart_id() << "," << sip::JobControl::global->get_program_num()
+	        << std::endl << std::flush;
+	restart_controller.run();
 	if (attr->is_worker()) {
 		ASSERT_DOUBLE_EQ(x + 1, scalar_value("x"));
 		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
@@ -731,8 +776,138 @@ TEST(Sial,persistent_distributed_array_mpi){
 //	        sleep(5);
 //	}
 	controller.print_timers(std::cout);
-	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
 
+	barrier();
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
+	barrier();
+	//run second program
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		int i,j;
+		for (i=1; i <= norb ; ++i ){
+			for (j = 1; j <= norb; ++j){
+			    double firstval = (i-1)*norb + j;
+			    std::vector<int> indices;
+			    indices.push_back(i);
+			    indices.push_back(j);
+			    double * block_data = controller.local_block(std::string("a"),indices);
+			    size_t block_size = segs[i-1] * segs[j-1];
+			    for (size_t count = 0; count < block_size; ++count){
+			    	ASSERT_DOUBLE_EQ(3*firstval, block_data[count]);
+			    	firstval++;
+			    }
+			}
+		}
+	}
+
+//	controller.print_timers(std::cout);
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+#ifdef HAVE_MPI
+    if (attr->is_server()){
+        barrier();
+        controller.server_->gather_and_print_statistics(std::cerr);
+    }
+#endif
+    barrier();
+
+
+}
+
+
+TEST(Sial,persistent_distributed_array_n_of_three){
+	sip::ArrayFile::clean_directory();
+	std::string job("persistent_distributed_array");
+	double x = 3.456;
+	int norb = 2;
+	int segs[]  = {2,3};
+
+	if (attr->global_rank() == 0){
+		init_setup(job.c_str());
+		set_scalar("x",x);
+		set_constant("norb",norb);
+		std::string tmp = job + "_one_of_three.siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		std::string tmp1 = job + "_two_of_three.siox";
+		const char* nm1= tmp1.c_str();
+		add_sial_program(nm1);
+		std::string tmp2 = job + "_three_of_three.siox";
+		const char* nm2= tmp2.c_str();
+		add_sial_program(nm2);
+		set_aoindex_info(2,segs);
+		finalize_setup();
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+	}
+//	else
+//	if (attr->is_server())
+//			{//for gdb
+//			    int i = 0;
+//			    char hostname[256];
+//			    gethostname(hostname, sizeof(hostname));
+//			    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//			    fflush(stdout);
+//			    while (0 == i)
+//			        sleep(5);
+//			}
+
+
+
+	std::stringstream output;
+	TestControllerParallel controller(job, true, true, "", output);
+
+	//run first program
+	controller.initSipTables();
+	controller.run();
+//	{//for gdb
+//	    int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
+	controller.print_timers(std::cout);
+
+	barrier();
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array starting second program" << std::endl << std::flush;
+	barrier();
+	//run second program
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		int i,j;
+		for (i=1; i <= norb ; ++i ){
+			for (j = 1; j <= norb; ++j){
+			    double firstval = (i-1)*norb + j;
+			    std::vector<int> indices;
+			    indices.push_back(i);
+			    indices.push_back(j);
+			    double * block_data = controller.local_block(std::string("a"),indices);
+			    size_t block_size = segs[i-1] * segs[j-1];
+			    for (size_t count = 0; count < block_size; ++count){
+			    	ASSERT_DOUBLE_EQ(3*firstval, block_data[count]);
+			    	firstval++;
+			    }
+			}
+		}
+	}
+
+	barrier();
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array starting third program" << std::endl << std::flush;
+	barrier();
 	//run second program
 	controller.initSipTables();
 	controller.run();
@@ -788,15 +963,14 @@ TEST(Sial,DISABLED_cached_block_map_test) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
-    sip::GlobalState::set_max_worker_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_worker_data_memory_usage(limit_size);
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
     if (attr->is_worker()) {
         EXPECT_TRUE(controller.worker_->all_stacks_empty());
     }
-    sip::GlobalState::reinitialize();
 }
 
 
@@ -818,15 +992,14 @@ TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
-    sip::GlobalState::set_max_worker_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_worker_data_memory_usage(limit_size);
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
     if (attr->is_worker()) {
         EXPECT_TRUE(controller.worker_->all_stacks_empty());
     }
-    sip::GlobalState::reinitialize();
 }
 
 
@@ -947,6 +1120,35 @@ TEST(Sial,put_accumulate_stress){
 
 }
 
+TEST(Sip,decreasing_segs){
+
+	    std::string job("decreasing_segs");
+	    int segs[] = {3,3,18,22,22,22};
+	    if (attr->global_rank() == 0) {
+	        init_setup(job.c_str());
+	        std::string tmp = job + ".siox";
+	        const char* nm = tmp.c_str();
+	        add_sial_program(nm);
+	        set_aoindex_info(6, segs);
+	        finalize_setup();
+	    }
+	    std::stringstream output;
+
+	    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//	    {
+//	        int i = 0;
+//	        char hostname[256];
+//	        gethostname(hostname, sizeof(hostname));
+//	        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	        fflush(stdout);
+//	        while (0 == i)
+//	            sleep(5);
+//	    }
+	    controller.initSipTables();
+
+
+	    controller.run();
+}
 
 /* This test sets a very low limit for memory usage at the server
  * and sends enough blocks to require disk backing.
@@ -960,10 +1162,10 @@ TEST(Sial,put_accumulate_stress){
 TEST(Sip,disk_backing_test) {
 	std::string job("disk_backing_test");
 	size_t limit_size = 70000000;
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
     if ( attr->global_rank() == 0){
-    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
-    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
     }
     barrier();
     int norb = 9;
@@ -1020,7 +1222,6 @@ TEST(Sip,disk_backing_test) {
     }
 #endif
 	barrier();
-    sip::GlobalState::reinitialize();
 }
 
 /* This test sets a very low limit for memory usage at the server
@@ -1032,10 +1233,10 @@ TEST(Sip,disk_backing_test) {
 TEST(Sip,disk_backing_put_acc_stress) {
 	std::string job("disk_backing_test");
 	size_t limit_size = 70000000;
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
     if ( attr->global_rank() == 0){
-    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
-    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
     }
     barrier();
     int norb = 9;
@@ -1087,7 +1288,6 @@ TEST(Sip,disk_backing_put_acc_stress) {
 	}
 #endif
 	barrier();
-	sip::GlobalState::reinitialize();
 	std::cerr << "at end of disk_backing_put_acc_stress" << std::endl << std::flush;
 }
 
@@ -1107,8 +1307,8 @@ TEST(Sip,disk_backing_test_default_limit) {
 //		std::cout << "I am a server with global rank " << attr->global_rank() << std::endl << std::flush;
 //	}
     if ( attr->global_rank() == 0){
-    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
-    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
     }
     barrier();
     int norb = 9;
@@ -1168,7 +1368,6 @@ TEST(Sip,disk_backing_test_default_limit) {
 		std::cout << std::flush;
 	}
 	barrier();
-	sip::GlobalState::reinitialize();
 }
 
 //****************************************************************************************************************

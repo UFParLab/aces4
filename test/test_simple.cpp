@@ -13,7 +13,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
@@ -28,7 +28,7 @@
 //#ifdef HAVE_MPI
 //#include "sip_server.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"

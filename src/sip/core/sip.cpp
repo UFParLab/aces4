@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include "sip_interface.h"
-#include "global_state.h"
+#include "job_control.h"
 
 #ifdef __GNUC__
 #include <execinfo.h>
@@ -71,6 +71,10 @@ void sip_abort(std::string m) {
 #endif // __GNUC__
 
 #ifdef HAVE_MPI
+
+
+	std::cerr << *(sip::JobControl::global) << std::flush;
+
 	if (sip::SIPMPIAttr::get_instance().is_worker())
 		std::cerr << "worker rank " << sip::SIPMPIAttr::get_instance().global_rank() << ": " << m << std::endl<< std::flush;
 	else
@@ -133,14 +137,14 @@ bool check_and_warn(bool condition, const char* message, int line){
 void warn(const char* message, int line) {
 	std::cerr << "WARNING:  " << message;
 	if (line > 0) {
-		std::cerr << " at " << GlobalState::get_program_name() << ":" << line;
+		std::cerr << " at " << JobControl::global->get_program_name() << ":" << line;
 	}
 	std::cerr << std::endl << std::flush;
 }
 void warn(const std::string& message, int line) {
 	std::cerr << "WARNING:  " << message;
 	if (line > 0) {
-		std::cerr << " at " << GlobalState::get_program_name() << ":" << line;
+		std::cerr << " at " << JobControl::global->get_program_name() << ":" << line;
 	}
 	std::cerr << std::endl << std::flush;
 }
@@ -151,7 +155,7 @@ void fail(const std::string& message, int line){
 	std::stringstream s;
 	s << "FATAL ERROR: " << message;
 	if (line > 0){
-		std::string prog = GlobalState::get_program_name();
+		std::string prog = JobControl::global->get_program_name();
 		int length = prog.size()-std::string(".siox").size();
 		s << " at "<< prog.substr(0,length) << ":" << line;
 	}
@@ -163,7 +167,7 @@ void fail(const char* message, int line){
 	std::stringstream s;
 	s << "FATAL ERROR: " << message;
 	if (line > 0){
-		std::string prog = GlobalState::get_program_name();
+		std::string prog = JobControl::global->get_program_name();
 		int length = prog.size()-std::string(".siox").size();
 		s << " at "<< prog.substr(0,length) << ":" << line;
 	}
@@ -176,7 +180,7 @@ void fail_with_exception(const std::string& message, int line){
 	std::stringstream s;
 	s << "FATAL ERROR: " << message;
 	if (line > 0){
-		std::string prog = GlobalState::get_program_name();
+		std::string prog = JobControl::global->get_program_name();
 		int length = prog.size()-std::string(".siox").size();
 		s << " at "<< prog.substr(0,length) << ":" << line;
 	}

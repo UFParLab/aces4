@@ -375,8 +375,7 @@ void IndexTable::segment_info(int index_slot, int& min, int& max, int& num_segme
 	lower = lower_seg(index_slot);
 	int seg = lower;
 	min = max = segment_extent(index_slot, seg);
-	seg++;
-	for (int i = 1; i < num_segments; ++i){
+	for (; seg < lower + num_segments; ++seg){
 		int extent = segment_extent(index_slot,seg);
 		min = (extent < min)? extent : min;
 		max = (extent > max)? extent : max;

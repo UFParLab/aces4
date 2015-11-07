@@ -160,6 +160,8 @@ void sial_fail(const std::string& m, int line = 0);
 bool sial_warn(bool condition, const std::string& m, int line = 0);
 bool sial_warn(bool condition, const char* m, int line = 0);
 
+
+
 }//namespace sip
 
 #endif /* SIP_H_*/

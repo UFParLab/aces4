@@ -14,7 +14,7 @@
 
 #include "mpi.h"
 #include "sip_mpi_utils.h"
-#include "global_state.h"
+#include "job_control.h"
 
 namespace sip {
 
@@ -381,7 +381,7 @@ namespace sip {
 //}
 //
 //void DiskBackedArraysIO::array_file_name(int array_id, char filename[MAX_FILE_NAME_SIZE]){
-//	const std::string& program_name_str = GlobalState::get_program_name();
+//	const std::string& program_name_str = JobControl::global->get_program_name();
 //	const std::string& arr_name_str = sip_tables_.array_name(array_id);
 //	const char * program_name = program_name_str.c_str();
 //	const char * arr_name = arr_name_str.c_str();
@@ -741,7 +741,7 @@ namespace sip {
 //}
 //
 //void DiskBackedArraysIO::array_file_name(int array_id, char filename[MAX_FILE_NAME_SIZE]){
-//	const std::string& program_name_str = GlobalState::get_program_name();
+//	const std::string& program_name_str = JobControl::global->get_program_name();
 //	const std::string& arr_name_str = sip_tables_.array_name(array_id);
 //	const char * program_name = program_name_str.c_str();
 //	const char * arr_name = arr_name_str.c_str();
@@ -1171,7 +1171,7 @@ namespace sip {
 ////}
 ////
 ////void DiskBackedArraysIO::array_file_name(int array_id, char filename[MAX_FILE_NAME_SIZE]){
-////	const std::string& program_name_str = GlobalState::get_program_name();
+////	const std::string& program_name_str = JobControl::global->get_program_name();
 ////	const std::string& arr_name_str = sip_tables_.array_name(array_id);
 ////	const char * program_name = program_name_str.c_str();
 ////	const char * arr_name = arr_name_str.c_str();

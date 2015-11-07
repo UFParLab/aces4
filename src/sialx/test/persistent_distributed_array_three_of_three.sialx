@@ -1,4 +1,4 @@
-sial persistent_distributed_array_mpi2
+sial persistent_distributed_array_three_of_three
 	special list_block_map
 	special print_block r
 	predefined int norb
@@ -11,7 +11,7 @@ sial persistent_distributed_array_mpi2
 	
 	local lb[i,j]
 	
-	println "$$$$$$$$$$$$$$ start of second prog $$$$$$$$$"
+	println "$$$$$$$$$$$$$$ start of third prog $$$$$$$$$"
 	allocate lb[*,*]
 	allocate a[*,*]
 	
@@ -34,7 +34,7 @@ sial persistent_distributed_array_mpi2
 	      print a[i,j]
 	   enddo j
 	enddo i
-	
+		
 	do i
 		do j
 			get b[i, j]
@@ -49,4 +49,4 @@ sial persistent_distributed_array_mpi2
 	sip_barrier
 	println "!!!!!!!!!! end of second prog!!!!!!!!!!!!!"
 	
-endsial persistent_distributed_array_mpi2
+endsial persistent_distributed_array_three_of_three

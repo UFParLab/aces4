@@ -30,7 +30,7 @@ namespace setup {
 
 class SetupWriter {
 public:
-    SetupWriter (std::string, OutputStream *);
+    SetupWriter (std::string jobname, OutputStream * file);
     ~SetupWriter ();
 //	void init_(const char * job_name);
     void write_header_file();

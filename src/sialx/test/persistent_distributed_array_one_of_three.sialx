@@ -1,0 +1,47 @@
+sial persistent_distributed_array_one_of_three
+	special list_block_map
+	special print_block r
+	special fill_block_sequential wr
+	predefined int norb # 2 in this test
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
+	
+	int count 
+	scalar scount
+
+	create b
+	create c
+	allocate a[*,*]
+	
+	println "Sending blocks"	
+	pardo i
+		do j
+			count = (i-1)*norb + j
+			scount = (scalar)count
+			execute fill_block_sequential a[i,j] scount
+			put b[i,j] = a[i,j]
+			put c[i,j] += a[i,j]
+			put c[i,j] += a[i,j]			
+		enddo j
+	endpardo i
+	
+	sip_barrier
+	
+    do i
+        do j
+            get b[i, j]
+            get c[i, j]
+            print b[i, j]
+            print c[i, j]
+        enddo j
+    enddo i
+	
+	set_persistent b "savedb"
+	set_persistent c "savedc"
+	
+	println "&&&&&&&&&& End of first prog &&&&&&&&&&&&&"
+	
+endsial persistent_distributed_array_one_of_three

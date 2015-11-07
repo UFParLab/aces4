@@ -16,7 +16,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include "sip_interface.h"
-#include "global_state.h"
+#include "job_control.h"
 
 #include <mpi.h>
 #include <execinfo.h>

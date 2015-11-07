@@ -10,9 +10,10 @@
 #include "data_manager.h"
 #include "worker_persistent_array_manager.h"
 #include "block.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "tracer.h"
 #include "counter.h"
+#include "aces_log.h"
 
 #include <vector>
 #include <sstream>
@@ -126,6 +127,7 @@ struct Aces4Parameters{
     std::string job;
     int num_workers;
     int num_servers;
+    std::string restart_job_id;
     Aces4Parameters(){
         init_binary_file = "data.dat";  // Default initialization file is data.dat
         sialx_file_dir = ".";           // Default directory for compiled sialx files is "."
@@ -141,6 +143,7 @@ struct Aces4Parameters{
         job = "";
         num_workers = -1;
         num_servers = -1;
+        restart_job_id = "";
     }
 };
 
@@ -159,6 +162,7 @@ static void print_usage(const std::string& program_name) {
 	std::cerr << "\t -v : approx. memory for servers. Actual usage will be more." << std::endl;
     std::cerr << "\t -q : number of workers  " << std::endl;
     std::cerr << "\t -r : number of servers  " << std::endl;
+    std::cerr << "\t -b : job id of job to restart " << std::endl;
     std::cerr << "\tDefaults: data file - \"data.dat\", sialx directory - \".\", Memory : 2GB" << std::endl;
     std::cerr << "\tm is the approximate memory to use. Actual usage will be more." << std::endl;
     std::cerr << "\tworkers & servers are distributed in a 2:1 ratio for an MPI build" << std::endl;
@@ -185,8 +189,9 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
     // v: approximate memory for servers to be used.
     // q: number of workers
     // r: number of servers
+    // b: job id of job to restart
     // h & ? are for help. They require no arguments
-    const char* optString = "d:j:s:m:w:v:q:r:h?";
+    const char* optString = "d:j:s:m:w:v:q:r:b:h?";
     int c;
     while ((c = getopt(argc, argv, optString)) != -1) {
         switch (c) {
@@ -228,6 +233,10 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
             break;
         case 'r' : {
             parameters.num_servers = read_from_optarg<int>();
+        }
+        	break;
+        case 'b' : {
+        	parameters.restart_job_id = optarg;
         }
             break;
         case 'h':
@@ -329,26 +338,53 @@ int main(int argc, char* argv[]) {
 	/* MPI Initialization */
 	MPI_Init(&argc, &argv);
 #endif // HAVE_MPI
-
+    {
+        int i = 0;
+        char hostname[256];
+        gethostname(hostname, sizeof(hostname));
+        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+        fflush(stdout);
+        while (0 == i)
+            sleep(5);
+    }
     Aces4Parameters parameters = parse_command_line_parameters(argc, argv);
 
 #ifdef HAVE_MPI    
     set_rank_distribution(parameters);
 	sip::SIPMPIUtils::set_error_handler();
 #endif
+	int restart_prognum = 0;
+	//limit scope of restart_log
+    {sip::AcesLog restart_log(parameters.restart_job_id, true);
+		if(restart_log.is_open()){
+			restart_prognum = restart_log.read_prog_num();
+			SIP_MASTER(
+			std::cout << "RESTARTING JOB at program number " << restart_prognum
+					<< " with persistent data from job " << parameters.restart_job_id << std::endl << std::flush;
+			);
+		}
+    }
+    std::string job_id = sip::JobControl::make_job_id();
+    sip::JobControl::set_global_job_control(new sip::JobControl(job_id, parameters.restart_job_id, restart_prognum,
+    		parameters.worker_memory,
+    		parameters.server_memory));
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cout<<sip_mpi_attr<<std::endl;
 
-	// Set Approx Max memory usage
-	sip::GlobalState::set_max_worker_data_memory_usage(parameters.worker_memory);
-	sip::GlobalState::set_max_server_data_memory_usage(parameters.server_memory);//small enough for disk back use in eom test
+
+    //create log for current job
+    sip::AcesLog current_log(sip::JobControl::global->get_job_id(), false);
+//#ifdef HAVE_MPI
+
 
 	//create setup_file
     setup::SetupReader* setup_reader = read_init_file(parameters);
 	SIP_MASTER_LOG(std::cout << "SETUP READER DATA:\n" << setup_reader << std::endl);
 	setup::SetupReader::SialProgList &progs = setup_reader->sial_prog_list();
 	setup::SetupReader::SialProgList::iterator it;
+
+
 
 //#ifdef HAVE_MPI
 // opening files for timer printout
@@ -367,6 +403,15 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_MPI
 	sip::ServerPersistentArrayManager persistent_server;
 	sip::WorkerPersistentArrayManager persistent_worker;
+	std::stringstream ss;
+
+	//if this is a restart, read the checkpoint data.  This is a noop if not a server.
+	if (restart_prognum > 0) {
+		ss << sip::JobControl::global->get_restart_id() << '.' << restart_prognum-1 << '.' << "worker_checkpoint";
+		persistent_worker.init_from_checkpoint(ss.str());
+	}
+
+
 
 	std::ostream& server_stat_os = server_timer_output;
 	std::ostream& worker_stat_os = worker_timer_output;
@@ -376,7 +421,10 @@ int main(int argc, char* argv[]) {
 #endif //HAVE_MPI
 
 
-	for (it = progs.begin(); it != progs.end(); ++it) {
+
+
+
+	for (it = progs.begin() + restart_prognum; it != progs.end(); ++it) {
 //		sip::SimpleTimer setup;
 //		setup.start();
 		std::string sialfpath;
@@ -384,14 +432,16 @@ int main(int argc, char* argv[]) {
 		sialfpath.append("/");
 		sialfpath.append(*it);
 
-		sip::GlobalState::set_program_name(*it);
-		sip::GlobalState::increment_program();
+		sip::JobControl::global->set_program_name(*it);
+
 
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(*setup_reader, siox_file);
 
-		SIP_MASTER_LOG(std::cout << "SIP TABLES" << '\n' << sipTables << std::endl);
-		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
+		std::cerr << "Executing siox file : " << sialfpath << "Program number= "<<  sip::JobControl::global->get_program_num() << std::endl << std::flush;
+
+//		SIP_MASTER_LOG(std::cout << "SIP TABLES" << '\n' << sipTables << std::endl);
+//		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);
 
 
 //		const std::vector<std::string> lno2name = sipTables.line_num_to_name();
@@ -400,6 +450,11 @@ int main(int argc, char* argv[]) {
 
 		// TODO Broadcast from worker master to all servers & workers.
 	if (sip_mpi_attr.is_server()){
+
+//DEBUG
+//		std::cerr << "At server prognum is " << sip::JobControl::global->get_program_num()<< std::endl << std::flush;
+
+
 		//			sip::ServerTimer server_timer(sipTables.op_table_size());
 		sip::SIPServer server(sipTables, data_distribution, sip_mpi_attr, &persistent_server);
 		server.run();
@@ -428,7 +483,7 @@ int main(int argc, char* argv[]) {
 
 	//interpret current program on worker
 	{
-
+//		std::cerr << "At worker prognum is " << sip::JobControl::global->get_program_num() << std::endl << std::flush;
 		//sip::SialxTimer sialxTimer(sipTables.max_timer_slots());
 		//sip::SialxTimer sialxTimer(sipTables.op_table_size());
 
@@ -439,6 +494,10 @@ int main(int argc, char* argv[]) {
 		runner.interpret();
 		runner.post_sial_program();
 		persistent_worker.save_marked_arrays(&runner);
+		std::stringstream tt;
+		tt << sip::JobControl::global->get_job_id() << '.' << sip::JobControl::global->get_program_num() << '.' << "worker_checkpoint";
+		std::string worker_checkpoint_filename = tt.str();
+		persistent_worker.checkpoint_persistent(worker_checkpoint_filename);
 		SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker;)
 
 		SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
@@ -454,6 +513,13 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_MPI
 		sip::SIPMPIUtils::check_err(MPI_Barrier(MPI_COMM_WORLD));
 #endif
+		//update program number and write to log
+		sip::JobControl::global->increment_program();
+//		std::cerr << "$$$$$$$$$$$ between programs, now program-number is " << sip::JobControl::global->get_program_num() << std::endl<< std::flush;
+		if (current_log.is_open()){
+			current_log.write_prog_num(sip::JobControl::global->get_program_num());
+		}
+
 	} //end of loop over programs
 
 #ifdef HAVE_MPI

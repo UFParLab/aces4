@@ -73,7 +73,11 @@ set(ACES_CORE_FILES
     src/sip/core/array_constants.cpp;
     src/sip/core/sip.h;
     src/sip/core/sip.cpp;
-    src/sip/core/aces_defs.h)
+    src/sip/core/aces_defs.h;
+    src/sip/core/aces_log.h;
+    src/sip/core/aces_log.cpp;
+    src/sip/core/job_control.h;
+    src/sip/core/job_control.cpp)
 
 # MPI - Conditional compile for MPI files
 if (HAVE_MPI AND MPI_CXX_FOUND)
@@ -171,8 +175,6 @@ set(ACES_WORKER_FILES
     src/sip/worker/pardo_loop_factory.h;
     src/sip/worker/interpreter.cpp;
     src/sip/worker/interpreter.h;
-    src/sip/worker/global_state.h;
-    src/sip/worker/global_state.cpp;
     src/sip/worker/siox_reader.h;
     src/sip/worker/siox_reader.cpp;
     src/sip/worker/sial_ops_sequential.h;
@@ -514,6 +516,9 @@ set(SIAL_FILES
     src/sialx/test/get_mpi.sialx;
     src/sialx/test/persistent_distributed_array_mpi1.sialx;
     src/sialx/test/persistent_distributed_array_mpi2.sialx;
+    src/sialx/test/persistent_distributed_array_one_of_three.sialx;
+    src/sialx/test/persistent_distributed_array_two_of_three.sialx;
+    src/sialx/test/persistent_distributed_array_three_of_three.sialx;
     src/sialx/test/persistent_empty_mpi1.sialx;
     src/sialx/test/persistent_empty_mpi2.sialx;
     src/sialx/test/persistent_scalars_1.sialx;
@@ -546,6 +551,7 @@ set(SIAL_FILES
     src/sialx/test/put_accumulate_stress.sialx;
     src/sialx/test/disk_backing_test.sialx;
     src/sialx/test/disk_backing_put_acc_stress.sialx;
+    src/sialx/test/decreasing_segs.sialx
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;

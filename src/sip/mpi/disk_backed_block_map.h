@@ -12,6 +12,8 @@
 #include "lru_array_policy.h"
 
 #include "counter.h"
+#include "array_file.h"
+#include "chunk_manager.h"
 
 namespace sip {
 class BlockId;
@@ -40,7 +42,7 @@ public:
 	typedef ArrayFile::offset_val_t offset_val_t;
 
 	static const int BLOCKS_PER_CHUNK;
-	static const offset_val_t ABSENT_BLOCK_OFFSET;
+
 
 	DiskBackedBlockMap(const SipTables&, const SIPMPIAttr&,
 			const DataDistribution&);
@@ -170,12 +172,11 @@ public:
 	/**
 	 * Marks the given array's ArrayFile object as persistent with the given label and
 	 * then writes the blocks of the given array to disk using a a collective flush.
-	 * This routine is also responsible for writing the files index.
+	 * This routine is also responsible for writing the file's index.
 	 *
 	 * This routine is called by the persistent array manager on completion of the server loop.
 	 *
 	 * The file is closed and renamed with a filename derived from the label
-	 * in the ArrayFile object's destructor.
 	 *
 	 * @param array_id
 	 * @param label
@@ -199,7 +200,7 @@ public:
 	 * @param eager     if true, all blocks of array are collectively restored.  Otherwise,
 	 *                     chunks are read in when accessed.
 	 */
-	void restore_persistent_array(int array_id, std::string & label, bool eager,
+	void restore_persistent_array(int array_id, const std::string & label, bool eager,
 			int pc);
 
 
@@ -276,6 +277,16 @@ public:
 		}
 	};
 
+	/**
+	 * Called by DiskBackedBlockMap destructor
+	 *
+	 * Deletes ArrayFile and ChunkManager objects.  The former closes the file.  Non-persistent
+	 * files are deleted, persistent files are renamed.
+	 *
+	 * Precondition:  save_persistent_array has been called for each persistent array.
+	 * Precondition to avoid memory leaks:  all blocks have been deleted
+	 */
+	void _finalize();
 
 private:
 
@@ -289,16 +300,7 @@ private:
 	 */
 	void _init();
 
-	/**
-	 * Called by DiskBackedBlockMap destructor
-	 *
-	 * Deletes ArrayFile and ChunkManager objects.  The former closes the file.  Non-persistent
-	 * files are deleted, persistent files are renamed.
-	 *
-	 * Precondition:  save_persistent_array has been called for each persistent array.
-	 * Precondition to avoid memory leaks:  all blocks have been deleted
-	 */
-	void _finalize();
+
 
 	/**
 	 * Creates a new block belonging to the indicated array with the given size,
@@ -372,6 +374,9 @@ private:
 			std::vector<ArrayFile::offset_val_t>& index_vals,
 			size_t num_blocks);
 
+	void initialize_local_sparse_index(int array_id, std::vector<ArrayFile::offset_val_t>& index_vals);
+
+
 	/*!
 	 * Collectively reads all of the given file's chunks which belong to this server.
 	 *
@@ -383,14 +388,18 @@ private:
 	 * @param num_blocks
 	 * @param distribution
 	 */
-	void eager_restore_chunks_from_index(int array_id, ArrayFile* file,
+	void eager_restore_chunks_from_index(int array_id, ArrayFile* file, std::vector<ArrayFile::offset_val_t>& index,
 			ChunkManager* manager, ArrayFile::header_val_t num_blocks,
 			const DataDistribution& distribution);
 
+
+	void eager_restore_chunks_from_sparse_index(int array_id, ArrayFile* file, std::vector<ArrayFile::offset_val_t>& index,
+			ChunkManager* manager,
+			const DataDistribution& distribution);
 	/**
 	 * UNTESTED!!!!
 	 * Creates an entry in the block map and assigns chunk data for each block, which is marked,
-	 * valid on disk.  The chunk is read when one of its blocks is accessed.
+	 * valid on disk.  The chunk is read only when one of its blocks is accessed.
 	 *
 	 * @param array_id
 	 * @param file
