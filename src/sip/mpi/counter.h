@@ -151,7 +151,7 @@ protected:
                 return os;
         }
         void gather_impl() {
-                check(sizeof(MPI_UNSIGNED_LONG) == sizeof(size_t),
+                check(sizeof(unsigned long int) == sizeof(size_t),
                                 "mismatch in  mpi and c++ type ");
                 int rank;
                 int comm_size;
