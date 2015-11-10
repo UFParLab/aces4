@@ -338,15 +338,15 @@ int main(int argc, char* argv[]) {
 	/* MPI Initialization */
 	MPI_Init(&argc, &argv);
 #endif // HAVE_MPI
-    {
-        int i = 0;
-        char hostname[256];
-        gethostname(hostname, sizeof(hostname));
-        printf("PID %d on %s ready for attach\n", getpid(), hostname);
-        fflush(stdout);
-        while (0 == i)
-            sleep(5);
-    }
+//    {
+//        int i = 0;
+//        char hostname[256];
+//        gethostname(hostname, sizeof(hostname));
+//        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//        fflush(stdout);
+//        while (0 == i)
+//            sleep(5);
+//    }
     Aces4Parameters parameters = parse_command_line_parameters(argc, argv);
 
 #ifdef HAVE_MPI    
