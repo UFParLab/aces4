@@ -694,6 +694,7 @@ scalar lcount
 scalar icount
 scalar xcount
 scalar imax
+scalar zmax
 scalar emax
 scalar energaa
 scalar energbb

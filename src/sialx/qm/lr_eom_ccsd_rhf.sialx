@@ -6690,7 +6690,11 @@ ZERO = 0.0
 one = 1.0
 root = 0
 subspc = eom_subspc
-roots = eom_roots
+
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 
 print " "
 print "-- Parallel left-right EE-EOM-CCSD program"

@@ -168,6 +168,7 @@
 # Declare scalars
 # ---------------
 #
+      scalar zmax
       scalar etemp
       scalar xtemp
       scalar xtemp1 
@@ -379,7 +380,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxxi
 #
 #    ------------------------------------------------------------------------
 #
@@ -436,7 +436,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxai
 #
      ENDPROC TRAN_TRAN3 
 #
@@ -5902,6 +5901,11 @@
       create Xai 
       create t1as_old
       sip_barrier 
+
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 #
 # Read transformed integrals from lists
 # -------------------------------------
@@ -5910,7 +5914,6 @@
       sip_barrier 
       CALL TRAN_UHF 
       server_barrier 
-      destroy Vxaai
 #
 # Set the partitioning of the occupied segments 
 # --------------------------------------------- 

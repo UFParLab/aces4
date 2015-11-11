@@ -514,13 +514,10 @@ import "tran_rhf_no4v_defs.sialx"
      set_persistent ca "ca"  
     #restore_persistent FTa "fock_a" 
      print "done restoring persistent arrays" 
-      imax = 0.0 
-      zmax = 0.0 
-     #DO mu 
-     #DO nu 
-     #   txx(mu,nu) = 0.0
-     #   execute compute_int_scratchmem txx(mu,nu) zmax imax
-         execute compute_int_scratchmem oed_ovl zmax imax 
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+     zmax = 0.0
+     imax = 0.0
+     execute compute_int_scratchmem oed_ovl zmax imax
 
      server_barrier 
 

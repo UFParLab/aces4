@@ -42,6 +42,11 @@ static fockrohf_b[aces_defs_mu,aces_defs_mu]
 scalar scf_energy  
 scalar totenerg
 
+static oed_nai[aces_defs_mu,aces_defs_mu]
+static oed_kin[aces_defs_mu,aces_defs_mu]
+static oed_ovl[aces_defs_mu,aces_defs_mu]
+
+special compute_int_scratchmem uuu
 special compute_ubatch6 wrruu
 special compute_integral_batch w
 special energy_denominator_rhf ur 
