@@ -474,6 +474,7 @@ SIOX_FILES=\
 ./src/sialx/test/aoladder.siox\
 ./src/sialx/test/test_ecpint.siox\
 ./src/sialx/test/test_derint.siox\
+./src/sialx/test/test_hessint.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -612,6 +613,7 @@ EXTRA_DIST += \
 ./src/sialx/test/aoladder.sialx\
 ./src/sialx/test/test_ecpint.sialx\
 ./src/sialx/test/test_derint.sialx\
+./src/sialx/test/test_hessint.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\

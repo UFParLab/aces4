@@ -1,5 +1,5 @@
-C-----------------------------------------------------------------
-!> special  return_1el_gradints wrur
+Cu----------------------------------------------------------------
+!> special  return_kin_ovl_hessints wrur
 !> 
 !> Return the one-particle part of the gradient by taking the 
 !> diect prodcut of the one paticle density matrix and the 
@@ -9,14 +9,15 @@ C-----------------------------------------------------------------
 !>
 !>  do mu
 !>  do nu
-!>     excecute return_1el_grdints I(mu,nu) D(mu,nu) Grad(3*natoms) type
+!>     excecute return_kin_ovl_hessints I(mu,nu) D(mu,nu) Hess(9*natoms*natoms)
+!>     flag
 !>  enddo nu
 !>  enddo mu
 !> 
 !>  Ajith Perera, 09/2015.
 C-----------------------------------------------------------------
 
-      subroutine return_1el_grdints(
+      subroutine return_kin_ovl_hessints(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
      c array_slot_2, rank_2, index_values_2, size_2, extents_2, data_2,
@@ -99,9 +100,6 @@ c     integer(C_INT) n_ao_segs(1), aosegs(6)
       integer(C_INT) nscr, niscr   
       integer i, j, type
 C
-      integer(C_INT) zsum_length01, zsum_length02, zsum_length1
-      integer(C_INT) zsum_length11, zsum_length12, zsum_length2
-
       ierr = 0
 c-------------------------------------------------------------------------
 c Get the data needed to do the computation.  
@@ -151,12 +149,12 @@ c   Compute data block of integrals.
 c---------------------------------------------------------------------------
 c Find the offset index ranges 
 c
-      type = INT(data_3(1))
-
       offset_01 = 0 
       offset_02 = 0 
       offset_11 = 0 
       offset_12 = 0 
+
+      Type = INT(Data_3(1))
 
       if (index_values_0(1) .gt. 1) offset_01 
      &                              = paosegs(index_values_0(1)-1) 
@@ -170,8 +168,8 @@ c
 
 C#ifdef _DEBUG_LVL0
       write(6,"(a)") " At the entry to compute_return_1el_grdnts"
-      Write(6,"(a)") " ncenters, type, zsum_length1"
-      Write(6,"(3I4)") ncenters,type,zsum_length1
+      Write(6,"(a)") " ncenters, type"
+      Write(6,"(3I4)") ncenters,type
       Write(6,*)
       Write(6,"(a)") " The atom coordinates" 
       Write(6,"(3F12.6)") (coords(i),i=1,3*sDimCoords(2))
@@ -187,9 +185,10 @@ C#ifdef _DEBUG_LVL0
       write(6,"(3(1x,F12.6))")(data_2(i),i=1,3*ncenters)
 C#endif 
 
-      call compute_return_1el_grdints(
-     &                                data_0, data_1, data_2, type,
-     &
+      call compute_return_kin_ovl_hessints(
+     &                                data_0, data_1, data_2,
+     &                                type,
+     &                               
      &                                1+offset_01, 
      &                                extents_0(1)+offset_01,
      &                                1+offset_02, 
@@ -208,6 +207,5 @@ c  Remove scratch space
 c
       call delete_scratch_array(cscr)
       call delete_integer_scratch_array(ciscr)
-
       return
       end

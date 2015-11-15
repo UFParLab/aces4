@@ -3534,18 +3534,24 @@ import "scf_rhf_defs.sialx"
 #      execute print_rel_info two pinf
 #      execute print_rel_info three Fock_a
 
-#      if rank == 0.0
-#         DO mu
-#         DO p
-#            txp[mu,p] = ca[mu,p]
-#            execute dump_amp txp[mu,p]
-#         ENDDO p
-#         ENDDO mu
-#      execute print_rel_info zero ca
-#      endif
+      DO mu
+      DO p
+         txp[mu,p] = ca[mu,p]
+         cb[mu,p]  = txp[mu,p]
+      ENDDO p
+      ENDDO mu
+
+      DO p
+      DO p1
+         Tpp1[p,p1]   = fock_a[p,p1]
+         fock_b[p,p1] = Tpp1[p,p1]
+      ENDDO p1
+      ENDDO p
 
       set_persistent ca "ca"
+      set_persistent cb "cb"
       set_persistent Fock_a "fock_a"
+      set_persistent Fock_b "fock_b"
 #
       scf_energy = energy
       totenerg = scf_energy

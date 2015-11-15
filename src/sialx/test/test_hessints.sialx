@@ -1,0 +1,75 @@
+sial TEST
+predefined int norb
+predefined int baocc
+predefined int eavirt
+predefined int Natoms 
+predefined int three_natoms
+moaindex aces_defs_pa = baocc: eavirt
+static oed_ovl[aces_defs_pa,aces_defs_pa]
+special return_nai_hessints wru
+special return_kin_ovl_hessints  wrur
+special compute_int_scratchmem uuu
+special drive_2el_hessian ru
+#
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
+
+      index  iatom   = 1: Three_natoms
+      index  jatom   = 1: Three_natoms
+
+      Temp Txx[mu,nu]
+      Temp Txxxx[mu,nu,lambda,sigma]
+      distributed D[mu,nu]
+      static gradients[iatom]
+      static Hessian[iatom,jatom]
+
+      scalar zmax  
+      scalar imax
+      scalar rank
+#
+      scalar two
+      scalar one
+  
+      two = 2.0
+      one = 1.0
+
+      execute compute_int_scratchmem oed_ovl zmax imax
+      Create D
+      sip_barrier 
+
+      pardo mu, nu
+            Txx[mu,nu] = 0.0
+            put D[mu,nu] = Txx[mu,nu]
+      endpardo mu, nu
+      sip_barrier 
+
+      if rank == 0.0
+      print "Entering return_nai_hessints" 
+      Pardo mu, nu
+            get D[mu,nu]
+            execute return_nai_hessints Txx[mu,nu] D[mu,nu] Hessian 
+      endpardo mu, nu
+
+      print "Entering return_kin_ovl_hessints" 
+      Pardo mu, nu
+            get D[mu,nu]
+            execute return_kin_ovl_hessints Txx[mu,nu] D[mu,nu] Hessian  one
+      endpardo mu, nu
+
+      print "Entering return_kin_ovl_hessints" 
+      Pardo mu, nu
+	    get D[mu,nu]
+	    execute return_kin_ovl_hessints Txx[mu,nu] D[mu,nu] Hessian  two
+      endpardo mu, nu
+
+      endif 
+
+      print "Entering drive_2el_hessian" 
+      Pardo mu, nu, lambda, sigma
+             Txxxx[mu,nu,lambda,sigma] = 0.0
+            execute drive_2el_hessian Txxxx[mu,nu,lambda,sigma] Hessian
+      endpardo mu, nu, lambda, sigma 
+
+endsial TEST

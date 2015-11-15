@@ -567,6 +567,7 @@ set(SIAL_FILES
     src/sialx/test/aoladder.sialx;
     src/sialx/test/test_ecpint.sialx;
     src/sialx/test/test_derint.sialx;
+    src/sialx/test/test_hessints.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;

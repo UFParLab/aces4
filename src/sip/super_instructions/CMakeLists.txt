@@ -87,6 +87,12 @@ set(QM_SOURCE_FILES
     qm/direct_integral/compute_return_1el_grdints.F;
     qm/direct_integral/return_2el_grdints.F;
     qm/direct_integral/compute_return_2el_grdints.F;
+    qm/direct_integral/return_kin_ovl_hessints.F;
+    qm/direct_integral/compute_return_kin_ovl_hessints.F;
+    qm/direct_integral/return_nai_hessints.F;
+    qm/direct_integral/compute_return_nai_hessints.F;
+    qm/direct_integral/return_2el_hessian.F;
+    qm/direct_integral/drive_2el_hessian.F;
     qm/erd/erd__ctr_tu_expand.f;
     qm/erd/erd__ctr_4index_reorder.f;
     qm/erd/erd__spherical_transform.f;

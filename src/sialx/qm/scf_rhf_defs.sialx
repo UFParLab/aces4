@@ -42,7 +42,7 @@ mobindex aces_defs_pb = bbocc: ebvirt
 aoindex aces_defs_mu = 1: norb  
 
 static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
-static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
+static cb[aces_defs_mu,aces_defs_pa]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC. 
 
 scalar scf_energy
 scalar totenerg 
@@ -52,7 +52,7 @@ predefined static ea[aces_defs_mu]  # Alpha spin orbital energies matrix from th
 predefined static eb[aces_defs_mu]  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
 
 static fock_a[aces_defs_pa, aces_defs_pa]
-static fock_b[aces_defs_pb, aces_defs_pb]
+static fock_b[aces_defs_pa, aces_defs_pa]
 static oed_nai[aces_defs_mu,aces_defs_mu]
 static oed_kin[aces_defs_mu,aces_defs_mu]
 static oed_ovl[aces_defs_mu,aces_defs_mu]

@@ -133,6 +133,7 @@ import "scf_grad_ru_hf_defs.sialx"
       temp T3xx[mu,nu] 
       temp T4xx[mu,nu] 
       temp T5xx[mu,nu] 
+      temp Txp[mu,p]
       temp GRAD_AO_INTS[mu,nu,lambda,sigma]
 #
 # Declare scalars 
@@ -384,10 +385,6 @@ import "scf_grad_ru_hf_defs.sialx"
 #     ------------
 #
       Icount = 0.0
-      Do Ngrads
-         L_Gradient[Ngrads] = 0.0
-      Enddo Ngrads
-      print "blok1"
 
       PARDO mu, nu   
 #
@@ -455,14 +452,10 @@ import "scf_grad_ru_hf_defs.sialx"
            ENDDO lambda   
 #
       ENDPARDO mu, nu   
-
-      Icount = 0.0
-      Do Ngrads
-         L_Gradient[Ngrads] = 0.0
-      Enddo Ngrads
       sip_barrier 
 
-      print "blok2"
+      Icount = 0.0
+
       PARDO mu, nu 
 #
            DO lambda   
@@ -531,14 +524,10 @@ import "scf_grad_ru_hf_defs.sialx"
            ENDDO lambda   
 #
       ENDPARDO mu, nu 
-#
-      Icount = 0.0
-      Do Ngrads
-         L_Gradient[Ngrads] = 0.0
-      Enddo Ngrads 
       sip_barrier 
 
-      print "blok3"
+      Icount = 0.0
+
       PARDO mu, nu 
 #
            DO lambda   
@@ -607,14 +596,10 @@ import "scf_grad_ru_hf_defs.sialx"
            ENDDO lambda   
 #
       ENDPARDO mu, nu 
-#
-      Icount = 0.0
-      Do Ngrads
-         L_Gradient[Ngrads] = 0.0
-      Enddo Ngrads 
       sip_barrier 
 #
-      print "blok3"
+      Icount = 0.0
+#
       PARDO mu, nu 
 #
            DO lambda   
@@ -717,45 +702,34 @@ import "scf_grad_ru_hf_defs.sialx"
       print reference
 #end_debug
 
-      If Reference == 0
-         Server_barrier
-         Restore_persistent ca "ca"
-         restore_persistent Fock_a "fock_a"
-         Server_barrier
-
-#         Pardo mu, p
-#               cb[mu,p] = ca[mu,p]
-#         Endpardo mu, p 
-      Else
-         Server_barrier
-         Restore_persistent ca "ca"
-         Restore_persistent cb "cb"
-         restore_persistent Fock_a "fock_a"
-         restore_persistent Fock_b "fock_b"
-         Server_barrier
-      Endif 
+      Server_barrier
+      Restore_persistent ca "ca"
+      Restore_persistent cb "cb"
+      restore_persistent Fock_a "fock_a"
+      restore_persistent Fock_b "fock_b"
+      Server_barrier
 
 #bgn_debug
-       execute get_my_rank rank
-       if rank==0.0
-       esuma = 0.0
-       esumb = 0.0
-       DO p
-       DO p1
-          etemp  = fock_a[p,p1] * fock_a[p,p1]
-          esuma += etemp
-       ENDDO p1
-       ENDDO p
-       DO q
-       DO q1
-          etemp  = fock_b[q,q1] * fock_b[q,q1]
-          esumb += etemp
-       ENDDO q1
-       ENDDO q
-       print "checksum of focka and fockb"
-       print  esuma
-       print  esumb
-       endif
+#       execute get_my_rank rank
+#       if rank==0.0
+#       esuma = 0.0
+#       esumb = 0.0
+#       DO p
+#       DO p1
+#          etemp  = fock_a[p,p1] * fock_a[p,p1]
+#          esuma += etemp
+#       ENDDO p1
+#       ENDDO p
+#       DO q
+#       DO q1
+#          etemp  = fock_b[q,q1] * fock_b[q,q1]
+#          esumb += etemp
+#       ENDDO q1
+#       ENDDO q
+#       print "checksum of focka and fockb"
+#       print  esuma
+#       print  esumb
+#       endif
 #end_debug
 
 
@@ -764,24 +738,24 @@ import "scf_grad_ru_hf_defs.sialx"
 #
       call WHFDENS
 #bgn_debug
-       execute get_my_rank rank
-       if rank==0.0
-       esuma = 0.0
-       esumb = 0.0
-       DO mu
-       DO nu
-          get Whfa[mu,nu]
-          get Whfb[mu,nu]
-          etemp  = Whfa[mu,nu] * whfa[mu,nu]
-          esuma += etemp
-          etemp  = Whfb[mu,nu] * Whfb[mu,nu]
-          esumb += etemp
-       ENDDO nu
-       ENDDO mu
-       print "checksum of whfa and whfb"
-       print  esuma
-       print  esumb
-       endif
+#       execute get_my_rank rank
+#       if rank==0.0
+#       esuma = 0.0
+#       esumb = 0.0
+#       DO mu
+#       DO nu
+#          get Whfa[mu,nu]
+#          get Whfb[mu,nu]
+#          etemp  = Whfa[mu,nu] * whfa[mu,nu]
+#          esuma += etemp
+#          etemp  = Whfb[mu,nu] * Whfb[mu,nu]
+#          esumb += etemp
+#       ENDDO nu
+#       ENDDO mu
+#       print "checksum of whfa and whfb"
+#       print  esuma
+#       print  esumb
+#       endif
 #end_debug
 
 
@@ -791,23 +765,24 @@ import "scf_grad_ru_hf_defs.sialx"
 #
       CALL HFDENS
       sip_barrier
+
 #bgn_debug
-       execute get_my_rank rank
-       if rank==0.0
-       esuma = 0.0
-       esumb = 0.0
-       DO mu
-       DO nu
-          etemp  = LDhfa[mu,nu] * LDhfa[mu,nu]
-          esuma += etemp
-          etemp  = LDhfb[mu,nu] * LDhfb[mu,nu]
-          esumb += etemp
-       ENDDO nu
-       ENDDO mu
-       print "checksum of hfdensa and hfdensb"
-       print  esuma
-       print  esumb
-       endif
+#       execute get_my_rank rank
+#       if rank==0.0
+#       esuma = 0.0
+#       esumb = 0.0
+#       DO mu
+#       DO nu
+#          etemp  = LDhfa[mu,nu] * LDhfa[mu,nu]
+#          esuma += etemp
+#          etemp  = LDhfb[mu,nu] * LDhfb[mu,nu]
+#          esumb += etemp
+#       ENDDO nu
+#       ENDDO mu
+#       print "checksum of hfdensa and hfdensb"
+#       print  esuma
+#       print  esumb
+#       endif
 #end_debug
 
      execute compute_nn_repulsion_grad Gradient 
@@ -817,13 +792,13 @@ import "scf_grad_ru_hf_defs.sialx"
      Enddo Ngrads
 
 #bgn_debug
-     esuma = 0.0
-     DO Ngrads
-         get D_gradient[Ngrads]
-         esuma += D_Gradient[Ngrads] * D_Gradient[Ngrads] 
-     enddo Ngrads
-     print "checksum of nuc-nuc gradient"
-     print  esuma
+#     esuma = 0.0
+#     DO Ngrads
+#         get D_gradient[Ngrads]
+#         esuma += D_Gradient[Ngrads] * D_Gradient[Ngrads] 
+#     enddo Ngrads
+#     print "checksum of nuc-nuc gradient"
+#     print  esuma
 #end_debug
 
 #
