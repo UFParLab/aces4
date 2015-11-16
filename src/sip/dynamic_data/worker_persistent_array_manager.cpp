@@ -167,12 +167,12 @@ namespace sip {
 		   int nscalars = scalar_value_map_.size();
 			file->write_int(nscalars);
 //			std::cerr << "\nnscalars=" << nscalars << std::endl << std::flush;
-//			for (LabelScalarValueMap::iterator it=scalar_value_map_.begin();
-//					it!= scalar_value_map_.end(); ++it){
-//				 file -> write_string(it->first);
-//				 file -> write_double(it->second);
+			for (LabelScalarValueMap::iterator it=scalar_value_map_.begin();
+					it!= scalar_value_map_.end(); ++it){
+				 file -> write_string(it->first);
+				 file -> write_double(it->second);
 //				 std::cerr << it->first << "=" <<it->second;
-//			}
+			}
 			//write contiguous arrays
 			int narrays = contiguous_array_map_.size();
 			file->write_int(narrays);
