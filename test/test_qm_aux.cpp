@@ -14,11 +14,6 @@
 
 #include "block.h"
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
-
-
 //bool VERBOSE_TEST = false;
 bool VERBOSE_TEST = true;
 
@@ -160,10 +155,6 @@ int main(int argc, char **argv) {
 	attr = &sip_mpi_attr;
 #endif
 	barrier();
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
 
 
 	printf("Running main() from test_sial.cpp\n");
@@ -173,9 +164,6 @@ int main(int argc, char **argv) {
 
 	std::cout << "Rank  " << attr->global_rank() << " Finished RUN_ALL_TEST() " << std::endl << std::flush;
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
 	barrier();
 #ifdef HAVE_MPI
 	MPI_Finalize();

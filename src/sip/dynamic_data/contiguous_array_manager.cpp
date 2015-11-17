@@ -30,7 +30,7 @@ WriteBack::~WriteBack() {
 	delete block_;
 }
 void WriteBack::do_write_back() {
-	sip::check(!done_, "SIP bug:  called doWriteBack twice");
+	CHECK(!done_, "SIP bug:  called doWriteBack twice");
 	contiguous_block_->insert_slice(rank_, offsets_, block_);
 	done_ = true;
 }
@@ -113,7 +113,7 @@ ContiguousArrayManager::~ContiguousArrayManager() {
 
 Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 		Block::BlockPtr block_ptr) {
-	sip::check(block_ptr != NULL && block_ptr->get_data() != NULL,
+	CHECK(block_ptr != NULL && block_ptr->get_data() != NULL,
 			"Trying to insert null block_ptr or null block into contiguous array manager\n");
 	ContiguousArrayMap::iterator it = contiguous_array_map_.find(array_id);
 	if (it != contiguous_array_map_.end()){
@@ -125,7 +125,7 @@ Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 
 	SIP_LOG(
 			std::cout<<"Contiguous Block of array "<<sip_tables_.array_name(array_id)<<std::endl);
-	sip::check(
+	CHECK(
 			block_ptr->shape() == sip_tables_.contiguous_array_shape(array_id),
 			std::string("array ") + sip_tables_.array_name(array_id)
 					+ std::string(
@@ -204,7 +204,7 @@ Block::BlockPtr ContiguousArrayManager::get_block(const BlockId& block_id, int& 
 	int array_id = block_id.array_id();
 	rank = sip_tables_.array_rank(array_id);
 	contiguous = get_array(array_id);
-	sip::check(contiguous != NULL, "contiguous array not allocated");
+	CHECK(contiguous != NULL, "contiguous array not allocated");
 	const sip::index_selector_t& selector = sip_tables_.selectors(array_id);
 	BlockShape array_shape = sip_tables_.contiguous_array_shape(array_id); //shape of containing contiguous array
 

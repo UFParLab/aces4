@@ -59,12 +59,12 @@ TestControllerParallel::TestControllerParallel(std::string job,
 		job_(job), verbose_(verbose), comment_(comment), sial_output_(
 				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
-				NULL), server_(NULL), worker_(NULL), printer_(NULL), server_timer_(NULL), sialx_timers_(NULL) {
+				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
 	barrier();
-	sip::GlobalState::reinitialize();
+//	sip::GlobalState::reinitialize();
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
-		setup_reader_ = new setup::SetupReader(setup_file);
+		setup_reader_ = new setup::SetupReader(setup_file); 
 		progs_ = &setup_reader_->sial_prog_list();
 	} else {
 		setup_reader_ = setup::SetupReader::get_empty_reader();
@@ -108,12 +108,6 @@ TestControllerParallel::~TestControllerParallel() {
 		delete setup_reader_;
 	if (sip_tables_)
 		delete sip_tables_;
-	if (sialx_timers_)
-		delete sialx_timers_;
-#ifdef HAVE_MPI
-	if (server_timer_)
-		delete server_timer_;
-#endif
 }
 
 
@@ -126,11 +120,8 @@ void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	setup::BinaryInputFile siox_file(siox_path);
 	//remove objects left from previous sial programs to avoid memory leaks
 	if (worker_) delete worker_;
-	if (sialx_timers_)
-		delete sialx_timers_;
 #ifdef HAVE_MPI
 	if (server_) delete server_;
-	if (server_timer_) delete server_timer_;
 #endif
 	if (sip_tables_) delete sip_tables_;
 	sip_tables_ = new sip::SipTables(*setup_reader_, siox_file);
@@ -202,15 +193,24 @@ double* TestControllerParallel::static_array(const std::string& name){
 }
 
 void TestControllerParallel::print_timers(std::ostream& out){
-	if (! attr->is_worker()) return;
-	if (sip_tables_ == NULL || sialx_timers_ == NULL){
-		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
-				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
-		return;
-	}
-	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
-	sialx_timers_->print_timers(lno2name, out);
-	out<< std::flush;
+//	if (! attr->is_worker()) return;
+//	if (sip_tables_ == NULL || sialx_timers_ == NULL){
+//		std::cerr << "Cannot print timers.  sip_table_ " << (sip_tables_==NULL ? "NULL" : "OK")
+//				<< ", sialx_timer " << (sialx_timers_==NULL ? "NULL" : "OK") << std::endl << std::flush;
+//		return;
+//	}
+////	const std::vector<std::string> lno2name = sip_tables_->line_num_to_name();
+////	sialx_timers_->print_timers(lno2name, out);
+//	out<< std::flush;
+//	barrier();
+//	if (attr->is_worker()){
+////TODO print
+//	}
+//	barrier();
+//	if (attr->is_server()){
+//		server_->print_statistics(out);
+//	}
+//	barrier();
 }
 
 void TestControllerParallel::run() {
@@ -269,12 +269,9 @@ double* TestControllerParallel::local_block(const std::string& name,
 bool TestControllerParallel::runServer() {
 	if (this_test_enabled_) {
 		sip::DataDistribution data_distribution(*sip_tables_, *attr);
-std::cout << "before creating server timer " << std::endl << std::flush;
-		sip::ServerTimer server_timer(sip_tables_->max_timer_slots());
-		std::cout << "after creating server timer" << std::endl << std::flush;
+	//	sip::ServerTimer server_timer(sip_tables_->op_table_size());
 		server_ = new sip::SIPServer(*sip_tables_, data_distribution, *attr,
-				spam_, server_timer);
-		std::cout << "after creating server" << std::endl << std::flush;
+				spam_);
 		barrier();
 		if (verbose_)
 			std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM "
@@ -282,9 +279,7 @@ std::cout << "before creating server timer " << std::endl << std::flush;
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
-				std::cout << "before server run" << std::endl << std::flush;
 				server_->run();
-				std::cout << "after server run" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in server: " << e.what();
 				ADD_FAILURE();
@@ -297,7 +292,7 @@ std::cout << "before creating server timer " << std::endl << std::flush;
 			if (std::cout != sial_output_)
 				std::cout << sial_output_.rdbuf();
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
-					<< job_ << "SERVER TERMINATED " << std::endl << std::flush;
+					<< prog_name_ << "TERMINATED SERVER" << std::endl << std::flush;
 		}
 		spam_->save_marked_arrays(server_);
 	}
@@ -312,9 +307,9 @@ bool TestControllerParallel::runWorker() {
 
 
 
-		int slot = sip_tables_->max_timer_slots();
-		sialx_timers_ = new sip::SialxTimer(sip_tables_->max_timer_slots());
-		worker_ = new sip::Interpreter(*sip_tables_, sialx_timers_, printer_, wpam_);
+//		int slot = sip_tables_->op_table_size();
+	//	sialx_timers_ = new sip::SialxTimer(sip_tables_->op_table_size());
+		worker_ = new sip::Interpreter(*sip_tables_,  printer_, wpam_);
 		barrier();
 
 		if (verbose_)
@@ -323,9 +318,7 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		if (expect_success_) { //if success is expected, catch the exception and fail, otherwise, let enclosing test deal with it.
 			try {
-				std::cout << "before worker interpret" << std::endl << std::flush;
 				worker_->interpret();
-				std::cout << "after worker interpret" << std::endl << std::flush;
 			} catch (const std::exception& e) {
 				std::cerr << "exception thrown in worker: " << e.what();
 				ADD_FAILURE();
@@ -333,7 +326,7 @@ bool TestControllerParallel::runWorker() {
 		} else {
 			worker_->interpret();
 		}
-
+		worker_->post_sial_program();
 		if (verbose_) {
 			if (std::cout != sial_output_){
 				std::cout << sial_output_.rdbuf();
@@ -342,7 +335,7 @@ bool TestControllerParallel::runWorker() {
 					<< prog_name_ << " TERMINATED WORKER " << std::endl
 					<< std::flush;
 		}
-		worker_->post_sial_program();
+
 //		std::cout << "\nRank " << attr->global_rank() << " after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
 //		std::cout << "\nRank " << attr->global_rank() << " after sae_marked_arrays" << std::endl << std::flush;

@@ -70,35 +70,35 @@ import "scf_rhf_defs.sialx"
       aoindex lambda = 1: norb
       aoindex sigma  = 1: norb
 #
-      moaindex i = baocc: eaocc
-      moaindex i1= baocc: eaocc
-      moaindex i2= baocc: eaocc
-      moaindex i3= baocc: eaocc
+      moaindex i = 1: eaocc
+      moaindex i1= 1: eaocc
+      moaindex i2= 1: eaocc
+      moaindex i3= 1: eaocc
 #
       moaindex a = bavirt: eavirt
       moaindex a1= bavirt: eavirt
       moaindex a2= bavirt: eavirt
       moaindex a3= bavirt: eavirt
 #
-      moaindex j = baocc: eaocc
-      moaindex j1= baocc: eaocc
-      moaindex j2= baocc: eaocc
-      moaindex j3= baocc: eaocc
+      moaindex j = 1: eaocc
+      moaindex j1= 1: eaocc
+      moaindex j2= 1: eaocc
+      moaindex j3= 1: eaocc
 #
       moaindex b = bavirt: eavirt
       moaindex b1= bavirt: eavirt
       moaindex b2= bavirt: eavirt
       moaindex b3= bavirt: eavirt
 #
-      moaindex p = baocc: eavirt
-      moaindex p1= baocc: eavirt
-      moaindex p2= baocc: eavirt
-      moaindex p3= baocc: eavirt
+      moaindex p = 1: eavirt
+      moaindex p1= 1: eavirt
+      moaindex p2= 1: eavirt
+      moaindex p3= 1: eavirt
 #
-      moaindex q = baocc: eavirt
-      moaindex q1= baocc: eavirt
-      moaindex q2= baocc: eavirt
-      moaindex q3= baocc: eavirt
+      moaindex q = 1: eavirt
+      moaindex q1= 1: eavirt
+      moaindex q2= 1: eavirt
+      moaindex q3= 1: eavirt
 # 
 # The distributed arrays.
 # -----------------------
@@ -1020,6 +1020,8 @@ import "scf_rhf_defs.sialx"
        ENDDO nu
        ENDDO mu
        endif
+       broadcast_from 0 oed_ovl
+       broadcast_from 0 OVLP
 
        sip_barrier
 
@@ -1308,7 +1310,7 @@ import "scf_rhf_defs.sialx"
       IF COREH == 1
 
 #bgn_debug
-         print "The core Hamiltonian guess block"
+#         print "The core Hamiltonian guess block"
 #end_debug
 
 # Generate the core-Hamiltonian guess
@@ -1328,7 +1330,7 @@ import "scf_rhf_defs.sialx"
             PUT Fpq_b[mu,nu] = Txx[mu,nu]
          ENDPARDO mu, nu
          sip_barrier
-         print "The core Hamiltonian guess block" 
+#         print "The core Hamiltonian guess block" 
 
          CALL OVER_HALF
          sip_barrier
@@ -1485,11 +1487,11 @@ import "scf_rhf_defs.sialx"
                      
 		     etemp = (scalar)katom
 
-                     print "Printing atom number at entry to scf_atom"
-                     print etemp
+#                     print "Printing atom number at entry to scf_atom"
+#                     print etemp
                      execute a4_scf_atom  fockrohf_a fockrohf_b oed_kin oed_nai oed_ovl etemp
-                     print "Printing atom number exit from scf_atom"
-                     print etemp
+#                     print "Printing atom number exit from scf_atom"
+#                     print etemp
 
                      DO mu
                      DO nu
@@ -3194,19 +3196,20 @@ import "scf_rhf_defs.sialx"
       print deps
       print DEAVG_OLD
 #end_debug
-                  ICOUNT = 0
                   DO ITHREE
-                     ICOUNT += 1
-                     IF ICOUNT == 1
+                     IF ITHREE == 1
                         DAMP_PARMS[ITHREE] = DE
                      ENDIF
-                     IF ICOUNT == 2
+                     IF ITHREE == 2
                         DAMP_PARMS[ITHREE] = DEP
                      ENDIF
-                     IF ICOUNT == 3
+                     IF ITHREE == 3
                         DAMP_PARMS[ITHREE] = DEAVG
                      ENDIF
                   ENDDO ITHREE
+
+		  print DAMP_PARMS
+		  print DAMP_FACTOR
 
                  EXECUTE A4_DAVID_DAMP_FACTOR DAMP_PARMS DAMP_FACTOR
 #bgn_debug                

@@ -26,9 +26,6 @@
 
 #include "block.h"
 
-#ifdef HAVE_TAU
-#include <TAU.h>
-#endif
 
 #ifdef HAVE_MPI
 #include "test_controller_parallel.h"
@@ -1539,21 +1536,6 @@ void bt_sighandler(int signum) {
 	abort();
 }
 
-/**
- * All workers in rank distribution
- */
-class AllWorkerRankDistribution : public sip::RankDistribution{
-public:
-	virtual bool is_server(int rank, int size){
-		return false;
-	}
-	virtual int local_server_to_communicate(int rank, int size){
-		return -1;
-	}
-	virtual bool is_local_worker_to_communicate(int rank, int size){
-		return -1;
-	}
-};
 
 int main(int argc, char **argv) {
 
@@ -1577,17 +1559,13 @@ int main(int argc, char **argv) {
 				<< std::endl;
 		return -1;
 	}
-	AllWorkerRankDistribution all_workers_rank_dist;
+	sip::AllWorkerRankDistribution all_workers_rank_dist;
 	sip::SIPMPIAttr::set_rank_distribution(&all_workers_rank_dist);
 	sip::SIPMPIUtils::set_error_handler();
 #endif
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
 	barrier();
-#ifdef HAVE_TAU
-	TAU_PROFILE_SET_NODE(0);
-	TAU_STATIC_PHASE_START("SIP Main");
-#endif
 
 //	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
 //	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
@@ -1598,9 +1576,6 @@ int main(int argc, char **argv) {
 	barrier();
 	int result = RUN_ALL_TESTS();
 
-#ifdef HAVE_TAU
-	TAU_STATIC_PHASE_STOP("SIP Main");
-#endif
 	barrier();
 #ifdef HAVE_MPI
 	MPI_Finalize();

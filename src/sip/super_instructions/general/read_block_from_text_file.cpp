@@ -70,7 +70,7 @@ void read_block_from_text_file(int& array_slot, int& rank, int* index_values, in
 // files have new line at the end usually....
 	read_size--;
 
-	sip::check(read_size == size, "Incorrect number of elements in file " + file_ss.str());
+	CHECK(read_size == size, "Incorrect number of elements in file " + file_ss.str());
 
 	delete [] indices;
 

@@ -59,16 +59,18 @@ public:
 	/**
 	 * @return Maximum number of slots to initialize in the timer
 	 */
-	int max_timer_slots() const;
+//	int max_timer_slots() const;
 
 	/**
 	 * Returns a vector that contain super instruction names
 	 * @return
 	 */
-	std::vector<std::string> line_num_to_name() const;
+//	std::vector<std::string> line_num_to_name() const;
+
+	size_t op_table_size() const {return op_table_.size();}
 
 //scalars and arrays
-	int array_slot(const std::string& name){return array_table_.array_slot(name);}
+	int array_slot(const std::string& name) const {return array_table_.array_slot(name);}
 	std::string array_name(int array_table_slot) const;
 	std::string scalar_name(int array_table_slot) const;
 	int array_rank(int array_table_slot) const;
@@ -156,6 +158,17 @@ public:
 //	SpecialInstructionManager::fp1 one_arg_special_instruction(int func_slot) const;
 //	SpecialInstructionManager::fp2 two_arg_special_instruction(int func_slot) const;
 
+
+//optable
+	int line_number(int pc) const{
+		return op_table_.line_number(pc);
+	}
+
+	std::string opcode_name(int pc) const{
+		if (pc < op_table_.size()) return opcodeToName(op_table_.opcode(pc));
+		//the worker sends the server an end_program instruction with pc = 1 + last pc, which is the op_table_.size()
+		return std::string("END_PROGRAM");
+	}
     void print() const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 

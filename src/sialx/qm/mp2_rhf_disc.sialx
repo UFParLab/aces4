@@ -207,14 +207,9 @@
       scalar mp2_correlation
       scalar mp2_energy 
 
-      static ca[mu,p]
-      static fock_a[p,p1]
       static oed_nai[aces_defs_mu,aces_defs_mu]
       static oed_kin[aces_defs_mu,aces_defs_mu]
       static oed_ovl[aces_defs_mu,aces_defs_mu]
-
-      static fockrohf_a[aces_defs_mu,aces_defs_mu]
-      static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
       served T2old_aa[a,i,a1,i1]
       served T2old_ab[a,i,b,j]
@@ -412,7 +407,6 @@
         ENDPARDO a1, mu, i1
  
         sip_barrier
-        delete Vxixi #(*,*,*,i)
  
         PARDO a, a1, i1
 

@@ -23,7 +23,7 @@ void AsyncAcks::expect_ack_from(int from_rank, int tag) {
 	SIPMPIUtils::check_err(
 			MPI_Irecv(0, 0, MPI_INT, from_rank, tag, MPI_COMM_WORLD, &request));
 	add_request(request);
-	cleanup();
+//	cleanup();
 }
 
 void AsyncAcks::expect_sync_ack_from(int from_rank, int tag) {

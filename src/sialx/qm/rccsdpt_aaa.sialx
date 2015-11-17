@@ -63,8 +63,6 @@
 #
 # Declare static arrays
 # ---------------------
-      static fock_a[p,p1] 
-      static ca[mu,p] 
 
       temp  taibj[a,i,a1,j]
       served T2aiai[a,i,a1,j]

@@ -1,0 +1,29 @@
+sial pardo_loop_with_pragma
+
+
+
+	predefined int lower0
+	predefined int upper0
+	predefined int lower1
+	predefined int upper1
+	predefined int lower2
+	predefined int upper2
+	
+	index i0 = lower0:upper0
+	index i1 = lower1:upper1
+	index i2 = lower2:upper2
+ 
+	int counter = 0
+	scalar total = 0.0
+		
+	pardo i0, i1, i2 "test_pardo_pragma"
+		counter += 1	
+	endpardo i0, i1, i2
+	
+	sip_barrier
+    collective total += (scalar)counter
+    sip_barrier
+    	
+
+	
+endsial pardo_loop_with_pragma

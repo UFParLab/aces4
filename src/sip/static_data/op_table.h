@@ -66,7 +66,13 @@ public:
     	return entries_.at(pc).selector;
     }
 
+    /** returns the line number of the given optable entry.
+     * If past the end of the program, return -1.
+     * @param pc
+     * @return
+     */
 	int line_number(int pc) const{
+		if (pc >= entries_.size()) return -1;
 		return entries_.at(pc).line_number;
 	}
 

@@ -19,6 +19,8 @@
 namespace sip {
 
 class Interpreter;
+class LoopManager;
+
 
 /*! Base class for loop managers. */
 class LoopManager {
@@ -47,7 +49,9 @@ protected:
 private:
 	virtual bool do_update() = 0;
 	virtual void do_finalize() = 0;
-	virtual void do_set_to_exit();DISALLOW_COPY_AND_ASSIGN(LoopManager);
+	virtual void do_set_to_exit();
+
+	DISALLOW_COPY_AND_ASSIGN(LoopManager);
 };
 
 class DoLoop: public LoopManager {
@@ -82,7 +86,9 @@ public:
 private:
 	int parent_id_;
 	int parent_value_;
-	virtual std::string to_string() const;DISALLOW_COPY_AND_ASSIGN(SubindexDoLoop);
+	virtual std::string to_string() const;
+
+	DISALLOW_COPY_AND_ASSIGN(SubindexDoLoop);
 };
 class SequentialPardoLoop: public LoopManager {
 public:
@@ -115,7 +121,7 @@ public:
 	virtual ~StaticTaskAllocParallelPardoLoop();
 	friend std::ostream& operator<<(std::ostream&,
 			const StaticTaskAllocParallelPardoLoop &);
-private:
+protected:
 	virtual std::string to_string() const;
 	virtual bool do_update();
 	virtual void do_finalize();
@@ -134,10 +140,24 @@ private:
 	bool increment_indices();
 	bool initialize_indices();
 
+private:
 	DISALLOW_COPY_AND_ASSIGN(StaticTaskAllocParallelPardoLoop);
 
 };
 
+class TestStaticTaskAllocParallelPardoLoop: public StaticTaskAllocParallelPardoLoop {
+public:
+	TestStaticTaskAllocParallelPardoLoop(int num_indices,
+			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr);
+	virtual ~TestStaticTaskAllocParallelPardoLoop();
+	friend std::ostream& operator<<(std::ostream&,
+			const TestStaticTaskAllocParallelPardoLoop &);
+private:
+	virtual std::string to_string() const;
+	DISALLOW_COPY_AND_ASSIGN(TestStaticTaskAllocParallelPardoLoop);
+
+};
 
 
 
@@ -175,6 +195,8 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(BalancedTaskAllocParallelPardoLoop);
 
 };
+
+
 #endif
 
 } /* namespace sip */

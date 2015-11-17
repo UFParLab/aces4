@@ -10,7 +10,6 @@
 #include "io_utils.h"
 #include "setup_reader.h"
 #include "assert.h"
-#include "sialx_timer.h"
 #include "sip_tables.h"
 #include "setup_interface.h"
 
