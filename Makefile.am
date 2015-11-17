@@ -44,7 +44,12 @@ ACES_CORE_FILES=\
 ./src/sip/core/array_constants.cpp\
 ./src/sip/core/sip.h\
 ./src/sip/core/sip.cpp\
-./src/sip/core/aces_defs.h
+./src/sip/core/aces_defs.h\
+./src/sip/core/aces_log.h\
+./src/sip/core/aces_log.cpp\
+./src/sip/core/job_control.h\
+./src/sip/core/job_control.cpp
+
 
 
 ACES_DATA_FILES=\
@@ -94,8 +99,6 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/pardo_loop_factory.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
-./src/sip/worker/global_state.h\
-./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
 ./src/sip/worker/siox_reader.cpp\
 ./src/sip/worker/sial_ops_sequential.h\
@@ -454,6 +457,9 @@ SIOX_FILES=\
 ./src/sialx/test/get_mpi.siox\
 ./src/sialx/test/persistent_distributed_array_mpi1.siox\
 ./src/sialx/test/persistent_distributed_array_mpi2.siox\
+./src/sialx/test/persistent_distributed_array_one_of_three.siox\
+./src/sialx/test/persistent_distributed_array_two_of_three.siox\
+./src/sialx/test/persistent_distributed_array_three_of_three.siox\
 ./src/sialx/test/persistent_empty_mpi1.siox\
 ./src/sialx/test/persistent_empty_mpi2.siox\
 ./src/sialx/test/persistent_scalars_1.siox\
@@ -491,6 +497,8 @@ SIOX_FILES=\
 ./src/sialx/test/aoladder.siox\
 ./src/sialx/test/put_accumulate_stress.siox\
 ./src/sialx/test/disk_backing_test.siox\
+./src/sialx/test/disk_backing_put_acc_stress.siox\
+./src/sialx/test/decreasing_segs.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -586,6 +594,9 @@ EXTRA_DIST += \
 ./src/sialx/test/get_mpi.sialx\
 ./src/sialx/test/persistent_distributed_array_mpi1.sialx\
 ./src/sialx/test/persistent_distributed_array_mpi2.sialx\
+./src/sialx/test/persistent_distributed_array_one_of_three.sialx\
+./src/sialx/test/persistent_distributed_array_two_of_three.sialx\
+./src/sialx/test/persistent_distributed_array_three_of_three.sialx\
 ./src/sialx/test/persistent_empty_mpi1.sialx\
 ./src/sialx/test/persistent_empty_mpi2.sialx\
 ./src/sialx/test/persistent_scalars_1.sialx\
@@ -621,6 +632,10 @@ EXTRA_DIST += \
 ./src/sialx/test/put_initialize.sialx\
 ./src/sialx/test/cast_indices_to_simple.sialx\
 ./src/sialx/test/aoladder.sialx\
+./src/sialx/test/put_accumulate_stress.sialx\
+./src/sialx/test/disk_backing_test.sialx\
+./src/sialx/test/disk_backing_put_acc_stress.sialx\
+./src/sialx/test/decreasing_segs.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
