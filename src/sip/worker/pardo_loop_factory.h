@@ -62,6 +62,8 @@ public:
 		Fragment_i_aa__PardoLoopManager,
 		Fragment_Nij_aa__PardoLoopManager,
 		Fragment_Nij_a_a_PardoLoopManager,
+		Fragment_Nij_o_o_PardoLoopManager,
+		Fragment_Nij_oo__PardoLoopManager,
 		Fragment_ij_aa_a_PardoLoopManager,
 		Fragment_ij_aaa__PardoLoopManager,
 		Fragment_ij_ao_ao_PardoLoopManager,

@@ -465,6 +465,7 @@ set(SIAL_FILES
     src/sialx/test/no_arg_user_sub.sialx;
     src/sialx/test/helloworld.sialx;
     src/sialx/test/pardo_loop.sialx;
+    src/sialx/test/pardo_loop_with_pragma.sialx;
     src/sialx/test/subindex_test.sialx;
     src/sialx/test/local_arrays.sialx;
     src/sialx/test/scalarTable.sialx;
@@ -557,8 +558,12 @@ set(SIAL_FILES
     src/sialx/qm/scf_frag_lowmem.sialx;
     src/sialx/qm/drop_core_in_sial.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
+    src/sialx/qm/tran_frag.sialx;
     src/sialx/qm/mcpt2_vars.sialx;
     src/sialx/qm/mcpt2_defs.sialx;
+    src/sialx/qm/mcpt2_singles.sialx;
+    src/sialx/qm/mcpt2_doubles.sialx;
+    src/sialx/qm/mcpt2_util.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;

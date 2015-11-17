@@ -14,7 +14,7 @@ PROC TRAN_TRAN2
 #
 #    ------------------------------------------------------------------------
 #
-print "Starting tran 1"
+print "Starting tran 1-2"
 pardo mu, nu, lambda
 #
     allocate Txxxi[mu,nu,lambda,*]

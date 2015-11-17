@@ -39,6 +39,7 @@ static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 scalar has_singles
 scalar is_ccpt
+scalar is_mcpt
 
 predefined scalar cc_conv
 scalar scf_energy  # ???? 

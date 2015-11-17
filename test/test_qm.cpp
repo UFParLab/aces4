@@ -11,7 +11,6 @@
 #include "test_controller.h"
 #include "test_controller_parallel.h"
 #include "test_constants.h"
-#include "array_file.h"
 
 #include "block.h"
 
@@ -19,16 +18,10 @@
 //bool VERBOSE_TEST = false;
 bool VERBOSE_TEST = true;
 
-void clean_directory(){
-	if (attr->global_rank() == 0){
-		sip::ArrayFile::clean_directory();
-	}
-}
-
 // old ccsd(t) test.... difficult to deal with because the ZMAT source is gone
 TEST(Sial_QM,DISABLED_ccsdpt_test){
 	std::string job("ccsdpt_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -82,7 +75,6 @@ TEST(Sial_QM,second_ccsdpt_test){
 	std::string job("second_ccsdpt_test");
 
 	std::stringstream output;
-	clean_directory();
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 //
@@ -160,7 +152,7 @@ SIAL_PROGRAM = rcis_d_rhf.siox
 */
 TEST(Sial_QM,cis_test){
 	std::string job("cis_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -234,7 +226,7 @@ SIAL_PROGRAM = lr_eom_ccsd_rhf.siox
 */
 TEST(Sial_QM,eom_test){
 	std::string job("eom_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -296,7 +288,7 @@ TEST(Sial_QM,eom_test){
 
 TEST(Sial_QM,DISABLED_mcpt2_test){
 	std::string job("mcpt2_test");
-	sip::ArrayFile::clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -355,7 +347,7 @@ TEST(Sial_QM,DISABLED_mcpt2_test){
 */
 TEST(Sial_QM,mcpt2_water_test){
 	std::string job("mcpt2_water_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -405,7 +397,7 @@ SIAL_PROGRAM = scf_rhf_coreh.siox
 */
 TEST(Sial_QM,lindep_test){
 	std::string job("lindep_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -472,7 +464,7 @@ SIAL_PROGRAM = rlambda_rhf.siox
 */
 TEST(Sial_QM,rlambda_test){
 	std::string job("rlambda_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -536,7 +528,7 @@ SIAL_PROGRAM = rlccd_rhf.siox
 */
 TEST(Sial_QM,DISABLED_lccd_dropcoreinsial_test){
 	std::string job("lccd_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -662,7 +654,7 @@ SIAL_PROGRAM = rlccsd_rhf.siox
 */
 TEST(Sial_QM,DISABLED_lccsd_test){
 	std::string job("lccsd_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -723,7 +715,7 @@ SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 */
 TEST(Sial_QM,eom_lccsd_test){
 	std::string job("eom_lccsd_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -804,7 +796,7 @@ SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 */
 TEST(Sial_QM,DISABLED_eom_lccd_test){
 	std::string job("eom_lccd_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
@@ -885,7 +877,7 @@ SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 */
 TEST(Sial_QM,eom_mp2_test){
 	std::string job("eom_mp2_test");
-	clean_directory();
+
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);

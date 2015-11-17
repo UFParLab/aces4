@@ -20,7 +20,8 @@ namespace sip {
 const PardoLoopFactory::Loop_t PardoLoopFactory::default_loop = PardoLoopFactory::BalancedTaskAllocParallelPardoLoop;
 const PardoLoopFactory::Loop_t PardoLoopFactory::test_loop = PardoLoopFactory::TestStaticTaskAllocParallelPardoLoop;
 #else
-//const PardoLoopFactory::Loop_t PardoLoopFactory::default_loop = PardoLoopFactory::SequentialPardoLoop;
+const PardoLoopFactory::Loop_t PardoLoopFactory::default_loop = PardoLoopFactory::SequentialPardoLoop;
+const PardoLoopFactory::Loop_t PardoLoopFactory::test_loop = PardoLoopFactory::SequentialPardoLoop;
 #endif
 
 
@@ -30,13 +31,14 @@ const PardoLoopFactory::Loop_t PardoLoopFactory::test_loop = PardoLoopFactory::T
 std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_variant_map= create_map<std::string, enum PardoLoopFactory::Loop_t>::create_map
 ("default_loop_manager",PardoLoopFactory::default_loop)
 ("SequentialPardoLoop",PardoLoopFactory::SequentialPardoLoop)
-("test_pardo_pragma", PardoLoopFactory::test_loop)
 #ifdef HAVE_MPI
 ("StaticTaskAllocParallelPardoLoop",PardoLoopFactory::StaticTaskAllocParallelPardoLoop)
 ("BalancedTaskAllocParallelPardoLoop",PardoLoopFactory::BalancedTaskAllocParallelPardoLoop)
 ("Frag{i}{aa}{}", PardoLoopFactory::Fragment_i_aa__PardoLoopManager)
 ("Frag{Nij}{aa}{}", PardoLoopFactory::Fragment_Nij_aa__PardoLoopManager)
 ("Frag{Nij}{a}{a}", PardoLoopFactory::Fragment_Nij_a_a_PardoLoopManager)
+("Frag{Nij}{o}{o}", PardoLoopFactory::Fragment_Nij_o_o_PardoLoopManager)
+("Frag{Nij}{oo}{}", PardoLoopFactory::Fragment_Nij_oo__PardoLoopManager)
 ("Frag{ij}{aa}{a}", PardoLoopFactory::Fragment_ij_aa_a_PardoLoopManager)
 ("Frag{ij}{aaa}{}", PardoLoopFactory::Fragment_ij_aaa__PardoLoopManager)
 ("Frag{ij}{ao}{ao}",PardoLoopFactory::Fragment_ij_ao_ao_PardoLoopManager)
@@ -66,8 +68,9 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 ("Frag{Rij}{vo}{vo}",PardoLoopFactory::Fragment_Rij_vo_vo_PardoLoopManager)
 ("Frag{NR1ij}{vo}{vo}",PardoLoopFactory::Fragment_NR1ij_vo_vo_PardoLoopManager)
 ("Frag{NR1ij}{oo}{vo}",PardoLoopFactory::Fragment_NR1ij_oo_vo_PardoLoopManager)
-("Frag{NR1ij}{vv}{vo}",PardoLoopFactory::Fragment_NR1ij_vv_vo_PardoLoopManager);
+("Frag{NR1ij}{vv}{vo}",PardoLoopFactory::Fragment_NR1ij_vv_vo_PardoLoopManager)
 #endif
+("test_pardo_pragma",PardoLoopFactory::test_loop);
 
 
 
@@ -134,6 +137,14 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 			sip_mpi_attr, num_where_clauses, interpreter, iteration);
 		case Fragment_Nij_a_a_PardoLoopManager:
 			return new sip::Fragment_Nij_a_a_PardoLoopManager(
+			num_indices, index_ids, data_manager, sip_tables,
+			sip_mpi_attr, num_where_clauses, interpreter, iteration);
+		case Fragment_Nij_oo__PardoLoopManager:
+			return new sip::Fragment_Nij_oo__PardoLoopManager(
+			num_indices, index_ids, data_manager, sip_tables,
+			sip_mpi_attr, num_where_clauses, interpreter, iteration);
+		case Fragment_Nij_o_o_PardoLoopManager:
+			return new sip::Fragment_Nij_o_o_PardoLoopManager(
 			num_indices, index_ids, data_manager, sip_tables,
 			sip_mpi_attr, num_where_clauses, interpreter, iteration);
 		case Fragment_ij_aa_a_PardoLoopManager:
