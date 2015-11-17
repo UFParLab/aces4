@@ -162,7 +162,7 @@ protected:
                         gather_done_ = true;
                 }
                 if (comm_size > 1) {
-                        MPI_Gather(&value_, 1, MPI_UNSIGNED_LONG, gathered_vals_.data(), 1,
+                        MPI_Gather(&value_, 1, MPI_UNSIGNED_LONG, &gathered_vals_.front(), 1,
                                         MPI_UNSIGNED_LONG, 0, comm_);
                 } else {
                         gathered_vals_[0] = value_;
@@ -291,8 +291,8 @@ protected:
                         gather_done_ = true;
                 }
                 if (comm_size > 1) {
-                        MPI_Gather(list_.data(), size_, MPI_UNSIGNED_LONG,
-                                        gathered_vals_.data(), size_, MPI_UNSIGNED_LONG, 0, comm_);
+                        MPI_Gather(&list_.front(), size_, MPI_UNSIGNED_LONG,
+                                        &gathered_vals_.front(), size_, MPI_UNSIGNED_LONG, 0, comm_);
                 } else {
                         gathered_vals_ = list_;
                 }
@@ -308,7 +308,7 @@ protected:
                         reduce_done_ = true;
                 }
                 if (comm_size > 1) {
-                        MPI_Reduce(list_.data(), reduced_vals_.data(), size_,
+                        MPI_Reduce(&list_.front(), &reduced_vals_.front(), size_,
                                         MPI_UNSIGNED_LONG, MPI_SUM, 0, comm_);
                 } else {
                         reduced_vals_ = list_;
@@ -504,8 +504,8 @@ protected:
                         gather_done_=true;
                 }
                 if(comm_size>1){
-                        MPI_Gather(&value_, 1, MPI_LONG_LONG, gathered_value_.data(), 1, MPI_LONG_LONG, 0, comm_);
-                        MPI_Gather(&max_, 1, MPI_LONG_LONG, gathered_max_.data(), 1, MPI_LONG_LONG, 0, comm_);
+                        MPI_Gather(&value_, 1, MPI_LONG_LONG, &gathered_value_.front(), 1, MPI_LONG_LONG, 0, comm_);
+                        MPI_Gather(&max_, 1, MPI_LONG_LONG, &gathered_max_.front(), 1, MPI_LONG_LONG, 0, comm_);
                 }
                 else{
                         gathered_value_[0] = value_;
@@ -874,12 +874,12 @@ public:
                 }
 
                 if (comm_size > 1) {
-                        MPI_Gather(total_.data(), size_, MPI_DOUBLE, gathered_total_.data(),
+                        MPI_Gather(&total_.front(), size_, MPI_DOUBLE, &gathered_total_.front(),
                                         size_, MPI_DOUBLE, 0, comm_);
-                        MPI_Gather(max_.data(), size_, MPI_DOUBLE, gathered_max_.data(),
+                        MPI_Gather(&max_.front(), size_, MPI_DOUBLE, &gathered_max_.front(),
                                         size_, MPI_DOUBLE, 0, comm_);
-                        MPI_Gather(num_epochs_.data(), size_, MPI_UNSIGNED_LONG,
-                                        gathered_num_epoch_.data(), size_, MPI_UNSIGNED_LONG, 0,
+                        MPI_Gather(&num_epochs_.front(), size_, MPI_UNSIGNED_LONG,
+                                        &gathered_num_epoch_.front(), size_, MPI_UNSIGNED_LONG, 0,
                                         comm_);
 
                 } else {
@@ -904,11 +904,11 @@ public:
                         reduce_done_=true;
                 }
                 //reduce total and calculate mean
-                MPI_Reduce(total_.data(), reduced_mean_.data(), size_, MPI_DOUBLE,
+                MPI_Reduce(&total_.front(), &reduced_mean_.front(), size_, MPI_DOUBLE,
                                 MPI_SUM, 0, comm_); //this is actually the total. need to divide by #epochs
-                MPI_Reduce(max_.data(), reduced_max_.data(), size_, MPI_DOUBLE, MPI_MAX,
+                MPI_Reduce(&max_.front(), &reduced_max_.front(), size_, MPI_DOUBLE, MPI_MAX,
                                 0, comm_);
-                MPI_Reduce(num_epochs_.data(), reduced_num_epoch_.data(), size_,
+                MPI_Reduce(&num_epochs_.front(), &reduced_num_epoch_.front(), size_,
                                 MPI_UNSIGNED_LONG, MPI_SUM, 0, comm_);
                 if (rank == 0) {
                         std::vector<double>::iterator miter = reduced_mean_.begin();
@@ -1178,12 +1178,12 @@ protected:
                         gather_done_ = true;
                 }
                 if (comm_size > 1) {
-                        MPI_Gather(&total_, 1, MPI_DOUBLE, gathered_total_.data(), 1,
+                        MPI_Gather(&total_, 1, MPI_DOUBLE, &gathered_total_.front(), 1,
                                         MPI_DOUBLE, 0, comm_);
-                        MPI_Gather(&max_, 1, MPI_DOUBLE, gathered_max_.data(), 1,
+                        MPI_Gather(&max_, 1, MPI_DOUBLE, &gathered_max_.front(), 1,
                                         MPI_DOUBLE, 0, comm_);
                         MPI_Gather(&num_epochs_, 1, MPI_UNSIGNED_LONG,
-                                        gathered_num_epochs_.data(), 1, MPI_UNSIGNED_LONG, 0,
+                                        &gathered_num_epochs_.front(), 1, MPI_UNSIGNED_LONG, 0,
                                         comm_);
                 } else {
                         gathered_total_[0] = total_;
