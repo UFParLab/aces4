@@ -379,7 +379,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxxi
 #
 #    ------------------------------------------------------------------------
 #
@@ -436,7 +435,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxai
 #
      ENDPROC TRAN_TRAN3 
 #
@@ -3979,6 +3977,7 @@
 #
       ncount = 0.0 
       DO NT 
+         print NT
 
          ncount = ncount + 1.0  
 
@@ -4010,13 +4009,14 @@
 
          kend = kstart 
 
-        #print_scalar whichi  
-        #print_scalar istart   
-        #print_scalar iend   
-        #print_scalar whichj  
-        #print_scalar jstart   
-        #print_scalar jend   
-        #print_scalar kstart   
+        #print whichi  
+        #print istart   
+        #print iend   
+        #print whichj  
+        #print jstart   
+        #print jend   
+        #print kstart   
+	server_barrier
 
          if kstart <= 0  
             exit 
@@ -5910,7 +5910,6 @@
       sip_barrier 
       CALL TRAN_UHF 
       server_barrier 
-      destroy Vxaai
 #
 # Set the partitioning of the occupied segments 
 # --------------------------------------------- 
@@ -5971,6 +5970,7 @@
 # ---------------------------- 
       if nsects == one    
          xtemp1 = xtemp 
+         print xtemp
          CALL OSEG_TRIP 
       endif 
 #
@@ -5990,12 +5990,24 @@
 ##          esum_s += etemp 
 ##    ENDPARDO a, i1 
 #
+      DO Nt
+      DO i7  
+      where Nt == 1
+      where i7 == 2
+         istart = (int)Xijk[Nt,i7] 
+      ENDDO i7  
+      ENDDO Nt 
+
+      print istart
+      server_barrier
       PARDO a, ii 
+      if ii >= istart
      #      PREQUEST  t1ps(a,ii) = t1a_old(a,i1)   
             GET       Xai[a,ii] 
             GET       t1as_old[a,ii] 
             etemp   = t1as_old[a,ii]*Xai[a,ii]
             esum_s += etemp 
+      endif
       ENDPARDO a, ii 
       server_barrier
 #
