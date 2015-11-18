@@ -115,14 +115,14 @@ C      write(6,*) ' N(I):', (np(i), i=1,nseg)
       enddo 
 
       Nt = 0 
-      ie = bseg - 1
+      ie = start(1) - 1
       do i = 1, nseg 
       do ii = 1, np(i) 
 
          is = ie + 1 
          ie = is + n_s(i,ii) - 1 
 
-          je = bseg - 1
+          je = start(1) - 1
           do j = 1, nseg 
           do jj = 1, np(j) 
 

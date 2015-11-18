@@ -379,7 +379,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxxi
 #
 #    ------------------------------------------------------------------------
 #
@@ -436,7 +435,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxai
 #
      ENDPROC TRAN_TRAN3 
 #
@@ -4010,13 +4008,14 @@
 
          kend = kstart 
 
-        #print_scalar whichi  
-        #print_scalar istart   
-        #print_scalar iend   
-        #print_scalar whichj  
-        #print_scalar jstart   
-        #print_scalar jend   
-        #print_scalar kstart   
+        #print whichi  
+        #print istart   
+        #print iend   
+        #print whichj  
+        #print jstart   
+        #print jend   
+        #print kstart   
+	server_barrier
 
          if kstart <= 0  
             exit 
@@ -4043,9 +4042,6 @@
                      if iicount >= istart  
                      if iicount <= iend  
                         tps[a,ii] = 0.0 
-			print a
-			print i1
-			print ii
                         execute stripi t1a_old[a,i1] tps[a,ii] 
                         PUT t1as_old[a,ii] = tps[a,ii] 
                      endif 
@@ -5913,7 +5909,6 @@
       sip_barrier 
       CALL TRAN_UHF 
       server_barrier 
-      destroy Vxaai
 #
 # Set the partitioning of the occupied segments 
 # --------------------------------------------- 
