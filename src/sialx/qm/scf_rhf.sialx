@@ -2208,10 +2208,10 @@ import "scf_rhf_defs.sialx"
       X  *= damp_denom
 
 #bgn_debug
-      print "Karls Damping: numerator, denominator and damp factor"
-      print damp_numra
-      print damp_denom
-      print x
+#      print "Karls Damping: numerator, denominator and damp factor"
+#      print damp_numra
+#      print damp_denom
+#      print x
 #end_debug
 
       IF X < 1.0
@@ -2717,8 +2717,8 @@ import "scf_rhf_defs.sialx"
       zmax = 0.0
       imax = 0.0
       execute compute_int_scratchmem oed_ovl zmax imax
-      print zmax
-      print imax
+#      print zmax
+#      print imax
 
       ecrit  = scf_conv # Energy tolerance  
 #
@@ -3191,10 +3191,10 @@ import "scf_rhf_defs.sialx"
                   DEAVG_OLD *= 0.20
 
 #bgn_debug
-      print "The input three variables to compute davison damp factor"
-      print des
-      print deps
-      print DEAVG_OLD
+#      print "The input three variables to compute davison damp factor"
+#      print des
+#      print deps
+#      print DEAVG_OLD
 #end_debug
                   DO ITHREE
                      IF ITHREE == 1
@@ -3208,13 +3208,13 @@ import "scf_rhf_defs.sialx"
                      ENDIF
                   ENDDO ITHREE
 
-		  print DAMP_PARMS
-		  print DAMP_FACTOR
+		  #print DAMP_PARMS
+		  #print DAMP_FACTOR
 
                  EXECUTE A4_DAVID_DAMP_FACTOR DAMP_PARMS DAMP_FACTOR
 #bgn_debug                
-      print"the davidson damp_factor"
-      print damp_factor
+#      print"the davidson damp_factor"
+#      print damp_factor
 #end_#debug
                  IF DAMP_FACTOR >= DAMP_THRES
                        CAN_DAMP = 1
