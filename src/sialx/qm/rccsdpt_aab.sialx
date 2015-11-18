@@ -3068,15 +3068,27 @@
 #
      easum = 0.0
      esaab = 0.0 
+
+      DO Nt
+      DO i7  
+      where Nt == 1
+      where i7 == 2
+         istart = (int)Xijk[Nt,i7] 
+      ENDDO i7  
+      ENDDO Nt 
+
+     print istart
      sip_barrier
      PARDO a, ii
 #
+      if ii >= istart
           #PREQUEST x1ai(a,ii) = t1a_old(a,i1)
            GET                 t1as_old[a,ii] 
            GET                 sai[a,ii]
            etemp             = sai[a,ii]*t1as_old[a,ii]
            etemp            *= 0.25
            easum             += etemp
+      endif
 #
      ENDPARDO a, ii
 #

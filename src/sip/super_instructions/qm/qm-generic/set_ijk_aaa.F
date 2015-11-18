@@ -78,18 +78,24 @@ c------------------------------------------------------------------------
 c Make sure maxi < mo_ranges(i) 
 
       do i = 1, nseg 
-         if (maxi .ge. mo_ranges(i)) maxi = maxi - 1   
+         if (maxi .ge. mo_ranges(bseg + i - 1)) maxi = maxi - 1   
       enddo 
 
       start(1) = 1 
       end(1)   = mo_ranges(1) 
+      if (bseg .gt. 1) then
+	  do i = 2, bseg
+             start(1) = end(1) + 1  
+             end(1) = start(1) + mo_ranges(i) - 1 
+	  enddo
+      endif
       do i = 2, nseg 
          start(i) = end(i-1) + 1  
-         end(i) = start(i) + mo_ranges(i) - 1 
+         end(i) = start(i) + mo_ranges(bseg + i - 1) - 1 
       enddo 
 
-c     write(6,*) ' NSEG = ', nseg 
-c     write(6,*) '   ', (start(i),end(i), i=1,nseg) 
+C      write(6,*) ' NSEG = ', nseg 
+C      write(6,*) '   ', (start(i),end(i), i=1,nseg) 
 
       do i = 1, nseg 
          np(i) = (end(i) - start(i) + 1)/maxi 
@@ -97,7 +103,7 @@ c     write(6,*) '   ', (start(i),end(i), i=1,nseg)
      *       np(i) = np(i) + 1 
       enddo 
 
-c     write(6,*) ' N(I):', (np(i), i=1,nseg) 
+C      write(6,*) ' N(I):', (np(i), i=1,nseg) 
 
       do i = 1, nseg 
          e = 0 
@@ -109,14 +115,14 @@ c     write(6,*) ' N(I):', (np(i), i=1,nseg)
       enddo 
 
       Nt = 0 
-      ie = 0 
+      ie = bseg - 1
       do i = 1, nseg 
       do ii = 1, np(i) 
 
          is = ie + 1 
          ie = is + n_s(i,ii) - 1 
 
-          je = 0 
+          je = bseg - 1
           do j = 1, nseg 
           do jj = 1, np(j) 
 

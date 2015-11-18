@@ -4043,6 +4043,9 @@
                      if iicount >= istart  
                      if iicount <= iend  
                         tps[a,ii] = 0.0 
+			print a
+			print i1
+			print ii
                         execute stripi t1a_old[a,i1] tps[a,ii] 
                         PUT t1as_old[a,ii] = tps[a,ii] 
                      endif 
@@ -5990,12 +5993,24 @@
 ##          esum_s += etemp 
 ##    ENDPARDO a, i1 
 #
+      DO Nt
+      DO i7  
+      where Nt == 1
+      where i7 == 2
+         istart = (int)Xijk[Nt,i7] 
+      ENDDO i7  
+      ENDDO Nt 
+
+      print istart
+      server_barrier
       PARDO a, ii 
+      if ii >= istart
      #      PREQUEST  t1ps(a,ii) = t1a_old(a,i1)   
             GET       Xai[a,ii] 
             GET       t1as_old[a,ii] 
             etemp   = t1as_old[a,ii]*Xai[a,ii]
             esum_s += etemp 
+      endif
       ENDPARDO a, ii 
       server_barrier
 #
