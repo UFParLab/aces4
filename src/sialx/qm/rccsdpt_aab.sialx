@@ -2352,6 +2352,8 @@
       ncount = 0 
       DO NT 
 
+         print NT
+
          ncount = ncount + 1
 
          itemp = 0.0
@@ -3054,6 +3056,7 @@
 # ----------------------------
       if nsects == (int)one
          xtemp1 = xtemp
+         print xtemp
          CALL OSEG_TRIP1 
       endif
 #

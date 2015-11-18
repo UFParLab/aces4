@@ -3977,6 +3977,7 @@
 #
       ncount = 0.0 
       DO NT 
+         print NT
 
          ncount = ncount + 1.0  
 
@@ -5969,6 +5970,7 @@
 # ---------------------------- 
       if nsects == one    
          xtemp1 = xtemp 
+         print xtemp
          CALL OSEG_TRIP 
       endif 
 #
