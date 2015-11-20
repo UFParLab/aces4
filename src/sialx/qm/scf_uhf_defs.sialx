@@ -42,8 +42,8 @@ predefined  scalar damp
 
 #these are predefined in the index table
 
-moaindex aces_defs_pa = baocc: eavirt  
-mobindex aces_defs_pb = bbocc: ebvirt   
+moaindex aces_defs_pa = 1: eavirt  
+mobindex aces_defs_pb = 1: ebvirt   
 aoindex aces_defs_mu = 1: norb  
 
 static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC. 
@@ -96,6 +96,7 @@ special compute_aabb_batch ww
 special get_my_rank w
 #special scf_atom u
 #special print_rel_info rr
+special compute_dipole_integrals wur
 
 endsial scf_uhf_defs 
 
