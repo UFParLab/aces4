@@ -357,7 +357,7 @@ void return_nai_hessints(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
 	int& ierr);
 
-void drive_2el_hessian(
+void compute_2el_hessian(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
 	int& ierr);
@@ -622,7 +622,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["return_2el_gradient"]=(fp0)&return_2el_gradient;
     procmap_["return_nai_hessints"]=(fp0)&return_nai_hessints;
     procmap_["return_kin_ovl_hessints"]=(fp0)&return_kin_ovl_hessints;
-    procmap_["drive_2el_hessian"]=(fp0)&drive_2el_hessian;
+    procmap_["compute_2el_hessian"]=(fp0)&compute_2el_hessian;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
     procmap_["compute_nn_repulsion_grad"]=(fp0)&compute_nn_repulsion_grad;
 

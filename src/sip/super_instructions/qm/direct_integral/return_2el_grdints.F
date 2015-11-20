@@ -1,5 +1,5 @@
 C-----------------------------------------------------------------
-!> special compute_2el_grdints wr
+!> special return_2el_grdints wr
 !>
 !> Return the two-particle derivative integrals. The space for the 
 !> deriavtive integrals is a temp array in SIAL (customarily)

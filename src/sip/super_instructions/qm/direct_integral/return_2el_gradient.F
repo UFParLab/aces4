@@ -1,20 +1,19 @@
 C-----------------------------------------------------------------
-!> special return_2el_hessian ru
+!> special return_2el_gradient wr
 !>
-!> Driver routine to compute the two electron contribution to the 
-!> Hessian. Notice that the Hessian integrals are not returned. 
-!> Instead, we compute the contribution to the Hessian on the fly. 
+!> Return the two-particle derivative integrals. The space for the 
+!> deriavtive integrals is a temp array in SIAL (customarily)
 !>
 !> PARDO mu, nu, lambda, sigma
 !>
-!>  execute return_2el_hessian Density[mu,nu,lambda,sigma] hess[9*natoms*natoms]
+!>      execute return_2el_gradient aoint[mu,nu,lambda,sigma] gradient[3*natoms]
 !>
 !> ENDPARDO mu, nu, lambda, sigma
 !>
 !>  Ajith Perera, 09/2015.
 C-----------------------------------------------------------------
 
-      subroutine drive_2el_hessian(
+      subroutine return_2el_gradient(
      c array_slot_0, rank_0, index_values_0, size_0, extents_0, data_0,
      c array_slot_1, rank_1, index_values_1, size_1, extents_1, data_1,
      c  ierr) BIND(C)
@@ -33,11 +32,11 @@ c Interface added BUT should be include NOT added in the future
       integer(C_INT), intent(in)::index_values_0(1:rank_0)
       integer(C_INT), intent(in)::size_0
       integer(C_INT), intent(in)::extents_0(1:rank_0)
-      real(C_DOUBLE), intent(in)::data_0(1:size_0)
+      real(C_DOUBLE), intent(out)::data_0(1:size_0)
 
       integer(C_INT), intent(in)::array_slot_1
       integer(C_INT), intent(in)::rank_1
-      integer(C_INT), intent(in)::index_values_1(1:rank_0)
+      integer(C_INT), intent(in)::index_values_1(1:rank_1)
       integer(C_INT), intent(in)::size_1
       integer(C_INT), intent(in)::extents_1(1:rank_1)
       real(C_DOUBLE), intent(in)::data_1(1:size_1)
@@ -71,15 +70,12 @@ c ---------------------------------------------------------------------------
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
       integer(C_INT) i, j, one, two
       integer(C_INT) nscr, niscr
-      integer(C_INT) ncenters
+      integer der_flags(12)
+      integer Derv_component 
 
       ierr = 0 
       one  = 1
       two  = 2
-c Number of nuclear centers
-c
-      ncenters = int_constant("ncenters"//C_NULL_CHAR)
-
 c Nuclear coordinates
       call predefined_scalar_array("coords"//C_NULL_CHAR,
      *                                  two, pDimCoords, pcoords)
@@ -125,22 +121,33 @@ c     call TAU_STOP("start scratch_array")
       if (index_values_0(3).gt.1) offset_3=paosegs(index_values_0(3)-1) 
       if (index_values_0(4).gt.1) offset_4=paosegs(index_values_0(4)-1)
 
-c     call TAU_START("start compute_return_2el_hessian")   
+c     call TAU_START("start compute_return_2el_gradient")   
 
-      call compute_return_2el_hessian(
+      Derv_component = INT(data_1(1))
+
+      do j = 1, 12
+         der_flags(j) = 0
+      enddo 
+
+      der_flags(Derv_component) = 1
+
+      call compute_return_2el_gradient(
      &
-     &                        data_0, data_1, 
-     & 
+     &                        data_0, 
      &                        1+offset_1, extents_0(1)+offset_1,
      &                        1+offset_2, extents_0(2)+offset_2,
      &                        1+offset_3, extents_0(3)+offset_3,
      &                        1+offset_4, extents_0(4)+offset_4,
      &
-     &                        ncenters, coords, tcoords,
-     &                    
-     &                        scr,iscr)
+     &                        scr,
+     &                        iscr,
+     & 
+     &                        coords, tcoords,
+     & 
+     &                        der_flags)
 
-c     call TAU_STOP("start compute_return_2el_hessian")   
+
+c     call TAU_STOP("start compute_return_2el_gradient")   
 
 c ----------------------------------------------------------------------
 c

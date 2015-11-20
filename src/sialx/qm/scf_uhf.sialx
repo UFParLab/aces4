@@ -1390,14 +1390,16 @@ import "scf_uhf_defs.sialx"
          IF NATOMS > 3
 
             etemp = 0.0
-            DO katom
-            DO jatom
-               IF katom == jatom
-                  etemp             = etemp + 1.0
-                  atom[katom,jatom] = etemp
-               endif
-            ENDDO jatom
-            ENDDO katom
+#JNB chnages 
+#            DO katom
+#            DO jatom
+#               IF katom == jatom
+#                  etemp             = etemp + 1.0
+#                  atom[katom,jatom] = etemp
+#               endif
+#            ENDDO jatom
+#            ENDDO katom
+#JNB check this?
 
             PARDO mu, nu
                Txx[mu,nu]        = 0.0
@@ -1406,20 +1408,38 @@ import "scf_uhf_defs.sialx"
             ENDPARDO mu, nu
 
             execute get_my_rank rank
+
+            DO mu
+            DO nu
+
+             Txx[mu,nu] = 0.0
+             execute return_ovl Txx[mu,nu]
+             oed_ovl[mu,nu] = Txx[mu,nu]
+             execute return_h1 Txx[mu,nu]
+             oed_nai[mu,nu] = Txx[mu,nu]
+
+            ENDDO nu
+            ENDDO mu
+#JNB: i changed this 
 #
-            if rank == 0.0
+#            if rank == 0.0
 
                PARDO katom
-               DO jatom
-                  IF katom == jatom
 
-                     tatom[katom,jatom] = atom[katom,jatom]
-                     execute return_sval tatom[katom,jatom] etemp
+#               DO jatom
+#                  IF katom == jatom
+#
+#                     tatom[katom,jatom] = atom[katom,jatom]
+#                     execute return_sval tatom[katom,jatom] etemp
 
                      print "Printing atom number at entry to scf_atom"
+                     etemp = (scalar) katom
                      print etemp
 
                      execute a4_scf_atom fockrohf_a fockrohf_b oed_kin oed_nai oed_ovl etemp
+                     print "Printing atom number exit from scf_atom"
+                     print etemp
+
                      DO mu
                      DO nu
                         txx[mu,nu] = Fockrohf_a[mu,nu]
@@ -1434,12 +1454,12 @@ import "scf_uhf_defs.sialx"
                      ENDDO nu
                      ENDDO mu
 
-                  ENDIF
-
-               ENDDO jatom
+#                  ENDIF
+#
+#               ENDDO jatom
                ENDPARDO katom
 
-            ENDIF 
+#            ENDIF 
 
          ENDIF 
          sip_barrier 
@@ -1513,8 +1533,8 @@ import "scf_uhf_defs.sialx"
 #     Compute the new HF density
 #     ----------------------
 #
-#         EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
-#         EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
+         EXECUTE A4_GET_INIT_OCCUPATION A_OCC_NUMS ZERO
+         EXECUTE A4_GET_INIT_OCCUPATION B_OCC_NUMS ONE
 
          CALL HFIDENS
          sip_barrier
