@@ -123,7 +123,6 @@
       scalar seven
       scalar energy
       scalar ccsd_correlation
-      scalar ccsd_energy
       scalar mp2_correlation
       scalar etemp
       scalar esum
@@ -2607,6 +2606,7 @@
       set_persistent T2old_ab "T2old_ab"
       set_persistent scf_energy "scf_energy"
       set_persistent totenerg "totenerg"
+      set_persistent ccsd_energy "ccsd_energy"
       set_persistent VSpipi "VSpipi"
       set_persistent Vaaii  "Vaaii"
       set_persistent Viaai  "Viaai"

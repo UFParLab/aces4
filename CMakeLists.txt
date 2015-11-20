@@ -558,6 +558,7 @@ set(SIAL_FILES
     src/sialx/qm/rlccsd_rhf.sialx;
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
+    src/sialx/qm/rlamccsdpt_aaa.sialx;
     src/sialx/qm/rccpt1p2_prop.sialx;
     src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/rcis_d_rhf.sialx;

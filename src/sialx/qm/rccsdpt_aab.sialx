@@ -141,7 +141,7 @@
 # Declare scalars
 # ---------------
 #
-      scalar ccsdpt_energy
+      scalar ccsdpt_correlation
       scalar etemp
       scalar xtemp
       scalar xtemp1
@@ -3116,7 +3116,8 @@
       collective eaab += esum 
       sip_barrier
 
-    restore_persistent totenerg "totenerg"
+      restore_persistent totenerg "totenerg"
+      restore_persistent ccsd_energy "ccsd_energy"
 
       eaab *= 2.0
       eSaab *= 2.0
@@ -3124,12 +3125,17 @@
       totenerg += eSaab 
 
       ccsdpt_energy = totenerg
+      ccsdpt_correlation = ccsdpt_energy - ccsd_energy
 
       print eaab 
       print eSaab 
+      print ccsdpt_correlation
+      print ccsd_energy
       print ccsdpt_energy
 
     set_persistent totenerg "totenerg"
+    set_persistent ccsd_energy "ccsd_energy"
+    set_persistent ccsdpt_energy "ccsdpt_energy"
 
       sip_barrier
 #
