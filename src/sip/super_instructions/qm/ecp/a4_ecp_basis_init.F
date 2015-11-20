@@ -260,15 +260,15 @@ c loop over contracted basisfunctions
       Enddo
 
       If (nshells .NE. Nshll) Then
-         Write(6,"(a,a,a)") "The basis functions with the same angular"
-     &                      " entered in GENBAS file as more than one"
+         Write(6,"(a,a,a)") "The basis functions with the same angular",
+     &                      " entered in GENBAS file as more than one",
      &                      " shell. It us not allowed in ACES IV"
          call abort_job()
       Endif 
 
       If (nbf .NE. nval_bfns) Then
          
-         Write(6,"(a,a,a)") "Inconsistency is detected in the number"
+         Write(6,"(a,a,a)") "Inconsistency is detected in the number",
      &                      " of basis functions: This can not happen!"
          call abort_job()
       Endif  
