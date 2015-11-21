@@ -141,6 +141,8 @@
 # Declare scalars 
 # --------------- 
 #
+      scalar imax
+      scalar zmax
       scalar e_a     
       scalar e_b     
       scalar escf_a 
@@ -206,10 +208,6 @@
       scalar esumaa 
       scalar mp2_correlation
       scalar mp2_energy 
-
-      static oed_nai[aces_defs_mu,aces_defs_mu]
-      static oed_kin[aces_defs_mu,aces_defs_mu]
-      static oed_ovl[aces_defs_mu,aces_defs_mu]
 
       served T2old_aa[a,i,a1,i1]
       served T2old_ab[a,i,b,j]
@@ -489,6 +487,11 @@
       restore_persistent fock_a "fock_a" 
       restore_persistent Ca "ca"
       sip_barrier
+
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 
 #     Start the mp2 calculation  
 #     ------------------------------------------------ 

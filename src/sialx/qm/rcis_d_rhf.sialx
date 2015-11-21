@@ -62,6 +62,8 @@ import "reom_rhf_defs.sialx"
       scalar etriples
       scalar ecis_d
       scalar kroot
+      scalar imax
+      scalar zmax
 #
       static Ek[kstate]
       static Ekd[kstate]
@@ -549,6 +551,11 @@ import "reom_rhf_defs.sialx"
       restore_persistent Vpiqj   "Vpiqj"
       restore_persistent VSpipi  "VSpipi"
       server_barrier
+
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 #
       call iguess_uhf
       call energy_new

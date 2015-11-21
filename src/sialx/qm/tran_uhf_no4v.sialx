@@ -499,6 +499,7 @@ scalar lcount
 scalar icount
 scalar xcount
 scalar imax
+scalar zmax
 scalar emax
 scalar energaa
 scalar energbb
@@ -1765,6 +1766,10 @@ ENDPROC TRAN_UHF
 server_barrier
 restore_persistent ca "ca"
 set_persistent ca "ca"  
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 server_barrier
 
 CALL TRAN_UHF 

@@ -110,6 +110,8 @@
 # Declare scalar arrays 
 # --------------------- 
 #
+      scalar imax
+      scalar zmax
       scalar ncount1
       scalar ncount2
       scalar jcount
@@ -2427,6 +2429,11 @@
       diis_start = (scalar)scf_beg
       diis_order = (scalar)scf_hist
       Idiis_order = scf_hist
+
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 
       print diis_start
       print diis_order

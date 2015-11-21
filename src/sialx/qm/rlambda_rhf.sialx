@@ -407,6 +407,8 @@ import "rccsd_rhf_defs.sialx"
       static NucDip[ixyz]
       static Dip02[ixyz]
       served Dxx_scf[mu,nu]
+      scalar imax
+      scalar zmax
       scalar rank
       scalar dsum
       scalar AbsDip
@@ -4432,6 +4434,11 @@ import "rccsd_rhf_defs.sialx"
       eight = 8.0 
       nine = 9.0 
       ten = 10.0 
+
+# Initilize the vaiable to zmax and imax (memory of ERD and OED).
+zmax = 0.0
+imax = 0.0
+execute compute_int_scratchmem oed_ovl zmax imax
 
       diis_start = (scalar)scf_beg
       diis_order = (scalar)scf_hist
