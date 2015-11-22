@@ -37,6 +37,7 @@
 #endif
 
 #include "test_constants.h"
+#include "job_control.h"
 
 TestController::TestController(std::string job, bool has_dot_dat_file,
 		bool verbose, std::string comment, std::ostream& sial_output,
@@ -59,6 +60,10 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 //		siox_path = dir_name + prog_name;
 //		std::cout << "siox_path: " << siox_path << std::endl << std::flush;
 //	}
+
+	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id()));
+
+	std::cout << "job_id" << sip::JobControl::global->get_job_id() << std::endl << std::flush;
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);
@@ -115,7 +120,9 @@ void TestController::initSipTables(const std::string& sial_dir_name) {
 //	printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(),
 //			*sip_tables_);
 //	barrier();
-	prog_name_ = progs_->at(prog_number_++);
+//	prog_name_ = progs_->at(prog_number_++);
+	prog_number_ = sip::JobControl::global->get_program_num();
+	prog_name_ = progs_->at(prog_number_);
 	sip::JobControl::global->set_program_name(prog_name_);
 //	sip::JobControl::global->increment_program();
 	std::string siox_path = sial_dir_name + prog_name_;
@@ -232,6 +239,10 @@ void TestController::runWorker() {
 	}
 //	barrier();
 	wpam_->save_marked_arrays(worker_);
+	std::stringstream tt;
+	tt << sip::JobControl::global->get_job_id() << "." << sip::JobControl::global->get_program_num() << "." << "worker_checkpoint";
+	std::string worker_checkpoint_filename = tt.str();
+	wpam_->checkpoint_persistent(worker_checkpoint_filename);
 
 }
 

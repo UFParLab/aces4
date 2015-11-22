@@ -331,22 +331,18 @@ add_library(jsoncpp;
 add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_DEFINITIONS}")
 
-# aces4 executable
+# executable for main program
 add_executable(aces4 src/aces_main/main.cpp)
 
-# print_siptables executable
+# executables for tools in the util directory
 add_executable(print_siptables src/util/print_siptables.cpp)
-
-#<<<<<<< HEAD
-# print_init_file executable
 add_executable(print_init_file src/util/print_init_file.cpp)
+add_executable(print_worker_checkpoint src/util/print_worker_checkpoint.cpp)
 
-#||||||| merged common ancestors
-#=======
 ## dump_array_file executable
 #add_executable(dump_array_file src/util/dump_array_file.cpp)
 
-#>>>>>>> put_async_new_disk_backing
+
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
@@ -357,20 +353,27 @@ set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}
 set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(print_worker_checkpoint PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
+
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
+target_link_libraries(print_worker_checkpoint ${TOLINK_LIBRARIES})
 
 # Dependencies
 if(HAVE_CUDA)
 	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_worker_checkpoint tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
+	add_dependencies(print_worker_checkpoint tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_sip tensordil)
