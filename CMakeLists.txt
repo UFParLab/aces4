@@ -281,6 +281,8 @@ configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPY
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/scf_uhfrhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/scf_uhf_triplet_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccd_frozencore_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -296,6 +298,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test.txt ${
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays_2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/test_1el_ecp_ints.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 
 #----------------------------------------------------------------------
 # Build aces4 & other executables
@@ -382,6 +385,7 @@ add_executable(test_basic_sial      test/test_basic_sial.cpp;
                                     test/test_transpose4d_op.F;
                                     test/test_contraction_small2.F)
 add_executable(test_sial  	    test/test_sial.cpp)
+add_executable(test_basic_qm              test/test_basic_qm.cpp)
 add_executable(test_qm              test/test_qm.cpp)
 add_executable(test_qm_aux          test/test_qm_aux.cpp)
 add_executable(test_unit            test/test_unit.cpp)
@@ -389,18 +393,21 @@ add_executable(test_unit            test/test_unit.cpp)
 # Link test executable against gtest & gtest_main
 set_target_properties(test_basic_sial   PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+set_target_properties(test_basic_qm     PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_qm_aux       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
 target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+target_link_libraries(test_basic_qm     test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_qm_aux       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
 set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+set_target_properties(test_basic_qm     PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_qm_aux       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
@@ -408,8 +415,9 @@ set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLA
 
 add_dependencies(test_basic_sial   gtest gtest_main test_controllers)
 add_dependencies(test_sial         gtest gtest_main test_controllers)
-add_dependencies(test_qm_aux       gtest gtest_main test_controllers)
+add_dependencies(test_basic_qm           gtest gtest_main test_controllers)
 add_dependencies(test_qm           gtest gtest_main test_controllers)
+add_dependencies(test_qm_aux       gtest gtest_main test_controllers)
 add_dependencies(test_unit         gtest gtest_main test_controllers)
 
 
@@ -417,11 +425,13 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_test(NAME test_unit         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_unit)
     add_test(NAME test_basic_sial   COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_sial)
     add_test(NAME test_sial         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_sial)
+    add_test(NAME test_basic_qm           COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_qm)
     add_test(NAME test_qm           COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_qm)
 else() # Single Node Version Tests
     add_test(NAME test_unit         COMMAND test_unit)
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
     add_test(NAME test_sial         COMMAND test_sial)
+    add_test(NAME test_basic_qm           COMMAND test_basic_qm)
     add_test(NAME test_qm           COMMAND test_qm)
 endif()
 
@@ -533,6 +543,7 @@ set(SIAL_FILES
     src/sialx/test/read_block_test.sialx;
     src/sialx/test/cast_indices_to_simple.sialx;
     src/sialx/test/aoladder.sialx;
+    src/sialx/test/test_ecpint.sialx;
     src/sialx/test/put_accumulate_stress.sialx;
     src/sialx/test/disk_backing_test.sialx;
     src/sialx/test/disk_backing_put_acc_stress.sialx;
@@ -569,6 +580,8 @@ set(SIAL_FILES
     src/sialx/qm/lr_eom_linccsd_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx;
+    src/sialx/qm/scf_uhf.sialx;
+    src/sialx/qm/scf_uhf_defs.sialx;
     src/sialx/qm/scf_rhf.sialx; 
     src/sialx/qm/scf_rhf_defs.sialx)
     
