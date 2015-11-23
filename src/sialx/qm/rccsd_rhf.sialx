@@ -2412,6 +2412,7 @@
 
       print " "
       print "-- Parallel CCSD program"
+      print "-- J. Chem. Phys. 76, 1910 (1982)"
       print "-- Written by Victor F. Lotrich, 2014"
       print " "
 

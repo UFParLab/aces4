@@ -7392,6 +7392,12 @@
 #
 # BEGIN MAIN PROGRAM
 # ------------------
+      print " "
+      print "-- Parallel Lambda-CCSD(T) program"
+      print "-- AAA spin combination"
+      print "-- J Chem Phys 128 , 044110 (2008)"
+      print "-- Written by Jason N. Byrd, 2015"
+      print " "
 #
       eaaa   = 0.0  
       esum   = 0.0  

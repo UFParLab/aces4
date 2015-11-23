@@ -931,6 +931,87 @@ TEST(Sial_QM,eom_mp2_test){
 	}
 }
 
+/* lambda CCSD(T) test
+test
+H 0.0 0.0 0.0
+F 0.0 0.0 0.917
+
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+drop_mo=1-1
+spherical=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf_coreh.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rlambda_rhf.siox
+SIAL_PROGRAM = rlamccsdpt_aaa.siox
+SIAL_PROGRAM = lamrccsdpt_aab.siox
+
+*/
+TEST(Sial_QM,lamccsdpt_test){
+	std::string job("lamccsdpt_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-99.45975176375698, scf_energy, 1e-10);
+	}
+//
+// tran
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ccsd_energy = controller.scalar_value("ccsd_energy");
+		ASSERT_NEAR(-99.583972376431, ccsd_energy, 1e-10);
+	}
+//
+// lambda
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// lambda ccsdpt aaa
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double eaaa = controller.scalar_value("eaaa");
+		ASSERT_NEAR(-0.00001109673867, eaaa, 1e-10);
+		double esaab =controller.scalar_value("esaaa");
+		ASSERT_NEAR(0.00000190144932, esaab, 1e-10);
+	}
+//
+// ccsdpt aab
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double eaab = controller.scalar_value("eaab");
+		ASSERT_NEAR(-0.00057100058054, eaab, 1e-10);
+		double esaab =controller.scalar_value("esaab");
+		ASSERT_NEAR(0.00002785417018, esaab, 1e-10);
+		double ccsdpt_energy = controller.scalar_value("ccsdpt_energy");
+		ASSERT_NEAR(-99.584524718131, ccsdpt_energy, 1e-10);
+	}
+
+}
+
 //****************************************************************************************************************
 
 //void bt_sighandler(int signum) {

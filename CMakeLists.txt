@@ -285,6 +285,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/rlambda_test.dat ${CMAKE_BINARY_DIR}/ CO
 configure_file(${CMAKE_SOURCE_DIR}/test/lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccd_frozencore_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/lamccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/helloworld1.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays_wild.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/local_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -559,6 +560,7 @@ set(SIAL_FILES
     src/sialx/qm/rccsdpt_aaa.sialx;
     src/sialx/qm/rccsdpt_aab.sialx;
     src/sialx/qm/rlamccsdpt_aaa.sialx;
+    src/sialx/qm/rlamccsdpt_aab.sialx;
     src/sialx/qm/rccpt1p2_prop.sialx;
     src/sialx/qm/rcis_rhf.sialx;
     src/sialx/qm/rcis_d_rhf.sialx;

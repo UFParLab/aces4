@@ -5892,6 +5892,12 @@
 #
 # BEGIN MAIN PROGRAM
 # ------------------
+      print " "
+      print "-- Parallel CCSD(T) program"
+      print "-- AAA spin combination"
+      print "-- Chemical Physics 157, 479 (1989)"
+      print "-- Written by Victor F. Lotrich 2015"
+      print " "
 #
       eaaa   = 0.0  
       esum   = 0.0  
