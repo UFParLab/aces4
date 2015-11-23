@@ -484,7 +484,7 @@ C
      &                       
      &                 spherical,ecp)
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       w=0.0d0
       Write(6,*)
       Write(6,"(a)") "@-comp_return_1el_ecp_ints, The ECP integrals"
@@ -494,7 +494,7 @@ C#ifdef _DEBUG_LVL0
       enddo
       Write(6, "(a,(1x,F20.13))") "The ecpint. check sum = ", w
       Write(6,*)
-C#endif
+#endif
 
       i = 0
       do b = db1,db2

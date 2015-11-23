@@ -158,6 +158,47 @@ TEST(Sial_BasicQM,lindep_test){
 	}
 }
 
+/* PLACE THIS TEST LAST
+ecp test
+CL
+CL 1 R
+CL 1 R 2 A
+
+R=1.5
+A=108.0
+
+*ACES2(ECP=ON,SYM=OFF,CALC=CCSD,MEM=1gb,CHARGE=-1)
+
+CL:SBKJC
+CL:SBKJC
+CL:SBKJC
+
+CL:SBKJC
+CL:SBKJC
+CL:SBKJC
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM=test_ecpint.siox
+
+*/
+TEST(Sial_BasicQM,test_1el_ecp_ints){
+	std::string job("test_1el_ecp_ints");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// ecp test code
+	controller.initSipTables(dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ecp_checksum = controller.scalar_value("ecp_checksum");
+		ASSERT_NEAR(21.33193395347041, ecp_checksum, 1e-10);
+	}
+}
+
 //****************************************************************************************************************
 
 //void bt_sighandler(int signum) {

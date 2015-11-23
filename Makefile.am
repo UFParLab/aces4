@@ -333,7 +333,8 @@ test/expected_output/scalars.txt\
 test/expected_output/static_array_test.txt\
 test/expected_output/static_array_test2.txt\
 test/expected_output/tmp_arrays_2.txt\
-test/expected_output/tmp_arrays.txt
+test/expected_output/tmp_arrays.txt\
+test/expected_output/test_1el_ecp_ints.dat
 
 
 EXTRA_DIST+= $(TEST_SUPPORT_FILES)

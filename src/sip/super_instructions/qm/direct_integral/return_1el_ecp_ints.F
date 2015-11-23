@@ -33,6 +33,8 @@ c--------------------------------------------------------------------------
 !>   execute return_h1 h1(mu,nu)
 !>
 !>   The array h1 is blocked and as of now a temporary array.
+!> TODO: The ECP 1 electron integrals will fail on runtime if the compiler uses
+!>       array out of bound checks while still being a useful code otherwise.
 !>
 c--------------------------------------------------------------------------
 

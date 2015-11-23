@@ -297,6 +297,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test.txt ${
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/static_array_test2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays_2.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/expected_output/tmp_arrays.txt ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/test_1el_ecp_ints.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 
 #----------------------------------------------------------------------
 # Build aces4 & other executables
