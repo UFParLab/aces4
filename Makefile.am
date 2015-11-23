@@ -321,6 +321,7 @@ test/rlambda_test.dat\
 test/lccd_test.dat\
 test/lccd_frozencore_test.dat\
 test/lccsd_test.dat\
+test/lamccsdpt_test.dat\
 test/scf_rhf_aguess_test.dat\
 test/scf_uhfrhf_aguess_test.dat\
 test/scf_uhf_triplet_aguess_test.dat\
@@ -532,6 +533,8 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab.siox\
+./src/sialx/qm/rlamccsdpt_aaa.siox\
+./src/sialx/qm/rlamccsdpt_aab.siox\
 ./src/sialx/qm/scf_rhf.siox\
 ./src/sialx/qm/scf_rhf_defs.siox
 
@@ -667,10 +670,10 @@ EXTRA_DIST += \
 ./src/sialx/qm/rlambda_rhf.sialx\
 ./src/sialx/qm/rccpt1p2_prop.sialx\
 ./src/sialx/qm/rccsd_rhf_defs.sialx\
-./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\
-./src/sialx/qm/rccsdpt_aab_defs.sialx\
 ./src/sialx/qm/rccsdpt_aab.sialx\
+./src/sialx/qm/rlamccsdpt_aaa.sialx\
+./src/sialx/qm/rlamccsdpt_aab.sialx\
 ./src/sialx/qm/scf_rhf.sialx\
 ./src/sialx/qm/scf_rhf_defs.sialx
 

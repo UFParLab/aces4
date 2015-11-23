@@ -1,7 +1,5 @@
-# import "rccsdpt_aaa_defs.sialx"
-  import "rccsd_rhf_defs.sialx"
-#
-                           SIAL RCCSDPT_AAA 
+ import "rccsd_rhf_defs.sialx"
+                           SIAL CCSD_RHF_SV1
 #
 #-------------------------------------------------------------------------------
 #
@@ -10,6 +8,7 @@
 #
       index N1       = 1: 1 # cc_iter
       index NT       = 1: 10000 
+      index NT1      = 1: 10000 
       index i7       = 1: 7 
       index ii       = 1: naocc
       index jj       = 1: naocc
@@ -18,7 +17,7 @@
       index kptr1    = 1: 2 
       index iii      = 1: 5
       index jjj      = 1: 5 
-      index xx       = 1: 10000 
+      index xx       = 1: 10000
 #
       aoindex mu     = 1: norb
       aoindex nu     = 1: norb
@@ -34,11 +33,15 @@
 
       moaindex i2= baocc: eaocc
       moaindex i3= baocc: eaocc
+      moaindex i4= baocc: eaocc
+      moaindex i5= baocc: eaocc
 #
       moaindex a = bavirt: eavirt
       moaindex a1= bavirt: eavirt
       moaindex a2= bavirt: eavirt
       moaindex a3= bavirt: eavirt
+      moaindex a4= bavirt: eavirt
+      moaindex a5= bavirt: eavirt
 #
       moaindex j2= baocc: eaocc
       moaindex j3= baocc: eaocc
@@ -63,7 +66,6 @@
 #
 # Declare static arrays
 # ---------------------
-
       temp  taibj[a,i,a1,j]
       served T2aiai[a,i,a1,j]
       temp  tpipi[p,i,p1,i1]
@@ -72,13 +74,19 @@
       served  Vpiqj[p,i,p1,i1]
       temp   taaai[a,a1,a2,i]
       served VSaaai[a,a1,a2,i1]
+      served Vaaai[a,a1,a2,i1]
       served TSaiai[a3,i1,a1,j1] 
+      served LSaiai[a3,i1,a1,j1] 
       temp   taaii[a,a1,i,i1]
       temp    tiaai[i,a,a1,i1]
       served  Vaaii[a,a1,i,i1]
       served  Viaai[i,a,a1,i1]
       served t1a_old[a,i1]
-      distributed t1as_old[a,ii]
+      distributed l1a_old[i,a] 
+      served sl1a[a,i] 
+      served sl1as[a,ii] 
+      served LSiaia[i,a,i1,a1]  
+      served L2iaia[i,a,i1,a1]  
       temp taaa[a,a1,a2] 
       temp taass[a3,a1,i,j]
       temp taa[a3,a1]
@@ -97,12 +105,13 @@
       temp t5pppp[p,p1,p2,p3] 
       temp txpppp[p,p1,p2,p3] 
 #
-      local Xaaaiii[a,a1,a2,k1,ii,jj] 
+      local xaaaiii[a,a1,a2,k1,ii,jj] 
       temp taaaiii[a,a1,a2,k1,ii,jj] 
-      temp taiaiai[a,ii,a1,jj,a3,k1] 
+      temp taiaiai[a,ii,a1,jj,a3,k1]
 
       local XTaaaiii[a,a1,a2,k1,iii,jjj]
       local XRaaaiii[a,a1,a2,k1,iii,jjj]
+      local Raaaiii[a,a1,a2,k1,ii,jj]
 
       distributed sai[a,i1] 
       distributed xai[a,ii] 
@@ -154,11 +163,6 @@
       temp   t24aaai[a,a1,a2,i]
       temp   t25aaai[a,a1,a2,i]
 
-      distributed DCa[mu,p]
-      distributed FTa[p,p1]
-      static zz[mu,nu] 
-      static Xijk[xx,i7] 
-
       static pinf[kiter,kptr1]
       temp tpinf[kiter,kptr1]
       scalar ncount1 
@@ -170,7 +174,9 @@
 #
       int number_psec_triplets
       scalar etemp
+      scalar xcount 
       scalar xtemp
+      scalar xtemp0 
       scalar xtemp1 
       scalar xtemp2 
       scalar xtemp3 
@@ -186,7 +192,6 @@
       scalar xtemp13  
       scalar xtemp14  
       scalar xtemp15  
-      scalar itemp 
 
       scalar esum
       scalar esum_s 
@@ -205,9 +210,8 @@
       int jjcount 
       int kcount 
       scalar ncount 
-      int pcount 
-      int fcount 
-      scalar xcount 
+      scalar pcount 
+      scalar fcount 
 
       int istart 
       int iend  
@@ -255,6 +259,13 @@
       temp tpps[p,p2,ii] 
       temp t1pps[p,p2,ii] 
       temp t2pps[p,p2,ii] 
+
+      static Xijk[xx,i7]
+
+      distributed DCa[mu,p]
+      distributed FTa[p,p1]
+
+
 #
 #    ------------------------------------------------------------------------
 #
@@ -263,11 +274,7 @@
      PROC READ_BLOCKDATA
 #    -------------------
 #
-#   Read BLOCKDATA file.
-#
-     #create FTa 
-     #create DCa 
-      sip_barrier
+      server_barrier
        restore_persistent Fock_a "fock_a" 
        set_persistent Fock_a "fock_a" 
        restore_persistent ca "ca" 
@@ -278,22 +285,15 @@
        set_persistent TSaiai "T2old_aa"
        restore_persistent T2aiai "T2old_ab"
        set_persistent T2aiai "T2old_ab"
-
-     #DO mu 
-     #DO p 
-     #   GET        DCa(mu,p) 
-     #   ca(mu,p) = Dca(mu,p) 
-     #ENDDO p 
-     #ENDDO mu 
-
-     #DO p 
-     #DO p1 
-     #   GET            Fta(p,p1) 
-     #   fock_a(p,p1) = Fta(p,p1) 
-     #ENDDO p1 
-     #ENDDO p 
-      
+      restore_persistent l1a_old  "l1a_old"
+      restore_persistent LSiaia "L2old_aa"
+      restore_persistent L2iaia "L2old_ab"
+      set_persistent l1a_old  "l1a_old"
+      set_persistent LSiaia "L2old_aa"
+      set_persistent L2iaia "L2old_ab"
       server_barrier
+
+#   Anitsymmetrize T2aiai  
 #
       PARDO a, a1, i, i1 
             REQUEST T2aiai[a,i,a1,i1]  
@@ -303,6 +303,18 @@
             tpipi[a,i,a1,i1] -= t1pipi[a,i,a1,i1]
             PREPARE TSaiai[a,i,a1,i1] = tpipi[a,i,a1,i1] 
       ENDPARDO a, a1, i, i1 
+
+      PARDO a, a1, i, i1 
+            REQUEST LSiaia[i,a,i1,a1]  
+            tpipi[a,i,a1,i1] = LSiaia[i,a,i1,a1] 
+            PREPARE LSaiai[a,i,a1,i1] = tpipi[a,i,a1,i1] 
+      ENDPARDO a, a1, i, i1 
+
+      PARDO a, i 
+            GET l1a_old[i,a] 
+            tpp[a,i] = l1a_old[i,a] 
+            PREPARE sl1a[a,i] = tpp[a,i]  
+      ENDPARDO a, i 
 #
       server_barrier
 #
@@ -323,8 +335,7 @@
 #
           DO sigma
 #
-            #execute compute_ubatch6 aoint(mu,nu,lambda,sigma) zz zz zz zz 
-             execute compute_integral_batch aoint[mu,nu,lambda,sigma] 
+             execute compute_integral_batch aoint[mu,nu,lambda,sigma]
 #
              DO i   
 #
@@ -380,6 +391,7 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
+     destroy Vxxxi
 #
 #    ------------------------------------------------------------------------
 #
@@ -436,6 +448,7 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
+     destroy Vxxai
 #
      ENDPROC TRAN_TRAN3 
 #
@@ -527,6 +540,8 @@
 #                       t3ppps(a1,a2,k1,ii) = 0.0  
 #                       tps(a,ii)           = 0.0  
 #                       
+#  ---------------------------------------------------------------------------------- 
+#     ------------- 
 #  ---------------------------------------------------------------------------------- 
       PROC Sai_1 
 #     ---------- 
@@ -667,8 +682,6 @@
 #
                         tpp[a2,k1]       = tpppp[a,a1,a2,k1]*t2pp[a,a1]
       ENDPROC Sai_9 
-#     ------------- 
-#  ---------------------------------------------------------------------------------- 
 #
 # ------------------------------------------------------------------------------ 
 #
@@ -721,8 +734,8 @@
                                        tpppp[a,a1,a2,k1] = VSaaai[a,a3,a2,k1]*tpp[a3,a1]  
 
                                        taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1] 
-                                       Xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                      #execute sum_64ss Xaaaiii tpppp 
+                                       xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                      ##execute sum_64ss xaaaiii tpppp 
 
                                     endif  
                                     endif  
@@ -804,7 +817,7 @@
 
                                        taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
                                        xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                      #execute sum_64ss Xaaaiii tpppp 
+                                      ##execute sum_64ss xaaaiii tpppp 
 
                                     endif
                                     endif
@@ -883,7 +896,7 @@
 
                                        taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
                                        xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                      #execute sum_64ss Xaaaiii tpppp 
+                                      ##execute sum_64ss xaaaiii tpppp 
 
                                     endif
                                     endif
@@ -959,7 +972,7 @@
                                        tpppp[a,a1,a2,k1]         = t2ppp[a,a3,a2]*tppp[a3,a1,k1]  
                                        taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
                                        xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                      #execute sum_64ss Xaaaiii tpppp 
+                                      ##execute sum_64ss xaaaiii tpppp 
 
                                      endif 
                                      endif 
@@ -1038,7 +1051,7 @@
 #
                                        taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
                                        xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                      #execute sum_64ss Xaaaiii tpppp 
+                                      ##execute sum_64ss xaaaiii tpppp 
 
                                      endif 
                                      endif 
@@ -1116,7 +1129,7 @@
 #
                                        taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
                                        xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                      #execute sum_64ss Xaaaiii tpppp 
+                                      ##execute sum_64ss xaaaiii tpppp 
 
                                      endif 
                                      endif 
@@ -1189,7 +1202,7 @@
                                     t1pppp[a,a1,a2,k1]        = tppp[a,a3,a2]*t1ppp[a3,a1,k1]
                                     taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
                                     xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
-                                   #execute sum_64ss Xaaaiii t1pppp 
+                                   ##execute sum_64ss xaaaiii t1pppp 
 
                                  endif
                                  endif
@@ -1265,7 +1278,7 @@
                                     taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
                                     xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                   #execute sum_64ss Xaaaiii t1pppp 
+                                   ##execute sum_64ss xaaaiii t1pppp 
 
                                  endif
                                  endif
@@ -1340,7 +1353,7 @@
                                     taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
                                     xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                   #execute sum_64ss Xaaaiii t1pppp 
+                                   ##execute sum_64ss xaaaiii t1pppp 
 
                                  endif
                                  endif
@@ -1419,7 +1432,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii t1pppp 
+                                         ##execute sum_64ss xaaaiii t1pppp 
 
                                        endif
                                        endif
@@ -1494,7 +1507,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii t2pppp 
+                                         ##execute sum_64ss xaaaiii t2pppp 
 
                                        endif
                                        endif
@@ -1570,7 +1583,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii t2pppp 
+                                         ##execute sum_64ss xaaaiii t2pppp 
 
                                        endif
                                        endif
@@ -1644,7 +1657,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii t1pppp 
+                                         ##execute sum_64ss xaaaiii t1pppp 
 
                                        endif
                                        endif
@@ -1720,7 +1733,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii t2pppp 
+                                         ##execute sum_64ss xaaaiii t2pppp 
 
                                        endif
                                        endif
@@ -1795,7 +1808,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii t2pppp 
+                                         ##execute sum_64ss xaaaiii t2pppp 
 
                                        endif
                                        endif
@@ -1869,7 +1882,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii tpppp 
+                                         ##execute sum_64ss xaaaiii tpppp 
 
                                        endif
                                        endif
@@ -1945,7 +1958,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii tpppp 
+                                         ##execute sum_64ss xaaaiii tpppp 
 
                                        endif
                                        endif
@@ -2020,7 +2033,7 @@
                                           taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
                                           xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
 
-                                         #execute sum_64ss Xaaaiii tpppp 
+                                         ##execute sum_64ss xaaaiii tpppp 
 
                                        endif
                                        endif
@@ -2045,6 +2058,74 @@
 #
 # ------------------------------------------------------------------------------ 
 #
+      PROC COMP_T3aaaiii   
+#     ------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# Form Taaaiii 
+# ------------ 
+#
+#   Compute the amp now 
+#   ---------------------- 
+#
+            kcount = 0
+            DO k1 
+               kcount = kcount + 1 
+               if kcount == kstart  
+            jcount = 0
+            DO j1 
+               jcount = jcount + 1 
+               if jcount == whichj 
+               icount = 0
+            DO i1 
+
+               icount = icount + 1 
+               if icount == whichi 
+
+                  iicount = 0
+                  DO ii 
+                     iicount = iicount + 1 
+                     if iicount >= istart
+                     if iicount <= iend
+                        jjcount = 0
+                  DO jj 
+                     jjcount = jjcount + 1 
+                     if jjcount >= jstart
+                     if jjcount <= jend
+#
+                        taiaiai[a,ii,a1,jj,a2,k1] = xaaaiii[a,a1,a2,k1,ii,jj]
+
+                        execute energy_denominator_rhf taiaiai[a,ii,a1,jj,a2,k1] fock_a
+#
+                        taaaiii[a,a1,a2,k1,ii,jj] = taiaiai[a,ii,a1,jj,a2,k1]
+#
+                        xaaaiii[a,a1,a2,k1,ii,jj] = taaaiii[a,a1,a2,k1,ii,jj]
+#
+                     endif 
+                     endif 
+                  ENDDO jj 
+                     endif 
+                     endif 
+                  ENDDO ii 
+#
+               endif 
+             ENDDO i1 
+               endif 
+             ENDDO j1 
+               endif 
+             ENDDO k1 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC COMP_T3aaaiii   
+#     --------------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+#
+# ------------------------------------------------------------------------------ 
+#
       PROC COMP_E4T  
 #     ------------- 
 #
@@ -2056,77 +2137,77 @@
 # Set the numerical factor 
 # ------------------------ 
 #
-            pcount = 0
-            fcount = 0
+            pcount = 0.0 
+            fcount = 0.0 
             if whichi < whichj 
-               pcount = pcount + 1 
+               pcount = pcount + 1.0
             endif 
             if whichj < kstart  
-               pcount = pcount + 1 
+               pcount = pcount + 1.0
             endif 
             if a < a1 
-               fcount = fcount + 1 
+               fcount = fcount + 1.0
             endif 
             if a1 < a2 
-               fcount = fcount + 1 
+               fcount = fcount + 1.0
             endif 
-            if pcount == 0
-               if fcount == 0
+            if pcount == 0.0
+               if fcount == 0.0
                   efact = 1.0
                   fact = 1.0
                endif
             endif
 
-            if pcount == 0
-               if fcount == 1
+            if pcount == 0.0
+               if fcount == 1.0
                   efact = 3.0
                   fact = 3.0
                endif
             endif
 
-            if pcount == 1
-               if fcount == 0
+            if pcount == 1.0
+               if fcount == 0.0
                   efact = 3.0
                   fact = 3.0
                endif
             endif
 
-            if pcount == 1
-               if fcount == 1
+            if pcount == 1.0
+               if fcount == 1.0
                   efact = 9.0
                   fact = 3.0
                endif
             endif
 
-            if pcount == 2
-               if fcount == 00
+            if pcount == 2.0
+               if fcount == 0.0
                   efact = 6.0
                   fact = 6.0
                endif
             endif
 
-            if pcount == 0
-               if fcount == 2
+            if pcount == 0.0
+               if fcount == 2.0
                   efact = 6.0
                   fact = 6.0
                endif
             endif
 
-            if pcount == 2
-               if fcount == 1
+            if pcount == 2.0
+               if fcount == 1.0
                   efact = 18.0
                   fact = 12.0
                endif
             endif
 
-            if pcount == 1
-               if fcount == 2
+            if pcount == 1.0
+               if fcount == 2.0
                   efact = 18.0
                   fact = 12.0
                endif
             endif
-            if pcount == 2
-               if fcount == 2
+            if pcount == 2.0
+               if fcount == 2.0
                   efact = 36.0
                   fact = 18.0
                endif
@@ -2135,44 +2216,36 @@
 #   Compute the energy now 
 #   ---------------------- 
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
                      if jjcount <= jend
 #
-                        taiaiai[a,ii,a1,jj,a2,k1] = xaaaiii[a,a1,a2,k1,ii,jj] 
-
-                        execute energy_denominator_rhf taiaiai[a,ii,a1,jj,a2,k1] fock_a  
-#
-                        taaaiii[a,a1,a2,k1,ii,jj] = taiaiai[a,ii,a1,jj,a2,k1]   
-
-                        tpppp[a,a1,a2,k1]         = taaaiii[a,a1,a2,k1,ii,jj]
+                        tpppp[a,a1,a2,k1]         = Raaaiii[a,a1,a2,k1,ii,jj]
                         t1pppp[a,a1,a2,k1]        = xaaaiii[a,a1,a2,k1,ii,jj]
                         etemp                     = tpppp[a,a1,a2,k1]*t1pppp[a,a1,a2,k1] 
                         etemp                    *= efact 
                         esum                     += etemp 
-#
-                        xaaaiii[a,a1,a2,k1,ii,jj] = taaaiii[a,a1,a2,k1,ii,jj] 
 #
                      endif 
                      endif 
@@ -2202,28 +2275,28 @@
     PROC PSai_1  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
                REQUEST               VSpipi[a1,j1,a2,k1]  
                t4pppp[a1,a2,k1,j1] = VSpipi[a1,j1,a2,k1] 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -2548,15 +2621,15 @@
     PROC PSai_2  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -2564,12 +2637,12 @@
                REQUEST VSpipi[a1,i1,a2,k1]  
                t4pppp[a1,a2,k1,i1] = VSpipi[a1,i1,a2,k1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -2755,15 +2828,15 @@
     PROC PSai_3  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -2771,12 +2844,12 @@
                 REQUEST VSpipi[a1,j1,a2,i1]  
                 t4pppp[a1,a2,j1,i1] = VSpipi[a1,j1,a2,i1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -2982,28 +3055,28 @@
     PROC PSai_4  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
                REQUEST VSpipi[a,j1,a2,k1]  
                t4pppp[a,a2,k1,j1] = VSpipi[a,j1,a2,k1] 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -3191,28 +3264,28 @@
     PROC PSai_5  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
                REQUEST VSpipi[a1,j1,a,k1]  
                t4pppp[a,a1,k1,j1] = VSpipi[a1,j1,a,k1] 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -3382,15 +3455,15 @@
     PROC PSai_6  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -3398,12 +3471,12 @@
                   REQUEST VSpipi[a,i1,a2,k1]  
                   t4pppp[a,a2,k1,i1] = VSpipi[a,i1,a2,k1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -3518,15 +3591,15 @@
     PROC PSai_7  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -3534,12 +3607,12 @@
                   REQUEST VSpipi[a,j1,a2,i1]  
                   t4pppp[a,a2,j1,i1] = VSpipi[a,j1,a2,i1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -3653,15 +3726,15 @@
     PROC PSai_8  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -3669,12 +3742,12 @@
                   REQUEST VSpipi[a1,i1,a,k1]  
                   t4pppp[a,a1,k1,i1] = VSpipi[a1,i1,a,k1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -3792,15 +3865,15 @@
     PROC PSai_9  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -3808,12 +3881,12 @@
                   REQUEST VSpipi[a,i1,a1,j1]  
                   t4pppp[a,a1,j1,i1] = VSpipi[a,i1,a1,j1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -3951,6 +4024,1380 @@
 #
 # ------------------------------------------------------------------------------ 
 #
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_1 
+#     ------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 1 
+#
+# ------------------------------------------------------------------------------ 
+#
+            DO a3 
+               kcount = 0
+            DO k1 
+               kcount = kcount + 1 
+               if kcount == kstart 
+               REQUEST VSaaai[a,a3,a2,k1]  
+               jcount = 0
+               DO j1 
+                  jcount = jcount + 1 
+                  if jcount == whichj  
+                     icount = 0
+                     DO i1 
+                        icount = icount + 1 
+                        if icount == whichi 
+
+                           REQUEST  LSaiai[a3,i1,a1,j1]  
+                           jjcount = 0
+
+                           DO jj 
+                              jjcount = jjcount + 1 
+                              if jjcount >= jstart  
+                              if jjcount <= jend 
+
+                                 tppps[a3,i1,a1,jj] = 0.0 
+                                 execute stripi       LSaiai[a3,i1,a1,j1] tppps[a3,i1,a1,jj]
+                                 t1ppp[a3,i1,a1]    = tppps[a3,i1,a1,jj] 
+                                 tppp[a3,a1,i1]     = t1ppp[a3,i1,a1]  
+                                 iicount = 0 
+
+                                 DO ii 
+                                    iicount = iicount + 1 
+                                    if iicount >= istart  
+                                    if iicount <= iend  
+
+                                       tpps[a3,a1,ii]    = 0.0 
+                                       execute stripi      tppp[a3,a1,i1] tpps[a3,a1,ii]
+                                       tpp[a3,a1]        = tpps[a3,a1,ii] 
+                                       tpppp[a,a1,a2,k1] = VSaaai[a,a3,a2,k1]*tpp[a3,a1]  
+
+                                      taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1] 
+                                      xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                       #execute sum_64ss xaaaiii tpppp 
+
+                                    endif  
+                                    endif  
+                                 ENDDO ii 
+
+                              endif  
+                              endif  
+                           ENDDO jj 
+                        ENDIF 
+                     ENDDO i1
+                  ENDIF 
+               ENDDO j1
+               endif 
+            ENDDO k1
+            ENDDO a3 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_1 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_2 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 2 
+#
+# ------------------------------------------------------------------------------ 
+#
+            DO a3
+               kcount = 0
+            DO k1
+               kcount = kcount + 1 
+               if kcount == kstart 
+
+                  REQUEST               VSaaai[a1,a3,a2,k1] 
+                  txpppp[a3,a1,a2,k1] = VSaaai[a1,a3,a2,k1] 
+                  icount = 0 
+
+                  DO i1
+                     icount = icount + 1 
+                     if icount == whichi 
+                        jcount = 0
+                     DO j1
+                        jcount = jcount + 1 
+                        if jcount == whichj 
+
+                           REQUEST   LSaiai[a3,i1,a,j1]  
+                           jjcount = 0
+
+                           do jj
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+
+                                 tppps[a3,i1,a,jj] = 0.0
+                                 execute stripi      Lsaiai[a3,i1,a,j1] tppps[a3,i1,a,jj]
+                                 t1ppp[a3,i1,a]    = tppps[a3,i1,a,jj]
+                                 tppp[a3,a,i1]     = t1ppp[a3,i1,a]
+                                 tppp[a3,a,i1]    *= -1.0 # SIGN CHANGE   
+                                 iicount = 0
+
+                                 do ii
+                                    iicount = iicount + 1
+                                    if iicount >= istart
+                                    if iicount <= iend
+
+                                       tpps[a3,a,ii]     = 0.0
+                                       execute stripi      tppp[a3,a,i1] tpps[a3,a,ii]
+                                       tpp[a3,a]         = tpps[a3,a,ii]
+                                       tpppp[a,a1,a2,k1] = txpppp[a3,a1,a2,k1]*tpp[a3,a]
+
+                                      taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
+                                      xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                       #execute sum_64ss xaaaiii tpppp 
+
+                                    endif
+                                    endif
+                                 enddo ii
+
+                              endif
+                              endif
+                           enddo jj 
+
+                        endif 
+                     ENDDO j1
+                     endif 
+                  ENDDO i1
+               endif 
+            ENDDO k1
+            ENDDO a3 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_2 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_3 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 3 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3
+               kcount = 0
+            DO k1
+               kcount = kcount + 1 
+               if kcount == kstart 
+                  REQUEST VSaaai[a1,a3,a,k1] 
+                  txpppp[a,a1,a3,k1] = VSaaai[a1,a3,a,k1] 
+                  icount = 0
+                  DO i1
+                     icount = icount + 1 
+                     if icount == whichi 
+                        jcount = 0
+                     DO j1
+                        jcount = jcount + 1 
+                        if jcount == whichj 
+
+                           REQUEST   LSaiai[a3,i1,a2,j1] 
+                           jjcount = 0
+                           do jj
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+
+                                 tppps[a3,i1,a2,jj] = 0.0
+                                 execute stripi       Lsaiai[a3,i1,a2,j1] tppps[a3,i1,a2,jj]
+                                 t1ppp[a3,i1,a2]    = tppps[a3,i1,a2,jj]
+                                 tppp[a3,a2,i1]     = t1ppp[a3,i1,a2]
+
+                                 iicount = 0
+                                 do ii
+                                    iicount = iicount + 1
+                                    if iicount >= istart
+                                    if iicount <= iend
+
+                                       tpps[a3,a2,ii]    = 0.0
+                                       execute stripi      tppp[a3,a2,i1] tpps[a3,a2,ii]
+                                       tpp[a3,a2]        = tpps[a3,a2,ii]
+                                       tpppp[a,a1,a2,k1] = txpppp[a,a1,a3,k1]*tpp[a3,a2]
+
+                                      taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
+                                      xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                       #execute sum_64ss xaaaiii tpppp 
+
+                                    endif
+                                    endif
+                                 enddo ii
+
+                              endif
+                              endif
+                           enddo jj 
+
+                        endif 
+                     ENDDO j1
+                     endif 
+                  ENDDO i1
+               endif 
+            ENDDO k1
+            ENDDO a3 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_3 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_4 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 4 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3 
+               icount = 0 
+            DO i1 
+               icount = icount + 1 
+               if icount == whichi 
+                  REQUEST VSaaai[a,a3,a2,i1]  
+                  kcount = 0
+                  DO k1 
+                     kcount = kcount + 1 
+                     if kcount == kstart 
+                     jcount = 0
+                     DO j1 
+                        jcount = jcount + 1 
+                        if jcount == whichj  
+                           REQUEST LSaiai[a3,k1,a1,j1]   
+                           jjcount = 0
+                           DO jj 
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+                                 tppps[a3,k1,a1,jj]  = 0.0 
+                                 execute stripi        Lsaiai[a3,k1,a1,j1] tppps[a3,k1,a1,jj]
+                                 t1ppps[a3,a1,k1,jj] = tppps[a3,k1,a1,jj]  
+                                 tppp[a3,a1,k1]      = t1ppps[a3,a1,k1,jj] 
+                                 tppp[a3,a1,k1]     *= -1.0  
+                                 iicount = 0
+                                 DO ii 
+                                    iicount = iicount + 1 
+                                    if iicount >= istart
+                                    if iicount <= iend
+
+                                       t2ppps[a,a3,a2,ii]        = 0.0 
+                                       execute stripi              VSaaai[a,a3,a2,i1] t2ppps[a,a3,a2,ii]
+                                       t2ppp[a,a3,a2]            = t2ppps[a,a3,a2,ii] 
+#
+                                       tpppp[a,a1,a2,k1]         = t2ppp[a,a3,a2]*tppp[a3,a1,k1]  
+                                      taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
+                                      xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                       #execute sum_64ss xaaaiii tpppp 
+
+                                     endif 
+                                     endif 
+                                  ENDDO ii 
+                               endif  
+                               endif  
+                            ENDDO jj 
+#
+                        endif 
+                     ENDDO j1  
+                     endif 
+                  ENDDO k1 
+               endif 
+            ENDDO i1 
+            ENDDO a3 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_4 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_5 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 5 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3 
+               icount = 0 
+            DO i1 
+               icount = icount + 1 
+               if icount == whichi 
+                  REQUEST               VSaaai[a1,a3,a2,i1]  
+                  txpppp[a3,a1,a2,i1] = VSaaai[a1,a3,a2,i1] 
+                  kcount = 0
+                  DO k1 
+                     kcount = kcount + 1 
+                     if kcount == kstart 
+                     jcount = 0
+                     DO j1 
+                        jcount = jcount + 1 
+                        if jcount == whichj  
+#
+                           REQUEST LSaiai[a3,k1,a,j1]   
+                           jjcount = 0
+#
+                           DO jj 
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+
+                                 tppps[a3,k1,a,jj] = 0.0 
+                                 execute stripi      Lsaiai[a3,k1,a,j1] tppps[a3,k1,a,jj]
+                                 tppp[a3,k1,a]     = tppps[a3,k1,a,jj]  
+                                 t1ppp[a3,a,k1]    = tppp[a3,k1,a] 
+                                 iicount = 0 
+
+                                 DO ii 
+                                    iicount = iicount + 1 
+                                    if iicount >= istart
+                                    if iicount <= iend
+
+                                       t1ppps[a3,a1,a2,ii] = 0.0 
+                                       execute stripi        txpppp[a3,a1,a2,i1] t1ppps[a3,a1,a2,ii]
+                                       t2ppp[a3,a1,a2]     = t1ppps[a3,a1,a2,ii] 
+                                       tpppp[a,a1,a2,k1]   = t2ppp[a3,a1,a2]*t1ppp[a3,a,k1]  
+#
+                                      taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
+                                      xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                       #execute sum_64ss xaaaiii tpppp 
+
+                                     endif 
+                                     endif 
+                                  ENDDO ii 
+                               endif  
+                               endif  
+                            ENDDO jj 
+#
+                        endif 
+                     ENDDO j1  
+                     endif 
+                  ENDDO k1 
+               endif 
+            ENDDO i1 
+            ENDDO a3 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_5 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_6 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 6 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3 
+               icount = 0
+            DO i1 
+               icount = icount + 1 
+               if icount == whichi 
+                  REQUEST              VSaaai[a1,a3,a,i1]  
+                  txpppp[a,a1,a3,i1] = VSaaai[a1,a3,a,i1] 
+                  kcount = 0 
+                  DO k1 
+                     kcount = kcount + 1 
+                     if kcount == kstart 
+                     jcount = 0
+                     DO j1 
+                        jcount = jcount + 1 
+                        if jcount == whichj 
+
+                           REQUEST LSaiai[a3,k1,a2,j1]  
+                           jjcount = 0
+#
+                           DO jj 
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+                                 tppps[a3,k1,a2,jj] = 0.0 
+                                 execute stripi    Lsaiai[a3,k1,a2,j1] tppps[a3,k1,a2,jj]
+                                 tppp[a3,k1,a2] = tppps[a3,k1,a2,jj]  
+                                 t1ppp[a3,a2,k1] = tppp[a3,k1,a2] 
+                                 t1ppp[a3,a2,k1]*= -1.0  
+                                 iicount = 0
+                                 DO ii 
+                                    iicount = iicount + 1 
+                                    if iicount >= istart
+                                    if iicount <= iend
+
+                                       t1ppps[a,a1,a3,ii] = 0.0 
+                                       execute stripi       txpppp[a,a1,a3,i1] t1ppps[a,a1,a3,ii]
+                                       t2ppp[a,a1,a3]     = t1ppps[a,a1,a3,ii] 
+                                       tpppp[a,a1,a2,k1]  = t2ppp[a,a1,a3]*t1ppp[a3,a2,k1]  
+#
+                                      taaaiii[a,a1,a2,k1,ii,jj]  = tpppp[a,a1,a2,k1]
+                                      xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                       #execute sum_64ss xaaaiii tpppp 
+
+                                     endif 
+                                     endif 
+                                  ENDDO ii 
+                               endif  
+                               endif  
+                            ENDDO jj 
+#
+                        endif 
+                     ENDDO j1  
+                     endif 
+                  ENDDO k1 
+               endif 
+            ENDDO i1 
+            ENDDO a3 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_6 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_7 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 7 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3
+               jcount = 0
+            DO j1
+               jcount = jcount + 1
+               if jcount == whichj
+                  REQUEST VSaaai[a,a3,a2,j1]  
+                  icount = 0
+                  DO i1
+                     icount = icount + 1
+                     if icount == whichi
+                     kcount = 0
+                     DO k1
+                        kcount = kcount + 1
+                        if kcount == kstart
+                           REQUEST              LSaiai[a3,k1,a1,i1] 
+                           tpppp[a3,a1,k1,i1] = LSaiai[a3,k1,a1,i1]
+                           jjcount = 0
+                           DO jj
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+                              tppps[a,a3,a2,jj] = 0.0
+                              execute stripi      VSaaai[a,a3,a2,j1] tppps[a,a3,a2,jj]
+                              tppp[a,a3,a2]     = tppps[a,a3,a2,jj]
+                              iicount = 0
+                              DO ii
+                                 iicount = iicount + 1
+                                 if iicount >= istart
+                                 if iicount <= iend
+                                    t1ppps[a3,a1,k1,ii]       = 0.0
+                                    execute stripi               tpppp[a3,a1,k1,i1] t1ppps[a3,a1,k1,ii]
+                                    t1ppp[a3,a1,k1]           =  t1ppps[a3,a1,k1,ii]
+
+                                    t1pppp[a,a1,a2,k1]        = tppp[a,a3,a2]*t1ppp[a3,a1,k1]
+                                   taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
+                                   xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+                                   ##execute sum_64ss xaaaiii t1pppp 
+
+                                 endif
+                                 endif
+                              ENDDO ii
+                              endif
+                              endif
+                           ENDDO jj
+                         endif
+                       ENDDO k1
+                       endif
+                    ENDDO i1
+               endif
+            ENDDO j1
+            ENDDO a3
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_7 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_8 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 8 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3
+               jcount = 0
+            DO j1
+               jcount = jcount + 1
+               if jcount == whichj
+                  REQUEST               VSaaai[a1,a3,a2,j1]  
+                  t2pppp[a3,a1,a2,j1] = VSaaai[a1,a3,a2,j1]
+                  icount = 0
+                  DO i1
+                     icount = icount + 1
+                     if icount == whichi
+                     kcount = 0
+                     DO k1
+                        kcount = kcount + 1
+                        if kcount == kstart
+                           REQUEST             LSaiai[a3,k1,a,i1] 
+                           tpppp[a3,a,k1,i1] = LSaiai[a3,k1,a,i1]
+                           jjcount = 0
+                           DO jj
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+                              tppps[a3,a1,a2,jj] = 0.0
+                              execute stripi      t2pppp[a3,a1,a2,j1] tppps[a3,a1,a2,jj]
+                              tppp[a3,a1,a2]    = tppps[a3,a1,a2,jj]
+                              tppp[a3,a1,a2]   *= -1.0
+                              iicount = 0
+                              DO ii
+                                 iicount = iicount + 1
+                                 if iicount >= istart
+                                 if iicount <= iend
+                                    t1ppps[a3,a,k1,ii]        = 0.0
+                                    execute stripi               tpppp[a3,a,k1,i1] t1ppps[a3,a,k1,ii]
+                                    t1ppp[a3,a,k1]            =  t1ppps[a3,a,k1,ii]
+
+                                    t1pppp[a,a1,a2,k1]        = tppp[a3,a1,a2]*t1ppp[a3,a,k1]
+
+                                   taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
+                                   xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                   ##execute sum_64ss xaaaiii t1pppp 
+
+                                 endif
+                                 endif
+                              ENDDO ii
+                              endif
+                              endif
+                           ENDDO jj
+                         endif
+                       ENDDO k1
+                       endif
+                    ENDDO i1
+               endif
+            ENDDO j1
+            ENDDO a3
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_8 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV4O3_9 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+# TERM 9 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO a3
+               jcount = 0
+            DO j1
+               jcount = jcount + 1
+               if jcount == whichj
+                  REQUEST              VSaaai[a1,a3,a,j1]  
+                  t2pppp[a,a1,a3,j1] = VSaaai[a1,a3,a,j1]
+                  icount = 0
+                  DO i1
+                     icount = icount + 1
+                     if icount == whichi
+                     kcount = 0
+                     DO k1
+                        kcount = kcount + 1
+                        if kcount == kstart
+                           REQUEST              LSaiai[a3,k1,a2,i1] 
+                           tpppp[a3,a2,k1,i1] = LSaiai[a3,k1,a2,i1]
+                           jjcount = 0
+                           DO jj
+                              jjcount = jjcount + 1
+                              if jjcount >= jstart
+                              if jjcount <= jend
+                              tppps[a,a1,a3,jj] = 0.0
+                              execute stripi      t2pppp[a,a1,a3,j1] tppps[a,a1,a3,jj]
+                              tppp[a,a1,a3]     = tppps[a,a1,a3,jj]
+                              iicount = 0
+                              DO ii
+                                 iicount = iicount + 1
+                                 if iicount >= istart
+                                 if iicount <= iend
+                                    t1ppps[a3,a2,k1,ii]       = 0.0
+                                    execute stripi               tpppp[a3,a2,k1,i1] t1ppps[a3,a2,k1,ii]
+                                    t1ppp[a3,a2,k1]           =  t1ppps[a3,a2,k1,ii]
+
+                                    t1pppp[a,a1,a2,k1]        = tppp[a,a1,a3]*t1ppp[a3,a2,k1]
+
+                                   taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
+                                   xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                   ##execute sum_64ss xaaaiii t1pppp 
+
+                                 endif
+                                 endif
+                              ENDDO ii
+                              endif
+                              endif
+                           ENDDO jj
+                         endif
+                       ENDDO k1
+                       endif
+                    ENDDO i1
+               endif
+            ENDDO j1
+            ENDDO a3
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV4O3_9 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_1 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Second do the 'cheap' part involving 3-occupied integrals and of order VVVoooo
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term1
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               icount = 0
+            DO i1
+               icount = icount + 1
+               if icount == whichi
+                  REQUEST LSaiai[a,i2,a2,i1] 
+                  kcount = 0
+                  DO k1
+                     kcount = kcount + 1
+                     if kcount == kstart
+                        jcount = 0
+                        DO j1
+                           jcount = jcount + 1
+                           if jcount == whichj
+                              REQUEST              VSpipi[a1,k1,i2,j1] 
+                              tpppp[i2,a1,k1,j1] = VSpipi[a1,k1,i2,j1]
+                              tpppp[i2,a1,k1,j1]*= -1.0
+                              iicount = 0
+                              DO ii
+                                 iicount = iicount + 1
+                                 if iicount >= istart
+                                 if iicount <= iend
+                                    tppps[a,i2,a2,ii] = 0.0
+                                    execute stripi      LSaiai[a,i2,a2,i1] tppps[a,i2,a2,ii]
+                                    tppp[a,i2,a2]     = tppps[a,i2,a2,ii]
+                                    jjcount = 0
+                                    DO jj
+                                       jjcount = jjcount + 1
+                                       if jjcount >= jstart
+                                       if jjcount <= jend
+                                          t1ppps[i2,a1,k1,jj]       = 0.0
+                                          execute stripi              tpppp[i2,a1,k1,j1] t1ppps[i2,a1,k1,jj]
+                                          t1ppp[i2,a1,k1]           = t1ppps[i2,a1,k1,jj]
+
+                                          t1pppp[a,a1,a2,k1]        = tppp[a,i2,a2]*t1ppp[i2,a1,k1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                         ##execute sum_64ss xaaaiii t1pppp 
+
+                                       endif
+                                       endif
+                                    ENDDO jj
+                                    endif
+                                    endif
+                                 ENDDO ii
+                              endif
+                         ENDDO j1
+                      endif
+                   ENDDO k1
+               endif
+            ENDDO i1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_1 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_2 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term2
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               icount = 0
+            DO i1
+               icount = icount + 1
+               if icount == whichi
+                  REQUEST              LSaiai[a1,i2,a2,i1] 
+                  t1pppp[i2,a1,a2,i1] = LSaiai[a1,i2,a2,i1]
+                  kcount = 0
+                  DO k1
+                     kcount = kcount + 1
+                     if kcount == kstart
+                        jcount = 0
+                        DO j1
+                           jcount = jcount + 1
+                           if jcount == whichj
+                              REQUEST             VSpipi[a,k1,i2,j1] 
+                              tpppp[i2,a,k1,j1] = VSpipi[a,k1,i2,j1]
+                              iicount = 0
+                              DO ii
+                                 iicount = iicount + 1
+                                 if iicount >= istart
+                                 if iicount <= iend
+                                    tppps[i2,a1,a2,ii] = 0.0
+                                    execute stripi       t1pppp[i2,a1,a2,i1] tppps[i2,a1,a2,ii]
+                                    tppp[i2,a1,a2]     = tppps[i2,a1,a2,ii]
+                                    jjcount = 0
+                                    DO jj
+                                       jjcount = jjcount + 1
+                                       if jjcount >= jstart
+                                       if jjcount <= jend
+                                          t1ppps[i2,a,k1,jj]        = 0.0
+                                          execute stripi              tpppp[i2,a,k1,j1] t1ppps[i2,a,k1,jj]
+                                          t1ppp[i2,a,k1]            = t1ppps[i2,a,k1,jj]
+
+                                          t2pppp[a,a1,a2,k1]        = tppp[i2,a1,a2]*t1ppp[i2,a,k1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii t2pppp 
+
+                                       endif
+                                       endif
+                                    ENDDO jj
+                                    endif
+                                    endif
+                                 ENDDO ii
+                              endif
+                         ENDDO j1
+                      endif
+                   ENDDO k1
+               endif
+            ENDDO i1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_2 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_3 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term3
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               icount = 0
+            DO i1
+               icount = icount + 1
+               if icount == whichi
+                  REQUEST             LSaiai[a1,i2,a,i1] 
+                  t1pppp[a,a1,i2,i1] = LSaiai[a1,i2,a,i1]
+                  kcount = 0
+                  DO k1
+                     kcount = kcount + 1
+                     if kcount == kstart
+                        jcount = 0
+                        DO j1
+                           jcount = jcount + 1
+                           if jcount == whichj
+                              REQUEST              VSpipi[a2,k1,i2,j1] 
+                              tpppp[i2,a2,k1,j1] = VSpipi[a2,k1,i2,j1]
+                              tpppp[i2,a2,k1,j1]*= -1.0
+                              iicount = 0
+                              DO ii
+                                 iicount = iicount + 1
+                                 if iicount >= istart
+                                 if iicount <= iend
+                                    tppps[a,a1,i2,ii] = 0.0
+                                    execute stripi      t1pppp[a,a1,i2,i1] tppps[a,a1,i2,ii]
+                                    tppp[a,a1,i2]     = tppps[a,a1,i2,ii]
+                                    jjcount = 0
+                                    DO jj
+                                       jjcount = jjcount + 1
+                                       if jjcount >= jstart
+                                       if jjcount <= jend
+                                          t1ppps[i2,a2,k1,jj]       = 0.0
+                                          execute stripi              tpppp[i2,a2,k1,j1] t1ppps[i2,a2,k1,jj]
+                                          t1ppp[i2,a2,k1]           = t1ppps[i2,a2,k1,jj]
+
+                                          t2pppp[a,a1,a2,k1]        = tppp[a,a1,i2]*t1ppp[i2,a2,k1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii t2pppp 
+
+                                       endif
+                                       endif
+                                    ENDDO jj
+                                    endif
+                                    endif
+                                 ENDDO ii
+                              endif
+                         ENDDO j1
+                      endif
+                   ENDDO k1
+               endif
+            ENDDO i1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_3 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_4 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term4
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               jcount = 0
+            DO j1
+               jcount = jcount + 1
+               if jcount == whichj
+                  REQUEST LSaiai[a,i2,a2,j1] 
+                  kcount = 0
+                  DO k1
+                     kcount = kcount + 1
+                     if kcount == kstart
+                        icount = 0
+                        DO i1
+                           icount = icount + 1
+                           if icount == whichi
+                              REQUEST              VSpipi[a1,k1,i2,i1] 
+                              tpppp[i2,a1,k1,i1] = VSpipi[a1,k1,i2,i1]
+                              jjcount = 0
+                              DO jj
+                                 jjcount = jjcount + 1
+                                 if jjcount >= jstart
+                                 if jjcount <= jend
+                                    tppps[a,i2,a2,jj] = 0.0
+                                    execute stripi      LSaiai[a,i2,a2,j1] tppps[a,i2,a2,jj]
+                                    tppp[a,i2,a2]     = tppps[a,i2,a2,jj]
+                                    iicount = 0
+                                    DO ii
+                                       iicount = iicount + 1
+                                       if iicount >= istart
+                                       if iicount <= iend
+                                          t1ppps[i2,a1,k1,ii]       = 0.0
+                                          execute stripi              tpppp[i2,a1,k1,i1] t1ppps[i2,a1,k1,ii]
+                                          t1ppp[i2,a1,k1]           = t1ppps[i2,a1,k1,ii]
+
+                                          t1pppp[a,a1,a2,k1]        = tppp[a,i2,a2]*t1ppp[i2,a1,k1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = t1pppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                         ##execute sum_64ss xaaaiii t1pppp 
+
+                                       endif
+                                       endif
+                                    ENDDO ii
+                                    endif
+                                    endif
+                                 ENDDO jj
+                              endif
+                         ENDDO i1
+                      endif
+                   ENDDO k1
+               endif
+            ENDDO j1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_4 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_5 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term5
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               jcount = 0
+            DO j1
+               jcount = jcount + 1
+               if jcount == whichj
+                  REQUEST              LSaiai[a1,i2,a2,j1] 
+                  tpppp[i2,a1,a2,j1] = LSaiai[a1,i2,a2,j1]
+                  kcount = 0
+                  DO k1
+                     kcount = kcount + 1
+                     if kcount == kstart
+                        icount = 0
+                        DO i1
+                           icount = icount + 1
+                           if icount == whichi
+                              REQUEST              VSpipi[a,k1,i2,i1] 
+                              t1pppp[i2,a,k1,i1] = VSpipi[a,k1,i2,i1]
+                              t1pppp[i2,a,k1,i1]*= -1.0
+                              jjcount = 0
+                              DO jj
+                                 jjcount = jjcount + 1
+                                 if jjcount >= jstart
+                                 if jjcount <= jend
+                                    tppps[i2,a1,a2,jj] = 0.0
+                                    execute stripi       tpppp[i2,a1,a2,j1] tppps[i2,a1,a2,jj]
+                                    tppp[i2,a1,a2]     = tppps[i2,a1,a2,jj]
+                                    iicount = 0
+                                    DO ii
+                                       iicount = iicount + 1
+                                       if iicount >= istart
+                                       if iicount <= iend
+                                          t1ppps[i2,a,k1,ii]        = 0.0
+                                          execute stripi              t1pppp[i2,a,k1,i1] t1ppps[i2,a,k1,ii]
+                                          t1ppp[i2,a,k1]            = t1ppps[i2,a,k1,ii]
+
+                                          t2pppp[a,a1,a2,k1]        = tppp[i2,a1,a2]*t1ppp[i2,a,k1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii t2pppp 
+
+                                       endif
+                                       endif
+                                    ENDDO ii
+                                    endif
+                                    endif
+                                 ENDDO jj
+                              endif
+                         ENDDO i1
+                      endif
+                   ENDDO k1
+               endif
+            ENDDO j1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_5 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_6 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term6
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               jcount = 0
+            DO j1
+               jcount = jcount + 1
+               if jcount == whichj
+                  REQUEST             LSaiai[a1,i2,a,j1] 
+                  tpppp[a,a1,i2,j1] = LSaiai[a1,i2,a,j1]
+                  kcount = 0
+                  DO k1
+                     kcount = kcount + 1
+                     if kcount == kstart
+                        icount = 0
+                        DO i1
+                           icount = icount + 1
+                           if icount == whichi
+                              REQUEST               VSpipi[a2,k1,i2,i1]   
+                              t1pppp[i2,a2,k1,i1] = VSpipi[a2,k1,i2,i1]
+                              jjcount = 0
+                              DO jj
+                                 jjcount = jjcount + 1
+                                 if jjcount >= jstart
+                                 if jjcount <= jend
+                                    tppps[a,a1,i2,jj] = 0.0
+                                    execute stripi      tpppp[a,a1,i2,j1] tppps[a,a1,i2,jj]
+                                    tppp[a,a1,i2]     = tppps[a,a1,i2,jj]
+                                    iicount = 0
+                                    DO ii
+                                       iicount = iicount + 1
+                                       if iicount >= istart
+                                       if iicount <= iend
+                                          t1ppps[i2,a2,k1,ii]       = 0.0
+                                          execute stripi              t1pppp[i2,a2,k1,i1] t1ppps[i2,a2,k1,ii]
+                                          t1ppp[i2,a2,k1]           = t1ppps[i2,a2,k1,ii]
+
+                                          t2pppp[a,a1,a2,k1]        = tppp[a,a1,i2]*t1ppp[i2,a2,k1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = t2pppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii t2pppp 
+
+                                       endif
+                                       endif
+                                    ENDDO ii
+                                    endif
+                                    endif
+                                 ENDDO jj
+                              endif
+                         ENDDO i1
+                      endif
+                   ENDDO k1
+               endif
+            ENDDO j1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_6 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_7 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term7
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               kcount = 0
+            DO k1
+               kcount = kcount + 1
+               if kcount == kstart
+                  REQUEST LSaiai[a,i2,a2,k1] 
+                  icount = 0
+                  DO i1
+                     icount = icount + 1
+                     if icount == whichi
+                        jcount = 0
+                        DO j1
+                           jcount = jcount + 1
+                           if jcount == whichj
+                              REQUEST VSpipi[a1,i1,i2,j1] 
+                              t1pppp[i2,a1,i1,j1] = VSpipi[a1,i1,i2,j1]
+                              jjcount = 0
+                              DO jj
+                                 jjcount = jjcount + 1
+                                 if jjcount >= jstart
+                                 if jjcount <= jend
+                                    tppps[i2,a1,i1,jj] = 0.0
+                                    execute stripi t1pppp[i2,a1,i1,j1] tppps[i2,a1,i1,jj]
+                                    tppp[i2,a1,i1] = tppps[i2,a1,i1,jj]
+                                    iicount = 0
+                                    DO ii
+                                       iicount = iicount + 1
+                                       if iicount >= istart
+                                       if iicount <= iend
+                                          tpps[i2,a1,ii] = 0.0
+                                          execute stripi tppp[i2,a1,i1] tpps[i2,a1,ii]
+                                          tpp[i2,a1] = tpps[i2,a1,ii]
+
+                                          tpppp[a,a1,a2,k1] = LSaiai[a,i2,a2,k1]*tpp[i2,a1]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii tpppp 
+
+                                       endif
+                                       endif
+                                     ENDDO ii
+                                   endif
+                                   endif
+                                ENDDO jj
+                             endif
+                          ENDDO j1
+                        endif
+                   ENDDO i1
+                 endif 
+            ENDDO k1
+            ENDDO i2 
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_7 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_8 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term8
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               kcount = 0
+            DO k1
+               kcount = kcount + 1
+               if kcount == kstart
+                  REQUEST               LSaiai[a1,i2,a2,k1] 
+                  t1pppp[i2,a1,a2,k1] = LSaiai[a1,i2,a2,k1]
+                  t1pppp[i2,a1,a2,k1]*= -1.0 
+                  icount = 0
+                  DO i1
+                     icount = icount + 1
+                     if icount == whichi
+                        jcount = 0
+                        DO j1
+                           jcount = jcount + 1
+                           if jcount == whichj
+                              REQUEST              VSpipi[a,i1,i2,j1] 
+                              t2pppp[i2,a,i1,j1] = VSpipi[a,i1,i2,j1]
+                              jjcount = 0
+                              DO jj
+                                 jjcount = jjcount + 1
+                                 if jjcount >= jstart
+                                 if jjcount <= jend
+                                    tppps[i2,a,i1,jj] = 0.0
+                                    execute stripi t2pppp[i2,a,i1,j1] tppps[i2,a,i1,jj]
+                                    tppp[i2,a,i1] = tppps[i2,a,i1,jj]
+                                    iicount = 0
+                                    DO ii
+                                       iicount = iicount + 1
+                                       if iicount >= istart
+                                       if iicount <= iend
+                                          tpps[i2,a,ii] = 0.0
+                                          execute stripi tppp[i2,a,i1] tpps[i2,a,ii]
+                                          tpp[i2,a] = tpps[i2,a,ii]
+
+                                          tpppp[a,a1,a2,k1] = t1pppp[i2,a1,a2,k1]*tpp[i2,a]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii tpppp 
+
+                                       endif
+                                       endif
+                                     ENDDO ii
+                                   endif
+                                   endif
+                                ENDDO jj
+                             endif
+                          ENDDO j1
+                        endif
+                   ENDDO i1
+                 endif
+            ENDDO k1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_8 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ------------------------------------------------------------------------------ 
+#
+      PROC LV3O4_9 
+#     ----------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+# ----------------------------------------------------------------------------------------- 
+#
+# Term9
+#
+# ----------------------------------------------------------------------------------------- 
+#
+            DO i2
+               kcount = 0
+            DO k1
+               kcount = kcount + 1
+               if kcount == kstart
+                  REQUEST              LSaiai[a1,i2,a,k1] 
+                  t1pppp[a,a1,i2,k1] = LSaiai[a1,i2,a,k1]
+                  icount = 0
+                  DO i1
+                     icount = icount + 1
+                     if icount == whichi
+                        jcount = 0
+                        DO j1
+                           jcount = jcount + 1
+                           if jcount == whichj
+                              REQUEST               VSpipi[a2,i1,i2,j1] 
+                              t2pppp[i2,a2,i1,j1] = VSpipi[a2,i1,i2,j1]
+                              jjcount = 0
+                              DO jj
+                                 jjcount = jjcount + 1
+                                 if jjcount >= jstart
+                                 if jjcount <= jend
+                                    tppps[i2,a2,i1,jj] = 0.0
+                                    execute stripi t2pppp[i2,a2,i1,j1] tppps[i2,a2,i1,jj]
+                                    tppp[i2,a2,i1] = tppps[i2,a2,i1,jj]
+                                    iicount = 0
+                                    DO ii
+                                       iicount = iicount + 1
+                                       if iicount >= istart
+                                       if iicount <= iend
+                                          tpps[i2,a2,ii] = 0.0
+                                          execute stripi tppp[i2,a2,i1] tpps[i2,a2,ii]
+                                          tpp[i2,a2] = tpps[i2,a2,ii]
+
+                                          tpppp[a,a1,a2,k1] = t1pppp[a,a1,i2,k1]*tpp[i2,a2]
+
+                                         taaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]
+                                         xaaaiii[a,a1,a2,k1,ii,jj] += taaaiii[a,a1,a2,k1,ii,jj]
+
+                                          #execute sum_64ss xaaaiii tpppp 
+
+                                       endif
+                                       endif
+                                     ENDDO ii
+                                   endif
+                                   endif
+                                ENDDO jj
+                             endif
+                          ENDDO j1
+                        endif
+                   ENDDO i1
+                 endif
+            ENDDO k1
+            ENDDO i2
+#
+# ------------------------------------------------------------------------------ 
+#
+      ENDPROC LV3O4_9 
+#     -------------- 
+#
+# ------------------------------------------------------------------------------ 
+#
+#
 # -----------------------------------------------------------------------------------  
 #
       PROC OSEG_TRIP 
@@ -3981,70 +5428,70 @@
 
          ncount = ncount + 1.0  
 
-         DO i7 
-            if i7 == 1 
-               whichi = (int)Xijk[NT,i7] 
-            endif 
-            if i7 == 2 
-               istart = (int)Xijk[NT,i7] 
-            endif 
-            if i7 == 3 
-               iend = (int)Xijk[NT,i7] 
-            endif 
-            if i7 == 4 
-               whichj = (int)Xijk[NT,i7] 
-            endif 
-            if i7 == 5 
-               jstart = (int)Xijk[NT,i7] 
-            endif 
-            if i7 == 6 
-               jend = (int)Xijk[NT,i7] 
-            endif 
-            if i7 == 7 
-               kstart = (int)Xijk[NT,i7] 
-            endif 
-         ENDDO i7 
+         DO i7
+            if i7 == 1
+               whichi = (int)Xijk[NT,i7]
+            endif
+            if i7 == 2
+               istart = (int)Xijk[NT,i7]
+            endif
+            if i7 == 3
+               iend = (int)Xijk[NT,i7]
+            endif
+            if i7 == 4
+               whichj = (int)Xijk[NT,i7]
+            endif
+            if i7 == 5
+               jstart = (int)Xijk[NT,i7]
+            endif
+            if i7 == 6
+               jend = (int)Xijk[NT,i7]
+            endif
+            if i7 == 7
+               kstart = (int)Xijk[NT,i7]
+            endif
+         ENDDO i7
 
-         kend = kstart 
+         kend = kstart
 
-        #print whichi  
-        #print istart   
-        #print iend   
-        #print whichj  
-        #print jstart   
-        #print jend   
-        #print kstart   
-	server_barrier
+        #print whichi
+        #print istart
+        #print iend
+        #print whichj
+        #print jstart
+        #print jend
+        #print kstart
+        #print kend
+        server_barrier
 
-         if kstart <= 0  
-            exit 
-         endif  
+         if kstart <= 0
+            exit
+         endif
 
          print NT
 
-         if ncount >  0.0      
+         if ncount >  xtemp0 # 0.0      
          if ncount <= xtemp1  
     
          IF whichj >= whichi 
          IF kstart >= whichj   
 
-         PARDO a 
-# Put the singles amplitude arrays into one with simple occ index for later use. 
+# Put the singles lambda arrays into one with simple occ index for later use. 
 # ------------------------------------------------------------------------------ 
-
+         PARDO a 
             icount = 0 
             DO i1 
                icount = icount + 1 
                if icount == whichi 
-                  REQUEST t1a_old[a,i1]   
+                  REQUEST sl1a[a,i1]   
                   iicount            = 0 
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart  
                      if iicount <= iend  
                         tps[a,ii] = 0.0 
-                        execute stripi t1a_old[a,i1] tps[a,ii] 
-                        PUT t1as_old[a,ii] = tps[a,ii] 
+                        execute stripi sl1a[a,i1] tps[a,ii] 
+                        prepare sl1as[a,ii] = tps[a,ii] 
                      endif 
                      endif 
                   ENDDO ii 
@@ -4056,8 +5503,8 @@
       where a  <= a1 
       where a1 <= a2 
 #
-# Allocate the partial amplitude array 
-# ------------------------------------ 
+# Allocate the partial amplitude arrays L and R  
+# ---------------------------------------------  
 #
             icount = 0 
             DO ii  
@@ -4073,7 +5520,8 @@
                   DO k1 
                      kcount = kcount + 1 
                      if kcount == kstart 
-                        allocate Xaaaiii[a,a1,a2,k1,ii,jj] 
+                        allocate xaaaiii[a,a1,a2,k1,ii,jj] 
+                        allocate Raaaiii[a,a1,a2,k1,ii,jj] 
                      endif 
                   ENDDO k1 
                   endif 
@@ -4107,9 +5555,9 @@
       CALL V3O4_8 
       CALL V3O4_9 
 #
-# Compute the 4th-order energy contribution 
-# ----------------------------------------- 
-      CALL COMP_E4T  
+# Compute the right hand amplitude  
+# -------------------------------- 
+      CALL COMP_T3aaaiii   
 #
 # Compute the 5th-order energy contribution 
 # ----------------------------------------- 
@@ -4120,28 +5568,28 @@
 #   PROC PSai_1  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
                REQUEST               VSpipi[a1,j1,a2,k1]  
                t4pppp[a1,a2,k1,j1] = VSpipi[a1,j1,a2,k1] 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -4466,15 +5914,15 @@
 #   PROC PSai_2  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -4482,12 +5930,12 @@
                REQUEST VSpipi[a1,i1,a2,k1]  
                t4pppp[a1,a2,k1,i1] = VSpipi[a1,i1,a2,k1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -4673,15 +6121,15 @@
 #   PROC PSai_3  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -4689,12 +6137,12 @@
                 REQUEST VSpipi[a1,j1,a2,i1]  
                 t4pppp[a1,a2,j1,i1] = VSpipi[a1,j1,a2,i1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -4900,28 +6348,28 @@
 #   PROC PSai_4  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
                REQUEST VSpipi[a,j1,a2,k1]  
                t4pppp[a,a2,k1,j1] = VSpipi[a,j1,a2,k1] 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -5109,28 +6557,28 @@
 #   PROC PSai_5  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
                REQUEST VSpipi[a1,j1,a,k1]  
                t4pppp[a,a1,k1,j1] = VSpipi[a1,j1,a,k1] 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
                if icount == whichi 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -5300,15 +6748,15 @@
 #   PROC PSai_6  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -5316,12 +6764,12 @@
                   REQUEST VSpipi[a,i1,a2,k1]  
                   t4pppp[a,a2,k1,i1] = VSpipi[a,i1,a2,k1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -5436,15 +6884,15 @@
 #   PROC PSai_7  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -5452,12 +6900,12 @@
                   REQUEST VSpipi[a,j1,a2,i1]  
                   t4pppp[a,a2,j1,i1] = VSpipi[a,j1,a2,i1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -5571,15 +7019,15 @@
 #   PROC PSai_8  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -5587,12 +7035,12 @@
                   REQUEST VSpipi[a1,i1,a,k1]  
                   t4pppp[a,a1,k1,i1] = VSpipi[a1,i1,a,k1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -5710,15 +7158,15 @@
 #   PROC PSai_9  
 #   -----------  
 #
-            kcount = 0 
+            kcount = 0
             DO k1 
                kcount = kcount + 1 
                if kcount == kstart  
-            jcount = 0 
+            jcount = 0
             DO j1 
                jcount = jcount + 1 
                if jcount == whichj 
-               icount = 0 
+               icount = 0
             DO i1 
 
                icount = icount + 1 
@@ -5726,12 +7174,12 @@
                   REQUEST VSpipi[a,i1,a1,j1]  
                   t4pppp[a,a1,j1,i1] = VSpipi[a,i1,a1,j1] 
 #
-                  iicount = 0 
+                  iicount = 0
                   DO ii 
                      iicount = iicount + 1 
                      if iicount >= istart
                      if iicount <= iend
-                        jjcount = 0 
+                        jjcount = 0
                   DO jj 
                      jjcount = jjcount + 1 
                      if jjcount >= jstart
@@ -5839,11 +7287,64 @@
 #   -------------- 
 #
 #  ---------------------------------------------------------------------------------- 
+# Put the right hand amplitude in Raaaiii 
+#
+      icount = 0 
+      DO ii  
+         icount = icount + 1 
+         if icount >= istart 
+         if icount <= iend  
+         jcount = 0 
+         DO jj 
+            jcount = jcount + 1 
+            if jcount >= jstart 
+            if jcount <= jend  
+            kcount = 0 
+            DO k1 
+               kcount = kcount + 1 
+               if kcount == kstart 
+
+                 #tpppp(a,a1,a2,k1)         = xaaaiii(a,a1,a2,k1,ii,jj)
+                  Raaaiii[a,a1,a2,k1,ii,jj] = xaaaiii[a,a1,a2,k1,ii,jj] 
+                  tpppp[a,a1,a2,k1]         = 0.0  
+                  xaaaiii[a,a1,a2,k1,ii,jj] = tpppp[a,a1,a2,k1]  
+               endif 
+            ENDDO k1 
+            endif 
+            endif 
+         ENDDO jj  
+         endif 
+         endif 
+      ENDDO ii  
+
+# First do the expensive part involving 3-virtual integrals and of order VVVVooo
+# ------------------------------------------------------------------------------ 
+      CALL LV4O3_1 
+      CALL LV4O3_2 
+      CALL LV4O3_3 
+      CALL LV4O3_4 
+      CALL LV4O3_5 
+      CALL LV4O3_6 
+      CALL LV4O3_7 
+      CALL LV4O3_8 
+      CALL LV4O3_9 
+#
+# Second do the cheaper part involving 3-virtual integrals and of order VVVVooo
+# ------------------------------------------------------------------------------ 
+      CALL LV3O4_1 
+      CALL LV3O4_2 
+      CALL LV3O4_3 
+      CALL LV3O4_4 
+      CALL LV3O4_5 
+      CALL LV3O4_6 
+      CALL LV3O4_7 
+      CALL LV3O4_8 
+      CALL LV3O4_9 
+#
+      CALL COMP_E4T 
 #
 # deAllocate the partial amplitude array 
 # -------------------------------------- 
-#
-           #deallocate Xaaaiii #(a,a1,a2,k1,ii,jj) 
 #
             icount = 0 
             DO ii  
@@ -5859,7 +7360,8 @@
                   DO k1 
                      kcount = kcount + 1 
                      if kcount == kstart 
-                       deallocate Xaaaiii[a,a1,a2,k1,ii,jj] 
+                        deallocate xaaaiii[a,a1,a2,k1,ii,jj] 
+                        deallocate Raaaiii[a,a1,a2,k1,ii,jj] 
                      endif 
                   ENDDO k1 
                   endif 
@@ -5869,9 +7371,7 @@
                endif 
             ENDDO ii  
 #
-#
       ENDPARDO a2, a1, a 
-      server_barrier 
 #
 # ----------------------------------------------------------  
 # End Virtual symetry combination XX.  
@@ -5893,10 +7393,10 @@
 # BEGIN MAIN PROGRAM
 # ------------------
       print " "
-      print "-- Parallel CCSD(T) program"
+      print "-- Parallel Lambda-CCSD(T) program"
       print "-- AAA spin combination"
-      print "-- Chemical Physics 157, 479 (1989)"
-      print "-- Written by Victor F. Lotrich 2015"
+      print "-- J Chem Phys 128 , 044110 (2008)"
+      print "-- Written by Jason N. Byrd, 2015"
       print " "
 #
       eaaa   = 0.0  
@@ -5904,53 +7404,55 @@
       esum_S = 0.0  
       ithresh = 0.000000001 
       tthresh = 0.000000001 
-      create Sai 
-      create Xai 
-      create t1as_old
-      sip_barrier 
+      server_barrier 
 #
 # Read transformed integrals from lists
 # -------------------------------------
 #
       CALL READ_BLOCKDATA
-      sip_barrier 
+      server_barrier 
       CALL TRAN_UHF 
       server_barrier 
 #
 # Set the partitioning of the occupied segments 
 # --------------------------------------------- 
-      execute set_ijk_aaa Xijk # iflag(i1)   
-      sip_barrier 
+      execute set_ijk_aaa Xijk # iflag(i1)
+      server_barrier 
+      PARDO a, i1 
+            put Sai[a,i1] = 0.0
+      ENDPARDO a, i1 
+
+      server_barrier 
 #
 # Determine the total number of combinations 
 # ------------------------------------------ 
 #
-      ncount = 0.0 
-      DO Nt  
-      DO i7  
-        #execute print_block Xijk(Nt,i7) 
-         execute return_sval Xijk[Nt,i7] etemp  
-         if etemp < 0.0 
-            exit 
-         endif  
-      ENDDO i7  
-         if etemp < 0.0 
-            exit 
-         endif  
-         ncount += 1.0 
-      ENDDO Nt 
-# 
-      TCOMB = ncount 
+      ncount = 0.0
+      DO Nt
+      DO i7
+        #execute print_block Xijk(Nt,i7)
+         execute return_sval Xijk[Nt,i7] etemp
+         if etemp < 0.0
+            exit
+         endif
+      ENDDO i7
+         if etemp < 0.0
+            exit
+         endif
+         ncount += 1.0
+      ENDDO Nt
+#
+      TCOMB = ncount
 #
 # Determine the number of horizontal sections 
 # ------------------------------------------- 
 #
-      xcount = 1.0 
-     #execute pardo_sects xcount ncount   
-     #nsects = ncount  
-      nsects = 1.0   
+      xcount = 1.0
+     #execute pardo_sects xcount ncount
+     #nsects = ncount
+      nsects = 1.0
 #
-      xtemp = TCOMB/nsects  
+      xtemp = TCOMB/nsects
 #
 # ----------------------------------------------------------  
 # Compute occupied triplet combination.  
@@ -5974,12 +7476,18 @@
 # ---------------------------- 
 # Combination 1. 
 # ---------------------------- 
+
+      xtemp0 = 0.0 
+      xtemp1 = xtemp 
+      xcount = 0.0 
+
       if nsects == one    
          xtemp1 = xtemp 
 	 number_psec_triplets = (int)xtemp
          print number_psec_triplets
          CALL OSEG_TRIP 
       endif 
+      nsects = 0.0 
 #
 # ----------------------------------------------------------  
 # End Virtual symetry combination 15.  
@@ -5990,13 +7498,6 @@
 # Compute the single contribution 
 # ------------------------------- 
 #
-##    PARDO a, i1 
-##          REQUEST   t1a_old(a,i1) a  
-##          GET       Sai(a,i1) 
-##          etemp   = t1a_old(a,i1)*Sai(a,i1)
-##          esum_s += etemp 
-##    ENDPARDO a, i1 
-#
       DO Nt
       DO i7  
       where Nt == 1
@@ -6006,12 +7507,19 @@
       ENDDO Nt 
 
       server_barrier
+      PARDO a, i1 
+            REQUEST   sl1a[a,i1]   
+            GET       Sai[a,i1] 
+            etemp   = sl1a[a,i1]*Sai[a,i1]
+            esum_s += etemp 
+      ENDPARDO a, i1 
+#
       PARDO a, ii 
       if ii >= istart
-     #      PREQUEST  t1ps(a,ii) = t1a_old(a,i1)   
+            request sl1as[a,ii]
+            t1ps[a,ii] = sl1as[a,ii]   
             GET       Xai[a,ii] 
-            GET       t1as_old[a,ii] 
-            etemp   = t1as_old[a,ii]*Xai[a,ii]
+            etemp   = t1ps[a,ii]*Xai[a,ii]
             esum_s += etemp 
       endif
       ENDPARDO a, ii 
@@ -6019,12 +7527,10 @@
 #
       esum   = esum/36.0 
       esum_S = esum_S/4.0 
-     #print_scalar esum  
-     #print_scalar esum_S  
-      sip_barrier
+      server_barrier
       collective eaaa  += esum 
       collective eSaaa += esum_s  
-      sip_barrier
+      server_barrier
       eaaa *= 2.0 
       eSaaa *= 2.0 
       print eaaa  
@@ -6034,9 +7540,9 @@
       totenerg += eSaaa 
       print totenerg
       set_persistent totenerg "totenerg"
-
-
 #
-                           ENDSIAL RCCSDPT_AAA 
+      server_barrier
+#
+                           ENDSIAL CCSD_RHF_SV1
 #
 #
