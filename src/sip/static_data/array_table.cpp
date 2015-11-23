@@ -80,7 +80,19 @@ size_t ArrayTableEntry::block_number(const BlockId& id) const{
 	return res;
 }
 
-
+BlockId ArrayTableEntry::num2id(int array_id, size_t block_number) const{
+	index_value_array_t index_array;
+	size_t num = block_number;
+	for (int i = 0; i < rank_; i++){
+		int q = num/slice_sizes_[i];
+		index_array[i] = q + lower_[i];
+		num -= (q*slice_sizes_[i]);
+	}
+	for (int j = rank_; j< MAX_RANK; j++){
+		index_array[j] = unused_index_value;
+	}
+	return BlockId(array_id, index_array);
+}
 std::ostream& operator<<(std::ostream& os,
                 const sip::ArrayTableEntry& entry) {
 	    os << entry.name_ << ": ";

@@ -57,19 +57,7 @@ public:
 	size_t block_number(const BlockId& id) const;
 
 
-	BlockId num2id(int array_id, int block_number) const{
-		index_value_array_t index_array;
-		int num = block_number;
-		for (int i = 0; i < rank_; i++){
-			int q = num/slice_sizes_[i];
-			index_array[i] = q + lower_[i];
-			num -= (q*slice_sizes_[i]);
-		}
-		for (int j = rank_; j< MAX_RANK; j++){
-			index_array[j] = unused_index_value;
-		}
-		return BlockId(array_id, index_array);
-	}
+	BlockId num2id(int array_id, size_t block_number) const;
 
 private:
 	/** initializes this ArrayTableEntry with values read from the given InputStream, which should be an .siox file
@@ -111,7 +99,7 @@ private:
 	size_t max_block_size_;
 	size_t min_block_size_;
 	std::vector<long> slice_sizes_;
-	std::vector<long> lower_;
+	std::vector<long> lower_; //could be negative for simple indices, so use long instead of size_t
 
 	/** the name of the array in the SIAL program */
 	std::string name_;
@@ -172,13 +160,13 @@ public:
 	 */
 	int scalar_selector(int array_slot) const {return entries_.at(array_slot).scalar_selector_;}
 
-	int id2number(const BlockId& id) const{
+	size_t id2number(const BlockId& id) const{
 		return entries_[id.array_id()].block_number(id);
 	}
 
 	size_t num_blocks(int array_id) const {return entries_.at(array_id).num_blocks_;}
 
-	BlockId number2id(int array_id, int num) const{
+	BlockId number2id(int array_id, size_t num) const{
 		return entries_[array_id].num2id(array_id, num);
 	}
 

@@ -32,9 +32,9 @@ public:
 	 * @param
 	 * @return
 	 */
-	int get_server_rank(const sip::BlockId&) const;
-	int block_cyclic_distribution_server_rank(const sip::BlockId& bid) const;
-	int hashed_indices_based_server_rank(const sip::BlockId& bid) const;
+	int get_server_rank(const sip::BlockId& block_id) const;
+	int block_cyclic_distribution_server_rank(const sip::BlockId& block_id) const;
+	int hashed_indices_based_server_rank(const sip::BlockId& block_id) const;
 
 	//precondition--called by server
 	bool is_my_block(size_t block_number) const;

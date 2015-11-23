@@ -15,11 +15,19 @@ DataDistribution::DataDistribution(const SipTables& sip_tables, SIPMPIAttr& sip_
 }
 
 int DataDistribution::block_cyclic_distribution_server_rank(
-		const sip::BlockId& bid) const {
+		const sip::BlockId& block_id) const {
 	// Convert rank-dimensional index to 1-dimensional index
-	size_t block_position = sip_tables_.block_number(bid);
-	BlockId id2 = sip_tables_.block_id(bid.array_id(),block_position);
-	check(bid==id2, "problem computing block position in block_cyclic_distribution_server_rank");
+	size_t block_position = sip_tables_.block_number(block_id);
+	BlockId id2 = sip_tables_.block_id(block_id.array_id(),block_position);
+	if (block_id != id2){
+		std::stringstream ss;
+		ss << "problem computing block position in block_cyclic_distribution_server_rank";
+		ss << " at " << (sip_mpi_attr_.is_worker()?"worker":"server") << std::endl;
+		ss << "block_id=" << block_id.str(sip_tables_) << std::endl;
+		ss << " block_position=" << block_position << std::endl;
+		ss << " computed_id=" << id2.str(sip_tables_) << std::endl;
+        check(false, ss.str());
+	}
 	// Cyclic distribution
 	int server_global_rank = server_rank_from_hash(block_position);
 	return server_global_rank;
