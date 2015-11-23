@@ -104,7 +104,7 @@ c     integer(C_INT) iscr(5000000)
 c     real(C_DOUBLE) scr(5000000)   
 
       real(C_DOUBLE), pointer :: scr(:) 
-      real(C_DOUBLE), pointer :: iscr(:) 
+      integer, pointer :: iscr(:) 
       TYPE(C_PTR) :: cscr 
       TYPE(C_PTR) :: ciscr 
 !     offsets of atomic indeces  
@@ -241,7 +241,7 @@ c     call TAU_START("start scratch_array")
       call scratch_array(nscr, cscr) 
       call c_f_pointer(cscr, scr, [nscr]) 
 
-      call scratch_array(niscr, ciscr) 
+      call integer_scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr]) 
 
 c     call TAU_STOP("start scratch_array")   
@@ -279,7 +279,7 @@ c ----------------------------------------------------------------------
 c
 c  Remove scratch space  
       call delete_scratch_array(cscr) 
-      call delete_scratch_array(ciscr) 
+      call delete_integer_scratch_array(ciscr) 
 
 c     do i = 1, (extents_0(1)-1)*(extents_0(2)-1)*  
 c    *          (extents_0(3)-1)*(extents_0(4)-1)  

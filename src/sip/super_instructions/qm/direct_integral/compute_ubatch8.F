@@ -104,9 +104,13 @@ c     integer(C_INT) iscr(5000000)
 c     real(C_DOUBLE) scr(5000000)   
 
       real(C_DOUBLE), pointer :: scr(:) 
-      real(C_DOUBLE), pointer :: iscr(:) 
+      integer, pointer :: iscr(:) 
       TYPE(C_PTR) :: cscr 
       TYPE(C_PTR) :: ciscr 
+      TYPE(C_PTR) :: cptr_int
+
+      real(C_DOUBLE), pointer :: fptr_int(:)
+
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
       integer(C_INT) i, one, two   
@@ -124,6 +128,8 @@ c      integer, pointer :: end_nfps(:)
 c ----------------------------------------------------------------------
 
       integer(C_INT) norb, nscr, niscr   
+      integer(C_INT) int_length1, int_length2, int_length3
+      integer(C_INT) int_length4, int_length
 c
       one = 0 ! 1
       two = 0 ! 2
@@ -240,7 +246,7 @@ c     call TAU_START("start scratch_array")
       call scratch_array(nscr, cscr) 
       call c_f_pointer(cscr, scr, [nscr]) 
 
-      call scratch_array(niscr, ciscr) 
+      call integer_scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr]) 
 
 c     call TAU_STOP("start scratch_array")   
@@ -253,6 +259,16 @@ c     call TAU_STOP("start scratch_array")
       if (index_values_0(2).gt.1) offset_2=paosegs(index_values_0(2)-1) 
       if (index_values_0(3).gt.1) offset_3=paosegs(index_values_0(3)-1) 
       if (index_values_0(4).gt.1) offset_4=paosegs(index_values_0(4)-1)
+
+      int_length1 = extents_0(1)+offset_1 
+      int_length2 = extents_0(2)+offset_2
+      int_length3 = extents_0(3)+offset_3
+      int_length4 = extents_0(4)+offset_4 
+      int_length  = int_length1 * int_length2 * int_length3 *
+     +              int_length4
+
+      call scratch_array(int_length, cptr_int)
+      call c_f_pointer(cptr_int, fptr_int, [int_length])
 
 c     call TAU_START("start compute_uintegrals8")   
 c
@@ -270,7 +286,7 @@ c
   
      *                         data_1, data_2, 
      *                         1, extents_1(1), 1,extents_1(2),
-     *                         data_3, data_4)
+     *                         data_3, data_4,fptr_int)
 
 c     call TAU_STOP("start compute_uintegrals8")   
 
@@ -278,7 +294,8 @@ c ----------------------------------------------------------------------
 c
 c  Remove scratch space  
       call delete_scratch_array(cscr) 
-      call delete_scratch_array(ciscr) 
+      call delete_scratch_array(cptr_int) 
+      call delete_integer_scratch_array(ciscr) 
 
 c     do i = 1, (extents_0(1)-1)*(extents_0(2)-1)*  
 c    *          (extents_0(3)-1)*(extents_0(4)-1)  

@@ -17,7 +17,7 @@ C  in the file COPYRIGHT.
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend,
      *                 ca, cb, nc1,nc2, nd1, nd2,
-     *                 fa,fb) 
+     *                 fa,fb,integrals)
 c---------------------------------------------------------------------------
 !>   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
 !>   following 'types' of integrals based on atomic labels.
@@ -61,7 +61,7 @@ c---------------------------------------------------------------------------
       double precision x2,y2,z2
       double precision x3,y3,z3
       double precision x4,y4,z4
-
+      
       double precision coords(3,*), coeffs(*), alphas(*)
       double precision tcoords(3,*)
       double precision ca(nc1:nc2,nd1:nd2)

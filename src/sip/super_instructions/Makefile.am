@@ -1,8 +1,9 @@
 noinst_LTLIBRARIES=libinstr.la
 
 #libinstr_la_CPPFLAGS=\
-	#-I$(top_srcdir)/src/special_instruction_f/erd  			\
+	#-I$(top_srcdir)/src/special_instruction_f/erd  		\
 	#-I$(top_srcdir)/src/special_instruction_f/oed 			\
+	#-I$(top_srcdir)/src/special_instruction_f/ecp 			\
 	#-I$(top_srcdir)/src/special_instruction_f/direct_integral	\
 	#-I$(top_srcdir)/src/sip/
 	
@@ -10,6 +11,7 @@ libinstr_la_CPPFLAGS=\
 -I$(srcdir)/qm\
 -I$(srcdir)/qm/erd\
 -I$(srcdir)/qm/oed\
+-I$(srcdir)/qm/ecp\
 -I$(srcdir)/qm/direct_integral\
 -I${top_srcdir}/src/sip\
 -I${top_srcdir}/src/sip/tensor_algebra\
@@ -80,6 +82,10 @@ QM_SOURCE_FILES=\
 ./qm/direct_integral/return_ovl.F\
 ./qm/direct_integral/compute_return_h1.F\
 ./qm/direct_integral/compute_return_ovl.F\
+./qm/direct_integral/return_1el_ecp_ints.F\
+./qm/direct_integral/compute_return_1el_ecp_ints.F\
+./qm/direct_integral/return_1el_ecp_grdints.F\
+./qm/direct_integral/compute_return_1el_ecp_grdints.F\
 ./qm/direct_integral/erd_scratch_mem_calc.F\
 ./qm/direct_integral/compute_dipole_integrals.F\
 ./qm/direct_integral/compute_int_scratchmem.F\
@@ -318,6 +324,55 @@ QM_SOURCE_FILES=\
 ./qm/oed/oed__xyz_to_ry_abc.f\
 ./qm/oed/oed__xyz_to_ry_ab.f\
 ./qm/oed/oed__xyz_to_ry_matrix.f\
+./qm/ecp/izero.F\
+./qm/ecp/dzero.F\
+./qm/ecp/a4_ecp_basis_init.F\
+./qm/ecp/a4_ecp_init.F\
+./qm/ecp/a4_ecp_main.F\
+./qm/ecp/a4_ecp_grdint_main.F\
+./qm/ecp/a4_ecpgrd_int.F\
+./qm/ecp/factorial.F\
+./qm/ecp/factorialo.F\
+./qm/ecp/factorialo.F\
+./qm/ecp/dfactorial.F\
+./qm/ecp/make_ztab.F\
+./qm/ecp/make_xyz.F\
+./qm/ecp/make_ftab.F\
+./qm/ecp/binomial_coefs.F\
+./qm/ecp/a4_ecp_int_driver.F\
+./qm/ecp/a4_ecp_grdint_driver.F\
+./qm/ecp/ecp_int_4prim.F\
+./qm/ecp/ecp_grdint_4prim.F\
+./qm/ecp/get_center.F\
+./qm/ecp/ecp_int_typ1.F\
+./qm/ecp/ecp_int_typ2.F\
+./qm/ecp/ecp_rad_int_typ1.F\
+./qm/ecp/ecp_ang_int_typ1.F\
+./qm/ecp/radint_recur.F\
+./qm/ecp/make_bc_cacb_xyz.F\
+./qm/ecp/screen_ang_typ1.F\
+./qm/ecp/make_res.F\
+./qm/ecp/ang_int.F\
+./qm/ecp/ecp_rad_int_typ2.F\
+./qm/ecp/ecp_ang_int_typ2.F\
+./qm/ecp/sps.F\
+./qm/ecp/gpwm.F\
+./qm/ecp/bess.F\
+./qm/ecp/ecp_ang_int2.F\
+./qm/ecp/make_bc_pq_xyz.F\
+./qm/ecp/screen_ang_typ2.F\
+./qm/ecp/ecp_int_4shell.F\
+./qm/ecp/ecp_int.F\
+./qm/ecp/ecp_grdint.F\
+./qm/ecp/oedecp__xyz_to_ry_ab.F\
+./qm/ecp/oedecp__xyz_to_ry_matrix.F\
+./qm/ecp/qcomp_38D.F\
+./qm/ecp/qcomp_38D_odd.F\
+./qm/ecp/qcomp.F\
+./qm/ecp/qcomp_sps.F\
+./qm/ecp/qpasy.F\
+./qm/ecp/transp.F\
+./qm/ecp/dcopy.F\
 ./qm/tests/get_and_print_int_array_dummy.F\
 ./qm/tests/get_and_print_scalar_array_dummy.F\
 ./qm/tests/get_scratch_array_dummy.F\

@@ -220,8 +220,8 @@ AM_CPPFLAGS = \
 
 
 
-check_PROGRAMS =    test_unit test_basic_sial test_sial test_qm test_qm_aux 
-TESTS =             test_unit test_basic_sial test_sial test_qm
+check_PROGRAMS =    test_unit test_basic_sial test_sial test_basic_qm test_qm test_qm_aux 
+TESTS =             test_unit test_basic_sial test_sial test_basic_qm test_qm
 
 if WORKING_MPI
 LOG_COMPILER = mpirun   # Run mpi test with mpirun
@@ -257,6 +257,16 @@ test_basic_sial_SOURCES = \
     test/test_contraction_small2.F
     
     
+test_basic_qm_SOURCES = \
+	$(ACES_SOURCEFILES) \
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+	test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
+    test/test_basic_qm.cpp
+    
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
     test/test_controller_parallel.h\
@@ -288,6 +298,7 @@ TEST_LDADD_VARS = \
 	
 test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_sial_LDADD = $(TEST_LDADD_VARS)
+test_basic_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_aux_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
@@ -310,6 +321,9 @@ test/rlambda_test.dat\
 test/lccd_test.dat\
 test/lccd_frozencore_test.dat\
 test/lccsd_test.dat\
+test/scf_rhf_aguess_test.dat\
+test/scf_uhfrhf_aguess_test.dat\
+test/scf_uhf_triplet_aguess_test.dat\
 test/expected_output/helloworld1.txt\
 test/expected_output/local_arrays_wild.txt\
 test/expected_output/local_arrays.txt\
@@ -319,7 +333,8 @@ test/expected_output/scalars.txt\
 test/expected_output/static_array_test.txt\
 test/expected_output/static_array_test2.txt\
 test/expected_output/tmp_arrays_2.txt\
-test/expected_output/tmp_arrays.txt
+test/expected_output/tmp_arrays.txt\
+test/expected_output/test_1el_ecp_ints.dat
 
 
 EXTRA_DIST+= $(TEST_SUPPORT_FILES)
@@ -368,6 +383,7 @@ test_libgtest_main_la_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
 TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) -no-install
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_basic_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_aux_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
@@ -482,6 +498,7 @@ SIOX_FILES=\
 ./src/sialx/test/put_initialize.siox\
 ./src/sialx/test/cast_indices_to_simple.siox\
 ./src/sialx/test/aoladder.siox\
+./src/sialx/test/test_ecpint.siox\
 ./src/sialx/test/put_accumulate_stress.siox\
 ./src/sialx/test/disk_backing_test.siox\
 ./src/sialx/qm/scf_defs.siox\
@@ -617,6 +634,9 @@ EXTRA_DIST += \
 ./src/sialx/test/put_initialize.sialx\
 ./src/sialx/test/cast_indices_to_simple.sialx\
 ./src/sialx/test/aoladder.sialx\
+./src/sialx/test/test_ecpint.sialx\
+./src/sialx/test/put_accumulate_stress.sialx\
+./src/sialx/test/disk_backing_test.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\

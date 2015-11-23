@@ -4,7 +4,7 @@ C-----------------------------------------------------------------
 !>
 !> This SIP does something closer to the serial blas routine dscale does.
 !> That C is A = C(i) A(*,i)  where A is a vector and C is scalar array.
-!> Primarily used in scf_rhf and scf_rhf.
+!> Primarily used in scf_rhf and scf_uhf.
 !> This must be invoked from the SIALX as
 !> execute  A4_dscale A(a,b) B(a) C where A is a anytype of blocked 
 !> array, B is static and array and C is 0.0 or 1.0 indicating 

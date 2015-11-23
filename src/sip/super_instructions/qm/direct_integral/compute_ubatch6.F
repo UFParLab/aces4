@@ -103,9 +103,13 @@ c     integer(C_INT) iscr(5000000)
 c     real(C_DOUBLE) scr(5000000)   
 
       real(C_DOUBLE), pointer :: scr(:) 
-      real(C_DOUBLE), pointer :: iscr(:) 
+      integer, pointer :: iscr(:) 
       TYPE(C_PTR) :: cscr 
       TYPE(C_PTR) :: ciscr 
+      TYPE(C_PTR) :: cptr_int
+
+      real(C_DOUBLE), pointer :: fptr_int(:)
+
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4  
       integer(C_INT) i, one, two   
@@ -120,10 +124,15 @@ c  END_NFPS
       TYPE(C_PTR) :: pnalpha, pend_nfps
       integer, pointer :: nalpha(:)
       integer, pointer :: end_nfps(:)
+
 c ----------------------------------------------------------------------
 
       integer(C_INT) norb, nscr, niscr   
+      integer(C_INT) int_length1, int_length2, int_length3
+      integer(C_INT) int_length4, int_length
 c
+      double precision sa, sb
+
       one = 0 ! 1
       two = 0 ! 2
       ierr = 0 
@@ -241,7 +250,7 @@ c     call TAU_START("start scratch_array")
       call scratch_array(nscr, cscr) 
       call c_f_pointer(cscr, scr, [nscr]) 
 
-      call scratch_array(niscr, ciscr) 
+      call integer_scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr]) 
 
 c     call TAU_STOP("start scratch_array")   
@@ -257,6 +266,16 @@ c     call TAU_STOP("start scratch_array")
 
 c     call TAU_START("start compute_uintegrals6")   
 c
+      int_length1 = extents_0(1)+offset_1 
+      int_length2 = extents_0(2)+offset_2 
+      int_length3 = extents_0(3)+offset_3 
+      int_length4 = extents_0(4)+offset_4
+      int_length  = int_length1 * int_length2 * int_length3 *
+     +              int_length4
+
+      call scratch_array(int_length, cptr_int)
+      call c_f_pointer(cptr_int, fptr_int, [int_length])
+
       call compute_uintegrals6(1+offset_1, extents_0(1)+offset_1,
      *                         1+offset_2, extents_0(2)+offset_2,
      *                         1+offset_3, extents_0(3)+offset_3,
@@ -271,7 +290,7 @@ c
 c 
      *                         data_1, data_2, 
      *                         1, extents_1(1), 1,extents_1(2),
-     *                         data_3, data_4)
+     *                         data_3, data_4, fptr_int)
 
 c     call TAU_STOP("start compute_uintegrals6")   
 
@@ -279,8 +298,21 @@ c ----------------------------------------------------------------------
 c
 c  Remove scratch space  
       call delete_scratch_array(cscr) 
-      call delete_scratch_array(ciscr) 
+      call delete_scratch_array(cptr_int) 
+      call delete_integer_scratch_array(ciscr) 
 
+#ifdef _DEBUG_LVL0
+        sa = 0.0d0
+        sb = 0.0d0
+        do i=1,size_4
+           sb=sb+data_4(i) * data_4(i)
+        enddo
+        do i=1,size_3
+           sa=sa+data_3(i) * data_3(i)
+        enddo
+        write(6,"(a,F15.8)") "Checksum of Fa in ubatch6 =", sa
+        write(6,"(a,F15.8)") "Checksum of Fb in ubatch6 =", sb
+#endif 
 c     do i = 1, (extents_0(1)-1)*(extents_0(2)-1)*  
 c    *          (extents_0(3)-1)*(extents_0(4)-1)  
 c        write(6,*) 'INT6', i, data_0(i), scr(i)  
