@@ -26,9 +26,22 @@ predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT
 
 
 #these are predefined in the index table         
-moaindex aces_defs_pa = baocc: eavirt  
-mobindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
+
+
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC.
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC.
+static fock_a[aces_defs_pa, aces_defs_pa]
+static fock_b[aces_defs_pb, aces_defs_pb]
+static fockrohf_a[aces_defs_mu,aces_defs_mu]
+static fockrohf_b[aces_defs_mu,aces_defs_mu]
+
+static oed_nai[aces_defs_mu,aces_defs_mu]
+static oed_kin[aces_defs_mu,aces_defs_mu]
+static oed_ovl[aces_defs_mu,aces_defs_mu]
+
           
 special compute_ubatch6 wrruu
 special compute_integral_batch w
@@ -36,6 +49,7 @@ special return_sval rw
 special get_my_rank w
 special scf_atom u
 special print_block r
+special compute_int_scratchmem uuu
 
 endsial tran_rhf_no4v_defs
 

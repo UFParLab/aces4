@@ -35,6 +35,7 @@ public:
 //	void init_(const char * job_name);
     void write_header_file();
 	void write_data_file();
+	std::string get_json_string();
 	void addPredefinedIntHeader(std::string name, int val);
 	void addPredefinedIntData(std::string name, int val);
 	void addPredefinedContiguousArray(std::string name, int rank, int * dims, double * data);

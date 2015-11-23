@@ -85,8 +85,6 @@
       static Xijk[NT,i7] 
       distributed t1as_old[a,ii] 
       temp tps[a,ii] 
-      static ca[mu,p] 
-      static fock_a[p,p1] 
 #
       temp dpppp[p,p1,p2,p3] 
       temp tpppp[p,p1,p2,p3] 
@@ -143,7 +141,7 @@
 # Declare scalars
 # ---------------
 #
-      scalar ccsdpt_energy
+      scalar ccsdpt_correlation
       scalar etemp
       scalar xtemp
       scalar xtemp1
@@ -2395,6 +2393,9 @@
          if kstart <= 0  
             exit 
          endif  
+
+         print NT
+
          if (scalar)ncount <= xtemp1  
          IF whichj >= whichi   
 
@@ -2977,6 +2978,12 @@
 #
 # BEGIN MAIN PROGRAM
 # ------------------
+      print " "
+      print "-- Parallel CCSD(T) program"
+      print "-- AAB spin combination"
+      print "-- Chemical Physics 157, 479 (1989)"
+      print "-- Written by Victor F. Lotrich 2015"
+      print " "
 #
       esum = 0.0 
       eaab = 0.0  
@@ -3056,6 +3063,7 @@
 # ----------------------------
       if nsects == (int)one
          xtemp1 = xtemp
+         print xtemp
          CALL OSEG_TRIP1 
       endif
 #
@@ -3070,15 +3078,27 @@
 #
      easum = 0.0
      esaab = 0.0 
+
+      DO Nt
+      DO i7  
+      where Nt == 1
+      where i7 == 2
+         istart = (int)Xijk[Nt,i7] 
+      ENDDO i7  
+      ENDDO Nt 
+
+     print istart
      sip_barrier
      PARDO a, ii
 #
+      if ii >= istart
           #PREQUEST x1ai(a,ii) = t1a_old(a,i1)
            GET                 t1as_old[a,ii] 
            GET                 sai[a,ii]
            etemp             = sai[a,ii]*t1as_old[a,ii]
            etemp            *= 0.25
            easum             += etemp
+      endif
 #
      ENDPARDO a, ii
 #
@@ -3103,7 +3123,8 @@
       collective eaab += esum 
       sip_barrier
 
-    restore_persistent totenerg "totenerg"
+      restore_persistent totenerg "totenerg"
+      restore_persistent ccsd_energy "ccsd_energy"
 
       eaab *= 2.0
       eSaab *= 2.0
@@ -3111,12 +3132,17 @@
       totenerg += eSaab 
 
       ccsdpt_energy = totenerg
+      ccsdpt_correlation = ccsdpt_energy - ccsd_energy
 
       print eaab 
       print eSaab 
+      print ccsdpt_correlation
+      print ccsd_energy
       print ccsdpt_energy
 
     set_persistent totenerg "totenerg"
+    set_persistent ccsd_energy "ccsd_energy"
+    set_persistent ccsdpt_energy "ccsdpt_energy"
 
       sip_barrier
 #

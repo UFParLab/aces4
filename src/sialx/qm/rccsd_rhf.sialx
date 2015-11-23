@@ -56,8 +56,6 @@
 # Declare static arrays 
 # --------------------- 
 #
-      static ca[mu,p] 
-      static fock_a[p,p1] 
 # 
 # Declare distributed arrays 
 # --------------------- 
@@ -125,7 +123,6 @@
       scalar seven
       scalar energy
       scalar ccsd_correlation
-      scalar ccsd_energy
       scalar mp2_correlation
       scalar etemp
       scalar esum
@@ -897,7 +894,9 @@
       PROC WminjAB
 #     ------------
 #
-      create Wminj_ab
+      pardo i,i1,j,j1
+          put Wminj_ab[i,i1,j,j1] = 0.0
+      endpardo i,i1,j,j1
       sip_barrier
       PARDO i, i1, j, j1
 #
@@ -957,7 +956,6 @@
 #
       ENDPARDO i1, j1, a, b
       sip_barrier
-      delete Wminj_ab
 #
       ENDPROC WminjAB
 #     --------------- 
@@ -1164,7 +1162,10 @@
 #
       ENDPARDO b, a, j, i
 #
-     create t1a_ax 
+     server_barrier   
+     pardo a,mu
+         PUT t1a_ax[a,mu] = 0.0
+     endpardo a,mu
      server_barrier   
 #
 #    Contract AOINT with half back transformed Amplitudes 
@@ -1298,7 +1299,6 @@
 #
         sip_barrier
 #
-     delete t1a_ax 
 #
 #    ------------------------------------------------------------------------ 
 #
@@ -1353,7 +1353,10 @@
 #
       ENDPARDO b, a, j, i
 #
-     create t1a_ax 
+     server_barrier   
+     pardo a,mu
+         PUT t1a_ax[a,mu] = 0.0
+     endpardo a,mu
      server_barrier   
 #
 #    Contract AOINT with half back transformed Amplitudes 
@@ -1467,7 +1470,6 @@
 #
         sip_barrier
 #
-     delete t1a_ax 
 #
 #    ------------------------------------------------------------------------ 
 #
@@ -1487,7 +1489,10 @@
 # 1/2 tau^{ab}_{mn} * [ 1/4 tau^{ef}_{ij} * (V^{mn}_{ef} - V^{mn}_{fe}]  
 # --------------------------------------------------------------------- 
 #
-      create Wminj_ab 
+      sip_barrier 
+      pardo i,i1,j,j1
+	  PUT Wminj_ab[i1,i,j1,j] = 0.0
+      endpardo i,i1,j,j1
       sip_barrier 
       PARDO i, j, a, b  
 #
@@ -1523,7 +1528,6 @@
 #
       ENDPARDO a, b, i1, j1  
       sip_barrier 
-      delete Wminj_ab 
 #
       ENDPROC WAEBFAB 
 #     --------------- 
@@ -2408,6 +2412,7 @@
 
       print " "
       print "-- Parallel CCSD program"
+      print "-- J. Chem. Phys. 76, 1910 (1982)"
       print "-- Written by Victor F. Lotrich, 2014"
       print " "
 
@@ -2496,9 +2501,17 @@
 #
 #        Form one-particle intermediates 
 #        ------------------------------- 
-         CREATE Fae_a 
          CREATE Fme_a
          CREATE Fmi_a 
+	 pardo a,a1
+	     put Fae_a[a,a1] = 0.0
+	 endpardo a,a1
+	 pardo a,i
+	     put Fme_a[i,a] = 0.0
+	 endpardo a,i
+	 pardo i,i1
+	     put Fmi_a[i,i1] = 0.0
+	 endpardo i,i1
          SERVER_BARRIER  
 # 
          CALL FAE 
@@ -2526,9 +2539,6 @@
 #        ---------------------- 
          SERVER_BARRIER   
 #
-         DELETE Fae_a 
-         DELETE Fme_a
-         DELETE Fmi_a 
          CALL UPDATET1 
          CALL UPDATET2 
 #
@@ -2597,6 +2607,7 @@
       set_persistent T2old_ab "T2old_ab"
       set_persistent scf_energy "scf_energy"
       set_persistent totenerg "totenerg"
+      set_persistent ccsd_energy "ccsd_energy"
       set_persistent VSpipi "VSpipi"
       set_persistent Vaaii  "Vaaii"
       set_persistent Viaai  "Viaai"

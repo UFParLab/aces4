@@ -67,8 +67,8 @@ C
       double precision DE, DEP, DEAVG, DAMP
 
       DATA DMPMAX /256.0D+00/
-      DATA ZERO,PT25,PT5,TWO,FOUR,FAC /0.0D+00,2.5D-01,0.5D+00,
-     1 2.0D+00,4.0D+00,1.6D+01/
+      DATA ZERO,PT25,PT5,TWO,FOUR,FAC,PT2 /0.0D+00,2.5D-01,0.5D+00,
+     1 2.0D+00,4.0D+00,1.6D+01,2.0D-01/
 
 #ifdef _DEBUG_LVL0
 C      if (me .eq. master) then

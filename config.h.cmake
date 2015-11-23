@@ -10,12 +10,6 @@
 /* Define if you have the MPI library. */
 #cmakedefine HAVE_MPI
 
-/* Define if you have a PAPI library. */
-#cmakedefine HAVE_PAPI
-
-/* Define if you have a TAU library. */
-#cmakedefine HAVE_TAU
-
 /* Development mode, extra logging and checking */
 #cmakedefine SIP_DEVEL
 

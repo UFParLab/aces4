@@ -666,9 +666,9 @@ c ******************************************************************************
 
       endif 
 
-      write(6,*) ' No indeces were found to strip in strip3 '
+      write(6,*) ' No indeces were found to strip in strip2 '
       write(6,*) ' Strip = ', strip  
-      write(6,*) ' Match(i) = ', (match(i), i=1,3)  
+      write(6,*) ' Match(i) = ', (match(i), i=1,2)  
       call abort_job() 
 
 100   continue 

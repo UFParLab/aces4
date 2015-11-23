@@ -22,8 +22,8 @@ SipTables::SipTables(setup::SetupReader& setup_reader, setup::InputStream& input
 SipTables::~SipTables() {
 }
 
-int SipTables::max_timer_slots() const{
-	return op_table_.line_number(op_table_.size()-1);
+//int SipTables::max_timer_slots() const{
+//	return op_table_.line_number(op_table_.size()-1);
 //	std::cout << "calling max_timer_slots()" << std::endl;
 //	op_table_.line_number(op_table_.size()-1);
 //	if (sialx_lines_ > 0)
@@ -39,19 +39,19 @@ int SipTables::max_timer_slots() const{
 //	sialx_lines_ = max_line;
 //	check(max_line == op_table_.line_number(op_table_.size()-1), "unexpected max_timer_slot value");
 //	return max_line;
-}
+//}
 
-std::vector<std::string> SipTables::line_num_to_name() const{
-	std::vector<std::string> lno2name(max_timer_slots()+1, "");	// "" is the sentinel value checked in printing.
-	int size = op_table_.size();
-	for (int i=0; i<size; i++){
-		int line = op_table_.line_number(i);
-		opcode_t opcode = intToOpcode(op_table_.opcode(i));
-		if (printableOpcode(opcode))
-			lno2name.at(line) = opcodeToName(opcode);
-	}
-	return lno2name;
-}
+//std::vector<std::string> SipTables::line_num_to_name() const{
+//	std::vector<std::string> lno2name(max_timer_slots()+1, "");	// "" is the sentinel value checked in printing.
+//	int size = op_table_.size();
+//	for (int i=0; i<size; i++){
+//		int line = op_table_.line_number(i);
+//		opcode_t opcode = intToOpcode(op_table_.opcode(i));
+//		if (printableOpcode(opcode))
+//			lno2name.at(line) = opcodeToName(opcode);
+//	}
+//	return lno2name;
+//}
 
 
 std::string SipTables::array_name(int array_table_slot) const{

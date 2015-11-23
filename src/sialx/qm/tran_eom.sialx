@@ -2,10 +2,18 @@ import "reom_rhf_defs.sialx"
 import "reom_vars.sialx"
 
 sial tran_eom
+#    DEFINE PROCEDURES  
 #
 #    ------------------------------------------------------------------------
 #
+#    Compute the integrals and store in the served array saoint. 
+#
+#    Perform the first two stages of the transformation in two N5 steps. 
+#
 PROC TRAN_TRAN2 
+#
+#    ------------------------------------------------------------------------
+#
 print "Starting tran 1-2"
 pardo mu, nu, lambda
 #
@@ -588,6 +596,128 @@ PROC TRAN_TRAN4
 #
 #    ------------------------------------------------------------------------
 #
+print "Starting tran 4:VSpipi"
+pardo p, i, i1
+#
+    allocate Lxipi[*,i,p,i1] 
+#
+    do mu 
+#
+	request Vxipi[mu,i,p,i1]  
+	request Vxipi[mu,i1,p,i]  
+	Lxipi[mu,i,p,i1]  = Vxipi[mu,i,p,i1] 
+	Txipi[mu,i,p,i1]  = Vxipi[mu,i1,p,i] 
+	Lxipi[mu,i,p,i1] -= Txipi[mu,i,p,i1] 
+#
+    enddo mu  
+#
+    do p1 
+#
+	Tpipi[p1,i,p,i1] = 0.0  
+#
+	do mu  
+#
+	T1pipi[p1,i,p,i1] = Lxipi[mu,i,p,i1]*ca[mu,p1]
+	Tpipi[p1,i,p,i1] += T1pipi[p1,i,p,i1]  
+#
+	enddo mu  
+#
+	prepare VSpipi[p1,i,p,i1] = Tpipi[p1,i,p,i1] 
+#
+    enddo p1 
+#
+    deallocate Lxipi[*,i,p,i1] 
+#
+endpardo p, i, i1
+#
+print "Starting tran 4:Vaaii|Viaai"
+pardo a, i, i1
+#
+    allocate Lxaii[*,a,i,i1] 
+    allocate Lixai[i,*,a,i1] 
+#
+    do mu 
+#
+	request Vxaii[mu,a,i,i1]  
+	request Vixai[i,mu,a,i1]  
+#
+	Lxaii[mu,a,i,i1] = Vxaii[mu,a,i,i1]  
+	Lixai[i,mu,a,i1] = Vixai[i,mu,a,i1] 
+#
+    enddo mu 
+#
+    do a1 
+#
+	Taaii[a1,a,i,i1] = 0.0  
+#
+	do mu  
+#
+	T1aaii[a1,a,i,i1] = Lxaii[mu,a,i,i1]*ca[mu,a1]
+	Taaii[a1,a,i,i1] += T1aaii[a1,a,i,i1]  
+#
+	enddo mu  
+#
+	prepare Vaaii[a1,a,i,i1] = Taaii[a1,a,i,i1]
+#
+    enddo a1 
+#
+    deallocate Lxaii[*,a,i,i1] 
+#
+    do a1 
+#
+	Tiaai[i,a1,a,i1] = 0.0  
+#
+	do mu  
+#
+	T1iaai[i,a1,a,i1] = Lixai[i,mu,a,i1]*ca[mu,a1]
+	Tiaai[i,a1,a,i1] += T1iaai[i,a1,a,i1]   
+#
+	enddo mu  
+#
+	prepare Viaai[i,a1,a,i1] = Tiaai[i,a1,a,i1]
+#
+    enddo a1 
+#
+    deallocate Lixai[i,*,a,i1] 
+#
+endpardo a, i, i1
+# 
+print "Starting tran 4:Vaaai|VSaaai"
+pardo a, a1, i
+#
+    allocate L1xaai[*,a,a1,i] 
+#
+    do mu 
+#
+	request Vxaai[mu,a,a1,i]  
+#
+	L1xaai[mu,a,a1,i]  = Vxaai[mu,a,a1,i]
+#
+    enddo mu 
+#
+    do a2  
+#
+	Taaai[a2,a,a1,i] = 0.0 
+#
+	do mu 
+#
+	T1aaai[a2,a,a1,i] = L1xaai[mu,a,a1,i]*ca[mu,a2]
+	Taaai[a2,a,a1,i] += T1aaai[a2,a,a1,i]  
+#
+	enddo mu 
+#
+	T1aaai[a1,a,a2,i]           = Taaai[a2,a,a1,i] 
+	T1aaai[a1,a,a2,i]          *= -1.0  
+	prepare Vaaai [a2,a,a1,i]  += Taaai [a2,a,a1,i]
+	prepare VSaaai[a2,a,a1,i]  += Taaai [a2,a,a1,i]
+	prepare VSaaai[a1,a,a2,i]  += T1aaai[a1,a,a2,i]
+#
+    enddo a2  
+#
+    deallocate L1xaai[*,a,a1,i] 
+#
+endpardo a, a1, i
+# 
 print "Starting tran 4:VSqjqj"
 pardo q, j, j1
 #
@@ -767,6 +897,37 @@ pardo b, a, i
 #
 endpardo b, a, i
 #
+print "Starting tran 4:Vpiqj"
+pardo q, i, j
+#
+    allocate Lxiqj[*,i,q,j] 
+#
+    do mu  
+#
+	request Vxiqj[mu,i,q,j]  
+	Lxiqj[mu,i,q,j] = Vxiqj[mu,i,q,j] 
+#
+    enddo mu  
+#
+    do p 
+#
+	Tpiqj[p,i,q,j] = 0.0 
+#
+	do mu  
+#
+	T1piqj[p,i,q,j] = Lxiqj[mu,i,q,j]*ca[mu,p]
+	Tpiqj[p,i,q,j] += T1piqj[p,i,q,j]  
+#
+	enddo mu  
+#
+	prepare Vpiqj[p,i,q,j] = Tpiqj[p,i,q,j]
+#
+    enddo p 
+#
+    deallocate Lxiqj[*,i,q,j] 
+#
+endpardo q, i, j
+#
 print "Starting tran 4:Vaajj"
 pardo a, j, j1
 #
@@ -865,6 +1026,9 @@ endpardo a, b, j
 ENDPROC TRAN_TRAN4 
 #
 #    ------------------------------------------------------------------------
+#
+#    ------------------------------------------------------------------------ 
+#
 PROC TRAN_UHF 
 # 
 #        CALL COMP_INTEGRALS # --> compute integrals and put into served array 
@@ -874,35 +1038,8 @@ CALL TRAN_TRAN3     # --> performs the third stage
 #     two-electron integral transformation.  
 CALL TRAN_TRAN4     # --> performs the fourth stage of the  
 #     two-electron integral transformation.  
-server_barrier
-destroy vixai
-destroy vixbj
-destroy vixxi
-destroy vixxj
-destroy vjxbj
-destroy vjxxj
-destroy vxaai
-destroy vxabj
-destroy vxaii
-destroy vxajj
-destroy vxbai
-destroy vxbbj
-destroy vxbii
-destroy vxbjj
-destroy vxipi
-destroy vxiqj
-destroy vxixi
-destroy vxixj
-destroy vxjqj
-destroy vxjxj
-destroy vxxai
-destroy vxxbj
-destroy vxxii
-destroy vxxij
-destroy vxxjj
-destroy vxxxi
-destroy vxxxj
 #
 ENDPROC TRAN_UHF 
+#
 
 endsial tran_eom

@@ -63,8 +63,6 @@
 #
 # Declare static arrays
 # ---------------------
-      static fock_a[p,p1] 
-      static ca[mu,p] 
 
       temp  taibj[a,i,a1,j]
       served T2aiai[a,i,a1,j]
@@ -170,6 +168,7 @@
 # Declare scalars
 # ---------------
 #
+      int number_psec_triplets
       scalar etemp
       scalar xtemp
       scalar xtemp1 
@@ -381,7 +380,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxxi
 #
 #    ------------------------------------------------------------------------
 #
@@ -438,7 +436,6 @@
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxai
 #
      ENDPROC TRAN_TRAN3 
 #
@@ -3984,9 +3981,7 @@
 
          ncount = ncount + 1.0  
 
-         itemp = 0.0 
          DO i7 
-            itemp += 1.0 
             if i7 == 1 
                whichi = (int)Xijk[NT,i7] 
             endif 
@@ -4012,17 +4007,20 @@
 
          kend = kstart 
 
-        #print_scalar whichi  
-        #print_scalar istart   
-        #print_scalar iend   
-        #print_scalar whichj  
-        #print_scalar jstart   
-        #print_scalar jend   
-        #print_scalar kstart   
+        #print whichi  
+        #print istart   
+        #print iend   
+        #print whichj  
+        #print jstart   
+        #print jend   
+        #print kstart   
+	server_barrier
 
          if kstart <= 0  
             exit 
          endif  
+
+         print NT
 
          if ncount >  0.0      
          if ncount <= xtemp1  
@@ -5894,6 +5892,12 @@
 #
 # BEGIN MAIN PROGRAM
 # ------------------
+      print " "
+      print "-- Parallel CCSD(T) program"
+      print "-- AAA spin combination"
+      print "-- Chemical Physics 157, 479 (1989)"
+      print "-- Written by Victor F. Lotrich 2015"
+      print " "
 #
       eaaa   = 0.0  
       esum   = 0.0  
@@ -5912,7 +5916,6 @@
       sip_barrier 
       CALL TRAN_UHF 
       server_barrier 
-      destroy Vxaai
 #
 # Set the partitioning of the occupied segments 
 # --------------------------------------------- 
@@ -5973,6 +5976,8 @@
 # ---------------------------- 
       if nsects == one    
          xtemp1 = xtemp 
+	 number_psec_triplets = (int)xtemp
+         print number_psec_triplets
          CALL OSEG_TRIP 
       endif 
 #
@@ -5992,12 +5997,23 @@
 ##          esum_s += etemp 
 ##    ENDPARDO a, i1 
 #
+      DO Nt
+      DO i7  
+      where Nt == 1
+      where i7 == 2
+         istart = (int)Xijk[Nt,i7] 
+      ENDDO i7  
+      ENDDO Nt 
+
+      server_barrier
       PARDO a, ii 
+      if ii >= istart
      #      PREQUEST  t1ps(a,ii) = t1a_old(a,i1)   
             GET       Xai[a,ii] 
             GET       t1as_old[a,ii] 
             etemp   = t1as_old[a,ii]*Xai[a,ii]
             esum_s += etemp 
+      endif
       ENDPARDO a, ii 
       server_barrier
 #
@@ -6016,6 +6032,7 @@
       restore_persistent totenerg "totenerg"
       totenerg += eaaa 
       totenerg += eSaaa 
+      print totenerg
       set_persistent totenerg "totenerg"
 
 

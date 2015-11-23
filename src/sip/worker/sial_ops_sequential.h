@@ -22,39 +22,37 @@ class SialOpsSequential {
 public:
 	SialOpsSequential(DataManager &,
 			WorkerPersistentArrayManager*,
-			SialxTimer*,
 			const SipTables&);
 	~SialOpsSequential();
 
 	/** implements a global SIAL barrier */
-	void sip_barrier();
+	void sip_barrier(int pc);
 
 	/** SIAL operations on arrays */
-	void create_distributed(int array_id);
-	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map);
-	void delete_distributed(int array_id);
-	void get(BlockId&);
-	void put_replace(BlockId&, const Block::BlockPtr);
-	void put_accumulate(BlockId&, const Block::BlockPtr);
-	void put_initialize(const BlockId&, double value);
-	void put_increment(const BlockId&, double value);
-	void put_scale(const BlockId&, double value);
+	void create_distributed(int array_id, int pc);
+	void restore_distributed(int array_id, IdBlockMap<Block>* bid_map, int pc);
+	void delete_distributed(int array_id, int pc);
+	void get(BlockId&, int pc);
+	void put_replace(BlockId&, const Block::BlockPtr, int pc);
+	void put_accumulate(BlockId&, const Block::BlockPtr, int pc);
+	void put_initialize(const BlockId&, double value, int pc);
+	void put_increment(const BlockId&, double value, int pc);
+	void put_scale(const BlockId&, double value, int pc);
 
-	void destroy_served(int array_id);
-	void request(BlockId&);
-	void prequest(BlockId&, BlockId&);
-	void prepare(BlockId&, Block::BlockPtr);
-	void prepare_accumulate(BlockId&, Block::BlockPtr);
+	void destroy_served(int array_id, int pc);
+	void request(BlockId&, int pc);
+	void prequest(BlockId&, BlockId&, int pc);
+	void prepare(BlockId&, Block::BlockPtr, int pc);
+	void prepare_accumulate(BlockId&, Block::BlockPtr, int pc);
 
 	void collective_sum(double rhs_value, int dest_array_slot);
-	bool assert_same(int source_array_slot){return true;}
-	void broadcast_static(Block::BlockPtr, int source_worker){}  //nop for single process version
+	bool assert_same(int source_array_slot) {return true;}
+	void broadcast_static(Block::BlockPtr block, int source_worker) {}
 
-	void set_persistent(Interpreter*, int array_id, int string_slot);
-	void restore_persistent(Interpreter*, int array_id, int string_slot);
+	void set_persistent(Interpreter*, int array_id, int string_slot, int pc);
+	void restore_persistent(Interpreter*, int array_id, int string_slot, int pc);
 
 	void end_program();
-
 
 
 //	/**
@@ -71,12 +69,17 @@ public:
 	 * @param id
 	 * @return
 	 */
-	Block::BlockPtr get_block_for_reading(const BlockId& id, int unused_sial_line_number);
+	Block::BlockPtr get_block_for_reading(const BlockId& id, int pc);
 
 	Block::BlockPtr get_block_for_writing(const BlockId& id,
-			bool is_scope_extent);
+			bool is_scope_extent, int pc);
 
-	Block::BlockPtr get_block_for_updating(const BlockId& id);
+	Block::BlockPtr get_block_for_updating(const BlockId& id, int pc);
+
+	void reduce() { }
+
+	void print_op_table_stats(std::ostream& os,
+						const SipTables& sip_tables) const {}
 
 private:
 

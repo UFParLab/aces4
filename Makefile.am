@@ -7,11 +7,20 @@ ACLOCAL_AMFLAGS = -I m4
 # ACES4
 #######################################################################
 
-bin_PROGRAMS=aces4 print_siptables
+bin_PROGRAMS=\
+aces4\
+print_siptables\
+print_init_file
 
+# Dmitry's Tensor Library
 noinst_LIBRARIES = libtensordil.a
 libtensordil_a_SOURCES = ./src/sip/tensor_algebra/tensor_dil_omp.F90
 libtensordil_a_FFLAGS = $(FLIBS) $(FCLIBS)  $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS)
+
+# External Project jsoncpp
+noinst_LIBRARIES += libjsoncpp.a
+libjsoncpp_a_SOURCES = ./jsoncpp/jsoncpp.cpp ./jsoncpp/json/json.h ./jsoncpp/json/json-forwards.h
+
 
 EXTRA_DIST+=\
 README.md\
@@ -72,18 +81,18 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/worker_persistent_array_manager.cpp\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
-./src/sip/dynamic_data/cached_block_map.cpp\
-./src/sip/dynamic_data/sip_timer.h\
-./src/sip/dynamic_data/sip_timer.cpp
+./src/sip/dynamic_data/cached_block_map.cpp
 #need only header files for templates--these include .cpp
 
 ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.cpp\
 ./src/sip/worker/loop_manager.h\
+./src/sip/worker/fragment_loop_manager.cpp\
+./src/sip/worker/fragment_loop_manager.h\
+./src/sip/worker/pardo_loop_factory.cpp\
+./src/sip/worker/pardo_loop_factory.h\
 ./src/sip/worker/interpreter.cpp\
 ./src/sip/worker/interpreter.h\
-./src/sip/worker/sialx_timer.cpp\
-./src/sip/worker/sialx_timer.h\
 ./src/sip/worker/global_state.h\
 ./src/sip/worker/global_state.cpp\
 ./src/sip/worker/siox_reader.h\
@@ -94,12 +103,16 @@ ACES_SOURCEFILES=\
 ./src/sip/worker/sial_printer.cpp\
 ./src/sip/worker/sial_math.h\
 ./src/sip/worker/sial_math.cpp\
+./src/sip/worker/tracer.h\
+./src/sip/worker/tracer.cpp\
 ./src/sip/sip_interface.h\
 ./src/sip/sip_interface.cpp\
 ./src/sip/tensor_algebra/tensor_ops_c_prototypes.h\
 ./src/sip/cuda/gpu_super_instructions.h\
 ./src/sip/mpi/sip_mpi_attr.h\
 ./src/sip/mpi/sip_mpi_attr.cpp\
+./src/sip/mpi/rank_distribution.h \
+./src/sip/mpi/rank_distribution.cpp \
 $(ACES_SETUPFILES)\
 $(ACES_CORE_FILES)\
 $(ACES_DATA_FILES)
@@ -107,8 +120,6 @@ $(ACES_DATA_FILES)
 # MPI
 if WORKING_MPI
 ACES_SOURCEFILES +=\
-./src/sip/mpi/rank_distribution.h \
-./src/sip/mpi/rank_distribution.cpp \
 ./src/sip/mpi/data_distribution.cpp \
 ./src/sip/mpi/data_distribution.h\
 ./src/sip/mpi/sip_mpi_utils.h\
@@ -130,9 +141,11 @@ ACES_SOURCEFILES +=\
 ./src/sip/mpi/disk_backed_block_map.cpp\
 ./src/sip/mpi/server_persistent_array_manager.h\
 ./src/sip/mpi/server_persistent_array_manager.cpp\
-./src/sip/mpi/server_timer.h\
-./src/sip/mpi/server_timer.cpp\
-./src/sip/dynamic_data/mpi_state.h
+./src/sip/dynamic_data/mpi_state.h\
+./src/sip/dynamic_data/distributed_block_consistency.cpp\
+./src/sip/dynamic_data/distributed_block_consistency.h\
+./src/sip/mpi/async_ops.cpp\
+./src/sip/mpi/async_ops.h
 
 
 endif
@@ -142,7 +155,7 @@ if WORKING_NVCC
     ACES_SOURCEFILES += ./src/sip/cuda/gpu_super_instructions.cu ./src/sip/cuda/cuda_check.h
 endif
 
-AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(PAPI_LIBS) $(TAU_LIBS) $(NVCCLDFLAGS)
+AM_LDADD_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS) $(FCLIBS) $(NVCCLDFLAGS)
 
 aces4_SOURCES= \
     $(ACES_SOURCEFILES) \
@@ -152,15 +165,27 @@ print_siptables_SOURCES=\
 	$(ACES_SOURCEFILES)\
 	./src/util/print_siptables.cpp
 
+print_init_file_SOURCES=\
+    $(ACES_SOURCEFILES)\
+    ./src/util/print_init_file.cpp
+
 aces4_LDADD = \
 	libtensordil.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
 
 print_siptables_LDADD=\
 	libtensordil.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS)
+
+print_init_file_LDADD=\
+    libtensordil.a \
+    libjsoncpp.a \
+    src/sip/super_instructions/libinstr.la\
+    $(AM_LDADD_LIBS)	
 	
 aces4_LDFLAGS = \
 	$(OPENMP_FFLAGS)\
@@ -180,13 +205,12 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/dynamic_data\
 -I${top_srcdir}/src/sip/mpi\
 -I${top_srcdir}/src/sip/cuda\
+-I${top_srcdir}/jsoncpp\
 -I${top_srcdir}/test\
 -I${top_srcdir}/test/gtest-1.7.0/include
 
 AM_CPPFLAGS = \
-    $(ACES4_CPP_FLAGS)\
-    $(PAPI_INCLUDE)\
-    $(TAU_CPP)
+    $(ACES4_CPP_FLAGS)
 
 
 
@@ -196,30 +220,18 @@ AM_CPPFLAGS = \
 
 
 
+check_PROGRAMS =    test_unit test_basic_sial test_sial test_basic_qm test_qm test_qm_aux 
+TESTS =             test_unit test_basic_sial test_sial test_basic_qm test_qm
+
 if WORKING_MPI
-TESTS = test_qm test_qm_aux test_sial test_unit test_basic_sial
-check_PROGRAMS = test_qm test_unit test_basic_sial test_sial
-LOG_COMPILER = mpirun 	# Run mpi test with mpirun
-AM_LOG_FLAGS = -np 2		# Run locally with 2 mpi ranks
-else
-TESTS = test_basic_sial test_sial test_qm test_qm_aux
-check_PROGRAMS = test_basic_sial test_sial test_qm 
-#TESTS = test_simple
-#check_PROGRAMS = test_simple
+LOG_COMPILER = mpirun   # Run mpi test with mpirun
+AM_LOG_FLAGS = -np 2        # Run locally with 2 mpi ranks
 endif
+
 
 test_unit_SOURCES = \
 	$(ACES_SOURCEFILES)\
 	test/test_unit.cpp
-
-#test_mpi_qm_SOURCES = \
-#	$(ACES_SOURCEFILES)\
-#	test/test_controller_parallel.h\
-#	test/test_controller_parallel.cpp\
-#	test/test_constants.h\
-#	test/test_constants.cpp\
-#	test/test_mpi_qm.cpp
-
 
 test_sial_SOURCES = \
     $(ACES_SOURCEFILES) \
@@ -245,6 +257,16 @@ test_basic_sial_SOURCES = \
     test/test_contraction_small2.F
     
     
+test_basic_qm_SOURCES = \
+	$(ACES_SOURCEFILES) \
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+	test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
+    test/test_basic_qm.cpp
+    
 test_qm_SOURCES = \
 	$(ACES_SOURCEFILES) \
     test/test_controller_parallel.h\
@@ -269,23 +291,26 @@ TEST_LDADD_VARS = \
 	test/libgtest.la \
 	test/libgtest_main.la \
 	libtensordil.a \
+	libjsoncpp.a \
 	src/sip/super_instructions/libinstr.la\
 	$(AM_LDADD_LIBS) 
 #	$(PTHREAD_LIBS) 
 	
 test_unit_LDADD = $(TEST_LDADD_VARS)	
 test_sial_LDADD = $(TEST_LDADD_VARS)
+test_basic_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_aux_LDADD = $(TEST_LDADD_VARS)
-#test_mpi_qm_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
+
 # Add any initialization files needed by tests here.
 TEST_SUPPORT_FILES=\
 test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
+test/mcpt2_water_test.dat\
 test/eom_test.dat\
 test/eom_water_dimer_test.dat\
 test/eom_lccsd_test.dat\
@@ -294,9 +319,12 @@ test/eom_mp2_test.dat\
 test/lindep_test.dat\
 test/rlambda_test.dat\
 test/lccd_test.dat\
+test/lccd_frozencore_test.dat\
 test/lccsd_test.dat\
+test/lamccsdpt_test.dat\
 test/scf_rhf_aguess_test.dat\
 test/scf_uhfrhf_aguess_test.dat\
+test/scf_uhf_triplet_aguess_test.dat\
 test/expected_output/helloworld1.txt\
 test/expected_output/local_arrays_wild.txt\
 test/expected_output/local_arrays.txt\
@@ -306,7 +334,8 @@ test/expected_output/scalars.txt\
 test/expected_output/static_array_test.txt\
 test/expected_output/static_array_test2.txt\
 test/expected_output/tmp_arrays_2.txt\
-test/expected_output/tmp_arrays.txt
+test/expected_output/tmp_arrays.txt\
+test/expected_output/test_1el_ecp_ints.dat
 
 
 EXTRA_DIST+= $(TEST_SUPPORT_FILES)
@@ -324,8 +353,6 @@ copy-data-files.stamp:
 #	test_simple_CFLAGS = $(PTHREAD_CFLAGS)
 #	test_qm_LDADD += $(PTHREAD_LIBS)
 #	test_qm_CFLAGS = $(PTHREAD_CFLAGS)
-#	test_mpi_qm_LDADD += $(PTHREAD_LIBS)
-#	test_mpi_qm_CFLAGS += $(PTHREAD_CFLAGS)
 #	test_mpi_simple_LDADD += $(PTHREAD_LIBS)
 #	test_mpi_simple_CFLAGS += $(PTHREAD_CFLAGS)
 #endif
@@ -357,9 +384,9 @@ test_libgtest_main_la_CXXFLAGS = -DGTEST_HAS_PTHREAD=0
 TEST_LDFLAGS_VARS = $(OPENMP_FFLAGS) $(OPENMP_FCFLAGS) $(OPENMP_CFLAGS) $(OPENMP_CXXFLAGS) -no-install
 test_unit_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_basic_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_aux_LDFLAGS = $(TEST_LDFLAGS_VARS)
-#test_mpi_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 
@@ -475,16 +502,19 @@ SIOX_FILES=\
 ./src/sialx/test/test_ecpint.siox\
 ./src/sialx/test/test_derint.siox\
 ./src/sialx/test/test_hessint.siox\
+./src/sialx/test/put_accumulate_stress.siox\
+./src/sialx/test/disk_backing_test.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
-./src/sialx/qm/scf_frag_defs_lowmem.siox\
 ./src/sialx/qm/drop_core_in_sial.siox\
-./src/sialx/qm/frag_2order_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
-./src/sialx/qm/mcpt2_singles_lowmem.siox\
-./src/sialx/qm/mcpt2_doubles_lowmem.siox\
-./src/sialx/qm/trans_frag_defs.siox\
+./src/sialx/qm/tran_frag.siox\
+./src/sialx/qm/mcpt2_vars.siox\
+./src/sialx/qm/mcpt2_defs.siox\
+./src/sialx/qm/mcpt2_singles.siox\
+./src/sialx/qm/mcpt2_doubles.siox\
+./src/sialx/qm/mcpt2_util.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
@@ -505,6 +535,8 @@ SIOX_FILES=\
 ./src/sialx/qm/rccsd_rhf_defs.siox\
 ./src/sialx/qm/rccsdpt_aaa.siox\
 ./src/sialx/qm/rccsdpt_aab.siox\
+./src/sialx/qm/rlamccsdpt_aaa.siox\
+./src/sialx/qm/rlamccsdpt_aab.siox\
 ./src/sialx/qm/scf_rhf.siox\
 ./src/sialx/qm/scf_rhf_defs.siox\
 ./src/sialx/qm/scf_uhf.siox\
@@ -614,16 +646,18 @@ EXTRA_DIST += \
 ./src/sialx/test/test_ecpint.sialx\
 ./src/sialx/test/test_derint.sialx\
 ./src/sialx/test/test_hessint.sialx\
+./src/sialx/test/put_accumulate_stress.sialx\
+./src/sialx/test/disk_backing_test.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
-./src/sialx/qm/scf_frag_defs_lowmem.sialx\
 ./src/sialx/qm/drop_core_in_sial.sialx\
-./src/sialx/qm/trans_frag_defs.sialx\
-./src/sialx/qm/frag_2order_corr_lowmem.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
-./src/sialx/qm/mcpt2_singles_lowmem.sialx\
-./src/sialx/qm/mcpt2_doubles_lowmem.sialx\
+./src/sialx/qm/tran_frag.sialx\
+./src/sialx/qm/mcpt2_vars.sialx\
+./src/sialx/qm/mcpt2_defs.sialx\
+./src/sialx/qm/mcpt2_singles.sialx\
+./src/sialx/qm/mcpt2_doubles.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
 ./src/sialx/qm/cis_rhf.sialx\
 ./src/sialx/qm/cis_rhf_defs.sialx\
@@ -644,10 +678,10 @@ EXTRA_DIST += \
 ./src/sialx/qm/rlambda_rhf.sialx\
 ./src/sialx/qm/rccpt1p2_prop.sialx\
 ./src/sialx/qm/rccsd_rhf_defs.sialx\
-./src/sialx/qm/rccsdpt_aaa_defs.sialx\
 ./src/sialx/qm/rccsdpt_aaa.sialx\
-./src/sialx/qm/rccsdpt_aab_defs.sialx\
 ./src/sialx/qm/rccsdpt_aab.sialx\
+./src/sialx/qm/rlamccsdpt_aaa.sialx\
+./src/sialx/qm/rlamccsdpt_aab.sialx\
 ./src/sialx/qm/scf_rhf.sialx\
 ./src/sialx/qm/scf_rhf_defs.sialx\
 ./src/sialx/qm/scf_uhf.sialx\

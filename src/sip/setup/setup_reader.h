@@ -44,11 +44,24 @@ public:
 
 	static SetupReader* get_empty_reader();
 
+	/**
+	 * Construct SetupReader from binary .dat file
+	 * @param
+	 */
 	SetupReader(InputStream &);
+
+	/**
+	 * Construct SetupReader from JSON file.
+	 * @param
+	 */
+	SetupReader(std::istream&);
+
 	virtual ~SetupReader();
 
 	void dump_data();  	//for debugging;
 	void dump_data(std::ostream&);  //for debugging;
+
+	std::string get_json_string();
 
 	typedef std::map<std::string, int> PredefIntMap;
 	typedef std::map<std::string, double> PredefScalarMap;
@@ -100,7 +113,7 @@ private:
 	 */
 	SetupReader(InputStream &, bool);
 
-    void read();
+    void read_binary();
 
 	void read_and_check_magic();
 	void read_and_check_version();
@@ -118,7 +131,8 @@ private:
 	void dump_segment_map(std::ostream&);
 	void dump_predefined_map(std::ostream&);
 
-	InputStream& stream_;
+	InputStream* binary_stream_;
+	std::istream* json_stream_;
 
 	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
 
