@@ -73,7 +73,7 @@ void ArrayTableEntry::init_calculated_values(const IndexTable& index_table){
 }
 
 size_t ArrayTableEntry::block_number(const BlockId& id) const{
-	int res = 0;
+	size_t res = 0;
 	for (int i = 0; i < rank_; i++){
 		res += (slice_sizes_[i] * (id.index_values(i) - lower_[i]));
 	}

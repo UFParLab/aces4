@@ -522,6 +522,8 @@ private:
 	friend class Fragment_NR1ij_oo_vo_PardoLoopManager;
 	friend class Fragment_NR1ij_vv_vo_PardoLoopManager;
 	friend void ::list_blocks_with_number();
+	friend void ::check_block_number_calculation(int& array_slot, int& rank,
+            int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 	void permute_rhs_to_lhs(const BlockSelector& lhs_selector,

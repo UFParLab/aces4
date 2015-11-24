@@ -20,6 +20,8 @@
 #include "cached_block_map.h"
 
 void list_blocks_with_number();
+void check_block_number_calculation(int& array_slot, int& rank,
+			int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 namespace sip {
 class SipTables;
@@ -265,6 +267,8 @@ private:
 	friend class ContiguousLocalArrayManager;
 
 	friend void ::list_blocks_with_number();
+	friend void ::check_block_number_calculation(int& array_slot, int& rank,
+			int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

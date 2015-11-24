@@ -85,7 +85,7 @@ public:
 	 * races due to missing barrier and implements the wait for blocks of
 	 * distributed and served arrays.
 	 *
-	 * Get block for reading may block, the current line is passed in for the block wait timer.
+	 * Get block for reading may block, the current pc is passed in for the block wait timer.
 	 *
 	 * @param id
 	 * @return

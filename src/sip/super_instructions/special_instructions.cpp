@@ -360,6 +360,7 @@ void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 void one_arg_no_op(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void list_blocks_with_number();
+void check_block_number_calculation(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 namespace sip{
 
@@ -582,6 +583,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
     procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
+    procmap_["check_block_number_calculation"]=(fp0)&check_block_number_calculation;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

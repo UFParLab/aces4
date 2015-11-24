@@ -555,7 +555,8 @@ set(SIAL_FILES
     src/sialx/test/put_accumulate_stress.sialx;
     src/sialx/test/disk_backing_test.sialx;
     src/sialx/test/disk_backing_put_acc_stress.sialx;
-    src/sialx/test/decreasing_segs.sialx
+    src/sialx/test/decreasing_segs.sialx;
+    src/sialx/test/check_block_number_calc.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;

@@ -320,7 +320,8 @@ set(GENERAL_SOURCE_FILES
     general/read_block_from_text_file.cpp;
     general/abort_job.F;
     general/one_arg_no_op.cpp;
-    general/list_blocks_with_number.cpp)
+    general/list_blocks_with_number.cpp;
+    general/check_block_number_calculation.cpp)
 
 
 set(SRCS 
