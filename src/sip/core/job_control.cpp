@@ -8,6 +8,7 @@
 #include "job_control.h"
 #include "sip_mpi_attr.h"
 #include "sip.h"
+#include <iostream>
 
 namespace sip {
 
