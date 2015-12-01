@@ -2393,10 +2393,10 @@ c-------------------------------------------------------------------------
       enddo
 12    continue
 
-      if (watom(1) .eq. 1) then 
-         write(6,*) ' Fragment 1', napf, 'atoms', (watom(i), i=1,napf) 
-         write(6,*) ' M N', m1, m2, n1, n2 
-      endif  
+C      if (watom(1) .eq. 1) then 
+C         write(6,*) ' Fragment 1', napf, 'atoms', (watom(i), i=1,napf) 
+C         write(6,*) ' M N', m1, m2, n1, n2 
+C      endif  
 
 c     m1 = 1 
 c     m2 = nshells 

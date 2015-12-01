@@ -510,6 +510,8 @@ SIOX_FILES=\
 ./src/sialx/qm/mcpt2_singles.siox\
 ./src/sialx/qm/mcpt2_doubles.siox\
 ./src/sialx/qm/mcpt2_util.siox\
+./src/sialx/qm/MOI_rhf.siox\
+./src/sialx/qm/MOI_rhf_defs.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
@@ -650,6 +652,8 @@ EXTRA_DIST += \
 ./src/sialx/qm/mcpt2_defs.sialx\
 ./src/sialx/qm/mcpt2_singles.sialx\
 ./src/sialx/qm/mcpt2_doubles.sialx\
+./src/sialx/qm/MOI_rhf.sialx\
+./src/sialx/qm/MOI_rhf_defs.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
 ./src/sialx/qm/cis_rhf.sialx\
 ./src/sialx/qm/cis_rhf_defs.sialx\

@@ -438,7 +438,9 @@ int main(int argc, char* argv[]) {
 		setup::BinaryInputFile siox_file(sialfpath);
 		sip::SipTables sipTables(*setup_reader, siox_file);
 
-		std::cerr << "Executing siox file : " << sialfpath << "Program number= "<<  sip::JobControl::global->get_program_num() << std::endl << std::flush;
+		if(sip_mpi_attr.is_company_master()){
+		    std::cerr << "Executing siox file : " << sialfpath << "Program number= "<<  sip::JobControl::global->get_program_num() << std::endl << std::flush;
+		}
 
 //		SIP_MASTER_LOG(std::cout << "SIP TABLES" << '\n' << sipTables << std::endl);
 //		SIP_MASTER_LOG(std::cout << "Executing siox file : " << sialfpath << std::endl);

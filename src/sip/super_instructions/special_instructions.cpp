@@ -329,6 +329,22 @@ void print_block_and_index(
 void form_diagonal_unit_matrix(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
+void moi_nn_repulsion(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void return_h1_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void return_ovl_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+
 //##############################
 }
 
@@ -584,6 +600,9 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
     procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
     procmap_["check_block_number_calculation"]=(fp0)&check_block_number_calculation;
+    procmap_["moi_nn_repulsion"]=(fp0)&moi_nn_repulsion;
+    procmap_["return_h1_moi"]=(fp0)&return_h1_moi;
+    procmap_["return_ovl_moi"]=(fp0)&return_ovl_moi;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

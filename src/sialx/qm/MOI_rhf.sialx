@@ -1,37 +1,9 @@
-import "scf_defs.sialx"
+import "MOI_rhf_defs.sialx"
 #
                            SIAL SCF_RHF_COREH          
 #
-# ----------------------------------------------------------------------------
-#
-# The sial program SIAL_UHF performs a UHF based SCF calculation. Davidson 
-# damping is performed during the first scf_beg-1 iterations after which the 
-# DIIS is turned on with scf_order. At present DIIS is turned on after the 
-# third iteration and 6 histories are kept. 
-#
-
-# Fock matrix final arrays:
-# ------------------------- 
-#
-# 1. Fpq_a  
-# 2. Fpq_b  
-#
-# Transformation coefficients final arrays:
-# ----------------------------------------- 
-#
-# 1. Ca  
-# 2. Cb  
-#
-# Converged SCF energy:
-# --------------------- 
-#
-# 1. scf_energy 
-#
-# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
-#
 # Declare indices 
 # --------------- 
-#
 #
       index   kiter  = 1: scf_iter  
       index   kbeg   = 1: scf_beg
@@ -51,40 +23,46 @@ import "scf_defs.sialx"
       index   g52    = 1: 5000 
       index   ixyz   = 1: 3
 #
-      aoindex mu     = 1: norb
-      aoindex nu     = 1: norb
-      aoindex lambda = 1: norb
-      aoindex sigma  = 1: norb
+      aoindex mu     = 1: frag1_norb
+      aoindex nu     = 1: frag1_norb
+      aoindex lambda = 1: frag1_norb
+      aoindex sigma  = 1: frag1_norb
 #
-      moaindex i = 1: eaocc
-      moaindex i1= 1: eaocc
-      moaindex i2= 1: eaocc
-      moaindex i3= 1: eaocc
+      moaindex i = 1: frag1_eaocc
+      moaindex i1= 1: frag1_eaocc
+      moaindex i2= 1: frag1_eaocc
+      moaindex i3= 1: frag1_eaocc
 #
-      moaindex a = bavirt: eavirt
-      moaindex a1= bavirt: eavirt
-      moaindex a2= bavirt: eavirt
-      moaindex a3= bavirt: eavirt
+      moaindex a = frag1_bavirt: frag1_eavirt
+      moaindex a1= frag1_bavirt: frag1_eavirt
+      moaindex a2= frag1_bavirt: frag1_eavirt
+      moaindex a3= frag1_bavirt: frag1_eavirt
 #
-      moaindex j = 1: eaocc
-      moaindex j1= 1: eaocc
-      moaindex j2= 1: eaocc
-      moaindex j3= 1: eaocc
+      moaindex j = 1: frag1_eaocc
+      moaindex j1= 1: frag1_eaocc
+      moaindex j2= 1: frag1_eaocc
+      moaindex j3= 1: frag1_eaocc
 #
-      moaindex b = bavirt: eavirt
-      moaindex b1= bavirt: eavirt
-      moaindex b2= bavirt: eavirt
-      moaindex b3= bavirt: eavirt
+      moaindex b = frag1_bavirt: frag1_eavirt
+      moaindex b1= frag1_bavirt: frag1_eavirt
+      moaindex b2= frag1_bavirt: frag1_eavirt
+      moaindex b3= frag1_bavirt: frag1_eavirt
 #
-      moaindex p = 1: eavirt
-      moaindex p1= 1: eavirt
-      moaindex p2= 1: eavirt
-      moaindex p3= 1: eavirt
+      moaindex p = 1: frag1_eavirt
+      moaindex p1= 1: frag1_eavirt
+      moaindex p2= 1: frag1_eavirt
+      moaindex p3= 1: frag1_eavirt
 #
-      moaindex q = 1: eavirt
-      moaindex q1= 1: eavirt
-      moaindex q2= 1: eavirt
-      moaindex q3= 1: eavirt
+      moaindex q = 1: frag1_eavirt
+      moaindex q1= 1: frag1_eavirt
+      moaindex q2= 1: frag1_eavirt
+      moaindex q3= 1: frag1_eavirt
+
+      index   ao_scratch = 1: max_aoseg   
+
+    contiguous local clca[ao_scratch,ao_scratch] 
+    scalar stype
+
 # 
 # Declare one-particle density arrays 
 # ----------------------------------- 
@@ -109,45 +87,18 @@ import "scf_defs.sialx"
 # Declare temporary arrays 
 # ------------------------ 
 #
-      temp Ixi[mu,i] 
-      temp I1xi[mu,i] 
-      temp Ixj[mu,j] 
-      temp I1xj[mu,j] 
       temp Tpq[mu,nu] 
       temp T1pq[mu,nu] 
       temp Txi[mu,i] 
       temp T1xi[mu,i] 
       temp Txj[mu,j] 
-      temp T1xj[mu,j] 
       temp Txx[mu,nu] 
       temp TAxx[mu,nu] 
       temp TBxx[mu,nu] 
       temp T1xx[mu,nu] 
       temp T2xx[mu,nu] 
-      temp T3xx[mu,nu] 
-      temp T4xx[mu,nu] 
-      temp T5xx[mu,nu] 
-      temp T6xx[mu,nu] 
-      temp T7xx[mu,nu] 
-      temp T8xx[mu,nu] 
-      temp T9xx[mu,nu] 
-      temp T10xx[mu,nu] 
-      temp T11xx[mu,nu] 
-      temp T12xx[mu,nu] 
-      temp T13xx[mu,nu] 
-      temp T14xx[mu,nu] 
-      temp T15xx[mu,nu] 
-      temp T16xx[mu,nu] 
-      temp T17xx[mu,nu] 
-      temp T18xx[mu,nu] 
-      temp T19xx[mu,nu] 
-      temp T20xx[mu,nu] 
-      temp T21xx[mu,nu] 
-      temp T22xx[mu,nu] 
       temp Tii[i,i1] 
-      temp T1ii[i,i1] 
       temp Tjj[j,j1] 
-      temp T1jj[j,j1] 
       temp Txp[mu,p] 
       temp T1xp[mu,p] 
       temp Tpp[p,p1] 
@@ -175,8 +126,6 @@ import "scf_defs.sialx"
       local LDHFb[mu,nu] 
       local LFpq_b[mu,nu] 
       local LFpq_a[mu,nu] 
-      static pinf[kiter,kptr1]
-      temp tpinf[kiter,kptr1]
 #
 # Arrays used in DIIS procedure 
 # ----------------------------- 
@@ -241,20 +190,9 @@ import "scf_defs.sialx"
       distributed Fbj[b,j,kdiis] 
       distributed Fai[a,i,kdiis] 
       temp tpqx[mu,nu,d2]   
-      temp taix[a,i,d2]   
-      temp tbjx[b,j,d2]   
       temp tdd[d1,d2] 
       temp t1dd[d1,d2] 
       static BB[d1,d2] 
-
-      temp DAOINT[mu,nu]
-      static dipole[ixyz]
-      static NucDip[ixyz]
-      static Dip02[ixyz]
-      served Dxx_scf[mu,nu]
-      scalar dsum
-      scalar AbsDip
-      scalar ncount2
 #
 # ---------------------------------------------------------------------------- 
 #
@@ -279,8 +217,11 @@ import "scf_defs.sialx"
 #
             DO i 
 #
-               Txi[nu,i]   = ca[nu,i]
-               T1pq[mu,nu] = Txi[nu,i]*ca[mu,i]
+	       get DCa[nu,i]
+	       get DCa[mu,i]
+
+               Txi[nu,i]   = DCa[nu,i]
+               T1pq[mu,nu] = Txi[nu,i]*DCa[mu,i]
                Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO i 
@@ -296,8 +237,10 @@ import "scf_defs.sialx"
 #
             DO j 
 #
-               Txj[nu,j]   = ca[nu,j]
-               T1pq[mu,nu] = ca[mu,j]*Txj[nu,j]
+	       get DCa[nu,j]
+	       get DCa[mu,j]
+               Txj[nu,j]   = Dca[nu,j]
+               T1pq[mu,nu] = Dca[mu,j]*Txj[nu,j]
                Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO j 
@@ -329,8 +272,10 @@ import "scf_defs.sialx"
 #
             DO i 
 #
-               Txi[nu,i]   = ca[nu,i]
-               T1pq[mu,nu] = Txi[nu,i]*ca[mu,i]
+	       get DCa[nu,i]
+	       get DCa[mu,i]
+               Txi[nu,i]   = DCa[nu,i]
+               T1pq[mu,nu] = Txi[nu,i]*DCa[mu,i]
                Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO i 
@@ -344,8 +289,10 @@ import "scf_defs.sialx"
 #
             DO j 
 #
-               Txj[nu,j]   = ca[nu,j]
-               T1pq[mu,nu] = ca[mu,j]*Txj[nu,j]
+	       get DCa[nu,j]
+	       get DCa[mu,j]
+               Txj[nu,j]   = Dca[nu,j]
+               T1pq[mu,nu] = Dca[mu,j]*Txj[nu,j]
                Tpq[mu,nu] += T1pq[mu,nu] 
 #
             ENDDO j 
@@ -355,13 +302,7 @@ import "scf_defs.sialx"
       ENDPARDO mu, nu 
 #
       ENDPROC HFIDENS
-#     ---------------
 #
-# ---------------------------------------------------------------------------- 
-#
-# ---------------------------------------------------------------------------- 
-#
-
 # ---------------------------------------------------------------------------- 
 #
        PROC FOCK_MATRIX_FAST   
@@ -539,7 +480,7 @@ import "scf_defs.sialx"
        DO mu    
        DO nu   
 #
-            execute return_h1 txx[mu,nu] 
+            execute return_h1_moi txx[mu,nu] one
 #
             PUT Fpq_a[mu,nu] += Txx[mu,nu] 
             PUT Fpq_b[mu,nu] += Txx[mu,nu] 
@@ -576,7 +517,7 @@ import "scf_defs.sialx"
              GET DHFb[mu,nu] 
 #
              Txx[mu,nu]   = 0.0 
-             execute return_h1 txx[mu,nu]  
+             execute return_h1_moi txx[mu,nu]  one
 #
              T1xx[mu,nu]  = Txx[mu,nu] 
              T1xx[mu,nu] += Fpq_a[mu,nu] 
@@ -602,7 +543,6 @@ import "scf_defs.sialx"
        collective energy += esum 
        energy += repulsion 
 #
-       #print_scalar esum  
         assert_same energy
         print energy 
 #
@@ -620,7 +560,7 @@ import "scf_defs.sialx"
 #
        DO mu 
        DO nu 
-          execute return_ovl txx[mu,nu] 
+          execute return_ovl_moi txx[mu,nu] one
           oed_ovl[mu,nu] = txx[mu,nu]  
        ENDDO nu 
        ENDDO mu 
@@ -708,6 +648,15 @@ import "scf_defs.sialx"
 #      First put the transposed Fock arrays into static arrays 
 #      ------------------------------------------------------- 
 #
+       pardo mu, a
+           put DCa[mu,a] = 0.0
+       endpardo mu, a
+       pardo mu, i
+           put DCa[mu,i] = 0.0
+       endpardo mu, i
+       server_barrier
+       execute get_my_rank rank
+       if rank == 0.0
        DO mu   
        DO nu  
 #
@@ -719,9 +668,24 @@ import "scf_defs.sialx"
 #
        ENDDO nu  
        ENDDO mu   
-
 #
-       execute eigen_calc FSpq_a ca
+       execute eigen_calc FSpq_a clca[1:max_aoseg,1:max_aoseg]
+
+       stype = 1.0
+       do mu
+	   do a
+	       Txp[mu,a] = 0.0
+	       execute place_scratch txp[mu,a] clca[1:max_aoseg,1:max_aoseg] stype one
+	       put DCa[mu,a] += txp[mu,a]
+	   enddo a
+	   do i
+	       Txp[mu,i] = 0.0
+	       execute place_scratch txp[mu,i] clca[1:max_aoseg,1:max_aoseg] stype one
+	       put DCa[mu,i] += txp[mu,i]
+	   enddo i
+       enddo mu
+
+       endif
 
 #
        ENDPROC FOCK_DIAG 
@@ -735,50 +699,88 @@ import "scf_defs.sialx"
 #      Transform the coefficient array back to the original basis 
 #      ---------------------------------------------------------- 
 #
-       PARDO mu, p  
+       PARDO mu, a  
 #
-          Txp[mu,p] = 0.0 
+          Txp[mu,a] = 0.0 
 #
           DO nu 
 #
              GET          Qxx[mu,nu] 
+	     get          DCa[nu,a]
 #
-             T1xp[mu,p] = Qxx[mu,nu]*ca[nu,p]   
-             Txp[mu,p] += T1xp[mu,p] 
+             T1xp[mu,a] = Qxx[mu,nu]*DCa[nu,a]   
+             Txp[mu,a] += T1xp[mu,a] 
 #
           ENDDO nu 
 #
-          PUT CBT_a[mu,p] = Txp[mu,p] 
+          PUT CBT_a[mu,a] = Txp[mu,a] 
 #
-       ENDPARDO mu, p  
+       ENDPARDO mu, a  
+       PARDO mu, i  
 #
-       PARDO mu, q
+          Txp[mu,i] = 0.0 
+#
+          DO nu 
+#
+             GET          Qxx[mu,nu] 
+	     get          DCa[nu,i]
+#
+             T1xi[mu,i] = Qxx[mu,nu]*DCa[nu,i]   
+             Txp[mu,i] += T1xi[mu,i] 
+#
+          ENDDO nu 
+#
+          PUT CBT_a[mu,i] = Txp[mu,i] 
+#
+       ENDPARDO mu, i  
+#
+       PARDO mu, a
 # 
-          Txq[mu,q] = 0.0 
+          Txp[mu,a] = 0.0 
 #
           DO nu 
 #
              GET          Qxx[mu,nu] 
+	     get          DCa[nu,a]
 #
-             T1xq[mu,q] = Qxx[mu,nu]*ca[nu,q]   
-             Txq[mu,q] += T1xq[mu,q] 
+             T1xp[mu,a] = Qxx[mu,nu]*DCa[nu,a]   
+             Txp[mu,a] += T1xp[mu,a] 
 #
           ENDDO nu 
 #
-          PUT CBT_b[mu,q] = Txq[mu,q] 
+          PUT CBT_b[mu,a] = Txp[mu,a] 
 #
-       ENDPARDO mu, q
+       ENDPARDO mu, a
+       PARDO mu, i
+# 
+          Txp[mu,i] = 0.0 
+#
+          DO nu 
+#
+             GET          Qxx[mu,nu] 
+	     get          DCa[nu,i]
+#
+             T1xi[mu,i] = Qxx[mu,nu]*DCa[nu,i]   
+             Txp[mu,i] += T1xi[mu,i] 
+#
+          ENDDO nu 
+#
+          PUT CBT_b[mu,i] = Txp[mu,i] 
+#
+       ENDPARDO mu, i
        sip_barrier 
 #
 #      Put the transformed coefficients into static arrays 
 #      --------------------------------------------------- 
 #
-       DO mu 
-       DO p 
-          GET        CBT_a[mu,p] 
-          ca[mu,p] = CBT_a[mu,p] 
-       ENDDO p 
-       ENDDO mu  
+       pardo mu,a
+           get CBT_a[mu,a]
+	   put DCa[mu,a] = CBT_a[mu,a]
+       endpardo mu,a
+       pardo mu,i
+           get CBT_a[mu,i]
+	   put DCa[mu,i] = CBT_a[mu,i]
+       endpardo mu,i
 #
        ENDPROC C_BTRAN 
 #      --------------- 
@@ -820,17 +822,12 @@ import "scf_defs.sialx"
        ENDPARDO mu, nu 
 #
        ENDPROC HFDENS_REPLACE    
-#      ----------------------  
 #
 # ---------------------------------------------------------------------------- 
 #
        PROC GEN_6HISTORY  
 #      ------------------  
 #
-      #DELETE FFai
-      #DELETE FFbj
-      #CREATE FFai
-      #CREATE FFbj
        PARDO a, i 
              tai[a,i] = 0.0 
              PUT FFai[a,i] = tai[a,i] 
@@ -845,17 +842,21 @@ import "scf_defs.sialx"
              GET Fpq_a[mu,nu]  
              GET Fpq_b[mu,nu]  
              DO i 
-                txi[mu,i] = Fpq_a[mu,nu]*ca[nu,i] 
+	     get DCa[nu,i]
+                txi[mu,i] = Fpq_a[mu,nu]*Dca[nu,i] 
                 DO a 
-                   tai[a,i]      = txi[mu,i]*ca[mu,a] 
+		   get DCa[mu,a]
+                   tai[a,i]      = txi[mu,i]*Dca[mu,a] 
                    PUT FFai[a,i] += tai[a,i] 
                 ENDDO a 
              ENDDO i 
 #
              DO j 
-                txj[mu,j] = Fpq_b[mu,nu]*ca[nu,j] 
+	        get DCa[nu,j]
+                txj[mu,j] = Fpq_b[mu,nu]*Dca[nu,j] 
                 DO b 
-                   tbj[b,j]      = txj[mu,j]*ca[mu,b] 
+		   get DCa[mu,b]
+                   tbj[b,j]      = txj[mu,j]*Dca[mu,b] 
                    PUT FFbj[b,j] += tbj[b,j] 
                 ENDDO b 
              ENDDO j 
@@ -951,11 +952,6 @@ import "scf_defs.sialx"
 #
 # The DIIS expansion coefficients are computed using the <= worder  previous iterations.
 #
-#      Zero out scalars.
-#      -----------------
-#
-      #CALL ZERO_SCALAR 
-#
        sip_barrier 
 #
 #      Determine the 'B-matrix'. 
@@ -965,19 +961,12 @@ import "scf_defs.sialx"
 #      --------------------------------- 
 
        temp_order = worder
-      #if diis_order < worder 
-      #   temp_order = diis_order 
-      #endif 
           
 #
-       n1 = 0.0 
        DO d1 
-          n1+= 1.0 
-       if n1 <= temp_order # worder 
-          n2 = 0.0 
+       where d1 <= (int)temp_order # worder 
        DO d2 
-          n2+= 1.0 
-       if n2 <= temp_order # worder 
+       where d2 <= (int)temp_order # worder 
           tdd[d1,d2] = 0.0 
           DO a  
           DO i 
@@ -1003,9 +992,7 @@ import "scf_defs.sialx"
           ENDDO b  
           BB[d1,d2] = tdd[d1,d2] 
 
-       endif 
        ENDDO d2 
-       endif 
        ENDDO d1 
 #
        execute compute_diis BB 
@@ -1025,34 +1012,26 @@ import "scf_defs.sialx"
 #
            txx[mu,nu] = 0.0 
 #
-           n1 = 0.0 
            DO d1   
-              n1 += 1.0 
-           if n1 <= temp_order # worder 
+           where d1 <= (int)temp_order # worder 
               GET            Fa[mu,nu,d1] 
               t1xx[mu,nu]  = Fa[mu,nu,d1] 
               execute return_sval BB[d1,d1] etemp 
-             #etemp        = BB(d1,d1)        
               t1xx[mu,nu] *= etemp   
               txx[mu,nu]  += t1xx[mu,nu] 
-           endif 
            ENDDO d1   
 #
            PUT Fpq_a[mu,nu] = txx[mu,nu] 
 #
            txx[mu,nu] = 0.0 
 #
-           n1 = 0.0 
            DO d1   
-              n1 += 1.0 
-           if d1 <= (int)temp_order # worder 
+	   where d1 <= (int)temp_order
               GET            Fb[mu,nu,d1] 
               t1xx[mu,nu]  = Fb[mu,nu,d1] 
               execute return_sval BB[d1,d1] etemp 
-             #etemp        = BB(d1,d1)        
               t1xx[mu,nu] *= etemp   
               txx[mu,nu]  += t1xx[mu,nu] 
-           endif 
            ENDDO d1   
 #
            PUT Fpq_b[mu,nu] = txx[mu,nu] 
@@ -1067,12 +1046,12 @@ import "scf_defs.sialx"
 # ---------------------------------------------------------------------------- 
 #
       PROC IGUESS
-         execute get_my_rank rank 
+        execute get_my_rank rank 
        if rank == 0.0 
          DO mu  
          DO nu 
             Txx[mu,nu]      = 0.0
-            execute return_h1 Txx[mu,nu]
+            execute return_h1_moi Txx[mu,nu] one
             PUT Fpq_a[mu,nu] = Txx[mu,nu]
             PUT Fpq_b[mu,nu] = Txx[mu,nu]
          ENDDO nu 
@@ -1080,124 +1059,22 @@ import "scf_defs.sialx"
        endif 
       ENDPROC IGUESS
 
-    PROC form_Dscf
-
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-        prepare Dxx_scf[mu,nu] = Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-        do i
-            T1xx[mu,nu] = Ca[mu,i]*Ca[nu,i]
-            Txx[mu,nu] += T1xx[mu,nu]
-        enddo i
-        Txx[mu,nu] *= -2.0
-        prepare Dxx_scf[mu,nu] += Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-
-    do ixyz
-        ncount2 = (scalar)ixyz
-        dsum = 0.0
-        esum = 0.0
-        pardo mu,nu
-            request Dxx_scf[mu,nu]
-            ncount1 = 0.0
-            execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
-            NucDip[ixyz] = ncount1
-            Txx[mu,nu] = Dxx_scf[mu,nu]
-            etemp = Txx[mu,nu]*DAOINT[mu,nu]
-            esum += etemp
-        endpardo mu,nu
-        server_barrier
-        collective dsum += esum
-        server_barrier
-        dsum += NucDip[ixyz]
-        dipole[ixyz] = dsum
-    enddo ixyz
-
-    server_barrier
-
-    ENDPROC form_Dscf
-
-#  
-# ---------------------------------------------------------------------------- 
-#
 ############################################################################## 
 #
 #                         START OF MAIN PROGRAM 
 #
 ############################################################################## 
 #
-#     Define a few constants 
-#     ---------------------- 
+      print "Monomer-Of-Interest fragment parallel SCF program"
+      print "Written by Jason N. Byrd, December 2015"
 #
-      ecrit  = scf_conv # Energy tolerance  
-     #damp   = 0.0 
+      ecrit  = scf_conv 
       etemp  = 1.0 
       etemp += damp  
       damp1  = 1.0/etemp         # 1/(1+damp)  
       pcount = 0.0 
       print damp 
       print damp1
-#
-#     Compute the nuclear-nuclear repulsion energy  
-#     -------------------------------------------- 
-      execute compute_nn_repulsion repulsion
-      print repulsion 
-#
-#     New HF density 
-#     -------------- 
-#
-      CREATE DHFa   
-      CREATE DHFb   
-      sip_barrier 
-      PARDO mu, nu 
-            txx[mu,nu]      = 0.0  
-            PUT Dhfa[mu,nu] = txx[mu,nu]
-            txx[mu,nu]      = 0.0  
-            PUT Dhfb[mu,nu] = txx[mu,nu]
-      ENDPARDO mu, nu 
-
-#     Get memory requirements from integral calculation 
-#     ------------------------------------------------- 
-      imax = 0.0 
-      zmax = 0.0 
-     #DO mu 
-     #DO nu 
-     #   txx(mu,nu) = 0.0
-     #   execute compute_int_scratchmem txx(mu,nu) zmax imax
-         execute compute_int_scratchmem oed_ovl zmax imax 
-     #ENDDO nu 
-     #ENDDO mu 
-     server_barrier 
-
-#
-#     Perform initial (aa|bb) integral computation to set Schwartz paramaters 
-#     ----------------------------------------------------------------------- 
-#
-#### JNB fix later.
-#      DO mu
-#      DO nu
-#      DO lambda
-#      DO sigma
-#            IF mu == lambda
-#            IF nu == sigma
-#               aoint[mu,nu,lambda,sigma] = 0.0 
-#               execute compute_aabb_batch aoint[mu,nu,lambda,sigma] screen_array 
-#            ENDIF
-#            ENDIF
-#      ENDDO sigma
-#      ENDDO lambda
-#      ENDDO nu
-#      ENDDO mu
-
-#     do g51 
-#     do g52 
-#     enddo g52 
-#     enddo g51 
 
       zero = 0.0 
       mone = -1.0 
@@ -1210,74 +1087,53 @@ import "scf_defs.sialx"
       diis_end = 5000.0 
       diis_order = 8.0 
       diis_max_order = 10.0 
-
-      diis_start = 0.0
-      do kbeg
-         diis_start += 1.0
-      ENDDO kbeg
-
-      diis_order = 0.0
-      do korder
-         diis_order += 1.0
-      ENDDO korder
-
+      diis_start = (scalar)scf_beg
+      diis_order = (scalar)scf_hist
       print diis_start
       print diis_order
+#
+#     Compute the nuclear-nuclear repulsion energy  
+#     -------------------------------------------- 
+      execute moi_nn_repulsion repulsion one
+      print repulsion 
+#
+#     New HF density 
+#     -------------- 
+#
+      sip_barrier 
+      PARDO mu, nu 
+            PUT Dhfa[mu,nu] = 0.0
+            PUT Dhfb[mu,nu] = 0.0
+      ENDPARDO mu, nu 
+
+#     Get memory requirements from integral calculation 
+#     ------------------------------------------------- 
+      imax = 0.0 
+      zmax = 0.0 
+      execute compute_int_scratchmem_lowmem oed_ovl zmax imax 
+      server_barrier 
+
 #
 # Zero out the DIIS vectors 
 # 
 
-      PARDO a, i  
-            tai[a,i] = 0.0 
-            do d1 
-               PUT Fai[a,i,d1] = tai[a,i] 
-            enddo d1 
-      ENDPARDO a, i  
+      PARDO a, i, d1
+	   PUT Fai[a,i,d1] = 0.0
+      ENDPARDO a, i, d1
 
-      PARDO b, j  
-            tbj[b,j] = 0.0 
-            do d1 
-               PUT Fbj[b,j,d1] = tbj[b,j] 
-            enddo d1 
-      ENDPARDO b, j  
+      PARDO b, j, d1
+	   PUT Fbj[b,j,d1] = 0.0
+      ENDPARDO b, j, d1
 
-      PARDO mu, nu 
-            txx[mu,nu] = 0.0 
-            do d1 
-               PUT Fa[mu,nu,d1] = txx[mu,nu]  
-               PUT Fb[mu,nu,d1] = txx[mu,nu]  
-            enddo d1 
-      ENDPARDO mu, nu 
-
-#
-#     Create the one-particle arrays needed for the computation. 
-#     ---------------------------------------------------------- 
-#
-#     Fock matrix
-#     ----------- 
-      CREATE Fpq_a  
-      CREATE Fpq_b  
-#
-#     Old HF density 
-#     -------------- 
-#
-      CREATE DHFa_old    
-      CREATE DHFb_old    
-#
-#     DIIS vectors 
-#     ------------ 
-#
-      create Fa 
-      create Fb 
-      create Fai  
-      create Fbj  
-      CREATE FFai
-      CREATE FFbj
+      PARDO mu, nu, d1
+	   PUT Fa[mu,nu,d1] = 0.0
+	   PUT Fb[mu,nu,d1] = 0.0
+      ENDPARDO mu, nu, d1
 #
 #     Orthonormalizing transformation coefficient
 #     ------------------------------------------- 
 #
-      CREATE Qxx 
+      allocate contiguous clca[1:max_aoseg,1:max_aoseg]
       sip_barrier 
 #
 #     Construct the initial guess of the Fock matrix.
@@ -1287,10 +1143,7 @@ import "scf_defs.sialx"
       esum1= 0.0
       sip_barrier
 
-     #if dens_check == -1.0 
       CALL IGUESS 
-     #endif 
-     # print_scalar dens_check 
 
 #     Construct the array S**(-1/2) 
 #     ----------------------------- 
@@ -1312,8 +1165,6 @@ import "scf_defs.sialx"
 #     Construct S^(-1/2) F S^(-1/2) 
 #     ----------------------------- 
 #
-      CREATE FTpq_a  
-      CREATE FTpq_b  
       sip_barrier 
       CALL FOCK_TRANSPOSE 
       sip_barrier 
@@ -1325,8 +1176,6 @@ import "scf_defs.sialx"
 #     Back transform the coefficient array 
 #     ------------------------------------ 
 #
-      CREATE CBT_a 
-      CREATE CBT_b 
       sip_barrier
       CALL   C_BTRAN 
       sip_barrier
@@ -1350,30 +1199,8 @@ import "scf_defs.sialx"
          txx[mu,nu] = oed_ovl[mu,nu]  
       ENDDO nu 
       ENDDO mu 
-
-      dens_check = -1.0 
-#      execute scf_atom dens_check   # VFL Commented out
-
-      if dens_check == 1.0 
-
-         DO mu 
-         DO nu 
-            txx[mu,nu]      = Fockrohf_a[mu,nu]  
-            PUT Dhfa[mu,nu] = txx[mu,nu]
-            txx[mu,nu]      = Fockrohf_b[mu,nu]  
-            PUT Dhfb[mu,nu] = txx[mu,nu]
-         ENDDO nu 
-         ENDDO mu 
-
-      endif 
       
       sip_barrier
-#
-#     Damp the HF density 
-#     ------------------- 
-#
-#     CALL HF_DAMP 
-#     execute sip_barrier
 #
 #     Compute the energy 
 #     ------------------ 
@@ -1387,17 +1214,33 @@ import "scf_defs.sialx"
 #
       CALL HFDENS_REPLACE 
 #
-#     Create history arrays 
-#     --------------------- 
-#
       sip_barrier
 #
-      DELETE FTpq_a  
-      DELETE FTpq_b  
-      DELETE Fpq_a  
-      DELETE Fpq_b  
-      DELETE CBT_a 
-      DELETE CBT_b 
+	pardo mu,nu
+	    put Fpq_a[mu,nu] = 0.0
+	endpardo mu,nu
+	pardo mu,nu
+	    put Fpq_b[mu,nu] = 0.0
+	endpardo mu,nu
+	 pardo mu,nu
+	     put FTpq_a[mu,nu] = 0.0
+	 endpardo mu,nu
+	 pardo mu,nu
+	     put FTpq_b[mu,nu] = 0.0
+	 endpardo mu,nu
+	 pardo mu,a
+	     put CBT_a[mu,a] = 0.0
+	 endpardo mu,a
+	 pardo mu,i
+	     put CBT_a[mu,i] = 0.0
+	 endpardo mu,i
+	 pardo mu,a
+	     put CBT_b[mu,a] = 0.0
+	 endpardo mu,a
+	 pardo mu,i
+	     put CBT_b[mu,i] = 0.0
+	 endpardo mu,i
+         server_barrier
 #
 # Start iterations 
 # ---------------- 
@@ -1410,12 +1253,6 @@ import "scf_defs.sialx"
 #        Create 1-particle arrays 
 #        ------------------------ 
 #
-         CREATE Fpq_a 
-         CREATE Fpq_b 
-         CREATE CBT_a 
-         CREATE CBT_b 
-         CREATE FTpq_a  
-         CREATE FTpq_b  
          sip_barrier
 #
 #        Construct the new Fock matrix 
@@ -1431,7 +1268,6 @@ import "scf_defs.sialx"
          ENDDO mu
 
          CALL FOCK_MATRIX_FAST 
-        #CALL FOCK_MATRIX 
          sip_barrier 
 #
          CALL HF_ENERGY 
@@ -1447,10 +1283,6 @@ import "scf_defs.sialx"
          etemp-= 1.0  
          etemp+= diis_order   
 
-        #print_scalar diis_start   
-        #print_scalar diis_order    
-        #print_scalar etemp  
-
          worder = 0.0  
          n2 = diis_start 
          n2-= 1.0  
@@ -1460,12 +1292,10 @@ import "scf_defs.sialx"
             worder+= 1.0    
          endif  
          endif  
-        #print_scalar worder   
 
          if diis_count > etemp 
             worder = etemp  
          endif  
-         #print_scalar worder  
 #
          if worder > 0.0  
             CALL GEN_6HISTORY 
@@ -1481,14 +1311,12 @@ import "scf_defs.sialx"
          if diis_count <= diis_end
             worder -= diis_start
             worder += 1.0
-            #print_scalar worder
             damp  = 0.0
             damp1 = 1.0
             CALL DIISN
             etemp = diis_start
             etemp-= 1.0
             etemp+= diis_order
-           #print_scalar etemp 
             if diis_count >= etemp
                CALL MOVE6
             endif
@@ -1562,10 +1390,6 @@ import "scf_defs.sialx"
            #print_scalar diis_count 
             IF done < ecrit
            #print_scalar diis_count 
-               DELETE FTpq_a
-               DELETE FTpq_b
-               DELETE CBT_a
-               DELETE CBT_b
                exit
             ENDIF
          ENDIF
@@ -1588,96 +1412,85 @@ import "scf_defs.sialx"
          CALL HFDENS
          sip_barrier
 #
-#        Delete one-particle arrays to be used in the next iteration. 
+#        clear one-particle arrays to be used in the next iteration. 
 #        ------------------------------------------------------------ 
 #
          if kiter < scf_iter
-            DELETE Fpq_a 
-            DELETE Fpq_b 
+	    pardo mu,nu
+	        put Fpq_a[mu,nu] = 0.0
+	    endpardo mu,nu
+	    pardo mu,nu
+	        put Fpq_b[mu,nu] = 0.0
+	    endpardo mu,nu
          endif
 
-         DELETE FTpq_a  
-         DELETE FTpq_b  
-         DELETE CBT_a 
-         DELETE CBT_b 
+         server_barrier
+	 pardo mu,nu
+	     put FTpq_a[mu,nu] = 0.0
+	 endpardo mu,nu
+	 pardo mu,nu
+	     put FTpq_b[mu,nu] = 0.0
+	 endpardo mu,nu
+	 pardo mu,a
+	     put CBT_a[mu,a] = 0.0
+	 endpardo mu,a
+	 pardo mu,i
+	     put CBT_a[mu,i] = 0.0
+	 endpardo mu,i
+	 pardo mu,a
+	     put CBT_b[mu,a] = 0.0
+	 endpardo mu,a
+	 pardo mu,i
+	     put CBT_b[mu,i] = 0.0
+	 endpardo mu,i
+         server_barrier
 #
       ENDDO kiter 
 #
-#     Release unneeded memory blocks.
-#
-      sip_barrier
-      DELETE DHFA
-      DELETE DHFB
-      DELETE DHFA_OLD
-      DELETE DHFB_OLD
-
-      CREATE FTa 
-      CREATE FTb 
       sip_barrier 
       PARDO mu, nu 
             GET Fpq_a[mu,nu] 
-            DO p 
-               Txp[mu,p] = Fpq_a[mu,nu]*ca[nu,p] 
-               DO p1 
-                  Tpp[p1,p] = Txp[mu,p]*ca[mu,p1] 
-                  PUT FTa[p1,p] += Tpp[p1,p] 
-               ENDDO p1  
-            ENDDO p 
-      ENDPARDO mu, nu  
-#     
-      PARDO mu, nu 
-            GET Fpq_b[mu,nu] 
-            DO q 
-               Txq[mu,q] = Fpq_b[mu,nu]*ca[nu,q] 
-               DO q1 
-                  Tqq[q1,q] = Txq[mu,q]*ca[mu,q1] 
-                  PUT FTb[q1,q] += Tqq[q1,q] 
-               ENDDO q1  
-            ENDDO q 
+            DO a 
+	       get DCa[nu,a]
+               Txp[mu,a] = Fpq_a[mu,nu]*Dca[nu,a] 
+               DO a1 
+	          get DCa[mu,a1]
+                  Tpp[a1,a] = Txp[mu,a]*Dca[mu,a1] 
+                  PUT FTa[a1,a] += Tpp[a1,a] 
+               ENDDO a1  
+               DO i1 
+	          get DCa[mu,i1]
+                  Tpp[i1,a] = Txp[mu,a]*Dca[mu,i1] 
+                  PUT FTa[i1,a] += Tpp[i1,a] 
+               ENDDO i1  
+            ENDDO a
+            DO i 
+	       get DCa[nu,i]
+               Txp[mu,i] = Fpq_a[mu,nu]*Dca[nu,i] 
+               DO a1 
+	          get DCa[mu,a1]
+                  Tpp[a1,i] = Txp[mu,i]*Dca[mu,a1] 
+                  PUT FTa[a1,i] += Tpp[a1,i] 
+               ENDDO a1  
+               DO i1 
+	          get DCa[mu,i1]
+                  Tpp[i1,i] = Txp[mu,i]*Dca[mu,i1] 
+                  PUT FTa[i1,i] += Tpp[i1,i] 
+               ENDDO i1  
+            ENDDO i
       ENDPARDO mu, nu  
       sip_barrier 
-#
-#     Put the final Fock arrays into predefined arrays 
-#     ------------------------------------------------ 
-#
-      DO p
-      DO p1
-         GET FTa[p,p1]
-         Fock_a[p,p1] = FTa[p,p1]
-      ENDDO p1
-      ENDDO p
 
-      create Dca 
+      deallocate contiguous clca[1:max_aoseg,1:max_aoseg]
       sip_barrier
 
-     #VFL execute print_rel_info two pinf
-     #VFL execute print_rel_info three Fock_a
-     #execute get_my_rank rank
-     #if rank == 0.0
-         PARDO mu, p
-            txp[mu,p] = ca[mu,p]
-            PUT Dca[mu,p] = txp[mu,p] 
-         ENDPARDO mu, p
-      #VFL execute print_rel_info zero ca
-     #endif
-      sip_barrier
-
-      set_persistent ca "ca" 
-      set_persistent Fock_a "fock_a" 
-#     set_persistent energy "energy" 
+      set_persistent Dca "MOI_ca" 
+      set_persistent FTa "MOI_focka" 
 
       scf_energy  = energy2
       totenerg = scf_energy
       print scf_energy
 
-	call form_Dscf
-	print " "
-	print "SCF dipole moments"
-	print dipole
-
-      set_persistent scf_energy "scf_energy"
-      set_persistent dipole "scf_dipole"
-      set_persistent NucDip "nuclear_dipole"
       sip_barrier
 #                         
 #

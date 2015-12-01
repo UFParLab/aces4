@@ -71,6 +71,9 @@ QM_SOURCE_FILES=\
 ./qm/mcpt-fragment/return_pairs.F\
 ./qm/mcpt-fragment/compute_pair_nn.F\
 ./qm/mcpt-fragment/return_vpq.F\
+./qm/mcpt-fragment/compute_moi_nn_repulsion.F\
+./qm/mcpt-fragment/compute_h1_moi.F\
+./qm/mcpt-fragment/compute_ovl_moi.F\
 ./qm/direct_integral/uintegrals.F\
 ./qm/direct_integral/return_h1.F\
 ./qm/direct_integral/move_integrals.f\
