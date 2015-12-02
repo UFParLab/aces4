@@ -103,9 +103,9 @@ endpardo a, a1, a2, i
 
 pardo a, a1, b, j  
 
-    request Vaabj[a1,a,b,j]   
-    t1pp[a,a1]         = Vaabj[a1,a,b,j]*St1b[b,j] 
-    tppqq[a,a1,j,b]    = Vaabj[a1,a,b,j]
+    request Vaaai[a1,a,b,j]   
+    t1pp[a,a1]         = Vaaai[a1,a,b,j]*St1b[b,j] 
+    tppqq[a,a1,j,b]    = Vaaai[a1,a,b,j]
 
     put HBAR_aa[a,a1]                += t1pp[a,a1] 
     prepare HBAR_AIBC_aabb[a,a1,j,b] += tppqq[a,a1,j,b] 
@@ -267,8 +267,8 @@ pardo j, j1
 
     do b 
     do j2 
-	request VSqjqj[b,j2,j,j1]  
-	t1qq[j1,j] = VSqjqj[b,j2,j,j1]*St1b[b,j2]  
+	request VSpipi[b,j2,j,j1]  
+	t1qq[j1,j] = VSpipi[b,j2,j,j1]*St1b[b,j2]  
 	tqq[j1,j] += t1qq[j1,j] 
     enddo j2 
     enddo b 
@@ -285,7 +285,7 @@ pardo j, j1
     do b1 
     do j2 
 	request T2bb[b,j,b1,j2]  
-	request VSqjqj[b,j1,b1,j2]   
+	request VSpipi[b,j1,b1,j2]   
 
 	tqq[b1,j2]        = St1b[b1,j2]
 	t1qq[b1,j]        = St1b[b1,j] 
@@ -296,7 +296,7 @@ pardo j, j1
 	tqqqq[b,j,b1,j2] += t1qqqq[b,j,b1,j2] 
 	tqqqq[b,j,b1,j2] -= t2qqqq[b,j,b1,j2] 
 
-	t1qq[j1,j]        = tqqqq[b,j,b1,j2]*VSqjqj[b,j1,b1,j2] 
+	t1qq[j1,j]        = tqqqq[b,j,b1,j2]*VSpipi[b,j1,b1,j2] 
 	t1qq[j1,j]       *= 0.5 
 	tqq[j1,j]        += t1qq[j1,j] 
     enddo j2 
@@ -397,8 +397,8 @@ pardo j, b
 
     do b1 
     do j1 
-	request VSqjqj[b,j,b1,j1]  
-	t1qq[j,b] = VSqjqj[b,j,b1,j1]*St1b[b1,j1] 
+	request VSpipi[b,j,b1,j1]  
+	t1qq[j,b] = VSpipi[b,j,b1,j1]*St1b[b1,j1] 
 	tqq[j,b] += t1qq[j,b] 
     enddo j1 
     enddo b1 
@@ -688,8 +688,8 @@ endpardo i1, a1, a, i
 
 pardo i, i1, b, b1
 
-    request Vbbii[b,b1,i,i1] 
-    Tiibb[i,i1,b,b1]  = Vbbii[b,b1,i,i1]
+    request Vaaii[b,b1,i,i1] 
+    Tiibb[i,i1,b,b1]  = Vaaii[b,b1,i,i1]
     Tiibb[i,i1,b,b1] *= -1.0
 
     do a
@@ -708,8 +708,8 @@ endpardo i, i1, b, b1
 
 pardo j1, j, a, a1
 
-    request Vaajj[a,a1,j1,j] 
-    Tjjaa[j1,j,a,a1]  = Vaajj[a,a1,j1,j]
+    request Vaaii[a,a1,j1,j] 
+    Tjjaa[j1,j,a,a1]  = Vaaii[a,a1,j1,j]
     Tjjaa[j1,j,a,a1] *= -1.0
 
     do b
@@ -728,8 +728,8 @@ endpardo j1, j, a, a1
 
 pardo i, a, b, j
 
-    request Viabj[i,a,b,j] 
-    Tiabj[i,a,b,j] = Viabj[i,a,b,j]
+    request Viaai[i,a,b,j] 
+    Tiabj[i,a,b,j] = Viaai[i,a,b,j]
 
     do a1
     do i1
@@ -757,15 +757,15 @@ endpardo i, a, b, j
 
 pardo j, b, a, i
 
-    request Viabj[i,a,b,j] 
-    Tjbai[j,b,a,i] = Viabj[i,a,b,j]
+    request Viaai[i,a,b,j] 
+    Tjbai[j,b,a,i] = Viaai[i,a,b,j]
 
     do b1
     do j1
 	request T2ab[a,i,b1,j1] 
-	request VSqjqj[b,j,b1,j1]    # +
+	request VSpipi[b,j,b1,j1]    # +
 
-	T1jbai[j,b,a,i] = VSqjqj[b,j,b1,j1]*T2ab[a,i,b1,j1]
+	T1jbai[j,b,a,i] = VSpipi[b,j,b1,j1]*T2ab[a,i,b1,j1]
 	Tjbai[j,b,a,i] += T1jbai[j,b,a,i]
     enddo j1
     enddo b1
@@ -927,13 +927,13 @@ pardo i, i1, b, j
 	do b1
 
 	    request T2ab[a,i1,b1,j] 
-	    request Vbbai[b1,b,a,i]   
+	    request Vaaai[b1,b,a,i]   
 
 	    tppqq[a,i1,b1,j]  = T2ab[a,i1,b1,j] 
 	    t1ppqq[a,i1,b1,j] = St1a[a,i1]^St1b[b1,j] 
 	    tppqq[a,i1,b1,j] += t1ppqq[a,i1,b1,j] 
 
-	    T1iibj[i,i1,b,j]  = Vbbai[b1,b,a,i]*tppqq[a,i1,b1,j]
+	    T1iibj[i,i1,b,j]  = Vaaai[b1,b,a,i]*tppqq[a,i1,b1,j]
 	    Tiibj[i,i1,b,j]  += T1iibj[i,i1,b,j]
 
 	enddo b1
@@ -1101,19 +1101,19 @@ endpardo i1, a1, b, j
 
 pardo i, a, b, j
 
-    request Viabj[i,a,b,j] 
-    Tiabj[i,a,b,j]                  = Viabj[i,a,b,j]
+    request Viaai[i,a,b,j] 
+    Tiabj[i,a,b,j]                  = Viaai[i,a,b,j]
     prepare HBAR_AJIB_aabb[i,a,b,j]+= Tiabj[i,a,b,j]
 
 endpardo i, a, b, j 
 
 pardo i, a, b, b1  
 
-    request Vbbai[b1,b,a,i]  
+    request Vaaai[b1,b,a,i]  
 
     do j
 
-	Tjbai[j,b,a,i]                   = Vbbai[b1,b,a,i]*St1b[b1,j]
+	Tjbai[j,b,a,i]                   = Vaaai[b1,b,a,i]*St1b[b1,j]
 	T2jbai[j,b,a,i]                  = Tjbai[j,b,a,i]
 	Tiabj[i,a,b,j]                   = Tjbai[j,b,a,i]  
 	prepare NJBAI[j,b,a,i]          += T2jbai[j,b,a,i]
@@ -1184,8 +1184,8 @@ endpardo i1, a1, b, j
 
 pardo i1, b1, b, i
 
-    request Vbbii[b,b1,i1,i]  
-    Tiibb[i1,i,b,b1]                   = Vbbii[b,b1,i1,i]
+    request Vaaii[b,b1,i1,i]  
+    Tiibb[i1,i,b,b1]                   = Vaaii[b,b1,i1,i]
     Tiibb[i1,i,b,b1]                  *= -1.0
     prepare HBAR_AJIB_iibb[i1,i,b,b1] += Tiibb[i1,i,b,b1]
 
@@ -1193,10 +1193,10 @@ endpardo i1, b1, b, i
 
 pardo b1, b, a1, i1  
 
-    request Vbbai[b1,b,a1,i1]  
+    request Vaaai[b1,b,a1,i1]  
 
     do i
-	T1iibb[i1,i,b,b1]                  = Vbbai[b1,b,a1,i1]*St1a[a1,i]
+	T1iibb[i1,i,b,b1]                  = Vaaai[b1,b,a1,i1]*St1a[a1,i]
 	T2iibb[i1,i,b,b1]                  = T1iibb[i1,i,b,b1]  
 	T2iibb[i1,i,b,b1]                 *= -1.0 
 	prepare NIIBB[i1,i,b,b1]          += T1iibb[i1,i,b,b1]
@@ -1243,10 +1243,10 @@ endpardo i, b, j1, a1
 
 pardo j1, a1, a, b1  
 
-    request Vaabj[a1,a,b1,j1]  
+    request Vaaai[a1,a,b1,j1]  
 
     do j
-	T2jjaa[j1,j,a,a1]                  = Vaabj[a1,a,b1,j1]*St1b[b1,j]
+	T2jjaa[j1,j,a,a1]                  = Vaaai[a1,a,b1,j1]*St1b[b1,j]
 	prepare NJJAA[j1,j,a,a1]          += T2jjaa[j1,j,a,a1]
     enddo j
 
@@ -1280,8 +1280,8 @@ PROC HBAR_ABCI
 
 pardo a, a1, b, j 
 
-    request Vaabj[a,a1,b,j]   
-    prepare HBAR_ABCI_aabb[a,a1,b,j] += Vaabj[a,a1,b,j] 
+    request Vaaai[a,a1,b,j]   
+    prepare HBAR_ABCI_aabb[a,a1,b,j] += Vaaai[a,a1,b,j] 
 
 endpardo a, a1, b, j 
 
@@ -1303,13 +1303,13 @@ endpardo a, a1, a3, i2
 
 pardo a, a1, b, j
 
-    request Vaabj[a,a1,b,j] 
+    request Vaaai[a,a1,b,j] 
 
     do b1
     do j1
 
 	request T2bb[b1,j1,b,j] 
-	Tppqq[a1,a,b1,j1]                   = Vaabj[a,a1,b,j]*T2bb[b1,j1,b,j]
+	Tppqq[a1,a,b1,j1]                   = Vaaai[a,a1,b,j]*T2bb[b1,j1,b,j]
 	prepare HBAR_ABCI_aabb[a1,a,b1,j1] += Tppqq[a1,a,b1,j1]
 
     enddo j1
@@ -1378,12 +1378,12 @@ endpardo a1, b, j1, i
 
 pardo a, b1, b, i
 
-    request Vbbai[b,b1,a,i]   
+    request Vaaai[b,b1,a,i]   
 
     do j
     do a1
 	request T2ab[a1,i,b,j] 
-	Tppqq[a1,a,b1,j]                   = T2ab[a1,i,b,j]*Vbbai[b,b1,a,i]
+	Tppqq[a1,a,b1,j]                   = T2ab[a1,i,b,j]*Vaaai[b,b1,a,i]
 	Tppqq[a1,a,b1,j]                  *= -1.0
 	prepare HBAR_ABCI_aabb[a1,a,b1,j] += Tppqq[a1,a,b1,j]
     enddo a1
@@ -2380,9 +2380,9 @@ endpardo i, a, j, b
 #     Fmi_b
 
 pardo j, j1, j2, b
-    request VSqjqj[b,j2,j,j1] 
+    request VSpipi[b,j2,j,j1] 
     GET                VCACT1A[b,j2]
-    tjj[j1,j]        = VSqjqj[b,j2,j,j1]*VCACT1A[b,j2]
+    tjj[j1,j]        = VSpipi[b,j2,j,j1]*VCACT1A[b,j2]
     LFmi_b[j1,j] += tjj[j1,j]
 endpardo j, j1, j2, b
 
@@ -2390,8 +2390,8 @@ pardo j, b1, j2, b
 WHERE b < b1
     request VCACT2AA[b,j,b1,j2] 
     do j1
-	request VSqjqj[b,j1,b1,j2] 
-	tjj[j1,j]        = VCACT2AA[b,j,b1,j2]*VSqjqj[b,j1,b1,j2]
+	request VSpipi[b,j1,b1,j2] 
+	tjj[j1,j]        = VCACT2AA[b,j,b1,j2]*VSpipi[b,j1,b1,j2]
 	LFmi_b[j1,j] += tjj[j1,j]
     enddo j1
 endpardo j, b1, j2, b
@@ -2400,8 +2400,8 @@ pardo j, b1, j2, b
 WHERE b == b1
     request VCACT2AA[b,j,b1,j2] 
     do j1
-	request VSqjqj[b,j1,b1,j2] 
-	tjj[j1,j]        = VCACT2AA[b,j,b1,j2]*VSqjqj[b,j1,b1,j2]
+	request VSpipi[b,j1,b1,j2] 
+	tjj[j1,j]        = VCACT2AA[b,j,b1,j2]*VSpipi[b,j1,b1,j2]
 	tjj[j1,j]       *= 0.5
 	LFmi_b[j1,j] += tjj[j1,j]
     enddo j1
@@ -2425,11 +2425,11 @@ endpardo j, b, i, a
 
 pardo j1, a, b, a1
 
-    request Vaabj[a,a1,b,j1] 
+    request Vaaai[a,a1,b,j1] 
     GET             VCACT1A[b,j1]
-    tqppq[j1,a,a1,b] = Vaabj[a,a1,b,j1]
+    tqppq[j1,a,a1,b] = Vaaai[a,a1,b,j1]
 
-    t1aa[a1,a]    = Vaabj[a,a1,b,j1]*VCACT1A[b,j1]
+    t1aa[a1,a]    = Vaaai[a,a1,b,j1]*VCACT1A[b,j1]
     LFae_a[a1,a] += t1aa[a1,a]
 
     do i
@@ -2446,8 +2446,8 @@ endpardo j1, a, b, a1
 
 pardo i1, b, a, b1  
 
-    request Vbbai[b,b1,a,i1] 
-    tpqpq[i1,b,a,b1] = Vbbai[b,b1,a,i1] 
+    request Vaaai[b,b1,a,i1] 
+    tpqpq[i1,b,a,b1] = Vaaai[b,b1,a,i1] 
 
     do i
     do j
@@ -2606,9 +2606,9 @@ pardo j, b
 
     do b1
     do j1
-	request VSqjqj[b,j,b1,j1] 
+	request VSpipi[b,j,b1,j1] 
 	GET         VCACT1A[b1,j1]
-	t1jb[j,b] = VSqjqj[b,j,b1,j1]*VCACT1A[b1,j1]
+	t1jb[j,b] = VSpipi[b,j,b1,j1]*VCACT1A[b1,j1]
 	tjb[j,b] += t1jb[j,b]
     enddo j1
     enddo b1
@@ -6690,6 +6690,7 @@ ZERO = 0.0
 one = 1.0
 root = 0
 subspc = eom_subspc
+roots = eom_roots
 
 # Initilize the vaiable to zmax and imax (memory of ERD and OED).
 zmax = 0.0

@@ -51,7 +51,7 @@ special return_sval ru
 special read_block_from_text_file w
 special compute_dipole_integrals wur
 special print_block_and_index r
-special compute_int_scratchmem uuu
+special compute_int_scratchmem_lowmem uuu
 #     NOT PORTED 
 
 endsial reom_rhf_defs

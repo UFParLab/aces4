@@ -1,8 +1,760 @@
-import "reom_rhf_defs.sialx" 
-import "reom_vars.sialx"
-import "tran_eom.sialx"
+import "MOI_reom_defs.sialx" 
+import "MOI_reom_vars.sialx"
 
 SIAL R_EE_EOM_CCSD_RHF
+
+#    ------------------------------------------------------------------------
+#
+#    Compute the integrals and store in the served array saoint. 
+#
+#    Perform the first two stages of the transformation in two N5 steps. 
+#
+PROC TRAN_TRAN2 
+#
+#    ------------------------------------------------------------------------
+#
+print "Starting tran 1-2"
+pardo mu, nu, lambda
+#
+    allocate Txxxi[mu,nu,lambda,*]
+    allocate Txxxj[mu,nu,lambda,*]
+#
+    do sigma
+#
+	execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+#
+	do i   
+#
+	    T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
+	    Txxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]  
+#
+	enddo i   
+#
+	do j   
+#
+	    T1xxxj[mu,nu,lambda,j]  = aoint[mu,nu,lambda,sigma]*ca[sigma,j]
+	    Txxxj[mu,nu,lambda,j]  += T1xxxj[mu,nu,lambda,j]  
+#
+	enddo j   
+#
+    enddo sigma
+
+    do i
+	T1xxxi[mu,nu,lambda,i]         = Txxxi[mu,nu,lambda,i]
+	prepare Vxxxi[mu,nu,lambda,i]  = T1xxxi[mu,nu,lambda,i]
+    enddo i
+
+    do j
+	T1xxxj[mu,nu,lambda,j]         = Txxxj[mu,nu,lambda,j] 
+	prepare Vxxxj[mu,nu,lambda,j]  = T1xxxj[mu,nu,lambda,j]
+    enddo j
+
+    deallocate Txxxi[mu,nu,lambda,*]
+    deallocate Txxxj[mu,nu,lambda,*]
+#
+endpardo mu, nu, lambda 
+server_barrier
+#
+#    ------------------------------------------------------------------------
+#
+print "Starting tran 2"
+server_barrier
+pardo mu, nu, i
+#
+    allocate L1xxxi[mu,nu,*,i]
+#
+    do lambda
+#
+	request Vxxxi[mu,nu,lambda,i] 
+#
+	L1xxxi[mu,nu,lambda,i] = Vxxxi[mu,nu,lambda,i]
+#
+    enddo lambda
+#
+    do i1
+#
+	Txxii[mu,nu,i1,i] = 0.0
+#
+	do lambda
+#
+	    T1xxii[mu,nu,i1,i] = L1xxxi[mu,nu,lambda,i]*ca[lambda,i1]
+	    Txxii[mu,nu,i1,i] += T1xxii[mu,nu,i1,i]
+#
+	enddo lambda
+#
+	prepare Vxxii[mu,nu,i1,i] = Txxii[mu,nu,i1,i]
+#
+    enddo i1
+#
+    do a
+#
+	Txxai[mu,nu,a,i] = 0.0
+#
+	do lambda
+#
+	    T1xxai[mu,nu,a,i] = L1xxxi[mu,nu,lambda,i]*ca[lambda,a]
+	    Txxai[mu,nu,a,i] += T1xxai[mu,nu,a,i]
+#
+	enddo lambda
+#
+	prepare Vxxai[mu,nu,a,i] = Txxai[mu,nu,a,i]
+#
+    enddo a
+#
+    deallocate L1xxxi[mu,nu,*,i]
+endpardo mu, nu, i
+pardo mu, nu, i
+    allocate L2xxxi[mu,*,nu,i]
+
+    do lambda
+	request Vxxxi[mu,lambda,nu,i] 
+	L2xxxi[mu,lambda,nu,i] = Vxxxi[mu,lambda,nu,i]
+    enddo lambda
+
+    do i1
+	Txixi[mu,i1,nu,i] = 0.0
+
+	do lambda
+	    T1xixi[mu,i1,nu,i] = L2xxxi[mu,lambda,nu,i]*ca[lambda,i1]
+	    Txixi[mu,i1,nu,i] += T1xixi[mu,i1,nu,i]
+	enddo lambda
+
+	prepare Vxixi[mu,i1,nu,i] = Txixi[mu,i1,nu,i]
+    enddo i1
+
+    deallocate L2xxxi[mu,*,nu,i]
+endpardo mu, nu, i
+pardo mu, nu, i
+    allocate L3xxxi[*,mu,nu,i]
+
+    do lambda
+	request Vxxxi[lambda,mu,nu,i] 
+	L3xxxi[lambda,mu,nu,i] = Vxxxi[lambda,mu,nu,i]
+    enddo lambda
+
+    do i1
+	Tixxi[i1,mu,nu,i] = 0.0
+
+	do lambda
+	    T1ixxi[i1,mu,nu,i] = L3xxxi[lambda,mu,nu,i]*ca[lambda,i1]
+	    Tixxi[i1,mu,nu,i] += T1ixxi[i1,mu,nu,i]
+	enddo lambda
+
+	prepare Vixxi[i1,mu,nu,i] = Tixxi[i1,mu,nu,i]
+    enddo i1
+
+    deallocate L3xxxi[*,mu,nu,i]
+#
+endpardo mu, nu, i
+#
+#    ------------------------------------------------------------------------
+#
+pardo mu, nu, j
+#
+    allocate L1xxxj[mu,nu,*,j]
+#
+    do lambda
+#
+	request Vxxxj[mu,nu,lambda,j] 
+#
+	L1xxxj[mu,nu,lambda,j] = Vxxxj[mu,nu,lambda,j]
+#
+    enddo lambda
+#
+    do j1
+#
+	Txxjj[mu,nu,j1,j] = 0.0
+#
+	do lambda
+#
+	T1xxjj[mu,nu,j1,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,j1]
+	Txxjj[mu,nu,j1,j] += T1xxjj[mu,nu,j1,j]
+#
+	enddo lambda
+#
+	prepare Vxxjj[mu,nu,j1,j] = Txxjj[mu,nu,j1,j]
+#
+    enddo j1
+#
+    do b
+#
+	Txxbj[mu,nu,b,j] = 0.0
+#
+	do lambda
+#
+	T1xxbj[mu,nu,b,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,b]
+	Txxbj[mu,nu,b,j] += T1xxbj[mu,nu,b,j]
+#
+	enddo lambda
+#
+	prepare Vxxbj[mu,nu,b,j] = Txxbj[mu,nu,b,j]
+#
+    enddo b
+#
+    do i
+#
+	Txxij[mu,nu,i,j] = 0.0
+#
+	do lambda
+#
+	T1xxij[mu,nu,i,j] = L1xxxj[mu,nu,lambda,j]*ca[lambda,i]
+	Txxij[mu,nu,i,j] += T1xxij[mu,nu,i,j]
+#
+	enddo lambda
+#
+	prepare Vxxij[mu,nu,i,j] = Txxij[mu,nu,i,j]
+#
+    enddo i
+#
+    deallocate L1xxxj[mu,nu,*,j]
+endpardo mu, nu, j
+pardo mu, nu, j
+    allocate L2xxxj[mu,*,nu,j]
+
+    do lambda
+	request Vxxxj[mu,lambda,nu,j] 
+	L2xxxj[mu,lambda,nu,j] = Vxxxj[mu,lambda,nu,j]
+    enddo lambda
+
+    do j1
+	Txjxj[mu,j1,nu,j] = 0.0
+
+	do lambda
+	T1xjxj[mu,j1,nu,j] = L2xxxj[mu,lambda,nu,j]*ca[lambda,j1]
+	Txjxj[mu,j1,nu,j] += T1xjxj[mu,j1,nu,j]
+	enddo lambda
+
+	prepare Vxjxj[mu,j1,nu,j] = Txjxj[mu,j1,nu,j]
+    enddo j1
+
+    do i
+	Txixj[mu,i,nu,j] = 0.0
+
+	do lambda
+	T1xixj[mu,i,nu,j] = L2xxxj[mu,lambda,nu,j]*ca[lambda,i]
+	Txixj[mu,i,nu,j] += T1xixj[mu,i,nu,j]
+	enddo lambda
+
+	prepare Vxixj[mu,i,nu,j] = Txixj[mu,i,nu,j]
+    enddo i
+
+    deallocate L2xxxj[mu,*,nu,j]
+endpardo mu, nu, j
+pardo mu, nu, j
+    allocate L3xxxj[*,mu,nu,j]
+
+    do lambda
+	request Vxxxj[lambda,mu,nu,j] 
+	L3xxxj[lambda,mu,nu,j] = Vxxxj[lambda,mu,nu,j]
+    enddo lambda
+
+    do j1
+	Tjxxj[j1,mu,nu,j] = 0.0
+
+	do lambda
+	T1jxxj[j1,mu,nu,j] = L3xxxj[lambda,mu,nu,j]*ca[lambda,j1]
+	Tjxxj[j1,mu,nu,j] += T1jxxj[j1,mu,nu,j]
+	enddo lambda
+
+	prepare Vjxxj[j1,mu,nu,j] = Tjxxj[j1,mu,nu,j]
+    enddo j1
+
+    do i
+	Tixxj[i,mu,nu,j] = 0.0
+
+	do lambda
+	T1ixxj[i,mu,nu,j] = L3xxxj[lambda,mu,nu,j]*ca[lambda,i]
+	Tixxj[i,mu,nu,j] += T1ixxj[i,mu,nu,j]
+	enddo lambda
+
+	prepare Vixxj[i,mu,nu,j] = Tixxj[i,mu,nu,j]
+    enddo i
+
+    deallocate L3xxxj[*,mu,nu,j]
+#
+endpardo mu, nu, j
+#
+server_barrier
+#
+#    ------------------------------------------------------------------------
+#
+ENDPROC TRAN_TRAN2 
+#
+#    ------------------------------------------------------------------------
+#
+#    ------------------------------------------------------------------------
+#
+#    Perform the third N5 stage of the transformation.  
+#
+PROC TRAN_TRAN3 
+#
+#    ------------------------------------------------------------------------
+#
+print "Starting tran 3a"
+pardo mu, i, i1
+#
+    allocate Lxixi[mu,i,*,i1] 
+    allocate Lxxii[mu,*,i,i1] 
+    allocate Lixxi[i,mu,*,i1] 
+#
+    do nu 
+#
+	request Vxixi[mu,i,nu,i1]  
+	request Vxxii[mu,nu,i,i1]  
+	request Vixxi[i,mu,nu,i1]  
+#
+	Lxixi[mu,i,nu,i1] = Vxixi[mu,i,nu,i1] 
+	Lxxii[mu,nu,i,i1] = Vxxii[mu,nu,i,i1] 
+	Lixxi[i,mu,nu,i1] = Vixxi[i,mu,nu,i1] 
+#
+    enddo nu 
+#
+    do a
+#
+	Txipi[mu,i,a,i1] = 0.0  
+#
+	do nu  
+#
+	T1xipi[mu,i,a,i1] = Lxixi[mu,i,nu,i1]*ca[nu,a]
+	Txipi[mu,i,a,i1] += T1xipi[mu,i,a,i1]  
+#
+	enddo nu  
+#
+	prepare Vxipi[mu,i,a,i1] = Txipi[mu,i,a,i1]
+#
+    enddo a
+    do i2
+#
+	Txipi[mu,i,i2,i1] = 0.0  
+#
+	do nu  
+#
+	T1xipi[mu,i,i2,i1] = Lxixi[mu,i,nu,i1]*ca[nu,i2]
+	Txipi[mu,i,i2,i1] += T1xipi[mu,i,i2,i1]  
+#
+	enddo nu  
+#
+	prepare Vxipi[mu,i,i2,i1] = Txipi[mu,i,i2,i1]
+#
+    enddo i2
+#
+    do a
+#
+	Txaii[mu,a,i,i1] = 0.0 
+	Tixai[i,mu,a,i1] = 0.0  
+#
+	do nu 
+#
+	T1xaii[mu,a,i,i1] = Lxxii[mu,nu,i,i1]*ca[nu,a]
+	Txaii[mu,a,i,i1] += T1xaii[mu,a,i,i1]  
+#
+	T1ixai[i,mu,a,i1] = Lixxi[i,mu,nu,i1]*ca[nu,a]
+	Tixai[i,mu,a,i1] += T1ixai[i,mu,a,i1]  
+
+	enddo nu 
+#
+	prepare Vxaii[mu,a,i,i1] = Txaii[mu,a,i,i1]
+	prepare Vixai[i,mu,a,i1] = Tixai[i,mu,a,i1]
+#
+    enddo a
+#
+#
+    deallocate Lxixi[mu,i,*,i1] 
+    deallocate Lxxii[mu,*,i,i1] 
+    deallocate Lixxi[i,mu,*,i1] 
+#
+endpardo mu, i, i1
+#
+#    ------------------------------------------------------------------------
+#
+print "Starting tran 3b"
+pardo mu, a, i
+#
+    allocate Lxxai[mu,*,a,i] 
+#
+    do nu 
+#
+	request Vxxai[mu,nu,a,i]  
+	Lxxai[mu,nu,a,i] = Vxxai[mu,nu,a,i] 
+#
+    enddo nu 
+#
+    do a1 
+#
+	Txaai[mu,a1,a,i] = 0.0  
+#
+	do nu  
+#
+	T1xaai[mu,a1,a,i] = Lxxai[mu,nu,a,i]*ca[nu,a1]
+	Txaai[mu,a1,a,i] += T1xaai[mu,a1,a,i]  
+#
+	enddo nu  
+#
+	prepare Vxaai[mu,a1,a,i] = Txaai[mu,a1,a,i]
+#
+    enddo a1 
+#
+#
+    deallocate Lxxai[mu,*,a,i] 
+#
+endpardo mu, a, i
+#
+#    ------------------------------------------------------------------------
+#
+print "Starting tran 3e"
+pardo mu, i, j
+#
+    allocate Lxixj[mu,i,*,j] 
+#
+    do nu 
+#
+	request Vxixj[mu,i,nu,j]  
+#
+	Lxixj[mu,i,nu,j] = Vxixj[mu,i,nu,j] 
+#
+    enddo nu 
+#
+    do a 
+#
+	Txiqj[mu,i,a,j] = 0.0  
+#
+	do nu  
+#
+	T1xiqj[mu,i,a,j] = Lxixj[mu,i,nu,j]*ca[nu,a]
+	Txiqj[mu,i,a,j] += T1xiqj[mu,i,a,j]  
+#
+	enddo nu  
+#
+	prepare Vxiqj[mu,i,a,j] = Txiqj[mu,i,a,j]
+#
+    enddo a 
+    do i1
+#
+	Txiqj[mu,i,i1,j] = 0.0  
+#
+	do nu  
+#
+	T1xiqj[mu,i,i1,j] = Lxixj[mu,i,nu,j]*ca[nu,i1]
+	Txiqj[mu,i,i1,j] += T1xiqj[mu,i,i1,j]  
+#
+	enddo nu  
+#
+	prepare Vxiqj[mu,i,i1,j] = Txiqj[mu,i,i1,j]
+#
+    enddo i1
+#
+#
+    deallocate Lxixj[mu,i,*,j] 
+#
+endpardo mu, i, j
+#
+#    ------------------------------------------------------------------------
+#    
+server_barrier
+#
+ENDPROC TRAN_TRAN3 
+#
+#    ------------------------------------------------------------------------
+#
+#    ------------------------------------------------------------------------
+#
+PROC TRAN_TRAN4 
+#
+#    ------------------------------------------------------------------------
+#
+print "Starting tran 4:VSpipi"
+pardo a1, i, i1
+#
+    allocate Lxipi[*,i,a1,i1] 
+#
+    do mu 
+#
+	request Vxipi[mu,i,a1,i1]  
+	request Vxipi[mu,i1,a1,i]  
+	Lxipi[mu,i,a1,i1]  = Vxipi[mu,i,a1,i1] 
+	Txipi[mu,i,a1,i1]  = Vxipi[mu,i1,a1,i] 
+	Lxipi[mu,i,a1,i1] -= Txipi[mu,i,a1,i1] 
+#
+    enddo mu  
+#
+    do a2
+#
+	Tpipi[a2,i,a1,i1] = 0.0  
+#
+	do mu  
+#
+	T1pipi[a2,i,a1,i1] = Lxipi[mu,i,a1,i1]*ca[mu,a2]
+	Tpipi[a2,i,a1,i1] += T1pipi[a2,i,a1,i1]  
+#
+	enddo mu  
+#
+	prepare VSpipi[a2,i,a1,i1] = Tpipi[a2,i,a1,i1] 
+#
+    enddo a2
+
+    do i2
+#
+	Tpipi[i2,i,a1,i1] = 0.0  
+#
+	do mu  
+#
+	T1pipi[i2,i,a1,i1] = Lxipi[mu,i,a1,i1]*ca[mu,i2]
+	Tpipi[i2,i,a1,i1] += T1pipi[i2,i,a1,i1]  
+#
+	enddo mu  
+#
+	prepare VSpipi[i2,i,a1,i1] = Tpipi[i2,i,a1,i1] 
+#
+    enddo i2
+#
+    deallocate Lxipi[*,i,a1,i1] 
+#
+endpardo a1, i, i1
+pardo i3, i, i1
+#
+    allocate Lxipi[*,i,i3,i1] 
+#
+    do mu 
+#
+	request Vxipi[mu,i,i3,i1]  
+	request Vxipi[mu,i1,i3,i]  
+	Lxipi[mu,i,i3,i1]  = Vxipi[mu,i,i3,i1] 
+	Txipi[mu,i,i3,i1]  = Vxipi[mu,i1,i3,i] 
+	Lxipi[mu,i,i3,i1] -= Txipi[mu,i,i3,i1] 
+#
+    enddo mu  
+#
+    do a2
+#
+	Tpipi[a2,i,i3,i1] = 0.0  
+#
+	do mu  
+#
+	T1pipi[a2,i,i3,i1] = Lxipi[mu,i,i3,i1]*ca[mu,a2]
+	Tpipi[a2,i,i3,i1] += T1pipi[a2,i,i3,i1]  
+#
+	enddo mu  
+#
+	prepare VSpipi[a2,i,i3,i1] = Tpipi[a2,i,i3,i1] 
+#
+    enddo a2
+
+    do i2
+#
+	Tpipi[i2,i,i3,i1] = 0.0  
+#
+	do mu  
+#
+	T1pipi[i2,i,i3,i1] = Lxipi[mu,i,i3,i1]*ca[mu,i2]
+	Tpipi[i2,i,i3,i1] += T1pipi[i2,i,i3,i1]  
+#
+	enddo mu  
+#
+	prepare VSpipi[i2,i,i3,i1] = Tpipi[i2,i,i3,i1] 
+#
+    enddo i2
+#
+    deallocate Lxipi[*,i,i3,i1] 
+#
+endpardo i3, i, i1
+#
+print "Starting tran 4:Vaaii|Viaai"
+pardo a, i, i1
+#
+    allocate Lxaii[*,a,i,i1] 
+    allocate Lixai[i,*,a,i1] 
+#
+    do mu 
+#
+	request Vxaii[mu,a,i,i1]  
+	request Vixai[i,mu,a,i1]  
+#
+	Lxaii[mu,a,i,i1] = Vxaii[mu,a,i,i1]  
+	Lixai[i,mu,a,i1] = Vixai[i,mu,a,i1] 
+#
+    enddo mu 
+#
+    do a1 
+#
+	Taaii[a1,a,i,i1] = 0.0  
+#
+	do mu  
+#
+	T1aaii[a1,a,i,i1] = Lxaii[mu,a,i,i1]*ca[mu,a1]
+	Taaii[a1,a,i,i1] += T1aaii[a1,a,i,i1]  
+#
+	enddo mu  
+#
+	prepare Vaaii[a1,a,i,i1] = Taaii[a1,a,i,i1]
+#
+    enddo a1 
+#
+    deallocate Lxaii[*,a,i,i1] 
+#
+    do a1 
+#
+	Tiaai[i,a1,a,i1] = 0.0  
+#
+	do mu  
+#
+	T1iaai[i,a1,a,i1] = Lixai[i,mu,a,i1]*ca[mu,a1]
+	Tiaai[i,a1,a,i1] += T1iaai[i,a1,a,i1]   
+#
+	enddo mu  
+#
+	prepare Viaai[i,a1,a,i1] = Tiaai[i,a1,a,i1]
+#
+    enddo a1 
+#
+    deallocate Lixai[i,*,a,i1] 
+#
+endpardo a, i, i1
+# 
+print "Starting tran 4:Vaaai|VSaaai"
+pardo a, a1, i
+#
+    allocate L1xaai[*,a,a1,i] 
+#
+    do mu 
+#
+	request Vxaai[mu,a,a1,i]  
+#
+	L1xaai[mu,a,a1,i]  = Vxaai[mu,a,a1,i]
+#
+    enddo mu 
+#
+    do a2  
+#
+	Taaai[a2,a,a1,i] = 0.0 
+#
+	do mu 
+#
+	T1aaai[a2,a,a1,i] = L1xaai[mu,a,a1,i]*ca[mu,a2]
+	Taaai[a2,a,a1,i] += T1aaai[a2,a,a1,i]  
+#
+	enddo mu 
+#
+	T2aaai[a2,a,a1,i]          = Taaai[a2,a,a1,i]
+	T1aaai[a1,a,a2,i]           = Taaai[a2,a,a1,i] 
+	T1aaai[a1,a,a2,i]          *= -1.0  
+	prepare Vaaai [a2,a,a1,i]  += Taaai [a2,a,a1,i]
+	prepare VSaaai[a2,a,a1,i]  += T2aaai [a2,a,a1,i]
+	prepare VSaaai[a1,a,a2,i]  += T1aaai[a1,a,a2,i]
+#
+    enddo a2  
+#
+    deallocate L1xaai[*,a,a1,i] 
+#
+endpardo a, a1, i
+# 
+#
+print "Starting tran 4:Vpiqj"
+pardo b1, i, j
+#
+    allocate Lxiqj[*,i,b1,j] 
+#
+    do mu  
+#
+	request Vxiqj[mu,i,b1,j]  
+	Lxiqj[mu,i,b1,j] = Vxiqj[mu,i,b1,j] 
+#
+    enddo mu  
+#
+    do a1
+#
+	Tpiqj[a1,i,b1,j] = 0.0 
+#
+	do mu  
+#
+	T1piqj[a1,i,b1,j] = Lxiqj[mu,i,b1,j]*ca[mu,a1]
+	Tpiqj[a1,i,b1,j] += T1piqj[a1,i,b1,j]  
+#
+	enddo mu  
+#
+	prepare Vpiqj[a1,i,b1,j] = Tpiqj[a1,i,b1,j]
+#
+    enddo a1
+    do i1
+#
+	Tpiqj[i1,i,b1,j] = 0.0 
+#
+	do mu  
+#
+	T1piqj[i1,i,b1,j] = Lxiqj[mu,i,b1,j]*ca[mu,i1]
+	Tpiqj[i1,i,b1,j] += T1piqj[i1,i,b1,j]  
+#
+	enddo mu  
+#
+	prepare Vpiqj[i1,i,b1,j] = Tpiqj[i1,i,b1,j]
+#
+    enddo i1
+#
+    deallocate Lxiqj[*,i,b1,j] 
+#
+endpardo b1, i, j
+pardo j1, i, j
+#
+    allocate Lxiqj[*,i,j1,j] 
+#
+    do mu  
+#
+	request Vxiqj[mu,i,j1,j]  
+	Lxiqj[mu,i,j1,j] = Vxiqj[mu,i,j1,j] 
+#
+    enddo mu  
+#
+    do a1
+#
+	Tpiqj[a1,i,j1,j] = 0.0 
+#
+	do mu  
+#
+	T1piqj[a1,i,j1,j] = Lxiqj[mu,i,j1,j]*ca[mu,a1]
+	Tpiqj[a1,i,j1,j] += T1piqj[a1,i,j1,j]  
+#
+	enddo mu  
+#
+	prepare Vpiqj[a1,i,j1,j] = Tpiqj[a1,i,j1,j]
+#
+    enddo a1
+    do i1
+#
+	Tpiqj[i1,i,j1,j] = 0.0 
+#
+	do mu  
+#
+	T1piqj[i1,i,j1,j] = Lxiqj[mu,i,j1,j]*ca[mu,i1]
+	Tpiqj[i1,i,j1,j] += T1piqj[i1,i,j1,j]  
+#
+	enddo mu  
+#
+	prepare Vpiqj[i1,i,j1,j] = Tpiqj[i1,i,j1,j]
+#
+    enddo i1
+#
+    deallocate Lxiqj[*,i,j1,j] 
+#
+endpardo j1, i, j
+#
+#    ------------------------------------------------------------------------
+#
+ENDPROC TRAN_TRAN4 
+#
+#    ------------------------------------------------------------------------
+#
+#    ------------------------------------------------------------------------ 
+#
+PROC TRAN_UHF 
+# 
+#        CALL COMP_INTEGRALS # --> compute integrals and put into served array 
+CALL TRAN_TRAN2     # --> performs the first two stages of the 
+#     two-electron integral transformation.  
+CALL TRAN_TRAN3     # --> performs the third stage   
+#     two-electron integral transformation.  
+CALL TRAN_TRAN4     # --> performs the fourth stage of the  
+#     two-electron integral transformation.  
+#
+ENDPROC TRAN_UHF 
 
 #***********************************************************
 
@@ -10,45 +762,86 @@ PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
-restore_persistent has_singles "has_singles"
 server_barrier
-restore_persistent ca    "ca"
-restore_persistent Fock_a "fock_a"
-restore_persistent R1k1_a   "C1_a"
-restore_persistent RB1_a    "B1_a"
-restore_persistent T2aa "T2old_aa"
-restore_persistent T2ab "T2old_ab" 
-restore_persistent Lam2aa "L2old_aa"
-restore_persistent Lam2ab "L2old_ab"
-#restore_persistent VSpipi "VSpipi"
-#restore_persistent Vaaii "Vaaii"
-#restore_persistent Viaai "Viaai"
-#restore_persistent Vaaai "Vaaai"
-#restore_persistent VSaaai "VSaaai"
-#restore_persistent Vpiqj "Vpiqj"
-restore_persistent dipole "scf_dipole"
-set_persistent dipole "scf_dipole"
-restore_persistent NucDip "nuclear_dipole"
-set_persistent NucDip "nuclear_dipole"
+restore_persistent Dca      "MOI_ca"
+restore_persistent DFock_a  "MOI_focka"
+restore_persistent R1k1_a   "MOI_C1_a"
+restore_persistent RB1_a    "MOI_B1_a"
+restore_persistent t1a      "MOI_T1"
+restore_persistent T2ab     "MOI_T2ab"
+#restore_persistent T2aa "T2old_aa"
+#restore_persistent Lam2aa "L2old_aa"
+#restore_persistent Lam2ab "L2old_ab"
+#restore_persistent Lam1a  "l1a_old"
+
+#restore_persistent dipole "MOI_scf_dipole"
+#set_persistent dipole "MOI_scf_dipole"
+#restore_persistent NucDip "MOI_nuclear_dipole"
+#set_persistent NucDip "MOI_nuclear_dipole"
 server_barrier
+do a
+    do a1
+        get DFock_a[a,a1]
+        allocate Fock_a[a,a1]
+        Fock_a[a,a1] = DFock_a[a,a1]
+    enddo a1
+    do i1
+        get DFock_a[a,i1]
+        allocate Fock_a[a,i1]
+        Fock_a[a,i1] = DFock_a[a,i1]
+    enddo i1
+enddo a
+do i
+    do a1
+        get DFock_a[i,a1]
+        allocate Fock_a[i,a1]
+        Fock_a[i,a1] = DFock_a[i,a1]
+    enddo a1
+    do i1
+        get DFock_a[i,i1]
+        allocate Fock_a[i,i1]
+        Fock_a[i,i1] = DFock_a[i,i1]
+    enddo i1
+enddo i
+do mu
+    do a
+        get DCa[mu,a]
+        allocate Ca[mu,a]
+        Ca[mu,a] = DCa[mu,a]
+    enddo a
+    do i
+        get DCa[mu,i]
+        allocate Ca[mu,i]
+        Ca[mu,i] = DCa[mu,i]
+    enddo i
+enddo mu
+# place aa amplitude
+pardo a,i,b,j
+    request T2ab[a,i,b,j]
+    request T2ab[a,j,b,i]
+    T1aibj[a,i,b,j]  = T2ab[a,i,b,j]
+    T2aibj[a,i,b,j]  = T2ab[a,j,b,i]
+    T1aibj[a,i,b,j] -= T2aibj[a,i,b,j]
+    prepare T2aa[a,i,b,j] = T1aibj[a,i,b,j]
+endpardo a,i,b,j
 
-
-#
-# put T1 amplitudes in statics
-#
-
+server_barrier
+# place T as Lambda for ccpt theory
+PARDO a, a1, i, i1
+    request T2aa[a,i,a1,i1]
+    Tiaia[i,a,i1,a1] = T2aa[a,i,a1,i1]
+    prepare L2aa[i,a,i1,a1] = Tiaia[i,a,i1,a1]
+ENDPARDO a, a1, i, i1
+PARDO a, b, i, j
+    request T2ab[a,i,b,j]
+    Tiajb[i,a,j,b] = T2ab[a,i,b,j]
+    prepare L2ab[i,a,j,b] = Tiajb[i,a,j,b]
+ENDPARDO a, b, i, j
 pardo a,i
-    put t1a[a,i] = 0.0
-    put lam1a[i,a] = 0.0
+    get t1a[a,i]
+    Tia[i,a] = t1a[a,i]
+    put Lam1a[i,a] = Tia[i,a]
 endpardo a,i
-
-server_barrier
-if has_singles == 1.0
-restore_persistent t1a "t1a_old"
-restore_persistent Lam1a  "l1a_old"
-endif
-
-has_singles = 0.0
 
 server_barrier
 execute get_my_rank rank
@@ -74,7 +867,6 @@ pardo i,a
 endpardo i,a
 
 # for RHF T2bb=T2aa
-
 pardo a,i,b,j
     request T2aa[a,i,b,j]
     T1aibj[a,i,b,j] = t2aa[a,i,b,j]
@@ -6228,217 +7020,7 @@ endif
 server_barrier
 #
 ENDPROC  PUT_IN_Lk
-#
-PROC hf_density
-#
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-        put DHF[mu,nu] = Txx[mu,nu]
-    endpardo mu,nu
-    server_barrier
-    pardo mu,nu
-        Txx[mu,nu] = 0.0
-        do i
-            T1xx[mu,nu] = Ca[mu,i]*Ca[nu,i]
-            Txx[mu,nu] += T1xx[mu,nu]
-        enddo i
-        Txx[mu,nu] *= 2.0
-        put DHF[mu,nu] += Txx[mu,nu]
-    endpardo mu,nu
-#
-ENDPROC hf_density
-#
-PROC back_transform_dipole
-#
-pardo mu, nu
-PUT AO_DENS[mu,nu] = 0.0
-endpardo  mu, nu
 
-server_barrier
-
-pardo  i, i1
-GET DENS_OO_A[i,i1]
-
-    do mu
-	txi[mu,i1] = DENS_OO_A [i,i1]*CA[mu,i]
-	do nu
-	    txx  [mu,nu] = txi[mu,i1]*CA[nu,i1]
-	    PUT  AO_DENS[mu,nu] += txx[mu,nu]
-	enddo nu
-    enddo mu
-
-endpardo  i, i1
-#
-pardo  j, j1
-
-    GET  DENS_OO_B[j,j1]
-    do mu
-	txj[mu,j1] = DENS_OO_B[j,j1] * CA[mu,j]
-	do nu
-	    txx[mu,nu] = txj[mu,j1] * CA[nu,j1]
-	    PUT AO_DENS [mu,nu] += txx[mu,nu]
-	enddo nu
-    enddo mu
-
-endpardo  j, j1
-#
-pardo  a, a1
-
-    GET  DENS_VV_A [a,a1]
-
-    do mu
-
-	txa  [mu,a1] = DENS_VV_A [a,a1] * CA [mu,a]
-
-	do nu
-
-	    txx  [mu,nu] = txa [mu,a1] * CA [nu,a1]
-	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
-
-	enddo nu
-
-    enddo mu
-
-endpardo  a, a1
-#
-#
-#      ...Virtual-virtual beta...
-#
-#
-pardo  b, b1
-
-    GET  DENS_VV_B   [b,b1]
-
-    do mu
-
-	txb  [mu,b1] = DENS_VV_B [b,b1] * CA [mu,b]
-
-	do nu
-
-	    txx  [mu,nu] = txb [mu,b1] * CA [nu,b1]
-	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
-
-	enddo nu
-
-    enddo mu
-
-endpardo  b, b1
-#
-pardo  a, i
-
-    GET  DENS_VO_A [a,i]
-
-    do mu
-
-	txi [mu,i] = DENS_VO_A [a,i] * CA [mu,a]
-
-	do nu
-
-	    txx  [mu,nu] = txi [mu,i] * CA [nu,i]
-	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
-
-	enddo nu
-
-    enddo mu
-
-endpardo  a, i
-#
-pardo  b, j
-
-    GET  DENS_VO_B [b,j]
-
-    do mu
-
-	txj [mu,j] = DENS_VO_B [b,j] * CA [mu,b]
-
-	do nu
-
-	    txx  [mu,nu] = txj [mu,j] * CA [nu,j]
-	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
-
-	enddo nu
-
-    enddo mu
-
-endpardo  b, j
-#
-pardo  i, a
-
-    GET  DENS_OV_A   [i,a]
-
-    do mu
-
-	txa [mu,a] = DENS_OV_A [i,a] * CA [mu,i]
-
-	do nu
-
-	    txx  [mu,nu] = txa [mu,a] * CA [nu,a]
-	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
-
-	enddo nu
-
-    enddo mu
-
-endpardo  i, a
-#
-#
-#      ...Occupied-virtual beta...
-#
-#
-pardo  j, b
-
-    GET  DENS_OV_B   [j,b]
-
-    do mu
-
-	txb [mu,b] = DENS_OV_B [j,b] * CA [mu,j]
-
-	do nu
-
-	    txx  [mu,nu] = txb [mu,b] * CA [nu,b]
-	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
-
-	enddo nu
-
-    enddo mu
-
-endpardo  j, b
-
-IF GROUNDSTATE == ONE                        # Grab HF Density
-pardo  mu, nu
-    GET                     DHF [mu,nu]
-    txx [mu,nu]           = DHF [mu,nu]
-    PUT  AO_DENS [mu,nu] += txx [mu,nu]
-endpardo  mu, nu
-ENDIF   #  GROUNDSTATE == ONE  #
-#
-server_barrier
-#
-do ixyz
-    ncount2 = (scalar)ixyz
-    dsum = 0.0
-    esum = 0.0
-    pardo mu,nu
-	get ao_dens[mu,nu]
-	ncount1 = 0.0
-	execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
-	Txx[mu,nu] = ao_dens[mu,nu]
-	etemp = Txx[mu,nu]*DAOINT[mu,nu]
-	esum += etemp
-    endpardo mu,nu
-    server_barrier
-    collective dsum += esum
-    server_barrier
-#    dsum += NucDip[ixyz]
-    if logright == one
-        Rdipole[ixyz] = dsum
-    endif
-    if logright == zero
-        Ldipole[ixyz] = dsum
-    endif
-enddo ixyz
-#
-ENDPROC back_transform_dipole
 #-------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------
@@ -6457,10 +7039,11 @@ roots = eom_roots
 # Initilize the vaiable to zmax and imax (memory of ERD and OED).
 zmax = 0.0
 imax = 0.0
-execute compute_int_scratchmem oed_ovl zmax imax
+execute compute_int_scratchmem_lowmem oed_ovl zmax imax
 
 print " "
-print "-- Parallel left-right EE-EOM-CCPT(2) program"
+print "-- Parallel left-right EE-EOM-MCPT(2) program"
+print "-- ....... "
 print "-- Subspace collapse non-symmetric davidson update"
 print "-- J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
@@ -6515,78 +7098,6 @@ enddo kiter
 
 print " "
 print "EOM-CCPT has converged"
-#print "FINAL excitation energies"
-#do kstate
-#    allocate contiguous EOM_EE_Energy[kstate:kstate]
-#    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
-#    print EOM_EE_Energy[kstate:kstate]
-#    deallocate contiguous EOM_EE_Energy[kstate:kstate]
-#enddo kstate
-
-# -----------------
-# props
-# -----------------
-# scale so <R|R>=1.0 
-call norm_lr_vec
-call form_r0
-
-call hf_density
-
-allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
-allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
-allocate contiguous EOM_EE_Energy[1:eom_roots]
-
-do kstate
-    print " "
-    print "--------"
-    print kstate
-
-# logright = 0.0 : Left = left eom amplitudes
-# logright = 1.0 : Left = lambda amplitudes
-
-    omega = SEk0[kstate]
-    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
-    r0 = SR0[kstate]
-    print r0
-    print EOM_EE_Energy[kstate:kstate]
-    print " "
-
-    print "***** EXPERIMENTAL OSCILLATOR STRENGTH *****"
-    do ixyz
-	RDipole[ixyz] = 0.0
-	LDipole[ixyz] = 0.0
-    enddo ixyz
-
-    call get_r_amps
-
-    logright = one
-    CALL PUT_IN_Lk
-    call compute_density
-    call back_transform_dipole
-#    print Rdipole
-
-    logright = zero
-    r0 = 1.0
-    CALL PUT_IN_Lk
-    call compute_density
-    call back_transform_dipole
-#    print Ldipole
-
-    dsum = 0.0
-    do ixyz
-	sum1 = RDipole[ixyz]
-	sum2 = LDipole[ixyz]
-	etemp = sum1*sum2*omega*2.0/3.0
-	Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz] = etemp
-        print Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz]
-	dsum += etemp
-    enddo ixyz
-    Dipole_Oscillator_Norm[kstate:kstate] = dsum
-    print Dipole_Oscillator_Norm[kstate:kstate]
-    print "***** EXPERIMENTAL OSCILLATOR STRENGTH *****"
-
-
-enddo kstate
 
 server_barrier
 

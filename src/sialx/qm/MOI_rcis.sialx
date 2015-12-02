@@ -14,8 +14,7 @@ PARDO mu, nu, lambda
 #
 	DO i   
 #
-	    get DCa[sigma,i]
-	    T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*DCa[sigma,i]
+	    T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*Ca[sigma,i]
 	    Txxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]  
 #
 	ENDDO i   
@@ -25,11 +24,9 @@ PARDO mu, nu, lambda
     DO i
 	DO i1
 #
-	    get DCa[lambda,i1]
-	    Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*DCa[lambda,i1]
+	    Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*Ca[lambda,i1]
 	    PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-	    get DCa[mu,i1]
-	    Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*DCa[mu,i1]
+	    Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*Ca[mu,i1]
 	    PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
 #
 	ENDDO i1
@@ -53,8 +50,7 @@ PARDO mu, nu, i, i1
     REQUEST Vxxii[mu,nu,i,i1]  
 #
     DO a
-        get DCa[nu,a]
-	Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*DCa[nu,a]
+	Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*Ca[nu,a]
 	PREPARE Vxaii[mu,a,i,i1] += Txaii[mu,a,i,i1]
     ENDDO a
 #
@@ -66,8 +62,7 @@ PARDO mu, nu, i, i1
     REQUEST Vixxi[i,mu,nu,i1]  
 #
     DO a
-        get DCa[nu,a]
-	Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*DCa[nu,a]
+	Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*Ca[nu,a]
 	PREPARE Vixai[i,mu,a,i1] += Tixai[i,mu,a,i1]
     ENDDO a
 #
@@ -88,16 +83,14 @@ PARDO mu, a, i, i1
 #
     DO a1 
 #
-        get DCa[mu,a1]
-	Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*DCa[mu,a1]
+	Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*Ca[mu,a1]
 	PREPARE Vaaii[a1,a,i,i1] += Taaii[a1,a,i,i1]
 #
     ENDDO a1 
 #
     DO a1 
 #
-        get DCa[mu,a1]
-	Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*DCa[mu,a1]
+	Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*Ca[mu,a1]
 	PREPARE Viaai[i,a1,a,i1] += Tiaai[i,a1,a,i1]
 #
     ENDDO a1 
@@ -126,24 +119,43 @@ PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
-print frag1_norb
-print frag1_baocc
-print frag1_eaocc
-print frag1_bavirt
-print frag1_eavirt
 restore_persistent Dca "MOI_ca" 
 restore_persistent DFock_a "MOI_focka" 
 server_barrier
+do a
+    do a1
+	get DFock_a[a,a1]
+	allocate Fock_a[a,a1]
+	Fock_a[a,a1] = DFock_a[a,a1]
+    enddo a1
+    do i1
+	get DFock_a[a,i1]
+	allocate Fock_a[a,i1]
+	Fock_a[a,i1] = DFock_a[a,i1]
+    enddo i1
+enddo a
+do i
+    do a1
+	get DFock_a[i,a1]
+	allocate Fock_a[i,a1]
+	Fock_a[i,a1] = DFock_a[i,a1]
+    enddo a1
+    do i1
+	get DFock_a[i,i1]
+	allocate Fock_a[i,i1]
+	Fock_a[i,i1] = DFock_a[i,i1]
+    enddo i1
+enddo i
 do mu
     do a
 	get DCa[mu,a]
-        allocate contiguous Ca[mu:mu,a:a]
-	Ca[mu:mu,a:a] = DCa[mu,a]
+        allocate Ca[mu,a]
+	Ca[mu,a] = DCa[mu,a]
     enddo a
     do i
 	get DCa[mu,i]
-        allocate contiguous Ca[mu:mu,i:i]
-	Ca[mu:mu,i:i] = DCa[mu,i]
+        allocate Ca[mu,i]
+	Ca[mu,i] = DCa[mu,i]
     enddo i
 enddo mu
 server_barrier
@@ -205,8 +217,7 @@ PROC HBAR_AB
 #
 pardo a, a1 
 #
-    get DFock_a[a,a1]
-    tpp[a,a1] = DFock_a[a,a1]       
+    tpp[a,a1] = Fock_a[a,a1]       
     put HBAR_aa[a,a1] += tpp[a,a1] 
 #
 endpardo a, a1 
@@ -218,8 +229,7 @@ PROC HBAR_IJ
 #
 pardo i, i1 
 #
-    get DFock_a[i1,i]
-    tpp[i1,i] = DFock_a[i1,i] 
+    tpp[i1,i] = Fock_a[i1,i] 
     put HBAR_ii[i1,i] += tpp[i1,i]
 #
 endpardo i, i1 
@@ -281,8 +291,7 @@ server_barrier
 pardo a, a1
     WHERE a==a1 
 #
-    get DFock_a[a,a1]
-    taa[a,a1]      = DFock_a[a,a1]
+    taa[a,a1]      = Fock_a[a,a1]
     execute return_diagonal_elements taa[a,a1]
     put DDaa[a,a1] = taa[a,a1]
 #
@@ -293,8 +302,7 @@ endpardo a, a1
 pardo i, i1
     WHERE i==i1 
 #
-    get DFock_a[i1,i]
-    tii[i1,i]      = DFock_a[i1,i]
+    tii[i1,i]      = Fock_a[i1,i]
     execute return_diagonal_elements tii[i1,i]
     put DDii[i1,i] = tii[i1,i]
 #
@@ -327,8 +335,7 @@ pardo a, i
 
     do a1
 	where a == a1
-        get DFock_a[a,a1]
-	Taa[a,a1] = DFock_a[a,a1]
+	Taa[a,a1] = Fock_a[a,a1]
 	execute return_diagonal_elements Taa[a,a1]
 	T1ai[a1,i] = 1.0
 	T2ai[a,i] = Taa[a,a1]*T1ai[a1,i]
@@ -337,8 +344,7 @@ pardo a, i
 
     do i1
 	where i==i1
-        get DFock_a[i,i1]
-	Tii[i,i1] = DFock_a[i,i1]
+	Tii[i,i1] = Fock_a[i,i1]
 	execute return_diagonal_elements Tii[i,i1]
 	T1ai[a,i1] = -1.0
 	T2ai[a,i] = Tii[i,i1]*T1ai[a,i1]
@@ -385,8 +391,7 @@ do ksub
 	do i1
         request RB1_a[ksub,a,i1]
 
-        get DFock_a[i,i1]
-	T1kai[ksub,a,i] = RB1_a[ksub,a,i1]*DFock_a[i,i1]
+	T1kai[ksub,a,i] = RB1_a[ksub,a,i1]*Fock_a[i,i1]
 	T1kai[ksub,a,i] *= -1.0
 	Tkai[ksub,a,i] += T1kai[ksub,a,i]
 	enddo i1
@@ -394,8 +399,7 @@ do ksub
         do a1
         request RB1_a[ksub,a1,i]
 
-        get DFock_a[a,a1]
-	T2kai[ksub,a,i] = RB1_a[ksub,a1,i]*DFock_a[a,a1]
+	T2kai[ksub,a,i] = RB1_a[ksub,a1,i]*Fock_a[a,a1]
 	Tkai[ksub,a,i] += T2kai[ksub,a,i]
         enddo a1
 
@@ -847,7 +851,7 @@ roots = eom_roots
 
 zmax = 0.0
 imax = 0.0
-execute compute_int_scratchmem oed_ovl zmax imax
+execute compute_int_scratchmem_lowmem oed_ovl zmax imax
 #
 #
 print " "
@@ -910,6 +914,14 @@ do kstate
     print CIS_EE_Energy[kstate:kstate]
     deallocate contiguous CIS_EE_Energy[kstate:kstate]
 enddo kstate
+do kstate
+    allocate contiguous CIS_EE_eV[kstate:kstate]
+    etemp = SEk0[kstate]
+    etemp *=27.2113961
+    CIS_EE_eV[kstate:kstate] = etemp
+    print CIS_EE_eV[kstate:kstate]
+    deallocate contiguous CIS_EE_eV[kstate:kstate]
+enddo kstate
 
 # store vector
 server_barrier
@@ -922,9 +934,8 @@ enddo kstate
 server_barrier
 
 #
-set_persistent R0k1_a   "C1_a"
-set_persistent RB1_a    "B1_a"
-set_persistent SEk0     "CIS_E"
+set_persistent R0k1_a   "MOI_C1_a"
+set_persistent RB1_a    "MOI_B1_a"
 server_barrier
 #
 #

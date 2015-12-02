@@ -10,6 +10,7 @@ sial tran_eom
 #
 #    Perform the first two stages of the transformation in two N5 steps. 
 #
+#
 PROC TRAN_TRAN2 
 #
 #    ------------------------------------------------------------------------
@@ -345,20 +346,6 @@ pardo mu, i, i1
 #
     enddo a
 #
-    do b 
-# 
-	Txbii[mu,b,i,i1] = 0.0 
-#
-	do nu  
-#
-	T1xbii[mu,b,i,i1] = Lxxii[mu,nu,i,i1]*ca[nu,b]
-	Txbii[mu,b,i,i1] += T1xbii[mu,b,i,i1]  
-#
-	enddo nu  
-#
-	prepare Vxbii[mu,b,i,i1] = Txbii[mu,b,i,i1]
-#
-    enddo b 
 #
     deallocate Lxixi[mu,i,*,i1] 
     deallocate Lxxii[mu,*,i,i1] 
@@ -395,20 +382,6 @@ pardo mu, a, i
 #
     enddo a1 
 #
-    do b 
-#
-	Txbai[mu,b,a,i] = 0.0 
-#
-	do nu  
-#
-	T1xbai[mu,b,a,i] = Lxxai[mu,nu,a,i]*ca[nu,b]
-	Txbai[mu,b,a,i] += T1xbai[mu,b,a,i]   
-#
-	enddo nu  
-#
-	prepare Vxbai[mu,b,a,i] = Txbai[mu,b,a,i]
-#
-    enddo b 
 #
     deallocate Lxxai[mu,*,a,i] 
 #
@@ -416,144 +389,16 @@ endpardo mu, a, i
 #
 #    ------------------------------------------------------------------------
 #
-print "Starting tran 3c"
-pardo mu, j, j1
-#
-    allocate Lxjxj[mu,j,*,j1] 
-    allocate Lxxjj[mu,*,j,j1] 
-    allocate Ljxxj[j,mu,*,j1] 
-#
-    do nu 
-#
-	request Vxjxj[mu,j,nu,j1]  
-	request Vxxjj[mu,nu,j,j1]  
-	request Vjxxj[j,mu,nu,j1]  
-#
-	Lxjxj[mu,j,nu,j1] = Vxjxj[mu,j,nu,j1] 
-	Lxxjj[mu,nu,j,j1] = Vxxjj[mu,nu,j,j1] 
-	Ljxxj[j,mu,nu,j1] = Vjxxj[j,mu,nu,j1] 
-#
-    enddo nu 
-#
-    do q 
-#
-	Txjqj[mu,j,q,j1] = 0.0  
-#
-	do nu  
-#
-	T1xjqj[mu,j,q,j1] = Lxjxj[mu,j,nu,j1]*ca[nu,q]
-	Txjqj[mu,j,q,j1] += T1xjqj[mu,j,q,j1]  
-#
-	enddo nu  
-#
-	prepare Vxjqj[mu,j,q,j1] = Txjqj[mu,j,q,j1]
-#
-    enddo q 
-#
-    do b
-#
-	Txbjj[mu,b,j,j1] = 0.0 
-	Tjxbj[j,mu,b,j1] = 0.0  
-#
-	do nu 
-#
-	T1xbjj[mu,b,j,j1] = Lxxjj[mu,nu,j,j1]*ca[nu,b]
-	Txbjj[mu,b,j,j1] += T1xbjj[mu,b,j,j1]  
-#
-	T1jxbj[j,mu,b,j1] = Ljxxj[j,mu,nu,j1]*ca[nu,b]
-	Tjxbj[j,mu,b,j1] += T1jxbj[j,mu,b,j1]  
-
-	enddo nu 
-#
-	prepare Vxbjj[mu,b,j,j1] = Txbjj[mu,b,j,j1]
-	prepare Vjxbj[j,mu,b,j1] = Tjxbj[j,mu,b,j1]
-#
-    enddo b
-#
-    do a 
-#
-	Txajj[mu,a,j,j1] = 0.0  
-#
-	do nu  
-#
-	T1xajj[mu,a,j,j1] = Lxxjj[mu,nu,j,j1]*ca[nu,a]
-	Txajj[mu,a,j,j1] += T1xajj[mu,a,j,j1]  
-#
-	enddo nu  
-#
-	prepare Vxajj[mu,a,j,j1] = Txajj[mu,a,j,j1]
-#
-    enddo a 
-#
-    deallocate Lxjxj[mu,j,*,j1] 
-    deallocate Lxxjj[mu,*,j,j1] 
-    deallocate Ljxxj[j,mu,*,j1] 
-#
-endpardo mu, j, j1
-#
-#    ------------------------------------------------------------------------
-#
-print "Starting tran 3d"
-pardo mu, b, j
-#
-    allocate Lxxbj[mu,*,b,j] 
-#
-    do nu 
-#
-	request Vxxbj[mu,nu,b,j]  
-	Lxxbj[mu,nu,b,j] = Vxxbj[mu,nu,b,j] 
-#
-    enddo nu 
-#
-    do b1 
-#
-	Txbbj[mu,b1,b,j] = 0.0  
-#
-	do nu  
-#
-	T1xbbj[mu,b1,b,j] = Lxxbj[mu,nu,b,j]*ca[nu,b1]
-	Txbbj[mu,b1,b,j] += T1xbbj[mu,b1,b,j]  
-#
-	enddo nu  
-#
-	prepare Vxbbj[mu,b1,b,j] = Txbbj[mu,b1,b,j]
-#
-    enddo b1 
-#
-    do a 
-#
-	Txabj[mu,a,b,j] = 0.0  
-#
-	do nu  
-#
-	T1xabj[mu,a,b,j] = Lxxbj[mu,nu,b,j]*ca[nu,a]
-	Txabj[mu,a,b,j] += T1xabj[mu,a,b,j]  
-#
-	enddo nu  
-#
-	prepare Vxabj[mu,a,b,j] = Txabj[mu,a,b,j]
-#
-    enddo a 
-#
-    deallocate Lxxbj[mu,*,b,j]  
-#
-endpardo mu, b, j
-#
-#    ------------------------------------------------------------------------
-#
 print "Starting tran 3e"
 pardo mu, i, j
 #
     allocate Lxixj[mu,i,*,j] 
-    allocate Lixxj[i,mu,*,j] 
 #
     do nu 
 #
 	request Vxixj[mu,i,nu,j]  
-	request Vixxj[i,mu,nu,j]  
 #
 	Lxixj[mu,i,nu,j] = Vxixj[mu,i,nu,j] 
-	Lixxj[i,mu,nu,j] = Vixxj[i,mu,nu,j] 
 #
     enddo nu 
 #
@@ -572,23 +417,8 @@ pardo mu, i, j
 #
     enddo q 
 #
-    do b 
-#
-	Tixbj[i,mu,b,j] = 0.0  
-#
-	do nu  
-#
-	T1ixbj[i,mu,b,j] = Lixxj[i,mu,nu,j]*ca[nu,b]
-	Tixbj[i,mu,b,j] += T1ixbj[i,mu,b,j]  
-#
-	enddo nu  
-#
-	prepare Vixbj[i,mu,b,j] = Tixbj[i,mu,b,j]
-#
-    enddo b 
 #
     deallocate Lxixj[mu,i,*,j] 
-    deallocate Lixxj[i,mu,*,j] 
 #
 endpardo mu, i, j
 #
@@ -716,10 +546,11 @@ pardo a, a1, i
 #
 	enddo mu 
 #
+	T2aaai[a2,a,a1,i]          = Taaai[a2,a,a1,i]
 	T1aaai[a1,a,a2,i]           = Taaai[a2,a,a1,i] 
 	T1aaai[a1,a,a2,i]          *= -1.0  
 	prepare Vaaai [a2,a,a1,i]  += Taaai [a2,a,a1,i]
-	prepare VSaaai[a2,a,a1,i]  += Taaai [a2,a,a1,i]
+	prepare VSaaai[a2,a,a1,i]  += T2aaai [a2,a,a1,i]
 	prepare VSaaai[a1,a,a2,i]  += T1aaai[a1,a,a2,i]
 #
     enddo a2  
@@ -728,184 +559,6 @@ pardo a, a1, i
 #
 endpardo a, a1, i
 # 
-print "Starting tran 4:VSqjqj"
-pardo q, j, j1
-#
-    allocate Lxjqj[*,j,q,j1] 
-#
-    do mu  
-#
-	request Vxjqj[mu,j,q,j1]  
-	request Vxjqj[mu,j1,q,j]  
-	Lxjqj[mu,j,q,j1]  = Vxjqj[mu,j,q,j1] 
-	Txjqj[mu,j,q,j1]  = Vxjqj[mu,j1,q,j] 
-	Lxjqj[mu,j,q,j1] -= Txjqj[mu,j,q,j1] 
-#
-    enddo mu  
-#
-    do q1 
-#
-	Tqjqj[q1,j,q,j1] = 0.0 
-#
-	do mu  
-#
-	T1qjqj[q1,j,q,j1]      = Lxjqj[mu,j,q,j1]*ca[mu,q1]
-	Tqjqj[q1,j,q,j1]      += T1qjqj[q1,j,q,j1] 
-#
-	enddo mu  
-#
-	prepare VSqjqj[q1,j,q,j1] = Tqjqj[q1,j,q,j1]
-#
-    enddo q1 
-#
-    deallocate Lxjqj[*,j,q,j1] 
-#
-endpardo q, j, j1
-#
-print "Starting tran 4:Vbbjj|Vjbbj"
-pardo b, j, j1
-#
-    allocate Lxbjj[*,b,j,j1] 
-    allocate Ljxbj[j,*,b,j1] 
-#
-    do mu 
-#
-	request Vxbjj[mu,b,j,j1]  
-	request Vjxbj[j,mu,b,j1]  
-#
-	Lxbjj[mu,b,j,j1] = Vxbjj[mu,b,j,j1] 
-	Ljxbj[j,mu,b,j1] = Vjxbj[j,mu,b,j1] 
-#
-    enddo mu 
-#
-    do b1 
-#
-	Tbbjj[b1,b,j,j1] = 0.0 
-#
-	do mu 
-#
-	T1bbjj[b1,b,j,j1] = Lxbjj[mu,b,j,j1]*ca[mu,b1]
-	Tbbjj[b1,b,j,j1] += T1bbjj[b1,b,j,j1]  
-#
-	enddo mu  
-#
-	prepare Vbbjj[b1,b,j,j1] = Tbbjj[b1,b,j,j1]
-#
-    enddo b1 
-#
-    deallocate Lxbjj[*,b,j,j1] 
-#
-    do b1 
-#
-	Tjbbj[j,b1,b,j1] = 0.0 
-#
-	do mu  
-#
-	T1jbbj[j,b1,b,j1] = Ljxbj[j,mu,b,j1]*ca[mu,b1]
-	Tjbbj[j,b1,b,j1] += T1jbbj[j,b1,b,j1]  
-#
-	enddo mu  
-#
-	prepare Vjbbj[j,b1,b,j1] = Tjbbj[j,b1,b,j1]
-#
-    enddo b1 
-#
-    deallocate Ljxbj[j,*,b,j1] 
-#
-endpardo b, j, j1
-#
-print "Starting tran 4:Vbbii"
-pardo b, i, i1
-#
-    allocate Lxbii[*,b,i,i1] 
-#
-    do mu  
-#
-	request Vxbii[mu,b,i,i1]  
-	Lxbii[mu,b,i,i1] = Vxbii[mu,b,i,i1] 
-#
-    enddo mu  
-#
-    do b1 
-#
-	Tbbii[b1,b,i,i1] = 0.0 
-#
-	do mu  
-#
-	T1bbii[b1,b,i,i1] = Lxbii[mu,b,i,i1]*ca[mu,b1]
-	Tbbii[b1,b,i,i1] += T1bbii[b1,b,i,i1]  
-#
-	enddo mu  
-#
-	prepare Vbbii[b1,b,i,i1] = Tbbii[b1,b,i,i1]
-#
-    enddo b1 
-#
-    deallocate Lxbii[*,b,i,i1] 
-#
-endpardo b, i, i1
-#
-print "Starting tran 4:Vjbii"
-pardo b, i, i1
-#
-    allocate Lxbii[*,b,i,i1] 
-#
-    do mu 
-#
-	request Vxbii[mu,b,i,i1]  
-	Lxbii[mu,b,i,i1] = Vxbii[mu,b,i,i1]  
-#
-    enddo mu 
-#
-    do j 
-#
-	Tjbii[j,b,i,i1] = 0.0 
-#
-	do mu 
-#
-	T1jbii[j,b,i,i1] = Lxbii[mu,b,i,i1]*ca[mu,j]
-	Tjbii[j,b,i,i1] += T1jbii[j,b,i,i1]  
-#
-	enddo mu  
-#
-	prepare Vjbii[j,b,i,i1] = Tjbii[j,b,i,i1]
-#
-    enddo j 
-#
-    deallocate Lxbii[*,b,i,i1] 
-#
-endpardo b, i, i1
-#
-print "Starting tran 4:Vbbai"
-pardo b, a, i
-#
-    allocate Lxbai[*,b,a,i] 
-#
-    do mu  
-#
-	request Vxbai[mu,b,a,i]  
-	Lxbai[mu,b,a,i] = Vxbai[mu,b,a,i] 
-#
-    enddo mu  
-#
-    do b1 
-#
-	Tbbai[b1,b,a,i] = 0.0 
-#
-	do mu  
-#
-	T1bbai[b1,b,a,i] = Lxbai[mu,b,a,i]*ca[mu,b1]
-	Tbbai[b1,b,a,i] += T1bbai[b1,b,a,i]  
-#
-	enddo mu  
-#
-	prepare Vbbai[b1,b,a,i] = Tbbai[b1,b,a,i]
-#
-    enddo b1 
-#
-    deallocate Lxbai[*,b,a,i] 
-#
-endpardo b, a, i
 #
 print "Starting tran 4:Vpiqj"
 pardo q, i, j
@@ -938,99 +591,6 @@ pardo q, i, j
 #
 endpardo q, i, j
 #
-print "Starting tran 4:Vaajj"
-pardo a, j, j1
-#
-    allocate Lxajj[*,a,j,j1] 
-#
-    do mu  
-#
-	request Vxajj[mu,a,j,j1]  
-	Lxajj[mu,a,j,j1] = Vxajj[mu,a,j,j1]  
-#
-    enddo mu  
-#
-    do a1 
-#
-	Taajj[a1,a,j,j1] = 0.0 
-#
-	do mu  
-#
-	T1aajj[a1,a,j,j1] = Lxajj[mu,a,j,j1]*ca[mu,a1]
-	Taajj[a1,a,j,j1] += T1aajj[a1,a,j,j1]  
-#
-	enddo mu  
-#
-	prepare Vaajj[a1,a,j,j1] = Taajj[a1,a,j,j1]
-#
-    enddo a1 
-#
-    deallocate Lxajj[*,a,j,j1] 
-#
-endpardo a, j, j1
-#
-print "Starting tran 4:Viabj"
-pardo b, i, j
-#
-    allocate Lixbj[i,*,b,j] 
-#
-    do mu 
-#
-	request Vixbj[i,mu,b,j]  
-	Lixbj[i,mu,b,j] = Vixbj[i,mu,b,j] 
-#
-    enddo mu 
-#
-    do a 
-#
-	Tiabj[i,a,b,j] = 0.0 
-#
-	do mu 
-#
-	T1iabj[i,a,b,j] = Lixbj[i,mu,b,j]*ca[mu,a]
-	Tiabj[i,a,b,j] += T1iabj[i,a,b,j]  
-#
-	enddo mu 
-#
-	prepare Viabj[i,a,b,j] += Tiabj[i,a,b,j]
-#
-    enddo a 
-#
-    deallocate Lixbj[i,*,b,j] 
-#
-endpardo b, i, j
-#
-print "Starting tran 4:Vaabj"
-pardo a, b, j
-#
-    allocate Lxabj[*,a,b,j] 
-#
-    do mu  
-#
-	request Vxabj[mu,a,b,j]  
-	Lxabj[mu,a,b,j] = Vxabj[mu,a,b,j] 
-#
-    enddo mu  
-#
-    do a1 
-#
-	Taabj[a1,a,b,j] = 0.0 
-#
-	do mu  
-#
-	T1aabj[a1,a,b,j] = Lxabj[mu,a,b,j]*ca[mu,a1]
-	Taabj[a1,a,b,j] += T1aabj[a1,a,b,j]  
-#
-	enddo mu  
-#
-	prepare Vaabj[a1,a,b,j] = Taabj[a1,a,b,j]
-#
-    enddo a1 
-#
-    deallocate Lxabj[*,a,b,j] 
-#
-endpardo a, b, j
-#
 #    ------------------------------------------------------------------------
 #
 ENDPROC TRAN_TRAN4 
@@ -1050,6 +610,5 @@ CALL TRAN_TRAN4     # --> performs the fourth stage of the
 #     two-electron integral transformation.  
 #
 ENDPROC TRAN_UHF 
-#
 
 endsial tran_eom

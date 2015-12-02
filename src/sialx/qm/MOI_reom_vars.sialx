@@ -380,9 +380,11 @@ contiguous local CLLB1_a[ksub,a,i]
 contiguous local Dipole_Oscillator_Strength[kstate,ixyz]
 contiguous local Dipole_Oscillator_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
+contiguous local CIS_EE_eV[kstate]
 contiguous local EOM_EE_Energy[kstate]
 
-contiguous local ca[mu,p]
+local Ca[mu,p]
+local Fock_a[p,p1]
 #
 # Declare temp 
 # --------------- 
@@ -393,6 +395,7 @@ temp R3aiai[a,i,a1,i1]
 temp  Tk[ksub]
 temp  T1k[ksub]
 temp  T2k[ksub]
+temp  T2aaai[a,a2,a1,i]
 temp  T1aaai[a,a2,a1,i]
 temp  Taaai[a,a2,a1,i]
 temp  Taaii[a,a2,i,i2]

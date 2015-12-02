@@ -353,6 +353,8 @@ print " "
               do_iter = 2.0 
            ENDIF 
          ENDDO ifrag 
+         print dimer_doubles  
+         print fragment_doubles  
          print etemp 
          sip_barrier 
          if do_iter < 1.0 
@@ -474,19 +476,15 @@ print e2new
 enddo ifrag
 
 server_barrier
-#set_persistent FwC "MOI_wC"
-#set_persistent FT1old "MOI_T1"
-#set_persistent FT2old "MOI_T2ab"
-#set_persistent FFock_oo "MOI_Fock_oo"
-#set_persistent FFock_vv "MOI_Fock_vv"
-#set_persistent Fca_o "MOI_Ca_o"
-#set_persistent Fca_v "MOI_Ca_v"
-#set_persistent HBAR_ii "MOI_HBAR_ii"
-#set_persistent HBAR_aa "MOI_HBAR_aa"
-#set_persistent HBAR_ia "MOI_HBAR_ia"
-#set_persistent HBAR_AJIB "MOI_HBAR_ajib"
-#set_persistent HBAR_IAJK "MOI_HBAR_iajk"
-#set_persistent HBAR_ABCI "MOI_HBAR_abci"
+set_persistent FwC "MOI_wC"
+set_persistent FT1old "MOI_T1"
+set_persistent FT2old "MOI_T2ab"
+set_persistent HBAR_ii "MOI_HBAR_ii"
+set_persistent HBAR_aa "MOI_HBAR_aa"
+set_persistent HBAR_ia "MOI_HBAR_ia"
+set_persistent HBAR_AJIB "MOI_HBAR_ajib"
+set_persistent HBAR_IAJK "MOI_HBAR_iajk"
+set_persistent HBAR_ABCI "MOI_HBAR_abci"
 
          sip_barrier 
                            ENDSIAL FRAG_2ORDER_CORR 
