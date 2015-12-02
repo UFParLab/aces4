@@ -1,11 +1,8 @@
-import "reom_rhf_defs.sialx" 
-import "reom_vars.sialx"
+import "MOI_reom_defs.sialx" 
+import "MOI_reom_vars.sialx"
 #
 SIAL RCIS_RHF
 #***********************************************************
-#
-#    ------------------------------------------------------------------------
-#
 PROC TRAN_TRAN2 
 PARDO mu, nu, lambda
 #
@@ -17,7 +14,8 @@ PARDO mu, nu, lambda
 #
 	DO i   
 #
-	    T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*ca[sigma,i]
+	    get DCa[sigma,i]
+	    T1xxxi[mu,nu,lambda,i]  = aoint[mu,nu,lambda,sigma]*DCa[sigma,i]
 	    Txxxi[mu,nu,lambda,i]  += T1xxxi[mu,nu,lambda,i]  
 #
 	ENDDO i   
@@ -27,9 +25,11 @@ PARDO mu, nu, lambda
     DO i
 	DO i1
 #
-	    Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*ca[lambda,i1]
+	    get DCa[lambda,i1]
+	    Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*DCa[lambda,i1]
 	    PREPARE Vxxii[mu,nu,i1,i] += Txxii[mu,nu,i1,i]
-	    Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*ca[mu,i1]
+	    get DCa[mu,i1]
+	    Tixxi[i1,nu,lambda,i]      = Txxxi[mu,nu,lambda,i]*DCa[mu,i1]
 	    PREPARE Vixxi[i1,nu,lambda,i] += Tixxi[i1,nu,lambda,i]
 #
 	ENDDO i1
@@ -53,7 +53,8 @@ PARDO mu, nu, i, i1
     REQUEST Vxxii[mu,nu,i,i1]  
 #
     DO a
-	Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*ca[nu,a]
+        get DCa[nu,a]
+	Txaii[mu,a,i,i1]          = Vxxii[mu,nu,i,i1]*DCa[nu,a]
 	PREPARE Vxaii[mu,a,i,i1] += Txaii[mu,a,i,i1]
     ENDDO a
 #
@@ -65,7 +66,8 @@ PARDO mu, nu, i, i1
     REQUEST Vixxi[i,mu,nu,i1]  
 #
     DO a
-	Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*ca[nu,a]
+        get DCa[nu,a]
+	Tixai[i,mu,a,i1]          = Vixxi[i,mu,nu,i1]*DCa[nu,a]
 	PREPARE Vixai[i,mu,a,i1] += Tixai[i,mu,a,i1]
     ENDDO a
 #
@@ -86,14 +88,16 @@ PARDO mu, a, i, i1
 #
     DO a1 
 #
-	Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*ca[mu,a1]
+        get DCa[mu,a1]
+	Taaii[a1,a,i,i1]          = Vxaii[mu,a,i,i1]*DCa[mu,a1]
 	PREPARE Vaaii[a1,a,i,i1] += Taaii[a1,a,i,i1]
 #
     ENDDO a1 
 #
     DO a1 
 #
-	Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*ca[mu,a1]
+        get DCa[mu,a1]
+	Tiaai[i,a1,a,i1]          = Vixai[i,mu,a,i1]*DCa[mu,a1]
 	PREPARE Viaai[i,a1,a,i1] += Tiaai[i,a1,a,i1]
 #
     ENDDO a1 
@@ -122,10 +126,26 @@ PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
-restore_persistent ca    "ca"
-restore_persistent Fock_a "fock_a"
-restore_persistent Vaaii "Vaaii"
-restore_persistent Viaai "Viaai"
+print frag1_norb
+print frag1_baocc
+print frag1_eaocc
+print frag1_bavirt
+print frag1_eavirt
+restore_persistent Dca "MOI_ca" 
+restore_persistent DFock_a "MOI_focka" 
+server_barrier
+do mu
+    do a
+	get DCa[mu,a]
+        allocate contiguous Ca[mu:mu,a:a]
+	Ca[mu:mu,a:a] = DCa[mu,a]
+    enddo a
+    do i
+	get DCa[mu,i]
+        allocate contiguous Ca[mu:mu,i:i]
+	Ca[mu:mu,i:i] = DCa[mu,i]
+    enddo i
+enddo mu
 server_barrier
 #
 ENDPROC READ_AMP
@@ -185,7 +205,8 @@ PROC HBAR_AB
 #
 pardo a, a1 
 #
-    tpp[a,a1] = fock_a[a,a1]       
+    get DFock_a[a,a1]
+    tpp[a,a1] = DFock_a[a,a1]       
     put HBAR_aa[a,a1] += tpp[a,a1] 
 #
 endpardo a, a1 
@@ -197,7 +218,8 @@ PROC HBAR_IJ
 #
 pardo i, i1 
 #
-    tpp[i1,i] = fock_a[i1,i] 
+    get DFock_a[i1,i]
+    tpp[i1,i] = DFock_a[i1,i] 
     put HBAR_ii[i1,i] += tpp[i1,i]
 #
 endpardo i, i1 
@@ -259,7 +281,8 @@ server_barrier
 pardo a, a1
     WHERE a==a1 
 #
-    taa[a,a1]      = fock_a[a,a1]
+    get DFock_a[a,a1]
+    taa[a,a1]      = DFock_a[a,a1]
     execute return_diagonal_elements taa[a,a1]
     put DDaa[a,a1] = taa[a,a1]
 #
@@ -270,7 +293,8 @@ endpardo a, a1
 pardo i, i1
     WHERE i==i1 
 #
-    tii[i1,i]      = fock_a[i1,i]
+    get DFock_a[i1,i]
+    tii[i1,i]      = DFock_a[i1,i]
     execute return_diagonal_elements tii[i1,i]
     put DDii[i1,i] = tii[i1,i]
 #
@@ -303,7 +327,8 @@ pardo a, i
 
     do a1
 	where a == a1
-	Taa[a,a1] = fock_a[a,a1]
+        get DFock_a[a,a1]
+	Taa[a,a1] = DFock_a[a,a1]
 	execute return_diagonal_elements Taa[a,a1]
 	T1ai[a1,i] = 1.0
 	T2ai[a,i] = Taa[a,a1]*T1ai[a1,i]
@@ -312,7 +337,8 @@ pardo a, i
 
     do i1
 	where i==i1
-	Tii[i,i1] = fock_a[i,i1]
+        get DFock_a[i,i1]
+	Tii[i,i1] = DFock_a[i,i1]
 	execute return_diagonal_elements Tii[i,i1]
 	T1ai[a,i1] = -1.0
 	T2ai[a,i] = Tii[i,i1]*T1ai[a,i1]
@@ -359,7 +385,8 @@ do ksub
 	do i1
         request RB1_a[ksub,a,i1]
 
-	T1kai[ksub,a,i] = RB1_a[ksub,a,i1]*fock_a[i,i1]
+        get DFock_a[i,i1]
+	T1kai[ksub,a,i] = RB1_a[ksub,a,i1]*DFock_a[i,i1]
 	T1kai[ksub,a,i] *= -1.0
 	Tkai[ksub,a,i] += T1kai[ksub,a,i]
 	enddo i1
@@ -367,7 +394,8 @@ do ksub
         do a1
         request RB1_a[ksub,a1,i]
 
-	T2kai[ksub,a,i] = RB1_a[ksub,a1,i]*fock_a[a,a1]
+        get DFock_a[a,a1]
+	T2kai[ksub,a,i] = RB1_a[ksub,a1,i]*DFock_a[a,a1]
 	Tkai[ksub,a,i] += T2kai[ksub,a,i]
         enddo a1
 
@@ -824,16 +852,18 @@ execute compute_int_scratchmem oed_ovl zmax imax
 #
 print " "
 print "-- Parallel RHF-CIS program v2"
+print "-- Modified to runfor MOI fragment"
 print "-- J. Phys. Chem. 1992, 96, 135-149."
 print "-- Subspace collapse symmetric davidson update"
 print "-- J. Comp. Phys. 1992, 103, 382-389 | J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
+print "-- Modified to run for MOI fragment 2015"
+print " "
 server_barrier
 CALL READ_AMP
-#server_barrier 
-#CALL TRAN_UHF 
 server_barrier 
+CALL TRAN_UHF 
 call form_H
 call form_diag
 call form_guess
@@ -892,10 +922,6 @@ enddo kstate
 server_barrier
 
 #
-set_persistent ca       "ca"
-set_persistent Fock_a   "fock_a"
-set_persistent Vaaii    "Vaaii"
-set_persistent Viaai    "Viaai"
 set_persistent R0k1_a   "C1_a"
 set_persistent RB1_a    "B1_a"
 set_persistent SEk0     "CIS_E"

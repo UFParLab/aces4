@@ -268,9 +268,6 @@ import "tran_rhf_no4v_defs.sialx"
           ENDDO sigma
 
           DO i
-             T1xxxi[mu,nu,lambda,i]         = Txxxi[mu,nu,lambda,i] 
-             PREPARE Vxxxi[mu,nu,lambda,i]  = T1xxxi[mu,nu,lambda,i]
-
            DO i1
 #
               Txxii[mu,nu,i1,i]          = Txxxi[mu,nu,lambda,i]*ca[lambda,i1]
@@ -315,7 +312,6 @@ import "tran_rhf_no4v_defs.sialx"
 #    ------------------------------------------------------------------------
 #
      server_barrier
-     destroy Vxxxi
 #
 #    ------------------------------------------------------------------------
 #

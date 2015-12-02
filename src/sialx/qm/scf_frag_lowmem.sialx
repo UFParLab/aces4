@@ -25,6 +25,7 @@ SIAL SCF_FRAGMENT
       sip_barrier 
 
     PARDO katom  
+    where katom > 1
 	icount = (scalar)katom
 
 #	print icount # etemp 
@@ -116,12 +117,46 @@ SIAL SCF_FRAGMENT
       CALL SET_FRAG_PARMS   
       sip_barrier 
       print "Done setting fragment parameters" 
+
+      restore_persistent MOI_ca "MOI_ca"
+      restore_persistent MOI_focka "MOI_focka"
+      server_barrier
+# place MOI scf coeffs.
+      pardo fmu, fa
+          get MOI_ca[fmu,fa]
+	  put Dca[fmu,fa] = MOI_ca[fmu,fa]
+      endpardo fmu, fa
+      pardo fmu, fi
+          get MOI_ca[fmu,fi]
+	  put Dca[fmu,fi] = MOI_ca[fmu,fi]
+      endpardo fmu, fi
+# place MOI fock matrix
+      pardo fa,fa1
+          get MOI_focka[fa,fa1]
+	  put DFock_a[fa,fa1] = MOI_focka[fa,fa1]
+      endpardo fa,fa1
+      pardo fa,fi1
+          get MOI_focka[fa,fi1]
+	  put DFock_a[fa,fi1] = MOI_focka[fa,fi1]
+      endpardo fa,fi1
+      pardo fi,fa1
+          get MOI_focka[fi,fa1]
+	  put DFock_a[fi,fa1] = MOI_focka[fi,fa1]
+      endpardo fi,fa1
+      pardo fi,fi1
+          get MOI_focka[fi,fi1]
+	  put DFock_a[fi,fi1] = MOI_focka[fi,fi1]
+      endpardo fi,fi1
+      server_barrier
+      print "Done placing MOI"
+
       print "Performing monomer SCF"
       call IGUESS
       sip_barrier 
 
       set_persistent Dca "ca" 
       set_persistent DFock_a "fock_a"
+      print "Done setting persistent arrays"
 
 # -----------------------------------------------------------------------------
 #

@@ -1,4 +1,4 @@
-import "reom_rhf_defs.sialx" 
+import "MOI_reom_defs.sialx" 
 sial eom_vars
 
 #
@@ -17,40 +17,40 @@ index qsub     = 2: eom_subspc
 index jsub     = 1: eom_subspc
 index ixyz     = 1: 3
 
-aoindex mu     = 1: norb
-aoindex nu     = 1: norb
-aoindex lambda = 1: norb
-aoindex sigma  = 1: norb
+aoindex mu     = 1: frag1_norb
+aoindex nu     = 1: frag1_norb
+aoindex lambda = 1: frag1_norb
+aoindex sigma  = 1: frag1_norb
 
-moaindex i = baocc: eaocc
-moaindex i1= baocc: eaocc
-moaindex i2= baocc: eaocc
-moaindex i3= baocc: eaocc
+moaindex i = frag1_baocc: frag1_eaocc
+moaindex i1= frag1_baocc: frag1_eaocc
+moaindex i2= frag1_baocc: frag1_eaocc
+moaindex i3= frag1_baocc: frag1_eaocc
 
-moaindex a = bavirt: eavirt
-moaindex a1= bavirt: eavirt
-moaindex a2= bavirt: eavirt
-moaindex a3= bavirt: eavirt
+moaindex a = frag1_bavirt: frag1_eavirt
+moaindex a1= frag1_bavirt: frag1_eavirt
+moaindex a2= frag1_bavirt: frag1_eavirt
+moaindex a3= frag1_bavirt: frag1_eavirt
 
-moaindex j = baocc: eaocc
-moaindex j1= baocc: eaocc
-moaindex j2= baocc: eaocc
-moaindex j3= baocc: eaocc
+moaindex j = frag1_baocc: frag1_eaocc
+moaindex j1= frag1_baocc: frag1_eaocc
+moaindex j2= frag1_baocc: frag1_eaocc
+moaindex j3= frag1_baocc: frag1_eaocc
 
-moaindex b = bavirt: eavirt
-moaindex b1= bavirt: eavirt
-moaindex b2= bavirt: eavirt
-moaindex b3= bavirt: eavirt
+moaindex b = frag1_bavirt: frag1_eavirt
+moaindex b1= frag1_bavirt: frag1_eavirt
+moaindex b2= frag1_bavirt: frag1_eavirt
+moaindex b3= frag1_bavirt: frag1_eavirt
 
-moaindex p = baocc: eavirt
-moaindex p1= baocc: eavirt
-moaindex p2= baocc: eavirt
-moaindex p3= baocc: eavirt
+moaindex p = frag1_baocc: frag1_eavirt
+moaindex p1= frag1_baocc: frag1_eavirt
+moaindex p2= frag1_baocc: frag1_eavirt
+moaindex p3= frag1_baocc: frag1_eavirt
 
-moaindex q = baocc: eavirt
-moaindex q1= baocc: eavirt
-moaindex q2= baocc: eavirt
-moaindex q3= baocc: eavirt
+moaindex q = frag1_baocc: frag1_eavirt
+moaindex q1= frag1_baocc: frag1_eavirt
+moaindex q2= frag1_baocc: frag1_eavirt
+moaindex q3= frag1_baocc: frag1_eavirt
 #
 # Declare int 
 # --------------- 
@@ -145,6 +145,9 @@ distributed DENS_VO_B[a,i]
 distributed DHF[mu,nu]
 
 distributed ao_dens[mu,nu]
+
+distributed DCa[mu,p]
+distributed DFock_a[p,p1]
 
 #
 # Declare served 
@@ -378,6 +381,8 @@ contiguous local Dipole_Oscillator_Strength[kstate,ixyz]
 contiguous local Dipole_Oscillator_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
 contiguous local EOM_EE_Energy[kstate]
+
+contiguous local ca[mu,p]
 #
 # Declare temp 
 # --------------- 

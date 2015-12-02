@@ -287,7 +287,6 @@ ENDPROC FORM_JFRAG_HBAR
       deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
       deallocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
       sip_barrier 
-#
       ENDPROC IGUESS   
 
 #
@@ -310,15 +309,9 @@ print " "
 #     Set fragment parameters   
 #     ----------------------- 
 #
-# Restore the persistent arrays. 
-     #create DCa 
-     #create DFock_a
-     #execute enable_all_rank_print
       sip_barrier
-#      restore_persistent Dca "ca" 
-#      set_persistent Dca "ca" 
-#      restore_persistent DFock_a "fock_a"
-#      set_persistent DFock_a "fock_a"
+      restore_persistent Dca "ca" 
+      restore_persistent DFock_a "fock_a"
       rmaster = 0
       allocate sp[*] 
       zero = 0.0 
@@ -332,8 +325,6 @@ print " "
       CALL SET_FRAG_PARMS   
       sip_barrier 
       print "Done setting fragment parameters" 
-      print "Performing monomer SCF"
-      call IGUESS
       call set_fock_mos
       sip_barrier 
 

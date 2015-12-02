@@ -925,11 +925,11 @@ c           nocc_a = nocc_a + charge(m) - nocc_b
 
 c TEST !!!! 
 
-      write(6,*) ' Performing an SCF calculation on frag:', 
-     *  current_frag, 
-     * 'in a basis of', n_basis, 'functions with', nocc_a, nocc_b, 
-     * 'alpha and beta occupied electrons and ', nvirt_a, nvirt_b, 
-     * ' alpha and beta virtual electrons'    
+C      write(6,*) ' Performing an SCF calculation on frag:', 
+C     *  current_frag, 
+C     * 'in a basis of', n_basis, 'functions with', nocc_a, nocc_b, 
+C     * 'alpha and beta occupied electrons and ', nvirt_a, nvirt_b, 
+C     * ' alpha and beta virtual electrons'    
       if (nocc_a .eq. 0) return  
 
 c-----------------------------------------------------------------------
@@ -1386,40 +1386,40 @@ c-----------------------------------------------------------------------
 c       Compute the new HF energy  
 c-----------------------------------------------------------------------
 
-       call monomer_nn_repulsion(frag_nre,n_apf,ncenters,
-     *                           iatom,coords,charge)
+C       call monomer_nn_repulsion(frag_nre,n_apf,ncenters,
+C     *                           iatom,coords,charge)
 
-        call hfenergy_l(HFD_A,HFD_B,FA,FB,h0,frag_nre,
-     *                  n_basis,current_frag) 
-       write(6,*) ' Frag: ',current_frag," FINAL SCF = ",frag_nre
-
+C        call hfenergy_l(HFD_A,HFD_B,FA,FB,h0,frag_nre,
+C     *                  n_basis,current_frag) 
+       write(6,9999) current_frag,frag_nre
+9999   format(' Frag: ',I5," FINAL SCF = ",F24.14)
 c     if (current_frag .eq. -1) then 
-       write(6,*) ' Alpha Orbital energies ' 
-       write(6,*) ' -----------------------------------------------' 
-       do m = 1, nocc_a 
-          write(6,*) '  ', m, FTA(m,m), FTA(m,m)*27.21138386 
-       enddo  
-       write(6,*) ' -----------------------------------------------' 
-       do m = nocc_a + 1, n_basis  
-          write(6,*) '  ', m, FTA(m,m), FTA(m,m)*27.21138386  
-       enddo  
-       write(6,*) ' -----------------------------------------------' 
-       write(6,*) ' ' 
-
-       write(6,*) ' Beta Orbital energies ' 
-       write(6,*) ' -----------------------------------------------' 
-       do m = 1, nocc_b 
-          write(6,*) '  ', m, FTB(m,m), FTB(m,m)*27.21138386 
-       enddo  
-       write(6,*) ' -----------------------------------------------' 
-       do m = nocc_b + 1, n_basis  
-          write(6,*) '  ', m, FTB(m,m), FTB(m,m)*27.21138386  
-       enddo  
-       write(6,*) ' -----------------------------------------------' 
-       write(6,*) ' ' 
-
+C       write(6,*) ' Alpha Orbital energies ' 
+C       write(6,*) ' -----------------------------------------------' 
+C       do m = 1, nocc_a 
+C          write(6,*) '  ', m, FTA(m,m), FTA(m,m)*27.21138386 
+C       enddo  
+C       write(6,*) ' -----------------------------------------------' 
+C       do m = nocc_a + 1, n_basis  
+C          write(6,*) '  ', m, FTA(m,m), FTA(m,m)*27.21138386  
+C       enddo  
+C       write(6,*) ' -----------------------------------------------' 
+C       write(6,*) ' ' 
+C
+C       write(6,*) ' Beta Orbital energies ' 
+C       write(6,*) ' -----------------------------------------------' 
+C       do m = 1, nocc_b 
+C          write(6,*) '  ', m, FTB(m,m), FTB(m,m)*27.21138386 
+C       enddo  
+C       write(6,*) ' -----------------------------------------------' 
+C       do m = nocc_b + 1, n_basis  
+C          write(6,*) '  ', m, FTB(m,m), FTB(m,m)*27.21138386  
+C       enddo  
+C       write(6,*) ' -----------------------------------------------' 
+C       write(6,*) ' ' 
+C
 c      endif 
-          write(6,*) ' Done SCF calculation of ATOM :', current_frag  
+C          write(6,*) ' Done SCF calculation of ATOM :', current_frag  
 
 c-----------------------------------------------------------------------
 c     Put the transformation coefficients to the proper spot  
@@ -2709,9 +2709,9 @@ C
       enddo  
 
       etotal = 0.5d0*(ea + eb) + nnr
-      write(6,*) ' Frag:',current_frag,
-     *           ' SCF energy = ', etotal 
+      write(6,9998) current_frag,etotal 
 
+9998   format(' Frag: ',I5,"    E(SCF) = ",F24.14)
       nnr = etotal
 
       return 

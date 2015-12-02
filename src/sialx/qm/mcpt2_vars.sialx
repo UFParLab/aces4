@@ -57,6 +57,8 @@ aoindex  fmu= 1: frag1_norb
 aoindex  fnu= 1: frag1_norb
 aoindex  flambda= 1: frag1_norb
 aoindex  fsigma= 1: frag1_norb
+moaindex fp =  frag1_baocc: frag1_eavirt
+moaindex fp1=  frag1_baocc: frag1_eavirt
  
 # ---------------
 # Declare ints
@@ -211,6 +213,9 @@ distributed DwOccA_frag[i]
 distributed DwOccB_frag[j]
 distributed DwVirtA_frag[a]
 distributed DwVirtB_frag[b]
+
+distributed MOI_ca[fmu,fp]
+distributed MOI_focka[fp,fp1]
 
 distributed HBAR_ii[fi,fi1]
 distributed HBAR_aa[fa,fa1]

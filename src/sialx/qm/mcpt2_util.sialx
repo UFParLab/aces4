@@ -77,6 +77,47 @@ SIAL mcpt2_util
 
       sip_barrier
       ENDPROC SET_FRAG_PARMS    
+
+      PROC set_fock_mos
+      sip_barrier
+
+      print "Placing HF coefficients on nodes"
+      DO p 
+         Sx3[p] = 1.0 
+      ENDDO p  
+
+      DO p 
+         t3[p] = 0.0 
+      DO p1 
+      where p == p1
+            GET Dfock_a[p,p1] 
+            t3_1[p] = Dfock_a[p,p1]*Sx3[p1] 
+            t3[p] += t3_1[p] 
+      ENDDO p1 
+         fock_a[p] = t3[p] 
+      ENDDO p 
+
+      DO p 
+         t3[p] = fock_a[p] 
+      ENDDO p 
+
+      DO ifrag
+         DO mu
+         where (int)SwAO_frag[(index)mu] == ifrag
+            DO a 
+            where (int)SwVirtA_frag[(index)a] == ifrag
+                  GET        Dca[mu,a] 
+                  ca[mu,a] = Dca[mu,a] 
+            ENDDO a 
+            DO i 
+            where (int)SwOccA_frag[(index)i] == ifrag
+                  GET        Dca[mu,i] 
+                  ca[mu,i] = Dca[mu,i] 
+            ENDDO i 
+         ENDDO mu  
+      ENDDO ifrag
+      sip_barrier
+      ENDPROC set_fock_mos
 #
 ENDSIAL mcpt2_util
 ################################################################################

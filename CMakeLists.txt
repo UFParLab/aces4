@@ -561,6 +561,7 @@ set(SIAL_FILES
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/scf_frag_lowmem.sialx;
     src/sialx/qm/drop_core_in_sial.sialx;
+    src/sialx/qm/mcpt2_corr.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
     src/sialx/qm/tran_frag.sialx;
     src/sialx/qm/mcpt2_vars.sialx;
@@ -570,6 +571,9 @@ set(SIAL_FILES
     src/sialx/qm/mcpt2_util.sialx;
     src/sialx/qm/MOI_rhf.sialx;
     src/sialx/qm/MOI_rhf_defs.sialx;
+    src/sialx/qm/MOI_reom_defs.sialx;
+    src/sialx/qm/MOI_reom_vars.sialx;
+    src/sialx/qm/MOI_rcis.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;
