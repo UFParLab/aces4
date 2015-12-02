@@ -3,7 +3,8 @@ sial frag_vars
 # ---------------
 # Declare index
 # ---------------
-index   kiter  = 1: 10 # microiterations 
+index   kiter  = 1: 10 # monomer microiterations 
+index   diter  = 1: 5 # dimer microiterations 
 index   jiter  = 1: cc_iter # macroiterations 
 index   ifrag  = 1: nfrags # Nsolute   
 index  iifrag  = 1: nfrags # Nsolute    
@@ -225,7 +226,7 @@ distributed HBAR_iajk[fi,fi1,fa,fi2]
 distributed HBAR_abci[fa,fa1,fa2,fi]
 
 distributed FT1old[fa,fi]
-distributed FwC[fa,fi]
+distributed FwC[fp,fp1]
 distributed FT2old[fa,fi,fa1,fi1]
 distributed FFock_oo[fi,fi1]
 distributed FFock_vv[fa,fa1]
@@ -327,6 +328,7 @@ temp tbx[b,nu]
 temp tbj[b,j]
 temp tai[a,i] 
 temp t1ai[a,i] 
+temp t1ia[i,a] 
 temp txp[mu,p] 
 temp tpx[p,nu]
 temp tp[ifrag] 

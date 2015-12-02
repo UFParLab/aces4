@@ -720,8 +720,8 @@ SIAL mcpt2_doubles
       eold = 0.0
 
          print "Performing a dimer CCPT2 calc"
-      DO kiter 
-	 print kiter
+      DO diter 
+	 print diter
 #
       PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{vo}{vo}"
       where ifrag != jfrag
@@ -1158,12 +1158,12 @@ SIAL mcpt2_doubles
       ediff = escr**0.5
       print ediff
       if ediff < cc_conv
-	  exit #kiter
+	  exit #diter
       endif
       eold = dimer_doubles
       sip_barrier
 #
-      ENDDO kiter 
+      ENDDO diter 
 # 
       ENDPROC FORM_T2_DIMER_ITERS
 #
