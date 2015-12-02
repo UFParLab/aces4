@@ -6461,6 +6461,7 @@ execute compute_int_scratchmem oed_ovl zmax imax
 
 print " "
 print "-- Parallel left-right EE-EOM-CCPT(2) program"
+print "-- J. Comp. Chem. 143, 164103 (2015)"
 print "-- Subspace collapse non-symmetric davidson update"
 print "-- J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
