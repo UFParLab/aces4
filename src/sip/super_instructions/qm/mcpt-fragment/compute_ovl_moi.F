@@ -195,8 +195,7 @@ c---------------------------------------------------------------------------
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
      *                        npcoeffs, ncenters, pcoords, ptcoords,
-     *                        pcharge, atom,
-     *                        scr, iscr) 
+     *                        pcharge, scr, iscr) 
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
