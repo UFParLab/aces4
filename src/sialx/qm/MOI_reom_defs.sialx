@@ -17,7 +17,7 @@ predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT
 
 aoindex aces_defs_mu = 1: frag1_norb  
 moaindex aces_defs_pa = 1: frag1_eavirt  
-mobindex aces_defs_pb = 1: frag1_eavirt   
+moaindex aces_defs_pb = 1: frag1_eavirt   
 
 predefined scalar cc_conv
 scalar scf_energy  # ???? 

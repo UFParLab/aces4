@@ -43,7 +43,6 @@ set(QM_SOURCE_FILES
     qm/mcpt-fragment/scf_atom_lowmem.F;
     qm/mcpt-fragment/compute_int_scratchmem_lowmem.F;
     qm/mcpt-fragment/compute_xyz_batch.F;
-    qm/mcpt-fragment/comp_return_frag_h0.F;
     qm/mcpt-fragment/frag_index_range.F;
     qm/mcpt-fragment/place_scratch.F;
     qm/mcpt-fragment/compute_return_h1_frag.F;

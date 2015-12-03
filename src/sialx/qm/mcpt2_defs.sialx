@@ -29,7 +29,7 @@ predefined  int frag1_eavirt
 predefined  int frag1_norb
 
 moaindex aces_defs_pa = baocc: eavirt  
-mobindex aces_defs_pb = bbocc: ebvirt   
+moaindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
 
 predefined  int max_aoseg # maximum ao segment size 
