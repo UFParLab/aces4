@@ -5877,6 +5877,490 @@ Fragment_NRij_vv_oo_PardoLoopManager::~Fragment_NRij_vv_oo_PardoLoopManager() {
 
 /*!
  -------------------------------------------
+ _NRij_oo_vo_
+ -------------------------------------------
+ */
+
+/*
+ for each new special fragment where clause pattern, this should be the only thing realy changed.
+ see comment above for fragment_special_where_clause syntax
+ */
+bool Fragment_NRij_oo_vo_PardoLoopManager::where_clause(int index) {
+	bool where_;
+	int ifrag = 0;
+	int jfrag = 1;
+	int ao = 1;
+	int occ = 2;
+	int virt = 3;
+	int elst = 4;
+	int rcut = 5;
+	int NE = 0;
+
+	switch (index) {
+	case 0:
+	case 1:
+		where_ = fragment_special_where_clause(rcut, jfrag, ifrag)
+				&& fragment_special_where_clause(NE, jfrag, ifrag);
+		break;
+	case 2:
+		where_ = fragment_special_where_clause(occ, index, ifrag);
+		break;
+	case 3:
+		where_ = fragment_special_where_clause(occ, index, ifrag);
+		break;
+	case 4:
+		where_ = fragment_special_where_clause(virt, index, jfrag);
+		break;
+	case 5:
+		where_ = fragment_special_where_clause(occ, index, jfrag);
+		break;
+	default:
+		where_ = false;
+	}
+	return where_;
+}
+
+bool Fragment_NRij_oo_vo_PardoLoopManager::do_update() {
+	if (to_exit_)
+		return false;
+	bool more_iters;
+	bool where_clauses_value;
+
+	interpreter_->skip_where_clauses(num_where_clauses_);
+
+	int loop_count = iteration_;
+	int index_restart[MAX_RANK];
+
+	if (first_time_) {
+		first_time_ = false;
+		more_iters = initialize_indices();
+
+		for (int i = 0; i < num_indices_; ++i) {
+			index_restart[i] = index_values_[i];
+		}
+
+		for (int index_i = index_restart[0]; index_i < upper_bound_[0];
+				++index_i) {
+			index_values_[0] = index_i;
+			data_manager_.set_index_value(index_id_[0], index_i);
+
+			for (int index_j = index_restart[1]; index_j < upper_bound_[1];
+					++index_j) {
+				index_values_[1] = index_j;
+				data_manager_.set_index_value(index_id_[1], index_j);
+
+				if (where_clause(1)) {
+					for (int index_2 = index_restart[2];
+							index_2 < upper_bound_[2]; ++index_2) {
+						index_values_[2] = index_2;
+						data_manager_.set_index_value(index_id_[2], index_2);
+
+						if (where_clause(2)) {
+							for (int index_3 = index_restart[3];
+									index_3 < upper_bound_[3]; ++index_3) {
+								index_values_[3] = index_3;
+								data_manager_.set_index_value(index_id_[3],
+										index_3);
+
+								if (where_clause(3)) {
+									for (int index_4 = index_restart[4];
+											index_4 < upper_bound_[4];
+											++index_4) {
+										index_values_[4] = index_4;
+										data_manager_.set_index_value(
+												index_id_[4], index_4);
+
+										if (where_clause(4)) {
+											for (int index_5 = index_restart[5];
+													index_5 < upper_bound_[5];
+													++index_5) {
+												index_values_[5] = index_5;
+												data_manager_.set_index_value(
+														index_id_[5], index_5);
+
+												if (where_clause(5)) {
+													iteration_++;
+													if ((iteration_ - 1)
+															% num_workers_
+															== company_rank_) {
+														return true;
+													}
+												} // where 5
+											} // index_5
+											for (int i = 5; i < num_indices_;
+													++i) {
+												index_restart[i] =
+														lower_seg_[i];
+											}
+										} // where 4
+									} // index_4
+									for (int i = 4; i < num_indices_; ++i) {
+										index_restart[i] = lower_seg_[i];
+									}
+								} // where 3
+							} // index_3
+							for (int i = 3; i < num_indices_; ++i) {
+								index_restart[i] = lower_seg_[i];
+							}
+						} // where 2
+					} // index_2
+					for (int i = 2; i < num_indices_; ++i) {
+						index_restart[i] = lower_seg_[i];
+					}
+				} // where 1
+			} // index_j
+			for (int i = 1; i < num_indices_; ++i) {
+				index_restart[i] = lower_seg_[i];
+			}
+		} // index_i
+	}
+
+	for (int i = 0; i < num_indices_; ++i) {
+		index_restart[i] = index_values_[i];
+	}
+
+	for (int index_i = index_restart[0]; index_i < upper_bound_[0]; ++index_i) {
+		index_values_[0] = index_i;
+		data_manager_.set_index_value(index_id_[0], index_i);
+
+		for (int index_j = index_restart[1]; index_j < upper_bound_[1];
+				++index_j) {
+			index_values_[1] = index_j;
+			data_manager_.set_index_value(index_id_[1], index_j);
+
+			if (where_clause(1)) {
+				for (int index_2 = index_restart[2]; index_2 < upper_bound_[2];
+						++index_2) {
+					index_values_[2] = index_2;
+					data_manager_.set_index_value(index_id_[2], index_2);
+
+					if (where_clause(2)) {
+						for (int index_3 = index_restart[3];
+								index_3 < upper_bound_[3]; ++index_3) {
+							index_values_[3] = index_3;
+							data_manager_.set_index_value(index_id_[3],
+									index_3);
+
+							if (where_clause(3)) {
+								for (int index_4 = index_restart[4];
+										index_4 < upper_bound_[4]; ++index_4) {
+									index_values_[4] = index_4;
+									data_manager_.set_index_value(index_id_[4],
+											index_4);
+
+									if (where_clause(4)) {
+										for (int index_5 = index_restart[5];
+												index_5 < upper_bound_[5];
+												++index_5) {
+											index_values_[5] = index_5;
+											data_manager_.set_index_value(
+													index_id_[5], index_5);
+
+											if (where_clause(5)) {
+												if (loop_count > iteration_) {
+													iteration_++;
+													if ((iteration_ - 1)
+															% num_workers_
+															== company_rank_) {
+														return true;
+													}
+												}
+												++loop_count;
+											} // where 5
+										} // index_5
+										for (int i = 5; i < num_indices_; ++i) {
+											index_restart[i] = lower_seg_[i];
+										}
+									} // where 4
+								} // index_4
+								for (int i = 4; i < num_indices_; ++i) {
+									index_restart[i] = lower_seg_[i];
+								}
+							} // where 3
+						} // index_3
+						for (int i = 3; i < num_indices_; ++i) {
+							index_restart[i] = lower_seg_[i];
+						}
+					} // where 2
+				} // index_2
+				for (int i = 2; i < num_indices_; ++i) {
+					index_restart[i] = lower_seg_[i];
+				}
+			} // where 1
+		} // index_j
+		for (int i = 1; i < num_indices_; ++i) {
+			index_restart[i] = lower_seg_[i];
+		}
+	} // index_i
+
+	return false; //this should be false here
+}
+
+Fragment_NRij_oo_vo_PardoLoopManager::Fragment_NRij_oo_vo_PardoLoopManager(
+		int num_indices, const int (&index_id)[MAX_RANK],
+		DataManager & data_manager, const SipTables & sip_tables,
+		SIPMPIAttr & sip_mpi_attr, int num_where_clauses,
+		Interpreter* interpreter, long& iteration) :
+		FragmentPardoLoopManager(num_indices, index_id, data_manager,
+				sip_tables), first_time_(true), iteration_(iteration), sip_mpi_attr_(
+				sip_mpi_attr), num_where_clauses_(num_where_clauses), company_rank_(
+				sip_mpi_attr.company_rank()), num_workers_(
+				sip_mpi_attr_.num_workers()), interpreter_(interpreter) {
+
+	//form_elst_dist();
+	form_rcut_dist();
+	//form_swao_frag();
+	form_swocca_frag();
+	form_swvirta_frag();
+}
+
+Fragment_NRij_oo_vo_PardoLoopManager::~Fragment_NRij_oo_vo_PardoLoopManager() {
+}
+
+/*!
+ -------------------------------------------
+ _NRij_vv_vo_
+ -------------------------------------------
+ */
+
+/*
+ for each new special fragment where clause pattern, this should be the only thing realy changed.
+ see comment above for fragment_special_where_clause syntax
+ */
+bool Fragment_NRij_vv_vo_PardoLoopManager::where_clause(int index) {
+	bool where_;
+	int ifrag = 0;
+	int jfrag = 1;
+	int ao = 1;
+	int occ = 2;
+	int virt = 3;
+	int elst = 4;
+	int rcut = 5;
+	int NE = 0;
+
+	switch (index) {
+	case 0:
+	case 1:
+		where_ = fragment_special_where_clause(rcut, jfrag, ifrag)
+				&& fragment_special_where_clause(NE, jfrag, ifrag);
+		break;
+	case 2:
+		where_ = fragment_special_where_clause(virt, index, ifrag);
+		break;
+	case 3:
+		where_ = fragment_special_where_clause(virt, index, ifrag);
+		break;
+	case 4:
+		where_ = fragment_special_where_clause(virt, index, jfrag);
+		break;
+	case 5:
+		where_ = fragment_special_where_clause(occ, index, jfrag);
+		break;
+	default:
+		where_ = false;
+	}
+	return where_;
+}
+
+bool Fragment_NRij_vv_vo_PardoLoopManager::do_update() {
+	if (to_exit_)
+		return false;
+	bool more_iters;
+	bool where_clauses_value;
+
+	interpreter_->skip_where_clauses(num_where_clauses_);
+
+	int loop_count = iteration_;
+	int index_restart[MAX_RANK];
+
+	if (first_time_) {
+		first_time_ = false;
+		more_iters = initialize_indices();
+
+		for (int i = 0; i < num_indices_; ++i) {
+			index_restart[i] = index_values_[i];
+		}
+
+		for (int index_i = index_restart[0]; index_i < upper_bound_[0];
+				++index_i) {
+			index_values_[0] = index_i;
+			data_manager_.set_index_value(index_id_[0], index_i);
+
+			for (int index_j = index_restart[1]; index_j < upper_bound_[1];
+					++index_j) {
+				index_values_[1] = index_j;
+				data_manager_.set_index_value(index_id_[1], index_j);
+
+				if (where_clause(1)) {
+					for (int index_2 = index_restart[2];
+							index_2 < upper_bound_[2]; ++index_2) {
+						index_values_[2] = index_2;
+						data_manager_.set_index_value(index_id_[2], index_2);
+
+						if (where_clause(2)) {
+							for (int index_3 = index_restart[3];
+									index_3 < upper_bound_[3]; ++index_3) {
+								index_values_[3] = index_3;
+								data_manager_.set_index_value(index_id_[3],
+										index_3);
+
+								if (where_clause(3)) {
+									for (int index_4 = index_restart[4];
+											index_4 < upper_bound_[4];
+											++index_4) {
+										index_values_[4] = index_4;
+										data_manager_.set_index_value(
+												index_id_[4], index_4);
+
+										if (where_clause(4)) {
+											for (int index_5 = index_restart[5];
+													index_5 < upper_bound_[5];
+													++index_5) {
+												index_values_[5] = index_5;
+												data_manager_.set_index_value(
+														index_id_[5], index_5);
+
+												if (where_clause(5)) {
+													iteration_++;
+													if ((iteration_ - 1)
+															% num_workers_
+															== company_rank_) {
+														return true;
+													}
+												} // where 5
+											} // index_5
+											for (int i = 5; i < num_indices_;
+													++i) {
+												index_restart[i] =
+														lower_seg_[i];
+											}
+										} // where 4
+									} // index_4
+									for (int i = 4; i < num_indices_; ++i) {
+										index_restart[i] = lower_seg_[i];
+									}
+								} // where 3
+							} // index_3
+							for (int i = 3; i < num_indices_; ++i) {
+								index_restart[i] = lower_seg_[i];
+							}
+						} // where 2
+					} // index_2
+					for (int i = 2; i < num_indices_; ++i) {
+						index_restart[i] = lower_seg_[i];
+					}
+				} // where 1
+			} // index_j
+			for (int i = 1; i < num_indices_; ++i) {
+				index_restart[i] = lower_seg_[i];
+			}
+		} // index_i
+	}
+
+	for (int i = 0; i < num_indices_; ++i) {
+		index_restart[i] = index_values_[i];
+	}
+
+	for (int index_i = index_restart[0]; index_i < upper_bound_[0]; ++index_i) {
+		index_values_[0] = index_i;
+		data_manager_.set_index_value(index_id_[0], index_i);
+
+		for (int index_j = index_restart[1]; index_j < upper_bound_[1];
+				++index_j) {
+			index_values_[1] = index_j;
+			data_manager_.set_index_value(index_id_[1], index_j);
+
+			if (where_clause(1)) {
+				for (int index_2 = index_restart[2]; index_2 < upper_bound_[2];
+						++index_2) {
+					index_values_[2] = index_2;
+					data_manager_.set_index_value(index_id_[2], index_2);
+
+					if (where_clause(2)) {
+						for (int index_3 = index_restart[3];
+								index_3 < upper_bound_[3]; ++index_3) {
+							index_values_[3] = index_3;
+							data_manager_.set_index_value(index_id_[3],
+									index_3);
+
+							if (where_clause(3)) {
+								for (int index_4 = index_restart[4];
+										index_4 < upper_bound_[4]; ++index_4) {
+									index_values_[4] = index_4;
+									data_manager_.set_index_value(index_id_[4],
+											index_4);
+
+									if (where_clause(4)) {
+										for (int index_5 = index_restart[5];
+												index_5 < upper_bound_[5];
+												++index_5) {
+											index_values_[5] = index_5;
+											data_manager_.set_index_value(
+													index_id_[5], index_5);
+
+											if (where_clause(5)) {
+												if (loop_count > iteration_) {
+													iteration_++;
+													if ((iteration_ - 1)
+															% num_workers_
+															== company_rank_) {
+														return true;
+													}
+												}
+												++loop_count;
+											} // where 5
+										} // index_5
+										for (int i = 5; i < num_indices_; ++i) {
+											index_restart[i] = lower_seg_[i];
+										}
+									} // where 4
+								} // index_4
+								for (int i = 4; i < num_indices_; ++i) {
+									index_restart[i] = lower_seg_[i];
+								}
+							} // where 3
+						} // index_3
+						for (int i = 3; i < num_indices_; ++i) {
+							index_restart[i] = lower_seg_[i];
+						}
+					} // where 2
+				} // index_2
+				for (int i = 2; i < num_indices_; ++i) {
+					index_restart[i] = lower_seg_[i];
+				}
+			} // where 1
+		} // index_j
+		for (int i = 1; i < num_indices_; ++i) {
+			index_restart[i] = lower_seg_[i];
+		}
+	} // index_i
+
+	return false; //this should be false here
+}
+
+Fragment_NRij_vv_vo_PardoLoopManager::Fragment_NRij_vv_vo_PardoLoopManager(
+		int num_indices, const int (&index_id)[MAX_RANK],
+		DataManager & data_manager, const SipTables & sip_tables,
+		SIPMPIAttr & sip_mpi_attr, int num_where_clauses,
+		Interpreter* interpreter, long& iteration) :
+		FragmentPardoLoopManager(num_indices, index_id, data_manager,
+				sip_tables), first_time_(true), iteration_(iteration), sip_mpi_attr_(
+				sip_mpi_attr), num_where_clauses_(num_where_clauses), company_rank_(
+				sip_mpi_attr.company_rank()), num_workers_(
+				sip_mpi_attr_.num_workers()), interpreter_(interpreter) {
+
+	//form_elst_dist();
+	form_rcut_dist();
+	//form_swao_frag();
+	form_swocca_frag();
+	form_swvirta_frag();
+}
+
+Fragment_NRij_vv_vo_PardoLoopManager::~Fragment_NRij_vv_vo_PardoLoopManager() {
+}
+
+/*!
+ -------------------------------------------
  _NRij_o_ao_
  -------------------------------------------
  */

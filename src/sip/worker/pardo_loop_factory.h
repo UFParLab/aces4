@@ -89,6 +89,8 @@ public:
 		Fragment_NRij_vo_ao_PardoLoopManager,
 		Fragment_NRij_aa_aa_PardoLoopManager,
 		Fragment_NRij_vv_oo_PardoLoopManager,
+		Fragment_NRij_oo_vo_PardoLoopManager,
+		Fragment_NRij_vv_vo_PardoLoopManager,
 		Fragment_NRij_o_ao_PardoLoopManager,
 		Fragment_Rij_vo_vo_PardoLoopManager,
 		Fragment_NR1ij_vo_vo_PardoLoopManager,

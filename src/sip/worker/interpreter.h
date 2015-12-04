@@ -513,6 +513,8 @@ private:
 	friend class Fragment_Rij_vo_vo_PardoLoopManager;
 	friend class Fragment_NRij_vo_vo_PardoLoopManager;
 	friend class Fragment_NRij_vv_oo_PardoLoopManager;
+	friend class Fragment_NRij_oo_vo_PardoLoopManager;
+	friend class Fragment_NRij_vv_vo_PardoLoopManager;
 	friend class Fragment_NRij_vovo__PardoLoopManager;
 	friend class Fragment_NRij_ao_ao_PardoLoopManager;
 	friend class Fragment_NRij_vo_ao_PardoLoopManager;

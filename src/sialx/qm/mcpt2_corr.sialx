@@ -15,7 +15,7 @@ PROC FORM_JFRAG_HBAR
 #do ifrag
 #where ifrag == 1
 
-    PARDO ifrag, jfrag, i, i1, b, j "Frag{NR1ij}{oo}{vo}"
+    PARDO ifrag, jfrag, i, i1, b, j "Frag{NRij}{oo}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -33,7 +33,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, i, i1, b, j
 
-    PARDO ifrag, jfrag, i, i1, b, j "Frag{NR1ij}{oo}{vo}"
+    PARDO ifrag, jfrag, i, i1, b, j "Frag{NRij}{oo}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -54,7 +54,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, i, i1, b, j
 
-    PARDO ifrag, jfrag, a, a1, b, j "Frag{NR1ij}{vv}{vo}"
+    PARDO ifrag, jfrag, a, a1, b, j "Frag{NRij}{vv}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -70,7 +70,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, a, a1, b, j
 
-    PARDO ifrag, jfrag, a, a1, b, j "Frag{NR1ij}{vv}{vo}"
+    PARDO ifrag, jfrag, a, a1, b, j "Frag{NRij}{vv}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -93,7 +93,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, a, a1, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NR1ij}{vo}{vo}"
+    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -109,7 +109,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, a, i, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NR1ij}{vo}{vo}"
+    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -135,7 +135,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, a, i, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NR1ij}{vo}{vo}"
+    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -163,7 +163,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, a, i, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NR1ij}{vo}{vo}"
+    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
     where ifrag == 1
     where jfrag > 1
     where (int)rcut_dist[ifrag,jfrag] == ifrag
