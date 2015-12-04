@@ -769,6 +769,7 @@ restore_persistent R1k1_a   "MOI_C1_a"
 restore_persistent RB1_a    "MOI_B1_a"
 restore_persistent t1a      "MOI_T1"
 restore_persistent T2ab     "MOI_T2ab"
+restore_persistent FwC      "MOI_wC"
 #restore_persistent T2aa "T2old_aa"
 #restore_persistent Lam2aa "L2old_aa"
 #restore_persistent Lam2ab "L2old_ab"
@@ -787,15 +788,21 @@ do a
     enddo a1
     do i1
         get DFock_a[a,i1]
+	get FwC[a,i1]
         allocate Fock_a[a,i1]
-        Fock_a[a,i1] = DFock_a[a,i1]
+	Tai[a,i1]  = DFock_a[a,i1]
+	Tai[a,i1] += FwC[a,i1]
+        Fock_a[a,i1] = Tai[a,i1]
     enddo i1
 enddo a
 do i
     do a1
         get DFock_a[i,a1]
+	get FwC[i,a1]
         allocate Fock_a[i,a1]
-        Fock_a[i,a1] = DFock_a[i,a1]
+	Tia[i,a1]  = DFock_a[i,a1]
+	Tia[i,a1] += FwC[i,a1]
+        Fock_a[i,a1] = Tia[i,a1]
     enddo a1
     do i1
         get DFock_a[i,i1]

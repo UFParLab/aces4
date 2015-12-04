@@ -15,179 +15,172 @@ PROC FORM_JFRAG_HBAR
 #do ifrag
 #where ifrag == 1
 
-    PARDO ifrag, jfrag, i, i1, b, j "Frag{NRij}{oo}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{oo}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwOccA_frag[(index)i1] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
+    where (int)SwOccA_frag[(index)fi1] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get Viaii[j,b,i,i1]
+	get Viaii[j,b,fi,fi1]
 	get t1old[b,j]
 
-	tpp[i,i1] = t1old[b,j]*Viaii[j,b,i,i1]
+	tpp[fi,fi1] = t1old[b,j]*Viaii[j,b,fi,fi1]
  	#tpp[i,i1] *= -1.0
 
-	put HBAR_ii[i,i1] += tpp[i,i1]
+	put HBAR_ii[fi,fi1] += tpp[fi,fi1]
 
-    ENDPARDO ifrag, jfrag, i, i1, b, j
+    ENDPARDO ifrag, jfrag, fi, fi1, b, j
 
-    PARDO ifrag, jfrag, i, i1, b, j "Frag{NRij}{oo}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{oo}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwOccA_frag[(index)i1] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
+    where (int)SwOccA_frag[(index)fi1] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	do a1
-	    where (int)SwVirtA_frag[(index)a1] == ifrag
+	do fa1
+	    where (int)SwVirtA_frag[(index)fa1] == ifrag
 
-	    get Vaibj[a1,i1,b,j]
-	    get T2old[a1,i,b,j]
-	    tpp[i,i1] = T2old[a1,i,b,j]*Vaibj[a1,i1,b,j]
+	    get Vaibj[fa1,fi1,b,j]
+	    get T2old[fa1,fi,b,j]
+	    tpp[fi,fi1] = T2old[fa1,fi,b,j]*Vaibj[fa1,fi1,b,j]
 	    #tpp[i,i1] *= -1.0
-	    put HBAR_ii[i,i1] += tpp[i,i1]
+	    put HBAR_ii[fi,fi1] += tpp[fi,fi1]
 
-	enddo a1
+	enddo fa1
 
-    ENDPARDO ifrag, jfrag, i, i1, b, j
+    ENDPARDO ifrag, jfrag, fi, fi1, b, j
 
-    PARDO ifrag, jfrag, a, a1, b, j "Frag{NRij}{vv}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{vv}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwVirtA_frag[(index)fa1] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get Vaaai[a,a1,b,j]
+	get Vaaai[fa,fa1,b,j]
 	get t1old[b,j]
-	tpp[a,a1] = Vaaai[a,a1,b,j]*t1old[b,j]
+	tpp[fa,fa1] = Vaaai[fa,fa1,b,j]*t1old[b,j]
 	    #tpp[a,a1] *= -1.0
-	put HBAR_aa[a,a1] += tpp[a,a1]
+	put HBAR_aa[fa,fa1] += tpp[fa,fa1]
 
-    ENDPARDO ifrag, jfrag, a, a1, b, j
+    ENDPARDO ifrag, jfrag, fa, fa1, b, j
 
-    PARDO ifrag, jfrag, a, a1, b, j "Frag{NRij}{vv}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{vv}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwVirtA_frag[(index)fa1] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	do i
-	where (int)SwOccA_frag[(index)i] == ifrag
+	do fi
+	where (int)SwOccA_frag[(index)fi] == ifrag
 
-	    get Vaibj[a1,i,b,j]
-	    get T2old[a,i,b,j]
+	    get Vaibj[fa1,fi,b,j]
+	    get T2old[fa,fi,b,j]
 
-	    tpp[a,a1] = T2old[a,i,b,j]*Vaibj[a1,i,b,j] 
+	    tpp[fa,fa1] = T2old[fa,fi,b,j]*Vaibj[fa1,fi,b,j] 
 	    #tpp[a,a1] *= -1.0
             
-	    put HBAR_aa[a,a1] += tpp[a,a1]
+	    put HBAR_aa[fa,fa1] += tpp[fa,fa1]
 
-	enddo i
+	enddo fi
 
-    ENDPARDO ifrag, jfrag, a, a1, b, j
+    ENDPARDO ifrag, jfrag, fa, fa1, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get Vaibj[a,i,b,j]
+	get Vaibj[fa,fi,b,j]
 	get t1old[b,j]
 
-	tpp[i,a] = Vaibj[a,i,b,j]*t1old[b,j]
-	put HBAR_ia[i,a] += tpp[i,a]
+	tpp[fi,fa] = Vaibj[fa,fi,b,j]*t1old[b,j]
+	put HBAR_ia[fi,fa] += tpp[fi,fa]
 
-    ENDPARDO ifrag, jfrag, a, i, b, j
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
 
-	get Vaibj[a,i,b,j]
+	get Vaibj[fa,fi,b,j]
 
-	do a1
-	where (int)SwVirtA_frag[(index)a1] == ifrag
-	do i1
-	where (int)SwOccA_frag[(index)i1] == ifrag
-	    get T2old[a1,i1,b,j]
+	do fa1
+	where (int)SwVirtA_frag[(index)fa1] == ifrag
+	do fi1
+	where (int)SwOccA_frag[(index)fi1] == ifrag
+	    get T2old[fa1,fi1,b,j]
 
-	    Tppqq[i1,a1,a,i] = T2old[a1,i1,b,j]*Vaibj[a,i,b,j]
+	    Tppqq[fi1,fa1,fa,fi] = T2old[fa1,fi1,b,j]*Vaibj[fa,fi,b,j]
 
-	    put HBAR_AJIB[i1,a1,a,i] += Tppqq[i1,a1,a,i]
+	    put HBAR_AJIB[fi1,fa1,fa,fi] += Tppqq[fi1,fa1,fa,fi]
 
-	enddo i1
-	enddo a1
+	enddo fi1
+	enddo fa1
 
-    ENDPARDO ifrag, jfrag, a, i, b, j
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get T2old[a,i,b,j]
+	get T2old[fa,fi,b,j]
 
-	do i1
-	where (int)SwOccA_frag[(index)i1] == ifrag
-	do i2
-	where (int)SwOccA_frag[(index)i2] == ifrag
+	do fi1
+	where (int)SwOccA_frag[(index)fi1] == ifrag
+	do fi2
+	where (int)SwOccA_frag[(index)fi2] == ifrag
 
-	get Viaii[j,b,i1,i2]
-	T1ppqq[i1,i2,b,j] = Viaii[j,b,i1,i2]
+	get Viaii[j,b,fi1,fi2]
+	T1ppqq[fi1,fi2,b,j] = Viaii[j,b,fi1,fi2]
 
-	Tppqq[i1,i2,a,i] = T1ppqq[i1,i2,b,j]*T2old[a,i,b,j]
+	Tppqq[fi1,fi2,fa,fi] = T1ppqq[fi1,fi2,b,j]*T2old[fa,fi,b,j]
 #	Tppqq[i1,i2,a,i] += -1.0
 
-	put HBAR_IAJK[i1,i2,a,i] += Tppqq[i1,i2,a,i]
+	put HBAR_IAJK[fi1,fi2,fa,fi] += Tppqq[fi1,fi2,fa,fi]
 
-	enddo i2
-	enddo i1
+	enddo fi2
+	enddo fi1
 
-    ENDPARDO ifrag, jfrag, a, i, b, j
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
 
-    PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
-    where ifrag == 1
-    where jfrag > 1
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get T2old[a,i,b,j]
 
-	do a1
-	where (int)SwVirtA_frag[(index)a1] == ifrag
-	do a2
-	where (int)SwVirtA_frag[(index)a2] == ifrag
+	get T2old[fa,fi,b,j]
 
-	get Vaaai[a1,a2,b,j]
+	do fa1
+	where (int)SwVirtA_frag[(index)fa1] == ifrag
+	do fa2
+	where (int)SwVirtA_frag[(index)fa2] == ifrag
 
-	Tppqq[a1,a2,a,i] = Vaaai[a1,a2,b,j]*T2old[a,i,b,j]
+	get Vaaai[fa1,fa2,b,j]
 
-	put HBAR_ABCI[a1,a2,a,i] += Tppqq[a1,a2,a,i]
+	Tppqq[fa1,fa2,fa,fi] = Vaaai[fa1,fa2,b,j]*T2old[fa,fi,b,j]
 
-	enddo a2
-	enddo a1
+	put HBAR_ABCI[fa1,fa2,fa,fi] += Tppqq[fa1,fa2,fa,fi]
 
-    ENDPARDO ifrag, jfrag, a, i, b, j
+	enddo fa2
+	enddo fa1
+
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
 
 ###
 #enddo ifrag

@@ -149,6 +149,8 @@ distributed ao_dens[mu,nu]
 distributed DCa[mu,p]
 distributed DFock_a[p,p1]
 
+distributed FwC[p,p1]
+
 #
 # Declare served 
 # --------------- 
