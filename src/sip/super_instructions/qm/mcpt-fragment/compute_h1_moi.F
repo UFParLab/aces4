@@ -194,7 +194,7 @@ c---------------------------------------------------------------------------
 c  Remove scratch space  
       call delete_scratch_array(cscr)
       call delete_scratch_array(ciscr)
-      call delete_scratch_array(ciatom)
+      call delete_integer_scratch_array(ciatom)
 
       return
       end

@@ -63,6 +63,8 @@ c     real(C_DOUBLE) scr(5000000)
       integer(C_INT), pointer :: iscr(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
+      real(C_DOUBLE), pointer :: zscr(:)
+      TYPE(C_PTR) :: czscr
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4
       integer(C_INT) i, j, one, two
@@ -104,7 +106,7 @@ c     mapping of atoms to shells
       real(C_DOUBLE) elst_thresh
 
       integer m, ix2, n_apf! Assumes < 20 atoms in a fragment TO CHANGE  
-      integer nscr, niscr  
+      integer nscr, niscr, nzscr
 
 C temp array
       TYPE(C_PTR) :: ciatom
@@ -190,24 +192,29 @@ c---------------------------------------------------------------------------
       call scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr, [niscr])
 
+      nzscr = size_0
+      call scratch_array(nzscr, czscr)
+      call c_f_pointer(czscr, zscr, [nzscr])
+
 
       call comp_return_frag_ovl(data_0, n_apf, iatom, 
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
      *                        npcoeffs, ncenters, pcoords, ptcoords,
-     *                        pcharge, scr, iscr) 
+     *                        pcharge,zscr, scr, iscr) 
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
       call delete_scratch_array(ciscr)
-      call delete_scratch_array(ciatom)
+      call delete_scratch_array(czscr)
+      call delete_integer_scratch_array(ciatom)
 
       return
       end
 
       subroutine comp_return_frag_ovl(z, napf, watom, da1, da2, 
      * db1, db2, 
-     * npcoeffs, ncenters, coords, tcoords, charge, atom, zz, iscr)
+     * npcoeffs, ncenters, coords, tcoords, charge, zsum, zz, iscr)
 c---------------------------------------------------------------------------
 c  Computes the set of OED integrals of types  
 c
@@ -260,7 +267,7 @@ c     double precision z(da1:da2, db1:db2)
       double precision x1,y1,z1,x2,y2,z2, y
       double precision acharge(ncenters)
       integer do_atom(ncenters)
-      integer napf, watom(napf), atom(*)
+      integer napf, watom(napf)
       double precision charge(ncenters)
 
       integer (C_INT) one

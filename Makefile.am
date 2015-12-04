@@ -504,6 +504,7 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_frag_lowmem.siox\
 ./src/sialx/qm/drop_core_in_sial.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
+./src/sialx/qm/mcpt2_corr.siox\
 ./src/sialx/qm/tran_frag.siox\
 ./src/sialx/qm/mcpt2_vars.siox\
 ./src/sialx/qm/mcpt2_defs.siox\
@@ -651,6 +652,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_frag_lowmem.sialx\
 ./src/sialx/qm/drop_core_in_sial.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
+./src/sialx/qm/mcpt2_corr.sialx\
 ./src/sialx/qm/tran_frag.sialx\
 ./src/sialx/qm/mcpt2_vars.sialx\
 ./src/sialx/qm/mcpt2_defs.sialx\
