@@ -40,6 +40,8 @@ static fockrohf_a[aces_defs_mu,aces_defs_mu]
 static fockrohf_b[aces_defs_mu,aces_defs_mu]
 
 scalar scf_energy  
+scalar ccsd_energy  
+scalar ccsdpt_energy  
 scalar totenerg
 
 static oed_nai[aces_defs_mu,aces_defs_mu]
