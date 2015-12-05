@@ -2352,6 +2352,8 @@
       ncount = 0 
       DO NT 
 
+         print NT
+
          ncount = ncount + 1
 
          itemp = 0.0
@@ -3059,6 +3061,7 @@ execute compute_int_scratchmem oed_ovl zmax simax
 # ----------------------------
       if nsects == (int)one
          xtemp1 = xtemp
+         print xtemp
          CALL OSEG_TRIP1 
       endif
 #
@@ -3073,15 +3076,27 @@ execute compute_int_scratchmem oed_ovl zmax simax
 #
      easum = 0.0
      esaab = 0.0 
+
+      DO Nt
+      DO i7  
+      where Nt == 1
+      where i7 == 2
+         istart = (int)Xijk[Nt,i7] 
+      ENDDO i7  
+      ENDDO Nt 
+
+     print istart
      sip_barrier
      PARDO a, ii
 #
+      if ii >= istart
           #PREQUEST x1ai(a,ii) = t1a_old(a,i1)
            GET                 t1as_old[a,ii] 
            GET                 sai[a,ii]
            etemp             = sai[a,ii]*t1as_old[a,ii]
            etemp            *= 0.25
            easum             += etemp
+      endif
 #
      ENDPARDO a, ii
 #
