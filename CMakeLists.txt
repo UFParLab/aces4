@@ -576,6 +576,7 @@ set(SIAL_FILES
     src/sialx/qm/MOI_reom_vars.sialx;
     src/sialx/qm/MOI_rcis.sialx;
     src/sialx/qm/MOI_reom_mcpt2.sialx;
+    src/sialx/qm/MOI_reom_elements.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;

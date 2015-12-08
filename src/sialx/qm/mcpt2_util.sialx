@@ -73,7 +73,7 @@ SIAL mcpt2_util
                SwVirtA_frag[(index)a] = (scalar)jfrag
           ENDDO a
       enddo jfrag
-      print SwVirtA_frag
+#      print SwVirtA_frag
 
       sip_barrier
       ENDPROC SET_FRAG_PARMS    

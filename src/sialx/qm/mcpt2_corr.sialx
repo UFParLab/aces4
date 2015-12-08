@@ -259,8 +259,10 @@ print " "
 #     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
 #     ------------------------------------------------------ 
 #
+      print " "
       CALL FORM_T10
       sip_barrier 
+      print " "
       CALL FORM_T1
       sip_barrier 
       print "Completely Done singles formation" 
@@ -279,8 +281,11 @@ print " "
 # Start macro-iterations 
       DO jiter 
          sip_barrier 
+	 print " "
+	 print "------------------------------------------------------"
 	 print "Macro iteration"
 	 print jiter
+	 print " "
 
          PARDO ifrag 
            GET                   e20c[ifrag] 
@@ -293,6 +298,7 @@ print " "
 	 print "Entering FORM_T2_FRAGMENT_ITERS"
          CALL FORM_T2_FRAGMENT_ITERS 
          sip_barrier 
+	 print " "
 	 print "Entering FORM_T2_DIMER_ITERS"
          CALL FORM_T2_DIMER_ITERS 
          print "Done forming T2 Dimer calculation" 
@@ -301,6 +307,7 @@ print " "
 # Print out energies after each macroiteration  
          execute get_my_rank rank
          if rank == 0.0
+	 print " "
          print "MCPT(2) monomer macro-iteration energies"
 	 fragment_doubles = 0.0
          DO ifrag
@@ -313,6 +320,7 @@ print " "
             deallocate contiguous macro_e20[ifrag:ifrag]
          ENDDO ifrag   
 
+	 print " "
          print "MCPT(2) dimer macro-iteration energies"
 	 do ifrag
 	 do jfrag
