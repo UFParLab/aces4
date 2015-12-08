@@ -391,7 +391,7 @@ void ArrayFile::mark_persistent(const std::string& label) {
 			"calling set_persistent on already persistent file");
 
 	if (comm_rank() == 0) {
-		std::cout << "marking array with name " << name_
+		std::cerr << "marking array with name " << name_
 				<< " persistent with label " << label << std::endl
 				<< std::flush;
 	}

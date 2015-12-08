@@ -39,6 +39,7 @@ set(QM_SOURCE_FILES
     qm/utility/stripi.F;
     qm/utility/compute_diis.F;
     qm/utility/return_sval.F;
+    qm/utility/remove_diagonal_elements.F;
     qm/mcpt-fragment/set_frag.F;
     qm/mcpt-fragment/scf_atom_lowmem.F;
     qm/mcpt-fragment/compute_int_scratchmem_lowmem.F;

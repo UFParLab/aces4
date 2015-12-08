@@ -370,7 +370,7 @@ int main(int argc, char* argv[]) {
     		parameters.server_memory));
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
-	std::cout<<sip_mpi_attr<<std::endl;
+	std::cerr<<sip_mpi_attr<<std::endl;
 
 
     //create log for current job

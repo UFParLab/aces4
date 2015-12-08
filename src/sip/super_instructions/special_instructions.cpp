@@ -344,6 +344,9 @@ void return_ovl_moi(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
         int& ierr);
 
+void remove_diagonal(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
 
 //##############################
 }
@@ -603,6 +606,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["moi_nn_repulsion"]=(fp0)&moi_nn_repulsion;
     procmap_["return_h1_moi"]=(fp0)&return_h1_moi;
     procmap_["return_ovl_moi"]=(fp0)&return_ovl_moi;
+    procmap_["remove_diagonal"]=(fp0)&remove_diagonal;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING
