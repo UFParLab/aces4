@@ -880,6 +880,14 @@ do kstate
     print CIS_EE_Energy[kstate:kstate]
     deallocate contiguous CIS_EE_Energy[kstate:kstate]
 enddo kstate
+do kstate
+    allocate contiguous CIS_EE_eV[kstate:kstate]
+    etemp = SEk0[kstate]
+    etemp *=27.2113961
+    CIS_EE_eV[kstate:kstate] = etemp
+    print CIS_EE_eV[kstate:kstate]
+    deallocate contiguous CIS_EE_eV[kstate:kstate]
+enddo kstate
 
 # store vector
 server_barrier

@@ -378,6 +378,8 @@ contiguous local Dipole_Oscillator_Strength[kstate,ixyz]
 contiguous local Dipole_Oscillator_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
 contiguous local EOM_EE_Energy[kstate]
+contiguous local CIS_EE_eV[kstate]
+contiguous local EOM_EE_eV[kstate]
 #
 # Declare temp 
 # --------------- 
