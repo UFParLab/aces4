@@ -1,0 +1,23 @@
+#ifndef _ECP_PAR_
+#define _ECP_PAR_
+
+C
+C Basic parameters: Maxang set to 7 (i functions) and Maxproj set
+C 5 (up to h functions in projection space).
+
+      Integer Dmap_L
+      Parameter(Maxang=7, Maxproj=6)
+
+      Parameter(Maxangpwr=(Maxang+1)**2,Lmnpwr=(((Maxang*(Maxang+2)*
+     &         (Maxang+4))/3)*(Maxang+3)+(Maxang+2)**2*(Maxang+4))/16)
+
+      Parameter(Lmnmax=(Maxang+1)*(Maxang+2)*(Maxang+3)/6,
+     &          Lmnmaxg=(Maxang+1)*(9+5*Maxang+Maxang*Maxang)/3)
+
+      Parameter(Imap_L=((Maxang/2+1)*(Maxang/2+2)*(2*Maxang+1)))
+
+      Parameter(Dmap_L=((Maxang/2+1)*(Maxang/2+2)*(2*Maxang+1)))
+   
+      Parameter(Rint_cutoff = 25.32838, Eps1 = 1.0D-15, Tol=46.0561)
+#endif /* _ECP_PAR_ */
+

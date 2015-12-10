@@ -1,0 +1,45 @@
+sial TEST
+predefined int norb
+predefined int baocc
+predefined int eavirt
+moaindex aces_defs_pa = baocc: eavirt
+static oed_ovl[aces_defs_pa,aces_defs_pa]
+special return_1el_ecpints w
+special compute_int_scratchmem uuu
+#
+      aoindex mu     = 1: norb
+      aoindex nu     = 1: norb
+
+      Temp Txx[mu,nu]
+      Temp T1xx[mu,nu]
+      scalar etemp
+      scalar esum
+      scalar ecp_checksum
+
+      scalar zmax
+      scalar imax
+
+#
+      execute compute_int_scratchmem oed_ovl zmax imax
+ 
+      print "Entering return_1el_ecpints" 
+      esum = 0.0
+      server_barrier
+      Pardo mu, nu
+            execute return_1el_ecpints Txx[mu,nu]
+	    T1xx[mu,nu] = Txx[mu,nu]
+	    etemp = T1xx[mu,nu]*Txx[mu,nu]
+	    esum += etemp
+      endpardo mu, nu
+      ecp_checksum = 0.0
+      server_barrier
+      collective ecp_checksum += esum
+      print "This checksum will fail if compiler array bound-checking is turned on"
+      print "See commit log and source code comments in return_1el_ecp_ints.F for more."
+# TODO:
+# it is a known issue that the ECP code has outof bounds issues.  
+# until this is fixed with more man power, the possibility for problems in ECP
+# calculations is acceptable.
+      print ecp_checksum
+
+endsial TEST

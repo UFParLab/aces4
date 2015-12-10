@@ -973,6 +973,8 @@ c
       double precision dtemp, etemp, itemp(5), dcrit, factor  
       double precision dtemp1, etemp1 
       double precision dtemp2, etemp2 
+      double precision sa, sb
+     
 
       dcrit = 0.0 
       drange1 = max(vd1, d1)
@@ -997,6 +999,19 @@ c    * , integrals(a,b,c,d)
             enddo 
        enddo 
        enddo 
+#ifdef _DEBUG_LVL0
+       sa=0.0d0
+       sb=0.0d0
+       do a = nc1,nc2
+       do b = nd1,nd2
+          sa = ca(a,b) *ca(a,b) + sa
+          sb = cb(a,b) *cb(a,b) + sb
+       enddo
+       enddo
+       Write(6,"(a,F15.8)") "Checksum of DA =",sa
+       Write(6,"(a,F15.8)") "Checksum of DB =",sb
+#endif 
+c
 
 c ----------------------------------------------------------------- 
 
@@ -1081,6 +1096,19 @@ c              itemp = intblk(a+ainc,b,c,d)
             enddo
       enddo
       enddo
+
+#ifdef _DEBUG_LVL0
+       sa=0.0d0
+       sb=0.0d0
+       do a = nc1,nc2
+       do b = nd1,nd2
+          sa = Fa(a,b) *Fa(a,b) + sa
+          sb = Fb(a,b) *Fb(a,b) + sb
+       enddo
+       enddo
+       Write(6,"(a,F15.8)") "Checksum of FA =",sa
+       Write(6,"(a,F15.8)") "Checksum of FB =",sb
+#endif
 
       return
       end

@@ -17,7 +17,7 @@ C  in the file COPYRIGHT.
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend,
      *                 ca, cb, nc1,nc2, nd1, nd2,
-     *                 fa,fb) 
+     *                 fa,fb,integrals)
 c---------------------------------------------------------------------------
 !>   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
 !>   following 'types' of integrals based on atomic labels.
@@ -394,13 +394,14 @@ c     enddo
 c     enddo 
 c     stop 
 
-c     write(6,*) ' Fock_a inside' 
-c     write(6,*) ' -------------' 
-c     do b = nc1, nc2
-c     do a = nc1, nc2
-c        write(6,*) a, b, Fa(a,b) 
-c     enddo
-c     enddo 
+c      write(6,*) ' C_a inside' 
+c      write(6,*) ' -------------' 
+c      do b = nc1, nc2
+c      do a = nd1, nd2
+c        write(6,*) a, b, Ca(a,b) 
+c        write(6,*) a, b, Cb(a,b) 
+c      enddo
+c      enddo 
 
       return
       end

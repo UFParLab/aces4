@@ -31,6 +31,7 @@ predefined  int damp_end
 predefined  int lock_orbitals
 predefined  int lock_orbocc
 predefined  int Natoms
+predefined  int iecp_on
 
 predefined scalar scf_conv  # value of SCF_CONV from ZMAT
 predefined scalar damp
@@ -59,6 +60,7 @@ static oed_kin[aces_defs_mu,aces_defs_mu]
 static oed_ovl[aces_defs_mu,aces_defs_mu]
 
 special return_h1 w
+special return_1el_ecpints w
 special return_ovl w
 special eigen_calc_sqr_inv uuu
 special eigen_calc uu

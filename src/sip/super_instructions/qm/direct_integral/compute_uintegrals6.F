@@ -1,4 +1,4 @@
-C  Copyright (c) 2003-2010 University of Florida
+
 C
 C  This program is free software; you can redistribute it and/or modify
 C  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ C  in the file COPYRIGHT.
      *                 ixpcoef,alphas, 
      *                 ixalpha, ccbeg, ccend,
      *                 ca, cb, nc1,nc2, nd1, nd2,
-     *                 fa,fb) 
+     *                 fa,fb,integrals)
 c---------------------------------------------------------------------------
 !>   The block of integrals (a1:a2,b1:b2,c1:c2,d1:d2) is computed for the 
 !>   following 'types' of integrals based on atomic labels.
@@ -61,6 +61,9 @@ c---------------------------------------------------------------------------
       double precision x2,y2,z2
       double precision x3,y3,z3
       double precision x4,y4,z4
+
+      double precision sa,sb
+
 
       double precision coords(3,*), coeffs(*), alphas(*)
       double precision tcoords(3,*)
@@ -224,7 +227,7 @@ c     zmax = 2*intmax
       enddo 
       enddo 
 
-c Set the integral tolerance 
+cSet the integral tolerance 
 
 c Skip screening for now 
 c     call set_itol(delta,itol)
@@ -393,13 +396,17 @@ c     enddo
 c     enddo 
 c     stop 
 
-c     write(6,*) ' Fock_a inside' 
-c     write(6,*) ' -------------' 
-c     do b = nc1, nc2
-c     do a = nc1, nc2
-c        write(6,*) a, b, Fa(a,b) 
-c     enddo
-c     enddo 
-
+#ifdef _DEBUG_LVL0
+      sa=0.0d0
+      sb=0.0d0
+      do a = nc1,nc2
+      do b = nc1,nc2
+         sa = Fa(a,b) *Fa(a,b) + sa
+         sb = Fb(a,b) *Fb(a,b) + sb
+      enddo
+      enddo
+      Write(6,"(a,F15.8)") "Checksum of Fa in Unints6 =",sa
+      Write(6,"(a,F15.8)") "Checksum of Fb in Unints6 =",sb
+#endif 
       return
       end

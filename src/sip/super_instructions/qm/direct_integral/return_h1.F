@@ -39,9 +39,12 @@ c     integer(C_INT) iscr(10000000) !!! NEED TO MALLOC VFL
 c     real(C_DOUBLE) scr(10000000)  !!! NEED TO MALLOC VFL  
 
       real(C_DOUBLE), pointer :: scr(:)
-      real(C_DOUBLE), pointer :: iscr(:)
+      integer, pointer :: iscr(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
+
+      TYPE(C_PTR) :: cptr_zsum
+      real(C_DOUBLE), pointer :: fptr_zsum(:)
 
 c Nuclear coordinates 
 c --------------------------------------------------------------------------- 
@@ -64,6 +67,8 @@ c     integer(C_INT) n_ao_segs(1), aosegs(6)
 
       integer(C_INT) norb, one, two, offset_1, offset_2 
       integer(C_INT) i, nscr, niscr   
+C
+      integer(C_INT) zsum_length1, zsum_length2, zsum_length
 
 c--------------------------------------------------------------------------
 !>
@@ -112,7 +117,7 @@ c   Set scratch space
       call scratch_array(nscr, cscr) 
       call c_f_pointer(cscr, scr, [nscr]) 
 
-      call scratch_array(niscr, ciscr) 
+      call integer_scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr])
 
 c---------------------------------------------------------------------------
@@ -125,13 +130,22 @@ c Find the offset index ranges
       if (index_values(1) .gt. 1) offset_1 = paosegs(index_values(1)-1) 
       if (index_values(2) .gt. 1) offset_2 = paosegs(index_values(2)-1) 
 
+
+      zsum_length1 = (extents(1)+offset_1) 
+      zsum_length2 = (extents(2)+offset_2)
+      zsum_length  = zsum_length1 * zsum_length2
+
+      call scratch_array(zsum_length, cptr_zsum) 
+      call c_f_pointer(cptr_zsum, fptr_zsum, [zsum_length]) 
+
       call comp_return_h1(data, 1+offset_1, extents(1)+offset_1,
      *           1+offset_2, extents(2)+offset_2, ncenters, 
-     *           coords, tcoords, scr, iscr)
+     *           coords, tcoords, scr, iscr,fptr_zsum)
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
+      call delete_integer_scratch_array(ciscr)
+      call delete_scratch_array(cptr_zsum)
 
       return
       end
