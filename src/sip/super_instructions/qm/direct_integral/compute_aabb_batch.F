@@ -249,12 +249,7 @@ c     niscr = 5000000
       if (index_values_1(3).gt.1) offset_3=paosegs(index_values_1(3)-1)
       if (index_values_1(4).gt.1) offset_4=paosegs(index_values_1(4)-1)
 
-      int_length1 = extents_1(1)+offset_1 
-      int_length2 = extents_1(2)+offset_2 
-      int_length3 = extents_1(3)+offset_3  
-      int_length4 = extents_1(4)+offset_4
-      int_length  = int_length1 * int_length2 * int_length3 *
-     +              int_length4
+      int_length = size_1 
 
       call scratch_array(int_length, cptr_int)
       call c_f_pointer(cptr_int, fptr_int, [int_length])
