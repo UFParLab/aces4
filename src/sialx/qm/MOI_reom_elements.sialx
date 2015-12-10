@@ -836,14 +836,13 @@ pardo a, i, b, j
 
 endpardo a, i, b, j  
 
+pardo a,a1
+    get MOI_HBAR_aa[a,a1]
+    put HBAR_aa[a,a1] += MOI_HBAR_aa[a,a1]
+endpardo a,a1
+
 #     alpha-alpha spin component done. 
 #     -------------------------------- 
-
-#     beta-beta spin component next. 
-#     ------------------------------ 
-
-#     beta-beta spin component done. 
-#     ------------------------------ 
 
 server_barrier 
 do a 
@@ -921,78 +920,15 @@ pardo i, i1
     enddo b 
     enddo a 
 
+    get MOI_HBAR_ii[i1,i]
+    tpp[i1,i] += MOI_HBAR_ii[i1,i]
+
     put HBAR_ii[i1,i] = tpp[i1,i] 
 
 endpardo i, i1 
 
 #     done alpha-alpha spin component. 
 #     -------------------------------- 
-
-#     beta-beta spin component next. 
-#     ------------------------------ 
-
-pardo j, j1 
-
-# diagram 1
-    tqq[j1,j] = fock_a[j1,j] 
-
-# diagram 3
-    do b 
-	t1qq[j1,j] = fock_a[j1,b]*St1b[b,j] 
-	tqq[j1,j] += t1qq[j1,j] 
-    enddo b 
-
-# diagram 2
-    do b 
-    do j2 
-	request VSpipi[b,j2,j,j1]  
-	t1qq[j1,j] = VSpipi[b,j2,j,j1]*St1b[b,j2]  
-	tqq[j1,j] += t1qq[j1,j] 
-    enddo j2 
-    enddo b 
-
-# diagram 2
-    do a 
-    do i 
-	request Vpiqj[a,i,j,j1]  
-	t1qq[j1,j] = Vpiqj[a,i,j,j1]*St1a[a,i]  
-	tqq[j1,j] += t1qq[j1,j] 
-    enddo i 
-    enddo a 
-
-# diagram 4
-    do b 
-    do b1 
-    do j2 
-	request T2bb[b,j,b1,j2]  
-	request VSpipi[b,j1,b1,j2]   
-
-	tqqqq[b,j,b1,j2]  = T2bb[b,j,b1,j2]
-	t1qq[j1,j]        = tqqqq[b,j,b1,j2]*VSpipi[b,j1,b1,j2] 
-	t1qq[j1,j]       *= 0.5 
-	tqq[j1,j]        += t1qq[j1,j] 
-    enddo j2 
-    enddo b1 
-    enddo b 
-
-# diagram 4
-    do a 
-    do b 
-    do i 
-	request T2ab[a,i,b,j]  
-	request Vpiqj[a,i,b,j1]   
-
-	tppqq[a,i,b,j]  = T2ab[a,i,b,j]
-	t1qq[j1,j]      = tppqq[a,i,b,j]*Vpiqj[a,i,b,j1] 
-	tqq[j1,j]      += t1qq[j1,j] 
-    enddo i 
-    enddo b 
-    enddo a 
-
-    put HBAR_jj[j1,j] = tqq[j1,j] 
-
-endpardo j, j1 
-
 server_barrier 
 do i 
 do i1 
@@ -1000,12 +936,6 @@ GET              HBAR_ii[i,i1]
 LHBAR_ii[i,i1] = HBAR_ii[i,i1]  
 enddo i1 
 enddo i 
-do j 
-do j1 
-GET              HBAR_jj[j,j1] 
-LHBAR_jj[j,j1] = HBAR_jj[j,j1]  
-enddo j1 
-enddo j 
 server_barrier 
 
 #     done beta-beta spin component. 
@@ -1042,42 +972,12 @@ pardo i, a
     enddo j 
     enddo b 
 
+    get MOI_HBAR_ia[i,a]
+    tpp[i,a] += MOI_HBAR_ia[i,a]
+
     put HBAR_ia[i,a] = tpp[i,a] 
 
 endpardo i, a 
-
-#     done alpha-alpha spin component. 
-#     -------------------------------- 
-
-#     beta-beta spin component next. 
-#     ------------------------------ 
-
-pardo j, b 
-
-# diagram 1
-    tqq[j,b] = fock_a[j,b] 
-
-# diagram 2
-    do b1 
-    do j1 
-	request VSpipi[b,j,b1,j1]  
-	t1qq[j,b] = VSpipi[b,j,b1,j1]*St1b[b1,j1] 
-	tqq[j,b] += t1qq[j,b] 
-    enddo j1 
-    enddo b1 
-
-# diagram 2
-    do a 
-    do i 
-	request Vpiqj[a,i,b,j]  
-	t1qq[j,b] = Vpiqj[a,i,b,j]*St1a[a,i] 
-	tqq[j,b] += t1qq[j,b] 
-    enddo i 
-    enddo a 
-
-    put HBAR_jb[j,b] = tqq[j,b] 
-
-endpardo j, b 
 
 #     done alpha-alpha spin component. 
 #     -------------------------------- 
@@ -1091,8 +991,7 @@ enddo i
 enddo a 
 do b 
 do j 
-GET HBAR_jb[j,b] 
-LHBAR_jb[j,b] = HBAR_jb[j,b]  
+LHBAR_jb[j,b] = LHBAR_ia[j,b]  
 enddo j 
 enddo b 
 server_barrier 
@@ -1455,6 +1354,14 @@ pardo i, i1, a, i2
 
 endpardo i, i1, a, i2
 
+pardo i, i1, a, i2
+    request MOI_HBAR_IAJK_aabb[i,i1,a,i2]
+    request MOI_HBAR_IAJK_aabb[i,i2,a,i1]
+    tpppp[i,i1,a,i2]  = MOI_HBAR_IAJK_aabb[i,i1,a,i2]
+    t1pppp[i,i2,a,i1] = MOI_HBAR_IAJK_aabb[i,i2,a,i1]
+    tpppp[i,i1,a,i2] -= t1pppp[i,i2,a,i1]
+    prepare HBAR_IAJK_aaaa[i,i1,a,i2] += tpppp[i,i1,a,i2]
+endpardo i, i1, a, i2
 #     AABB spin combination. 
 #     ---------------------- 
 
@@ -1537,6 +1444,9 @@ pardo i, i1, b, j
 	enddo j2
 
     enddo b1
+
+    request MOI_HBAR_IAJK_aabb[i,i1,b,j]
+    Tiibj[i,i1,b,j] += MOI_HBAR_IAJK_aabb[i,i1,b,j]
 
     prepare HBAR_IAJK_aabb[i,i1,b,j] = Tiibj[i,i1,b,j]
 
@@ -1642,6 +1552,11 @@ pardo i1, a1, b, j
 
 endpardo i1, a1, b, j
 
+pardo i,a,a1,i1
+    request MOI_HBAR_AJIB_aabb[i,a,a1,i1]
+    prepare HBAR_AJIB_aaaa[i,a,a1,i1] += MOI_HBAR_AJIB_aabb[i,a,a1,i1]
+endpardo i,a,a1,i1
+
 #     BBBB spin combination. 
 #     ---------------------- 
 
@@ -1720,6 +1635,11 @@ pardo i1, a1, b, j
     enddo a
 
 endpardo i1, a1, b, j 
+
+pardo i,a,b,j
+    request MOI_HBAR_AJIB_aabb[i,a,b,j]
+    prepare HBAR_AJIB_aabb[i,a,b,j] += MOI_HBAR_AJIB_aabb[i,a,b,j]
+endpardo i,a,b,j
 
 #     BBAA spin combination. 
 #     ---------------------- 
@@ -1913,6 +1833,12 @@ pardo a, b1, b, i
     enddo j
 
 endpardo a, b1, b, i
+
+pardo a, a1, a2, i
+    request                              MOI_HBAR_ABCI_aabb[a,a1,a2,i]
+    tpppp[a,a1,a2,i]                   = MOI_HBAR_ABCI_aabb[a,a1,a2,i]
+    prepare HBAR_ABCI_aabb[a,a1,a2,i] += tpppp[a,a1,a2,i]
+endpardo a, a1, a2, i
 
 
 #     Done AABB spin component. 
@@ -2227,18 +2153,6 @@ allocate LHBAR_ii[*,*]
 allocate LHBAR_ia[*,*]
 allocate LHBAR_jb[*,*]
 allocate LHBAR_aa[*,*]
-pardo i,i1
-    put HBAR_ii[i,i1] = 0.0
-endpardo i,i1
-pardo i,a
-    put HBAR_ia[i,a] = 0.0
-endpardo i,a
-pardo j,b
-    put HBAR_jb[j,b] = 0.0
-endpardo j,b
-pardo a,a1
-    put HBAR_aa[a,a1] = 0.0
-endpardo a,a1
 server_barrier
 
 print "Forming H_ab"

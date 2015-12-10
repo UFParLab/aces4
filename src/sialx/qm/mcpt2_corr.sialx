@@ -14,7 +14,7 @@ PROC FORM_JFRAG_HBAR
 
 #do ifrag
 #where ifrag == 1
-
+#-----------
     PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{oo}{vo}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -25,8 +25,9 @@ PROC FORM_JFRAG_HBAR
 	get Viaii[j,b,fi,fi1]
 	get t1old[b,j]
 
-	tpp[fi,fi1] = t1old[b,j]*Viaii[j,b,fi,fi1]
- 	#tpp[i,i1] *= -1.0
+	tpp[fi,fi1]  = t1old[b,j]*Viaii[j,b,fi,fi1]
+# 2 for alpha + beta jfrag
+	tpp[fi,fi1] *= 2.0
 
 	put HBAR_ii[fi,fi1] += tpp[fi,fi1]
 
@@ -44,14 +45,17 @@ PROC FORM_JFRAG_HBAR
 
 	    get Vaibj[fa1,fi1,b,j]
 	    get T2old[fa1,fi,b,j]
+
 	    tpp[fi,fi1] = T2old[fa1,fi,b,j]*Vaibj[fa1,fi1,b,j]
-	    #tpp[i,i1] *= -1.0
+# 2 for alpha + beta jfrag
+	    tpp[fi,fi1] *= 2.0
+
 	    put HBAR_ii[fi,fi1] += tpp[fi,fi1]
 
 	enddo fa1
 
     ENDPARDO ifrag, jfrag, fi, fi1, b, j
-
+#-----------
     PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{vv}{vo}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -61,8 +65,11 @@ PROC FORM_JFRAG_HBAR
     where (int)SwOccA_frag[(index)j] == jfrag
 	get Vaaai[fa,fa1,b,j]
 	get t1old[b,j]
-	tpp[fa,fa1] = Vaaai[fa,fa1,b,j]*t1old[b,j]
-	    #tpp[a,a1] *= -1.0
+
+	tpp[fa,fa1]  = Vaaai[fa,fa1,b,j]*t1old[b,j]
+# 2 for alpha + beta jfrag
+	tpp[fa,fa1] *= 2.0
+
 	put HBAR_aa[fa,fa1] += tpp[fa,fa1]
 
     ENDPARDO ifrag, jfrag, fa, fa1, b, j
@@ -81,14 +88,15 @@ PROC FORM_JFRAG_HBAR
 	    get T2old[fa,fi,b,j]
 
 	    tpp[fa,fa1] = T2old[fa,fi,b,j]*Vaibj[fa1,fi,b,j] 
-	    #tpp[a,a1] *= -1.0
-            
+# 2 for alpha + beta jfrag
+	    tpp[fa,fa1]  *= -2.0
+
 	    put HBAR_aa[fa,fa1] += tpp[fa,fa1]
 
 	enddo fi
 
     ENDPARDO ifrag, jfrag, fa, fa1, b, j
-
+#-----------
     PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -99,11 +107,14 @@ PROC FORM_JFRAG_HBAR
 	get Vaibj[fa,fi,b,j]
 	get t1old[b,j]
 
-	tpp[fi,fa] = Vaibj[fa,fi,b,j]*t1old[b,j]
+	tpp[fi,fa]  = Vaibj[fa,fi,b,j]*t1old[b,j]
+# 2 for alpha + beta jfrag
+	tpp[fi,fa] *= 2.0
+
 	put HBAR_ia[fi,fa] += tpp[fi,fa]
 
     ENDPARDO ifrag, jfrag, fa, fi, b, j
-
+#-----------
     PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -118,9 +129,12 @@ PROC FORM_JFRAG_HBAR
 	where (int)SwVirtA_frag[(index)fa1] == ifrag
 	do fi1
 	where (int)SwOccA_frag[(index)fi1] == ifrag
+
 	    get T2old[fa1,fi1,b,j]
 
 	    Tppqq[fi1,fa1,fa,fi] = T2old[fa1,fi1,b,j]*Vaibj[fa,fi,b,j]
+# 2 for alpha + beta jfrag
+	    Tppqq[fi1,fa1,fa,fi] *= 2.0
 
 	    put HBAR_AJIB[fi1,fa1,fa,fi] += Tppqq[fi1,fa1,fa,fi]
 
@@ -128,7 +142,7 @@ PROC FORM_JFRAG_HBAR
 	enddo fa1
 
     ENDPARDO ifrag, jfrag, fa, fi, b, j
-
+#-----------
     PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -146,8 +160,9 @@ PROC FORM_JFRAG_HBAR
 	get Viaii[j,b,fi1,fi2]
 	T1ppqq[fi1,fi2,b,j] = Viaii[j,b,fi1,fi2]
 
-	Tppqq[fi1,fi2,fa,fi] = T1ppqq[fi1,fi2,b,j]*T2old[fa,fi,b,j]
-#	Tppqq[i1,i2,a,i] += -1.0
+	Tppqq[fi1,fi2,fa,fi]  = T1ppqq[fi1,fi2,b,j]*T2old[fa,fi,b,j]
+# 2 for alpha + beta jfrag
+	Tppqq[fi1,fi2,fa,fi] *= 2.0
 
 	put HBAR_IAJK[fi1,fi2,fa,fi] += Tppqq[fi1,fi2,fa,fi]
 
@@ -155,7 +170,7 @@ PROC FORM_JFRAG_HBAR
 	enddo fi1
 
     ENDPARDO ifrag, jfrag, fa, fi, b, j
-
+#-----------
     PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
@@ -174,6 +189,8 @@ PROC FORM_JFRAG_HBAR
 	get Vaaai[fa1,fa2,b,j]
 
 	Tppqq[fa1,fa2,fa,fi] = Vaaai[fa1,fa2,b,j]*T2old[fa,fi,b,j]
+# 2 for alpha + beta jfrag
+	Tppqq[fa1,fa2,fa,fi] *= -2.0
 
 	put HBAR_ABCI[fa1,fa2,fa,fi] += Tppqq[fa1,fa2,fa,fi]
 

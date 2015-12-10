@@ -151,6 +151,10 @@ distributed DFock_a[p,p1]
 
 distributed FwC[p,p1]
 
+distributed MOI_HBAR_ia[i,a]
+distributed MOI_HBAR_aa[a,a1]
+distributed MOI_HBAR_ii[i1,i]
+
 #
 # Declare served 
 # --------------- 
@@ -200,6 +204,9 @@ served HBAR_AJIB_aabb[i,a,b,j]
 served HBAR_AJIB_iibb[i1,i,b,b1]
 served HBAR_ABCI_aaaa[a,a1,a2,i]
 served HBAR_ABCI_aabb[a,a1,b,j]
+served MOI_HBAR_AJIB_aabb[i,a,b,j]
+served MOI_HBAR_IAJK_aabb[i,i1,b,j]
+served MOI_HBAR_ABCI_aabb[a,a1,b,j]
 served WHIAAI[i,a,a1,i1]
 served WHJBBJ[j,b,b1,j1]
 served WHIABJ[i,a,b1,j1]
