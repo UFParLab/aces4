@@ -155,6 +155,7 @@ distributed MOI_HBAR_ia[i,a]
 distributed MOI_HBAR_aa[a,a1]
 distributed MOI_HBAR_ii[i1,i]
 
+
 #
 # Declare served 
 # --------------- 
@@ -295,6 +296,10 @@ served R2BB[a,i,a1,i1]
 served L2AA[i,a,i1,a1]
 served L2AB[i,a,j,b]
 served L2BB[i,a,i1,a1]
+served t1a_old[a,i]
+served t1a_new[a,i]
+served D0ai[a,i]
+served Mck_a[a,i]
 #
 # Declare local 
 # --------------- 
@@ -391,9 +396,10 @@ contiguous local Dipole_Oscillator_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
 contiguous local CIS_EE_eV[kstate]
 contiguous local EOM_EE_Energy[kstate]
+contiguous local EOM_EE_eV[kstate]
 
 local Ca[mu,p]
-local Fock_a[p,p1]
+static Fock_a[p,p1]
 #
 # Declare temp 
 # --------------- 
@@ -631,6 +637,7 @@ temp T1ixxi[i1,mu,nu,i]
 # Declare scalar 
 # --------------- 
 #
+scalar second_order_singles
 scalar ncount1
 scalar ncount2
 scalar dsum
@@ -738,5 +745,7 @@ scalar overlapS
 scalar overlap1
 scalar overlap2
 scalar rmsconv
+scalar dimer_doubles
+scalar norm
 
 endsial eom_vars

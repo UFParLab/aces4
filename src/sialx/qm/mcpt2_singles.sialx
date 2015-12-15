@@ -44,13 +44,6 @@ SIAL mcpt2_singles
       where (int)elst_dist[ifrag,jfrag] == ifrag
       where (int)SwAO_frag[(index)mu] == ifrag
       where (int)SwAO_frag[(index)nu] == jfrag
-#      PARDO ifrag,jfrag
-#      where ifrag != jfrag
-#      where (int)elst_dist[ifrag,jfrag] == ifrag
-#      do mu
-#      where (int)SwAO_frag[(index)mu] == ifrag
-#      do nu
-#      where (int)SwAO_frag[(index)nu] == jfrag
 
          icount = (scalar)ifrag
          jcount = (scalar)jfrag
@@ -71,9 +64,6 @@ SIAL mcpt2_singles
 
                enddo i 
 
-#      enddo nu
-#      enddo mu
-#      endpardo ifrag,jfrag
       ENDPARDO ifrag,jfrag, mu, nu
       print "Done form_e1pol" 
 
@@ -89,7 +79,7 @@ SIAL mcpt2_singles
       PROC EXCHANGE_ALT
 #     ----------------- 
 
-      e1x_at = 0.0  
+      e1exc_at = 0.0  
       esum = 0.0 
 
       PARDO ifrag, jfrag  
@@ -258,8 +248,8 @@ SIAL mcpt2_singles
       ENDPARDO ifrag, jfrag, i, i1
 
       sip_barrier
-      collective e1x_at += esum   
-      print e1x_at 
+      collective e1exc_at += esum   
+      print e1exc_at 
 # 
       execute get_my_rank rank
       if rank == 0.0
@@ -523,6 +513,149 @@ SIAL mcpt2_singles
       sip_barrier 
 # 
       ENDPROC FORM_T1 
+
+
+#    PROC form_t1_secondorder
+#
+#    print "forming approximate second-order T1 amplitudes"
+#    server_barrier
+#
+#    pardo a1,b,i1,a
+#	request Vaaai[b,a,a1,i1]
+#	do i
+#	    request T2old[b,i,a1,i1]
+#	    request T2aa[b,i,a1,i1]
+#
+#	    Taibj[b,i,a1,i1]  = T2ab[b,i,a1,i1]
+#	    T1aibj[b,i,a1,i1] = T2aa[b,i,a1,i1]
+#	    Taibj[b,i,a1,i1] += T1aibj[b,i,a1,i1]
+#
+#	    Tai[a,i] = Vaaai[b,a,a1,i1]*Taibj[b,i,a1,i1]
+#
+#	    T1ai[b,i] = Fock_a[a1,i1]*Taibj[b,i,a1,i1]
+#
+#	    prepare Mck_a[a,i] += Tai[a,i]
+#	    prepare Mck_a[b,i] += T1ai[b,i]
+#	enddo i
+#    endpardo a1,b,i1,a
+#
+#    pardo a1,i1,j,i
+#        request Vpiqj[a1,i1,i,j]
+#	do a
+#	    request T2ab[a,j,a1,i1]
+#	    request T2aa[a,j,a1,i1]
+#
+#	    Taibj[a,j,a1,i1]  = T2ab[a,j,a1,i1]
+#	    T1aibj[a,j,a1,i1] = T2aa[a,j,a1,i1]
+#	    Taibj[a,j,a1,i1] += T1aibj[a,j,a1,i1]
+#
+#	    Tai[a,i] = Vpiqj[a1,i1,i,j]*Taibj[a,j,a1,i1]
+#	    Tai[a,i] *= -1.0
+#	    
+#	    prepare Mck_a[a,i] += Tai[a,i]
+#	enddo a
+#    endpardo a1,i1,j,i
+#
+#    server_barrier
+## t1(2) guess
+#    esum = 0.0
+#	pardo a,i
+#	    request Mck_a[a,i]
+#	    Tai[a,i] = Mck_a[a,i]
+#	    execute energy_denominator_rhf Tai[a,i] fock_a
+#	    prepare t1a_old[a,i] = Tai[a,i]
+#	    T1ai[a,i] = Tai[a,i]
+#	    etemp = tai[a,i]*t1ai[a,i]
+#	    esum += etemp
+#	endpardo a,i
+#    server_barrier
+#    second_order_singles = 0.0
+#    collective second_order_singles += esum
+#    print second_order_singles
+#    eold = second_order_singles
+#    server_barrier
+#
+#    do kiter
+#	print " "
+#	print kiter
+#	server_barrier
+#
+#	pardo a,i
+#	    Tai[a,i] = 0.0
+#	    prepare t1a_new[a,i] = Tai[a,i]
+#	endpardo a,i
+#	server_barrier
+#
+#	pardo a,i
+#	    Tai[a,i] = 0.0
+#	    do b
+#		do j
+#		    request Viaai[i,a,b,j]
+#		    request t1a_old[b,j]
+#
+#		    T1ai[a,i] = Viaai[i,a,b,j]*t1a_old[b,j]
+#		    Tai[a,i] += T1ai[a,i]
+#		enddo j
+#	    enddo b
+#	    do a1
+#		do i1
+#		    request Vaaii[a,a1,i1,i]
+#		    request Viaai[i1,a1,a,i]
+#		    request t1a_old[a1,i1]
+#		    Tpppp[i1,a1,a,i]  = Vaaii[a,a1,i1,i]
+#		    Tpppp[i1,a1,a,i] -= Viaai[i1,a1,a,i]
+#
+#		    T2ai[a,i] = Tpppp[i1,a1,a,i]*t1a_old[a1,i1]
+#		    Tai[a,i] -= t2ai[a,i]
+#
+#		enddo i1
+#	    enddo a1
+#
+#	    request Mck_a[a,i]
+#	    T1ai[a,i] = Mck_a[a,i]
+#
+#	    Tai[a,i] += T1ai[a,i]
+#
+#	    prepare t1a_new[a,i] += Tai[a,i]
+#	endpardo a,i
+#	server_barrier
+#	esum = 0.0
+#	pardo a,i
+#	    request t1a_new[a,i]
+#	    Tai[a,i] = t1a_new[a,i]
+#	    execute energy_denominator_rhf Tai[a,i] fock_a
+#	    prepare t1a_old[a,i] = Tai[a,i]
+#	    T1ai[a,i] = Tai[a,i]
+#	    etemp = tai[a,i]*t1ai[a,i]
+#	    esum += etemp
+#	endpardo a,i
+#	server_barrier
+#	norm = 0.0
+#	collective norm += esum
+#	etemp2 = norm - eold
+#	ediff = (etemp2**2.0)**0.5
+#	print ediff
+#
+#	if ediff < cc_conv
+#	    exit
+#        endif
+#
+#	eold = norm
+#	server_barrier
+#    enddo kiter
+#
+#	esum = 0.0
+#	pardo a,i
+#	    request t1a_old[a,i]
+#	    etemp = t1a_old[a,i]*Fock_a[a,i]
+#	    esum += etemp
+#	endpardo a,i
+#	server_barrier
+#	second_order_singles = 0.0
+#	collective second_order_singles += esum
+#	print second_order_singles
+##
+#    ENDPROC form_t1_secondorder
 
 ENDSIAL mcpt2_singles
 ##

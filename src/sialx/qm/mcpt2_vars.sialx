@@ -113,13 +113,16 @@ scalar eold
 scalar esum 
 scalar esum1
 scalar esum2
+scalar esum3
 scalar ediff
 scalar escr
-scalar e1x_at 
+scalar e1exc_at 
 scalar e10pol_at 
 scalar mono_lccd  
+scalar mcpt_corr
 scalar elccd
 scalar singles 
+scalar MOI_dimer_doubles 
 scalar dimer_doubles 
 scalar fragment_doubles 
 scalar eint_tot 
@@ -202,6 +205,9 @@ distributed VE_x[p,p1]
 distributed t1old[b,j]  
 distributed t1new[b,j]  
 distributed x1new[b,j]  
+distributed p2x1new[b,j]  
+distributed p2t1old[b,j]  
+distributed p2t1new[b,j]  
 distributed wC_ao[mu,nu] 
 distributed dip_xmom[kfrag] 
 distributed dip_ymom[kfrag] 

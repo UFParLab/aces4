@@ -26,19 +26,47 @@ restore_persistent MOI_HBAR_AJIB_aabb "MOI_HBAR_ajib"
 restore_persistent MOI_HBAR_IAJK_aabb "MOI_HBAR_iajk"
 restore_persistent MOI_HBAR_ABCI_aabb "MOI_HBAR_abci"
 
+restore_persistent dimer_doubles "dimer_doubles"
+
+#pardo i,i1
+#put MOI_HBAR_ii[i,i1] = 0.0
+#endpardo i,i1
+#pardo a,a1
+#put MOI_HBAR_aa[a,a1] = 0.0
+#endpardo a,a1
+#pardo a,i
+#put MOI_HBAR_ia[i,a] = 0.0
+#endpardo a,i
+#pardo i,a,a1,i1
+#    prepare MOI_HBAR_AJIB_aabb[i,a,a1,i1] = 0.0
+#endpardo i,a,a1,i1
+#pardo i, i1, a, i2
+#    prepare MOI_HBAR_IAJK_aabb[i,i1,a,i2] = 0.0
+#endpardo i, i1, a, i2
+#pardo a, a1, a2, i
+#    prepare MOI_HBAR_ABCI_aabb[a,a1,a2,i] = 0.0
+#endpardo a, a1, a2, i
+
 server_barrier
 print "Setting wC elements of the Fock matrix"
 do a
     do a1
-        allocate Fock_a[a,a1]
+#        allocate Fock_a[a,a1]
         get DFock_a[a,a1]
 	get FwC[a,a1]
+	Taa[a,a1]  = FwC[a,a1]
+#	Taa[a,a1] *= 0.5
+
+#	if a == a1
+#	    execute remove_diagonal Taa[a,a1]
+    #    endif
 
         Fock_a[a,a1]  = DFock_a[a,a1]
-        Fock_a[a,a1] += FwC[a,a1]
+        Fock_a[a,a1] += Taa[a,a1]
+
     enddo a1
     do i1
-        allocate Fock_a[a,i1]
+#        allocate Fock_a[a,i1]
         get DFock_a[a,i1]
 	get FwC[a,i1]
 
@@ -48,7 +76,7 @@ do a
 enddo a
 do i
     do a1
-        allocate Fock_a[i,a1]
+#        allocate Fock_a[i,a1]
         get DFock_a[i,a1]
 	get FwC[i,a1]
 
@@ -56,17 +84,19 @@ do i
         Fock_a[i,a1] += FwC[i,a1]
     enddo a1
     do i1
-        allocate Fock_a[i,i1]
+#        allocate Fock_a[i,i1]
         get DFock_a[i,i1]
 	get FwC[i,i1]
 
-	Tii1[i,i1] = FwC[i,i1]
+	Tii1[i,i1]  = FwC[i,i1]
+#	Tii1[i,i1] *= 0.5
 #	if i == i1
 #	    execute remove_diagonal Tii1[i,i1]
 #	endif
 
         Fock_a[i,i1]  = DFock_a[i,i1]
         Fock_a[i,i1] += Tii1[i,i1]
+
     enddo i1
 enddo i
 do mu
@@ -117,8 +147,8 @@ if myrank == root
     do i
         get t1a[a,i]
         Tai[a,i] = t1a[a,i]
-        St1a[a,i] = t1a[a,i]
-        St1b[a,i] = t1a[a,i]
+        St1a[a,i] = 0.0 #t1a[a,i]
+        St1b[a,i] = 0.0 #t1a[a,i]
         put t1b[a,i] = Tai[a,i]
     enddo i
     enddo a
@@ -1430,6 +1460,266 @@ server_barrier
 
 ENDPROC form_guess
 #
+#---------------------------------------------------------------
+#
+proc norm_lr_vec
+#
+do ksub
+#######################
+    normS   = 0.0
+    Tk[ksub] = 1.0
+    pardo a,i
+	request RB1_a[ksub,a,i]
+	Tkai[ksub,a,i] = RB1_a[ksub,a,i]
+	normT  = Tkai[ksub,a,i]*RB1_a[ksub,a,i]
+	normT *= 2.0
+	normS += normT
+    endpardo a,i
+    pardo a,i,a1,i1
+	request RB2_aa[ksub,a,i,a1,i1]
+	Tkaiai[ksub,a,i,a1,i1] = RB2_aa[ksub,a,i,a1,i1]
+	normT  = Tkaiai[ksub,a,i,a1,i1]*RB2_aa[ksub,a,i,a1,i1]
+	normT *= 0.5
+	normS += normT
+    endpardo a,i,a1,i1
+
+    pardo a,i,b,j
+	request RB2_ab[ksub,a,i,b,j]
+	Tkaibj[ksub,a,i,b,j] = RB2_ab[ksub,a,i,b,j]
+	normT  = Tkaibj[ksub,a,i,b,j]*RB2_ab[ksub,a,i,b,j]
+	normS += normT
+    endpardo a,i,b,j
+    server_barrier
+    norm1   = 0.0
+    collective norm1   += normS
+    norm2 = (norm1)**(-0.5)
+#######################
+
+    pardo a,i
+        prepare RB1_a[ksub,a,i] *= norm2
+    endpardo a,i
+    pardo a,i,a1,i1
+        prepare RB2_aa[ksub,a,i,a1,i1] *= norm2
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        prepare RB2_ab[ksub,a,i,b,j] *= norm2
+    endpardo a,i,b,j
+
+    norm2 = (norm1)**(0.5)
+
+    pardo a,i
+        prepare LB1_a[ksub,a,i] *= norm2
+    endpardo a,i
+    pardo a,i,a1,i1
+        prepare LB2_aa[ksub,a,i,a1,i1] *= norm2
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        prepare LB2_ab[ksub,a,i,b,j] *= norm2
+    endpardo a,i,b,j
+enddo ksub
+#
+endproc norm_lr_vec
+
+proc form_r0
+#
+do kstate
+    sum1 = 0.0
+    sum2 = 0.0
+    sum3 = 0.0
+    pardo a,i
+        request RB1_a[kstate,a,i]
+        Tk[kstate] = 1.0
+        Tai[a,i] = Tk[kstate]*RB1_a[kstate,a,i]
+        etemp  = LHBAR_ia[i,a]*Tai[a,i]
+        etemp *= 2.0
+        sum1  += etemp
+    endpardo a,i
+    pardo a,i,a1,i1
+        request VSpipi[a,i,a1,i1]
+        request RB2_aa[kstate,a,i,a1,i1]
+        Tk[kstate] = 1.0
+        Taiai[a,i,a1,i1] = Tk[kstate]*RB2_aa[kstate,a,i,a1,i1]
+        etemp  = VSpipi[a,i,a1,i1]*Taiai[a,i,a1,i1]
+        etemp *= 0.5
+        sum2  += etemp
+    endpardo a,i,a1,i1
+
+    pardo a,i,b,j
+        request Vpiqj[a,i,b,j]
+        request RB2_ab[kstate,a,i,b,j]
+        Tk[kstate] = 1.0
+        Taibj[a,i,b,j] = Tk[kstate]*RB2_ab[kstate,a,i,b,j]
+        etemp = Vpiqj[a,i,b,j]*Taibj[a,i,b,j]
+        sum3 += etemp
+    endpardo a,i,b,j
+    server_barrier
+    etemp1 = 0.0
+    etemp2 = 0.0
+    etemp3 = 0.0
+    collective etemp1 += sum1
+    collective etemp2 += sum2
+    collective etemp3 += sum3
+
+    etemp4  = etemp1
+    etemp4 += etemp2
+    etemp4 += etemp3
+
+    omega = SEk0[kstate]
+    etemp = (etemp4/omega)
+    normT = 1.0
+    normT += etemp**2.0
+    normS = 1.0/(normT)**0.5
+    r0 = etemp*normS
+    SR0[kstate] = r0
+enddo kstate
+endproc form_r0
+
+    PROC form_t1_secondorder
+
+    print "forming approximate second-order T1 amplitudes"
+    server_barrier
+
+    pardo a1,b,i1,a
+	request Vaaai[b,a,a1,i1]
+	do i
+	    request T2ab[b,i,a1,i1]
+	    request T2aa[b,i,a1,i1]
+
+	    Taibj[b,i,a1,i1]  = T2ab[b,i,a1,i1]
+	    T1aibj[b,i,a1,i1] = T2aa[b,i,a1,i1]
+	    Taibj[b,i,a1,i1] += T1aibj[b,i,a1,i1]
+
+	    Tai[a,i] = Vaaai[b,a,a1,i1]*Taibj[b,i,a1,i1]
+
+	    T1ai[b,i] = Fock_a[a1,i1]*Taibj[b,i,a1,i1]
+
+	    prepare Mck_a[a,i] += Tai[a,i]
+	    prepare Mck_a[b,i] += T1ai[b,i]
+	enddo i
+    endpardo a1,b,i1,a
+
+    pardo a1,i1,j,i
+        request Vpiqj[a1,i1,i,j]
+	do a
+	    request T2ab[a,j,a1,i1]
+	    request T2aa[a,j,a1,i1]
+
+	    Taibj[a,j,a1,i1]  = T2ab[a,j,a1,i1]
+	    T1aibj[a,j,a1,i1] = T2aa[a,j,a1,i1]
+	    Taibj[a,j,a1,i1] += T1aibj[a,j,a1,i1]
+
+	    Tai[a,i] = Vpiqj[a1,i1,i,j]*Taibj[a,j,a1,i1]
+	    Tai[a,i] *= -1.0
+	    
+	    prepare Mck_a[a,i] += Tai[a,i]
+	enddo a
+    endpardo a1,i1,j,i
+
+    server_barrier
+# t1(2) guess
+    esum = 0.0
+	pardo a,i
+	    request Mck_a[a,i]
+	    Tai[a,i] = Mck_a[a,i]
+	    execute energy_denominator_rhf Tai[a,i] fock_a
+	    prepare t1a_old[a,i] = Tai[a,i]
+	    T1ai[a,i] = Tai[a,i]
+	    etemp = tai[a,i]*t1ai[a,i]
+	    esum += etemp
+	endpardo a,i
+    server_barrier
+    second_order_singles = 0.0
+    collective second_order_singles += esum
+    print second_order_singles
+    eold = second_order_singles
+    server_barrier
+
+    do kiter
+	print " "
+	print kiter
+	server_barrier
+
+	pardo a,i
+	    Tai[a,i] = 0.0
+	    prepare t1a_new[a,i] = Tai[a,i]
+	endpardo a,i
+	server_barrier
+
+	pardo a,i
+	    Tai[a,i] = 0.0
+	    do b
+		do j
+		    request Viaai[i,a,b,j]
+		    request t1a_old[b,j]
+
+		    T1ai[a,i] = Viaai[i,a,b,j]*t1a_old[b,j]
+		    Tai[a,i] += T1ai[a,i]
+		enddo j
+	    enddo b
+	    do a1
+		do i1
+		    request Vaaii[a,a1,i1,i]
+		    request Viaai[i1,a1,a,i]
+		    request t1a_old[a1,i1]
+		    Tpppp[i1,a1,a,i]  = Vaaii[a,a1,i1,i]
+		    Tpppp[i1,a1,a,i] -= Viaai[i1,a1,a,i]
+
+		    T2ai[a,i] = Tpppp[i1,a1,a,i]*t1a_old[a1,i1]
+		    Tai[a,i] -= t2ai[a,i]
+
+		enddo i1
+	    enddo a1
+
+	    request Mck_a[a,i]
+	    T1ai[a,i] = Mck_a[a,i]
+
+	    Tai[a,i] += T1ai[a,i]
+
+	    prepare t1a_new[a,i] += Tai[a,i]
+	endpardo a,i
+	server_barrier
+	esum = 0.0
+	pardo a,i
+	    request t1a_new[a,i]
+	    Tai[a,i] = t1a_new[a,i]
+	    execute energy_denominator_rhf Tai[a,i] fock_a
+	    prepare t1a_old[a,i] = Tai[a,i]
+	    T1ai[a,i] = Tai[a,i]
+	    etemp = tai[a,i]*t1ai[a,i]
+	    esum += etemp
+	endpardo a,i
+	server_barrier
+	norm = 0.0
+	collective norm += esum
+	etemp2 = norm - eold
+	ediff = (etemp2**2.0)**0.5
+	print ediff
+
+	if ediff < cc_conv
+	    exit
+        endif
+
+	eold = norm
+	server_barrier
+    enddo kiter
+
+	esum = 0.0
+	pardo a,i
+	    request t1a_old[a,i]
+	    etemp = t1a_old[a,i]*Fock_a[a,i]
+	    esum += etemp
+	endpardo a,i
+	server_barrier
+	second_order_singles = 0.0
+	collective second_order_singles += esum
+	print second_order_singles
+#
+    ENDPROC form_t1_secondorder
+
+#
+#-------------------------------------------------------------------------
+#
+#
 # -----------------
 #  MAIN
 # -----------------
@@ -1455,6 +1745,9 @@ print " "
 server_barrier
 CALL READ_AMP
 call tran_uhf
+server_barrier
+call form_t1_secondorder
+server_barrier
 call form_H_MCPT
 
 call form_diag
@@ -1501,7 +1794,34 @@ do kiter
 enddo kiter
 
 print " "
-print "EOM-CCPT has converged"
+print "EOM-MCPT has converged"
+
+allocate contiguous EOM_EE_Energy[1:eom_roots]
+allocate contiguous EOM_EE_eV[1:eom_roots]
+
+call norm_lr_vec
+call form_r0
+
+do kstate
+    print " "
+    print "--------"
+    print kstate
+
+    omega  = SEk0[kstate]
+
+    etemp = omega
+    etemp *=27.2113961
+
+    r0 = SR0[kstate]
+
+    EOM_EE_Energy[kstate:kstate] = omega
+    EOM_EE_eV[kstate:kstate] = etemp
+    print EOM_EE_Energy[kstate:kstate]
+    print EOM_EE_eV[kstate:kstate]
+    print " "
+    print r0
+
+enddo kstate
 
 server_barrier
 

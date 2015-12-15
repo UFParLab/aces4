@@ -204,6 +204,118 @@ PROC FORM_JFRAG_HBAR
 
     server_barrier
 ENDPROC FORM_JFRAG_HBAR
+PROC MOI_MANAGER
+print "starting additional transformations"
+call ADDITIONAL_FRAG_TRAN
+print "Finished additional transformations"
+print "Forming HBAR elements"
+call FORM_JFRAG_HBAR
+print "done forming HBAR elements"
+
+server_barrier
+    pardo fa,fa1
+        get wC[fa,fa1]
+	put FwC[fa,fa1] = wC[fa,fa1]
+    endpardo fa,fa1
+    pardo fa, fi
+	get wC[fa,fi]
+	t1ai[fa,fi] = wC[fa,fi]
+	t1ia[fi,fa] = wC[fa,fi]
+	put FwC[fa,fi] = t1ai[fa,fi]
+	put FwC[fi,fa] = t1ia[fi,fa]
+    endpardo fa, fi
+    pardo fi,fi1
+        get wC[fi,fi1]
+	put FwC[fi,fi1] = wC[fi,fi1]
+    endpardo fi,fi1
+
+    pardo fa, fi
+        get t1old[fa,fi]
+	put FT1old[fa,fi] = t1old[fa,fi]
+    endpardo fa, fi
+
+    pardo fa, fi, fa1, fi1
+
+        get T2old[fa,fi,fa1,fi1]
+
+	t1ppqq[fa,fi,fa1,fi1] = T2old[fa,fi,fa1,fi1]
+
+	put FT2old[fa,fi,fa1,fi1] = t1ppqq[fa,fi,fa1,fi1]
+	
+    endpardo fa, fi, fa1, fi1
+
+esum1 = 0.0
+esum2 = 0.0
+    server_barrier
+
+      PARDO fa, fi, fa1, fi1 
+
+               GET                T2old[fa,fi,fa1,fi1]
+               GET                Vaibj[fa,fi,fa1,fi1]
+               GET                Vaibj[fa,fi1,fa1,fi]
+
+               t1ppqq[fa,fi,fa1,fi1] = Vaibj[fa,fi,fa1,fi1]
+               t3ppqq[fa,fi1,fa1,fi] = Vaibj[fa,fi1,fa1,fi]
+               t2ppqq[fa,fi,fa1,fi1] = t3ppqq[fa,fi1,fa1,fi]
+               t1ppqq[fa,fi,fa1,fi1]*= 2.0
+               t1ppqq[fa,fi,fa1,fi1]-= t2ppqq[fa,fi,fa1,fi1]
+
+               etemp = T2old[fa,fi,fa1,fi1]*t1ppqq[fa,fi,fa1,fi1]
+
+               esum2 += etemp
+
+      ENDPARDO fa, fi, fa1, fi1
+
+      PARDO fa, fi
+
+               GET        FT1old[fa,fi] 
+               GET        FwC[fa,fi] 
+               tai[fa,fi] = FT1old[fa,fi] 
+
+               etemp = tai[fa,fi]*FwC[fa,fi]  
+               etemp*= 2.0  
+
+	       esum1 += etemp
+
+      ENDPARDO fa, fi
+
+    esum3 = 0.0
+    do ifrag
+    where ifrag == 1
+	pardo jfrag
+	WHERE jfrag > ifrag 
+	where (int)rcut_dist[ifrag,jfrag] == ifrag
+
+	get d20c[ifrag,jfrag]
+	etemp = d20c[ifrag,jfrag]
+	esum3 += etemp
+
+	endpardo jfrag
+    enddo ifrag
+
+server_barrier
+e1new = 0.0
+e2new = 0.0
+MOI_dimer_doubles = 0.0
+collective e1new += esum1
+collective e2new += esum2
+collective MOI_dimer_doubles += esum3
+print e1new
+print e2new
+print MOI_dimer_doubles
+
+server_barrier
+set_persistent FwC "MOI_wC"
+set_persistent FT1old "MOI_T1"
+set_persistent FT2old "MOI_T2ab"
+set_persistent HBAR_ii "MOI_HBAR_ii"
+set_persistent HBAR_aa "MOI_HBAR_aa"
+set_persistent HBAR_ia "MOI_HBAR_ia"
+set_persistent HBAR_AJIB "MOI_HBAR_ajib"
+set_persistent HBAR_IAJK "MOI_HBAR_iajk"
+set_persistent HBAR_ABCI "MOI_HBAR_abci"
+set_persistent MOI_dimer_doubles "dimer_doubles"
+ENDPROC MOI_MANAGER
 #
 # -----------------------------------------------------------------------------
 # 
@@ -283,226 +395,19 @@ print " "
       CALL FORM_T1
       sip_barrier 
       print "Completely Done singles formation" 
-      print e1x_at 
+      print e1exc_at 
       print e10pol_at 
       print eps1_pol  
       print singles  
       sip_barrier 
-#
-#     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
-#     ------------------------------------------------------ 
-      CALL FORM_T2_0GUESS 
-      sip_barrier 
-      print "Done forming T2_0guess" 
-#
-# Start macro-iterations 
-      DO jiter 
-         sip_barrier 
-	 print " "
-	 print "------------------------------------------------------"
-	 print "Macro iteration"
-	 print jiter
-	 print " "
-
-         PARDO ifrag 
-           GET                   e20c[ifrag] 
-           PUT e2_macro[ifrag] = e20c[ifrag] 
-         ENDPARDO ifrag  
-
-         sip_barrier 
-         CALL FORM_T2_GUESS 
-         sip_barrier 
-	 print "Entering FORM_T2_FRAGMENT_ITERS"
-         CALL FORM_T2_FRAGMENT_ITERS 
-         sip_barrier 
-	 print " "
-	 print "Entering FORM_T2_DIMER_ITERS"
-         CALL FORM_T2_DIMER_ITERS 
-         print "Done forming T2 Dimer calculation" 
-         esum = 0.0 
-         sip_barrier 
-# Print out energies after each macroiteration  
-         execute get_my_rank rank
-         if rank == 0.0
-	 print " "
-         print "MCPT(2) monomer macro-iteration energies"
-	 fragment_doubles = 0.0
-         DO ifrag
-            allocate contiguous macro_e20[ifrag:ifrag]
-            GET                 e20c[ifrag] 
-            macro_e20[ifrag:ifrag]  = e20c[ifrag] 
-            print macro_e20[ifrag:ifrag] 
-            etemp = e20c[ifrag] 
-            fragment_doubles += etemp 
-            deallocate contiguous macro_e20[ifrag:ifrag]
-         ENDDO ifrag   
-
-	 print " "
-         print "MCPT(2) dimer macro-iteration energies"
-	 do ifrag
-	 do jfrag
-	     WHERE jfrag > ifrag 
-	     where (int)rcut_dist[ifrag,jfrag] == ifrag
-	     icount = (scalar)ifrag
-	     jcount = (scalar)jfrag
-
-		 allocate contiguous macro_d20[ifrag:ifrag,jfrag:jfrag]
-		 get d20c[ifrag,jfrag]
-		 macro_d20[ifrag:ifrag,jfrag:jfrag] = d20c[ifrag,jfrag]
-		 print macro_d20[ifrag:ifrag,jfrag:jfrag]
-		 deallocate contiguous macro_d20[ifrag:ifrag,jfrag:jfrag]
-	 enddo jfrag
-	 enddo ifrag
-         endif
-         sip_barrier 
-
-# Determine if full macro convergence is met 
-         do_iter = 0.0 
-         DO ifrag 
-           GET          e20c[ifrag] 
-           GET          e2_macro[ifrag] 
-           tp[ifrag]  = e20c[ifrag]  
-           tp[ifrag] -= e2_macro[ifrag]  
-           execute return_sval tp[ifrag] etemp  
-           if etemp < zero 
-              etemp *= -1.0 
-           endif 
-           IF etemp > cc_conv 
-              do_iter = 2.0 
-           ENDIF 
-         ENDDO ifrag 
-         print dimer_doubles  
-         print fragment_doubles  
-         print etemp 
-         sip_barrier 
-         if do_iter < 1.0 
-            exit 
-         endif 
-#
-      ENDDO jiter 
+      call DOUBLES_MANAGER
       sip_barrier
 #
-      CALL FORM_T2_MONOMER  
+      call END_PRINT
       sip_barrier
+
+      call MOI_MANAGER
 #
-      eint_tot  = 0.0 
-      eint_tot += e1x_at  
-      eint_tot += e10pol_at  
-      eint_tot += eps1_pol   
-      eint_tot += singles  
-      eint_tot += dimer_doubles  
-      eint_tot += fragment_doubles  
-      eint_tot += mono_lccd   
-
-      print e1x_at 
-      print e10pol_at 
-      print eps1_pol  
-      print singles  
-      print dimer_doubles  
-      print fragment_doubles  
-      print mono_lccd  
-
-      print eint_tot 
-
-#
-print "starting additional transformations"
-call ADDITIONAL_FRAG_TRAN
-print "Finished additional transformations"
-print "Forming HBAR elements"
-call FORM_JFRAG_HBAR
-print "done forming HBAR elements"
-
-server_barrier
-do ifrag
-where ifrag == 1
-
-    pardo fa,fa1
-        get wC[fa,fa1]
-	put FwC[fa,fa1] = wC[fa,fa1]
-    endpardo fa,fa1
-    pardo fa, fi
-	get wC[fa,fi]
-	t1ai[fa,fi] = wC[fa,fi]
-	t1ia[fi,fa] = wC[fa,fi]
-	put FwC[fa,fi] = t1ai[fa,fi]
-	put FwC[fi,fa] = t1ia[fi,fa]
-    endpardo fa, fi
-    pardo fi,fi1
-        get wC[fi,fi1]
-	put FwC[fi,fi1] = wC[fi,fi1]
-    endpardo fi,fi1
-
-    pardo fa, fi
-        get t1old[fa,fi]
-	put FT1old[fa,fi] = t1old[fa,fi]
-    endpardo fa, fi
-
-    pardo fa, fi, fa1, fi1
-
-        get T2old[fa,fi,fa1,fi1]
-
-	t1ppqq[fa,fi,fa1,fi1] = T2old[fa,fi,fa1,fi1]
-
-	put FT2old[fa,fi,fa1,fi1] = t1ppqq[fa,fi,fa1,fi1]
-	
-    endpardo fa, fi, fa1, fi1
-
-esum1 = 0.0
-esum2 = 0.0
-    server_barrier
-
-      PARDO fa, fi, fa1, fi1 
-
-               GET                T2old[fa,fi,fa1,fi1]
-               GET                Vaibj[fa,fi,fa1,fi1]
-               GET                Vaibj[fa,fi1,fa1,fi]
-
-               t1ppqq[fa,fi,fa1,fi1] = Vaibj[fa,fi,fa1,fi1]
-               t3ppqq[fa,fi1,fa1,fi] = Vaibj[fa,fi1,fa1,fi]
-               t2ppqq[fa,fi,fa1,fi1] = t3ppqq[fa,fi1,fa1,fi]
-               t1ppqq[fa,fi,fa1,fi1]*= 2.0
-               t1ppqq[fa,fi,fa1,fi1]-= t2ppqq[fa,fi,fa1,fi1]
-
-               etemp = T2old[fa,fi,fa1,fi1]*t1ppqq[fa,fi,fa1,fi1]
-
-               esum2 += etemp
-
-      ENDPARDO fa, fi, fa1, fi1
-
-      PARDO fa, fi
-
-               GET        FT1old[fa,fi] 
-               GET        FwC[fa,fi] 
-               tai[fa,fi] = FT1old[fa,fi] 
-
-               etemp = tai[fa,fi]*FwC[fa,fi]  
-               etemp*= 2.0  
-
-	       esum1 += etemp
-
-      ENDPARDO fa, fi
-
-server_barrier
-e1new = 0.0
-e2new = 0.0
-collective e1new += esum1
-collective e2new += esum2
-print ifrag
-print e1new
-print e2new
-
-enddo ifrag
-
-server_barrier
-set_persistent FwC "MOI_wC"
-set_persistent FT1old "MOI_T1"
-set_persistent FT2old "MOI_T2ab"
-set_persistent HBAR_ii "MOI_HBAR_ii"
-set_persistent HBAR_aa "MOI_HBAR_aa"
-set_persistent HBAR_ia "MOI_HBAR_ia"
-set_persistent HBAR_AJIB "MOI_HBAR_ajib"
-set_persistent HBAR_IAJK "MOI_HBAR_iajk"
-set_persistent HBAR_ABCI "MOI_HBAR_abci"
 
          sip_barrier 
                            ENDSIAL FRAG_2ORDER_CORR 

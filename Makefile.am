@@ -229,8 +229,8 @@ AM_CPPFLAGS = \
 
 
 
-check_PROGRAMS =    test_unit test_basic_sial test_sial test_basic_qm test_qm test_qm_aux 
-TESTS =             test_unit test_basic_sial test_sial test_basic_qm test_qm
+check_PROGRAMS =    test_unit test_basic_sial test_sial test_basic_qm test_qm test_qm_aux test_qm_frag
+TESTS =             test_unit test_basic_sial test_sial test_basic_qm test_qm test_qm_frag
 
 if WORKING_MPI
 LOG_COMPILER = mpirun   # Run mpi test with mpirun
@@ -295,6 +295,16 @@ test_qm_aux_SOURCES = \
     test/test_constants.h\
     test/test_constants.cpp\
     test/test_qm_aux.cpp
+    
+test_qm_frag_SOURCES = \
+	$(ACES_SOURCEFILES) \
+    test/test_controller_parallel.h\
+    test/test_controller_parallel.cpp\
+	test/test_controller.h\
+    test/test_controller.cpp\
+    test/test_constants.h\
+    test/test_constants.cpp\
+    test/test_qm_frag.cpp
 
 TEST_LDADD_VARS = \
 	test/libgtest.la \
@@ -310,6 +320,7 @@ test_sial_LDADD = $(TEST_LDADD_VARS)
 test_basic_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_LDADD = $(TEST_LDADD_VARS)
 test_qm_aux_LDADD = $(TEST_LDADD_VARS)
+test_qm_frag_LDADD = $(TEST_LDADD_VARS)
 test_mpi_simple_LDADD = $(TEST_LDADD_VARS)
 test_basic_sial_LDADD = $(TEST_LDADD_VARS)
 
@@ -396,6 +407,7 @@ test_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_qm_aux_LDFLAGS = $(TEST_LDFLAGS_VARS)
+test_qm_frag_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_mpi_simple_LDFLAGS = $(TEST_LDFLAGS_VARS)
 test_basic_sial_LDFLAGS = $(TEST_LDFLAGS_VARS)
 

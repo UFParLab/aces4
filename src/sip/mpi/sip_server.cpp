@@ -269,7 +269,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 		err_ss << "Incorrect PUT block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), line_number(pc_));
+		sial_check(false, err_ss.str(), pc_);
 	}
 
 }
