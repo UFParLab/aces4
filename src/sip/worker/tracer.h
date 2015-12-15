@@ -38,8 +38,8 @@ public:
 
 	//put at bottom of loop (to handle initialization properly)
 	void trace_op(int pc, opcode_t opcode) {
-		opcode_histogram_.inc(last_opcode_ - goto_op);
-		pc_histogram_.inc(last_pc_);
+//		opcode_histogram_.inc(last_opcode_ - goto_op);
+//		pc_histogram_.inc(last_pc_);
 		double time = opcode_timer_.get_time();
 
 		opcode_timer_.inc(last_pc_, time - last_time_);
@@ -75,10 +75,10 @@ public:
 private:
 
 
-	MPICounterList opcode_histogram_;  //this records the number of times each opcode has been executed
-	                                     //can be used to evaluate test coverage of the sial interpreter.
-	MPICounterList pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
-	                                     //can be used to find dead code in a sial program.
+//	MPICounterList opcode_histogram_;  //this records the number of times each opcode has been executed
+//	                                     //can be used to evaluate test coverage of the sial interpreter.
+//	MPICounterList pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
+//	                                     //can be used to find dead code in a sial program.
 
 	MPITimer run_loop_timer_;
 	MPITimerList opcode_timer_;
@@ -108,8 +108,8 @@ public:
 
 	//put at bottom of loop (to handle initialization properly)
 	void trace_op(int pc, opcode_t opcode) {
-		opcode_histogram_.inc(last_opcode_ - goto_op);
-		pc_histogram_.inc(last_pc_);
+//		opcode_histogram_.inc(last_opcode_ - goto_op);
+//		pc_histogram_.inc(last_pc_);
 
 		double time = opcode_timer_.get_time();
 		opcode_timer_.inc(last_pc_, time - last_time_);
@@ -132,10 +132,10 @@ public:
 
 private:
 
-	SingleNodeCounterList opcode_histogram_; //this records the number of times each opcode has been executed
-									  //can be used to evaluate test coverage of the sial interpreter.
-	SingleNodeCounterList pc_histogram_; //this records the number of times each line (or optable entry) in the sial program has been executed.
-								  //can be used to find dead code in a sial program.
+//	SingleNodeCounterList opcode_histogram_; //this records the number of times each opcode has been executed
+//									  //can be used to evaluate test coverage of the sial interpreter.
+//	SingleNodeCounterList pc_histogram_; //this records the number of times each line (or optable entry) in the sial program has been executed.
+//								  //can be used to find dead code in a sial program.
 	LinuxTimer run_loop_timer_;
 	LinuxTimerList opcode_timer_;
 	size_t last_pc_;

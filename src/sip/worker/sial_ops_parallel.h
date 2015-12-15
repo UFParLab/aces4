@@ -99,10 +99,12 @@ public:
 
 
 	void reduce() { wait_time_.reduce(); }
+	void gather() { wait_time_.gather(); }
 
 	void print_op_table_stats(std::ostream& os,
-						const SipTables& sip_tables) const {
-		wait_time_.print_op_table_stats_impl(os, sip_tables);
+						const SipTables& sip_tables, bool print_gathered) const {
+		wait_time_.print_op_table_stats(os, sip_tables, print_gathered);
+		os << std::endl << std::flush;
 	}
 
 
@@ -140,6 +142,7 @@ private:
 
 	// Instrumentation
 	MPITimerList wait_time_; //"block wait time"
+
 	/**
 	 * values for mode_ array
 	 */
@@ -196,6 +199,7 @@ private:
 	bool nearlyEqual(double a, double  b, double epsilon);
 
 	friend void ::list_blocks_with_number();
+
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

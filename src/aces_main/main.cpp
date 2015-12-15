@@ -394,9 +394,9 @@ int main(int argc, char* argv[]) {
 	std::ofstream worker_timer_output;
 //	if (sip_mpi_attr.is_company_master()) {
 #ifdef HAVE_MPI
-			server_timer_output.open((std::string("server_data_for_").append(job).append(".csv")).c_str());
+			server_timer_output.open((job_id + std::string(".server_data.csv")).c_str());
 #endif
-			worker_timer_output.open((std::string("worker_data_for_").append(job).append(".csv")).c_str());
+			worker_timer_output.open((job_id + std::string(".worker_data.csv")).c_str());
 //	}
 //#endif
 

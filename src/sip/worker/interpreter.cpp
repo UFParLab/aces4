@@ -92,42 +92,7 @@ void Interpreter::interpret() {
 	interpret(0, nops);
 }
 
-void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
-		const BlockSelector& rhs_selector, sip::Block::BlockPtr lhs_block,
-		sip::Block::BlockPtr rhs_block, bool extra_check) {
 
-	//permutation vector is in the instructions' index_selector array.
-	//Calculate permutation and compare with compiler's.
-	//when confident about the compiler, can remove this code.
-	int lhs_rank = lhs_selector.rank_;
-	int permutation[MAX_RANK];
-	std::fill(permutation + 0, permutation + MAX_RANK, 0);
-	for (int i = 0; i < lhs_rank; ++i) {
-		int lhs_index = lhs_selector.index_ids_[i];
-		int j;
-		for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index;
-				++j) {
-			/* keep looking until matching index found */
-		}
-		CHECK(j < lhs_rank, "illegal transpose");
-		permutation[j] = i;
-	}
-	for (int i = lhs_rank; i < MAX_RANK; ++i) {
-		//fill in unused dims with -1 to cause failure if accessed
-		permutation[i] = -1;
-	}
-	//compare calculated here and compiler generated
-	if (extra_check){
-		bool OK = true;
-		for (int i = 0; i < MAX_RANK && OK; ++i) {
-			OK &= (permutation[i] == index_selectors()[i]);
-		}
-		check(OK, "permutation vector from compiler differs from sip's",
-				line_number());
-	}
-	//do the transpose
-	lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
-}
 
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
@@ -229,246 +194,6 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 							num_indices, index_selectors(), data_manager_, sip_tables_,
 							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_	);
 			}
-
-
-//			// HARD CODING LOOP MANAGER FOR FRAGMENT CODE
-//			int line = get_line_number();
-//			if (sip::JobControl::global->get_program_name() == "mcpt2_corr_lowmem.siox"){
-//				switch (line){
-//				    case 16:
-//				    case 110:
-//				    case 627:
-//				    case 689:
-//					loop = new Fragment_i_aa__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 30:
-//					loop = new Fragment_Nij_aa__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 713:
-//					loop = new Fragment_Nij_a_a_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 161:
-//				case 221:
-//				case 3190:
-//					loop = new Fragment_ij_aa_a_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 266:
-//					loop = new Fragment_ij_aaa__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 322:
-//				case 345:
-//				case 388:
-//					loop = new Fragment_ij_ao_ao_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 369:
-//					loop = new Fragment_ij_aa_oo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 3233:
-//					loop = new Fragment_ij_aa_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 407:
-//					loop = new Fragment_ij_aoa_o_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 431:
-//				case 451:
-//					loop = new Fragment_ij_ao_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 471:
-//					loop = new Fragment_ij_av_oo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 3272:
-//					loop = new Fragment_ij_av_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 494:
-//				case 3254:
-//					loop = new Fragment_ij_ao_oo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 513:
-//					loop = new Fragment_ij_oo_ao_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 532:
-//					loop = new Fragment_ij_aoo_o_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 561:
-//					loop = new Fragment_ij_vo_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//			        case 1224:
-//			        case 1245:
-//				case 1299:
-//				case 1317:
-//				case 1419:
-//					loop = new Fragment_i_vo__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 1339:
-//				case 1491:
-//				case 1511:
-//				case 1589:
-//				case 1757:
-//				case 1881:
-//				case 1923:
-//				case 1965:
-//				case 2001:
-//				case 2091:
-//				case 2120:
-//				case 2689:
-//				case 2707:
-//				case 2833:
-//				case 2881:
-//				case 2927:
-//				case 2967:
-//				case 3063:
-//				case 3097:
-//					loop = new Fragment_i_vovo__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 1778:
-//				case 2730:
-//					loop = new Fragment_i_aaoo__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 1805:
-//				case 2754:
-//					loop = new Fragment_i_aovo__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 1845:
-//				case 2795:
-//					loop = new Fragment_i_aaaa__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 2038:
-//				case 3005:
-//					loop = new Fragment_i_aoo__PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 1380:
-//					loop = new Fragment_Nij_vo_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 1538:
-//				case 1667:
-//				case 2225:
-//				case 2351:
-//				case 2424:
-//				case 2515:
-//				case 2581:
-//				case 2614:
-//					loop = new Fragment_NRij_vo_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 2247:
-//					loop = new Fragment_NRij_ao_ao_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 2272:
-//					loop = new Fragment_NRij_vo_ao_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 2315:
-//					loop = new Fragment_NRij_aa_aa_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 2388:
-//					loop = new Fragment_NRij_vv_oo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 2461:
-//					loop = new Fragment_NRij_o_ao_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-////					loop = new Fragment_NRij_vovo__PardoLoopManager(
-////						num_indices, index_selectors(), data_manager_, sip_tables_,
-////							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-////					break;
-//				case 1569:
-//					loop = new Fragment_Rij_vo_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 3380:
-//				case 3396:
-//				case 3422:
-//				case 3450:
-//					loop = new Fragment_NR1ij_vo_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 3302:
-//				case 3320:
-//					loop = new Fragment_NR1ij_oo_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				case 3341:
-//				case 3357:
-//					loop = new Fragment_NR1ij_vv_vo_PardoLoopManager(
-//						num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//					break;
-//				default:
-//					loop = new BalancedTaskAllocParallelPardoLoop(
-//							num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//				}
-//			} else {
-//				loop = new BalancedTaskAllocParallelPardoLoop(
-//							num_indices, index_selectors(), data_manager_, sip_tables_,
-//							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//			}
-
-//			LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(
-//					num_indices, index_selectors(), data_manager_, sip_tables_,
-//					SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-//#else
-//			LoopManager* loop = new SequentialPardoLoop(num_indices,
-//					index_selectors(), data_manager_, sip_tables_);
-//#endif
 			loop_start(loop);
 		}
 			break;
@@ -2311,6 +2036,43 @@ void Interpreter::contiguous_blocks_post_op() {
 	}
 	read_block_list_.clear();
 
+}
+
+void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
+		const BlockSelector& rhs_selector, sip::Block::BlockPtr lhs_block,
+		sip::Block::BlockPtr rhs_block, bool extra_check) {
+
+	//permutation vector is in the instructions' index_selector array.
+	//Calculate permutation and compare with compiler's.
+	//when confident about the compiler, can remove this code.
+	int lhs_rank = lhs_selector.rank_;
+	int permutation[MAX_RANK];
+	std::fill(permutation + 0, permutation + MAX_RANK, 0);
+	for (int i = 0; i < lhs_rank; ++i) {
+		int lhs_index = lhs_selector.index_ids_[i];
+		int j;
+		for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index;
+				++j) {
+			/* keep looking until matching index found */
+		}
+		CHECK(j < lhs_rank, "illegal transpose");
+		permutation[j] = i;
+	}
+	for (int i = lhs_rank; i < MAX_RANK; ++i) {
+		//fill in unused dims with -1 to cause failure if accessed
+		permutation[i] = -1;
+	}
+	//compare calculated here and compiler generated
+	if (extra_check){
+		bool OK = true;
+		for (int i = 0; i < MAX_RANK && OK; ++i) {
+			OK &= (permutation[i] == index_selectors()[i]);
+		}
+		check(OK, "permutation vector from compiler differs from sip's",
+				line_number());
+	}
+	//do the transpose
+	lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
 }
 
 }/* namespace sip */

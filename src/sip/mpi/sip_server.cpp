@@ -660,10 +660,10 @@ std::ostream& SIPServer::Stats::gather_and_print_statistics(std::ostream& os, SI
 		os << std::endl;
 		os << "Server op_timer_" << std::endl;
 		//os << op_timer_ << std::endl;
-		op_timer_.print_op_table_stats(os, server->sip_tables_);
+		op_timer_.print_op_table_stats(os, server->sip_tables_, false);
 		os << std::endl << "Server get_block_timer_" << std::endl;
 		//os << get_block_timer_ << std::endl;
-		get_block_timer_.print_op_table_stats(os, server->sip_tables_);
+		get_block_timer_.print_op_table_stats(os, server->sip_tables_, false);
 		os << std::endl << "total_timer_" << std::endl;
 		os << total_timer_ ;
 		os << std::endl << "handle_op_timer_" << std::endl;

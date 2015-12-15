@@ -179,14 +179,23 @@ public:
 	void post_sial_program();
 
 	void gather_and_print_statistics(std::ostream& os){
+		free_blocks();
 	    tracer_->gather();
-	    sial_ops_.reduce();
 	    if (SIPMPIAttr::get_instance().is_company_master()){
 	    	os << "Worker Statistics"<<std::endl << std::endl;
 	    	os << *tracer_;
 	    	os << std::endl;
-	    	os << "Worker wait_time_" << std::endl;
-	    	sial_ops_.print_op_table_stats(os, sip_tables_);
+	    	os << std::endl << std::flush;
+	    }
+	    delete tracer_;
+	    tracer_ = NULL;
+
+	    sial_ops_.gather();
+	    sial_ops_.reduce();
+
+	    if (SIPMPIAttr::get_instance().is_company_master()){
+	    	os << "Worker wait times" << std::endl << std::endl;
+	    	sial_ops_.print_op_table_stats(os, sip_tables_, true);
 	    	os << std::endl << std::flush;
 	    }
 	}
@@ -248,6 +257,11 @@ public:
 	const DataManager& data_manager() const { return data_manager_; }
 	const SipTables& sip_tables() const { return sip_tables_; }
 	SialPrinter& printer() const { return *printer_; }
+
+	//use at end of sial program to free memory before collecting statistics
+	void free_blocks(){
+		data_manager_.free_blocks();
+	}
 
 private:
 	//static data

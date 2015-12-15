@@ -15,9 +15,9 @@ namespace sip {
 #ifdef HAVE_MPI
 Tracer::Tracer(const SipTables& sip_tables) :
 		sip_tables_(sip_tables),
-		opcode_histogram_(SIPMPIAttr::get_instance().company_communicator(), last_op-goto_op-1),
-		pc_histogram_(SIPMPIAttr::get_instance().company_communicator(), sip_tables.op_table_.size()),
-//		total_time_(sip_tables.op_table_.size(),0.0),
+//		opcode_histogram_(SIPMPIAttr::get_instance().company_communicator(), last_op-goto_op-1),
+//		pc_histogram_(SIPMPIAttr::get_instance().company_communicator(), sip_tables.op_table_.size()),
+////		total_time_(sip_tables.op_table_.size(),0.0),
 //		last_time_ (0.0),
 		run_loop_timer_(SIPMPIAttr::get_instance().company_communicator()),
 		opcode_timer_(SIPMPIAttr::get_instance().company_communicator(), sip_tables.op_table_.size()+1),
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const Tracer& obj){
 // 		os << "opcode_timer_"<< obj.opcode_timer_ << std::endl;
  		os << "Worker opcode_timer_" << std::endl;
 // 		os << obj.opcode_timer_ << std::endl << std::endl;
- 		obj.opcode_timer_.print_op_table_stats(os, obj.sip_tables_);
+ 		obj.opcode_timer_.print_op_table_stats(os, obj.sip_tables_, false);
  		return os;
 }
 
@@ -44,8 +44,8 @@ std::ostream& operator<<(std::ostream& os, const Tracer& obj){
 
 Tracer::Tracer(const SipTables& sip_tables) :
 		sip_tables_(sip_tables),
-		opcode_histogram_(last_op-goto_op-1),
-		pc_histogram_(sip_tables.op_table_.size()),
+//		opcode_histogram_(last_op-goto_op-1),
+//		pc_histogram_(sip_tables.op_table_.size()),
 //		total_time_(sip_tables.op_table_.size(),0.0),
 //		last_time_ (0.0),
 		run_loop_timer_(),

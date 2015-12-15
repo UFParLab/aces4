@@ -14,6 +14,7 @@
 #include <vector>
 #include <iomanip>
 #include <limits>
+#include <exception>
 #include "sip.h"
 #include "sip_tables.h"
 
@@ -745,8 +746,8 @@ public:
         }
 
         void print_op_table_stats(std::ostream& os,
-                        const SipTables& sip_tables) const {
-                static_cast<const T*>(this)->print_op_table_stats_impl(os, sip_tables);
+                        const SipTables& sip_tables, bool print_gathered) const {
+                static_cast<const T*>(this)->print_op_table_stats_impl(os, sip_tables, print_gathered);
         }
 
 //      const std::vector<double>& get_total() {
@@ -861,17 +862,26 @@ public:
         }
 
         void gather_impl() {
-                int rank; //this rank is relative to comm_
+        	if (gather_done_) return;
+
+        	int rank; //this rank is relative to comm_
                 int comm_size;
                 MPI_Comm_rank(comm_, &rank);
                 MPI_Comm_size(comm_, &comm_size);
 
                 if (rank == 0) {
                         size_t buffsize = size_ * comm_size;
+                 try{
                         gathered_total_.resize(buffsize, 0.0);
                         gathered_max_.resize(buffsize, 0.0);
                         gathered_num_epoch_.resize(buffsize, 0.0);
-                        gather_done_ = true;
+                 }
+                 catch (const std::bad_alloc& ba){
+                	 check_and_warn(false, "Not enough memory to gather statistics, output reduction only.");
+                	 reduce_impl();
+                	 return;
+                 }
+                 gather_done_ = true;
                 }
 
                 if (comm_size > 1) {
@@ -893,6 +903,7 @@ public:
         }
 
         void reduce_impl() {
+        	if (reduce_done_) return;
                 int rank;
                 int comm_size;
                 MPI_Comm_rank(comm_, &rank);
@@ -1002,24 +1013,51 @@ public:
         }
 
         void print_op_table_stats_impl(std::ostream& os,
-                        const SipTables& sip_tables, bool filter = true) const {
+                        const SipTables& sip_tables, bool print_gathered) const {
 
                 int comm_size;
                 MPI_Comm_size(comm_, &comm_size);
                 check(reduce_done_, "must call reduce before print_optable_stats");
-                os << "pc, line number, opcode, mean,  max,  mean num_epochs" << std::endl;
+                os << "pc, line number, opcode, mean,  max,  mean num_epochs";
+                if (print_gathered && gather_done_){
+                	for (int w=0; w < comm_size; ++w){
+                		os << ",T" << w;
+                	}
+                	for (int w=0; w < comm_size; ++w){
+                		os << ",M" << w;
+                	}
+                   	for (int w=0; w < comm_size; ++w){
+                    		os << ",N" << w;
+                    }
+                }
+                os << std::endl;
                 std::vector<double>::const_iterator mean_iter = reduced_mean_.begin();
                 std::vector<double>::const_iterator max_iter = reduced_max_.begin();
                 std::vector<unsigned long>::const_iterator num_epoch_iter =
                                 reduced_num_epoch_.begin();
                 for (int i = 0; i != size_; ++i) {
-                        if (!filter || *num_epoch_iter > 0) {
+                        if (*num_epoch_iter > 0) {
                                 std::setprecision(30);
                                 os << i << ',' << sip_tables.line_number(i) << ','
                                                 << sip_tables.opcode_name(i) << ',';
                                 os << *mean_iter << ',' << *max_iter << ',';
                                 std::setprecision(3);
                                 os<< (double)(*num_epoch_iter) / comm_size;
+
+                                if (print_gathered && gather_done_){
+                                	int j = i;
+                                	for (int count = 0; count < comm_size; ++count){
+                                		os << "," << gathered_total_.at(j); j+=size_;
+                                	}
+                                	j = i;
+                                	for (int count = 0; count < comm_size; ++count){
+                                		os << "," << gathered_max_.at(j); j+=size_;
+                                	}
+                                	j = i;
+                                	for (int count = 0; count < comm_size; ++count){
+                                		os << "," << gathered_num_epoch_.at(j); j+=size_;
+                                	}
+                                }
                                 os << std::endl;
                         }
                         ++mean_iter;
