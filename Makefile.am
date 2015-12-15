@@ -517,6 +517,7 @@ SIOX_FILES=\
 ./src/sialx/test/disk_backing_test.siox\
 ./src/sialx/test/disk_backing_put_acc_stress.siox\
 ./src/sialx/test/decreasing_segs.siox\
+./src/sialx/test/check_block_number_calc.siox\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
@@ -561,7 +562,8 @@ SIOX_FILES=\
 ./src/sialx/qm/rlamccsdpt_aaa.siox\
 ./src/sialx/qm/rlamccsdpt_aab.siox\
 ./src/sialx/qm/scf_rhf.siox\
-./src/sialx/qm/scf_rhf_defs.siox
+./src/sialx/qm/scf_rhf_defs.siox\
+./src/sialx/qm/scf_uhf.siox
 
 BUILT_SOURCES= $(SIOX_FILES)
 
@@ -671,6 +673,7 @@ EXTRA_DIST += \
 ./src/sialx/test/disk_backing_put_acc_stress.sialx\
 ./src/sialx/test/decreasing_segs.sialx\
 ./src/sialx/test/test_ecpint.sialx\
+./src/sialx/test/check_block_number_calc.sialx\
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
