@@ -51,51 +51,50 @@ server_barrier
 print "Setting wC elements of the Fock matrix"
 do a
     do a1
-#        allocate Fock_a[a,a1]
+        allocate Fock_a[a,a1]
         get DFock_a[a,a1]
 	get FwC[a,a1]
 	Taa[a,a1]  = FwC[a,a1]
-#	Taa[a,a1] *= 0.5
-
-#	if a == a1
-#	    execute remove_diagonal Taa[a,a1]
-    #    endif
 
         Fock_a[a,a1]  = DFock_a[a,a1]
         Fock_a[a,a1] += Taa[a,a1]
 
+	SFock_a[a,a1] = Fock_a[a,a1]
+
     enddo a1
     do i1
-#        allocate Fock_a[a,i1]
+        allocate Fock_a[a,i1]
         get DFock_a[a,i1]
 	get FwC[a,i1]
 
         Fock_a[a,i1]  = DFock_a[a,i1]
         Fock_a[a,i1] += FwC[a,i1]
+
+	SFock_a[a,i1] = Fock_a[a,i1]
     enddo i1
 enddo a
 do i
     do a1
-#        allocate Fock_a[i,a1]
+        allocate Fock_a[i,a1]
         get DFock_a[i,a1]
 	get FwC[i,a1]
 
         Fock_a[i,a1]  = DFock_a[i,a1]
         Fock_a[i,a1] += FwC[i,a1]
+
+	SFock_a[i,a1] = Fock_a[i,a1]
     enddo a1
     do i1
-#        allocate Fock_a[i,i1]
+        allocate Fock_a[i,i1]
         get DFock_a[i,i1]
 	get FwC[i,i1]
 
 	Tii1[i,i1]  = FwC[i,i1]
-#	Tii1[i,i1] *= 0.5
-#	if i == i1
-#	    execute remove_diagonal Tii1[i,i1]
-#	endif
 
         Fock_a[i,i1]  = DFock_a[i,i1]
         Fock_a[i,i1] += Tii1[i,i1]
+
+	SFock_a[i,i1] = Fock_a[i,i1]
 
     enddo i1
 enddo i
@@ -1621,7 +1620,7 @@ endproc form_r0
 	pardo a,i
 	    request Mck_a[a,i]
 	    Tai[a,i] = Mck_a[a,i]
-	    execute energy_denominator_rhf Tai[a,i] fock_a
+	    execute energy_denominator_rhf Tai[a,i] SFock_a
 	    prepare t1a_old[a,i] = Tai[a,i]
 	    T1ai[a,i] = Tai[a,i]
 	    etemp = tai[a,i]*t1ai[a,i]
@@ -1682,7 +1681,7 @@ endproc form_r0
 	pardo a,i
 	    request t1a_new[a,i]
 	    Tai[a,i] = t1a_new[a,i]
-	    execute energy_denominator_rhf Tai[a,i] fock_a
+	    execute energy_denominator_rhf Tai[a,i] SFock_a
 	    prepare t1a_old[a,i] = Tai[a,i]
 	    T1ai[a,i] = Tai[a,i]
 	    etemp = tai[a,i]*t1ai[a,i]

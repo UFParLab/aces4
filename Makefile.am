@@ -331,6 +331,7 @@ test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
 test/mcpt2_water_test.dat\
+test/mcpt2_222_test.dat\
 test/eom_test.dat\
 test/eom_water_dimer_test.dat\
 test/eom_lccsd_test.dat\

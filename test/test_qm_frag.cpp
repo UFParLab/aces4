@@ -105,6 +105,60 @@ TEST(Sial_QM_FRAG,mcpt2_water_test){
 
 }
 
+TEST(Sial_QM_FRAG,mcpt2_222_test){
+	std::string job("mcpt2_222_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// MOI SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-99.45988112164575, scf_energy, 1e-10);
+	}
+//
+// frag SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// mcpt
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double e1exc_at = controller.scalar_value("e1exc_at");
+		ASSERT_NEAR(0.07666842263301, e1exc_at, 1e-10);
+		double e10pol_at = controller.scalar_value("e10pol_at");
+		ASSERT_NEAR(-0.05673548393582, e10pol_at, 1e-10);
+		double singles = controller.scalar_value("singles");
+		ASSERT_NEAR(-0.00258787489593, singles, 1e-10);
+		double dimer_doubles = controller.scalar_value("dimer_doubles");
+		ASSERT_NEAR(-0.00271042341177, dimer_doubles, 1e-10);
+		double fragment_doubles = controller.scalar_value("fragment_doubles");
+		ASSERT_NEAR(-1.00322095294998, fragment_doubles, 1e-10);
+		double mono_lccd = controller.scalar_value("mono_lccd");
+		ASSERT_NEAR(1.00337537138491, mono_lccd, 1e-10);
+	}
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double expected[] = {0.43245480933972,0.43245480933973};
+		int i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(sek0[i], expected[i], 1e-8);
+		}
+	}
+
+}
+
 //****************************************************************************************************************
 
 //void bt_sighandler(int signum) {

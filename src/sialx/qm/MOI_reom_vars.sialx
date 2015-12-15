@@ -399,7 +399,8 @@ contiguous local EOM_EE_Energy[kstate]
 contiguous local EOM_EE_eV[kstate]
 
 local Ca[mu,p]
-static Fock_a[p,p1]
+local Fock_a[p,p1]
+static SFock_a[p,p1]
 #
 # Declare temp 
 # --------------- 

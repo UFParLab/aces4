@@ -1744,6 +1744,7 @@ SIAL mcpt2_doubles
 		 print macro_d20[ifrag:ifrag,jfrag:jfrag]
 	 enddo jfrag
 	 enddo ifrag
+         endif
 
 # Determine if full macro convergence is met 
          do_iter = 0.0 
@@ -1758,11 +1759,6 @@ SIAL mcpt2_doubles
               do_iter = 2.0 
            ENDIF 
          ENDDO ifrag 
-         endif
-	 assert_same etemp2
-	 assert_same do_iter
-	 assert_same dimer_doubles
-	 assert_same fragment_doubles
          sip_barrier 
          print dimer_doubles  
          print fragment_doubles  
