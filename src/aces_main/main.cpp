@@ -365,6 +365,8 @@ int main(int argc, char* argv[]) {
 		}
     }
     std::string job_id = sip::JobControl::make_job_id();
+
+
     sip::JobControl::set_global_job_control(new sip::JobControl(job_id, parameters.restart_job_id, restart_prognum,
     		parameters.worker_memory,
     		parameters.server_memory));
@@ -372,6 +374,7 @@ int main(int argc, char* argv[]) {
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cerr<<sip_mpi_attr<<std::endl;
 
+    if (sip_mpi_attr.is_company_master()) {std::cout << "Running with job_id: " << job_id << std::endl;}
 
     //create log for current job
     sip::AcesLog current_log(sip::JobControl::global->get_job_id(), false);
@@ -394,9 +397,9 @@ int main(int argc, char* argv[]) {
 	std::ofstream worker_timer_output;
 //	if (sip_mpi_attr.is_company_master()) {
 #ifdef HAVE_MPI
-			server_timer_output.open((job_id + std::string(".server_data.csv")).c_str());
+			server_timer_output.open((std::string("server_data_for_").append(job_id).append(".csv")).c_str());
 #endif
-			worker_timer_output.open((job_id + std::string(".worker_data.csv")).c_str());
+			worker_timer_output.open((std::string("worker_data_for_").append(job_id).append(".csv")).c_str());
 //	}
 //#endif
 

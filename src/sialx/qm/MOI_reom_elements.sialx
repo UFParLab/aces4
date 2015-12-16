@@ -768,11 +768,11 @@ PROC HBAR_AB_MCPT
 pardo a, a1 
 
 # diagram 1
-    tpp[a,a1] = fock_a[a,a1]       
+    tpp[a,a1] = Fock_a[a,a1]       
 
 # diagram 3
     do i 
-	t1pp[a,a1] = St1a[a,i]*fock_a[i,a1] 
+	t1pp[a,a1] = St1a[a,i]*Fock_a[i,a1] 
 	tpp[a,a1] -= t1pp[a,a1] 
     enddo i 
 
@@ -864,11 +864,11 @@ PROC HBAR_IJ_MCPT
 pardo i, i1 
 
 # diagram 1
-    tpp[i1,i] = fock_a[i1,i] 
+    tpp[i1,i] = Fock_a[i1,i] 
 
 # diagram 3
     do a 
-	t1pp[i1,i] = fock_a[i1,a]*St1a[a,i] 
+	t1pp[i1,i] = Fock_a[i1,a]*St1a[a,i] 
 	tpp[i1,i] += t1pp[i1,i] 
     enddo a 
 
@@ -952,7 +952,7 @@ PROC HBAR_IB_MCPT
 pardo i, a 
 
 # diagram 1
-    tpp[i,a] = fock_a[i,a] 
+    tpp[i,a] = Fock_a[i,a] 
 
 # diagram 2
     do a1 
@@ -1249,7 +1249,10 @@ pardo a, i, i1, i2
 
     do i3
 	request VSpipi[i,i1,i3,i2] 
-	T1iiai[i,i1,a,i2] = VSpipi[i,i1,i3,i2]*St1a[a,i3]
+	request t1a_old[a,i3]
+	Tai[a,i3]  = t1a_old[a,i3]
+	Tai[a,i3] += St1a[a,i3]
+	T1iiai[i,i1,a,i2] = VSpipi[i,i1,i3,i2]*Tai[a,i3]
 	Tiiai[i,i1,a,i2] -= T1iiai[i,i1,a,i2]
     enddo i3
 
@@ -1419,8 +1422,11 @@ pardo i, i1, b, j
     do j1
 
 	request Vpiqj[i,i1,j1,j] 
+	request t1a_old[b,j1]
+	Tai[b,j1]  = t1a_old[b,j1]
+	Tai[b,j1] += St1b[b,j1]
 
-	T1iibj[i,i1,b,j] = Vpiqj[i,i1,j1,j]*St1b[b,j1]
+	T1iibj[i,i1,b,j] = Vpiqj[i,i1,j1,j]*Tai[b,j1]
 	Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
 
     enddo j1
@@ -1777,7 +1783,7 @@ pardo a1, a, j, b
 	request T2ab[a1,i,b,j] 
 	request Viaai[i,a,b,j] 
 
-	T1ppqq[a1,a,b,j] = T2ab[a1,i,b,j]*fock_a[i,a]
+	T1ppqq[a1,a,b,j] = T2ab[a1,i,b,j]*Fock_a[i,a]
 	Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
 
 	T2ppqq[a1,a,b,j] = Viaai[i,a,b,j]*St1a[a1,i]
@@ -1863,7 +1869,10 @@ pardo j,sigma
     t1xj[sigma,j]=0.0
 
     do b
-	txj[sigma,j]=St1b[b,j]*ca[sigma,b]
+	request t1a_old[b,j]
+	Tai[b,j]  = t1a_old[b,j]
+	Tai[b,j] += St1b[b,j]
+	txj[sigma,j] = Tai[b,j]*ca[sigma,b]
 	t1xj[sigma,j]+=txj[sigma,j]
     enddo b
 # 
@@ -1876,7 +1885,10 @@ pardo i, sigma
     t1xi[sigma,i]=0.0
 
     do a
-	txi[sigma,i]=St1a[a,i]*ca[sigma,a]
+	request t1a_old[a,i]
+	Tai[a,i]  = t1a_old[a,i]
+	Tai[a,i] += St1a[a,i]
+	txi[sigma,i]=Tai[a,i]*ca[sigma,a]
 	t1xi[sigma,i]+=txi[sigma,i]
     enddo a
 

@@ -1153,9 +1153,8 @@ SIAL mcpt2_doubles
       sip_barrier 
       collective dimer_doubles += esum 
       print dimer_doubles
-      ediff = dimer_doubles - eold
-      escr = ediff**2.0
-      ediff = escr**0.5
+      escr = dimer_doubles - eold
+      ediff = (escr**2.0)**0.5
       print ediff
       if ediff < cc_conv
 	  exit #diter
@@ -1192,6 +1191,7 @@ SIAL mcpt2_doubles
       sip_barrier
 #
       eold = 0.0
+      print " "
       print "Performing a LCCD calc on fragment "
       DO kiter 
          do_iter = 0.0 
@@ -1634,9 +1634,8 @@ SIAL mcpt2_doubles
       sip_barrier
 
       print elccd
-      ediff = elccd - eold
-      escr = ediff**2.0
-      ediff = escr**0.5
+      escr = elccd - eold
+      ediff = (escr**2.0)**0.5
       if ediff < cc_conv
 	  exit #kiter
       endif
@@ -1651,13 +1650,11 @@ SIAL mcpt2_doubles
       execute get_my_rank rank
       if rank == 0.0
       do ifrag
-	 allocate contiguous monomer_lccd[ifrag:ifrag]
          GET                        e20c[ifrag] 
          monomer_lccd[ifrag:ifrag] = e20c[ifrag]  
 	 print monomer_lccd[ifrag:ifrag]
          etemp = e20c[ifrag] 
          esum -= etemp 
-	 deallocate contiguous monomer_lccd[ifrag:ifrag]
       enddo ifrag
       endif
       sip_barrier
@@ -1668,6 +1665,118 @@ SIAL mcpt2_doubles
 # -----------------------------------------------------------------------------
 # 
       ENDPROC FORM_T2_MONOMER  
+#
+# ----------------------------------------------------------------------------
+#
+      PROC DOUBLES_MANAGER
+#
+#     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
+#     ------------------------------------------------------ 
+      CALL FORM_T2_0GUESS 
+      sip_barrier 
+      print "Done forming T2_0guess" 
+
+# allocate energy arrays all at once.
+     execute get_my_rank rank
+     if rank == 0.0
+     DO ifrag
+	allocate contiguous macro_e20[ifrag:ifrag]
+	allocate contiguous monomer_lccd[ifrag:ifrag]
+     ENDDO ifrag   
+     do ifrag
+     do jfrag
+     WHERE jfrag > ifrag 
+     where (int)rcut_dist[ifrag,jfrag] == ifrag
+	 allocate contiguous macro_d20[ifrag:ifrag,jfrag:jfrag]
+     enddo jfrag
+     enddo ifrag
+     endif
+      sip_barrier 
+#
+# Start macro-iterations 
+      DO jiter 
+         sip_barrier 
+	 print " "
+	 print "------------------------------------------------------"
+	 print "Macro iteration"
+	 print jiter
+	 print " "
+
+         PARDO ifrag 
+           GET                   e20c[ifrag] 
+           PUT e2_macro[ifrag] = e20c[ifrag] 
+         ENDPARDO ifrag  
+
+         sip_barrier 
+         CALL FORM_T2_GUESS 
+         sip_barrier 
+	 print "Entering FORM_T2_FRAGMENT_ITERS"
+         CALL FORM_T2_FRAGMENT_ITERS 
+         sip_barrier 
+	 print " "
+	 print "Entering FORM_T2_DIMER_ITERS"
+         CALL FORM_T2_DIMER_ITERS 
+         esum = 0.0 
+         sip_barrier 
+
+# Print out energies after each macroiteration  
+         execute get_my_rank rank
+         if rank == 0.0
+	 print " "
+         print "MCPT(2) monomer macro-iteration energies"
+	 fragment_doubles = 0.0
+         DO ifrag
+            GET                 e20c[ifrag] 
+            macro_e20[ifrag:ifrag]  = e20c[ifrag] 
+            print macro_e20[ifrag:ifrag] 
+            etemp = e20c[ifrag] 
+            fragment_doubles += etemp 
+         ENDDO ifrag   
+
+	 print " "
+         print "MCPT(2) dimer macro-iteration energies"
+	 do ifrag
+	 do jfrag
+	 WHERE jfrag > ifrag 
+	 where (int)rcut_dist[ifrag,jfrag] == ifrag
+		 get d20c[ifrag,jfrag]
+		 macro_d20[ifrag:ifrag,jfrag:jfrag] = d20c[ifrag,jfrag]
+		 print macro_d20[ifrag:ifrag,jfrag:jfrag]
+	 enddo jfrag
+	 enddo ifrag
+         endif
+
+# Determine if full macro convergence is met 
+         do_iter = 0.0 
+         DO ifrag 
+           GET          e20c[ifrag] 
+           GET          e2_macro[ifrag] 
+           tp[ifrag]  = e20c[ifrag]  
+           tp[ifrag] -= e2_macro[ifrag]  
+	   etemp = tp[ifrag]
+	   etemp2 = (etemp**2.0)**0.5
+           IF etemp2 > cc_conv 
+              do_iter = 2.0 
+           ENDIF 
+         ENDDO ifrag 
+         sip_barrier 
+         print dimer_doubles  
+         print fragment_doubles  
+         sip_barrier 
+         if do_iter < 1.0 
+            exit 
+         endif 
+#
+      ENDDO jiter 
+      sip_barrier
+#
+# Compute the LCCD amplitudes for each monomer
+
+      CALL FORM_T2_MONOMER  
+
+      sip_barrier
+
+      ENDPROC DOUBLES_MANAGER
 #
 # ----------------------------------------------------------------------------
 ENDSIAL mcpt2_doubles

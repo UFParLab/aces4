@@ -30,9 +30,9 @@ SIAL SCF_FRAGMENT
 
 #	print icount # etemp 
 
-	print "Starting computing fragment scf" 
+#	print "Starting computing fragment scf" 
 	execute scf_atom_lowmem icount scr_1[1:max_aoseg,1:max_aoseg] scr_2[1:max_aoseg,1:max_aoseg] scr_3[1:max_aoseg,1:max_aoseg] scr_4[1:max_aoseg,1:max_aoseg]
-	print "Done computing fragment scf" 
+#	print "Done computing fragment scf" 
 #
 # Nowput the coefficients and fock matrices into the full distributed arrays 
 
@@ -52,7 +52,7 @@ SIAL SCF_FRAGMENT
 		PUT DCa[mu,i] += txp[mu,i]
 	    ENDDO i
 	ENDDO mu
-	print "Done placing coefficients"
+#	print "Done placing coefficients"
 
 	stype = 2.0 # Fock matrix  
 	DO a   
@@ -94,7 +94,7 @@ SIAL SCF_FRAGMENT
 #                    PUT Dfock_a(p,p1) += tpp(p,p1)
 #                 ENDDO p1 
 #                 ENDDO p 
-	print "Done placing fock_matrix"
+#	print "Done placing fock_matrix"
 
 
     ENDPARDO katom   

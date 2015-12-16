@@ -118,6 +118,33 @@ SIAL mcpt2_util
       ENDDO ifrag
       sip_barrier
       ENDPROC set_fock_mos
+
+      PROC END_PRINT
+      eint_tot  = 0.0 
+      eint_tot += e1exc_at  
+      eint_tot += e10pol_at  
+      eint_tot += eps1_pol   
+      eint_tot += singles  
+      eint_tot += dimer_doubles  
+      eint_tot += fragment_doubles  
+      eint_tot += mono_lccd   
+
+      mcpt_corr = singles  
+      mcpt_corr += dimer_doubles  
+      mcpt_corr += fragment_doubles  
+
+      print " "
+      print e1exc_at 
+      print e10pol_at 
+      print eps1_pol  
+      print singles  
+      print dimer_doubles
+      print fragment_doubles
+      print mcpt_corr
+      print mono_lccd  
+
+      print eint_tot 
+      ENDPROC END_PRINT
 #
 ENDSIAL mcpt2_util
 ################################################################################
