@@ -123,7 +123,7 @@ c  ATOMIC COORDINATES
       implicit none 
 
       integer ifrag, jfrag, nfrags, iatom, jatom, i, j   
-      integer natoms_frag(*), watom_frag(nfrags,*) 
+      integer natoms_frag(*), watom_frag(2000,100) 
       double precision coords(3,*) 
       double precision dist, dmin, dcrit, pair_flag   
 
