@@ -93,6 +93,10 @@ public:
 
 	ContiguousArrayManager& contiguous_array_manager() { return contiguous_array_manager_; }
 
+	void free_blocks(){
+		block_manager_.free_blocks();
+	}
+
 private:
 
 	const SipTables& sip_tables_;

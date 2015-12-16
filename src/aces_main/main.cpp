@@ -503,6 +503,7 @@ int main(int argc, char* argv[]) {
 		SIP_MASTER_LOG(std::cout<<"Persistent array manager at master worker after program " << sialfpath << " :"<<std::endl<< persistent_worker;)
 
 		SIP_MASTER(std::cout << "\nSIAL PROGRAM " << sialfpath << " TERMINATED at " << sip_timestamp() << std::endl);
+		runner.free_blocks();
 		runner.gather_and_print_statistics(worker_stat_os);
 #ifdef HAVE_MPI
 		MPI_Barrier(MPI_COMM_WORLD);
