@@ -48,34 +48,34 @@ TEST(Sial_QM_FRAG,DISABLED_mcpt2_test){
 
 
 /*
- water dimer
- O -0.00000007     0.06307336     0.00000000
- H -0.75198755    -0.50051034     0.00000000
- H  0.75198873    -0.50050946     0.00000000
- O -0.00000007     0.06307336   5.00000000
- H -0.75198755    -0.50051034   5.00000000
- H  0.75198873    -0.50050946   5.00000000
+water dimer
+O  -0.001684     1.516645     0.000000
+H  -0.905818     1.830641     0.000000
+H  -0.082578     0.556134     0.000000
+O  -0.001684    -1.393774     0.000000
+H   0.507668    -1.684875     0.758561
+H   0.507668    -1.684875    -0.758561
 
- *ACES2(BASIS=3-21G
- scf_conv=12
- cc_conv=12
- estate_tol=8
- estate_sym=4
- spherical=off
- excite=eomee
- symmetry=off
- NOREORI=ON
- CALC=ccsd)
+*ACES2(BASIS=3-21G
+scf_conv=12
+cc_conv=12
+estate_tol=1
+estate_sym=1
+spherical=off
+excite=eomee
+symmetry=off
+NOREORI=ON
+CALC=ccsd)
 
- *SIP
- MAXMEM=120000
- SIAL_PROGRAM = mcpt2_corr_lowmem.siox
+*SIP
+MAXMEM=120000
+SIAL_PROGRAM = mcpt2_corr_lowmem.siox
 
- *FRAGLIST
- 2 10.0 10.0
- 3 3
- 1 2 3
- 4 5 6
+*FRAGLIST
+2 10.0 10.0
+3 3
+1 2 3
+4 5 6
 */
 TEST(Sial_QM_FRAG,mcpt2_water_test){
 	std::string job("mcpt2_water_test");
@@ -90,17 +90,17 @@ TEST(Sial_QM_FRAG,mcpt2_water_test){
 
 	if (attr->global_rank() == 0) {
 		double e1exc_at = controller.scalar_value("e1exc_at");
-		ASSERT_NEAR(-0.00002319025225, e1exc_at, 1e-10);
+		ASSERT_NEAR(0.00392118115294, e1exc_at, 1e-10);
 		double e10pol_at = controller.scalar_value("e10pol_at");
-		ASSERT_NEAR(0.00590428495666, e10pol_at, 1e-10);
+		ASSERT_NEAR(-0.01393567927922, e10pol_at, 1e-10);
 		double singles = controller.scalar_value("singles");
-		ASSERT_NEAR(-0.00012759140498, singles, 1e-10);
+		ASSERT_NEAR(-0.00075493885372, singles, 1e-10);
 		double dimer_doubles = controller.scalar_value("dimer_doubles");
-		ASSERT_NEAR(-0.00013637010071, dimer_doubles, 1e-10);
+		ASSERT_NEAR(-0.00048177099748, dimer_doubles, 1e-10);
 		double fragment_doubles = controller.scalar_value("fragment_doubles");
-		ASSERT_NEAR(-0.25554107195002, fragment_doubles, 1e-10);
+		ASSERT_NEAR(-0.25889198174987, fragment_doubles, 1e-10);
 		double mono_lccd = controller.scalar_value("mono_lccd");
-		ASSERT_NEAR(0.255547494689395, mono_lccd, 1e-10);
+		ASSERT_NEAR(0.258920875522295, mono_lccd, 1e-10);
 	}
 
 }
