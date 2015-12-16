@@ -136,7 +136,7 @@ namespace sip {
 ////std::cout << "Reading block " << bid << " of size " << bptr->size() * sizeof(double) << " from " << block_offset << std::endl;
 //	int array_id = bid.array_id();
 //	MPI_File fh = mpi_file_arr_[array_id];
-//	sip::check(fh != MPI_FILE_NULL, "Trying to read block from array file after closing it !");
+//	sip::CHECK(fh != MPI_FILE_NULL, "Trying to read block from array file after closing it !");
 //	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
 //	MPI_Status read_status;
 //	double * data = bptr->get_data();
@@ -526,7 +526,7 @@ namespace sip {
 //
 //	int size_of_double;
 //	SIPMPIUtils::check_err(MPI_Type_size(MPI_DOUBLE, &size_of_double),__LINE__,__FILE__);
-//	check(sizeof(double) == size_of_double,
+//	CHECK(sizeof(double) == size_of_double,
 //				"Size of double and MPI_DOUBLE don't match !");
 //}
 //
@@ -667,7 +667,7 @@ namespace sip {
 //	mpi_file_arr_[array_id] = MPI_FILE_NULL;	// So that a "close" is not attempted on it.
 //
 //	// Close the file
-//	sip::check(mpif != MPI_FILE_NULL, "Trying to close already closed file when restoring array");
+//	sip::CHECK(mpif != MPI_FILE_NULL, "Trying to close already closed file when restoring array");
 //	SIPMPIUtils::check_err(MPI_File_close(&mpif),__LINE__,__FILE__);
 //
 //	int my_rank = sip_mpi_attr_.company_rank();
@@ -706,7 +706,7 @@ namespace sip {
 //
 //void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 //		const ServerBlock::ServerBlockPtr bptr) {
-//	sip::check(fh != MPI_FILE_NULL,
+//	sip::CHECK(fh != MPI_FILE_NULL,
 //			"Trying to write block to array file after closing it !");
 //	MPI_Offset block_offset = calculate_block_offset(bid);
 //    //std::cout << "Writing block " << bid << " of size " << bptr->size() * sizeof(double) << " to " << block_offset << std::endl;
@@ -745,7 +745,7 @@ namespace sip {
 //	const std::string& arr_name_str = sip_tables_.array_name(array_id);
 //	const char * program_name = program_name_str.c_str();
 //	const char * arr_name = arr_name_str.c_str();
-//	sip::check(program_name_str.length() > 1,
+//	sip::CHECK(program_name_str.length() > 1,
 //			"Program name length is too short - " + program_name_str
 //					+ " !");
 //	// Each array is saved in a file called:
@@ -855,7 +855,7 @@ namespace sip {
 ////
 ////
 ////			if (to_write_dirty_block)
-//			check(sb->disk_state_.is_in_memory() || sb->disk_state_.is_valid_on_disk(),
+//			CHECK(sb->disk_state_.is_in_memory() || sb->disk_state_.is_valid_on_disk(),
 //					"in write_persistent_array_blocks, found server block neither in mem or valid on disk.");
 //			if ( ! sb->disk_state_.is_valid_on_disk()){
 //				write_block_to_file(mpif, bid, sb);
@@ -881,12 +881,12 @@ namespace sip {
 //	// Data type checks
 //	int size_of_mpiint;
 //	SIPMPIUtils::check_err(MPI_Type_size(MPI_INT, &size_of_mpiint),__LINE__,__FILE__);
-//	check(sizeof(int) == size_of_mpiint,
+//	CHECK(sizeof(int) == size_of_mpiint,
 //			"Size of int and MPI_INT don't match !");
 //
 //	int size_of_double;
 //	SIPMPIUtils::check_err(MPI_Type_size(MPI_DOUBLE, &size_of_double),__LINE__,__FILE__);
-//	check(sizeof(double) == size_of_double,
+//	CHECK(sizeof(double) == size_of_double,
 //				"Size of double and MPI_DOUBLE don't match !");
 //}
 //
@@ -932,7 +932,7 @@ namespace sip {
 //////std::cout << "Reading block " << bid << " of size " << bptr->size() * sizeof(double) << " from " << block_offset << std::endl;
 ////	int array_id = bid.array_id();
 ////	MPI_File fh = mpi_file_arr_[array_id];
-////	sip::check(fh != MPI_FILE_NULL, "Trying to read block from array file after closing it !");
+////	sip::CHECK(fh != MPI_FILE_NULL, "Trying to read block from array file after closing it !");
 ////	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
 ////	MPI_Status read_status;
 ////	double * data = bptr->get_data();
@@ -1097,7 +1097,7 @@ namespace sip {
 ////	mpi_file_arr_[array_id] = MPI_FILE_NULL;	// So that a "close" is not attempted on it.
 ////
 ////	// Close the file
-////	sip::check(mpif != MPI_FILE_NULL, "Trying to close already closed file when restoring array");
+////	sip::CHECK(mpif != MPI_FILE_NULL, "Trying to close already closed file when restoring array");
 ////	SIPMPIUtils::check_err(MPI_File_close(&mpif),__LINE__,__FILE__);
 ////
 ////	int my_rank = sip_mpi_attr_.company_rank();
@@ -1136,7 +1136,7 @@ namespace sip {
 ////
 ////void DiskBackedArraysIO::write_block_to_file(MPI_File fh, const BlockId& bid,
 ////		const ServerBlock::ServerBlockPtr bptr) {
-////	sip::check(fh != MPI_FILE_NULL,
+////	sip::CHECK(fh != MPI_FILE_NULL,
 ////			"Trying to write block to array file after closing it !");
 ////	MPI_Offset block_offset = calculate_block_offset(bid);
 ////    //std::cout << "Writing block " << bid << " of size " << bptr->size() * sizeof(double) << " to " << block_offset << std::endl;
@@ -1175,7 +1175,7 @@ namespace sip {
 ////	const std::string& arr_name_str = sip_tables_.array_name(array_id);
 ////	const char * program_name = program_name_str.c_str();
 ////	const char * arr_name = arr_name_str.c_str();
-////	sip::check(program_name_str.length() > 1,
+////	sip::CHECK(program_name_str.length() > 1,
 ////			"Program name length is too short - " + program_name_str
 ////					+ " !");
 ////	// Each array is saved in a file called:
@@ -1285,7 +1285,7 @@ namespace sip {
 //////
 //////
 //////			if (to_write_dirty_block)
-////			check(sb->disk_state_.is_in_memory() || sb->disk_state_.is_valid_on_disk(),
+////			CHECK(sb->disk_state_.is_in_memory() || sb->disk_state_.is_valid_on_disk(),
 ////					"in write_persistent_array_blocks, found server block neither in mem or valid on disk.");
 ////			if ( ! sb->disk_state_.is_valid_on_disk()){
 ////				write_block_to_file(mpif, bid, sb);
@@ -1311,12 +1311,12 @@ namespace sip {
 ////	// Data type checks
 ////	int size_of_mpiint;
 ////	SIPMPIUtils::check_err(MPI_Type_size(MPI_INT, &size_of_mpiint),__LINE__,__FILE__);
-////	check(sizeof(int) == size_of_mpiint,
+////	CHECK(sizeof(int) == size_of_mpiint,
 ////			"Size of int and MPI_INT don't match !");
 ////
 ////	int size_of_double;
 ////	SIPMPIUtils::check_err(MPI_Type_size(MPI_DOUBLE, &size_of_double),__LINE__,__FILE__);
-////	check(sizeof(double) == size_of_double,
+////	CHECK(sizeof(double) == size_of_double,
 ////				"Size of double and MPI_DOUBLE don't match !");
 ////}
 ////
@@ -1382,7 +1382,7 @@ namespace sip {
 //////	MPI_Offset header_offset = INTS_IN_FILE_HEADER * sizeof(int);
 //////	MPI_Offset file_size;
 //////	SIPMPIUtils::check_err(MPI_File_get_size(mpif_persistent, &file_size),__LINE__,__FILE__);
-//////	sip::check((file_size - header_offset) % sizeof(double) == 0,
+//////	sip::CHECK((file_size - header_offset) % sizeof(double) == 0,
 //////			"Inconsistent persistent file !");
 //////	int tot_elems = (file_size - header_offset) / sizeof(double);
 //////	int num_servers = sip_mpi_attr_.company_size();

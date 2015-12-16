@@ -41,7 +41,7 @@ DoLoop::DoLoop(int index_id, DataManager & data_manager,
 				index_id), first_time_(true) {
 	lower_seg_ = sip_tables_.lower_seg(index_id);
 	upper_bound_ = lower_seg_ + sip_tables_.num_segments(index_id);
-//	sip::check_and_warn(lower_seg_ < upper_bound_,
+//	WARN(lower_seg_ < upper_bound_,
 //			std::string("doloop has empty range"),
 //			Interpreter::global_interpreter->line_number());
 }
@@ -101,9 +101,7 @@ SubindexDoLoop::SubindexDoLoop(int subindex_id, DataManager & data_manager,
 	lower_seg_ = 1;  //subindices always start at 1
 	upper_bound_ = lower_seg_
 			+ sip_tables_.num_subsegments(subindex_id, parent_value_);
-	sip::check_and_warn(lower_seg_ < upper_bound_,
-			std::string("SubindexDoLoop has empty range"),
-			Interpreter::global_interpreter->line_number());
+	WARN_WITH_LINE(lower_seg_ < upper_bound_,std::string("SubindexDoLoop has empty range"),Interpreter::global_interpreter->line_number());
 }
 
 std::string SubindexDoLoop::to_string() const {

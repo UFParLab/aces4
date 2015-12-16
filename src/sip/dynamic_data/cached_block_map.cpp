@@ -21,8 +21,8 @@ CachedBlockMap::CachedBlockMap(int num_arrays)
 CachedBlockMap::~CachedBlockMap() {
 /** waits for blocks pending delete to be deleted*/
 	wait_and_clean_pending();
-	check_and_warn(pending_delete_bytes_==0, "pending_delete_bytes != 0 after wait_and_clean_pending in ~CachedBlockMap");
-	check_and_warn(pending_delete_.size()==0, "pending_delete_ not empty in ~CachedBlockMap");
+	WARN(pending_delete_bytes_==0, "pending_delete_bytes != 0 after wait_and_clean_pending in ~CachedBlockMap");
+	WARN(pending_delete_.size()==0, "pending_delete_ not empty in ~CachedBlockMap");
 }
 
 Block* CachedBlockMap::block(const BlockId& block_id){

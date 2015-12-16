@@ -38,7 +38,7 @@ SipTables::~SipTables() {
 //			max_line = line;
 //	}
 //	sialx_lines_ = max_line;
-//	check(max_line == op_table_.line_number(op_table_.size()-1), "unexpected max_timer_slot value");
+//	CHECK(max_line == op_table_.line_number(op_table_.size()-1), "unexpected max_timer_slot value");
 //	return max_line;
 //}
 

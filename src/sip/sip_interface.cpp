@@ -223,7 +223,7 @@ int get_line_number() {
 ////			return server->last_seen_line();
 ////		else
 ////			return 0;
-//		check(false, "get_line_number only defined for workers");
+//		CHECK(false, "get_line_number only defined for workers");
 //		return 0;
 //	}
 	if (interpreter != NULL)

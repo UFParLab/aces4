@@ -86,7 +86,7 @@ void MPIScalarOpType::initialize_mpi_scalar_op_type(){
 	//now since there is no way to test it.  See examples in the MPI books.
 //	MPI_Aint  s_lower, s_extent;
 //	MPI_Type_get_extent(mpi_scalar_op_type_, &s_lower, &s_extent);
-//	check(s_extent == sizeof(mpi_scalar_op_type_), "Need to use MPI_Type_create_resized.  See code comments");
+//	CHECK(s_extent == sizeof(mpi_scalar_op_type_), "Need to use MPI_Type_create_resized.  See code comments");
 
 
 	MPI_Type_commit(&mpi_scalar_op_type_);

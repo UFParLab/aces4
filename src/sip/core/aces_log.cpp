@@ -19,11 +19,11 @@ AcesLog::AcesLog(std::string jobid, bool is_restart) :
 	SIPMPIAttr& mpi_attr = SIPMPIAttr::get_instance();
 	if (is_restart) { //all processes open file in read-only mode
 			log_file_ = new std::fstream(filename_.c_str(), std::fstream::in);
-			check(log_file_->good(), "failure opening aces_log file " + filename_ +" for restart job id " + jobid);
+			CHECK(log_file_->good(), "failure opening aces_log file " + filename_ +" for restart job id " + jobid);
 	} else { //this is a new file, server master opens the file in write mode and intializes with value 0.
 		if (mpi_attr.is_company_master() && mpi_attr.is_server()) {
 			log_file_ = new std::fstream(filename_.c_str(), std::fstream::out | std::fstream::trunc);
-			check(log_file_->good(), "failure opening aces_log file " + filename_ + " for job id " + jobid);
+			CHECK(log_file_->good(), "failure opening aces_log file " + filename_ + " for job id " + jobid);
 		}
 	}
 }

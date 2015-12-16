@@ -54,17 +54,17 @@
 //	policy.touch(bid5);
 //
 //	sip::Block* b;
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 0, "Block to remove should be from array 0");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 0, "Block to remove should be from array 0");
 //	block_map.get_and_remove_block(bid0);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 1, "Block to remove should be from array 1");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 1, "Block to remove should be from array 1");
 //	block_map.get_and_remove_block(bid1);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 2, "Block to remove should be from array 2");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 2, "Block to remove should be from array 2");
 //	block_map.get_and_remove_block(bid2);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 3, "Block to remove should be from array 3");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 3, "Block to remove should be from array 3");
 //	block_map.get_and_remove_block(bid3);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 4, "Block to remove should be from array 4");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 4, "Block to remove should be from array 4");
 //	block_map.get_and_remove_block(bid4);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 5, "Block to remove should be from array 5");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 5, "Block to remove should be from array 5");
 //	block_map.get_and_remove_block(bid5);
 //
 //}
@@ -104,17 +104,17 @@
 //
 //	sip::ServerBlock* b;
 //
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 0, "Block to remove should be from array 0");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 0, "Block to remove should be from array 0");
 //	server_block_map.get_and_remove_block(bid0);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 1, "Block to remove should be from array 1");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 1, "Block to remove should be from array 1");
 //	server_block_map.get_and_remove_block(bid1);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 2, "Block to remove should be from array 2");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 2, "Block to remove should be from array 2");
 //	server_block_map.get_and_remove_block(bid2);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 3, "Block to remove should be from array 3");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 3, "Block to remove should be from array 3");
 //	server_block_map.get_and_remove_block(bid3);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 4, "Block to remove should be from array 4");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 4, "Block to remove should be from array 4");
 //	server_block_map.get_and_remove_block(bid4);
-//	sip::check(policy.get_next_block_for_removal(b).array_id() == 5, "Block to remove should be from array 5");
+//	CHECK(policy.get_next_block_for_removal(b).array_id() == 5, "Block to remove should be from array 5");
 //	server_block_map.get_and_remove_block(bid5);
 //
 //}
@@ -1328,9 +1328,9 @@ int main(int argc, char **argv) {
 //	TAU_STATIC_PHASE_START("SIP Main");
 //#endif
 
-	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+	CHECK(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+	CHECK(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+	CHECK(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 
 	int num_procs;
 	int err = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);

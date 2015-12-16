@@ -49,7 +49,7 @@ void SioxReader::read(){
 }
 
 double * SioxReader::contiguous_array_data(std::string name){
-    sip::check_and_warn(false, "implement SioxReader::get_contiguous_array_data");
+    WARN(false, "implement SioxReader::get_contiguous_array_data");
     return NULL;
 }
 

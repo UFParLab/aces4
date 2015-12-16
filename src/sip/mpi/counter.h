@@ -152,7 +152,7 @@ protected:
                 return os;
         }
         void gather_impl() {
-                check(sizeof(unsigned long int) == sizeof(size_t),
+                CHECK(sizeof(unsigned long int) == sizeof(size_t),
                                 "mismatch in  mpi and c++ type ");
                 int rank;
                 int comm_size;
@@ -639,7 +639,7 @@ public:
         }
         void start() {
                 start_ = get_time();
-                check(!on_, "starting timer already on");
+                CHECK(!on_, "starting timer already on");
                 on_ = true;
         }
         R get_time() {
@@ -655,7 +655,7 @@ public:
                 if (elapsed > max_) {
                         max_ = elapsed;
                 }
-                check(on_, "pausing time that is not on");
+                CHECK(on_, "pausing time that is not on");
                 on_ = false;
         }
         void gather() {
@@ -707,7 +707,7 @@ public:
         }
         void start(size_t index) {
                 start_.at(index) = get_time();
-                check(!on_.at(index), "starting timer already on");
+                CHECK(!on_.at(index), "starting timer already on");
                 on_.at(index) = true;
         }
 
@@ -726,7 +726,7 @@ public:
                 if (elapsed > max_.at(index)) {
                         max_.at(index) = elapsed;
                 }
-                check(on_.at(index), "pausing time that is not on");
+                CHECK(on_.at(index), "pausing time that is not on");
                 on_.at(index) = false;
         }
         void inc(size_t index, double elapsed) {
@@ -735,7 +735,7 @@ public:
                 if (elapsed > max_.at(index)) {
                         max_.at(index) = elapsed;
                 }
-                check(!on_.at(index), "incrementing timer that is on");
+                CHECK(!on_.at(index), "incrementing timer that is on");
         }
 
         void gather() {
@@ -877,7 +877,7 @@ public:
                         gathered_num_epoch_.resize(buffsize, 0.0);
                  }
                  catch (const std::bad_alloc& ba){
-                	 check_and_warn(false, "Not enough memory to gather statistics, output reduction only.");
+                	 WARN(false, "Not enough memory to gather statistics, output reduction only.");
                 	 reduce_impl();
                 	 return;
                  }
@@ -1017,7 +1017,7 @@ public:
 
                 int comm_size;
                 MPI_Comm_size(comm_, &comm_size);
-                check(reduce_done_, "must call reduce before print_optable_stats");
+                CHECK(reduce_done_, "must call reduce before print_optable_stats");
                 os << "pc, line number, opcode, mean,  max,  mean num_epochs";
                 if (print_gathered && gather_done_){
                 	for (int w=0; w < comm_size; ++w){
@@ -1191,7 +1191,7 @@ protected:
                 return end - start;
         }
         double get_mean_impl(){
-                check(reduce_done_, "must call reduce before retrieving mean");
+                CHECK(reduce_done_, "must call reduce before retrieving mean");
                 return reduced_mean_;
         }
         const MPI_Comm& comm_;

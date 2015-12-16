@@ -93,7 +93,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id,
 		errmsg << " : Asking for block " << block_id
 		<< ". It has not been put/prepared before !  ";
 
-		sial_check(false, errmsg.str(),
+		SIAL_CHECK(false, errmsg.str(),
 				SIPServer::global_sipserver->line_number(pc));
 
 	}
@@ -106,7 +106,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_reading(const BlockId& block_id,
 			read_chunk_from_disk(block, block_id);
 		}
 		else {
-			check(false,
+			CHECK(false,
 					"existing block is neither in memory or on disk" + block_id.str(sip_tables_));
 		}
 	}
@@ -138,7 +138,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_writing(
 			read_chunk_from_disk(block, block_id);
 		}
 		else {
-			check(false, "existing block is neither in memory or on disk " + block_id.str(sip_tables_));
+			CHECK(false, "existing block is neither in memory or on disk " + block_id.str(sip_tables_));
 		}
 	}
 	block->block_data_.chunk_->valid_on_disk_=false;
@@ -176,7 +176,7 @@ ServerBlock* DiskBackedBlockMap::get_block_for_accumulate(
 			read_chunk_from_disk(block, block_id);
 		}
 		else {
-			check(false, "existing block is neither in memory or on disk " + block_id.str(sip_tables_));
+			CHECK(false, "existing block is neither in memory or on disk " + block_id.str(sip_tables_));
 		}
 	}
 	block->block_data_.chunk_->valid_on_disk_ = false;
@@ -294,12 +294,12 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, const std::strin
 		eager_restore_chunks_from_index(array_id, file, index_file_data, manager, num_blocks, data_distribution_);
 	}
 	else if (index_type == ArrayFile::DENSE_INDEX){
-		check(false, "lazy restore persistent not yet implemented");
+		CHECK(false, "lazy restore persistent not yet implemented");
 	}
 	else if (eager && index_type == ArrayFile::SPARSE_INDEX){
 		eager_restore_chunks_from_sparse_index(array_id, file, index_file_data, manager, data_distribution_);
 	}
-	else check(false, "illegal value for index_file_data type");
+	else CHECK(false, "illegal value for index_file_data type");
 }
 
 //	//get the existing file, map, and chunk_manager for this array.
@@ -333,7 +333,7 @@ void DiskBackedBlockMap::restore_persistent_array(int array_id, const std::strin
 //	eager_restore_chunks_from_index(array_id, file, manager, num_blocks, data_distribution_);
 //	}
 //	else {
-//		check(false, "lazy restore not yet implemented");
+//		CHECK(false, "lazy restore not yet implemented");
 //	}
 //
 //
@@ -626,7 +626,7 @@ ServerBlock* DiskBackedBlockMap::create_block_for_lazy_restore(int array_id, siz
 //UNTESTED
 ServerBlock* DiskBackedBlockMap::get_block_for_lazy_restore(const BlockId& block_id){
 	ServerBlock* block = block_map_.block(block_id);
-	check(block == NULL, "attempting to restore block that already exists");
+	CHECK(block == NULL, "attempting to restore block that already exists");
 	size_t block_size = sip_tables_.block_size(block_id);
 	block = create_block_for_lazy_restore(block_id.array_id(), block_size);
 	block_map_.insert_block(block_id, block);

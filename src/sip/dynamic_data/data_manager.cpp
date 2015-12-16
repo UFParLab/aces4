@@ -83,7 +83,7 @@ void DataManager::set_scalar_value(const std::string& name, double value) {
 
 Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
 	Block::BlockPtr b = scalar_blocks_.at(array_table_slot);
-	check(b != NULL, "scalar in block wrapper not found");
+	CHECK(b != NULL, "scalar in block wrapper not found");
 	return b;
 }
 
@@ -190,7 +190,7 @@ BlockId DataManager::super_block_id(const BlockSelector& subblock_selector) cons
 			}
 			else{  //this is a subindex, look up the parent index's current value
 				int parent_index_slot = sip_tables_.index_table_.parent(index_slot);
-				check(sip_tables_.index_table_.index_type(parent_index_slot) != subindex, "current implementation only supports one level of subindices");
+				CHECK(sip_tables_.index_table_.index_type(parent_index_slot) != subindex, "current implementation only supports one level of subindices");
 				index_values[i] = index_values_[parent_index_slot];
 		     }
 	}

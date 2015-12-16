@@ -95,7 +95,7 @@ void SIPServer::run() {
 					<< std::endl;
 			std::cerr << status;
 			std::cerr << std::endl << std::flush;
-			check(false, "exception thrown decoding tag");
+			CHECK(false, "exception thrown decoding tag");
 		}
 
 		SIP_LOG(std::cout << "S " << my_rank << " : has message from " << mpi_source
@@ -212,7 +212,7 @@ void SIPServer::handle_GET(int mpi_source, int get_tag) {
 		std::stringstream err_ss;
 		err_ss << "Data race at server for block " << block_id
 				<< "from worker " << mpi_source << ".  Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), line_number(pc_));
+		SIAL_CHECK(false, err_ss.str(), line_number(pc_));
 	}
 
 }
@@ -269,7 +269,7 @@ void SIPServer::handle_PUT(int mpi_source, int put_tag,
 		err_ss << "Incorrect PUT block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), line_number(pc_));
+		SIAL_CHECK(false, err_ss.str(), line_number(pc_));
 	}
 
 }
@@ -325,7 +325,7 @@ void SIPServer::handle_PUT_ACCUMULATE(int mpi_source, int put_accumulate_tag,
 		err_ss << "Incorrect PUT_ACCUMULATE block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(),line_number(pc_));
+		SIAL_CHECK(false, err_ss.str(),line_number(pc_));
 	}
 
 	SIP_LOG(
@@ -404,7 +404,7 @@ void SIPServer::handle_PUT_INITIALIZE(int mpi_source, int put_initialize_tag) {
 		err_ss << "Incorrect PUT_INITIALIZE block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), line_number(pc_));
+		SIAL_CHECK(false, err_ss.str(), line_number(pc_));
 	}
 }
 
@@ -450,7 +450,7 @@ void SIPServer::handle_PUT_INCREMENT(int mpi_source, int put_increment_tag) {
 		err_ss << "Incorrect PUT_INCREMENT block semantics (data race) for " << block_id
 				<<  " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), line_number(pc_));
+		SIAL_CHECK(false, err_ss.str(), line_number(pc_));
 	}
 }
 
@@ -488,7 +488,7 @@ void SIPServer::handle_PUT_SCALE(int mpi_source, int put_scale_tag) {
 		err_ss << "Incorrect PUT_SCALE block semantics (data race) for " << block_id
 				 << " from worker "
 				<< mpi_source << ". Probably a missing sip_barrier";
-		sial_check(false, err_ss.str(), line_number(pc_));
+		SIAL_CHECK(false, err_ss.str(), line_number(pc_));
 	}
 }
 
@@ -598,7 +598,7 @@ void SIPServer::check_int_count(MPI_Status& status, int expected_count) {
 	int received_count;
 	SIPMPIUtils::check_err(MPI_Get_count(&status, MPI_INT, &received_count),
 			__LINE__, __FILE__);
-	check(received_count == expected_count,
+	CHECK(received_count == expected_count,
 			"message int count different than expected");
 }
 
@@ -608,7 +608,7 @@ void SIPServer::check_double_count(const MPI_Status& status,
 	SIPMPIUtils::check_err(
 			MPI_Get_count(&(const_cast<MPI_Status&>(status)), MPI_DOUBLE,
 					&received_count), __LINE__, __FILE__);
-	check(received_count == expected_count,
+	CHECK(received_count == expected_count,
 			"message double count different than expected");
 }
 

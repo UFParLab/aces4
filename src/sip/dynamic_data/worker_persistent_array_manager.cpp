@@ -35,7 +35,7 @@ namespace sip {
 		SIP_LOG(std::cout << "set_persistent: array= " << runner->array_name(array_id) << ", label=" << runner->string_literal(string_slot) << std::endl);
 		std::pair<ArrayIdLabelMap::iterator, bool> ret = persistent_array_map_.insert(std::pair<int, int>(array_id, string_slot));
 		//CHECK(ret.second, "duplicate save of array in same sial program ");
-		//check(ret.second, "duplicate save of array in same sial program " + SipTables::instance().array_name(array_id));
+		//CHECK(ret.second, "duplicate save of array in same sial program " + SipTables::instance().array_name(array_id));
 		//note that duplicate label for same type of object will
 		//be detected during the save process so we don't
 		//check for unique labels here.
@@ -214,8 +214,8 @@ namespace sip {
 		if(! SIPMPIAttr::get_instance().is_worker()) return;  //only workers do this
 
 //		std::cerr<< "WorkerPersistentArrayManager::init_from_checkpoint(" << filename << ")" << std::endl << std::flush;
-		check(contiguous_array_map_.empty(), "initializing nonempty persistent contiguous_array_map_ from checkpoint");
-		check(scalar_value_map_.empty(), "initializing nonempty persistent scalar_value_map_ from checkpoint");
+		CHECK(contiguous_array_map_.empty(), "initializing nonempty persistent contiguous_array_map_ from checkpoint");
+		CHECK(scalar_value_map_.empty(), "initializing nonempty persistent scalar_value_map_ from checkpoint");
 			setup::InputStream * file;
 			setup::BinaryInputFile *bfile = new setup::BinaryInputFile(filename);  //checkpoint file opened here
 			file = bfile;

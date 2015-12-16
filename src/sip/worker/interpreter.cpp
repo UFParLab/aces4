@@ -236,7 +236,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case allocate_contiguous_op: {
-			check(sip_tables_.is_contiguous_local(arg1()),
+			CHECK_WITH_LINE(sip_tables_.is_contiguous_local(arg1()),
 					"attempting to allocate_contiguous with array that is not contiguous_local",
 					line_number());
 			BlockId id = get_block_id_from_instruction();
@@ -246,7 +246,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case deallocate_contiguous_op: {
-			check(sip_tables_.is_contiguous_local(arg1()),
+			CHECK_WITH_LINE(sip_tables_.is_contiguous_local(arg1()),
 					"attempting to deallocate_contiguous with array that is not contiguous_local",
 					line_number());
 			BlockId id = get_block_id_from_instruction();
@@ -892,7 +892,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		default: {
-			check(false, opcodeToName(opcode) + " not yet implemented ",
+			CHECK_WITH_LINE(false, opcodeToName(opcode) + " not yet implemented ",
 					line_number());
 		}
 		}			// switch
@@ -1016,7 +1016,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				sip_tables_.special_instruction_manager().get_no_arg_special_instruction_ptr(
 						func_slot);
 		func(ierr);
-		check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1045,7 +1045,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 		//	typedef void(*fp1)(int& array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, ierr);
-		sip::check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1073,7 +1073,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 		func(array_id0, rank0, block_id0.index_values_, block0_size, seg_sizes0,
 				data0, array_id1, rank1, block_id1.index_values_, block1_size,
 				seg_sizes1, data1, ierr);
-		sip::check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1102,7 +1102,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				data0, array_id1, rank1, block_id1.index_values_, block1_size,
 				seg_sizes1, data1, array_id2, rank2, block_id2.index_values_,
 				block2_size, seg_sizes2, data2, ierr);
-		sip::check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1132,7 +1132,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				seg_sizes1, data1, array_id2, rank2, block_id2.index_values_,
 				block2_size, seg_sizes2, data2, array_id3, rank3,
 				block_id3.index_values_, block3_size, seg_sizes3, data3, ierr);
-		sip::check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1163,7 +1163,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				block_id3.index_values_, block3_size, seg_sizes3, data3,
 				array_id4, rank4, block_id4.index_values_, block4_size,
 				seg_sizes4, data4, ierr);
-		sip::check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1195,7 +1195,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 				array_id4, rank4, block_id4.index_values_, block4_size,
 				seg_sizes4, data4, array_id5, rank5, block_id5.index_values_,
 				block5_size, seg_sizes5, data5, ierr);
-		sip::check(ierr == 0,
+		CHECK(ierr == 0,
 				"error returned from special super instruction "
 						+ sip_tables_.special_instruction_manager().name(
 								func_slot));
@@ -1328,7 +1328,7 @@ void Interpreter::handle_contraction(int drank,
 //
 //	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
 //			contraction_pattern, ierr);
-//	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
+//	CHECK(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
 //			line_number());
 //	//    INPUT:
 //	//    ! - nthreads - number of threads requested;
@@ -1357,11 +1357,11 @@ void Interpreter::handle_contraction(int drank,
 //
 //	//}
 //
-////	sip::check(rrank == sip_tables_.array_rank(rselector.array_id_),
+////	CHECK(rrank == sip_tables_.array_rank(rselector.array_id_),
 ////			"SIP or compiler bug, inconsistent for r arg in contract op");
 ////	sip::BlockId rid;
 ////	sip::Block::BlockPtr rblock = get_block_from_selector_stack('r', rid);
-////	sip::check(rarray == rid.array_id(),
+////	CHECK(rarray == rid.array_id(),
 ////			"SIP or compiler bug:  inconsistent array ids in contract op");
 //
 //
@@ -1410,16 +1410,16 @@ void Interpreter::handle_contraction(int drank,
 //
 //	//get right operand info
 //	sip::BlockSelector rselector = block_selector_stack_.top();
-//	sip::check(rrank == sip_tables_.array_rank(rselector.array_id_),
+//	CHECK(rrank == sip_tables_.array_rank(rselector.array_id_),
 //			"SIP or compiler bug, inconsistent for r arg in contract op");
 //	sip::BlockId rid;
 //	sip::Block::BlockPtr rblock = get_block_from_selector_stack('r', rid);
-//	sip::check(rarray == rid.array_id(),
+//	CHECK(rarray == rid.array_id(),
 //			"SIP or compiler bug:  inconsistent array ids in contract op");
 //
 //	//get left operand info
 //	sip::BlockSelector lselector = block_selector_stack_.top();
-//	sip::check(lrank == sip_tables_.array_rank(lselector.array_id_),
+//	CHECK(lrank == sip_tables_.array_rank(lselector.array_id_),
 //			"SIP or compiler bug, inconsistent for l arg in contract op");
 //	sip::BlockId lid;
 //	sip::Block::BlockPtr lblock = get_block_from_selector_stack('r', lid);
@@ -1439,7 +1439,7 @@ void Interpreter::handle_contraction(int drank,
 //		sip::BlockSelector dselector = block_selector_stack_.top();
 //		std::copy(dselector.index_ids_ + 0, dselector.index_ids_ + MAX_RANK,
 //				dselected_index_ids + 0);
-//		sip::check(drank == sip_tables_.array_rank(dselector.array_id_),
+//		CHECK(drank == sip_tables_.array_rank(dselector.array_id_),
 //				"SIP or compiler bug, inconsistent for d arg in contract op");
 //		sip::BlockId did;
 //		dblock = get_block_from_selector_stack('w', did);
@@ -1462,7 +1462,7 @@ void Interpreter::handle_contraction(int drank,
 //
 //	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
 //			contraction_pattern, ierr);
-//	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
+//	CHECK(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
 //			line_number());
 //	//    INPUT:
 //	//    ! - nthreads - number of threads requested;
@@ -1626,7 +1626,7 @@ bool Interpreter::interpret_where(int num_where_clauses) {
 		}
 
 		//the current instruction is a where
-		check(opcode == where_op,
+		CHECK_WITH_LINE(opcode == where_op,
 				"expected where_op, actual " + opcodeToName(opcode),
 				line_number());
 
@@ -1823,7 +1823,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 //    int line = current_line();
 //    sialx_timers_->start_timer(line, SialxTimer::BLOCKWAITTIME);
 
-	sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
+	CHECK(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
 			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 	id = block_id(selector);
 	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
@@ -1856,7 +1856,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 	}
 		break;
 	default:
-		sip::check(false,
+		CHECK(false,
 				"SIP bug:  illegal or unsupported intent given to get_block");
 	}
 
@@ -2068,7 +2068,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 		for (int i = 0; i < MAX_RANK && OK; ++i) {
 			OK &= (permutation[i] == index_selectors()[i]);
 		}
-		check(OK, "permutation vector from compiler differs from sip's",
+		CHECK_WITH_LINE(OK, "permutation vector from compiler differs from sip's",
 				line_number());
 	}
 	//do the transpose
@@ -2087,7 +2087,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //	int rhs = op_table_.arg0(pc);    //slot in array table for rhs
 //	sip::BlockSelector rhs_selector = block_selector_stack_.top();
 //	block_selector_stack_.pop();
-//	sip::check(data_manager_.is_subblock(rhs_selector), //at least one index is subindex
+//	CHECK(data_manager_.is_subblock(rhs_selector), //at least one index is subindex
 //	"Compiler or sip bug:  rhs should be subblock");
 //	sip::BlockId rhs_super_block_id = data_manager_.super_block_id(
 //			rhs_selector);
@@ -2215,7 +2215,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //									&& rhs_selector.index_ids_[j] != lhs_index;
 //							++j) {/* keep looking until matching index found */
 //					}
-//					sip::check(j < lhs_rank, "illegal transpose");
+//					CHECK(j < lhs_rank, "illegal transpose");
 //					permutation[j] = i;
 //				}
 //				for (int i = lhs_rank; i < MAX_RANK; ++i) {
@@ -2238,13 +2238,13 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //				return;
 //			}
 //
-//			check(false, "illegal indices in assignment", line_number());
+//			CHECK(false, "illegal indices in assignment", line_number());
 //		} else { //lhs_rank > rhs_rank, the compiler should have checked that extra indices are simple
 //			lhs_block->copy_data_(rhs_block);
 //			return;
 //		}
 //	}
-//	check(false, "illegal indices in assignment");
+//	CHECK(false, "illegal indices in assignment");
 //}
 
 //void Interpreter::handle_contraction_op(int pc) {
@@ -2335,16 +2335,16 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //
 //	//get right operand info
 //	sip::BlockSelector rselector = block_selector_stack_.top();
-//	sip::check(rrank == sip_tables_.array_rank(rselector.array_id_),
+//	CHECK(rrank == sip_tables_.array_rank(rselector.array_id_),
 //			"SIP or compiler bug, inconsistent for r arg in contract op");
 //	sip::BlockId rid;
 //	sip::Block::BlockPtr rblock = get_block_from_selector_stack('r', rid);
-//	sip::check(rarray == rid.array_id(),
+//	CHECK(rarray == rid.array_id(),
 //			"SIP or compiler bug:  inconsistent array ids in contract op");
 //
 //	//get left operand info
 //	sip::BlockSelector lselector = block_selector_stack_.top();
-//	sip::check(lrank == sip_tables_.array_rank(lselector.array_id_),
+//	CHECK(lrank == sip_tables_.array_rank(lselector.array_id_),
 //			"SIP or compiler bug, inconsistent for l arg in contract op");
 //	sip::BlockId lid;
 //	sip::Block::BlockPtr lblock = get_block_from_selector_stack('r', lid);
@@ -2364,7 +2364,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //		sip::BlockSelector dselector = block_selector_stack_.top();
 //		std::copy(dselector.index_ids_ + 0, dselector.index_ids_ + MAX_RANK,
 //				dselected_index_ids + 0);
-//		sip::check(drank == sip_tables_.array_rank(dselector.array_id_),
+//		CHECK(drank == sip_tables_.array_rank(dselector.array_id_),
 //				"SIP or compiler bug, inconsistent for d arg in contract op");
 //		sip::BlockId did;
 //		dblock = get_block_from_selector_stack('w', did);
@@ -2387,7 +2387,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //
 //	get_contraction_ptrn_(drank, lrank, rrank, aces_pattern.data(),
 //			contraction_pattern, ierr);
-//	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
+//	CHECK(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
 //			line_number());
 //	//    INPUT:
 //	//    ! - nthreads - number of threads requested;
@@ -2446,7 +2446,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //		break;
 //	default: {
 //		std::cout << "int relational expression opcode =" << opcode;
-//		check(false, " illegal operator code");
+//		CHECK(false, " illegal operator code");
 //	}
 //	}
 //	return result;
@@ -2480,14 +2480,14 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //		break;
 //	default: {
 //		std::cout << "double relational expression opcode =" << opcode;
-//		check(false, " illegal operator code");
+//		CHECK(false, " illegal operator code");
 //	}
 //	}
 //	return result;
 //}
 
 //void Interpreter::handle_self_multiply_op(int pc) {
-//	check(is_scalar(op_table_.arg1(pc)), "*= only for scalar right hand side",
+//	CHECK(is_scalar(op_table_.arg1(pc)), "*= only for scalar right hand side",
 //			line_number());
 //	bool d_is_scalar = is_scalar(op_table_.arg2(pc));
 //	double lval = scalar_value(op_table_.arg1(pc));
@@ -2498,7 +2498,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //	} else {
 //		sip::BlockSelector dselector = block_selector_stack_.top();
 //		int drank = sip_tables_.array_rank(dselector.array_id_);
-//		check(dselector.array_id_ == op_table_.arg2(pc),
+//		CHECK(dselector.array_id_ == op_table_.arg2(pc),
 //				"compiler or sip bug:  inconsistent array values in self multiply and selector for d value",
 //				line_number());
 //
@@ -2600,11 +2600,11 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //	}
 //	//argument is a block with an explicit selector
 //	std::cout << " get_block selector, selecto rank, siptable rank " << selector << ", " << selector.rank_ << "," << sip_tables_.array_rank(selector.array_id_) << std::endl;
-//	sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
+//	CHECK(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
 //			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 //	id = block_id(selector);
 //	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-//	sip::check(!is_contiguous || contiguous_allowed,
+//	CHECK(!is_contiguous || contiguous_allowed,
 //			"using contiguous block in a context that doesn't support it");
 //	switch (intent) {
 //	case 'r': {
@@ -2630,7 +2630,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //	}
 //		break;
 //	default:
-//		sip::check(false,
+//		CHECK(false,
 //				"SIP bug:  illegal or unsupported intent given to get_block");
 //	}
 //	return block;
@@ -2704,7 +2704,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //	id = block_id(selector);
 //	sip::Block::BlockPtr block;
 //	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-//	sip::check(!is_contiguous || contiguous_allowed,
+//	CHECK(!is_contiguous || contiguous_allowed,
 //			"using contiguous block in a context that doesn't support it");
 //
 //	switch (intent) {
@@ -2742,7 +2742,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //		}
 //		break;
 //		default:
-//		sip::check(false, "illegal or unsupported intent given to get_block");
+//		CHECK(false, "illegal or unsupported intent given to get_block");
 //	}
 //	return block;
 //}
@@ -2758,10 +2758,10 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //		id = sip::BlockId(array_id);
 //		return block;
 //	}
-//	sip::check(selector.rank_ != 0, "Contiguous arrays not supported for GPU", line_number());
+//	CHECK(selector.rank_ != 0, "Contiguous arrays not supported for GPU", line_number());
 //
 //	//argument is a block with an explicit selector
-//	sip::check(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
+//	CHECK(selector.rank_ == sip_tables_.array_rank(selector.array_id_),
 //			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 //	id = block_id(selector);
 //	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
@@ -2782,7 +2782,7 @@ void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
 //		}
 //		break;
 //		default:
-//		sip::check(false, "illegal or unsupported intent given to get_block");
+//		CHECK(false, "illegal or unsupported intent given to get_block");
 //	}
 //
 //	return block;

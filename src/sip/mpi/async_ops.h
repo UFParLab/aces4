@@ -59,7 +59,7 @@ public:
 	}
 
 	virtual ~AsyncBase() {
-		check(async_status_ == DONE,
+		CHECK(async_status_ == DONE,
 				"attempting to deconstruct unhandled request");
 	}
 
@@ -311,7 +311,7 @@ public:
 		num_pending_writes_(0) {
 	}
 	~ServerBlockAsyncManager() {
-		check(pending_.empty(), "deleting block with pending async ops");
+		CHECK(pending_.empty(), "deleting block with pending async ops");
 	}
 
 	//increments num_pending_writes_
@@ -408,7 +408,7 @@ public:
 		while (it != pending_.end()) {
 			(*it)->wait();
 			bool res = (*it)->try_handle();
-			check(res, "in BlockAsyncManager::wait--handle ready op failed");
+			CHECK(res, "in BlockAsyncManager::wait--handle ready op failed");
 			if ((*it)->is_write()) {
 				num_pending_writes_--;
 			}
@@ -428,7 +428,7 @@ public:
 		while (it != pending_.end() && num_pending_writes_>0) {
 			(*it)->wait();
 			bool res = (*it)->try_handle();
-			check(res, "in BlockAsyncManager::wait--handle ready op failed");
+			CHECK(res, "in BlockAsyncManager::wait--handle ready op failed");
 			if ((*it)->is_write()) {
 				num_pending_writes_--;
 			}

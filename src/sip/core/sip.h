@@ -68,7 +68,8 @@ void sip_abort();
 #define SIAL_CHECK(condition, message, line) 		if (!(condition)) { sip::sial_fail(message, line); }
 #define CHECK_WITH_LINE(condition, message, line) 	if (!(condition)) { sip::fail(message, line); }
 #define CHECK(condition, message)					if (!(condition)) { sip::fail(message); }
-
+#define WARN(condition, message)                    if (!(condition)) { sip::warn(message); }
+#define WARN_WITH_LINE(condition, message, line)    if (!(condition)) { sip::warn(message, line); }
 
 namespace sip {
 

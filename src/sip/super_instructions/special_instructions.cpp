@@ -388,7 +388,7 @@ namespace sip{
 
 SpecialInstructionManager::SpecialInstructionManager(){
 //	std::cout << "in SpecialInstructionManager constructor";
-//    sip::check(procmap_.empty(), "attempting to initialize non-empty procmap");
+//    CHECK(procmap_.empty(), "attempting to initialize non-empty procmap");
 	init_procmap();
 }
 
@@ -426,7 +426,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 	try{
 		std::map<std::string, fp0>::iterator it = procmap_.find(name);
 		if (it == procmap_.end()){
-			SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+			SIP_LOG(WARN(false, std::string("Special instruction ") + name + " not found"));
 			procvec_.push_back(procvec_entry_t(NULL, sig));
 		} else {
 			fp0 func = it->second;

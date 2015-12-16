@@ -111,7 +111,7 @@ public:
 	 */
 	void insert_block(const BlockId& block_id, BLOCK_TYPE* block_ptr) {
 		if (block_id.is_contiguous_local()){
-			sial_check(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " +
+			SIAL_CHECK(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " ,
 					     current_line());
 		}
 		int array_id = block_id.array_id();
@@ -125,7 +125,7 @@ public:
 		std::pair<BlockId, BLOCK_TYPE*> bid_pair (block_id, block_ptr);
 		std::pair<typename PerArrayMap::iterator, bool> ret;
 		ret = map_ptr->insert(bid_pair);
-		sial_check(ret.second,
+		SIAL_CHECK(ret.second,
 		std::string("attempting to insert block that already exists into the block_map. Probable cause: sial program allocating block that exists"), current_line());
 	}
 
@@ -144,7 +144,7 @@ public:
 //		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
 //		map_ptr->erase(it);
 //		return block_ptr;
-		sial_check(it != map_ptr->end(),
+		SIAL_CHECK(it != map_ptr->end(),
 				"attempting to remove a non-existent block ",
 				current_line() );
 		BLOCK_TYPE* block_ptr = it->second;
@@ -261,9 +261,10 @@ public:
 		std::size_t tot_byes_inserted = 0;
 		//get current map and warn if it contains blocks.  Delete any map that exists
 	    PerArrayMap* current_map = block_map_.at(array_id);
-	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"));
-	    delete_per_array_map_and_blocks(array_id);
-
+	    if (current_map != NULL){
+	        delete_per_array_map_and_blocks(array_id);
+	        warn("replacing an existing array in block_map");
+	    }
 	    //create a new map with Ids updated to new array_id
 	    PerArrayMap* new_map = new PerArrayMap();
 	    typename PerArrayMap::iterator it;

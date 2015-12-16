@@ -52,9 +52,9 @@ ServerBlock::~ServerBlock(){
 
 ServerBlock::dataPtr ServerBlock::accumulate_data(size_t asize, dataPtr to_add){
 	double* data_ = block_data_.get_data();
-	check(size() == asize, "accumulating blocks of unequal size");
-	check(data_ != NULL, "attempting to accumulate into block with null data_");
-	check(to_add != NULL, "attempting to accumulate from null dataPtr");
+	CHECK(size() == asize, "accumulating blocks of unequal size");
+	CHECK(data_ != NULL, "attempting to accumulate into block with null data_");
+	CHECK(to_add != NULL, "attempting to accumulate from null dataPtr");
 	for (size_t i = 0; i < asize; ++i){
 			data_[i] += to_add[i];
 	}
@@ -78,9 +78,9 @@ ServerBlock::dataPtr ServerBlock::scale_data(double factor) {
 ServerBlock::dataPtr ServerBlock::copy_data(ServerBlock* source_block){
 	double* data = block_data_.get_data();
 	double* source_data = source_block->get_data();
-	check(size() == source_block->size(), "mismatched sizes in server block copy");
-	check(data != NULL, "attempting to copy into block with null data_");
-	check(source_data != NULL, "attempting to accumulate from null dataPtr");
+	CHECK(size() == source_block->size(), "mismatched sizes in server block copy");
+	CHECK(data != NULL, "attempting to copy into block with null data_");
+	CHECK(source_data != NULL, "attempting to accumulate from null dataPtr");
 	for (size_t i = 0; i < size(); ++i){
 			data[i] = source_data[i];
 	}
