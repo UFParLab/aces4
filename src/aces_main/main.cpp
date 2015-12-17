@@ -53,9 +53,9 @@ void bt_sighandler(int signum) {
  */
 void check_expected_datasizes() {
 
-    sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-    sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-    sip::check(sizeof(long long) >= 8,
+    CHECK(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+    CHECK(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+    CHECK(sizeof(long long) >= 8,
             "Size of long long should be 8 bytes or more");
 }
 

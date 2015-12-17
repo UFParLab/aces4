@@ -166,7 +166,7 @@ private:
 	 * @param pc  current index in optable. Used to index the wait_time_ timer list.
 	 * @return  the input parameter--for convenience
 	 */
-	Block::BlockPtr wait_and_check(Block::BlockPtr b, int pc);
+	Block::BlockPtr wait_and_CHECK(Block::BlockPtr b, int pc);
 
 	/**
 	 * returns true if the mode associated with an array is compatible with

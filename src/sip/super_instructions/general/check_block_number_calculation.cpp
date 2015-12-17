@@ -51,7 +51,7 @@ void check_block_number_calculation(int& array_slot, int& rank,
 	 		ss << "block_id=" << block_id.str(interpreter->sip_tables()) << std::endl;
 	 		ss << " block_number=" << block_number << std::endl;
 	 		ss << " computed_id=" << id2.str(interpreter->sip_tables()) << std::endl;
-	        sip::check(false, ss.str());
+	        CHECK(false, ss.str());
 	 	}
 
 		if (index_values_copy[0] == 8 && index_values_copy[1] == 1){

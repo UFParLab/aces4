@@ -17,7 +17,7 @@ ChunkManager::ChunkManager(chunk_size_t chunk_size, ArrayFile* file):
 ChunkManager::~ChunkManager() {
 	chunks_t::iterator it;
 	for (it = chunks_.begin(); it != chunks_.end(); ++it) {
-		check((*it)->data_ == NULL, "Memory leak: attempting to delete chunk with allocated data");
+		CHECK((*it)->data_ == NULL, "Memory leak: attempting to delete chunk with allocated data");
 	}
 }
 size_t ChunkManager::new_chunk() {
@@ -38,7 +38,7 @@ void ChunkManager::new_chunk_for_restore(offset_val_t offset){
 }
 
 size_t ChunkManager::reallocate_chunk_data(Chunk* chunk) {
-	check(chunk->data_ == NULL, "reallocating chunk data that exists");
+	CHECK(chunk->data_ == NULL, "reallocating chunk data that exists");
 	chunk->data_ = new double[chunk_size_];
 	return chunk_size_;
 }

@@ -85,7 +85,7 @@ public:
 	~ChunkManager() {
 		chunks_t::iterator it;
 		for (it = chunks_.begin(); it != chunks_.end(); ++it) {
-			check(it->data_ == NULL, "Memory leak: attempting to delete chunk with allocated data");
+			CHECK(it->data_ == NULL, "Memory leak: attempting to delete chunk with allocated data");
 		}
 	}
 
@@ -223,7 +223,7 @@ private:
 //	 * Throws a bad alloc exception if space cannot be allocated.
 //	 */
 //	size_t reallocate_chunk_data(Chunk* chunk){
-//		check(chunk->data_ == NULL & chunk->valid_on_disk_, "calling reallocate_chunk_data in invalid state");
+//		CHECK(chunk->data_ == NULL & chunk->valid_on_disk_, "calling reallocate_chunk_data in invalid state");
 //		//allocate data
 //		double * chunk_data = new double[chunk_size_];
 //		return chunk_size_;
@@ -251,7 +251,7 @@ private:
 //			free_chunk_data(*it);
 //		}
 //		ChunkList_t().swap(chunk_list_);   //clears chunk_list_ (clear method doesn't guarantee size is reduced)
-//		check(chunk_list_.size() == 0 && chunk_list_.capacity == 0, "swap didn't clear vector");
+//		CHECK(chunk_list_.size() == 0 && chunk_list_.capacity == 0, "swap didn't clear vector");
 //		return freed;
 //	}
 //
@@ -355,7 +355,7 @@ private:
 //returns size of chunk
 //size_t reallocate_chunk_data(Chunk& chunk) {
 //try {
-//	check(chunk.data_ == NULL,
+//	CHECK(chunk.data_ == NULL,
 //			"memory leak--reallocating non-NULL chunk data");
 //	chunk.data_ = new double[chunk_size_];
 //	chunk.num_allocated_doubles_ = 0;
@@ -363,7 +363,7 @@ private:
 //}
 //catch ( catch (const std::bad_alloc& ba)) {
 //	//TODO fix this
-//	check(false, "out of memory in reallocate_chunk_data");
+//	CHECK(false, "out of memory in reallocate_chunk_data");
 //}
 //}
 //

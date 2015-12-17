@@ -104,6 +104,14 @@ public:
 		return block_map_.total_blocks();
 	}
 
+	void free_blocks(){
+		for (int i = 0; i < sip_tables_.num_arrays(); ++i){
+			if (sip_tables_.is_distributed(i)){
+			block_map_.delete_per_array_map_and_blocks(i);
+			}
+		}
+	}
+
 #ifdef HAVE_CUDA
 	// GPU
 	Block::BlockPtr get_gpu_block_for_writing(const BlockId& id, bool is_scope_extent=false);

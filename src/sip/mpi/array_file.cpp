@@ -25,7 +25,7 @@ ArrayFile::ArrayFile(header_val_t chunk_size, const std::string& name,
 			const_cast<char *>(backing_file_name_.c_str()),
 			MPI_MODE_CREATE | MPI_MODE_EXCL | MPI_MODE_RDWR,
 			MPI_INFO_NULL, &fh_);
-	check(err == MPI_SUCCESS,
+	CHECK(err == MPI_SUCCESS,
 			std::string("error creating new file for array ") + name
 					+ std::string(" with filename " + backing_file_name_));
 	write_header();
@@ -71,11 +71,11 @@ void ArrayFile::open_persistent_file(const std::string& label,
 		//TODO  handle more than one restart job, probably the easiest way to do this is to create a
 		//link with current jobid to each file used from the restart id.
 	}
-	check(backing_file_name_ != "", "no persistent file for label" + label + " found.");
+	CHECK(backing_file_name_ != "", "no persistent file for label" + label + " found.");
 	int err = MPI_File_open(comm_,
 			const_cast<char *>(backing_file_name_.c_str()),
 			MPI_MODE_RDONLY, MPI_INFO_NULL, &fh_);
-	check(err == MPI_SUCCESS,
+	CHECK(err == MPI_SUCCESS,
 			std::string("failure opening persistent file") + label);
 	//read the header.
 	//this method checks that the chunk size and number of servers match.
@@ -101,7 +101,7 @@ void ArrayFile::read_index(const std::string& index_file_name, offset_val_t& ind
 		err = MPI_File_open(MPI_COMM_SELF,
 				const_cast<char *>(index_file_name.c_str()),
 				MPI_MODE_RDONLY, MPI_INFO_NULL, &index_fh);
-		check(err == MPI_SUCCESS,
+		CHECK(err == MPI_SUCCESS,
 				std::string("error opening index file ") + index_file_name);
 
 		//set view to count offset type instead of byte
@@ -113,7 +113,7 @@ void ArrayFile::read_index(const std::string& index_file_name, offset_val_t& ind
 		err = MPI_File_read_at(index_fh, 0, index_header,
 				NUM_VALS_IN_INDEX_HEADER,
 				MPI_OFFSET_VAL_T, &status);
-		check(err == MPI_SUCCESS,
+		CHECK(err == MPI_SUCCESS,
 				std::string("failure reading file index header")
 						+ index_file_name);
 
@@ -138,19 +138,19 @@ void ArrayFile::read_index(const std::string& index_file_name, offset_val_t& ind
 		MPI_Status status;
 		err = MPI_File_read_at(index_fh, NUM_VALS_IN_INDEX_HEADER, &index.front(), index_size,
 		MPI_OFFSET_VAL_T, &status);
-		check(err == MPI_SUCCESS,
+		CHECK(err == MPI_SUCCESS,
 				std::string("failure reading file index") + index_file_name);
 		MPI_File_close(&index_fh);
 	}
 	//everyone participates in the broadcast
 	err = MPI_Bcast(&index.front(), index_size, MPI_OFFSET_VAL_T, 0, comm_);
-	check(err == MPI_SUCCESS, "index broadcast failed");
+	CHECK(err == MPI_SUCCESS, "index broadcast failed");
 }
 
 void ArrayFile::write_header() {
 	int err = MPI_File_set_view(fh_, 0, MPI_HEADER_VAL_T,
 	MPI_HEADER_VAL_T, "native", MPI_INFO_NULL);
-	check(err == MPI_SUCCESS,
+	CHECK(err == MPI_SUCCESS,
 			"failure setting view in write_header for file " + backing_file_name_);
 	if (comm_rank() == 0) {
 		header_val_t header[NUM_VALS_IN_HEADER];
@@ -160,7 +160,7 @@ void ArrayFile::write_header() {
 		int err = MPI_File_write_at(fh_, 0, header, NUM_VALS_IN_HEADER,
 		MPI_HEADER_VAL_T,
 		MPI_STATUS_IGNORE);
-		check(err == MPI_SUCCESS, "failure writing array file header");
+		CHECK(err == MPI_SUCCESS, "failure writing array file header");
 	}
 	//technically should set view back to data, but we won't do that since we are just going to
 	//close and rename the file next anyway.
@@ -175,17 +175,17 @@ void ArrayFile::read_header() {
 		int err = MPI_File_read_at(fh_, 0, header, NUM_VALS_IN_HEADER,
 		MPI_HEADER_VAL_T,
 		MPI_STATUS_IGNORE);
-		check(err == MPI_SUCCESS, "failure reading array file header");
+		CHECK(err == MPI_SUCCESS, "failure reading array file header");
 	}
 	err = MPI_Bcast(header, NUM_VALS_IN_HEADER,
 	MPI_HEADER_VAL_T, 0, comm_);
-	check(err == MPI_SUCCESS, "header broadcast failed");
+	CHECK(err == MPI_SUCCESS, "header broadcast failed");
 	int chunk_size = header[0];
 	int file_comm_size = header[1];
-	check(chunk_size == chunk_size_,
+	CHECK(chunk_size == chunk_size_,
 			" unimplemented feature--currently chunks sizes must be consistent");
 
-	check(file_comm_size == comm_size(),
+	CHECK(file_comm_size == comm_size(),
 			"unimplemented feature--currently num servers must be same for reading and writing persisitent array");
 	set_view_for_data();
 }
@@ -196,7 +196,7 @@ void ArrayFile::set_view_for_data() {
 //TODO add padding for alignment?
 	int err = MPI_File_set_view(fh_, displacement, MPI_DOUBLE,
 	MPI_DOUBLE, "native", MPI_INFO_NULL);
-	check(err == MPI_SUCCESS, "setting view to write data failed");
+	CHECK(err == MPI_SUCCESS, "setting view to write data failed");
 }
 
 void ArrayFile::chunk_write(const Chunk & chunk) {
@@ -206,7 +206,7 @@ void ArrayFile::chunk_write(const Chunk & chunk) {
 	MPI_Status status;
 	int err = MPI_File_write_at(fh_, offset, chunk.data_, chunk_size_,
 	MPI_DOUBLE, &status);
-	check(err == MPI_SUCCESS, "write_chunk failed");
+	CHECK(err == MPI_SUCCESS, "write_chunk failed");
 	stats_.chunks_written_.inc();
 }
 
@@ -219,16 +219,16 @@ void ArrayFile::chunk_write_all(const Chunk & chunk) {
 		char string[MPI_MAX_ERROR_STRING];
 		int resultlen;
 		MPI_Error_string(err, string, &resultlen);
-		check(false, std::string("chunk_write_all write failed ") + string);
+		CHECK(false, std::string("chunk_write_all write failed ") + string);
 	}
-//	check(err == MPI_SUCCESS, "chunk_write_all write failed");
+//	CHECK(err == MPI_SUCCESS, "chunk_write_all write failed");
 	stats_.chunks_written_.inc();
 }
 
 void ArrayFile::chunk_write_all_nop() const {
 	MPI_Status status;
 	int err = MPI_File_write_at_all(fh_, 0, NULL, 0, MPI_DOUBLE, &status);
-	check(err == MPI_SUCCESS, "chunk_write_all_nop failed");
+	CHECK(err == MPI_SUCCESS, "chunk_write_all_nop failed");
 }
 
 void ArrayFile::chunk_read(Chunk& chunk) {
@@ -236,7 +236,7 @@ void ArrayFile::chunk_read(Chunk& chunk) {
 	MPI_Status status;
 	int err = MPI_File_read_at(fh_, offset, chunk.data_, chunk_size_,
 	MPI_DOUBLE, &status);
-	check(err == MPI_SUCCESS, "chunk_read failed");
+	CHECK(err == MPI_SUCCESS, "chunk_read failed");
 	stats_.chunks_restored_.inc();
 }
 
@@ -245,28 +245,28 @@ void ArrayFile::chunk_read_all(Chunk & chunk) {
 	MPI_Status status;
 	int err = MPI_File_read_at_all(fh_, offset, chunk.data_, chunk_size_,
 	MPI_DOUBLE, &status);
-	check(err == MPI_SUCCESS, "chunk_read_all failed");
+	CHECK(err == MPI_SUCCESS, "chunk_read_all failed");
 	stats_.chunks_restored_.inc();
 }
 
 void ArrayFile::chunk_read_all_nop() {
 	MPI_Status status;
 	int err = MPI_File_read_at_all(fh_, 0, NULL, 0, MPI_DOUBLE, &status);
-	check(err == MPI_SUCCESS, "chunk_read_all_nop failed");
+	CHECK(err == MPI_SUCCESS, "chunk_read_all_nop failed");
 }
 
 void ArrayFile::write_sparse_index(std::vector<offset_val_t>& index) {
 //	std::cerr << "writing sparse index " << make_index_file_name(label_) << std::endl << std::flush;
 	MPI_Status status;
 	std::vector<offset_val_t>::size_type index_size = index.size();
-	check(index_size < std::numeric_limits<int>::max(),
+	CHECK(index_size < std::numeric_limits<int>::max(),
 			"index size for persistent array exceeds mpi count limit. Fix to allow by writing in multiple parts");
 	int err;
 	//collectively compute total index size
 	offset_val_t total_size;
 	err = MPI_Reduce(&index_size, &total_size, 1,
 			MPI_OFFSET_VAL_T, MPI_SUM, 0, comm_);
-	check(err == MPI_SUCCESS, "failure reducing sparse file index");
+	CHECK(err == MPI_SUCCESS, "failure reducing sparse file index");
 
 	//collectively compute offset for each server
 	offset_val_t index_offset;
@@ -281,7 +281,7 @@ void ArrayFile::write_sparse_index(std::vector<offset_val_t>& index) {
 			const_cast<char *>(make_index_file_name(label_).c_str()),
 			MPI_MODE_CREATE | MPI_MODE_EXCL | MPI_MODE_WRONLY,
 			MPI_INFO_NULL, &index_fh);
-	check(err == MPI_SUCCESS, "error opening file to write sparse index ");
+	CHECK(err == MPI_SUCCESS, "error opening file to write sparse index ");
 
 
 	//set view to count MPI_OFFSET_VAL_T objects
@@ -289,7 +289,7 @@ void ArrayFile::write_sparse_index(std::vector<offset_val_t>& index) {
 	err = MPI_File_set_view(index_fh, displacement,
 	MPI_OFFSET_VAL_T,
 	MPI_OFFSET_VAL_T, "native", MPI_INFO_NULL);
-	check(err == MPI_SUCCESS, "setting view to write sparse index header failed");
+	CHECK(err == MPI_SUCCESS, "setting view to write sparse index header failed");
 
 	//rank 0 writes header
 	if (comm_rank()==0){
@@ -298,7 +298,7 @@ void ArrayFile::write_sparse_index(std::vector<offset_val_t>& index) {
 	header[1] = total_size;
 	err = MPI_File_write_at(index_fh, 0, header, NUM_VALS_IN_HEADER,
 	MPI_OFFSET_VAL_T, &status);
-	check(err == MPI_SUCCESS, "failure writing file index header");
+	CHECK(err == MPI_SUCCESS, "failure writing file index header");
 	}
 	//Collectively write the index.
 	//but first, set view to skip the header
@@ -306,48 +306,48 @@ void ArrayFile::write_sparse_index(std::vector<offset_val_t>& index) {
 		displacement = (NUM_VALS_IN_INDEX_HEADER * sizeof(offset_val_t));
 		err = MPI_File_set_view(index_fh, displacement, MPI_OFFSET_VAL_T,
 				MPI_OFFSET_VAL_T, "native", MPI_INFO_NULL);
-		check(err == MPI_SUCCESS, "setting view to write index failed");
+		CHECK(err == MPI_SUCCESS, "setting view to write index failed");
 
 	err = MPI_File_write_at_all(index_fh, index_offset, &index.front(), index_size, MPI_OFFSET_VAL_T, &status);
-		check(err == MPI_SUCCESS, "write index data failed");
+		CHECK(err == MPI_SUCCESS, "write index data failed");
 }
 
 void ArrayFile::write_dense_index(std::vector<offset_val_t>& index) {
 //	std::cerr << "writing dense index " << make_index_file_name(label_) << std::endl << std::flush;
 	MPI_Status status;
 	std::vector<offset_val_t>::size_type index_size = index.size();
-	check(index_size < std::numeric_limits<int>::max(),
+	CHECK(index_size < std::numeric_limits<int>::max(),
 			"index size for persistent array exceeds mpi count limit. Fix to allow by writing in multiple parts");
 	int err;
 	//TODO  check this
 	if (comm_rank() == 0) {
 		err = MPI_Reduce(MPI_IN_PLACE, &index.front(), index_size,
 		MPI_OFFSET_VAL_T, MPI_MAX, 0, comm_);
-		check(err == MPI_SUCCESS, "failure reducing file index at root");
+		CHECK(err == MPI_SUCCESS, "failure reducing file index at root");
 		//open index file and set view.  Only the master server writes, so use MPI_COMM_SELF
 		MPI_File index_fh;
 		err = MPI_File_open(MPI_COMM_SELF,
 				const_cast<char *>(make_index_file_name(label_).c_str()),
 				MPI_MODE_CREATE | MPI_MODE_EXCL | MPI_MODE_WRONLY,
 				MPI_INFO_NULL, &index_fh);
-		check(err == MPI_SUCCESS, "error opening file to write index ");
+		CHECK(err == MPI_SUCCESS, "error opening file to write index ");
 		//change view to count MPI_OFFSET_VAL_T types instead of bytes
 		MPI_Offset displacement = 0;
 		err = MPI_File_set_view(index_fh, displacement,
 		MPI_OFFSET_VAL_T,
 		MPI_OFFSET_VAL_T, "native", MPI_INFO_NULL);
-		check(err == MPI_SUCCESS, "setting view to write index failed");
+		CHECK(err == MPI_SUCCESS, "setting view to write index failed");
 		//write header
 		offset_val_t header[NUM_VALS_IN_INDEX_HEADER];
 		header[0] = DENSE_INDEX;
 		header[1] = index_size;
 		err = MPI_File_write_at(index_fh, 0, header, NUM_VALS_IN_HEADER,
 		MPI_OFFSET_VAL_T, &status);
-		check(err == MPI_SUCCESS, "failure writing file index header");
+		CHECK(err == MPI_SUCCESS, "failure writing file index header");
 		//now write the index.
 		err = MPI_File_write_at(index_fh, NUM_VALS_IN_HEADER, &index.front(), index_size,
 		MPI_OFFSET_VAL_T, &status);
-		check(err == MPI_SUCCESS, "failure writing file index");
+		CHECK(err == MPI_SUCCESS, "failure writing file index");
 		MPI_File_close (&index_fh);
 //		//DEBUG PRINT
 //		std::cerr << "in write_dense_index " <<std::endl;
@@ -361,7 +361,7 @@ void ArrayFile::write_dense_index(std::vector<offset_val_t>& index) {
 		int err = MPI_Reduce(&index.front(), NULL, index_size,
 		MPI_OFFSET_VAL_T,
 		MPI_MAX, 0, comm_);
-		check(err == MPI_SUCCESS, "failure reducing file index at non-root");
+		CHECK(err == MPI_SUCCESS, "failure reducing file index at non-root");
 	}
 }
 
@@ -380,14 +380,14 @@ void ArrayFile::write_dense_index(std::vector<offset_val_t>& index) {
 //		MPI_Status status;
 //		err = MPI_File_read_at(index_fh_, 0, index, num_blocks_,
 //		MPI_OFFSET_VAL_T, &status);
-//		check(err == MPI_SUCCESS, "failure reading file index");
+//		CHECK(err == MPI_SUCCESS, "failure reading file index");
 //	}
 //	err = MPI_Bcast(index, num_blocks_, MPI_OFFSET_VAL_T, 0, comm_);
-//	check(err == MPI_SUCCESS, "index broadcast failed");
+//	CHECK(err == MPI_SUCCESS, "index broadcast failed");
 //}
 
 void ArrayFile::mark_persistent(const std::string& label) {
-	check(is_persistent_ == false,
+	CHECK(is_persistent_ == false,
 			"calling set_persistent on already persistent file");
 
 	if (comm_rank() == 0) {
@@ -400,16 +400,16 @@ void ArrayFile::mark_persistent(const std::string& label) {
 }
 
 void ArrayFile::close_and_rename_persistent(){
-	check(is_persistent_, "attempting to treat non-persistent file as if it were persistent");
+	CHECK(is_persistent_, "attempting to treat non-persistent file as if it were persistent");
 //	write_header();
 	MPI_File_close(&fh_);
 	if (comm_rank() == 0 && !was_restored_) {
 		std::string new_file_name(make_persistent_file_name(label_));
-		check(rename(backing_file_name_, new_file_name),
+		CHECK(rename(backing_file_name_, new_file_name),
 				"error renaming persistent file");
 //		std::cerr << "renamed " << backing_file_name_ << " to " << new_file_name << std::endl << std::flush;
 		std::string index_file_name = make_index_file_name(label_);
-		check(file_exists(index_file_name),
+		CHECK(file_exists(index_file_name),
 				"index file has not been created " + index_file_name);
 	}
 }
@@ -429,7 +429,7 @@ void ArrayFile::close_and_rename_persistent(){
 // * @param index
 // */
 //void read_dense_index(offset_val_t* index, header_val_t size) {
-//	check(size == num_blocks_,
+//	CHECK(size == num_blocks_,
 //			"array passed to read_index may not have correct size");
 //	MPI_Offset displacement = NUM_VALS_IN_HEADER * sizeof(header_val_t);
 //	int err = MPI_File_set_view(fh_, displacement,
@@ -439,10 +439,10 @@ void ArrayFile::close_and_rename_persistent(){
 //	if (comm_rank() == 0) {
 //		err = MPI_File_read_at(fh_, 0, index, num_blocks_,
 //		MPI_OFFSET_VAL_T, &status);
-//		check(err == MPI_SUCCESS, "failure reading file index");
+//		CHECK(err == MPI_SUCCESS, "failure reading file index");
 //	}
 //	err = MPI_Bcast(index, num_blocks_, MPI_OFFSET_VAL_T, 0, comm_);
-//	check(err == MPI_SUCCESS, "index broadcast failed");
+//	CHECK(err == MPI_SUCCESS, "index broadcast failed");
 //	set_view_for_data();
 //}
 

@@ -238,13 +238,13 @@ public:
 //		if (name.compare(new_name)==0) return false;
 //		int err = std::remove(const_cast<char *>(new_name.c_str()));
 //		//note that here the error is that the remove succeeded.
-//		check_and_warn(err != 0, std::string("Deleted existing persistent file ") + new_name);
+//		WARN(err != 0, std::string("Deleted existing persistent file ") + new_name);
 ////		std::cout << "renaming " << name << " to " << new_name << std::endl << std::flush;
 //		err = std::rename(const_cast<char*>(name.c_str()),
 //				const_cast<char*>(new_name.c_str()));
 //		if (err != 0){
 //			perror("Error renaming persistent array");
-//			check(false,"");
+//			CHECK(false,"");
 //		}
 //		return true;
 //		}
@@ -456,7 +456,7 @@ public:
 //			 * @param index
 //			 */
 //			 void read_dense_index(std::vector<offset_val_t> index, header_val_t size) {
-////				check(size == num_blocks_,
+////				CHECK(size == num_blocks_,
 ////						"array passed to read_index may not have correct size");
 //				MPI_Offset displacement = NUM_VALS_IN_HEADER
 //				* sizeof(header_val_t);
@@ -467,16 +467,16 @@ public:
 //				if (comm_rank() == 0) {
 //					err = MPI_File_read_at(fh_, 0, &index.front(), size,
 //							MPI_OFFSET_VAL_T, &status);
-//					check(err == MPI_SUCCESS, "failure reading file index");
+//					CHECK(err == MPI_SUCCESS, "failure reading file index");
 //				}
 //				err = MPI_Bcast(&index.front(), size, MPI_OFFSET_VAL_T, 0,
 //						comm_);
-//				check(err == MPI_SUCCESS, "index broadcast failed");
+//				CHECK(err == MPI_SUCCESS, "index broadcast failed");
 //				set_view_for_data();
 //			}
 //
 //		//	void read_sparse_index(offset_val_t* index, header_val_t size) {
-//		//		check(size == num_blocks_,
+//		//		CHECK(size == num_blocks_,
 //		//				"array passed to read_index may not have correct size");
 //		//		MPI_Offset displacement = NUM_VALS_IN_HEADER
 //		//		* sizeof(header_val_t);
@@ -487,11 +487,11 @@ public:
 //		//		if (comm_rank() == 0) {
 //		//			err = MPI_File_read_at(fh_, 0, index, num_blocks_,
 //		//					MPI_OFFSET_VAL_T, &status);
-//		//			check(err == MPI_SUCCESS, "failure reading file index");
+//		//			CHECK(err == MPI_SUCCESS, "failure reading file index");
 //		//		}
 //		//		err = MPI_Bcast(index, num_blocks_, MPI_OFFSET_VAL_T, 0,
 //		//				comm_);
-//		//		check(err == MPI_SUCCESS, "index broadcast failed");
+//		//		CHECK(err == MPI_SUCCESS, "index broadcast failed");
 //		//		set_view_for_data();
 //		//	}
 
@@ -505,7 +505,7 @@ public:
 				MPI_Status status;
 				int err = MPI_File_read_at(fh_, offset, data, size,
 						MPI_DOUBLE, &status);
-				check(err == MPI_SUCCESS, "chunk_read_all failed");
+				CHECK(err == MPI_SUCCESS, "chunk_read_all failed");
 			}
 
 			void sync() {
@@ -542,12 +542,12 @@ public:
 		//	 * Causes failure if the number of blocks or chunk size exceed the current implementation limits.
 		//	 */
 		//	void check_implementation_limits() {
-		//		check(
+		//		CHECK(
 		//				num_blocks_
 		//				< std::numeric_limits<offset_val_t>::max()
 		//				/ chunk_size_,
 		//				"implementation limit encountered:  type used to represent offsets in the index file may not be big enough");
-		//		check(num_blocks_ < std::numeric_limits<int>::max(),
+		//		CHECK(num_blocks_ < std::numeric_limits<int>::max(),
 		//				"implemenation limit enountered:  number of blocks too large for int used when writing index file");
 		//	}
 
@@ -581,7 +581,7 @@ public:
 						const_cast<char*>(new_file_name.c_str()));
 				if (err != 0) {
 					perror("Error renaming file");
-					check(false,
+					CHECK(false,
 							old_file_name + std::string(" to ")
 							+ new_file_name);
 				}

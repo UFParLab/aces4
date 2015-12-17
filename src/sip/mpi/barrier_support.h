@@ -140,7 +140,7 @@ public:
 	 */
 	bool check_section_number_invariant(int section_number) {
 		bool section_number_changed = false;
-		check(section_number >= this->section_number_,
+		CHECK_WITH_LINE(section_number >= this->section_number_,
 				"Section number invariant violated. Received request from an older section !",
 				    current_line());
 		if (section_number > this->section_number_) {

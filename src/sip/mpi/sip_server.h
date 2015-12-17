@@ -62,7 +62,7 @@ public:
 	, pending_counter_(SIPMPIAttr::get_instance().company_communicator())
 {}
 	~PendingAsyncManager(){
-		check(pending_.empty(),"destructing non-empty PendingDataRequestManager");
+		CHECK(pending_.empty(),"destructing non-empty PendingDataRequestManager");
 	}
 
 	void add_put_data_request(int mpi_source, int put_data_tag, BlockId id, ServerBlock* block, int pc){
@@ -135,7 +135,7 @@ public:
 		while (iter != pending_.end()){
 			if(iter->first.array_id() == array_id){
 				bool block_complete = iter->second->async_state_.try_handle_test_none_pending();
-				check(block_complete, "attempting to delete array with pending async ops");
+				CHECK(block_complete, "attempting to delete array with pending async ops");
 				iter = pending_.erase(iter);
 				next_block_iter_ = iter;
 			}

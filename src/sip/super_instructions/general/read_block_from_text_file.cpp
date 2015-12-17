@@ -62,7 +62,7 @@ void read_block_from_text_file(int& array_slot, int& rank, int* index_values, in
 			loc += indices[i] - offset[i];
 		}
 
-		//sip::check (loc != -1, "Invalid index for block " + block_name_ss.str());
+		//CHECK (loc != -1, "Invalid index for block " + block_name_ss.str());
 		data[loc] = val;
 
 //        std::cout << read_size << " "  << size << std::endl;

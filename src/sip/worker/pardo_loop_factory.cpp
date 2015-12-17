@@ -250,7 +250,7 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 			sip_mpi_attr, num_where_clauses, interpreter, iteration);
 #endif
 		default:
-			check(false, "cannot create requested pardo loop manager", interpreter->line_number());
+			CHECK_WITH_LINE(false, "cannot create requested pardo loop manager", interpreter->line_number());
 			return NULL; //should not get here, this will cause a crash
 		}
 	}

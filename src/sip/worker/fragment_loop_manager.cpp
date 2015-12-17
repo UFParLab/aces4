@@ -22,7 +22,7 @@ FragmentPardoLoopManager::FragmentPardoLoopManager(int num_indices,
 		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
 		upper_bound_[i] = lower_seg_[i]
 				+ sip_tables_.num_segments(index_id_[i]);
-		sip::check(lower_seg_[i] < upper_bound_[i],
+		CHECK_WITH_LINE(lower_seg_[i] < upper_bound_[i],
 				"Pardo loop index " + sip_tables_.index_name(index_id_[i])
 						+ " has empty range",
 				Interpreter::global_interpreter->line_number());
@@ -43,7 +43,7 @@ bool FragmentPardoLoopManager::initialize_indices() {
 			more_iterations = false; //this loop has an empty range in at least one dimension.
 			return more_iterations;
 		}
-		sip::check(
+		CHECK_WITH_LINE(
 				data_manager_.index_value(index_id_[i])
 						== DataManager::undefined_index_value,
 				"SIAL or SIP error, index "
@@ -1179,7 +1179,7 @@ Fragment_ij_ao_vo_PardoLoopManager::Fragment_ij_ao_vo_PardoLoopManager(
 		lower_seg_[i] = sip_tables_.lower_seg(index_id_[i]);
 		upper_bound_[i] = lower_seg_[i]
 				+ sip_tables_.num_segments(index_id_[i]);
-		sip::check(lower_seg_[i] < upper_bound_[i],
+		CHECK_WITH_LINE(lower_seg_[i] < upper_bound_[i],
 				"Pardo loop index " + sip_tables_.index_name(index_id_[i])
 						+ " has empty range",
 				Interpreter::global_interpreter->line_number());

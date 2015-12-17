@@ -35,7 +35,7 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block_for_writing(const BlockId
 	int rank;
 	offset_array_t offsets;
 	Block::BlockPtr region = get_block(id, rank, containing_region, offsets);
-	sial_check(region != NULL, "Contiguous local block " + id.str(sip_tables_) + " must be explicitly allocated", current_line());
+	SIAL_CHECK(region != NULL, "Contiguous local block " + id.str(sip_tables_) + " must be explicitly allocated", current_line());
 	if (region != containing_region){
 		WriteBack* wb = new WriteBack(rank, containing_region, region, offsets);
 		write_back_list.push_back(wb);
@@ -49,7 +49,7 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block_for_reading(const BlockId
 	int rank;
 	offset_array_t offsets;
 	Block::BlockPtr region = get_block(id, rank, containing_region, offsets);
-	sial_check(region != NULL, "Attempting to read non-existent region of contiguous local array" + id.str(sip_tables_), current_line());
+	SIAL_CHECK(region != NULL, "Attempting to read non-existent region of contiguous local array" + id.str(sip_tables_), current_line());
 	if (region != containing_region){
 		read_block_list.push_back(region);
 	}
@@ -63,7 +63,7 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block_for_updating(const BlockI
 	int rank;
 	offset_array_t offsets;
 	Block::BlockPtr region = get_block(id, rank, containing_region, offsets);
-	sial_check(region != NULL, "Attempting to update non-existent region of contiguous local array" + id.str(sip_tables_), current_line());
+	SIAL_CHECK(region != NULL, "Attempting to update non-existent region of contiguous local array" + id.str(sip_tables_), current_line());
 	if (region != containing_region) write_back_list.push_back(new WriteBack(rank, containing_region, region, offsets));
 	return region;
 }

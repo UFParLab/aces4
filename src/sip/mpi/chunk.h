@@ -71,7 +71,7 @@ public:
 				return;
 			}
 		}
-		check(false, "attempting to remove block from chunk's blocks_ list but block not found");
+		CHECK(false, "attempting to remove block from chunk's blocks_ list but block not found");
 	}
 
 

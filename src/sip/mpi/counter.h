@@ -151,7 +151,7 @@ protected:
                 return os;
         }
         void gather_impl() {
-                check(sizeof(unsigned long int) == sizeof(size_t),
+                CHECK(sizeof(unsigned long int) == sizeof(size_t),
                                 "mismatch in  mpi and c++ type ");
                 int rank;
                 int comm_size;
@@ -638,7 +638,7 @@ public:
         }
         void start() {
                 start_ = get_time();
-                check(!on_, "starting timer already on");
+                CHECK(!on_, "starting timer already on");
                 on_ = true;
         }
         R get_time() {
@@ -654,7 +654,7 @@ public:
                 if (elapsed > max_) {
                         max_ = elapsed;
                 }
-                check(on_, "pausing time that is not on");
+                CHECK(on_, "pausing time that is not on");
                 on_ = false;
         }
         void gather() {
@@ -706,7 +706,7 @@ public:
         }
         void start(size_t index) {
                 start_.at(index) = get_time();
-                check(!on_.at(index), "starting timer already on");
+                CHECK(!on_.at(index), "starting timer already on");
                 on_.at(index) = true;
         }
 
@@ -725,7 +725,7 @@ public:
                 if (elapsed > max_.at(index)) {
                         max_.at(index) = elapsed;
                 }
-                check(on_.at(index), "pausing time that is not on");
+                CHECK(on_.at(index), "pausing time that is not on");
                 on_.at(index) = false;
         }
         void inc(size_t index, double elapsed) {
@@ -734,7 +734,7 @@ public:
                 if (elapsed > max_.at(index)) {
                         max_.at(index) = elapsed;
                 }
-                check(!on_.at(index), "incrementing timer that is on");
+                CHECK(!on_.at(index), "incrementing timer that is on");
         }
 
         void gather() {
@@ -1006,8 +1006,9 @@ public:
 
                 int comm_size;
                 MPI_Comm_size(comm_, &comm_size);
-                check(reduce_done_, "must call reduce before print_optable_stats");
-                os << "pc, line number, opcode, mean,  max,  mean num_epochs" << std::endl;
+                CHECK(reduce_done_, "must call reduce before print_optable_stats");
+                os << "pc, line number, opcode, mean,  max,  mean num_epochs";
+                os << std::endl;
                 std::vector<double>::const_iterator mean_iter = reduced_mean_.begin();
                 std::vector<double>::const_iterator max_iter = reduced_max_.begin();
                 std::vector<unsigned long>::const_iterator num_epoch_iter =
@@ -1153,7 +1154,7 @@ protected:
                 return end - start;
         }
         double get_mean_impl(){
-                check(reduce_done_, "must call reduce before retrieving mean");
+                CHECK(reduce_done_, "must call reduce before retrieving mean");
                 return reduced_mean_;
         }
         const MPI_Comm& comm_;

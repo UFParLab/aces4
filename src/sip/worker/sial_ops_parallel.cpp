@@ -56,7 +56,7 @@ void SialOpsParallel::sip_barrier(int pc) {
 
 	//TODO investigate this
 //	block_manager_.block_map_.clean_pending();
-//	check(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
+//	CHECK(block_manager_.block_map_.pending_list_size() == 0, "pending list not empty at barrier", current_line());
 
 
 	//Now, do an MPI barrier with the other workers.
@@ -142,7 +142,7 @@ void SialOpsParallel::get(BlockId& block_id, int pc) {
 	int server_rank = data_distribution_.get_server_rank(block_id);
 	int get_tag = barrier_support_.make_mpi_tag_for_GET();
 
-//    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+//    CHECK(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
     		<< " : sending GET for block " << block_id
@@ -240,7 +240,7 @@ void SialOpsParallel::put_replace(BlockId& target_id,
 	int put_tag, put_data_tag;
 	put_tag = barrier_support_.make_mpi_tags_for_PUT(put_data_tag);
 
-//    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+//    CHECK(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
      		<< " : sending PUT for block " << target_id.str(sip_tables_)
@@ -340,7 +340,7 @@ void SialOpsParallel::put_accumulate(BlockId& target_id,
 	put_accumulate_tag = barrier_support_.make_mpi_tags_for_PUT_ACCUMULATE(
 			put_accumulate_data_tag);
 
-//    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+//    CHECK(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
        		<< " : sending PUT_ACCUMULATE for block " << target_id
@@ -419,7 +419,7 @@ void SialOpsParallel::put_initialize(BlockId& target_id, double value, int pc){
 	int server_rank = data_distribution_.get_server_rank(target_id);
 	int put_initialize_tag = barrier_support_.make_mpi_tag_for_PUT_INITIALIZE();
 
-//    sip::check(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
+//    CHECK(server_rank>=0&&server_rank<sip_mpi_attr_.global_size(), "invalid server rank",current_line());
 
     SIP_LOG(std::cout<<"W " << sip_mpi_attr_.global_rank()
        		<< " : sending PUT_INITIALIZE for block " << target_id
@@ -762,7 +762,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_reading(const BlockId& id, int pc
 	if (sip_tables_.is_distributed(array_id)
 			|| sip_tables_.is_served(array_id)) {
 		check_and_set_mode(array_id, READ);
-		return wait_and_check(block_manager_.get_block_for_reading(id), pc);
+		return wait_and_CHECK(block_manager_.get_block_for_reading(id), pc);
 	}
 	return block_manager_.get_block_for_reading(id);
 }
@@ -776,7 +776,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_writing(const BlockId& id,
 				"sip bug: asking for scope-extent dist or served block");
 		check_and_set_mode(array_id, WRITE);
 	}
-	return wait_and_check(block_manager_.get_block_for_writing(id, is_scope_extent),pc);
+	return wait_and_CHECK(block_manager_.get_block_for_writing(id, is_scope_extent),pc);
 	//TODO  get rid of call to current_line
 }
 
@@ -787,7 +787,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id, int p
 					|| sip_tables_.is_served(array_id)),
 			"attempting to update distributed or served block", current_line());
 
-	return wait_and_check(block_manager_.get_block_for_updating(id), pc);
+	return wait_and_CHECK(block_manager_.get_block_for_updating(id), pc);
 	//TODO  get rid of call to current_line
 }
 
@@ -796,7 +796,7 @@ Block::BlockPtr SialOpsParallel::get_block_for_updating(const BlockId& id, int p
 // an Isend (put) or IReceive (get).  Checking the size only make sense for the latter.
 //For the time being, we will just call the version of wait that does not  check the size.
 //If asynch puts turn out to be useful, we can revisit this.
-Block::BlockPtr SialOpsParallel::wait_and_check(Block::BlockPtr b, int pc) {
+Block::BlockPtr SialOpsParallel::wait_and_CHECK(Block::BlockPtr b, int pc) {
 
 //		if (sialx_timers_ && !b->test()){
 //			sialx_timers_->start_timer(pc, SialxTimer::BLOCKWAITTIME);

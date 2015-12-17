@@ -62,11 +62,11 @@ std::string JobControl::make_job_id(){
 		char idstr[30];
 		std::time_t t = std::time(NULL);
 		bytes = std::strftime(idstr, sizeof(idstr), "_%Y%b%d_%H%M%S", std::localtime(&t));
-		check(bytes > 0, "error initializing job_id");
+		CHECK(bytes > 0, "error initializing job_id");
 #ifdef HAVE_MPI
 		//all procs need to have same value, use rank 0's value
 	int err = MPI_Bcast(idstr, bytes+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-	check(err == MPI_SUCCESS, "failure broadcasting job_id");
+	CHECK(err == MPI_SUCCESS, "failure broadcasting job_id");
 #endif
 //		job_id_ = idstr;
 	return idstr;

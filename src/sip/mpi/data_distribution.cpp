@@ -26,7 +26,7 @@ int DataDistribution::block_cyclic_distribution_server_rank(
 		ss << "block_id=" << block_id.str(sip_tables_) << std::endl;
 		ss << " block_position=" << block_position << std::endl;
 		ss << " computed_id=" << id2.str(sip_tables_) << std::endl;
-        check(false, ss.str());
+        CHECK(false, ss.str());
 	}
 	// Cyclic distribution
 	int server_global_rank = server_rank_from_hash(block_position);
