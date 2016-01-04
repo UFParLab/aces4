@@ -114,6 +114,7 @@ scalar esum
 scalar esum1
 scalar esum2
 scalar esum3
+scalar esum4
 scalar ediff
 scalar escr
 scalar e1exc_at 
@@ -132,6 +133,8 @@ scalar e1old
 scalar e1new  
 scalar e2old 
 scalar e2new  
+scalar e3new  
+scalar e4new  
 scalar ao_exit
 scalar occ_exit 
 scalar virt_exit 
@@ -145,6 +148,7 @@ scalar yDip_tot
 scalar zDip_tot 
 scalar se10c
 scalar stype 
+scalar second_order_singles
 # ---------------
 # Declare served
 # ---------------
@@ -232,12 +236,19 @@ distributed HBAR_iajk[fi,fi1,fa,fi2]
 distributed HBAR_abci[fa,fa1,fa2,fi]
 
 distributed FT1old[fa,fi]
+distributed FP2T1old[fa,fi]
 distributed FwC[fp,fp1]
 distributed FT2old[fa,fi,fa1,fi1]
 distributed FFock_oo[fi,fi1]
 distributed FFock_vv[fa,fa1]
 distributed Fca_o[fmu,fi]
 distributed Fca_v[fmu,fa]
+
+distributed e3m1[ifrag]
+distributed e3m1_old[ifrag]
+distributed e3m1_error[ifrag]
+
+distributed Mck_a[a,i]
 # ---------------
 # Declare contiguous
 # ---------------
@@ -253,6 +264,8 @@ static rcut_dist[jfrag,kfrag]
 contiguous local macro_e20[ifrag] 
 contiguous local macro_d20[ifrag,jfrag] 
 contiguous local initial_e10c[ifrag]
+contiguous local initial_e3m1[ifrag]
+contiguous local final_e3m1[ifrag]
 contiguous local final_e10c[ifrag]
 contiguous local final_e20disp[ifrag,jfrag]
 contiguous local final_e20exch[ifrag,jfrag]
@@ -358,5 +371,7 @@ temp xa1[a]
 temp xa2[a]  
 temp xb[b]  
 temp xb1[b]  
+temp Taibj[a,i,b,j]
+temp T1aibj[a,i,b,j]
 # ---------------
 endsial frag_vars

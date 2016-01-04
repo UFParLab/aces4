@@ -58,6 +58,8 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 ("Frag{i}{aovo}{}",PardoLoopFactory::Fragment_i_aovo__PardoLoopManager)
 ("Frag{i}{aaaa}{}",PardoLoopFactory::Fragment_i_aaaa__PardoLoopManager)
 ("Frag{i}{aoo}{}",PardoLoopFactory::Fragment_i_aoo__PardoLoopManager)
+("Frag{i}{vvvo}{}",PardoLoopFactory::Fragment_i_vvvo__PardoLoopManager)
+("Frag{i}{vooo}{}",PardoLoopFactory::Fragment_i_vooo__PardoLoopManager)
 ("Frag{Nij}{vo}{vo}",PardoLoopFactory::Fragment_Nij_vo_vo_PardoLoopManager)
 ("Frag{NRij}{vo}{vo}",PardoLoopFactory::Fragment_NRij_vo_vo_PardoLoopManager)
 ("Frag{NRij}{ao}{ao}",PardoLoopFactory::Fragment_NRij_ao_ao_PardoLoopManager)
@@ -208,6 +210,12 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 			sip_mpi_attr, num_where_clauses, interpreter, iteration);
 		case Fragment_i_aoo__PardoLoopManager:
 			return new sip::Fragment_i_aoo__PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,
+			sip_mpi_attr, num_where_clauses, interpreter, iteration);
+		case Fragment_i_vvvo__PardoLoopManager:
+			return new sip::Fragment_i_vvvo__PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,
+			sip_mpi_attr, num_where_clauses, interpreter, iteration);
+		case Fragment_i_vooo__PardoLoopManager:
+			return new sip::Fragment_i_vooo__PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,
 			sip_mpi_attr, num_where_clauses, interpreter, iteration);
 		case Fragment_Nij_vo_vo_PardoLoopManager:
 			return new sip::Fragment_Nij_vo_vo_PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,

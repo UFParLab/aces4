@@ -204,10 +204,8 @@ PROC FORM_JFRAG_HBAR
 
     server_barrier
 ENDPROC FORM_JFRAG_HBAR
+
 PROC MOI_MANAGER
-print "starting additional transformations"
-call ADDITIONAL_FRAG_TRAN
-print "Finished additional transformations"
 print "Forming HBAR elements"
 call FORM_JFRAG_HBAR
 print "done forming HBAR elements"
@@ -234,6 +232,11 @@ server_barrier
 	put FT1old[fa,fi] = t1old[fa,fi]
     endpardo fa, fi
 
+    pardo fa, fi
+        get p2t1old[fa,fi]
+	put FP2T1old[fa,fi] = p2t1old[fa,fi]
+    endpardo fa, fi
+
     pardo fa, fi, fa1, fi1
 
         get T2old[fa,fi,fa1,fi1]
@@ -246,6 +249,7 @@ server_barrier
 
 esum1 = 0.0
 esum2 = 0.0
+esum4 = 0.0
     server_barrier
 
       PARDO fa, fi, fa1, fi1 
@@ -293,20 +297,37 @@ esum2 = 0.0
 	endpardo jfrag
     enddo ifrag
 
+      PARDO fa, fi
+
+               GET        FP2T1old[fa,fi] 
+               GET        FwC[fa,fi] 
+               tai[fa,fi] = FP2T1old[fa,fi] 
+
+               etemp = tai[fa,fi]*FwC[fa,fi]  
+               etemp*= 2.0  
+
+	       esum4 += etemp
+
+      ENDPARDO fa, fi
+
 server_barrier
 e1new = 0.0
 e2new = 0.0
-MOI_dimer_doubles = 0.0
+e3new = 0.0
+e4new = 0.0
 collective e1new += esum1
 collective e2new += esum2
-collective MOI_dimer_doubles += esum3
+collective e3new += esum3
+collective e4new += esum4
 print e1new
 print e2new
-print MOI_dimer_doubles
+print e3new
+print e4new
 
 server_barrier
 set_persistent FwC "MOI_wC"
 set_persistent FT1old "MOI_T1"
+set_persistent FP2T1old "MOI_p2T1"
 set_persistent FT2old "MOI_T2ab"
 set_persistent HBAR_ii "MOI_HBAR_ii"
 set_persistent HBAR_aa "MOI_HBAR_aa"
@@ -314,7 +335,6 @@ set_persistent HBAR_ia "MOI_HBAR_ia"
 set_persistent HBAR_AJIB "MOI_HBAR_ajib"
 set_persistent HBAR_IAJK "MOI_HBAR_iajk"
 set_persistent HBAR_ABCI "MOI_HBAR_abci"
-set_persistent MOI_dimer_doubles "dimer_doubles"
 ENDPROC MOI_MANAGER
 #
 # -----------------------------------------------------------------------------
@@ -406,8 +426,14 @@ print " "
       call END_PRINT
       sip_barrier
 
+print "starting additional transformations"
+call ADDITIONAL_FRAG_TRAN
+print "Finished additional transformations"
+
+      call FORM_T1_SECONDORDER
+      sip_barrier
+
       call MOI_MANAGER
-#
 
          sip_barrier 
                            ENDSIAL FRAG_2ORDER_CORR 
