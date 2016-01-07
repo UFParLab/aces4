@@ -1276,7 +1276,10 @@ pardo i, i1, a, i2
 
         TSiiai[i,i2,a,i1] = 0.0
 
-	T1iiai[i,i1,a,i2]  = WHIAAI[i,a1,a,i2]*St1a[a1,i1]
+        Tai[a1,i1] = St1a[a1,i1]
+	request t1a_old[a1,i1]
+	Tai[a1,i1] += t1a_old[a1,i1]
+	T1iiai[i,i1,a,i2]  = WHIAAI[i,a1,a,i2]*Tai[a1,i1]
 	T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]
 
 	Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2]
@@ -1382,7 +1385,10 @@ pardo i, i1, b, j
 	T1iibj[i,i1,b,j] = T2ab[a,i1,b,j]*Fock_a[i,a]
 	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
 
-	T1iibj[i,i1,b,j] = Viaai[i,a,b,j]*St1a[a,i1]
+	Tai[a,i1] = St1a[a,i1]
+	request t1a_old[a,i1]
+	Tai[a,i1] += t1a_old[a,i1]
+	T1iibj[i,i1,b,j] = Viaai[i,a,b,j]*Tai[a,i1]
 	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
 
 	do b1
@@ -1436,6 +1442,9 @@ pardo i, i1, b, j
         request Vaaii[b,b1,i,i1]
         Tiibb[i,i1,b,b1] = Vaaii[b,b1,i,i1]
 
+        Tai[b1,j] = St1b[b1,j]
+	request t1a_old[b1,j]
+	Tai[b1,j] += t1a_old[b1,j]
 	T1iibj[i,i1,b,j] = Tiibb[i,i1,b,b1]*St1b[b1,j]
 	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
 
@@ -1786,7 +1795,10 @@ pardo a1, a, j, b
 	T1ppqq[a1,a,b,j] = T2ab[a1,i,b,j]*Fock_a[i,a]
 	Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
 
-	T2ppqq[a1,a,b,j] = Viaai[i,a,b,j]*St1a[a1,i]
+        Tai[a1,i] = St1a[a1,i]
+	request t1a_old[a1,i]
+	Tai[a1,i] += t1a_old[a1,i]
+	T2ppqq[a1,a,b,j] = Viaai[i,a,b,j]*Tai[a1,i]
 	Tppqq[a1,a,b,j] -= T2ppqq[a1,a,b,j]
 
     enddo i
@@ -1801,7 +1813,10 @@ pardo a, a1, j, j1
     tqqpp[j1,j,a1,a]  = WHJJAA[j1,j,a1,a] 
 
     do b
-	Tppqq[a1,a,b,j]                   = tqqpp[j1,j,a1,a]*St1b[b,j1]
+	Tai[b,j1] = St1b[b,j1]
+	request t1a_old[b,j1]
+	Tai[b,j1] += t1a_old[b,j1]
+	Tppqq[a1,a,b,j]                   = tqqpp[j1,j,a1,a]*Tai[b,j1]
 	prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
     enddo b
 

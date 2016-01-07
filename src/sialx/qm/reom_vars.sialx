@@ -283,6 +283,9 @@ served R2BB[a,i,a1,i1]
 served L2AA[i,a,i1,a1]
 served L2AB[i,a,j,b]
 served L2BB[i,a,i1,a1]
+served t1a_new[a,i]
+served t1a_old[a,i]
+served Mck_a[a,i]
 #
 # Declare local 
 # --------------- 
@@ -374,6 +377,8 @@ contiguous local CLRB1_a[ksub,a,i]
 contiguous local CLLB2_aa[ksub,a,i,a1,i1]
 contiguous local CLLB2_ab[ksub,a,i,b,j]
 contiguous local CLLB1_a[ksub,a,i]
+contiguous local Right_Dipole_Transition_Moment[kstate,ixyz]
+contiguous local Left_Dipole_Transition_Moment[kstate,ixyz]
 contiguous local Dipole_Oscillator_Strength[kstate,ixyz]
 contiguous local Dipole_Oscillator_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
@@ -724,5 +729,7 @@ scalar overlapS
 scalar overlap1
 scalar overlap2
 scalar rmsconv
+scalar second_order_singles
+scalar norm
 
 endsial eom_vars

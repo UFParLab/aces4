@@ -617,6 +617,7 @@ set(SIAL_FILES
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/lr_eom_linccsd_rhf.sialx;
+    src/sialx/qm/lr_eom_ccpt2_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/reom_hbar.sialx;
     src/sialx/qm/reom_vars.sialx;

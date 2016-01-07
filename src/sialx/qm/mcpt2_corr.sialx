@@ -11,6 +11,25 @@ import "mcpt2_util.sialx"
 # 
 PROC FORM_JFRAG_HBAR
     server_barrier
+    pardo fi,fi1
+	put HBAR_ii[fi,fi1] = 0.0
+    endpardo fi,fi1
+    PARDO fa, fa1
+	put HBAR_aa[fa,fa1] = 0.0
+    ENDPARDO fa, fa1
+    PARDO fa, fi
+	put HBAR_ia[fi,fa]  = 0.0
+    ENDPARDO fa, fi
+    PARDO fi1,fa1,fa,fi
+	    put HBAR_AJIB[fi1,fa1,fa,fi] = 0.0
+    ENDPARDO fi1,fa1,fa,fi
+    PARDO fi1,fi2,fa,fi
+	put HBAR_IAJK[fi1,fi2,fa,fi] = 0.0
+    ENDPARDO fi1,fi2,fa,fi
+    PARDO fa1,fa2,fa,fi
+	put HBAR_ABCI[fa1,fa2,fa,fi] = 0.0
+    ENDPARDO fa1,fa2,fa,fi
+    server_barrier
 
 #do ifrag
 #where ifrag == 1

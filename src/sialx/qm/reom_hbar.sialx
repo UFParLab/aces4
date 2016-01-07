@@ -1354,7 +1354,12 @@ pardo j,sigma
     t1xj[sigma,j]=0.0
 
     do b
-	txj[sigma,j]=St1b[b,j]*ca[sigma,b]
+	Tai[b,j]  = St1b[b,j]
+	if is_ccpt == 1.0
+	    request t1a_old[b,j]
+	    Tai[b,j] += t1a_old[b,j]
+        endif
+	txj[sigma,j] = Tai[b,j]*ca[sigma,b]
 	t1xj[sigma,j]+=txj[sigma,j]
     enddo b
 # 
@@ -3689,7 +3694,12 @@ pardo a, i, i1, i2
 
     do i3
 	request VSpipi[i,i1,i3,i2] 
-	T1iiai[i,i1,a,i2] = VSpipi[i,i1,i3,i2]*St1a[a,i3]
+	Tai[a,i3] = St1a[a,i3]
+	if is_ccpt == 1.0
+	    request t1a_old[a,i3]
+	    Tai[a,i3] += t1a_old[a,i3]
+	endif
+	T1iiai[i,i1,a,i2] = VSpipi[i,i1,i3,i2]*Tai[a,i3]
 	Tiiai[i,i1,a,i2] -= T1iiai[i,i1,a,i2]
     enddo i3
 
@@ -3713,7 +3723,12 @@ pardo i, i1, a, i2
 
         TSiiai[i,i2,a,i1] = 0.0
 
-	T1iiai[i,i1,a,i2]  = WHIAAI[i,a1,a,i2]*St1a[a1,i1]
+        Tai[a1,i1] = St1a[a1,i1]
+	if is_ccpt == 1.0
+	    request t1a_old[a1,i1]
+	    Tai[a1,i1] += t1a_old[a1,i1]
+        endif
+	T1iiai[i,i1,a,i2]  = WHIAAI[i,a1,a,i2]*Tai[a1,i1]
 	T2iiai[i,i2,a,i1]  = T1iiai[i,i1,a,i2]
 
 	Tiiai[i,i1,a,i2]  += T1iiai[i,i1,a,i2]
@@ -3811,7 +3826,13 @@ pardo i, i1, b, j
 	T1iibj[i,i1,b,j] = T2ab[a,i1,b,j]*Fock_a[i,a]
 	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
 
-	T1iibj[i,i1,b,j] = Viaai[i,a,b,j]*St1a[a,i1]
+	Tai[a,i1] = St1a[a,i1]
+	if is_ccpt == 1.0
+	    request t1a_old[a,i1]
+	    Tai[a,i1] += t1a_old[a,i1]
+	endif
+
+	T1iibj[i,i1,b,j] = Viaai[i,a,b,j]*Tai[a,i1]
 	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
 
 	do b1
@@ -3852,7 +3873,13 @@ pardo i, i1, b, j
 
 	request Vpiqj[i,i1,j1,j] 
 
-	T1iibj[i,i1,b,j] = Vpiqj[i,i1,j1,j]*St1b[b,j1]
+	Tai[b,j1]  = St1b[b,j1]
+	if is_ccpt == 1.0
+	    request t1a_old[b,j1]
+	    Tai[b,j1] += t1a_old[b,j1]
+	endif
+
+	T1iibj[i,i1,b,j] = Vpiqj[i,i1,j1,j]*Tai[b,j1]
 	Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
 
     enddo j1
@@ -3862,7 +3889,12 @@ pardo i, i1, b, j
         request Vaaii[b,b1,i,i1]
         Tiibb[i,i1,b,b1] = Vaaii[b,b1,i,i1]
 
-	T1iibj[i,i1,b,j] = Tiibb[i,i1,b,b1]*St1b[b1,j]
+        Tai[b1,j] = St1b[b1,j]
+	if is_ccpt == 1.0
+	    request t1a_old[b1,j]
+	    Tai[b1,j] += t1a_old[b1,j]
+	endif
+	T1iibj[i,i1,b,j] = Tiibb[i,i1,b,b1]*Tai[b1,j]
 	Tiibj[i,i1,b,j] += T1iibj[i,i1,b,j]
 
 	do j2
@@ -4199,7 +4231,12 @@ pardo a1, a, j, b
 	T1ppqq[a1,a,b,j] = T2ab[a1,i,b,j]*fock_a[i,a]
 	Tppqq[a1,a,b,j] -= T1ppqq[a1,a,b,j]
 
-	T2ppqq[a1,a,b,j] = Viaai[i,a,b,j]*St1a[a1,i]
+        Tai[a1,i] = St1a[a1,i]
+	if is_ccpt == 1.0
+	    request t1a_old[a1,i]
+	    Tai[a1,i] += t1a_old[a1,i]
+	endif
+	T2ppqq[a1,a,b,j] = Viaai[i,a,b,j]*Tai[a1,i]
 	Tppqq[a1,a,b,j] -= T2ppqq[a1,a,b,j]
 
     enddo i
@@ -4214,7 +4251,12 @@ pardo a, a1, j, j1
     tqqpp[j1,j,a1,a]  = WHJJAA[j1,j,a1,a] 
 
     do b
-	Tppqq[a1,a,b,j]                   = tqqpp[j1,j,a1,a]*St1b[b,j1]
+	Tai[b,j1] = St1b[b,j1]
+	if is_ccpt == 1.0
+	    request t1a_old[b,j1]
+	    Tai[b,j1] += t1a_old[b,j1]
+	endif
+	Tppqq[a1,a,b,j]                   = tqqpp[j1,j,a1,a]*Tai[b,j1]
 	prepare HBAR_ABCI_aabb[a1,a,b,j] += Tppqq[a1,a,b,j]
     enddo b
 

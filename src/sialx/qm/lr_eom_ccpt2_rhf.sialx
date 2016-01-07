@@ -4,26 +4,21 @@ import "tran_eom.sialx"
 import "reom_hbar.sialx"
 
 SIAL R_EE_EOM_CCSD_RHF
+
 #***********************************************************
 
 PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
+restore_persistent has_singles "has_singles"
+server_barrier
 restore_persistent ca    "ca"
 restore_persistent Fock_a "fock_a"
 restore_persistent R1k1_a   "C1_a"
 restore_persistent RB1_a    "B1_a"
-restore_persistent t1a "t1a_old"
 restore_persistent T2aa "T2old_aa"
 restore_persistent T2ab "T2old_ab" 
-#restore_persistent VSpipi "VSpipi"
-#restore_persistent Vaaii "Vaaii"
-#restore_persistent Viaai "Viaai"
-#restore_persistent Vaaai "Vaaai"
-#restore_persistent VSaaai "VSaaai"
-#restore_persistent Vpiqj "Vpiqj"
-restore_persistent Lam1a  "l1a_old"
 restore_persistent Lam2aa "L2old_aa"
 restore_persistent Lam2ab "L2old_ab"
 restore_persistent dipole "scf_dipole"
@@ -36,6 +31,21 @@ server_barrier
 #
 # put T1 amplitudes in statics
 #
+
+pardo a,i
+    put t1a[a,i] = 0.0
+    put lam1a[i,a] = 0.0
+endpardo a,i
+
+server_barrier
+if has_singles == 1.0
+restore_persistent t1a "t1a_old"
+restore_persistent Lam1a  "l1a_old"
+endif
+
+has_singles = 0.0
+
+server_barrier
 execute get_my_rank rank
 myrank = (int)rank
 if myrank == root
@@ -199,7 +209,6 @@ pardo a,i,a1,i1
 put D2RNaiai[a,i,a1,i1] = 0.0
 endpardo a,i,a1,i1
 server_barrier
-
 ENDPROC SYMMETRHC_A
 
 PROC place_HB
@@ -227,7 +236,7 @@ ENDPROC place_HB
 
 #------------------------------------------------------------------------
 
-PROC HB_mult
+PROC HB_mult_CCPT
 
 #------------------------------------------------------------------------
 #
@@ -248,31 +257,17 @@ do ksub
     call VCHACT_ZERO
     call place_VCACT
 
-    call FACTORS_NEW
+    call FACTORS_NEW_CCPT
     server_barrier
 
     call AOLADDER_NEW
-    call R2ABLIN_NEW # OK
-    call R2AALIN_NEW # OK
-    call R1ANEW # OK
+    call R2ABLIN_NEW_CCPT
+    call R2AALIN_NEW_CCPT
+    call R1ANEW_CCPT
 
     server_barrier
 
     call SYMMETRHC_A
-
-#    server_barrier
-#    sum1 = 0.0
-#    pardo a,i,a1,i1
-#	request VCHACT2AA[a,i,a1,i1]
-#	Taiai[a,i,a1,i1]  = VCHACT2AA[a,i,a1,i1]
-#	etemp = Taiai[a,i,a1,i1]*VCHACT2AA[a,i,a1,i1]
-#	sum1 += etemp
-#    endpardo a,i,a1,i1
-#    server_barrier
-#    sum2 = 0.0
-#    collective sum2 += sum1
-#    print "r2aa checksum"
-#    print sum2
 
     call place_HB
     server_barrier
@@ -293,7 +288,7 @@ do ksub
 enddo ksub
 server_barrier
 
-ENDPROC HB_mult
+ENDPROC HB_mult_CCPT
 
 #------------------------------------------------------------------------
 
@@ -413,7 +408,7 @@ ENDPROC BHB_mult
 
 PROC form_G
 
-call HB_mult
+call HB_mult_CCPT
 
 call BHB_mult
 
@@ -445,7 +440,7 @@ if myrank == root
     do kstate
 	SEk0[kstate] = SEk[kstate]
     enddo kstate
-    print "-- EOM-CCSD excited state energies --"
+    print "-- EOM-CCPT(2) excited state energies --"
 
     do kstate
 	allocate contiguous EOM_EE_Energy[kstate:kstate]
@@ -924,6 +919,7 @@ PROC all_GS
 #
 do ksub
 where ksub == 1
+server_barrier
 #######################
 # get k=k'=1 overlap
     normS   = 0.0
@@ -971,9 +967,9 @@ where ksub == 1
     pardo a,i,b,j
         prepare RB2_ab[ksub,a,i,b,j] *= norm2
     endpardo a,i,b,j
+    server_barrier
 #
 # flip sign of left vector for negative bi-norm
-    server_barrier
     norm2 *= etemp
 #
     pardo a,i
@@ -985,11 +981,12 @@ where ksub == 1
     pardo a,i,b,j
         prepare LB2_ab[ksub,a,i,b,j] *= norm2
     endpardo a,i,b,j
-enddo ksub
 server_barrier
+enddo ksub
 
 # loop over "k+1"
 do qsub
+server_barrier
 #######################
 # make copy of Ak+1
     Tk[qsub] = 1.0
@@ -1028,6 +1025,7 @@ do qsub
 
     do ksub
     where ksub < qsub
+server_barrier
 #######################
 # form (Ak+1,Gk) = Loverlap1
 	Tk[ksub] = 1.0
@@ -1123,6 +1121,7 @@ do qsub
 	    Tkaibj[qsub,a,i,b,j] = Tkk[qsub,ksub]*RB2_ab[ksub,a,i,b,j]
 	    prepare RB2_ab[qsub,a,i,b,j] += Tkaibj[qsub,a,i,b,j]
 	endpardo a,i,b,j
+    server_barrier
     enddo ksub
     server_barrier
 
@@ -1173,8 +1172,8 @@ do qsub
     pardo a,i,b,j
         prepare RB2_ab[qsub,a,i,b,j] *= norm2
     endpardo a,i,b,j
-#
     server_barrier
+#
     norm2 *= etemp
 #
     pardo a,i
@@ -1229,6 +1228,7 @@ call update_LB2aa
 
 call update_RB2ab
 call update_LB2ab
+
 server_barrier
 sum1 = 0.0
 pardo a,i,kstate
@@ -1489,7 +1489,10 @@ pardo  a, a1
 
     do i
 	GET           L1A [i,a1]
-	taa1 [a,a1] = ST1a [a,i] * L1A [i,a1]
+	Tai[a,i] = St1a[a,i]
+	request t1a_old[a,i]
+	Tai[a,i] += t1a_old[a,i]
+	taa1 [a,a1] = Tai[a,i] * L1A [i,a1]
 	taa[a,a1]  += taa1[a,a1] 
     enddo i
 
@@ -1500,9 +1503,8 @@ pardo  a, a1
 #          ...Initialize intermediates...
 #
 #
-    taa [a,a1]            = 0.0
-    PUT  T2L2_VV_A [a,a1] = taa [a,a1]
-    PUT  R2L2_VV_A [a,a1] = taa [a,a1]
+    PUT  T2L2_VV_A [a,a1] = 0.0
+    PUT  R2L2_VV_A [a,a1] = 0.0
 
 endpardo  a, a1
 #
@@ -1512,7 +1514,10 @@ pardo  b, b1
 
     do j
 	GET           L1B [j,b1]
-	tbb1 [b,b1] = ST1a [b,j] * L1B [j,b1]
+	Tai[b,j] = St1a[b,j]
+	request t1a_old[b,j]
+	Tai[b,j] += t1a_old[b,j]
+	tbb1 [b,b1] = Tai[b,j] * L1B [j,b1]
 	tbb[b,b1]  += tbb1[b,b1] 
     enddo j
 
@@ -1523,9 +1528,8 @@ pardo  b, b1
 #          ...Initialize the intermediates...
 #
 #
-    tbb [b,b1]            = 0.0
-    PUT  T2L2_VV_B [b,b1] = tbb [b,b1]
-    PUT  R2L2_VV_B [b,b1] = tbb [b,b1]
+    PUT  T2L2_VV_B [b,b1] = 0.0
+    PUT  R2L2_VV_B [b,b1] = 0.0
 
 endpardo  b, b1
 
@@ -1563,13 +1567,24 @@ pardo  i, i1
 
 	GET  L1A [i1,a]
 
-	tii1 [i,i1]  = ST1a [a,i] * L1A [i1,a]
+	tii1 [i,i1]  = St1a [a,i] * L1A [i1,a]
 	tii1 [i,i1] *= -1.0
 	tii[i,i1] += tii1[i,i1] 
 
     enddo a
 
     PUT  T1L1_OO_A [i,i1] = tii [i,i1]
+
+    do a
+
+	GET  L1A [i1,a]
+	request t1a_old[a,i]
+
+	tii1 [i,i1]  = t1a_old[a,i] * L1A [i1,a]
+	tii1 [i,i1] *= -1.0
+	tii[i,i1] += tii1[i,i1] 
+
+    enddo a
 
     tii [i,i1] *= R0
     PUT  DENS_OO_A [i,i1] = tii [i,i1]
@@ -1580,8 +1595,8 @@ pardo  i, i1
 #          ...Initialize intermediates...
 #
 #
-    PUT  T2L2_OO_A [i,i1] = tii [i,i1]
-    PUT  R2L2_OO_A [i,i1] = tii [i,i1]
+    PUT  T2L2_OO_A [i,i1] = 0.0
+    PUT  R2L2_OO_A [i,i1] = 0.0
 
 endpardo  i, i1
 
@@ -1603,6 +1618,17 @@ pardo  j, j1
 
     PUT  T1L1_OO_B [j,j1] = tjj [j,j1]
 
+    do b
+
+	GET  L1B [j1,b]
+	request t1a_old[b,j]
+
+	tjj1 [j,j1]  = t1a_old[b,j] * L1B [j1,b]
+	tjj1 [j,j1] *= -1.0
+	tjj[j,j1] += tjj1[j,j1] 
+
+    enddo b
+
     tjj [j,j1] *= R0
     PUT  DENS_OO_B [j,j1] = tjj [j,j1]
 #
@@ -1611,8 +1637,8 @@ pardo  j, j1
 #
 #
     tjj [j,j1] = 0.0
-    PUT  T2L2_OO_B [j,j1] = tjj [j,j1]
-    PUT  R2L2_OO_B [j,j1] = tjj [j,j1]
+    PUT  T2L2_OO_B [j,j1] = 0.0
+    PUT  R2L2_OO_B [j,j1] = 0.0
 
 endpardo  j, j1
 #
@@ -1718,8 +1744,10 @@ if  LOGRIGHT == ONE
 
 	    GET  R1A [a1,i2]
 	    laiai4 [a,i2,a1,i]  = laiai5 [a,i2,a1,i]
-	    taiai  [a,i2,a1,i]  = ST1a [a,i] ^ R1A [a1,i2]
-	    laiai4 [a,i2,a1,i] += taiai [a,i2,a1,i]
+#
+# jnb truncate
+#	    taiai  [a,i2,a1,i]  = St1a [a,i] ^ R1A [a1,i2]
+#	    laiai4 [a,i2,a1,i] += taiai [a,i2,a1,i]
 
 	enddo i
 
@@ -1764,8 +1792,10 @@ if  LOGRIGHT == ONE
 	    laibj5 [a,j,b,i] = R2AB[a,i,b,j]
 
 	    laibj4 [a,j,b,i]  = laibj5 [a,j,b,i]
-	    taibj  [a,j,b,i]  = ST1a [a,i] ^ R1B [b,j]
-	    laibj4 [a,j,b,i] += taibj [a,j,b,i]
+#
+# jnb truncate
+#	    taibj  [a,j,b,i]  = St1a [a,i] ^ R1B [b,j]
+#	    laibj4 [a,j,b,i] += taibj [a,j,b,i]
 
 	enddo i
 
@@ -1890,11 +1920,13 @@ pardo  a1, i, i1
 
 	REQUEST               R2AA [a,i,a1,i1] 
 
-	taiai  [a,i,a1,i1]  = ST1a [a,i] ^ R1A [a1,i1]
 	laiai  [a,i,a1,i1]  = R2AA [a,i,a1,i1]
 	laiai  [a,i,a1,i1] *= 0.5
 	laiai2 [a,i,a1,i1]  = laiai [a,i,a1,i1]
-	laiai  [a,i,a1,i1] += taiai [a,i,a1,i1]
+#
+# jnb truncate
+#	taiai  [a,i,a1,i1]  = St1a [a,i] ^ R1A [a1,i1]
+#	laiai  [a,i,a1,i1] += taiai [a,i,a1,i1]
 
     enddo a
 
@@ -1942,8 +1974,10 @@ pardo  b, j, i
 	laibj2 [a,i,b,j] = R2AB [a,i,b,j]
 
 	laibj [a,i,b,j]  = laibj2 [a,i,b,j]
-	taibj [a,i,b,j]  = ST1a [a,i] ^ R1B [b,j]
-	laibj [a,i,b,j] += taibj [a,i,b,j]
+#
+# jnb truncate
+#	taibj [a,i,b,j]  = St1a [a,i] ^ R1B [b,j]
+#	laibj [a,i,b,j] += taibj [a,i,b,j]
 
     enddo a
 
@@ -2003,8 +2037,14 @@ pardo  i, a, a1, i1
     REQUEST                     L2AA [i,a,i1,a1] 
     GET                         R1A  [a1,i1]
     tia [i,a]                 = L2AA [i,a,i1,a1] * R1A [a1,i1]
+    t1ia[i,a] = tia[i,a]
+    PUT  DENS_INT_OV_A [i,a] += t1ia [i,a]
+
+    request t1a_old[a1,i1]
+    tia [i,a]                 = L2AA [i,a,i1,a1] * t1a_old[a1,i1]
     PUT  DENS_OV_A     [i,a] += tia [i,a]
-    PUT  DENS_INT_OV_A [i,a] += tia [i,a]
+
+    request t1a_old[a1,i1]
 
 endpardo  i, a, a1, i1
 
@@ -2013,8 +2053,12 @@ pardo  i, a, b, j
     REQUEST                     L2AB [i,a,j,b] 
     GET                         R1B  [b,j]
     tia [i,a]                 = L2AB [i,a,j,b] * R1B [b,j]
+    t1ia[i,a] = tia[i,a]
+    PUT  DENS_INT_OV_A [i,a] += t1ia [i,a]
+
+    request t1a_old[b,j]
+    tia [i,a]                 = L2AB [i,a,j,b] * t1a_old[b,j]
     PUT  DENS_OV_A     [i,a] += tia [i,a]
-    PUT  DENS_INT_OV_A [i,a] += tia [i,a]
 
 endpardo i, a, b, j
 
@@ -2100,14 +2144,14 @@ pardo  a, i
 	tii [i,i1]  = T1L1_OO_A [i,i1]
 	tii [i,i1] += T2L2_OO_A [i,i1]
 
-	tai [a,i]   = ST1a [a,i1] * tii [i,i1]
+	tai [a,i]   = St1a [a,i1] * tii [i,i1]
 
 	tai1[a,i] += tai[a,i] 
 
     enddo i1 
 
     if GROUNDSTATE == ONE
-	tai1 [a,i]  += ST1a [a,i]
+	tai1 [a,i]  += St1a [a,i]
     endif
 
     tai1 [a,i]  *= R0
@@ -2121,7 +2165,7 @@ server_barrier
 pardo  a, a1, i
 
     GET                     T2L2_VV_A [a,a1]
-    tai [a,i]             = T2L2_VV_A [a,a1] * ST1a [a1,i]
+    tai [a,i]             = T2L2_VV_A [a,a1] * St1a [a1,i]
     tai [a,i]            *= R0
     PUT  DENS_VO_A [a,i] += tai [a,i]
 
@@ -2197,12 +2241,12 @@ pardo  i, i1
     do a1  
 	GET           DENS_INT_OV_A [i1,a1]
 	tia [i1,a1] = DENS_INT_OV_A [i1,a1]
-	tii1 [i,i1] = ST1a [a1,i] * tia [i1,a1]
+	tii1 [i,i1] = St1a [a1,i] * tia [i1,a1]
 	tii[i,i1] += tii1[i,i1] 
     enddo a1  
 
     do a
-	tai [a,i]             = ST1a [a,i1] * tii [i,i1]
+	tai [a,i]             = St1a [a,i1] * tii [i,i1]
 	tai [a,i]            *= -1.0
 	PUT  DENS_VO_A [a,i] += tai [a,i]
     enddo a
@@ -2242,7 +2286,7 @@ pardo  i, a, a1
     GET  R2L2_VV_A [a,a1]
     GET  T2L2_VV_A [a,a1]
     GET  R1A [a1,i]
-    tai  [a,i]  = R2L2_VV_A [a,a1] * ST1a [a1,i]
+    tai  [a,i]  = R2L2_VV_A [a,a1] * St1a [a1,i]
     tai2 [a,i]  = T2L2_VV_A [a,a1] * R1A [a1,i]
     tai  [a,i] += tai2 [a,i]
     PUT  DENS_VO_A [a,i] += tai [a,i]
@@ -2254,7 +2298,7 @@ pardo i, a, i1
     GET  R1A [a,i1]
     GET  R2L2_OO_A [i,i1]
     GET  T2L2_OO_A [i,i1]
-    tai  [a,i]  = ST1a [a,i1] * R2L2_OO_A [i,i1]
+    tai  [a,i]  = St1a [a,i1] * R2L2_OO_A [i,i1]
     tai2 [a,i]  = R1A [a,i1] * T2L2_OO_A [i,i1]
     tai  [a,i] += tai2 [a,i]
     PUT  DENS_VO_A [a,i] += tai [a,i]
@@ -2271,7 +2315,7 @@ endif
 
 if EXCITESTATE == ONE
     pardo  a, i
-	tai [a,i] = ST1a [a,i]
+	tai [a,i] = St1a [a,i]
 	PUT  DENS_VO_A [a,i] += tai [a,i]
     endpardo  a, i
 endif
@@ -2957,28 +3001,28 @@ endif
 if logright == zero
 # place left eom vector in
     pardo i,a
-        request RB1_a[kstate,a,i]
+        request LB1_a[kstate,a,i]
 	Tk[kstate] = 1.0
-	Tia[i,a] = Tk[kstate]*RB1_a[kstate,a,i]
+	Tia[i,a] = Tk[kstate]*LB1_a[kstate,a,i]
 	put L1A[i,a] = Tia[i,a]
 	put L1B[i,a] = Tia[i,a]
     endpardo i,a
     pardo i,a,b,j
-        request RB2_ab[kstate,a,i,b,j]
+        request LB2_ab[kstate,a,i,b,j]
 	Tk[kstate] = 1.0
-	Tiajb[i,a,j,b] = Tk[kstate]*RB2_ab[kstate,a,i,b,j]
+	Tiajb[i,a,j,b] = Tk[kstate]*Lb2_ab[kstate,a,i,b,j]
 	prepare L2AB[i,a,j,b] = Tiajb[i,a,j,b]
     endpardo i,a,b,j
     pardo i,a,i1,a1
-        request RB2_aa[kstate,a,i,a1,i1]
+        request LB2_aa[kstate,a,i,a1,i1]
 	Tk[kstate] = 1.0
-	Tiaia[i,a,i1,a1] = Tk[kstate]*RB2_aa[kstate,a,i,a1,i1]
+	Tiaia[i,a,i1,a1] = Tk[kstate]*LB2_aa[kstate,a,i,a1,i1]
 	prepare L2AA[i,a,i1,a1] = Tiaia[i,a,i1,a1]
     endpardo i,a,i1,a1
     pardo j,b,j1,b1
-        request RB2_aa[kstate,b,j,b1,j1]
+        request LB2_aa[kstate,b,j,b1,j1]
 	Tk[kstate] = 1.0
-	Tjbjb[j,b,j1,b1] = Tk[kstate]*RB2_aa[kstate,b,j,b1,j1]
+	Tjbjb[j,b,j1,b1] = Tk[kstate]*LB2_aa[kstate,b,j,b1,j1]
 	prepare L2BB[j,b,j1,b1] = Tjbjb[j,b,j1,b1]
     endpardo j,b,j1,b1
 endif
@@ -3196,6 +3240,167 @@ do ixyz
 enddo ixyz
 #
 ENDPROC back_transform_dipole
+
+    PROC form_t1_secondorder
+
+    print "forming approximate second-order T1 amplitudes"
+    server_barrier
+
+    pardo a, a1, a2, i1 
+
+        request Vaaai[a1,a,a2,i1]
+
+        do i
+            request T2ab[a1,i,a2,i1]
+            request T2ab[a2,i,a1,i1]
+
+            Taibj[a1,i,a2,i1]  = T2ab[a1,i,a2,i1]
+            Taibj[a1,i,a2,i1] *= 2.0
+            T1aibj[a1,i,a2,i1] = T2ab[a2,i,a1,i1]
+            Taibj[a1,i,a2,i1] -= T1aibj[a1,i,a2,i1]
+
+            Tai[a,i] = Vaaai[a1,a,a2,i1]*Taibj[a1,i,a2,i1]
+
+            prepare Mck_a[a,i] += Tai[a,i]
+        enddo i
+    endpardo a, a1, a2, i1
+
+    pardo a1,i,a2,i1
+
+        request T2ab[a1,i,a2,i1]
+        request T2ab[a2,i,a1,i1]
+
+        Taibj[a1,i,a2,i1]  = T2ab[a1,i,a2,i1]
+        Taibj[a1,i,a2,i1] *= 2.0
+        T1aibj[a1,i,a2,i1] = T2ab[a2,i,a1,i1]
+        Taibj[a1,i,a2,i1] -= T1aibj[a1,i,a2,i1]
+
+        Tai[a1,i] = Fock_a[a2,i1]*Taibj[a1,i,a2,i1]
+
+        prepare Mck_a[a1,i] += Tai[a1,i]
+
+    endpardo a1,i,a2,i1
+
+    pardo a2,i2,i,i1 
+
+        request Vpiqj[a2,i2,i,i1]
+
+        do a1
+
+            request T2ab[a1,i1,a2,i2]
+            request T2ab[a1,i2,a2,i1]
+
+            Taibj[a1,i1,a2,i2]  = T2ab[a1,i1,a2,i2]
+            Taibj[a1,i1,a2,i2] *= 2.0
+            T1aibj[a1,i1,a2,i2] = T2ab[a1,i2,a2,i1]
+            Taibj[a1,i1,a2,i2] -= T1aibj[a1,i1,a2,i2]
+
+            Tai[a1,i] = Vpiqj[a2,i2,i,i1]*Taibj[a1,i1,a2,i2]
+            Tai[a1,i] *= -1.0
+
+            prepare Mck_a[a1,i] += Tai[a1,i]
+        enddo a1
+    endpardo a2,i2,i,i1
+
+    server_barrier
+# t1(2) guess
+    esum = 0.0
+	pardo a,i
+	    request Mck_a[a,i]
+	    Tai[a,i] = Mck_a[a,i]
+	    execute energy_denominator_rhf Tai[a,i] Fock_a
+	    prepare t1a_old[a,i] = Tai[a,i]
+	    etemp = Fock_a[a,i]*tai[a,i]
+	    esum += etemp
+	endpardo a,i
+    server_barrier
+    second_order_singles = 0.0
+    collective second_order_singles += esum
+    print second_order_singles
+    eold = second_order_singles
+    server_barrier
+
+    do kiter
+	print " "
+	print kiter
+	server_barrier
+
+	pardo a,i
+	    Tai[a,i] = 0.0
+	    prepare t1a_new[a,i] = Tai[a,i]
+	endpardo a,i
+	server_barrier
+
+	pardo a,i
+	    Tai[a,i] = 0.0
+	    do b
+		do j
+		    request Viaai[i,a,b,j]
+		    request t1a_old[b,j]
+
+		    T1ai[a,i] = Viaai[i,a,b,j]*t1a_old[b,j]
+		    Tai[a,i] += T1ai[a,i]
+		enddo j
+	    enddo b
+	    do a1
+		do i1
+		    request Vaaii[a,a1,i1,i]
+		    request Viaai[i1,a1,a,i]
+		    request t1a_old[a1,i1]
+		    Tpppp[i1,a1,a,i]  = Vaaii[a,a1,i1,i]
+		    Tpppp[i1,a1,a,i] -= Viaai[i1,a1,a,i]
+
+		    T2ai[a,i] = Tpppp[i1,a1,a,i]*t1a_old[a1,i1]
+		    Tai[a,i] -= t2ai[a,i]
+
+		enddo i1
+	    enddo a1
+
+	    request Mck_a[a,i]
+	    T1ai[a,i] = Mck_a[a,i]
+
+	    Tai[a,i] += T1ai[a,i]
+
+	    prepare t1a_new[a,i] += Tai[a,i]
+	endpardo a,i
+	server_barrier
+	esum = 0.0
+	pardo a,i
+	    request t1a_new[a,i]
+	    Tai[a,i] = t1a_new[a,i]
+	    execute energy_denominator_rhf Tai[a,i] Fock_a
+	    prepare t1a_old[a,i] = Tai[a,i]
+	    T1ai[a,i] = Tai[a,i]
+	    etemp = tai[a,i]*t1ai[a,i]
+	    esum += etemp
+	endpardo a,i
+	server_barrier
+	norm = 0.0
+	collective norm += esum
+	etemp2 = norm - eold
+	ediff = (etemp2**2.0)**0.5
+	print ediff
+
+	if ediff < cc_conv
+	    exit
+        endif
+
+	eold = norm
+	server_barrier
+    enddo kiter
+
+	esum = 0.0
+	pardo a,i
+	    request t1a_old[a,i]
+	    etemp = t1a_old[a,i]*Fock_a[a,i]
+	    esum += etemp
+	endpardo a,i
+	server_barrier
+	second_order_singles = 0.0
+	collective second_order_singles += esum
+	print second_order_singles
+#
+    ENDPROC form_t1_secondorder
 #-------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------
@@ -3210,7 +3415,8 @@ one = 1.0
 root = 0
 subspc = eom_subspc
 roots = eom_roots
-is_ccpt = 0.0
+
+is_ccpt = 1.0
 
 # Initilize the vaiable to zmax and imax (memory of ERD and OED).
 zmax = 0.0
@@ -3218,9 +3424,9 @@ imax = 0.0
 execute compute_int_scratchmem oed_ovl zmax imax
 
 print " "
-#print "-- Parallel left-right EE-EOM-CCSD program"
-print "-- Parallel right EE-EOM-CCSD program"
-print "-- J. Comp. Phys. 1992, 103, 382-389 | J Chem Phys 2009, 130, 124122."
+#print "-- Parallel left-right EE-EOM-CCPT(2) program"
+print "-- Parallel right EE-EOM-CCPT(2) program"
+print "-- J. Comp. Chem. 143, 164103 (2015)"
 print "-- Subspace collapse non-symmetric davidson update"
 print "-- J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
@@ -3228,7 +3434,9 @@ print " "
 server_barrier
 CALL READ_AMP
 call tran_uhf
-call form_H
+call form_t1_secondorder
+call form_H_CCPT
+
 call form_diag
 
 iguess=0
@@ -3273,92 +3481,7 @@ do kiter
 enddo kiter
 
 print " "
-print "EOM-CCSD has converged"
-#print "FINAL excitation energies"
-#do kstate
-#    allocate contiguous EOM_EE_Energy[kstate:kstate]
-#    EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
-#    print EOM_EE_Energy[kstate:kstate]
-#    deallocate contiguous EOM_EE_Energy[kstate:kstate]
-#enddo kstate
-
-do ksub
-    print ksub
-    sum1 = 0.0
-    sum2 = 0.0
-    sum3 = 0.0
-    server_barrier
-    pardo a,i
-       request RB1_a[ksub,a,i]
-       Tkai[ksub,a,i] = RB1_a[ksub,a,i]
-       normT  = Tkai[ksub,a,i]*RB1_a[ksub,a,i]
-       sum1 += normT
-    endpardo a,i
-    pardo a,i,a1,i1
-       request RB2_aa[ksub,a,i,a1,i1]
-       Tkaiai[ksub,a,i,a1,i1] = RB2_aa[ksub,a,i,a1,i1]
-       normT  = Tkaiai[ksub,a,i,a1,i1]*RB2_aa[ksub,a,i,a1,i1]
-       normT *= 0.5
-       sum2 += normT
-    endpardo a,i,a1,i1
-
-    pardo a,i,b,j
-       request RB2_ab[ksub,a,i,b,j]
-       Tkaibj[ksub,a,i,b,j] = RB2_ab[ksub,a,i,b,j]
-       normT  = Tkaibj[ksub,a,i,b,j]*RB2_ab[ksub,a,i,b,j]
-       sum3 += normT
-    endpardo a,i,b,j
-    server_barrier
-    normS1 = 0.0
-    normS2aa = 0.0
-    normS2ab = 0.0
-    collective normS1 += sum1
-    collective normS2aa += sum2
-    collective normS2ab += sum3
-    server_barrier
-    print "right"
-    print normS1
-    print normS2aa
-    print normS2ab
-    server_barrier
-    sum1 = 0.0
-    sum2 = 0.0
-    sum3 = 0.0
-    server_barrier
-    pardo a,i
-       request LB1_a[ksub,a,i]
-       Tkai[ksub,a,i] = LB1_a[ksub,a,i]
-       normT  = Tkai[ksub,a,i]*LB1_a[ksub,a,i]
-       sum1 += normT
-    endpardo a,i
-    pardo a,i,a1,i1
-       request LB2_aa[ksub,a,i,a1,i1]
-       Tkaiai[ksub,a,i,a1,i1] = LB2_aa[ksub,a,i,a1,i1]
-       normT  = Tkaiai[ksub,a,i,a1,i1]*LB2_aa[ksub,a,i,a1,i1]
-       normT *= 0.5
-       sum2 += normT
-    endpardo a,i,a1,i1
-
-    pardo a,i,b,j
-       request LB2_ab[ksub,a,i,b,j]
-       Tkaibj[ksub,a,i,b,j] = LB2_ab[ksub,a,i,b,j]
-       normT  = Tkaibj[ksub,a,i,b,j]*LB2_ab[ksub,a,i,b,j]
-       sum3 += normT
-    endpardo a,i,b,j
-    server_barrier
-    normS1 = 0.0
-    normS2aa = 0.0
-    normS2ab = 0.0
-    collective normS1 += sum1
-    collective normS2aa += sum2
-    collective normS2ab += sum3
-    server_barrier
-    print "right"
-    print normS1
-    print normS2aa
-    print normS2ab
-    server_barrier
-enddo ksub
+print "EOM-CCPT has converged"
 
 # -----------------
 # props
@@ -3369,6 +3492,8 @@ call form_r0
 
 call hf_density
 
+allocate contiguous Right_Dipole_Transition_Moment[1:eom_roots,1:3]
+allocate contiguous Left_Dipole_Transition_Moment[1:eom_roots,1:3]
 allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
 allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
 allocate contiguous EOM_EE_Energy[1:eom_roots]
@@ -3380,11 +3505,11 @@ do kstate
     print kstate
 
 # logright = 0.0 : Left = left eom amplitudes
-# logright = 1.0 : Left = lambda amplitudes
+# logright = 1.0 : Left = lambda = T^\dag amplitudes
 
-    r0 = SR0[kstate]
     omega = SEk0[kstate]
     EOM_EE_Energy[kstate:kstate] = SEk0[kstate] 
+    r0 = SR0[kstate]
     etemp = SEk0[kstate]
     etemp *=27.2113961
     EOM_EE_eV[kstate:kstate] = etemp
@@ -3392,6 +3517,7 @@ do kstate
     print EOM_EE_eV[kstate:kstate]
     print " "
 
+#    print "***** EXPERIMENTAL OSCILLATOR STRENGTH *****"
     do ixyz
 	RDipole[ixyz] = 0.0
 	LDipole[ixyz] = 0.0
@@ -3413,6 +3539,17 @@ do kstate
 #    print Ldipole
 
     print "*** L = R^\dag approximation used ***"
+    print " "
+    do ixyz
+	etemp = Rdipole[ixyz]
+	Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
+	print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+    enddo ixyz
+    do ixyz
+	etemp = Ldipole[ixyz]
+	Left_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
+	print Left_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+    enddo ixyz
     dsum = 0.0
     do ixyz
 	sum1 = RDipole[ixyz]
@@ -3424,10 +3561,11 @@ do kstate
     enddo ixyz
     Dipole_Oscillator_Norm[kstate:kstate] = dsum
     print Dipole_Oscillator_Norm[kstate:kstate]
+#    print "***** EXPERIMENTAL OSCILLATOR STRENGTH *****"
 
 
 enddo kstate
 
 server_barrier
-#
+
 endSIAL R_EE_EOM_CCSD_RHF
