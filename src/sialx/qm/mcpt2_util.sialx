@@ -72,8 +72,15 @@ SIAL mcpt2_util
           where a <= (int)a_vend 
                SwVirtA_frag[(index)a] = (scalar)jfrag
           ENDDO a
+
       enddo jfrag
 #      print SwVirtA_frag
+      server_barrier
+      set_persistent SwAO_frag "SwAO_frag"
+      set_persistent SwOccA_frag "SwOccA_frag"
+      set_persistent SwVirtA_frag "SwVirtA_frag"
+      set_persistent rcut_dist "rcut_dist" 
+      set_persistent elst_dist "elst_dist"
 
       sip_barrier
       ENDPROC SET_FRAG_PARMS    

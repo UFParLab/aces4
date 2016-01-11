@@ -23,6 +23,8 @@ index      ii  = 1: 1  # 1
 index smu = 1:norb
 index si = baocc: eaocc
 index sa = bavirt: eavirt
+index kstate   = 1: eom_roots
+index ksub     = 1: eom_subspc
  
 aoindex mu     = 1: norb 
 aoindex mu1    = 1: norb 
@@ -65,6 +67,8 @@ moaindex fp1=  frag1_baocc: frag1_eavirt
 # Declare ints
 # ---------------
 int rmaster
+int do_nonhf
+int do_secondorder
 # ---------------
 # Declare scalars
 # ---------------
@@ -249,6 +253,10 @@ distributed e3m1_old[ifrag]
 distributed e3m1_error[ifrag]
 
 distributed Mck_a[a,i]
+
+distributed MOI_RB1_a[ksub,fa,fi]
+distributed MOI_RB2_aa[ksub,fa,fi,fa1,fi1]
+distributed MOI_RB2_ab[ksub,fa,fi,fa1,fi1]
 # ---------------
 # Declare contiguous
 # ---------------
@@ -373,5 +381,6 @@ temp xb[b]
 temp xb1[b]  
 temp Taibj[a,i,b,j]
 temp T1aibj[a,i,b,j]
+temp tk[kstate]
 # ---------------
 endsial frag_vars

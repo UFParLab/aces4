@@ -376,6 +376,8 @@ print " "
       restore_persistent Dca "ca" 
       restore_persistent DFock_a "fock_a"
       rmaster = 0
+      #do_nonhf = 1
+      do_nonhf = 0
       allocate sp[*] 
       zero = 0.0 
       one  = 1.0 
@@ -385,13 +387,16 @@ print " "
       print cc_conv 
       sip_barrier
 #
-      CALL SET_FRAG_PARMS   
+      restore_persistent SwAO_frag "SwAO_frag"
+      restore_persistent SwOccA_frag "SwOccA_frag"
+      restore_persistent SwVirtA_frag "SwVirtA_frag"
+      restore_persistent rcut_dist "rcut_dist" 
+      restore_persistent elst_dist "elst_dist"
+#      CALL SET_FRAG_PARMS   
       sip_barrier 
       print "Done setting fragment parameters" 
       call set_fock_mos
       sip_barrier 
-
-
 #     Compute the NN repusion between fragments  
 #     ----------------------------------------- 
       nn_rep = 0.0 
@@ -445,9 +450,9 @@ print " "
       call END_PRINT
       sip_barrier
 
-print "starting additional transformations"
-call ADDITIONAL_FRAG_TRAN
-print "Finished additional transformations"
+    print "starting additional transformations"
+    call ADDITIONAL_FRAG_TRAN
+    print "Finished additional transformations"
 
       call FORM_T1_SECONDORDER
       sip_barrier
@@ -455,6 +460,20 @@ print "Finished additional transformations"
       call MOI_MANAGER
 
          sip_barrier 
+
+	 set_persistent wC "frag_wC"
+	 set_persistent t1old "frag_t1old"
+	 set_persistent p2t1old "frag_p2t1old"
+	 set_persistent T2old "frag_t2old"
+	 set_persistent Vaibj "frag_vaibj"
+	 set_persistent Viabj "frag_viabj"
+	 set_persistent Vaajj "frag_vaajj"
+	 set_persistent Viijj "frag_viijj"
+	 set_persistent Vjiij "frag_vjiij"
+	 set_persistent Viiij "frag_viiij"
+#	 set_persistent Viaii "frag_viaii"
+#	 set_persistent Vaaai "frag_vaaai"
+
                            ENDSIAL FRAG_2ORDER_CORR 
 ##
 ################################################################################

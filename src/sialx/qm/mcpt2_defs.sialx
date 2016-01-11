@@ -28,6 +28,9 @@ predefined  int frag1_eaocc
 predefined  int frag1_eavirt
 predefined  int frag1_norb
 
+predefined int eom_roots
+predefined int eom_subspc
+
 moaindex aces_defs_pa = baocc: eavirt  
 moaindex aces_defs_pb = bbocc: ebvirt   
 aoindex aces_defs_mu = 1: norb  
@@ -69,6 +72,7 @@ special scf_atom_lowmem rwwww
 special place_scratch urrr
 special compute_pair_nn rrw
 special enable_all_rank_print
+special remove_diagonal u
 
 endsial trans_frag_defs
 

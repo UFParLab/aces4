@@ -1250,8 +1250,8 @@ pardo a, i, i1, i2
     do i3
 	request VSpipi[i,i1,i3,i2] 
 	request t1a_old[a,i3]
-	Tai[a,i3]  = t1a_old[a,i3]
-	Tai[a,i3] += St1a[a,i3]
+	Tai[a,i3]  = St1a[a,i3]
+	Tai[a,i3] += t1a_old[a,i3]
 	T1iiai[i,i1,a,i2] = VSpipi[i,i1,i3,i2]*Tai[a,i3]
 	Tiiai[i,i1,a,i2] -= T1iiai[i,i1,a,i2]
     enddo i3
@@ -1429,8 +1429,8 @@ pardo i, i1, b, j
 
 	request Vpiqj[i,i1,j1,j] 
 	request t1a_old[b,j1]
-	Tai[b,j1]  = t1a_old[b,j1]
-	Tai[b,j1] += St1b[b,j1]
+	Tai[b,j1]  = St1b[b,j1]
+	Tai[b,j1] += t1a_old[b,j1]
 
 	T1iibj[i,i1,b,j] = Vpiqj[i,i1,j1,j]*Tai[b,j1]
 	Tiibj[i,i1,b,j] -= T1iibj[i,i1,b,j]
@@ -1885,8 +1885,8 @@ pardo j,sigma
 
     do b
 	request t1a_old[b,j]
-	Tai[b,j]  = t1a_old[b,j]
-	Tai[b,j] += St1b[b,j]
+	Tai[b,j]  = St1b[b,j]
+	Tai[b,j] += t1a_old[b,j]
 	txj[sigma,j] = Tai[b,j]*ca[sigma,b]
 	t1xj[sigma,j]+=txj[sigma,j]
     enddo b
@@ -1901,8 +1901,8 @@ pardo i, sigma
 
     do a
 	request t1a_old[a,i]
-	Tai[a,i]  = t1a_old[a,i]
-	Tai[a,i] += St1a[a,i]
+	Tai[a,i]  = St1a[a,i]
+	Tai[a,i] += t1a_old[a,i]
 	txi[sigma,i]=Tai[a,i]*ca[sigma,a]
 	t1xi[sigma,i]+=txi[sigma,i]
     enddo a

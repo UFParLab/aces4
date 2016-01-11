@@ -59,7 +59,7 @@ do a
 #	Taa[a,a1] += FwC[a,a1]
 
         Fock_a[a,a1]  = DFock_a[a,a1]
-        Fock_a[a,a1] += Taa[a,a1]
+#        Fock_a[a,a1] += Taa[a,a1]
 
 	SFock_a[a,a1] = DFock_a[a,a1]
 
@@ -70,7 +70,7 @@ do a
 	get FwC[a,i1]
 
         Fock_a[a,i1]  = DFock_a[a,i1]
-        Fock_a[a,i1] += FwC[a,i1]
+#        Fock_a[a,i1] += FwC[a,i1]
 
 	SFock_a[a,i1] = DFock_a[a,i1]
     enddo i1
@@ -81,8 +81,11 @@ do i
         get DFock_a[i,a1]
 	get FwC[i,a1]
 
+	Tqq[i,a1] = FwC[i,a1]
+	Tqq[i,a1] *= -1.0
+
         Fock_a[i,a1]  = DFock_a[i,a1]
-        Fock_a[i,a1] += FwC[i,a1]
+        Fock_a[i,a1] += Tqq[i,a1]
 
 	SFock_a[i,a1] = DFock_a[i,a1]
     enddo a1
@@ -97,7 +100,7 @@ do i
 #	Tii1[i,i1] += FwC[i,i1]
 
         Fock_a[i,i1]  = DFock_a[i,i1]
-        Fock_a[i,i1] += Tii1[i,i1]
+#        Fock_a[i,i1] += Tii1[i,i1]
 
 	SFock_a[i,i1] = DFock_a[i,i1]
 

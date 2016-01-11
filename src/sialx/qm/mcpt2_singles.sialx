@@ -329,6 +329,27 @@ SIAL mcpt2_singles
       ENDDO ifrag 
       endif
 
+      sip_barrier
+
+if do_nonhf == 1
+print "placing wC into diagonal fock matrix"
+      do p
+	  t3[p] = 0.0
+      do p1
+      where p==p1
+	  get wC[p,p1]
+	  Tpp[p,p1] = wC[p,p1]
+	  execute return_diagonal Tpp[p,p1] etemp
+	  Sx3[p1] = 1.0
+	  t3_1[p] = Tpp[p,p1]*Sx3[p1]
+	  t3[p] += t3_1[p]
+      enddo p1
+      fock_a[p] += t3[p]
+      enddo p
+endif
+
+      sip_barrier
+
       ENDPROC FORM_T10
 #
 # -----------------------------------------------------------------------------
@@ -375,6 +396,37 @@ SIAL mcpt2_singles
 
                GET        wC[a,i] 
                tai[a,i] = wC[a,i] 
+
+               if do_nonhf == 1
+	       do a1
+	       where (int)SwVirtA_frag[(index)a1] == ifrag
+	       
+	           get t1old[a1,i]
+	           get wC[a,a1]
+		   Tpp[a,a1] = wC[a,a1]
+		   if a==a1
+		       execute remove_diagonal Tpp[a,a1]
+		   endif
+		   T1ai[a,i] = Tpp[a,a1]*t1old[a1,i]
+		   tai[a,i] += T1ai[a,i]
+	       enddo a1
+
+	       do i1
+	       where (int)SwOccA_frag[(index)i1] == ifrag
+
+	           get t1old[a,i1]
+		   get wC[i,i1]
+		   Tpp[i,i1] = wC[i,i1]
+		   if i==i1
+		       execute remove_diagonal Tpp[i,i1]
+		   endif
+		   T1ai[a,i]  = Tpp[i,i1]*t1old[a,i1]
+		   T1ai[a,i] *= -1.0
+		   tai[a,i]  += T1ai[a,i]
+	       enddo i1
+
+	       endif
+
                PUT x1new[a,i] += tai[a,i] 
 
 	 ENDIF
@@ -690,6 +742,14 @@ SIAL mcpt2_singles
       ENDDO ifrag 
       endif
 
+    PARDO ifrag, a, i "Frag{i}{vo}{}"
+    where (int)SwVirtA_frag[(index)a] == ifrag
+    where (int)SwOccA_frag[(index)i] == ifrag
+
+	    PUT p2t1new[a,i] = 0.0
+
+    ENDPARDO ifrag, a, i
+
     server_barrier
     ENDPROC form_t1_secondorder_guess
 
@@ -705,6 +765,8 @@ SIAL mcpt2_singles
     server_barrier
 
     PARDO ifrag, a, i "Frag{i}{vo}{}"
+    where (int)SwVirtA_frag[(index)a] == ifrag
+    where (int)SwOccA_frag[(index)i] == ifrag
 
 	GET     e3m1_error[ifrag] 
 	etemp = e3m1_error[ifrag] 
@@ -719,6 +781,8 @@ SIAL mcpt2_singles
     ENDPARDO ifrag, a, i
 
     server_barrier
+
+    if do_nonhf == 1
 #
 # Mck term
 #
@@ -735,11 +799,40 @@ SIAL mcpt2_singles
 	IF etemp > cc_conv 
 
 	    GET        Mck_a[a,i] 
-	    tai[a,i] = Mck_a[a,i] 
+               tai[a,i] = Mck_a[a,i] 
+
+	       do a1
+	       where (int)SwVirtA_frag[(index)a1] == ifrag
+	       
+	           get t1old[a1,i]
+	           get wC[a,a1]
+		   Tpp[a,a1] = wC[a,a1]
+		   if a==a1
+		       execute remove_diagonal Tpp[a,a1]
+		   endif
+		   T1ai[a,i] = Tpp[a,a1]*t1old[a1,i]
+		   tai[a,i] += T1ai[a,i]
+	       enddo a1
+
+	       do i1
+	       where (int)SwOccA_frag[(index)i1] == ifrag
+
+	           get t1old[a,i1]
+		   get wC[i,i1]
+		   Tpp[i,i1] = wC[i,i1]
+		   if i==i1
+		       execute remove_diagonal Tpp[i,i1]
+		   endif
+		   T1ai[a,i]  = Tpp[i,i1]*t1old[a,i1]
+		   T1ai[a,i] *= -1.0
+		   tai[a,i]  += T1ai[a,i]
+	       enddo i1
+
 	    PUT p2t1new[a,i] += tai[a,i] 
 
 	ENDIF
     ENDPARDO ifrag, a, i
+    endif
 #
 # monomer ring term
 #
@@ -798,7 +891,6 @@ SIAL mcpt2_singles
 
 	IF etemp > cc_conv 
 
-	    t1ai[a,i] = 0.0 
 
 	    GET Viabj[i,a,a1,i1]  
 	    GET p2t1old[a1,i1] 
@@ -806,9 +898,8 @@ SIAL mcpt2_singles
 	    tppqq[i,a,a1,i1]  = Viabj[i,a,a1,i1] 
 	    tppqq[i,a,a1,i1] *= 2.0  
 	    tai[a,i] = tppqq[i,a,a1,i1]*p2t1old[a1,i1]
-	    t1ai[a,i] += tai[a,i] 
 
-	    PUT p2t1new[a,i] += t1ai[a,i] 
+	    PUT p2t1new[a,i] += tai[a,i] 
 
 	ENDIF # etemp > cc_conv 
 
