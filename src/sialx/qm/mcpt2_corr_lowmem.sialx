@@ -135,8 +135,8 @@ print " "
 #      restore_persistent DFock_a "fock_a"
 #      set_persistent DFock_a "fock_a"
       rmaster = 0
+      print "**** Performing perturbing wc(a,i) flavor"
       do_nonhf = 0
-      allocate sp[*] 
       zero = 0.0 
       one  = 1.0 
       print r_thresh 

@@ -145,6 +145,7 @@ if rank == 0.0
 	enddo i
     enddo a
 #
+    print SHDiag
     execute cis_unit_guess C1_a SHDiag
 #
     do ksub

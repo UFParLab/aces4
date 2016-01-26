@@ -15,8 +15,8 @@
 #include "block.h"
 
 
-//bool VERBOSE_TEST = false;
-bool VERBOSE_TEST = true;
+bool VERBOSE_TEST = false;
+//bool VERBOSE_TEST = true;
 
 TEST(Sial_QM_FRAG,DISABLED_mcpt2_test){
 	std::string job("mcpt2_test");

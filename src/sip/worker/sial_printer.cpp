@@ -137,7 +137,7 @@ void SialPrinterForProduction::do_print_index(std::string name, int value, int l
 	}
 }
 void SialPrinterForProduction::do_print_block(const BlockId& id, Block::BlockPtr block, int line_number){
-		int MAX_TO_PRINT = 1024;
+		int MAX_TO_PRINT = 1000000;
 		int size = block->size();
 		int OUTPUT_ROW_SIZE = block->shape().segment_sizes_[0];
 		double* data = block->get_data();
@@ -164,7 +164,7 @@ void SialPrinterForProduction::do_print_block(const BlockId& id, Block::BlockPtr
 	}
 
 void SialPrinterForProduction::do_print_contiguous(int array_slot, Block::BlockPtr block, int line_number){
-	int MAX_TO_PRINT = 1024;
+	int MAX_TO_PRINT = 1000000;
 	int size = block->size();
 	int OUTPUT_ROW_SIZE = block->shape().segment_sizes_[0];
 	double* data = block->get_data();

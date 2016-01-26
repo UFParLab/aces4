@@ -14,7 +14,7 @@ server_barrier
 restore_persistent Dca      "MOI_ca"
 restore_persistent DFock_a  "MOI_focka"
 restore_persistent R1k1_a   "MOI_C1_a"
-restore_persistent RB1_a    "MOI_B1_a"
+restore_persistent TB1_a    "MOI_B1_a"
 restore_persistent t1a      "MOI_T1"
 restore_persistent T2ab     "MOI_T2ab"
 restore_persistent FwC      "MOI_wC"
@@ -45,6 +45,12 @@ restore_persistent MOI_HBAR_ABCI_aabb "MOI_HBAR_abci"
 #pardo a, a1, a2, i
 #    prepare MOI_HBAR_ABCI_aabb[a,a1,a2,i] = 0.0
 #endpardo a, a1, a2, i
+server_barrier
+
+pardo ksub,a,i
+    request TB1_a[ksub,a,i] 
+    prepare RB1_a[ksub,a,i] = TB1_a[ksub,a,i]
+endpardo ksub,a,i
 
 server_barrier
 print "Setting wC elements of the Fock matrix"
@@ -54,15 +60,9 @@ do a
         get DFock_a[a,a1]
 	get FwC[a,a1]
 	Taa[a,a1]  = FwC[a,a1]
-#	execute remove_diagonal Taa[a,a1]
-#	Taa[a,a1] *= -1.0
-#	Taa[a,a1] += FwC[a,a1]
 
         Fock_a[a,a1]  = DFock_a[a,a1]
-#        Fock_a[a,a1] += Taa[a,a1]
-
-	SFock_a[a,a1] = DFock_a[a,a1]
-
+        Fock_a[a,a1] += Taa[a,a1]
     enddo a1
     do i1
         allocate Fock_a[a,i1]
@@ -70,9 +70,6 @@ do a
 	get FwC[a,i1]
 
         Fock_a[a,i1]  = DFock_a[a,i1]
-#        Fock_a[a,i1] += FwC[a,i1]
-
-	SFock_a[a,i1] = DFock_a[a,i1]
     enddo i1
 enddo a
 do i
@@ -82,12 +79,9 @@ do i
 	get FwC[i,a1]
 
 	Tqq[i,a1] = FwC[i,a1]
-	Tqq[i,a1] *= -1.0
 
         Fock_a[i,a1]  = DFock_a[i,a1]
         Fock_a[i,a1] += Tqq[i,a1]
-
-	SFock_a[i,a1] = DFock_a[i,a1]
     enddo a1
     do i1
         allocate Fock_a[i,i1]
@@ -95,15 +89,9 @@ do i
 	get FwC[i,i1]
 
 	Tii1[i,i1]  = FwC[i,i1]
-#	execute remove_diagonal Tii1[i,i1]
-#	Tii1[i,i1] *= -1.0
-#	Tii1[i,i1] += FwC[i,i1]
 
         Fock_a[i,i1]  = DFock_a[i,i1]
-#        Fock_a[i,i1] += Tii1[i,i1]
-
-	SFock_a[i,i1] = DFock_a[i,i1]
-
+        Fock_a[i,i1] += Tii1[i,i1]
     enddo i1
 enddo i
 do mu
@@ -159,8 +147,8 @@ if myrank == root
     do i
         get t1a[a,i]
         Tai[a,i] = t1a[a,i]
-        St1a[a,i] = 0.0 #t1a[a,i]
-        St1b[a,i] = 0.0 #t1a[a,i]
+        St1a[a,i] = t1a[a,i]
+        St1b[a,i] = t1a[a,i]
         put t1b[a,i] = Tai[a,i]
     enddo i
     enddo a
@@ -3682,6 +3670,10 @@ do kstate
 
 enddo kstate
 
+server_barrier
+set_persistent RB1_a "MOI_RB1_a"
+set_persistent RB2_aa "MOI_RB2_aa"
+set_persistent RB2_ab "MOI_RB2_ab"
 server_barrier
 
 endSIAL R_EE_EOM_CCSD_RHF

@@ -56,6 +56,12 @@ SIAL mcpt2_util
           a_vstart  = m + (scalar)bavirt - 1.0
           a_vend    = n + (scalar)bavirt - 1.0
 
+	  ao_start[jfrag] = i_aostart
+	  ao_end[jfrag] = i_aoend
+
+	  occ_start[jfrag] = i_vstart
+	  occ_end[jfrag] = i_vend
+
           do mu
           where mu >= (int)i_aostart
           where mu <= (int)i_aoend
@@ -66,21 +72,21 @@ SIAL mcpt2_util
           where i >= (int)i_vstart
           where i <= (int)i_vend
                SwOccA_frag[(index)i] = (scalar)jfrag
+               SwMOA_frag[(index)i] = (scalar)jfrag
           ENDDO i
           DO a
           where a >= (int)a_vstart 
           where a <= (int)a_vend 
                SwVirtA_frag[(index)a] = (scalar)jfrag
+               SwMOA_frag[(index)a] = (scalar)jfrag
           ENDDO a
 
       enddo jfrag
-#      print SwVirtA_frag
       server_barrier
-      set_persistent SwAO_frag "SwAO_frag"
-      set_persistent SwOccA_frag "SwOccA_frag"
-      set_persistent SwVirtA_frag "SwVirtA_frag"
-      set_persistent rcut_dist "rcut_dist" 
-      set_persistent elst_dist "elst_dist"
+
+      print elst_dist
+      print rcut_dist
+      print SwMOA_frag
 
       sip_barrier
       ENDPROC SET_FRAG_PARMS    

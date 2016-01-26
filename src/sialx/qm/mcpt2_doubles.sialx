@@ -16,7 +16,7 @@ SIAL mcpt2_doubles
 
       esum = 0.0 
 
-      PARDO ifrag, a, i, a1, i1  "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1  "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -36,7 +36,7 @@ SIAL mcpt2_doubles
       server_barrier
 
 
-      PARDO ifrag, a, i, a1, i1  "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1  "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -63,7 +63,7 @@ SIAL mcpt2_doubles
 # Now form the initial guess to Taibj 
 # -----------------------------------------------------------------------------
 
-      PARDO ifrag, jfrag, a, i, b, j   "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, b, j   "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -90,7 +90,7 @@ SIAL mcpt2_doubles
 # Zero out the T20aiai array at the beginning of the microiterations 
 # This is the updated doubles V_X + H_0XY*T_XY
 
-      PARDO ifrag, jfrag, a, i, b, j    "Frag{Rij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, b, j    "Frag{Rij}{pp}{pp}"
       where (int)rcut_dist[ifrag,jfrag] == ifrag
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
@@ -107,7 +107,7 @@ SIAL mcpt2_doubles
 # First form the initial guess to Taiai 
 # -----------------------------------------------------------------------------
 
-      PARDO ifrag, a, i, a1, i1    "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1    "Frag{i}{pppp}{}"
 	 where (int)SwVirtA_frag[(index)a] == ifrag
 	 where (int)SwOccA_frag[(index)i] == ifrag
 	 where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -183,7 +183,7 @@ SIAL mcpt2_doubles
 # Now form the initial guess to Taibj 
 # -----------------------------------------------------------------------------
 
-      PARDO ifrag, jfrag, a, i, b, j     "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, b, j     "Frag{NRij}{pp}{pp}"
       where jfrag != ifrag 
       where (int)rcut_dist[ifrag,jfrag] == ifrag
 	 where (int)SwVirtA_frag[(index)a] == ifrag
@@ -261,7 +261,7 @@ SIAL mcpt2_doubles
       print kiter
 #
       sip_barrier
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -308,7 +308,7 @@ SIAL mcpt2_doubles
 
       if do_nonhf == 1
 
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -436,7 +436,7 @@ SIAL mcpt2_doubles
 #
 # Add the WMEBJ term 
 #
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -478,7 +478,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, a, i, a1, i1
 
 
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
@@ -520,7 +520,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, a, i, a1, i1
 
 
-      PARDO ifrag, a, j, b1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, j, b1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)j] == ifrag
 	  where (int)SwVirtA_frag[(index)b1] == ifrag
@@ -556,7 +556,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, a, j, b1, i1
 
 
-      PARDO ifrag, a, i1, b, j1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i1, b, j1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwVirtA_frag[(index)b] == ifrag
 	  where (int)SwOccA_frag[(index)i1] == ifrag
@@ -646,7 +646,7 @@ SIAL mcpt2_doubles
 #
 # Form the new ampllitude 
 #
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -675,7 +675,7 @@ SIAL mcpt2_doubles
 #
 # Form the new energy 
 #
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	  where (int)SwVirtA_frag[(index)a] == ifrag
 	  where (int)SwOccA_frag[(index)i] == ifrag
 	  where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -775,7 +775,7 @@ SIAL mcpt2_doubles
       DO diter 
 	 print diter
 #
-      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -824,7 +824,7 @@ SIAL mcpt2_doubles
 
       if do_nonhf == 1
 
-      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -903,7 +903,7 @@ SIAL mcpt2_doubles
       endif
 
 # Form backtransformed amplitudes 
-      PARDO ifrag, jfrag, a, i, mu, j "Frag{NRij}{vo}{ao}"
+      PARDO ifrag, jfrag, a, i, mu, j "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -982,7 +982,7 @@ SIAL mcpt2_doubles
 
 
 # Add the WMEBJ term 
-      PARDO ifrag, jfrag, a, i1, b1, j "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i1, b1, j "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -1019,7 +1019,7 @@ SIAL mcpt2_doubles
       ENDIF
       ENDPARDO ifrag, jfrag, a, i1, b1, j
 
-      PARDO ifrag, jfrag, a, a1, j, j1 "Frag{NRij}{vv}{oo}"
+      PARDO ifrag, jfrag, a, a1, j, j1 "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
 	  where (int)SwVirtA_frag[(index)a] == ifrag
@@ -1055,7 +1055,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, jfrag, a, a1, j, j1
 
 #     v^2 o^4 term  
-      PARDO ifrag, jfrag, a, i1, b, j1 "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i1, b, j1 "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -1146,7 +1146,7 @@ SIAL mcpt2_doubles
 
 
 #    Add the contributions coming from Vaiai  
-      PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, b, j "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -1212,7 +1212,7 @@ SIAL mcpt2_doubles
       server_barrier
 
 # Form the new amplitude 
-      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -1245,7 +1245,7 @@ SIAL mcpt2_doubles
       server_barrier
 
 # Form the new energy 
-      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{vo}{vo}"
+      PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
       where ifrag != jfrag
       where (int)rcut_dist[ifrag,jfrag] == ifrag
       where (int)SwVirtA_frag[(index)a] == ifrag
@@ -1311,7 +1311,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag  
 #
       sip_barrier
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)i] == ifrag
 	where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -1330,7 +1330,7 @@ SIAL mcpt2_doubles
          do_iter = 0.0 
 #
       sip_barrier
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)i] == ifrag
 	where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -1456,7 +1456,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, mu, nu, lambda, sigma
 
 
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)i] == ifrag
 	where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -1504,7 +1504,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, a, i, a1, i1
 
 
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a1] == ifrag
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)i] == ifrag
@@ -1550,7 +1550,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, a, i, a1, i1
 
 
-      PARDO ifrag, a, i1, b1, j "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i1, b1, j "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)j] == ifrag
 	where (int)SwOccA_frag[(index)i1] == ifrag
@@ -1590,7 +1590,7 @@ SIAL mcpt2_doubles
       ENDPARDO ifrag, a, i1, b1, j
 
 
-      PARDO ifrag, a, i1, b, j1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i1, b, j1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwVirtA_frag[(index)b] == ifrag
 	where (int)SwOccA_frag[(index)i1] == ifrag
@@ -1686,7 +1686,7 @@ SIAL mcpt2_doubles
       server_barrier
 
 
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)i] == ifrag
 	where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -1720,7 +1720,7 @@ SIAL mcpt2_doubles
       endpardo ifrag
       server_barrier
       esum = 0.0
-      PARDO ifrag, a, i, a1, i1 "Frag{i}{vovo}{}"
+      PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 	where (int)SwVirtA_frag[(index)a] == ifrag
 	where (int)SwOccA_frag[(index)i] == ifrag
 	where (int)SwVirtA_frag[(index)a1] == ifrag
@@ -1783,11 +1783,13 @@ SIAL mcpt2_doubles
       execute get_my_rank rank
       if rank == 0.0
       do ifrag
+	allocate contiguous monomer_lccd[ifrag:ifrag]
          GET                        e20c[ifrag] 
          monomer_lccd[ifrag:ifrag] = e20c[ifrag]  
 	 print monomer_lccd[ifrag:ifrag]
          etemp = e20c[ifrag] 
          esum -= etemp 
+	deallocate contiguous monomer_lccd[ifrag:ifrag]
       enddo ifrag
       endif
       sip_barrier
@@ -1809,22 +1811,6 @@ SIAL mcpt2_doubles
       sip_barrier 
       print "Done forming T2_0guess" 
 
-# allocate energy arrays all at once.
-     execute get_my_rank rank
-     if rank == 0.0
-     DO ifrag
-	allocate contiguous macro_e20[ifrag:ifrag]
-	allocate contiguous monomer_lccd[ifrag:ifrag]
-     ENDDO ifrag   
-     do ifrag
-     do jfrag
-     WHERE jfrag > ifrag 
-     where (int)rcut_dist[ifrag,jfrag] == ifrag
-	 allocate contiguous macro_d20[ifrag:ifrag,jfrag:jfrag]
-     enddo jfrag
-     enddo ifrag
-     endif
-      sip_barrier 
 #
 # Start macro-iterations 
       DO jiter 
@@ -1859,11 +1845,13 @@ SIAL mcpt2_doubles
          print "MCPT(2) monomer macro-iteration energies"
 	 fragment_doubles = 0.0
          DO ifrag
+	    allocate contiguous macro_e20[ifrag:ifrag]
             GET                 e20c[ifrag] 
             macro_e20[ifrag:ifrag]  = e20c[ifrag] 
             print macro_e20[ifrag:ifrag] 
             etemp = e20c[ifrag] 
             fragment_doubles += etemp 
+	    deallocate contiguous macro_e20[ifrag:ifrag]
          ENDDO ifrag   
 
 	 print " "
@@ -1872,9 +1860,11 @@ SIAL mcpt2_doubles
 	 do jfrag
 	 WHERE jfrag > ifrag 
 	 where (int)rcut_dist[ifrag,jfrag] == ifrag
+	         allocate contiguous macro_d20[ifrag:ifrag,jfrag:jfrag]
 		 get d20c[ifrag,jfrag]
 		 macro_d20[ifrag:ifrag,jfrag:jfrag] = d20c[ifrag,jfrag]
 		 print macro_d20[ifrag:ifrag,jfrag:jfrag]
+	         deallocate contiguous macro_d20[ifrag:ifrag,jfrag:jfrag]
 	 enddo jfrag
 	 enddo ifrag
          endif
