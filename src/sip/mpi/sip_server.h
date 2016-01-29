@@ -12,6 +12,7 @@
 #include <utility>
 #include <iomanip>
 #include <ios>
+#include <string>
 
 #include "sip_tables.h"
 #include "server_block.h"
@@ -130,12 +131,12 @@ public:
 	//leaves next_block_iter_ pointing to a valid
 	//iterator (possibly end) for pending_
 	//next_block_iter_ is unchanged if nothing was deleted
-	void remove_all_entries_for_array(int array_id){
+	void remove_all_entries_for_array(int array_id, const SipTables& sip_tables){
 		std::list<std::pair<BlockId,ServerBlock*> >::iterator iter = pending_.begin();
 		while (iter != pending_.end()){
 			if(iter->first.array_id() == array_id){
 				bool block_complete = iter->second->async_state_.try_handle_test_none_pending();
-				CHECK(block_complete, "attempting to delete array with pending async ops");
+				CHECK(block_complete,(std::string("attempting to delete array with pending async ops ")+ sip_tables.array_name(array_id)).c_str());
 				iter = pending_.erase(iter);
 				next_block_iter_ = iter;
 			}

@@ -238,7 +238,9 @@ Block::BlockPtr BlockManager::block(const BlockId& id){
 Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
 	try {
-		Block::BlockPtr block_ptr = new Block(shape);
+//		Block::BlockPtr block_ptr = new Block(shape);
+		double* data = block_map_.allocate_data(shape.num_elems(), false);
+		Block::BlockPtr block_ptr = new Block(shape, data);
 		insert_into_blockmap(block_id, block_ptr);
 		return block_ptr;
 	} catch (const std::out_of_range& oor){

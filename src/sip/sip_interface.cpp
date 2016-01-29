@@ -131,7 +131,7 @@ void scratch_array(int& num_elements, double **array){
         double * scratch = new double[num_elements]();  //initialize to zero
         *array = scratch;
     } catch (const std::bad_alloc& ba) {
-        std::cerr << "Got bad alloc ! Memory being requestd : " << num_elements << std::endl;
+        std::cerr << "Not enough memory for scratch array.  Memory being requested : " << num_elements << std::endl;
         throw ba;
     }
 }

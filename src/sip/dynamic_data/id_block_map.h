@@ -159,6 +159,7 @@ public:
 	 */
 	void delete_block(const BlockId& id){
 		BLOCK_TYPE* block_ptr = get_and_remove_block(id);
+		free_data(block_ptr->data_, block_ptr->size());
 		delete(block_ptr);
 	}
 

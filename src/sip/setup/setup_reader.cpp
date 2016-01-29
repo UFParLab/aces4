@@ -13,6 +13,7 @@
 #include "json/json.h"
 #include <stdexcept>
 #include <sstream>
+#include "memory_tracker.h"
 
 namespace setup {
 
@@ -535,6 +536,7 @@ void SetupReader::read_predefined_arrays(){
 			num_data_elems *= dims[i];
 		}
 		double * data = binary_stream_->read_double_array(&num_data_elems);
+		sip::MemoryTracker::global->inc_allocated(num_data_elems);
 //		std::pair<int *, double *> dataPair = std::pair<int *, double *>(dims, data);
 //		predef_arr_[name] = std::pair<int, std::pair<int *, double *> >(rank, dataPair);
 //

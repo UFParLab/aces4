@@ -364,7 +364,7 @@ void SIPServer::handle_DELETE(int mpi_source, int delete_tag) {
 			__LINE__, __FILE__);
 
 	//delete the block and map for the indicated array
-	async_ops_.remove_all_entries_for_array(array_id);
+	async_ops_.remove_all_entries_for_array(array_id, sip_tables_);
 	disk_backed_block_map_.delete_per_array_map_and_blocks(array_id);
 
 }

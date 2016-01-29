@@ -945,7 +945,7 @@ TEST(Sial,persistent_distributed_array_n_of_three){
 
 }
 
-TEST(Sial,DISABLED_cached_block_map_test) {
+TEST(Sial,cached_block_map_test) {
     std::string job("cached_block_map_test");
     int norb = 4;
     int iterations = 3;
@@ -963,10 +963,19 @@ TEST(Sial,DISABLED_cached_block_map_test) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
+    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
     sip::JobControl::global->set_max_worker_data_memory_usage(limit_size);
-    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
+//	if (attr->global_rank()==0){//for gdb
+//	    volatile int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
     controller.run();
     if (attr->is_worker()) {
         EXPECT_TRUE(controller.worker_->all_stacks_empty());
@@ -974,7 +983,7 @@ TEST(Sial,DISABLED_cached_block_map_test) {
 }
 
 
-TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
+TEST(Sial,cached_block_map_test_no_dangling_get) {
     std::string job("cached_block_map_test_no_dangling_get");
     int norb = 4;
     int iterations = 3;
@@ -1222,7 +1231,7 @@ TEST(Sip,check_block_number_calc){
 TEST(Sip,disk_backing_test) {
 	std::string job("disk_backing_test");
 	size_t limit_size = 70000000;
-    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
+
     if ( attr->global_rank() == 0){
     std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
     std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
@@ -1243,6 +1252,7 @@ TEST(Sip,disk_backing_test) {
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
 	controller.initSipTables();
 	controller.run();
 	if (attr->is_worker()) {
@@ -1293,7 +1303,7 @@ TEST(Sip,disk_backing_test) {
 TEST(Sip,disk_backing_put_acc_stress) {
 	std::string job("disk_backing_test");
 	size_t limit_size = 70000000;
-    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
+
     if ( attr->global_rank() == 0){
     std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
     std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
@@ -1314,6 +1324,7 @@ TEST(Sip,disk_backing_put_acc_stress) {
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
 	controller.initSipTables();
 	controller.run();
 //	if (attr->is_worker()) {

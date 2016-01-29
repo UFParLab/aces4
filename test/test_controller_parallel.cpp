@@ -60,9 +60,12 @@ TestControllerParallel::TestControllerParallel(std::string job,
 				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
 				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
+	sleep(5);
 	barrier();
 	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id()));
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
 
+	std::cout << "allocated_ " << sip::MemoryTracker::global->get_allocated_bytes() << std::endl << std::flush;
 	std::cout << "job_id" << sip::JobControl::global->get_job_id() << std::endl << std::flush;
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
@@ -99,8 +102,11 @@ TestControllerParallel::TestControllerParallel(std::string job,
 	barrier();
 	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id(),
 			restart_id, restart_prognum));
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
+
 
 	std::cout << "job_id: " << sip::JobControl::global->get_job_id() << ", restart_id: "<< restart_id << std::endl << std::flush;
+	std::cout << "allocated_ " << sip::MemoryTracker::global->get_allocated_bytes() << std::endl << std::flush;
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);

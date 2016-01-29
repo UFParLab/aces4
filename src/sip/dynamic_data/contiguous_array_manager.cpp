@@ -53,8 +53,8 @@ std::ostream& operator<<(std::ostream& os, const WriteBack& obj) {
 
 
 ContiguousArrayManager::ContiguousArrayManager(const sip::SipTables& sip_tables,
-		setup::SetupReader& setup_reader) :
-		sip_tables_(sip_tables), setup_reader_(setup_reader) {
+		setup::SetupReader& setup_reader, CachedBlockMap& block_map) :
+		sip_tables_(sip_tables), setup_reader_(setup_reader), block_map_(block_map) {
 	//create static arrays in sial program.  All static arrays are allocated a startup
 	int num_arrays = sip_tables_.num_arrays();
 	for (int i = 0; i < num_arrays; ++i) {
@@ -135,10 +135,12 @@ Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 
 Block::BlockPtr ContiguousArrayManager::create_contiguous_array(int array_id) {
 	BlockShape shape = sip_tables_.contiguous_array_shape(array_id);
-	SIP_LOG(
-			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape << " and array id :" << array_id << std::endl);
-	Block::BlockPtr block_ptr = new Block(shape);
-	block_ptr->fill(0.0);
+
+			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape <<
+					" num_elems " << shape.num_elems() << "  and array id :" << array_id << std::endl;
+	double* data = block_map_.allocate_data(shape.num_elems(), true);
+	Block::BlockPtr block_ptr = new Block(shape, data);
+//	block_ptr->fill(0.0);
 	const std::pair<ContiguousArrayMap::iterator, bool> &ret =
 			contiguous_array_map_.insert(
 					std::pair<int, Block::BlockPtr>(array_id, block_ptr));
@@ -220,7 +222,8 @@ Block::BlockPtr ContiguousArrayManager::get_block(const BlockId& block_id, int& 
 	BlockShape block_shape = sip_tables_.shape(block_id);
 
 //allocate a new block and copy data from contiguous block
-	Block::BlockPtr block = new Block(block_shape);
+	double* data = block_map_.allocate_data(block_shape.num_elems(), false);
+	Block::BlockPtr block = new Block(block_shape, data);
 	block->fill(0.0);
 	contiguous->extract_slice(rank, offsets, block);
 	return block;

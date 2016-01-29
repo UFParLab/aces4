@@ -163,7 +163,9 @@ set(ACES_DATA_FILES
     src/sip/dynamic_data/cached_block_map.h;
     src/sip/dynamic_data/cached_block_map.cpp;
     src/sip/dynamic_data/contiguous_local_array_manager.h;
-    src/sip/dynamic_data/contiguous_local_array_manager.cpp;)
+    src/sip/dynamic_data/contiguous_local_array_manager.cpp;
+    src/sip/dynamic_data/memory_tracker.h;
+    src/sip/dynamic_data/memory_tracker.cpp;)
 #need only header files for templates--these include .cpp
 
 set(ACES_WORKER_FILES

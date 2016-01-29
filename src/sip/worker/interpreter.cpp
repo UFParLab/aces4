@@ -1913,7 +1913,8 @@ void Interpreter::handle_block_add(int pc) {
 	} else {
 		// Created a transposed temporary block.
 		// This will become the new rdata.
-		Block::dataPtr tempdata = new double[rblock->size()];
+//		Block::dataPtr tempdata = new double[rblock->size()];
+		double * tempdata = data_manager_.block_manager_.block_map_.allocate_data(rblock->size(),false);
 		tempblock = new Block(rblock->shape(), tempdata);
 		permute_rhs_to_lhs(d_selector, r_selector, tempblock, rblock, false);
 		rdata = tempblock->get_data();
@@ -1974,7 +1975,8 @@ void Interpreter::handle_block_subtract(int pc) {
 	} else {
 		// Created a transposed temporary block.
 		// This will become the new rdata.
-		Block::dataPtr tempdata = new double[rblock->size()];
+//		Block::dataPtr tempdata = new double[rblock->size()];
+		double * tempdata = data_manager_.block_manager_.block_map_.allocate_data(rblock->size(), false);
 		tempblock = new Block(rblock->shape(), tempdata);
 		permute_rhs_to_lhs(d_selector, r_selector, tempblock, rblock, false);
 		rdata = tempblock->get_data();

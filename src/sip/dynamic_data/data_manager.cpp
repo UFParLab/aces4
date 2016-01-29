@@ -30,7 +30,7 @@ DataManager::DataManager(const SipTables &sipTables):
      scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
      int_table_(sipTables.int_table_), /* initialize integers from sipTables */
      block_manager_(sipTables),
-     contiguous_array_manager_(sipTables, sipTables.setup_reader_),
+     contiguous_array_manager_(sipTables, sipTables.setup_reader_, block_manager_.block_map_),
      contiguous_local_array_manager_(sipTables, block_manager_)
         {
 		for (int i = 0; i < sipTables.array_table_.entries_.size(); ++i) {
@@ -44,7 +44,8 @@ DataManager::DataManager(const SipTables &sipTables):
 DataManager::~DataManager() {
     for (int i = 0; i < sip_tables_.array_table_.entries_.size(); ++i){
     	if (sip_tables_.is_scalar(i) ){
-    		scalar_blocks_[i]->data_ = NULL;	// So that scalar that is pointed to is not freed.
+    		scalar_blocks_[i]->data_ = NULL;	//So that scalar that is pointed to is not freed
+    		                                    //in destructor for wrapper Block
     		delete scalar_blocks_[i];
     		scalar_blocks_[i] = NULL;
     	}

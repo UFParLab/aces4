@@ -370,6 +370,7 @@ int main(int argc, char* argv[]) {
     sip::JobControl::set_global_job_control(new sip::JobControl(job_id, parameters.restart_job_id, restart_prognum,
     		parameters.worker_memory,
     		parameters.server_memory));
+    sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
 
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance(); // singleton instance.
 	std::cerr<<sip_mpi_attr<<std::endl;

@@ -29,7 +29,7 @@ void check_block_number_calculation(int& array_slot, int& rank,
 		index_values_copy[k] = index_values[k];
 	}
 //	if (index_values_copy[0] == 8 && index_values_copy[1] == 1){
-//			    {
+//			    {  //for gdb
 //			        int i = 0;
 //			        char hostname[256];
 //			        gethostname(hostname, sizeof(hostname));

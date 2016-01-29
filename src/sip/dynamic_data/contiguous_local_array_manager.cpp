@@ -87,7 +87,8 @@ Block::BlockPtr ContiguousLocalArrayManager::create_block(const BlockId& id){
 	int array_rank = sip_tables_.array_rank(array_slot);
 	const BlockShape shape(sip_tables_.contiguous_region_shape(array_rank, array_slot, id.index_values_, id.parent_id_ptr_->index_values_));
 	try {
-		Block::BlockPtr region = new Block(shape);
+		double* data = block_map_.allocate_data(shape.num_elems(), false);
+		Block::BlockPtr region = new Block(shape, data);
 		region->fill(0.0);
 		block_map_.insert_block(id, region);  //this will fail if there is overlap.
 		return region;
@@ -131,7 +132,8 @@ Block::BlockPtr ContiguousLocalArrayManager::get_block(const BlockId& id, int& r
 		id.index_values_, id.parent_id_ptr_->index_values_);
 
     //allocate a new block and copy data from the contiguous block
-    block = new Block(id_shape);
+	double* data = block_map_.allocate_data(id_shape.num_elems(), false);
+    block = new Block(id_shape, data);
     enclosing_block->extract_slice(rank, offsets, block);
 	}
 

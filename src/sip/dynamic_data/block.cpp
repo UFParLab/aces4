@@ -33,13 +33,20 @@ Block::Block(BlockShape shape) :
 	//c++ feature:parens cause allocated memory to be initialized to zero
 	// but is also expensive. This is being removed and the block is being zeroed out
 	// wherever it needs to be.
+	try{
 	data_ = new double[size_];
+	MemoryTracker::global->inc_allocated(size_);
 
 	gpu_data_ = NULL;
 	status_[Block::onHost] = true;
 	status_[Block::onGPU] = false;
 	status_[Block::dirtyOnHost] = false;
 	status_[Block::dirtyOnGPU] = false;
+	}
+	catch (const std::bad_alloc& ba){
+		std::cerr << "Not enough memory in Block::Block(BlockShape shape)" << std::endl << std::flush;
+		throw ba;
+	}
 
 }
 
@@ -93,6 +100,7 @@ Block::~Block() {
 
 	if (data_ != NULL) {
 		delete[] data_;
+		MemoryTracker::global->inc_allocated(shape_.num_elems());
 		data_ = NULL;
 	}
 
@@ -103,10 +111,10 @@ Block::~Block() {
 		gpu_data_ = NULL;
 	}
 #endif //HAVE_CUDA
-	status_[Block::onGPU] = false;
-	status_[Block::onHost] = false;
-	status_[Block::dirtyOnHost] = false;
-	status_[Block::dirtyOnGPU] = false;
+//	status_[Block::onGPU] = false;
+//	status_[Block::onHost] = false;
+//	status_[Block::dirtyOnHost] = false;
+//	status_[Block::dirtyOnGPU] = false;
 }
 
 int Block::size() {
@@ -355,6 +363,7 @@ void Block::free_host_data(){
 void Block::allocate_host_data(){
 	WARN(data_ == NULL, "Potentially causing a memory leak on host");
 	data_ = new double[size_]();
+	MemoryTracker::global->inc_allocated(size_);
 	status_[Block::onHost] = true;
 	status_[Block::dirtyOnHost] = false;
 }
