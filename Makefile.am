@@ -80,6 +80,8 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/contiguous_local_array_manager.h\
 ./src/sip/dynamic_data/contiguous_local_array_manager.cpp\
+./src/sip/dynamic_data/memory_tracker.h\
+./src/sip/dynamic_data/memory_tracker.cpp\
 ./src/sip/dynamic_data/data_manager.h\
 ./src/sip/dynamic_data/data_manager.cpp\
 ./src/sip/dynamic_data/id_block_map.h\
