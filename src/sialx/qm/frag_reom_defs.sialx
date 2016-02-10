@@ -74,6 +74,9 @@ special compute_pair_nn rrw
 special enable_all_rank_print
 special remove_diagonal u
 special eigen_calc uu
+special return_diagonal_elements u
+special cis_unit_guess ru
+special invert_diagonal ur
 
 endsial trans_frag_defs
 

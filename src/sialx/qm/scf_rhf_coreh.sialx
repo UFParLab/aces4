@@ -192,6 +192,9 @@ import "scf_defs.sialx"
       scalar zmax 
       scalar imax 
       scalar repulsion
+      temp t3[p]
+      temp t4[p]
+      temp t5[p]
 #
 # Declare scalars 
 # --------------- 
@@ -246,6 +249,7 @@ import "scf_defs.sialx"
       temp tdd[d1,d2] 
       temp t1dd[d1,d2] 
       static BB[d1,d2] 
+      static sx3[p]
 
       temp DAOINT[mu,nu]
       static dipole[ixyz]
@@ -1679,6 +1683,18 @@ import "scf_defs.sialx"
       set_persistent dipole "scf_dipole"
       set_persistent NucDip "nuclear_dipole"
       sip_barrier
+      do p
+	  sx3[p] = 0.0
+	  t3[p] = 0.0
+	  do p1
+	      where p == p1
+	      t4[p1] = 1.0
+	      t5[p] = fock_a[p,p1]*t4[p1]
+	      t3[p] += t5[p]
+          enddo p1
+	  sx3[p] = t3[p]
+          enddo p
+	  print sx3
 #                         
 #
                            ENDSIAL SCF_RHF_COREH          

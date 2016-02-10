@@ -23,6 +23,7 @@ predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT
 predefined scalar damp #value of DAMPSCF from ZMAT
 predefined scalar cc_conv  # value of CC_CONV from ZMAT.
 predefined scalar scf_conv  # value of SCF_CONV from ZMAT
+predefined  int nfrags  # Number of fragments from ZMAT 
 
 # fragment 1 segment boundaries
 predefined  int frag1_baocc

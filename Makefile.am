@@ -80,6 +80,8 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/contiguous_array_manager.cpp\
 ./src/sip/dynamic_data/contiguous_local_array_manager.h\
 ./src/sip/dynamic_data/contiguous_local_array_manager.cpp\
+./src/sip/dynamic_data/memory_tracker.h\
+./src/sip/dynamic_data/memory_tracker.cpp\
 ./src/sip/dynamic_data/data_manager.h\
 ./src/sip/dynamic_data/data_manager.cpp\
 ./src/sip/dynamic_data/id_block_map.h\
@@ -556,6 +558,7 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/lr_eom_ccsd_rhf.siox\
 ./src/sialx/qm/lr_eom_linccsd_rhf.siox\
+./src/sialx/qm/lr_eom_ccpt2_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/reom_hbar.siox\
 ./src/sialx/qm/reom_vars.siox\
@@ -716,6 +719,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/reom_vars.sialx\
 ./src/sialx/qm/lr_eom_ccsd_rhf.sialx\
 ./src/sialx/qm/lr_eom_linccsd_rhf.sialx\
+./src/sialx/qm/lr_eom_ccpt2_rhf.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
 ./src/sialx/qm/rlccsd_rhf.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\

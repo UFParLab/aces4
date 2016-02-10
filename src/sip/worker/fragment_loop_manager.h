@@ -49,6 +49,7 @@ protected:
 	void form_rcut_dist();
 	void form_elst_dist();
 	void form_swao_frag();
+    void form_swmoa_frag();
 	void form_swocca_frag();
 	void form_swvirta_frag();
 
@@ -57,6 +58,7 @@ protected:
 	std::vector<std::vector<int> > elst_dist;
 	std::vector<std::vector<int> > rcut_dist;
 	std::vector<int> swao_frag;
+    std::vector<int> swmoa_frag;
 	std::vector<int> swocca_frag;
 	std::vector<int> swvirta_frag;
 };
@@ -154,27 +156,6 @@ private:
 	Interpreter* interpreter_;
 };
 
-class Fragment_ij_ao_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_ij_ao_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_ij_ao_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
 class Fragment_i_aa__PardoLoopManager: public FragmentPardoLoopManager {
 public:
 	Fragment_i_aa__PardoLoopManager(int num_indices,
@@ -182,48 +163,6 @@ public:
 			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
 			int num_where_clauses, Interpreter* interpreter, long& iteration);
 	virtual ~Fragment_i_aa__PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_i_vo__PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_i_vo__PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_i_vo__PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_i_vovo__PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_i_vovo__PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_i_vovo__PardoLoopManager();
 private:
 	virtual bool do_update();
 	bool where_clause(int index);
@@ -385,90 +324,6 @@ private:
 	Interpreter* interpreter_;
 };
 
-class Fragment_ij_av_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_ij_av_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_ij_av_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_ij_av_oo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_ij_av_oo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_ij_av_oo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_ij_ao_oo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_ij_ao_oo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_ij_ao_oo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_ij_oo_ao_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_ij_oo_ao_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_ij_oo_ao_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
 class Fragment_ij_aoo_o_PardoLoopManager: public FragmentPardoLoopManager {
 public:
 	Fragment_ij_aoo_o_PardoLoopManager(int num_indices,
@@ -476,90 +331,6 @@ public:
 			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
 			int num_where_clauses, Interpreter* interpreter, long& iteration);
 	virtual ~Fragment_ij_aoo_o_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_ij_vo_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_ij_vo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_ij_vo_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_Nij_vo_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_Nij_vo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_Nij_vo_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_NRij_vo_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_NRij_vo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NRij_vo_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_Rij_vo_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_Rij_vo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_Rij_vo_vo_PardoLoopManager();
 private:
 	virtual bool do_update();
 	bool where_clause(int index);
@@ -721,69 +492,6 @@ private:
 	Interpreter* interpreter_;
 };
 
-class Fragment_NRij_vv_oo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_NRij_vv_oo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NRij_vv_oo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_NRij_oo_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_NRij_oo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NRij_oo_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_NRij_vv_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_NRij_vv_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NRij_vv_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
 class Fragment_NRij_o_ao_PardoLoopManager: public FragmentPardoLoopManager {
 public:
 	Fragment_NRij_o_ao_PardoLoopManager(int num_indices,
@@ -805,69 +513,153 @@ private:
 	Interpreter* interpreter_;
 };
 
-class Fragment_NR1ij_vo_vo_PardoLoopManager: public FragmentPardoLoopManager {
+    class Fragment_i_pp__PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_i_pp__PardoLoopManager(int num_indices,
+                                        const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                        const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                        int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_i_pp__PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+    
+class Fragment_i_pppp__PardoLoopManager: public FragmentPardoLoopManager {
 public:
-	Fragment_NR1ij_vo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NR1ij_vo_vo_PardoLoopManager();
+    Fragment_i_pppp__PardoLoopManager(int num_indices,
+                                          const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                          const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                          int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_i_pppp__PardoLoopManager();
 private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
+    virtual bool do_update();
+    bool where_clause(int index);
+        
+    bool first_time_;
+    long& iteration_;
+    int num_where_clauses_;
+        
+    SIPMPIAttr & sip_mpi_attr_;
+    int company_rank_;
+    int num_workers_;
+    Interpreter* interpreter_;
 };
-
-class Fragment_NR1ij_oo_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_NR1ij_oo_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NR1ij_oo_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
-class Fragment_NR1ij_vv_vo_PardoLoopManager: public FragmentPardoLoopManager {
-public:
-	Fragment_NR1ij_vv_vo_PardoLoopManager(int num_indices,
-			const int (&index_ids)[MAX_RANK], DataManager & data_manager,
-			const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
-			int num_where_clauses, Interpreter* interpreter, long& iteration);
-	virtual ~Fragment_NR1ij_vv_vo_PardoLoopManager();
-private:
-	virtual bool do_update();
-	bool where_clause(int index);
-
-	bool first_time_;
-	long& iteration_;
-	int num_where_clauses_;
-
-	SIPMPIAttr & sip_mpi_attr_;
-	int company_rank_;
-	int num_workers_;
-	Interpreter* interpreter_;
-};
-
+    
+    class Fragment_ij_ap_pp_PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_ij_ap_pp_PardoLoopManager(int num_indices,
+                                           const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                           const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                           int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_ij_ap_pp_PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+    
+    class Fragment_ij_pp_pp_PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_ij_pp_pp_PardoLoopManager(int num_indices,
+                                           const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                           const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                           int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_ij_pp_pp_PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+    
+    class Fragment_Nij_pp_pp_PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_Nij_pp_pp_PardoLoopManager(int num_indices,
+                                            const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                            const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                            int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_Nij_pp_pp_PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+    
+    class Fragment_Rij_pp_pp_PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_Rij_pp_pp_PardoLoopManager(int num_indices,
+                                            const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                            const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                            int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_Rij_pp_pp_PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+    
+    class Fragment_NRij_pp_pp_PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_NRij_pp_pp_PardoLoopManager(int num_indices,
+                                        const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                        const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                        int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_NRij_pp_pp_PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+    
 #endif
 
 } /* namespace sip */

@@ -119,31 +119,78 @@ PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
+restore_persistent FwC      "MOI_wC"
 restore_persistent Dca "MOI_ca" 
 restore_persistent DFock_a "MOI_focka" 
 server_barrier
+#do a
+#    do a1
+#	get DFock_a[a,a1]
+#	allocate Fock_a[a,a1]
+#	Fock_a[a,a1] = DFock_a[a,a1]
+#    enddo a1
+#    do i1
+#	get DFock_a[a,i1]
+#	allocate Fock_a[a,i1]
+#	Fock_a[a,i1] = DFock_a[a,i1]
+#    enddo i1
+#enddo a
+#do i
+#    do a1
+#	get DFock_a[i,a1]
+#	allocate Fock_a[i,a1]
+#	Fock_a[i,a1] = DFock_a[i,a1]
+#    enddo a1
+#    do i1
+#	get DFock_a[i,i1]
+#	allocate Fock_a[i,i1]
+#	Fock_a[i,i1] = DFock_a[i,i1]
+#    enddo i1
+#enddo i
 do a
     do a1
-	get DFock_a[a,a1]
-	allocate Fock_a[a,a1]
-	Fock_a[a,a1] = DFock_a[a,a1]
+        allocate Fock_a[a,a1]
+        get DFock_a[a,a1]
+	get FwC[a,a1]
+	Taa[a,a1]  = FwC[a,a1]
+
+        if a==a1
+	T1aa[a,a1] = 0.014699
+	execute return_diagonal_elements T1aa[a,a1]
+	Taa[a,a1] += T1aa[a,a1]
+	endif
+
+        Fock_a[a,a1]  = DFock_a[a,a1]
+        Fock_a[a,a1] += Taa[a,a1]
     enddo a1
     do i1
-	get DFock_a[a,i1]
-	allocate Fock_a[a,i1]
-	Fock_a[a,i1] = DFock_a[a,i1]
+        allocate Fock_a[a,i1]
+        get DFock_a[a,i1]
+	get FwC[a,i1]
+
+        Fock_a[a,i1]  = DFock_a[a,i1]
     enddo i1
 enddo a
 do i
     do a1
-	get DFock_a[i,a1]
-	allocate Fock_a[i,a1]
-	Fock_a[i,a1] = DFock_a[i,a1]
+        allocate Fock_a[i,a1]
+        get DFock_a[i,a1]
+	get FwC[i,a1]
+
+	Tqq[i,a1] = FwC[i,a1]
+
+        Fock_a[i,a1]  = DFock_a[i,a1]
+        Fock_a[i,a1] += Tqq[i,a1]
     enddo a1
     do i1
-	get DFock_a[i,i1]
-	allocate Fock_a[i,i1]
-	Fock_a[i,i1] = DFock_a[i,i1]
+        allocate Fock_a[i,i1]
+        get DFock_a[i,i1]
+	get FwC[i,i1]
+
+	Tii1[i,i1]  = FwC[i,i1]
+
+        Fock_a[i,i1]  = DFock_a[i,i1]
+        Fock_a[i,i1] += Tii1[i,i1]
     enddo i1
 enddo i
 do mu
@@ -177,6 +224,7 @@ if rank == 0.0
 	enddo i
     enddo a
 #
+    print SHDiag
     execute cis_unit_guess C1_a SHDiag
 #
     do ksub
@@ -863,6 +911,7 @@ print "-- J. Comp. Phys. 1992, 103, 382-389 | J. Comp. Chem. 2001, 22, 1574-1589
 print "-- Written by Jason N. Byrd, 2015"
 print " "
 print "-- Modified to run for MOI fragment 2015"
+print "-- This version uses the wC correction to compute the perturbed CIS energy"
 print " "
 server_barrier
 CALL READ_AMP

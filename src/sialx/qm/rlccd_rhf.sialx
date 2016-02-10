@@ -885,10 +885,11 @@ ENDPROC form_D11
 
 print " "
 print "-- Parallel LCCD program"
+print "-- Ann. Rev. Phys. Chem. 32, 359-401 (1981)"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
 
-ecrit = 0.00000001
+ecrit = cc_conv
 zero = 0.0
 one = 1.0
 two = 2.0

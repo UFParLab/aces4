@@ -11,11 +11,28 @@ import "mcpt2_util.sialx"
 # 
 PROC FORM_JFRAG_HBAR
     server_barrier
+    pardo fi,fi1
+	put HBAR_ii[fi,fi1] = 0.0
+    endpardo fi,fi1
+    PARDO fa, fa1
+	put HBAR_aa[fa,fa1] = 0.0
+    ENDPARDO fa, fa1
+    PARDO fa, fi
+	put HBAR_ia[fi,fa]  = 0.0
+    ENDPARDO fa, fi
+    PARDO fi1,fa1,fa,fi
+	    put HBAR_AJIB[fi1,fa1,fa,fi] = 0.0
+    ENDPARDO fi1,fa1,fa,fi
+    PARDO fi1,fi2,fa,fi
+	put HBAR_IAJK[fi1,fi2,fa,fi] = 0.0
+    ENDPARDO fi1,fi2,fa,fi
+    PARDO fa1,fa2,fa,fi
+	put HBAR_ABCI[fa1,fa2,fa,fi] = 0.0
+    ENDPARDO fa1,fa2,fa,fi
+    server_barrier
 
-#do ifrag
-#where ifrag == 1
 #-----------
-    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{oo}{vo}"
+    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwOccA_frag[(index)fi] == ifrag
@@ -33,7 +50,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fi, fi1, b, j
 
-    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{oo}{vo}"
+    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwOccA_frag[(index)fi] == ifrag
@@ -56,7 +73,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fi, fi1, b, j
 #-----------
-    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{vv}{vo}"
+    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)fa] == ifrag
@@ -74,7 +91,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fa, fa1, b, j
 
-    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{vv}{vo}"
+    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)fa] == ifrag
@@ -97,7 +114,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fa, fa1, b, j
 #-----------
-    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)fa] == ifrag
@@ -115,7 +132,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fa, fi, b, j
 #-----------
-    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)fa] == ifrag
@@ -143,7 +160,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fa, fi, b, j
 #-----------
-    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)fa] == ifrag
@@ -171,7 +188,7 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fa, fi, b, j
 #-----------
-    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{vo}{vo}"
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
     where (int)rcut_dist[ifrag,jfrag] == ifrag
     where (int)SwVirtA_frag[(index)fa] == ifrag
@@ -200,14 +217,11 @@ PROC FORM_JFRAG_HBAR
     ENDPARDO ifrag, jfrag, fa, fi, b, j
 
 ###
-#enddo ifrag
 
     server_barrier
 ENDPROC FORM_JFRAG_HBAR
+
 PROC MOI_MANAGER
-print "starting additional transformations"
-call ADDITIONAL_FRAG_TRAN
-print "Finished additional transformations"
 print "Forming HBAR elements"
 call FORM_JFRAG_HBAR
 print "done forming HBAR elements"
@@ -234,6 +248,11 @@ server_barrier
 	put FT1old[fa,fi] = t1old[fa,fi]
     endpardo fa, fi
 
+    pardo fa, fi
+        get p2t1old[fa,fi]
+	put FP2T1old[fa,fi] = p2t1old[fa,fi]
+    endpardo fa, fi
+
     pardo fa, fi, fa1, fi1
 
         get T2old[fa,fi,fa1,fi1]
@@ -246,6 +265,7 @@ server_barrier
 
 esum1 = 0.0
 esum2 = 0.0
+esum4 = 0.0
     server_barrier
 
       PARDO fa, fi, fa1, fi1 
@@ -293,20 +313,37 @@ esum2 = 0.0
 	endpardo jfrag
     enddo ifrag
 
+      PARDO fa, fi
+
+               GET        FP2T1old[fa,fi] 
+               GET        FwC[fa,fi] 
+               tai[fa,fi] = FP2T1old[fa,fi] 
+
+               etemp = tai[fa,fi]*FwC[fa,fi]  
+               etemp*= 2.0  
+
+	       esum4 += etemp
+
+      ENDPARDO fa, fi
+
 server_barrier
 e1new = 0.0
 e2new = 0.0
-MOI_dimer_doubles = 0.0
+e3new = 0.0
+e4new = 0.0
 collective e1new += esum1
 collective e2new += esum2
-collective MOI_dimer_doubles += esum3
+collective e3new += esum3
+collective e4new += esum4
 print e1new
 print e2new
-print MOI_dimer_doubles
+print e3new
+print e4new
 
 server_barrier
 set_persistent FwC "MOI_wC"
 set_persistent FT1old "MOI_T1"
+set_persistent FP2T1old "MOI_p2T1"
 set_persistent FT2old "MOI_T2ab"
 set_persistent HBAR_ii "MOI_HBAR_ii"
 set_persistent HBAR_aa "MOI_HBAR_aa"
@@ -314,7 +351,7 @@ set_persistent HBAR_ia "MOI_HBAR_ia"
 set_persistent HBAR_AJIB "MOI_HBAR_ajib"
 set_persistent HBAR_IAJK "MOI_HBAR_iajk"
 set_persistent HBAR_ABCI "MOI_HBAR_abci"
-set_persistent MOI_dimer_doubles "dimer_doubles"
+server_barrier
 ENDPROC MOI_MANAGER
 #
 # -----------------------------------------------------------------------------
@@ -337,7 +374,10 @@ print " "
       restore_persistent Dca "ca" 
       restore_persistent DFock_a "fock_a"
       rmaster = 0
-      allocate sp[*] 
+      #print "**** Performing full non-HF flavor"
+      #do_nonhf = 1
+      print "**** Performing perturbing wc(a,i) flavor"
+      do_nonhf = 0
       zero = 0.0 
       one  = 1.0 
       print r_thresh 
@@ -351,8 +391,6 @@ print " "
       print "Done setting fragment parameters" 
       call set_fock_mos
       sip_barrier 
-
-
 #     Compute the NN repusion between fragments  
 #     ----------------------------------------- 
       nn_rep = 0.0 
@@ -406,10 +444,28 @@ print " "
       call END_PRINT
       sip_barrier
 
-      call MOI_MANAGER
-#
+    print "starting additional transformations"
+    call ADDITIONAL_FRAG_TRAN
+    print "Finished additional transformations"
+
+    call FORM_T1_SECONDORDER
+    sip_barrier
+
+    call MOI_MANAGER
 
          sip_barrier 
+set_persistent wC "frag_wC"
+set_persistent t1old "frag_t1old"
+set_persistent p2t1old "frag_p2t1old"
+set_persistent T2old "frag_t2old"
+set_persistent Vaibj "frag_vaibj"
+set_persistent Viabj "frag_viabj"
+set_persistent Vaajj "frag_vaajj"
+set_persistent Viijj "frag_viijj"
+set_persistent Vjiij "frag_vjiij"
+set_persistent Viiij "frag_viiij"
+
+
                            ENDSIAL FRAG_2ORDER_CORR 
 ##
-################################################################################
+###############################################################################

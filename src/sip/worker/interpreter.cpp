@@ -77,7 +77,8 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	tracer_ = new Tracer(sip_tables);
 
 
-	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+//	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+	if (printer_ == NULL) printer_ = new SialPrinterForProduction(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
 	timer_pc_ = 0;
 	iteration_=0;
 #ifdef HAVE_CUDA

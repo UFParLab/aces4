@@ -1,4 +1,4 @@
-import "mcpt2_defs.sialx" 
+import "frag_reom_defs.sialx" 
 sial frag_vars
 # ---------------
 # Declare index
@@ -23,9 +23,15 @@ index      ii  = 1: 1  # 1
 index smu = 1:norb
 index si = baocc: eaocc
 index sa = bavirt: eavirt
-index sp = baocc: eavirt
 index kstate   = 1: eom_roots
+index kstate1  = 1: eom_roots
+index jstate   = 1: eom_roots
+index qstate   = 2: eom_roots
 index ksub     = 1: eom_subspc
+index ksub1    = 1: eom_subspc
+index ksub2    = 1: eom_subspc
+index qsub     = 2: eom_subspc
+index jsub     = 1: eom_subspc
  
 aoindex mu     = 1: norb 
 aoindex mu1    = 1: norb 
@@ -39,13 +45,16 @@ aoindex sigma1=  1: norb
 moaindex i = baocc: eaocc  
 moaindex i1= baocc: eaocc  
 moaindex i2= baocc: eaocc  
+moaindex i3= baocc: eaocc  
 moaindex a = bavirt: eavirt   
 moaindex a1= bavirt: eavirt   
 moaindex a2= bavirt: eavirt   
 moaindex j = baocc: eaocc  
 moaindex j1= baocc: eaocc  
+moaindex j2= baocc: eaocc  
 moaindex b = bavirt: eavirt   
 moaindex b1= bavirt: eavirt   
+moaindex b2= bavirt: eavirt   
 moaindex p = baocc: eavirt
 moaindex p1= baocc: eavirt
 moaindex q = baocc: eavirt
@@ -67,6 +76,7 @@ moaindex fp1=  frag1_baocc: frag1_eavirt
 # ---------------
 # Declare ints
 # ---------------
+ int root
 int rmaster
 int do_nonhf
 int do_secondorder
@@ -230,33 +240,68 @@ distributed DwOccA_frag[i]
 distributed DwOccB_frag[j]
 distributed DwVirtA_frag[a]
 distributed DwVirtB_frag[b]
-distributed MOI_ca[fmu,fp]
-distributed MOI_focka[fp,fp1]
-distributed FT1old[fa,fi]
-distributed FP2T1old[fa,fi]
-distributed FwC[fp,fp1]
-distributed FT2old[fa,fi,fa1,fi1]
-distributed FFock_oo[fi,fi1]
-distributed FFock_vv[fa,fa1]
-distributed Fca_o[fmu,fi]
-distributed Fca_v[fmu,fa]
-distributed e3m1[ifrag]
-distributed e3m1_old[ifrag]
-distributed e3m1_error[ifrag]
-distributed Mck_a[a,i]
-distributed MOI_RB1_a[ksub,fa,fi]
-distributed MOI_RB2_aa[ksub,fa,fi,fa1,fi1]
-distributed MOI_RB2_ab[ksub,fa,fi,fa1,fi1]
-#
-distributed HBAR_ii[i,i1]
-distributed HBAR_aa[a,a1]
+
 distributed HBAR_ia[i,a]
-distributed HBAR_ajib[fi,fa,fa1,fi1]
-distributed HBAR_iajk[fi,fi1,fa,fi2]
-distributed HBAR_abci[fa,fa1,fa2,fi]
+distributed HBAR_jb[j,b]
+distributed HBAR_aa[a,a1]
+distributed HBAR_ii[i1,i]
+distributed HBAR_jj[j1,j]
+distributed HBAR_iiii[i,i1,i2,i3]
+distributed HBAR_iijj[i,i1,j,j1]
+distributed HBAR_AIBC_aaaa[a,a1,i,a2]
+distributed HBAR_AIBC_aabb[a,a1,j,b2]
+distributed HBAR_JKIA_aaaa[i1,i,i2,a]
+distributed HBAR_JKIA_aabb[i1,i,j2,b]
+distributed HBAR_IAJK_aaaa[i,i1,a,i2]
+distributed HBAR_IAJK_aabb[i,i1,b,j]
+distributed HBAR_AJIB_aaaa[i1,a1,a,i]
+distributed HBAR_AJIB_aabb[i,a,b,j]
+distributed HBAR_AJIB_iibb[i1,i,b,b1]
+distributed HBAR_ABCI_aaaa[a,a1,a2,i]
+distributed HBAR_ABCI_aabb[a,a1,b,j]
+distributed VCONV1A[a,i]
+distributed VCONV2AA[a,i,a1,i1]
+distributed VCONV2AB[a,i,b,j]
+distributed VCACT2AA[a,i,a1,i1]
+distributed VCACT2AB[a,i,b,j]
+distributed VCHACT2AA[a,i,a1,i1]
+distributed VCHACT2AB[a,i,b,j]
+distributed Gmat[ksub,ksub1]
+distributed HB2_aa[ksub,a,i,a1,i1]
+distributed HB2_ab[ksub,a,i,b,j]
+distributed HB1_a[ksub,a,i]
+distributed RB2_aa[ksub,a,i,a1,i1]
+distributed RB2_ab[ksub,a,i,b,j]
+distributed RB1_a[ksub,a,i]
+distributed LB2_aa[ksub,a,i,a1,i1]
+distributed LB2_ab[ksub,a,i,b,j]
+distributed LB1_a[ksub,a,i]
+distributed R1k2_aa[kstate,a,i,a1,i1]
+distributed R1k2_ab[kstate,a,i,b,j]
+distributed R1k1_a[kstate,a,i]
+distributed L1k2_aa[kstate,a,i,a1,i1]
+distributed L1k2_ab[kstate,a,i,b,j]
+distributed L1k1_a[kstate,a,i]
+distributed R0k2_aa[kstate,a,i,a1,i1]
+distributed R0k2_ab[kstate,a,i,b,j]
+distributed R0k1_a[kstate,a,i]
+distributed L0k2_aa[kstate,a,i,a1,i1]
+distributed L0k2_ab[kstate,a,i,b,j]
+distributed L0k1_a[kstate,a,i]
+distributed cRk2_aa[kstate,a,i,a1,i1]
+distributed cRk2_ab[kstate,a,i,b,j]
+distributed cRk1_a[kstate,a,i]
+distributed cLk2_aa[kstate,a,i,a1,i1]
+distributed cLk2_ab[kstate,a,i,b,j]
+distributed cLk1_a[kstate,a,i]
 # ---------------
 # Declare contiguous
 # ---------------
+static SAlphaR[ksub,ksub1]
+static GSmat[ksub,ksub1]
+static SEk[ksub]
+static SEk0[kstate]
+static SEkold[kstate]
 static ao_start[ifrag]
 static ao_end[ifrag]
 static occ_start[ifrag]
@@ -264,7 +309,6 @@ static occ_end[ifrag]
 static fock_a[p] 
 static Sx3[p] 
 static SwAO_frag[smu] 
-static SwMOA_frag[sp] 
 static SwOccA_frag[si]
 static SwOccB_frag[si]
 static SwVirtA_frag[sa]
@@ -291,6 +335,9 @@ contiguous local scr_2[ao_scratch,ao_scratch]
 contiguous local scr_3[ao_scratch,ao_scratch] 
 contiguous local scr_4[ao_scratch,ao_scratch] 
 contiguous local scr_5[ao_scratch,ao_scratch] 
+contiguous local SHDiag[a,i]
+contiguous local C1_a[ksub,a,i]
+contiguous local CIS_EE_Energy[ksub]
 # ---------------
 # Declare local
 # ---------------
@@ -301,6 +348,7 @@ local ca[mu,p]
 local LVxxxq[mu,nu,lambda,j] 
 local LVxxqq[mu,nu,j,j1] 
 local LDaixj[a,i,nu,j]
+local sp[ifrag] 
 local LwC[p,p1]  
 local wAO_frag[mu] 
 local wOccA_frag[i] 
@@ -382,21 +430,15 @@ temp xb[b]
 temp xb1[b]  
 temp Taibj[a,i,b,j]
 temp T1aibj[a,i,b,j]
-temp tk[kstate]
-
-###############
-# EXPERIMENTAL
-###############
-int istart
-int iend
-temp Txi[mu,i]
-static SCAij[mu,i]
-contiguous local SPij[i,i1]
-contiguous local SVij[i,i1]
-contiguous local SFij[i,i1]
-contiguous local SFTij[i,i1]
-contiguous local SZij[i,i1]
-contiguous local SOij[i,i1]
-contiguous local SVOij[i,i1]
+temp tk[ksub]
+temp tkk[ksub,ksub1]
+temp Tkai[ksub,a,i]
+temp T1kai[ksub,a,i]
+temp T2kai[ksub,a,i]
+temp Taaii[a,a1,i,i1]
+temp Tia[i,a]
+temp Taa[a,a1]
+temp Tii[i,i1]
+temp T2ai[a,i]
 # ---------------
 endsial frag_vars

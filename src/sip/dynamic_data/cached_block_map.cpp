@@ -128,8 +128,8 @@ double* CachedBlockMap::allocate_data(std::size_t size, bool initialize){
 					data = new double[size];
 				}
 				MemoryTracker::global->inc_allocated(size);
-				WARN(MemoryTracker::global->get_allocated_bytes() <= max_allocatable_bytes_ ,
-						"Memory allocated at worker exceeds max_allocatable_bytes_");
+//				WARN(MemoryTracker::global->get_allocated_bytes() <= max_allocatable_bytes_ ,
+//						"Memory allocated at worker exceeds max_allocatable_bytes_");
 				allocated = true;
 			}
 			catch (const std::bad_alloc& ba) {

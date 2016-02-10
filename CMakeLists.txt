@@ -610,6 +610,9 @@ set(SIAL_FILES
     src/sialx/qm/MOI_rcis.sialx;
     src/sialx/qm/MOI_reom_mcpt2.sialx;
     src/sialx/qm/MOI_reom_elements.sialx;
+    src/sialx/qm/frag_rcis_rhf.sialx;
+    src/sialx/qm/frag_wc.sialx;
+    src/sialx/qm/frag_rcis_rhf.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;
@@ -630,6 +633,7 @@ set(SIAL_FILES
     src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/lr_eom_linccsd_rhf.sialx;
+    src/sialx/qm/lr_eom_ccpt2_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/reom_hbar.sialx;
     src/sialx/qm/reom_vars.sialx;

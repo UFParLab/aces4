@@ -14,10 +14,11 @@ server_barrier
 restore_persistent Dca      "MOI_ca"
 restore_persistent DFock_a  "MOI_focka"
 restore_persistent R1k1_a   "MOI_C1_a"
-restore_persistent RB1_a    "MOI_B1_a"
+restore_persistent TB1_a    "MOI_B1_a"
 restore_persistent t1a      "MOI_T1"
 restore_persistent T2ab     "MOI_T2ab"
 restore_persistent FwC      "MOI_wC"
+restore_persistent t1a_old  "MOI_p2T1"
 
 restore_persistent MOI_HBAR_ii "MOI_HBAR_ii"
 restore_persistent MOI_HBAR_aa "MOI_HBAR_aa"
@@ -25,8 +26,6 @@ restore_persistent MOI_HBAR_ia "MOI_HBAR_ia"
 restore_persistent MOI_HBAR_AJIB_aabb "MOI_HBAR_ajib"
 restore_persistent MOI_HBAR_IAJK_aabb "MOI_HBAR_iajk"
 restore_persistent MOI_HBAR_ABCI_aabb "MOI_HBAR_abci"
-
-restore_persistent dimer_doubles "dimer_doubles"
 
 #pardo i,i1
 #put MOI_HBAR_ii[i,i1] = 0.0
@@ -46,6 +45,12 @@ restore_persistent dimer_doubles "dimer_doubles"
 #pardo a, a1, a2, i
 #    prepare MOI_HBAR_ABCI_aabb[a,a1,a2,i] = 0.0
 #endpardo a, a1, a2, i
+server_barrier
+
+pardo ksub,a,i
+    request TB1_a[ksub,a,i] 
+    prepare RB1_a[ksub,a,i] = TB1_a[ksub,a,i]
+endpardo ksub,a,i
 
 server_barrier
 print "Setting wC elements of the Fock matrix"
@@ -58,9 +63,6 @@ do a
 
         Fock_a[a,a1]  = DFock_a[a,a1]
         Fock_a[a,a1] += Taa[a,a1]
-
-	SFock_a[a,a1] = Fock_a[a,a1]
-
     enddo a1
     do i1
         allocate Fock_a[a,i1]
@@ -68,9 +70,6 @@ do a
 	get FwC[a,i1]
 
         Fock_a[a,i1]  = DFock_a[a,i1]
-        Fock_a[a,i1] += FwC[a,i1]
-
-	SFock_a[a,i1] = Fock_a[a,i1]
     enddo i1
 enddo a
 do i
@@ -79,10 +78,10 @@ do i
         get DFock_a[i,a1]
 	get FwC[i,a1]
 
-        Fock_a[i,a1]  = DFock_a[i,a1]
-        Fock_a[i,a1] += FwC[i,a1]
+	Tqq[i,a1] = FwC[i,a1]
 
-	SFock_a[i,a1] = Fock_a[i,a1]
+        Fock_a[i,a1]  = DFock_a[i,a1]
+        Fock_a[i,a1] += Tqq[i,a1]
     enddo a1
     do i1
         allocate Fock_a[i,i1]
@@ -93,9 +92,6 @@ do i
 
         Fock_a[i,i1]  = DFock_a[i,i1]
         Fock_a[i,i1] += Tii1[i,i1]
-
-	SFock_a[i,i1] = Fock_a[i,i1]
-
     enddo i1
 enddo i
 do mu
@@ -127,6 +123,11 @@ PARDO a, a1, i, i1
     Tiaia[i,a,i1,a1] = T2aa[a,i,a1,i1]
     prepare L2aa[i,a,i1,a1] = Tiaia[i,a,i1,a1]
 ENDPARDO a, a1, i, i1
+PARDO a, a1, i, i1
+    request T2aa[a,i,a1,i1]
+    Tiaia[i,a,i1,a1] = T2aa[a,i,a1,i1]
+    prepare L2bb[i,a,i1,a1] = Tiaia[i,a,i1,a1]
+ENDPARDO a, a1, i, i1
 PARDO a, b, i, j
     request T2ab[a,i,b,j]
     Tiajb[i,a,j,b] = T2ab[a,i,b,j]
@@ -146,8 +147,8 @@ if myrank == root
     do i
         get t1a[a,i]
         Tai[a,i] = t1a[a,i]
-        St1a[a,i] = 0.0 #t1a[a,i]
-        St1b[a,i] = 0.0 #t1a[a,i]
+        St1a[a,i] = t1a[a,i]
+        St1b[a,i] = t1a[a,i]
         put t1b[a,i] = Tai[a,i]
     enddo i
     enddo a
@@ -1572,47 +1573,1845 @@ do kstate
     SR0[kstate] = r0
 enddo kstate
 endproc form_r0
+#
+#-------------------------------------------------------------------------
+#
+PROC  COMPUTE_DENSITY
+#
+pardo  a, a1
+
+    taa[a,a1] = 0.0 
+
+    do i
+	GET           L1A [i,a1]
+	Tai[a,i] = St1a[a,i]
+	request t1a_old[a,i]
+	Tai[a,i] += t1a_old[a,i]
+	taa1 [a,a1] = Tai[a,i] * L1A [i,a1]
+	taa[a,a1]  += taa1[a,a1] 
+    enddo i
+
+    taa [a,a1]           *= R0
+    PUT  DENS_VV_A [a,a1] = taa [a,a1]
+#
+#
+#          ...Initialize intermediates...
+#
+#
+    PUT  T2L2_VV_A [a,a1] = 0.0
+    PUT  R2L2_VV_A [a,a1] = 0.0
+
+endpardo  a, a1
+#
+pardo  b, b1
+
+    tbb[b,b1] = 0.0 
+
+    do j
+	GET           L1B [j,b1]
+	Tai[b,j] = St1a[b,j]
+	request t1a_old[b,j]
+	Tai[b,j] += t1a_old[b,j]
+	tbb1 [b,b1] = Tai[b,j] * L1B [j,b1]
+	tbb[b,b1]  += tbb1[b,b1] 
+    enddo j
+
+    tbb [b,b1]           *= R0
+    PUT  DENS_VV_B [b,b1] = tbb [b,b1]
+#
+#
+#          ...Initialize the intermediates...
+#
+#
+    PUT  T2L2_VV_B [b,b1] = 0.0
+    PUT  R2L2_VV_B [b,b1] = 0.0
+
+endpardo  b, b1
+
+pardo  i, a
+
+    GET  L1A [i,a]
+
+    tia  [i,a]  = L1A [i,a]
+    tia  [i,a] *= R0
+    tia2 [i,a]  = 0.0
+
+    PUT  DENS_OV_A     [i,a] = tia [i,a]
+    PUT  DENS_INT_OV_A [i,a] = tia2 [i,a]
+
+endpardo  i, a
+
+pardo  j, b
+
+    GET  L1B [j,b] 
+
+    tjb  [j,b]  = L1B [j,b]
+    tjb  [j,b] *= R0 
+    tjb2 [j,b]  = 0.0
+
+    PUT  DENS_OV_B     [j,b] = tjb  [j,b]
+    PUT  DENS_INT_OV_B [j,b] = tjb2 [j,b]
+
+endpardo  j, b
+
+pardo  i, i1
+#
+    tii[i,i1] = 0.0 
+
+    do a
+
+	GET  L1A [i1,a]
+
+	tii1 [i,i1]  = St1a [a,i] * L1A [i1,a]
+	tii1 [i,i1] *= -1.0
+	tii[i,i1] += tii1[i,i1] 
+
+    enddo a
+
+    PUT  T1L1_OO_A [i,i1] = tii [i,i1]
+
+    do a
+
+	GET  L1A [i1,a]
+	request t1a_old[a,i]
+
+	tii1 [i,i1]  = t1a_old[a,i] * L1A [i1,a]
+	tii1 [i,i1] *= -1.0
+	tii[i,i1] += tii1[i,i1] 
+
+    enddo a
+
+    tii [i,i1] *= R0
+    PUT  DENS_OO_A [i,i1] = tii [i,i1]
+
+    tii [i,i1] = 0.0
+#
+#
+#          ...Initialize intermediates...
+#
+#
+    PUT  T2L2_OO_A [i,i1] = 0.0
+    PUT  R2L2_OO_A [i,i1] = 0.0
+
+endpardo  i, i1
+
+#VFL 
+pardo  j, j1
+#
+    tjj[j,j1] = 0.0 
+
+    do b
+
+	GET  T1B [b,j]
+	GET  L1B [j1,b]
+
+	tjj1 [j,j1]  = T1B [b,j] * L1B [j1,b]
+	tjj1 [j,j1] *= -1.0
+	tjj[j,j1] += tjj1[j,j1] 
+
+    enddo b
+
+    PUT  T1L1_OO_B [j,j1] = tjj [j,j1]
+
+    do b
+
+	GET  L1B [j1,b]
+	request t1a_old[b,j]
+
+	tjj1 [j,j1]  = t1a_old[b,j] * L1B [j1,b]
+	tjj1 [j,j1] *= -1.0
+	tjj[j,j1] += tjj1[j,j1] 
+
+    enddo b
+
+    tjj [j,j1] *= R0
+    PUT  DENS_OO_B [j,j1] = tjj [j,j1]
+#
+#
+#          ...Initialize the intermediates...
+#
+#
+    tjj [j,j1] = 0.0
+    PUT  T2L2_OO_B [j,j1] = 0.0
+    PUT  R2L2_OO_B [j,j1] = 0.0
+
+endpardo  j, j1
+#
+server_barrier
+#     
+#                          -------------------
+#                          -                 -
+#                          -  ALPHA DENSITY  -
+#                          -                 -
+#                          -------------------
+#
+#
+#    ===========================================================
+#       COMPUTE  OCCUPIED - OCCUPIED  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    ALPHA                                                 ALPHA
+#    -----                                                 -----
+#
+#
+#
+#          ...L  * T  ...
+#              2    2
+#
+#
+pardo i, a, a1, i2
+
+    REQUEST            T2AA [a,i,a1,i2] 
+    tpppp[a,i2,a1,i] = T2AA [a,i,a1,i2]  
+
+    do i1
+
+	REQUEST  L2AA [i1,a,i2,a1] 
+
+	tii1 [i1,i] = L2AA [i1,a,i2,a1] * tpppp [a,i2,a1,i]
+	tii [i,i1]  = tii1[i1,i] 
+	tii [i,i1] *= -0.5
+	PUT  T2L2_OO_A [i,i1] += tii [i,i1]
+
+	tii [i,i1] *= R0
+	PUT  DENS_OO_A [i,i1] += tii [i,i1]
+
+    enddo i1
+
+endpardo i, a, a1, i2
+#
+#
+#         ...ALPHA-BETA summation...
+#
+#
+pardo i, a, b, j
+
+    REQUEST          T2AB [a,i,b,j] 
+    tpppp[a,j,b,i] = T2AB[a,i,b,j] 
+
+    do i1
+
+	REQUEST       L2AB [i1,a,j,b] 
+
+	tii1[i1,i]  = L2AB [i1,a,j,b] * tpppp [a,j,b,i]
+	tii [i,i1]  = tii1[i1,i] 
+	tii [i,i1] *= -1.0
+	PUT  T2L2_OO_A [i,i1] += tii [i,i1]
+
+	tii [i,i1] *= R0
+	PUT  DENS_OO_A   [i,i1] += tii [i,i1]
+
+    enddo i1
+
+endpardo  i, a, b, j
+#
+#
+#           ...The other piece to the right moment density...
+#
+#                 R1 * A1  +  R2 * A2  +  T1 * R1 * A2
+#
+if  LOGRIGHT == ONE
+
+    pardo  i, i1, a
+
+	GET  R1A [a,i]
+	GET  L1A [i1,a]
+
+	tii  [i,i1]  = R1A [a,i] * L1A [i1,a]
+	tii  [i,i1] *= -1.0
+
+	PUT  DENS_OO_A [i,i1] += tii  [i,i1]
+	PUT  R2L2_OO_A [i,i1] += tii  [i,i1]
+
+    endpardo  i, i1, a 
+#
+#
+#
+    pardo  a, a1, i2
+
+	ALLOCATE  laiai4 [a,i2,a1,*]
+	ALLOCATE  laiai5 [a,i2,a1,*]
+
+	do i
+
+	    REQUEST               R2AA [a,i,a1,i2] 
+	    laiai5 [a,i2,a1,i]  = R2AA [a,i,a1,i2]
+	    laiai5 [a,i2,a1,i] *= 0.5
+
+	    GET  R1A [a1,i2]
+	    laiai4 [a,i2,a1,i]  = laiai5 [a,i2,a1,i]
+#
+# jnb truncate
+#	    taiai  [a,i2,a1,i]  = St1a [a,i] ^ R1A [a1,i2]
+#	    laiai4 [a,i2,a1,i] += taiai [a,i2,a1,i]
+
+	enddo i
+
+	do i1
+
+	    REQUEST  L2AA [i1,a,i2,a1] 
+
+	    do i
+
+		tii1[i1,i]  = L2AA [i1,a,i2,a1] * laiai4 [a,i2,a1,i]
+		tii [i,i1]  = tii1[i1,i]  
+		tii [i,i1] *= -1.0
+		PUT  DENS_OO_A [i,i1] += tii [i,i1]
+
+		tii1[i1,i]  = L2AA [i1,a,i2,a1] * laiai5 [a,i2,a1,i]
+		tii [i,i1]  = tii1[i1,i]  
+		tii [i,i1] *= -1.0
+		PUT  R2L2_OO_A [i,i1] += tii [i,i1]
+
+	    enddo i
+
+	enddo i1
+
+	DEALLOCATE  laiai4 [a,i2,a1,*]
+	DEALLOCATE  laiai5 [a,i2,a1,*]
+
+    endpardo  a, a1, i2
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+    pardo  a, b, j
+
+	ALLOCATE  laibj4 [a,j,b,*]
+	ALLOCATE  laibj5 [a,j,b,*]
+
+	do i
+
+	    REQUEST            R2AB [a,i,b,j] 
+	    GET                R1B [b,j]
+	    laibj5 [a,j,b,i] = R2AB[a,i,b,j]
+
+	    laibj4 [a,j,b,i]  = laibj5 [a,j,b,i]
+#
+# jnb truncate
+#	    taibj  [a,j,b,i]  = St1a [a,i] ^ R1B [b,j]
+#	    laibj4 [a,j,b,i] += taibj [a,j,b,i]
+
+	enddo i
+
+	do i1
+
+	    REQUEST  L2AB [i1,a,j,b] 
+
+	    do i
+
+		tii1[i1,i]  = L2AB [i1,a,j,b] * laibj4 [a,j,b,i]
+		tii [i,i1]  = tii1[i1,i]  
+		tii [i,i1] *= -1.0
+		PUT  DENS_OO_A [i,i1] += tii [i,i1]
+
+		tii1[i1,i]  = L2AB [i1,a,j,b] * laibj5 [a,j,b,i]
+		tii [i,i1]  = tii1[i1,i]  
+		tii [i,i1] *= -1.0
+		PUT  R2L2_OO_A [i,i1] += tii [i,i1]
+
+	    enddo i
+
+	enddo i1
+
+	DEALLOCATE  laibj5 [a,j,b,*]
+	DEALLOCATE  laibj4 [a,j,b,*]
+
+    endpardo  a, b, j
+
+endif  # LOGRIGHT == ONE #
+#
+#
+#
+#    ===========================================================
+#       COMPUTE  VIRTUAL - VIRTUAL  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    ALPHA                                                 ALPHA
+#    -----                                                 -----
+#
+#
+#
+#
+#    ...The following is the T1 * L1 piece...
+#
+#
+#          ...This is the T2 * A2 piece
+#
+#
+pardo  a2, a1, i, i1
+
+    REQUEST             L2AA [i,a2,i1,a1] 
+    tpppp[i,a1,i1,a2] = L2AA [i,a2,i1,a1] 
+
+    do a
+
+	REQUEST       T2AA [a,i,a1,i1] 
+
+	taa [a,a2]  = T2AA [a,i,a1,i1] * tpppp[i,a1,i1,a2]  
+	taa [a,a2] *= -0.50
+	PUT  T2L2_VV_A [a,a2] += taa [a,a2]
+
+	taa [a,a2] *= R0
+	taa [a,a2] *= -1.0
+	PUT  DENS_VV_A [a,a2] += taa [a,a2]
+
+    enddo a
+
+endpardo  a2, a1, i, i1
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+pardo  a2, b, j, i
+
+    REQUEST           L2AB [i,a2,j,b] 
+    tpppp[i,b,j,a2] = L2AB [i,a2,j,b] 
+
+    do a
+
+	REQUEST  T2AB [a,i,b,j] 
+
+	taa [a,a2]  = T2AB [a,i,b,j] * tpppp[i,b,j,a2] 
+	taa [a,a2] *= -1.0
+	PUT  T2L2_VV_A [a,a2] += taa [a,a2]
+
+	taa [a,a2] *= R0
+	taa [a,a2] *= -1.0
+	PUT  DENS_VV_A [a,a2] += taa [a,a2]
+
+    enddo a
+
+endpardo  a2, b, j, i
+#
+#
+#           ...The other piece to the right moment density...
+#
+#                 R1 * A1  +  R2 * A2  +  T1 * R1 * A2
+#
+if  LOGRIGHT == ONE
+
+pardo  a, a1, i 
+
+    GET  R1A [a,i]
+    GET  L1A [i,a1]
+
+    taa [a,a1]  = R1A [a,i] * L1A [i,a1]
+    PUT  DENS_VV_A [a,a1] += taa [a,a1]
+
+    taa [a,a1] *= -1.0
+    PUT  R2L2_VV_A [a,a1] += taa [a,a1]
+
+endpardo  a, a1, i 
+#
+pardo  a1, i, i1
+
+    ALLOCATE  laiai  [*,i,a1,i1]
+    ALLOCATE  laiai2 [*,i,a1,i1]
+
+    GET  R1A [a1,i1]
+
+    do a
+
+	REQUEST               R2AA [a,i,a1,i1] 
+
+	laiai  [a,i,a1,i1]  = R2AA [a,i,a1,i1]
+	laiai  [a,i,a1,i1] *= 0.5
+	laiai2 [a,i,a1,i1]  = laiai [a,i,a1,i1]
+#
+# jnb truncate
+#	taiai  [a,i,a1,i1]  = St1a [a,i] ^ R1A [a1,i1]
+#	laiai  [a,i,a1,i1] += taiai [a,i,a1,i1]
+
+    enddo a
+
+    do a2
+
+	REQUEST              L2AA [i,a2,i1,a1] 
+	tpppp[i,a1,i1,a2] =  L2AA [i,a2,i1,a1] 
+
+	do a
+
+	    taa  [a,a2] = laiai  [a,i,a1,i1] * tpppp[i,a1,i1,a2]  
+	    PUT  DENS_VV_A [a,a2] += taa  [a,a2]
+
+	enddo a
+
+	do a
+
+	    taa2 [a,a2]  = laiai2 [a,i,a1,i1] * tpppp[i,a1,i1,a2]
+	    taa2 [a,a2] *= -1.0
+	    PUT  R2L2_VV_A [a,a2] += taa2 [a,a2]
+
+	enddo a
+
+    enddo a2
+
+    DEALLOCATE  laiai  [*,i,a1,i1]
+    DEALLOCATE  laiai2 [*,i,a1,i1]
+
+endpardo  a1, i, i1
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+pardo  b, j, i
+
+    ALLOCATE  laibj  [*,i,b,j]
+    ALLOCATE  laibj2 [*,i,b,j]
+
+    GET  R1B [b,j]
+
+    do a
+
+	REQUEST            R2AB [a,i,b,j] 
+	laibj2 [a,i,b,j] = R2AB [a,i,b,j]
+
+	laibj [a,i,b,j]  = laibj2 [a,i,b,j]
+#
+# jnb truncate
+#	taibj [a,i,b,j]  = St1a [a,i] ^ R1B [b,j]
+#	laibj [a,i,b,j] += taibj [a,i,b,j]
+
+    enddo a
+
+    do a2
+
+	REQUEST            L2AB [i,a2,j,b] 
+	tpppp[i,b,j,a2] =  L2AB [i,a2,j,b] 
+
+	do a
+
+	    taa  [a,a2] = laibj  [a,i,b,j] * tpppp[i,b,j,a2] 
+	    PUT  DENS_VV_A [a,a2] += taa  [a,a2]
+
+	    taa2 [a,a2]  = laibj2 [a,i,b,j] * tpppp[i,b,j,a2] 
+	    taa2 [a,a2] *= -1.0
+	    PUT  R2L2_VV_A [a,a2] += taa2 [a,a2]
+
+	enddo a
+
+    enddo a2
+
+    DEALLOCATE  laibj  [*,i,b,j]
+    DEALLOCATE  laibj2 [*,i,b,j]
+
+endpardo  b, j, i
+
+endif  # LOGRIGHT == ONE #
+#
+#
+#
+#          ------------------------------------------------
+#                          !!! IMPORTANT !!!
+#          ------------------------------------------------
+#
+#           The following Occupied - Virtual code computes
+#           both the alpha and beta pieces since one needs
+#           both to compute the Virtual - Occupied piece.
+#
+#          ------------------------------------------------
+#          ------------------------------------------------
+#
+#
+#    ===========================================================
+#       COMPUTE  OCCUPIED - VIRTUAL  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    ALPHA                                                 ALPHA
+#    -----                                                 -----
+#
+#
+#
+#
+#
+if  LOGRIGHT == ONE
+
+pardo  i, a, a1, i1
+
+    REQUEST                     L2AA [i,a,i1,a1] 
+    GET                         R1A  [a1,i1]
+    tia [i,a]                 = L2AA [i,a,i1,a1] * R1A [a1,i1]
+    t1ia[i,a] = tia[i,a]
+    PUT  DENS_INT_OV_A [i,a] += t1ia [i,a]
+
+    request t1a_old[a1,i1]
+    tia [i,a]                 = L2AA [i,a,i1,a1] * t1a_old[a1,i1]
+    PUT  DENS_OV_A     [i,a] += tia [i,a]
+
+    request t1a_old[a1,i1]
+
+endpardo  i, a, a1, i1
+
+pardo  i, a, b, j
+
+    REQUEST                     L2AB [i,a,j,b] 
+    GET                         R1B  [b,j]
+    tia [i,a]                 = L2AB [i,a,j,b] * R1B [b,j]
+    t1ia[i,a] = tia[i,a]
+    PUT  DENS_INT_OV_A [i,a] += t1ia [i,a]
+
+    request t1a_old[b,j]
+    tia [i,a]                 = L2AB [i,a,j,b] * t1a_old[b,j]
+    PUT  DENS_OV_A     [i,a] += tia [i,a]
+
+endpardo i, a, b, j
+
+endif  # LOGRIGHT == ONE #
+#
+#
+#
+#    ===========================================================
+#       COMPUTE  OCCUPIED - VIRTUAL  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    BETA                                                   BETA
+#    ----                                                   ----
+#
+
+if  LOGRIGHT == ONE
+
+pardo  j, b
+
+    tjb[j,b] = 0.0 
+
+    do b1
+    do j1
+
+	REQUEST                     L2BB [j,b,j1,b1] 
+	GET                         R1B [b1,j1]
+	tjb1 [j,b]                = L2BB [j,b,j1,b1] * R1B [b1,j1]
+	tjb[j,b]                 += tjb1[j,b] 
+
+    enddo j1
+    enddo b1
+
+    PUT  DENS_OV_B     [j,b] += tjb [j,b]
+    PUT  DENS_INT_OV_B [j,b] += tjb [j,b]
+
+endpardo  j, b
+
+pardo  j, b
+
+    tjb[j,b] = 0.0 
+
+    do a
+    do i
+
+	REQUEST      L2AB [i,a,j,b] 
+	GET          R1A [a,i]
+	tjb1 [j,b] = L2AB [i,a,j,b] * R1A [a,i]
+	tjb[j,b]  += tjb1[j,b] 
+
+    enddo i
+    enddo a
+
+    PUT  DENS_OV_B     [j,b] += tjb [j,b]
+    PUT  DENS_INT_OV_B [j,b] += tjb [j,b]
+
+endpardo  j, b
+
+endif  # LOGRIGHT == ONE #
+
+server_barrier
+#
+#
+#
+#    ===========================================================
+#       COMPUTE  VIRTUAL - OCCUPIED  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    ALPHA                                                 ALPHA
+#    -----                                                 -----
+#
+#
+#          ...Evaluate the R0 contribution...
+#
+#
+# VFL 
+pardo  a, i
+
+    tai1[a,i] = 0.0 
+
+    do i1 
+
+	GET  T1L1_OO_A [i,i1]
+	GET  T2L2_OO_A [i,i1]
+
+	tii [i,i1]  = T1L1_OO_A [i,i1]
+	tii [i,i1] += T2L2_OO_A [i,i1]
+
+	tai [a,i]   = St1a [a,i1] * tii [i,i1]
+
+	tai1[a,i] += tai[a,i] 
+
+    enddo i1 
+
+    if GROUNDSTATE == ONE
+	tai1 [a,i]  += St1a [a,i]
+    endif
+
+    tai1 [a,i]  *= R0
+    PUT  DENS_VO_A [a,i] = tai1 [a,i]
+
+endpardo  a, i 
+
+server_barrier
+#
+#
+pardo  a, a1, i
+
+    GET                     T2L2_VV_A [a,a1]
+    tai [a,i]             = T2L2_VV_A [a,a1] * St1a [a1,i]
+    tai [a,i]            *= R0
+    PUT  DENS_VO_A [a,i] += tai [a,i]
+
+endpardo  a, a1, i
+#
+#
+pardo  a1, i1
+
+    GET  L1A [i1,a1]
+
+    do a
+    do i
+	REQUEST                 T2AA [a,i,a1,i1] 
+	tai  [a,i]            = T2AA [a,i,a1,i1] * L1A [i1,a1]
+	tai  [a,i]           *= R0
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo i
+    enddo a
+
+endpardo  a1, i1
+
+pardo  b, j
+
+    GET  L1B [j,b]
+
+    do a
+    do i
+	REQUEST                 T2AB [a,i,b,j] 
+	tai  [a,i]            = T2AB [a,i,b,j] * L1B [j,b]
+	tai  [a,i]           *= R0
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo i
+    enddo a
+
+endpardo  b, j
+#
+#
+if LOGRIGHT == ONE
+
+pardo  a1, i1
+
+    GET  DENS_INT_OV_A [i1,a1]
+    tia [i1,a1] = DENS_INT_OV_A [i1,a1]
+
+    do a
+    do i
+	REQUEST  T2AA [a,i,a1,i1] 
+	tai [a,i] = T2AA [a,i,a1,i1] * tia [i1,a1]
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo i
+    enddo a
+
+endpardo  a1, i1
+
+pardo  b, j
+
+    GET  DENS_INT_OV_B [j,b]
+    tjb [j,b] = DENS_INT_OV_B [j,b]
+
+    do a
+    do i
+	REQUEST  T2AB [a,i,b,j] 
+	tai [a,i]    = T2AB [a,i,b,j] * tjb [j,b]
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo i
+    enddo a
+
+endpardo  b, j
+#
+pardo  i, i1
+
+    tii[i,i1] = 0.0 
+    do a1  
+	GET           DENS_INT_OV_A [i1,a1]
+	tia [i1,a1] = DENS_INT_OV_A [i1,a1]
+	tii1 [i,i1] = St1a [a1,i] * tia [i1,a1]
+	tii[i,i1] += tii1[i,i1] 
+    enddo a1  
+
+    do a
+	tai [a,i]             = St1a [a,i1] * tii [i,i1]
+	tai [a,i]            *= -1.0
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo a
+
+endpardo  i, i1
+#
+pardo  a1, i1
+
+    GET  L1A [i1,a1]
+
+    do a
+    do i
+	REQUEST                 R2AA [a,i,a1,i1] 
+	tai [a,i]             = R2AA [a,i,a1,i1] * L1A [i1,a1]
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo i
+    enddo a
+
+endpardo  a1, i1
+
+pardo  b, j
+
+    GET  L1B [j,b]
+
+    do a
+    do i
+	REQUEST                 R2AB [a,i,b,j] 
+	tai [a,i]             = R2AB [a,i,b,j] * L1B [j,b]
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    enddo i
+    enddo a
+
+endpardo  b, j
+# 
+pardo  i, a, a1 
+
+    GET  R2L2_VV_A [a,a1]
+    GET  T2L2_VV_A [a,a1]
+    GET  R1A [a1,i]
+    tai  [a,i]  = R2L2_VV_A [a,a1] * St1a [a1,i]
+    tai2 [a,i]  = T2L2_VV_A [a,a1] * R1A [a1,i]
+    tai  [a,i] += tai2 [a,i]
+    PUT  DENS_VO_A [a,i] += tai [a,i]
+
+endpardo i, a, a1  
+#
+pardo i, a, i1  
+
+    GET  R1A [a,i1]
+    GET  R2L2_OO_A [i,i1]
+    GET  T2L2_OO_A [i,i1]
+    tai  [a,i]  = St1a [a,i1] * R2L2_OO_A [i,i1]
+    tai2 [a,i]  = R1A [a,i1] * T2L2_OO_A [i,i1]
+    tai  [a,i] += tai2 [a,i]
+    PUT  DENS_VO_A [a,i] += tai [a,i]
+
+endpardo  i, a, i1  
+#
+if EXCITESTATE == ZERO
+    pardo  a, i
+	GET  R1A [a,i]
+	tai [a,i] = R1A [a,i]
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    endpardo  a, i
+endif
+
+if EXCITESTATE == ONE
+    pardo  a, i
+	tai [a,i] = St1a [a,i]
+	PUT  DENS_VO_A [a,i] += tai [a,i]
+    endpardo  a, i
+endif
+
+
+endif  # LOGRIGHT = ONE #
+
+server_barrier
+#
+#
+#     
+#                          ------------------
+#                          -                -
+#                          -  BETA DENSITY  -
+#                          -                -
+#                          ------------------
+#     
+#
+#
+#
+#    ===========================================================
+#       COMPUTE  OCCUPIED - OCCUPIED  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    BETA                                                   BETA
+#    ----                                                   ----
+#
+#
+#
+#
+#
+pardo  j, b, b1, j2
+
+    REQUEST            T2BB [b,j,b1,j2] 
+    tpppp[b,j2,b1,j] = T2BB [b,j,b1,j2] 
+
+    do j1
+
+	REQUEST  L2BB [j1,b,j2,b1] 
+
+	tjj1[j1,j]  = L2BB [j1,b,j2,b1] * tpppp [b,j2,b1,j]
+	tjj [j,j1]  = tjj1[j1,j]  
+	tjj [j,j1] *= -0.5
+	PUT  T2L2_OO_B [j,j1] += tjj [j,j1]
+
+	tjj [j,j1] *= R0
+	PUT  DENS_OO_B [j,j1] += tjj [j,j1]
+
+    enddo j1
+
+endpardo  j, b, b1, j2
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+pardo  j1, a, b, i
+
+    REQUEST  L2AB [i,a,j1,b] 
+    tpppp[j1,a,i,b] = L2AB [i,a,j1,b] 
+
+    do j
+
+	REQUEST  T2AB [a,i,b,j] 
+
+	tjj1[j1,j]  = tpppp [j1,a,i,b] * T2AB [a,i,b,j]
+	tjj [j,j1]  = tjj1[j1,j]  
+	tjj [j,j1] *= -1.0
+	PUT  T2L2_OO_B [j,j1] += tjj [j,j1]
+
+	tjj [j,j1] *= R0
+	PUT  DENS_OO_B [j,j1] += tjj [j,j1]
+
+    enddo j
+
+endpardo  j1, a, b, i
+#
+#
+#           ...The other piece to the right moment density...
+#
+#                 R1 * A1  +  R2 * A2  +  T1 * R1 * A2
+#
+if  LOGRIGHT == ONE
+
+    pardo  j, j1
+
+	tjj [j,j1] = 0.0
+
+	do b
+
+	    GET  R1B [b,j]
+	    GET  L1B [j1,b]
+
+	    tjj1 [j,j1]  = R1B [b,j] * L1B [j1,b]
+	    tjj [j,j1] += tjj1[j,j1] 
+
+	enddo b
+
+	tjj [j,j1] *= -1.0
+	PUT  DENS_OO_B [j,j1] += tjj [j,j1]
+	PUT  R2L2_OO_B [j,j1] += tjj [j,j1]
+
+    endpardo  j, j1
+#
+    pardo  b, b1, j2
+
+	ALLOCATE  lbjbj4 [b,j2,b1,*]
+	ALLOCATE  lbjbj5 [b,j2,b1,*]
+
+	do j
+
+	    REQUEST               R2AA [b,j,b1,j2] 
+	    lbjbj5 [b,j2,b1,j]  = R2AA [b,j,b1,j2]
+	    lbjbj5 [b,j2,b1,j] *= 0.5
+
+	    GET  T1B [b,j]
+	    GET  R1B [b1,j2]
+	    lbjbj4 [b,j2,b1,j]  = lbjbj5 [b,j2,b1,j]
+	    tbjbj  [b,j2,b1,j]  = T1B [b,j] ^ R1B [b1,j2]
+	    lbjbj4 [b,j2,b1,j] += tbjbj [b,j2,b1,j]
+
+	enddo j
+
+	do j1
+
+	    REQUEST  L2BB [j1,b,j2,b1] 
+
+	    do j
+
+		tjj1[j1,j]  = L2BB [j1,b,j2,b1] * lbjbj4 [b,j2,b1,j]
+		tjj [j,j1]  = tjj1[j1,j]  
+		tjj [j,j1] *= -1.0
+		PUT  DENS_OO_B [j,j1] += tjj [j,j1]
+
+		tjj1[j1,j] = L2BB [j1,b,j2,b1] * lbjbj5 [b,j2,b1,j]
+		tjj [j,j1]  = tjj1[j1,j]  
+		tjj [j,j1] *= -1.0
+		PUT  R2L2_OO_B [j,j1] += tjj [j,j1]
+
+	    enddo j
+
+	enddo j1
+
+	DEALLOCATE  lbjbj4 [b,j2,b1,*]
+	DEALLOCATE  lbjbj5 [b,j2,b1,*]
+
+    endpardo  b, b1, j2
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+    pardo  a, b, i
+
+	ALLOCATE  laibj2 [a,i,b,*]
+	ALLOCATE  laibj3 [a,i,b,*]
+
+	do j
+
+	    REQUEST            R2AB [a,i,b,j] 
+	    laibj3 [a,i,b,j] = R2AB[a,i,b,j]
+
+	    GET  T1B [b,j]  
+	    GET  R1A [a,i]
+	    laibj2 [a,i,b,j]  = laibj3 [a,i,b,j]
+	    taibj  [a,i,b,j]  = T1B [b,j] ^ R1A [a,i]
+	    laibj2 [a,i,b,j] += taibj [a,i,b,j]
+
+	enddo j
+
+	do j1
+
+	    REQUEST            L2AB [i,a,j1,b] 
+	    tpppp[j1,a,i,b] =  L2AB [i,a,j1,b] 
+
+	    do j
+
+		tjj1[j1,j]  = tpppp[j1,a,i,b] * laibj2 [a,i,b,j]
+		tjj [j,j1]  = tjj1[j1,j] 
+		tjj [j,j1] *= -1.0
+		PUT  DENS_OO_B [j,j1] += tjj [j,j1]
+
+		tjj1[j1,j]  = tpppp[j1,a,i,b]  * laibj3 [a,i,b,j]
+		tjj [j,j1]  = tjj1[j1,j] 
+		tjj [j,j1] *= -1.0
+		PUT  R2L2_OO_B [j,j1] += tjj [j,j1]
+
+	    enddo j
+
+	enddo j1
+
+	DEALLOCATE  laibj3 [a,i,b,*]
+	DEALLOCATE  laibj2 [a,i,b,*]
+
+    endpardo  a, b, i
+
+endif  # LOGRIGHT == ONE #
+#
+#
+#
+#    ===========================================================
+#       COMPUTE  VIRTUAL - VIRTUAL  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    BETA                                                   BETA
+#    ----                                                   ----
+#
+#
+#
+pardo  b1, b2, j, j1
+
+    REQUEST             L2BB [j,b1,j1,b2] 
+    tpppp[j,b2,j1,b1] = L2BB [j,b1,j1,b2] 
+
+    do b
+
+	REQUEST       T2BB [b,j,b2,j1] 
+
+	tbb [b,b1]  = T2BB [b,j,b2,j1] * tpppp[j,b2,j1,b1] 
+	tbb [b,b1] *= -0.50
+	PUT  T2L2_VV_B [b,b1] += tbb [b,b1]
+
+	tbb [b,b1] *= R0
+	tbb [b,b1] *= -1.0
+	PUT  DENS_VV_B [b,b1] += tbb [b,b1]
+
+    enddo b
+
+endpardo b1, b2, j, j1
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+pardo  b, a, j, i
+
+    REQUEST  T2AB [b,j,a,i] 
+    tpppp[b,i,a,j] = T2AB[b,j,a,i] 
+
+    do b1
+
+	REQUEST  L2AB [i,a,j,b1] 
+
+	tbb [b,b1]  = tpppp[b,i,a,j] * L2AB [i,a,j,b1] 
+	tbb [b,b1] *= -1.0
+	PUT  T2L2_VV_B [b,b1] += tbb [b,b1]
+
+	tbb [b,b1] *= R0
+	tbb [b,b1] *= -1.0
+	PUT  DENS_VV_B [b,b1] += tbb [b,b1]
+
+    enddo b1
+
+endpardo  b, a, j, i
+#
+#
+#           ...The other piece to the right moment density...
+#
+#                 R1 * A1  +  R2 * A2  +  T1 * R1 * A2
+#
+if  LOGRIGHT == ONE
+
+    pardo  b, b1
+
+	tbb [b,b1] = 0.0
+
+	do j
+
+	    GET  R1B [b,j]
+	    GET  L1B [j,b1]
+
+	    tbb1 [b,b1]  = R1B [b,j] * L1B [j,b1]
+	    tbb[b,b1]   += tbb1[b,b1] 
+
+	enddo j
+
+	PUT  DENS_VV_B [b,b1] += tbb [b,b1]
+
+	tbb [b,b1] *= -1.0
+	PUT  R2L2_VV_B [b,b1] += tbb [b,b1]
+
+    endpardo  b, b1
+#
+#
+    pardo  b1, j, j1
+
+	ALLOCATE  lbjbj  [*,j,b1,j1]
+	ALLOCATE  lbjbj2 [*,j,b1,j1]
+
+	GET  R1B [b1,j1]
+
+	do b
+
+	    REQUEST               R2AA [b,j,b1,j1] 
+	    GET                   T1B [b,j]
+
+	    tbjbj  [b,j,b1,j1]  = T1B [b,j] ^ R1B [b1,j1]
+	    lbjbj  [b,j,b1,j1]  = R2AA [b,j,b1,j1]
+	    lbjbj  [b,j,b1,j1] *= 0.5
+	    lbjbj2 [b,j,b1,j1]  = lbjbj [b,j,b1,j1]
+	    lbjbj  [b,j,b1,j1] += tbjbj [b,j,b1,j1]
+
+	enddo b
+
+	do b2
+
+	    REQUEST             L2BB [j,b2,j1,b1] 
+	    tpppp[j,b1,j1,b2] = L2BB [j,b2,j1,b1] 
+
+	    do b
+
+		tbb  [b,b2] = lbjbj  [b,j,b1,j1] * tpppp[j,b1,j1,b2]  
+		PUT  DENS_VV_B [b,b2] += tbb [b,b2]
+
+	    enddo b
+
+	    do b
+
+		tbb2 [b,b2]  = lbjbj2 [b,j,b1,j1] * tpppp[j,b1,j1,b2]
+		tbb2 [b,b2] *= -1.0
+		PUT  R2L2_VV_B [b,b2] += tbb2 [b,b2]
+
+	    enddo b
+
+	enddo b2
+
+	DEALLOCATE  lbjbj  [*,j,b1,j1]
+	DEALLOCATE  lbjbj2 [*,j,b1,j1]
+
+    endpardo  b1, j, j1
+#
+#
+#          ...ALPHA-BETA summation...
+#
+#
+    pardo  a, j, i
+
+	ALLOCATE  lbiaj  [*,i,a,j]
+	ALLOCATE  lbiaj2 [*,i,a,j]
+
+	GET  R1A [a,i]
+
+	do b
+
+	    REQUEST            R2AB [a,i,b,j] 
+	    GET                T1B [b,j]
+	    lbiaj2 [b,i,a,j] = R2AB [a,i,b,j]
+
+	    lbiaj [b,i,a,j]  = R2AB [a,i,b,j]
+	    taibj [b,i,a,j]  = R1A [a,i] ^ T1B [b,j]
+	    lbiaj [b,i,a,j] += taibj [b,i,a,j]
+
+	enddo b
+
+	do b2
+
+	    REQUEST  L2AB [i,a,j,b2] 
+
+	    do b
+
+		tbb  [b,b2] = lbiaj [b,i,a,j] * L2AB [i,a,j,b2] 
+		PUT  DENS_VV_B [b,b2] += tbb  [b,b2]
+
+		tbb2 [b,b2]  = lbiaj2 [b,i,a,j] * L2AB [i,a,j,b2]
+		tbb2 [b,b2] *= -1.0
+		PUT  R2L2_VV_B [b,b2] += tbb2 [b,b2]
+
+	    enddo b
+
+	enddo b2
+
+	DEALLOCATE  lbiaj  [*,i,a,j]
+	DEALLOCATE  lbiaj2 [*,i,a,j]
+
+    endpardo  a, j, i
+
+endif  # LOGRIGHT = ONE #
+
+server_barrier
+#
+#
+#    ===========================================================
+#       COMPUTE  OCCUPIED - VIRTUAL  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    BETA                                                   BETA
+#    ----                                                   ----
+#
+#                Remember, this was already computed
+#                during the alpha part above.
+#    -----------------------------------------------------------
+#
+#
+#
+#    ===========================================================
+#       COMPUTE  VIRTUAL - OCCUPIED  PIECE  TO  THE  DENSITY
+#    ===========================================================
+#    BETA                                                   BETA
+#    ----                                                   ----
+#
+#
+#          ...Evaluate the R0 contribution...
+#
+#
+pardo  b, j 
+
+    tbj2[b,j] = 0.0 
+
+    do j1 
+
+	GET  T1B [b,j1]
+	GET  T1L1_OO_B [j,j1]
+	GET  T2L2_OO_B [j,j1]
+
+	tjj [j,j1]  = T1L1_OO_B [j,j1]
+	tjj [j,j1] += T2L2_OO_B [j,j1]
+
+	tbj [b,j]   = T1B [b,j1] * tjj [j,j1]
+
+	tbj2[b,j] += tbj[b,j] 
+
+    enddo j1 
+
+    if GROUNDSTATE == ONE
+	GET  T1B [b,j]
+	tbj2 [b,j]  += T1B [b,j]
+    endif
+
+    tbj2 [b,j]  *= R0
+
+    PUT  DENS_VO_B [b,j] = tbj2[b,j]
+
+endpardo  b, j 
+
+server_barrier
+#
+pardo  b, b1, j
+
+    GET  T1B [b1,j]
+    GET  T2L2_VV_B [b,b1]
+
+    tbj [b,j]  = T2L2_VV_B [b,b1] * T1B [b1,j]
+    tbj [b,j] *= R0
+
+    PUT  DENS_VO_B [b,j] += tbj [b,j]
+
+endpardo  b, b1, j
+#
+pardo  b1, j1
+
+    GET  L1B [j1,b1]
+
+    do b
+    do j
+	REQUEST  T2BB [b,j,b1,j1] 
+	tbj  [b,j]  = T2BB [b,j,b1,j1] * L1B [j1,b1]
+	tbj  [b,j] *= R0
+	PUT  DENS_VO_B [b,j] += tbj [b,j]
+    enddo j
+    enddo b
+
+endpardo  b1, j1
+
+pardo  i, a
+
+    GET  L1A [i,a]
+
+    do b
+    do j
+	REQUEST  T2AB [a,i,b,j] 
+	tbj  [b,j]  = T2AB [a,i,b,j] * L1A [i,a]
+	tbj  [b,j] *= R0
+	PUT  DENS_VO_B [b,j] += tbj [b,j]
+    enddo j
+    enddo b
+
+endpardo  i, a
+#
+if LOGRIGHT == ONE
+
+    pardo  b1, j1
+
+	GET            DENS_INT_OV_B [j1,b1]
+	tjb  [j1,b1] = DENS_INT_OV_B [j1,b1]
+
+	do b
+	do j
+	    REQUEST  T2BB [b,j,b1,j1] 
+	    tbj [b,j] = T2BB [b,j,b1,j1] * tjb [j1,b1]
+	    PUT  DENS_VO_B [b,j] += tbj [b,j]
+	enddo j
+	enddo b
+
+    endpardo  b1, j1
+
+    pardo  a, i
+
+	GET          DENS_INT_OV_A [i,a]
+	tia  [i,a] = DENS_INT_OV_A [i,a]
+
+	do b
+	do j
+	    REQUEST  T2AB [a,i,b,j] 
+	    tbj [b,j]    = T2AB [a,i,b,j] * tia [i,a]
+	    PUT  DENS_VO_B [b,j] += tbj [b,j]
+	enddo j
+	enddo b
+
+    endpardo  a, i
+#
+#
+#
+#
+#
+    pardo  b1, j1
+
+	GET            DENS_INT_OV_B [j1,b1]
+	tjb  [j1,b1] = DENS_INT_OV_B [j1,b1]
+
+	do j
+	    GET  T1B [b1,j]
+	    tjj [j,j1] = T1B [b1,j] * tjb [j1,b1]
+	    do b
+		GET  T1B [b,j1]
+		tbj [b,j]  = T1B [b,j1] * tjj [j,j1]
+		tbj [b,j] *= -1.0
+		PUT  DENS_VO_B [b,j] += tbj [b,j]
+	    enddo b
+	enddo j
+
+    endpardo  b1, j1
+#
+#
+#
+#
+#
+    pardo  b1, j1
+
+	GET  L1B [j1,b1]
+
+	do b
+	do j
+	    REQUEST  R2AA [b,j,b1,j1] 
+	    tbj [b,j] = R2AA [b,j,b1,j1] * L1B [j1,b1]
+	    PUT  DENS_VO_B [b,j] += tbj [b,j]
+	enddo j
+	enddo b
+
+    endpardo  b1, j1
+#
+#
+#
+#
+#
+    pardo  i, a
+
+	GET  L1A [i,a]
+
+	do b
+	do j
+	    REQUEST  R2AB [a,i,b,j] 
+	    tbj [b,j] = R2AB [a,i,b,j] * L1A [i,a]
+	    PUT  DENS_VO_B [b,j] += tbj [b,j]
+	enddo j
+	enddo b
+
+    endpardo  i, a
+#
+#
+#
+#
+#
+    pardo j, b, b1  
+
+	GET  R2L2_VV_B [b,b1]
+	GET  T2L2_VV_B [b,b1]
+	GET  R1B [b1,j]
+	GET  T1B [b1,j]
+	tbj  [b,j]  = R2L2_VV_B [b,b1] * T1B [b1,j]
+	tbj2 [b,j]  = T2L2_VV_B [b,b1] * R1B [b1,j]
+	tbj  [b,j] += tbj2 [b,j]
+#
+	PUT  DENS_VO_B [b,j] += tbj [b,j]
+
+    endpardo j, b, b1  
+#
+#
+#
+#
+#
+    pardo  j, b, j1  
+
+	GET  R1B [b,j1]
+	GET  T1B [b,j1]
+	GET  R2L2_OO_B [j,j1]
+	GET  T2L2_OO_B [j,j1]
+	tbj  [b,j]  = T1B [b,j1] * R2L2_OO_B [j,j1]
+	tbj2 [b,j]  = R1B [b,j1] * T2L2_OO_B [j,j1]
+	tbj  [b,j] += tbj2 [b,j]
+	PUT  DENS_VO_B [b,j] += tbj [b,j]
+
+    endpardo j, b, j1  
+#
+#
+#
+#
+#
+    if EXCITESTATE == ZERO
+	pardo  b, j
+	    GET  R1B [b,j]
+	    tbj [b,j] = R1B [b,j]
+	    PUT  DENS_VO_B [b,j] += tbj [b,j]
+	endpardo  b, j
+    endif
+
+    if EXCITESTATE == ONE
+	pardo  b, j
+	    GET  T1B [b,j]
+	    tbj [b,j] = T1B [b,j]
+	    PUT  DENS_VO_B [b,j] += tbj [b,j]
+	endpardo  b, j
+    endif
+
+endif  # LOGRIGHT == ONE #
+
+server_barrier
+#
+ENDPROC  COMPUTE_DENSITY
+#
+PROC get_r_amps
+#
+    server_barrier
+Tk[kstate] = 1.0
+pardo a,i,a1,i1
+    request RB2_aa[kstate,a,i,a1,i1]
+    Taiai[a,i,a1,i1] = Tk[kstate]*RB2_aa[kstate,a,i,a1,i1]
+    prepare R2AA[a,i,a1,i1] = Taiai[a,i,a1,i1]
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    request RB2_ab[kstate,a,i,b,j]
+    Taibj[a,i,b,j] = Tk[kstate]*RB2_ab[kstate,a,i,b,j]
+    prepare R2AB[a,i,b,j] = Taibj[a,i,b,j]
+endpardo a,i,b,j
+
+pardo a,i
+    request RB1_a[kstate,a,i]
+    Tai[a,i] = Tk[kstate]*RB1_a[kstate,a,i]
+    put R1A[a,i] = Tai[a,i]
+    put R1B[a,i] = Tai[a,i]
+endpardo a,i
+    server_barrier
+#
+ENDPROC get_r_amps
+
+PROC  PUT_IN_Lk
+#
+if logright == one
+# place lambda in
+    pardo i,a
+        get Lam1A[i,a]
+	Tia[i,a] = Lam1A[i,a]
+	put L1A[i,a] = Tia[i,a]
+    endpardo i,a
+    pardo j,b
+        get Lam1B[j,b]
+	Tia[j,b] = Lam1B[j,b]
+	put L1B[j,b] = Tia[j,b]
+    endpardo j,b
+#    pardo i,a,b,j
+#        request Lam2AB[i,a,j,b]
+#	Tiajb[i,a,j,b] = Lam2AB[i,a,j,b]
+#	prepare L2AB[i,a,j,b] = Tiajb[i,a,j,b]
+#    endpardo i,a,b,j
+#    pardo i,a,i1,a1
+#        request Lam2AA[i,a,i1,a1]
+#	Tiaia[i,a,i1,a1] = Lam2AA[i,a,i1,a1]
+#	prepare L2AA[i,a,i1,a1] = Tiaia[i,a,i1,a1]
+#    endpardo i,a,i1,a1
+#    pardo j,b,j1,b1
+#        request Lam2AA[j,b,j1,b1]
+#	Tjbjb[j,b,j1,b1] = Lam2AA[j,b,j1,b1]
+#	prepare L2BB[j,b,j1,b1] = Tjbjb[j,b,j1,b1]
+#    endpardo j,b,j1,b1
+endif
+if logright == zero
+# place left eom vector in
+    pardo i,a
+        request LB1_a[kstate,a,i]
+	Tk[kstate] = 1.0
+	Tia[i,a] = Tk[kstate]*LB1_a[kstate,a,i]
+	put L1A[i,a] = Tia[i,a]
+	put L1B[i,a] = Tia[i,a]
+    endpardo i,a
+    pardo i,a,b,j
+        request LB2_ab[kstate,a,i,b,j]
+	Tk[kstate] = 1.0
+	Tiajb[i,a,j,b] = Tk[kstate]*Lb2_ab[kstate,a,i,b,j]
+	prepare L2AB[i,a,j,b] = Tiajb[i,a,j,b]
+    endpardo i,a,b,j
+    pardo i,a,i1,a1
+        request LB2_aa[kstate,a,i,a1,i1]
+	Tk[kstate] = 1.0
+	Tiaia[i,a,i1,a1] = Tk[kstate]*LB2_aa[kstate,a,i,a1,i1]
+	prepare L2AA[i,a,i1,a1] = Tiaia[i,a,i1,a1]
+    endpardo i,a,i1,a1
+    pardo j,b,j1,b1
+        request LB2_aa[kstate,b,j,b1,j1]
+	Tk[kstate] = 1.0
+	Tjbjb[j,b,j1,b1] = Tk[kstate]*LB2_aa[kstate,b,j,b1,j1]
+	prepare L2BB[j,b,j1,b1] = Tjbjb[j,b,j1,b1]
+    endpardo j,b,j1,b1
+endif
+server_barrier
+#
+ENDPROC  PUT_IN_Lk
+#
+PROC hf_density
+#
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+        put DHF[mu,nu] = Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+    pardo mu,nu
+        Txx[mu,nu] = 0.0
+        do i
+            T1xx[mu,nu] = Ca[mu,i]*Ca[nu,i]
+            Txx[mu,nu] += T1xx[mu,nu]
+        enddo i
+        Txx[mu,nu] *= 2.0
+        put DHF[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu
+#
+ENDPROC hf_density
+#
+PROC back_transform_dipole
+#
+pardo mu, nu
+PUT AO_DENS[mu,nu] = 0.0
+endpardo  mu, nu
+
+server_barrier
+
+pardo  i, i1
+GET DENS_OO_A[i,i1]
+
+    do mu
+	txi[mu,i1] = DENS_OO_A [i,i1]*CA[mu,i]
+	do nu
+	    txx  [mu,nu] = txi[mu,i1]*CA[nu,i1]
+	    PUT  AO_DENS[mu,nu] += txx[mu,nu]
+	enddo nu
+    enddo mu
+
+endpardo  i, i1
+#
+pardo  j, j1
+
+    GET  DENS_OO_B[j,j1]
+    do mu
+	txj[mu,j1] = DENS_OO_B[j,j1] * CA[mu,j]
+	do nu
+	    txx[mu,nu] = txj[mu,j1] * CA[nu,j1]
+	    PUT AO_DENS [mu,nu] += txx[mu,nu]
+	enddo nu
+    enddo mu
+
+endpardo  j, j1
+#
+pardo  a, a1
+
+    GET  DENS_VV_A [a,a1]
+
+    do mu
+
+	txa  [mu,a1] = DENS_VV_A [a,a1] * CA [mu,a]
+
+	do nu
+
+	    txx  [mu,nu] = txa [mu,a1] * CA [nu,a1]
+	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
+
+	enddo nu
+
+    enddo mu
+
+endpardo  a, a1
+#
+#
+#      ...Virtual-virtual beta...
+#
+#
+pardo  b, b1
+
+    GET  DENS_VV_B   [b,b1]
+
+    do mu
+
+	txb  [mu,b1] = DENS_VV_B [b,b1] * CA [mu,b]
+
+	do nu
+
+	    txx  [mu,nu] = txb [mu,b1] * CA [nu,b1]
+	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
+
+	enddo nu
+
+    enddo mu
+
+endpardo  b, b1
+#
+pardo  a, i
+
+    GET  DENS_VO_A [a,i]
+
+    do mu
+
+	txi [mu,i] = DENS_VO_A [a,i] * CA [mu,a]
+
+	do nu
+
+	    txx  [mu,nu] = txi [mu,i] * CA [nu,i]
+	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
+
+	enddo nu
+
+    enddo mu
+
+endpardo  a, i
+#
+pardo  b, j
+
+    GET  DENS_VO_B [b,j]
+
+    do mu
+
+	txj [mu,j] = DENS_VO_B [b,j] * CA [mu,b]
+
+	do nu
+
+	    txx  [mu,nu] = txj [mu,j] * CA [nu,j]
+	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
+
+	enddo nu
+
+    enddo mu
+
+endpardo  b, j
+#
+pardo  i, a
+
+    GET  DENS_OV_A   [i,a]
+
+    do mu
+
+	txa [mu,a] = DENS_OV_A [i,a] * CA [mu,i]
+
+	do nu
+
+	    txx  [mu,nu] = txa [mu,a] * CA [nu,a]
+	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
+
+	enddo nu
+
+    enddo mu
+
+endpardo  i, a
+#
+#
+#      ...Occupied-virtual beta...
+#
+#
+pardo  j, b
+
+    GET  DENS_OV_B   [j,b]
+
+    do mu
+
+	txb [mu,b] = DENS_OV_B [j,b] * CA [mu,j]
+
+	do nu
+
+	    txx  [mu,nu] = txb [mu,b] * CA [nu,b]
+	    PUT  AO_DENS [mu,nu] += txx  [mu,nu]
+
+	enddo nu
+
+    enddo mu
+
+endpardo  j, b
+
+IF GROUNDSTATE == ONE                        # Grab HF Density
+pardo  mu, nu
+    GET                     DHF [mu,nu]
+    txx [mu,nu]           = DHF [mu,nu]
+    PUT  AO_DENS [mu,nu] += txx [mu,nu]
+endpardo  mu, nu
+ENDIF   #  GROUNDSTATE == ONE  #
+#
+server_barrier
+#
+do ixyz
+    ncount2 = (scalar)ixyz
+    dsum = 0.0
+    esum = 0.0
+    pardo mu,nu
+	get ao_dens[mu,nu]
+	ncount1 = 0.0
+	execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+	Txx[mu,nu] = ao_dens[mu,nu]
+	etemp = Txx[mu,nu]*DAOINT[mu,nu]
+	esum += etemp
+    endpardo mu,nu
+    server_barrier
+    collective dsum += esum
+    server_barrier
+#    dsum += NucDip[ixyz]
+    if logright == one
+        Rdipole[ixyz] = dsum
+    endif
+    if logright == zero
+        Ldipole[ixyz] = dsum
+    endif
+enddo ixyz
+#
+ENDPROC back_transform_dipole
 
     PROC form_t1_secondorder
 
     print "forming approximate second-order T1 amplitudes"
     server_barrier
 
-    pardo a1,b,i1,a
-	request Vaaai[b,a,a1,i1]
-	do i
-	    request T2ab[b,i,a1,i1]
-	    request T2aa[b,i,a1,i1]
+#    pardo a1,b,i1,a
+#	request Vaaai[b,a,a1,i1]
+#	do i
+#	    request T2ab[b,i,a1,i1]
+#	    request T2aa[b,i,a1,i1]
+#
+#	    Taibj[b,i,a1,i1]  = T2ab[b,i,a1,i1]
+#	    T1aibj[b,i,a1,i1] = T2aa[b,i,a1,i1]
+#	    Taibj[b,i,a1,i1] += T1aibj[b,i,a1,i1]
+#
+#	    Tai[a,i] = Vaaai[b,a,a1,i1]*Taibj[b,i,a1,i1]
+#
+#	    prepare Mck_a[a,i] += Tai[a,i]
+#	enddo i
+#    endpardo a1,b,i1,a
 
-	    Taibj[b,i,a1,i1]  = T2ab[b,i,a1,i1]
-	    T1aibj[b,i,a1,i1] = T2aa[b,i,a1,i1]
-	    Taibj[b,i,a1,i1] += T1aibj[b,i,a1,i1]
+    pardo a, a1, a2, i1 
 
-	    Tai[a,i] = Vaaai[b,a,a1,i1]*Taibj[b,i,a1,i1]
+        request Vaaai[a1,a,a2,i1]
 
-	    T1ai[b,i] = Fock_a[a1,i1]*Taibj[b,i,a1,i1]
+        do i
+            request T2ab[a1,i,a2,i1]
+            request T2ab[a2,i,a1,i1]
 
-	    prepare Mck_a[a,i] += Tai[a,i]
-	    prepare Mck_a[b,i] += T1ai[b,i]
-	enddo i
-    endpardo a1,b,i1,a
+            Taibj[a1,i,a2,i1]  = T2ab[a1,i,a2,i1]
+            Taibj[a1,i,a2,i1] *= 2.0
+            T1aibj[a1,i,a2,i1] = T2ab[a2,i,a1,i1]
+            Taibj[a1,i,a2,i1] -= T1aibj[a1,i,a2,i1]
 
-    pardo a1,i1,j,i
-        request Vpiqj[a1,i1,i,j]
-	do a
-	    request T2ab[a,j,a1,i1]
-	    request T2aa[a,j,a1,i1]
+            Tai[a,i] = Vaaai[a1,a,a2,i1]*Taibj[a1,i,a2,i1]
 
-	    Taibj[a,j,a1,i1]  = T2ab[a,j,a1,i1]
-	    T1aibj[a,j,a1,i1] = T2aa[a,j,a1,i1]
-	    Taibj[a,j,a1,i1] += T1aibj[a,j,a1,i1]
+            prepare Mck_a[a,i] += Tai[a,i]
+        enddo i
+    endpardo a, a1, a2, i1
 
-	    Tai[a,i] = Vpiqj[a1,i1,i,j]*Taibj[a,j,a1,i1]
-	    Tai[a,i] *= -1.0
-	    
-	    prepare Mck_a[a,i] += Tai[a,i]
-	enddo a
-    endpardo a1,i1,j,i
+    pardo a1,i,a2,i1
+
+        request T2ab[a1,i,a2,i1]
+        request T2ab[a2,i,a1,i1]
+
+        Taibj[a1,i,a2,i1]  = T2ab[a1,i,a2,i1]
+        Taibj[a1,i,a2,i1] *= 2.0
+        T1aibj[a1,i,a2,i1] = T2ab[a2,i,a1,i1]
+        Taibj[a1,i,a2,i1] -= T1aibj[a1,i,a2,i1]
+
+        Tai[a1,i] = Fock_a[a2,i1]*Taibj[a1,i,a2,i1]
+
+        prepare Mck_a[a1,i] += Tai[a1,i]
+
+    endpardo a1,i,a2,i1
+
+    pardo a2,i2,i,i1 
+
+        request Vpiqj[a2,i2,i,i1]
+
+        do a1
+
+            request T2ab[a1,i1,a2,i2]
+            request T2ab[a1,i2,a2,i1]
+
+            Taibj[a1,i1,a2,i2]  = T2ab[a1,i1,a2,i2]
+            Taibj[a1,i1,a2,i2] *= 2.0
+            T1aibj[a1,i1,a2,i2] = T2ab[a1,i2,a2,i1]
+            Taibj[a1,i1,a2,i2] -= T1aibj[a1,i1,a2,i2]
+
+            Tai[a1,i] = Vpiqj[a2,i2,i,i1]*Taibj[a1,i1,a2,i2]
+            Tai[a1,i] *= -1.0
+
+            prepare Mck_a[a1,i] += Tai[a1,i]
+        enddo a1
+    endpardo a2,i2,i,i1
 
     server_barrier
 # t1(2) guess
@@ -1622,8 +3421,7 @@ endproc form_r0
 	    Tai[a,i] = Mck_a[a,i]
 	    execute energy_denominator_rhf Tai[a,i] SFock_a
 	    prepare t1a_old[a,i] = Tai[a,i]
-	    T1ai[a,i] = Tai[a,i]
-	    etemp = tai[a,i]*t1ai[a,i]
+	    etemp = Fock_a[a,i]*tai[a,i]
 	    esum += etemp
 	endpardo a,i
     server_barrier
@@ -1745,8 +3543,8 @@ server_barrier
 CALL READ_AMP
 call tran_uhf
 server_barrier
-call form_t1_secondorder
-server_barrier
+#call form_t1_secondorder
+#server_barrier
 call form_H_MCPT
 
 call form_diag
@@ -1795,6 +3593,10 @@ enddo kiter
 print " "
 print "EOM-MCPT has converged"
 
+allocate contiguous Right_Dipole_Transition_Moment[1:eom_roots,1:3]
+allocate contiguous Left_Dipole_Transition_Moment[1:eom_roots,1:3]
+allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
+allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
 allocate contiguous EOM_EE_Energy[1:eom_roots]
 allocate contiguous EOM_EE_eV[1:eom_roots]
 
@@ -1820,8 +3622,58 @@ do kstate
     print " "
     print r0
 
+#    print "***** EXPERIMENTAL OSCILLATOR STRENGTH *****"
+    do ixyz
+	RDipole[ixyz] = 0.0
+	LDipole[ixyz] = 0.0
+    enddo ixyz
+
+    call get_r_amps
+
+    logright = one
+    CALL PUT_IN_Lk
+    call compute_density
+    call back_transform_dipole
+#    print Rdipole
+
+    logright = zero
+    r0 = 1.0
+    CALL PUT_IN_Lk
+    call compute_density
+    call back_transform_dipole
+#    print Ldipole
+
+    print "*** L = R^\dag approximation used ***"
+    print " "
+    do ixyz
+	etemp = Rdipole[ixyz]
+	Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
+	print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+    enddo ixyz
+    do ixyz
+	etemp = Ldipole[ixyz]
+	Left_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
+	print Left_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+    enddo ixyz
+    dsum = 0.0
+    do ixyz
+	sum1 = RDipole[ixyz]
+	sum2 = LDipole[ixyz]
+	etemp = sum1*sum2*omega*2.0/3.0
+	Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz] = etemp
+        print Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz]
+	dsum += etemp
+    enddo ixyz
+    Dipole_Oscillator_Norm[kstate:kstate] = dsum
+    print Dipole_Oscillator_Norm[kstate:kstate]
+#    print "***** EXPERIMENTAL OSCILLATOR STRENGTH *****"
+
 enddo kstate
 
+server_barrier
+set_persistent RB1_a "MOI_RB1_a"
+set_persistent RB2_aa "MOI_RB2_aa"
+set_persistent RB2_ab "MOI_RB2_ab"
 server_barrier
 
 endSIAL R_EE_EOM_CCSD_RHF
