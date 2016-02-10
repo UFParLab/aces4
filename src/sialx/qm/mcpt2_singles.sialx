@@ -16,8 +16,6 @@ SIAL mcpt2_singles
 #
 
       PARDO ifrag, mu, nu "Frag{i}{aa}{}"
-	 where (int)SwAO_frag[(index)mu] == ifrag
-	 where (int)SwAO_frag[(index)nu] == ifrag
 
          icount = (scalar)ifrag
 
@@ -25,12 +23,12 @@ SIAL mcpt2_singles
                execute return_h1frag txx[mu,nu] icount  
 
                do i 
-	       where (int)SwOccA_frag[(index)i] == ifrag
+	       where (int)SwMOA_frag[(index)i] == ifrag
 
                      tpx[i,nu] = txx[mu,nu]*ca[mu,i] 
 
                      do j 
-		     where (int)SwOccA_frag[(index)j] == ifrag
+		     where (int)SwMOA_frag[(index)j] == ifrag
                            t1pp[i,j] = tpx[i,nu]*ca[nu,j] 
                            PUT VE[i,j] += t1pp[i,j] 
                      enddo j 
@@ -40,10 +38,6 @@ SIAL mcpt2_singles
       ENDPARDO ifrag, mu, nu
 
       PARDO ifrag,jfrag, mu, nu "Frag{Nij}{a}{a}" #line 713
-      where ifrag != jfrag
-      where (int)elst_dist[ifrag,jfrag] == ifrag
-      where (int)SwAO_frag[(index)mu] == ifrag
-      where (int)SwAO_frag[(index)nu] == jfrag
 
          icount = (scalar)ifrag
          jcount = (scalar)jfrag
@@ -52,12 +46,12 @@ SIAL mcpt2_singles
                   execute return_h1frag txx[mu,nu] icount  
 
                do i 
-	       where (int)SwOccA_frag[(index)i] == ifrag
+	       where (int)SwMOA_frag[(index)i] == ifrag
 
                      tpx[i,nu] = txx[mu,nu]*ca[mu,i] 
 
                      do j 
-	             where (int)SwOccA_frag[(index)j] == jfrag
+	             where (int)SwMOA_frag[(index)j] == jfrag
                            t1pp[i,j] = tpx[i,nu]*ca[nu,j] 
                            PUT VE_x[i,j] += t1pp[i,j] 
                      enddo j 
@@ -90,9 +84,6 @@ SIAL mcpt2_singles
 
 # 1st-term 
       PARDO ifrag, jfrag, i, j "Frag{Nij}{o}{o}"
-      where ifrag != jfrag
-      where (int)SwOccA_frag[(index)i] == ifrag
-      where (int)SwOccA_frag[(index)j] == jfrag
 
          DO i1 
 	 where i==i1
@@ -114,15 +105,12 @@ SIAL mcpt2_singles
 
 # second-term 
       PARDO ifrag, jfrag, i2, j "Frag{Nij}{o}{o}"
-      where ifrag != jfrag
-      where (int)SwOccA_frag[(index)i2] == ifrag
-      where (int)SwOccA_frag[(index)j] == jfrag
 
 	      GET SOVL[j,i2] 
 	      tpp[i2,j] = 0.0 
 
 	     DO i
-	     where (int)SwOccA_frag[(index)i] == ifrag
+	     where (int)SwMOA_frag[(index)i] == ifrag
 	     DO i1 
 	     where i == i1 
 		  GET                 Viiij[i,i1,i2,j] 
@@ -157,15 +145,12 @@ SIAL mcpt2_singles
 
 # Third-term 
       PARDO ifrag, jfrag, j, j1 "Frag{Nij}{oo}{}"
-      where ifrag != jfrag
-      where (int)SwOccA_frag[(index)j] == ifrag
-      where (int)SwOccA_frag[(index)j1] == ifrag
 
 	      tpp[j1,j] = 0.0 
 	      t3pp[j,j1] = 0.0 
 
 	     DO i
-	     where (int)SwOccA_frag[(index)i] == jfrag
+	     where (int)SwMOA_frag[(index)i] == jfrag
 	     DO i1 
 	     where i == i1 
 		      GET Viijj[j1,j,i,i1] 
@@ -177,7 +162,7 @@ SIAL mcpt2_singles
 	     ENDDO i 
 
 	     DO i2 
-	     where (int)SwOccA_frag[(index)i2] == jfrag
+	     where (int)SwMOA_frag[(index)i2] == jfrag
 
                   GET SOVL[j,i2] 
                   GET SOVL[i2,j1] 
@@ -198,18 +183,15 @@ SIAL mcpt2_singles
 
 # Fourth-term 
       PARDO ifrag, jfrag, i1, j "Frag{Nij}{o}{o}"
-      where ifrag != jfrag
-      where (int)SwOccA_frag[(index)j] == jfrag
-      where (int)SwOccA_frag[(index)i1] == ifrag
 
                   tpp[i1,j] = 0.0 
                   GET         SOVL[j,i1] 
 
                DO i
-	       where (int)SwOccA_frag[(index)i] == ifrag
+	       where (int)SwMOA_frag[(index)i] == ifrag
 
                      DO j1  
-	             where (int)SwOccA_frag[(index)j1] == jfrag
+	             where (int)SwMOA_frag[(index)j1] == jfrag
                            GET         Viijj[i1,i,j1,j] 
                            GET         SOVL[i,j1] 
                            t1pp[i1,j] = Viijj[i1,i,j1,j]*SOVL[i,j1] 
@@ -227,13 +209,9 @@ SIAL mcpt2_singles
 
 
       PARDO ifrag, jfrag, i, i1 "Frag{Nij}{oo}{}"
-      where ifrag != jfrag
-      where (int)elst_dist[ifrag,jfrag] == ifrag
-      where (int)SwOccA_frag[(index)i] == ifrag
-      where (int)SwOccA_frag[(index)i1] == ifrag
 
                DO j
-	       where (int)SwOccA_frag[(index)j] == jfrag
+	       where (int)SwMOA_frag[(index)j] == jfrag
 		       GET         VE[i1,i] 
 		       GET         SOVL[j,i1] 
 		       GET         SOVL[i,j] 
@@ -280,8 +258,6 @@ SIAL mcpt2_singles
       et1_correction = 0.0  
 
       PARDO ifrag, a, i "Frag{i}{pp}{}"
-        where (int)SwVirtA_frag[(index)a] == ifrag
-        where (int)SwOccA_frag[(index)i] == ifrag
         icount = (scalar)ifrag
 
 # having gone through E1lst we now have the full contribution from wC as per rybak.
@@ -297,8 +273,6 @@ SIAL mcpt2_singles
 # Compute initial singles energy of clusters  
 
       PARDO ifrag, a, i "Frag{i}{pp}{}"
-      where (int)SwVirtA_frag[(index)a] == ifrag
-      where (int)SwOccA_frag[(index)i] == ifrag
       icount = (scalar)ifrag
 #
       esum = 0.0 
@@ -382,8 +356,6 @@ endif
       server_barrier
 
       PARDO ifrag, a, i "Frag{i}{pp}{}"
-	 where (int)SwOccA_frag[(index)i] == ifrag
-	 where (int)SwVirtA_frag[(index)a] == ifrag
          icount = (scalar)ifrag
 
          GET     e1error[ifrag] 
@@ -399,7 +371,7 @@ endif
 
                if do_nonhf == 1
 	       do a1
-	       where (int)SwVirtA_frag[(index)a1] == ifrag
+	       where (int)SwMOA_frag[(index)a1] == ifrag
 	       
 	           get t1old[a1,i]
 	           get wC[a,a1]
@@ -412,7 +384,7 @@ endif
 	       enddo a1
 
 	       do i1
-	       where (int)SwOccA_frag[(index)i1] == ifrag
+	       where (int)SwMOA_frag[(index)i1] == ifrag
 
 	           get t1old[a,i1]
 		   get wC[i,i1]
@@ -465,14 +437,6 @@ endif
       ENDPARDO ifrag, a, i, a1, i1
 
       PARDO ifrag, jfrag, a, i, a1, i1 "Frag{Nij}{pp}{pp}"
-      where ifrag != jfrag
-      where (int)elst_dist[ifrag,jfrag] == ifrag
-      where (int)SwVirtA_frag[(index)a] == ifrag
-      where (int)SwOccA_frag[(index)i] == ifrag
-      where (int)SwVirtA_frag[(index)a1] == jfrag
-      where (int)SwOccA_frag[(index)i1] == jfrag
-         icount = (scalar)ifrag
-         jcount = (scalar)jfrag
 
          GET     e1error[ifrag] 
          etemp = e1error[ifrag] 
@@ -504,9 +468,6 @@ endif
       sip_barrier 
 
       PARDO ifrag, a, i "Frag{i}{pp}{}"
-	 where (int)SwVirtA_frag[(index)a] == ifrag
-	 where (int)SwOccA_frag[(index)i] == ifrag
-         icount = (scalar)ifrag
 
                GET        x1new[a,i] 
                GET        wC[a,i] 
@@ -571,15 +532,11 @@ endif
 # 3v monomer
 #
     pardo ifrag, a, a1, a2, i1 "Frag{i}{pppp}{}"
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == ifrag
-    where (int)SwVirtA_frag[(index)a2] == ifrag
-    where (int)SwOccA_frag[(index)i1] == ifrag
     
 	get Vaaai[a1,a,a2,i1]
 
 	do i
-	where (int)SwOccA_frag[(index)i] == ifrag
+	where (int)SwMOA_frag[(index)i] == ifrag
 	    get T2old[a1,i,a2,i1]
 	    get T2old[a2,i,a1,i1]
 
@@ -597,11 +554,6 @@ endif
 # Non-HF wC monomer and dimer
 #
     pardo ifrag, jfrag, a1,i,a2,i1 "Frag{Rij}pp}{ppo}"
-    where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwVirtA_frag[(index)a2] == jfrag
-    where (int)SwOccA_frag[(index)i1] == jfrag
     
 	get T2old[a1,i,a2,i1]
 	get wC[a2,i1]
@@ -624,15 +576,11 @@ endif
 # 3o monomer 
 #
     pardo ifrag, a2,i2,i,i1 "Frag{i}{pppp}{}"
-    where (int)SwVirtA_frag[(index)a2] == ifrag
-    where (int)SwOccA_frag[(index)i2] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwOccA_frag[(index)i1] == ifrag
 
         get Viaii[i2,a2,i,i1]
 
 	do a1
-	where (int)SwVirtA_frag[(index)a1] == ifrag
+	where (int)SwMOA_frag[(index)a1] == ifrag
 
 	    get T2old[a1,i1,a2,i2]
 	    get T2old[a1,i2,a2,i1]
@@ -652,17 +600,11 @@ endif
 # 3v dimer
 #
     pardo ifrag,jfrag, a, a1, a2, i1 "Frag{NRij}{pp}{pp}"
-    where ifrag != jfrag
-    where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == ifrag
-    where (int)SwVirtA_frag[(index)a2] == jfrag
-    where (int)SwOccA_frag[(index)i1] == jfrag
     
 	get Vaaai[a1,a,a2,i1]
 
 	do i
-	where (int)SwOccA_frag[(index)i] == ifrag
+	where (int)SwMOA_frag[(index)i] == ifrag
 	    get T2old[a1,i,a2,i1]
 
 	    Tai[a,i] = Vaaai[a1,a,a2,i1]*T2old[a1,i,a2,i1]
@@ -675,17 +617,11 @@ endif
 # 3o dimer
 #
     pardo ifrag,jfrag, i,i1,a2,i2 "Frag{NRij}{pp}{pp}"
-    where ifrag != jfrag
-    where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwOccA_frag[(index)i1] == ifrag
-    where (int)SwVirtA_frag[(index)a2] == jfrag
-    where (int)SwOccA_frag[(index)i2] == jfrag
 
         get Viaii[i2,a2,i,i1]
 
 	do a1
-	where (int)SwVirtA_frag[(index)a1] == ifrag
+	where (int)SwMOA_frag[(index)a1] == ifrag
 
 	    get T2old[a1,i1,a2,i2]
 
@@ -707,8 +643,6 @@ endif
 # t1(2) guess
     esum = 0.0
     pardo ifrag,a,i "Frag{i}{pp}{}"
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
 
 	get Mck_a[a,i]
 	get wC[a,i]
@@ -737,8 +671,6 @@ endif
       endif
 
     PARDO ifrag, a, i "Frag{i}{pp}{}"
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
 
 	    PUT p2t1new[a,i] = 0.0
 
@@ -759,8 +691,6 @@ endif
     server_barrier
 
     PARDO ifrag, a, i "Frag{i}{pp}{}"
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
 
 	GET     e3m1_error[ifrag] 
 	etemp = e3m1_error[ifrag] 
@@ -781,8 +711,6 @@ endif
 # Mck term
 #
     PARDO ifrag, a, i "Frag{i}{pp}{}"
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
 
 	GET     e3m1_error[ifrag] 
 	etemp = e3m1_error[ifrag] 
@@ -796,7 +724,7 @@ endif
                tai[a,i] = Mck_a[a,i] 
 
 	       do a1
-	       where (int)SwVirtA_frag[(index)a1] == ifrag
+	       where (int)SwMOA_frag[(index)a1] == ifrag
 	       
 	           get t1old[a1,i]
 	           get wC[a,a1]
@@ -809,7 +737,7 @@ endif
 	       enddo a1
 
 	       do i1
-	       where (int)SwOccA_frag[(index)i1] == ifrag
+	       where (int)SwMOA_frag[(index)i1] == ifrag
 
 	           get t1old[a,i1]
 		   get wC[i,i1]
@@ -831,10 +759,6 @@ endif
 # monomer ring term
 #
     PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == ifrag
-    where (int)SwOccA_frag[(index)i1] == ifrag
 
 	GET     e3m1_error[ifrag] 
 	etemp = e3m1_error[ifrag] 
@@ -870,12 +794,6 @@ endif
 # dimer ring term
 #
     PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
-    where ifrag != jfrag
-    where (int)elst_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
-    where (int)SwVirtA_frag[(index)a1] == jfrag
-    where (int)SwOccA_frag[(index)i1] == jfrag
 
 	GET     e3m1_error[ifrag] 
 	etemp = e3m1_error[ifrag] 
@@ -908,8 +826,6 @@ endif
     sip_barrier 
 
     PARDO ifrag, a, i "Frag{i}{pp}{}"
-    where (int)SwVirtA_frag[(index)a] == ifrag
-    where (int)SwOccA_frag[(index)i] == ifrag
 
 	GET        p2t1new[a,i] 
 	GET        wC[a,i] 

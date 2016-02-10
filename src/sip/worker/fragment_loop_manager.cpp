@@ -4625,7 +4625,7 @@ bool Fragment_ij_pp_pp_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(elst, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(ao, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
 		where_ = fragment_special_where_clause(mo, index, ifrag);

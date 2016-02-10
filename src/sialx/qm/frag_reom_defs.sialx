@@ -30,6 +30,7 @@ predefined  int frag1_norb
 
 predefined int eom_roots
 predefined int eom_subspc
+predefined scalar eom_tol
 
 moaindex aces_defs_pa = baocc: eavirt  
 moaindex aces_defs_pb = bbocc: ebvirt   
