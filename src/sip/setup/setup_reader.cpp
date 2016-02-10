@@ -10,7 +10,9 @@
 #include "assert.h"
 #include "block.h"
 #include "block_shape.h"
+#ifdef HAVE_JSON
 #include "json/json.h"
+#endif
 #include <stdexcept>
 #include <sstream>
 #include "memory_tracker.h"
@@ -25,6 +27,7 @@ SetupReader* SetupReader::get_empty_reader(){
 	return sr;
 }
 
+#ifdef HAVE_JSON
 SetupReader::SetupReader(InputStream & stream) : binary_stream_(&stream), json_stream_(NULL) {
 	read_binary();
 }
@@ -291,7 +294,16 @@ std::string SetupReader::get_json_string() {
 	Json::StyledWriter writer;
 	return writer.write(root);
 }
+#else
+SetupReader::SetupReader(InputStream & stream) : binary_stream_(&stream) {
+	read_binary();
+}
 
+SetupReader::SetupReader(InputStream & stream, bool to_read) : binary_stream_(&stream){
+	if (to_read)
+		read_binary();
+}
+#endif //HAVE_JSON
 
 SetupReader::~SetupReader() {
 	for(PredefIntArrayIterator iter = predef_int_arr_.begin(); iter != predef_int_arr_.end(); ++iter){

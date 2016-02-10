@@ -128,6 +128,17 @@ else ()
     set(ACES_CUDA_FILES "")
 endif()
 
+if (HAVE_JSON)
+    set(ACES_JSON_DIR
+       ${CMAKE_SOURCE_DIR}/jsoncpp)
+    set(JSON_LIBRARIES
+       jasoncpp)
+else ()
+    set(ACES_JSON_FILES "")
+endif()
+    
+    
+
 set(ACES_DATA_FILES
     src/sip/static_data/array_table.h;
     src/sip/static_data/array_table.cpp;
@@ -219,13 +230,13 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
-    ${CMAKE_SOURCE_DIR}/jsoncpp;
+    ${ACES_JASON_DIR};
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
-    jsoncpp;
+    ${JSON_LIBRARIES};
     ${MPI_LIBRARIES};
     superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
@@ -329,10 +340,12 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
 add_subdirectory(src/sip/super_instructions)
 
 # Add Jsoncpp library
+if(HAVE_JSON)
 add_library(jsoncpp;
     jsoncpp/jsoncpp.cpp;
     jsoncpp/json/json.h;
     jsoncpp/json/json-forwards.h)
+endif()
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
