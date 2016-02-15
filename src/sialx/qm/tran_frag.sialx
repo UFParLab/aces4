@@ -1021,7 +1021,7 @@ PROC ADDITIONAL_FRAG_TRAN
 
 
 
-    PARDO ifrag, jfrag, nu, i, j, j1  "Frag{ij}{ao}{oo}"
+    PARDO ifrag, jfrag, nu, i, j, j1  "Frag{ij}{ap}{pp}"
     where (int)elst_dist[ifrag,jfrag] == ifrag
     where (int)SwAO_frag[(index)nu] == ifrag
     where (int)SwOccA_frag[(index)i] == ifrag

@@ -553,7 +553,7 @@ endif
 #
 # Non-HF wC monomer and dimer
 #
-    pardo ifrag, jfrag, a1,i,a2,i1 "Frag{Rij}pp}{ppo}"
+    pardo ifrag, jfrag, a1,i,a2,i1 "Frag{Rij}{pp}{pp}"
     
 	get T2old[a1,i,a2,i1]
 	get wC[a2,i1]

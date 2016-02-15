@@ -1600,6 +1600,267 @@ SIAL mcpt2_doubles
 # 
       ENDPROC FORM_T2_MONOMER  
 #
+# -----------------------------------------------------------------------------
+# 
+      PROC POL1_EPS 
+#     ------------- 
+      eps1_pol = 0.0 
+      esum = 0.0 
+      sip_barrier 
+#
+# ###################################################################################### 
+#                               D1 Contribution 
+# ###################################################################################### 
+#
+      PARDO ifrag, a2,i1 "Frag{i}{pp}{}"
+
+           tpp[i1,a2] = 0.0 
+
+           DO a
+           where (int)SwMOA_frag[(index)a] == ifrag
+           DO i
+           where (int)SwMOA_frag[(index)i] == ifrag
+           DO a1 
+           where (int)SwMOA_frag[(index)a1] == ifrag
+
+               GET                 Vaaai[a1,a2,a,i] 
+               GET                 T2old_mono[a,i,a1,i1] 
+               GET                 T2old_mono[a,i1,a1,i] 
+               taiai[a,i,a1,i1]  = T2old_mono[a,i,a1,i1] 
+               t1aiai[a,i,a1,i1] = T2old_mono[a,i1,a1,i] 
+
+               taiai[a,i,a1,i1] *= 4.0  
+               t1aiai[a,i,a1,i1]*= 2.0 
+               taiai[a,i,a1,i1] -= t1aiai[a,i,a1,i1] 
+
+               t1pp[i1,a2] = taiai[a,i,a1,i1]*Vaaai[a1,a2,a,i] 
+               tpp[i1,a2] += t1pp[i1,a2] 
+
+           ENDDO a1 
+           ENDDO i 
+           ENDDO a 
+
+           GET          wC[a2,i1] 
+           t2pp[a2,i1] = wC[a2,i1] 
+           execute energy_denominator_rhf t2pp[a2,i1] fock_a 
+
+           etemp  = tpp[i1,a2]*t2pp[a2,i1] 
+           esum  += etemp 
+
+      ENDPARDO ifrag, a2,i1
+
+      PARDO ifrag, a2,i1 "Frag{i}{pp}{}"
+
+           tpp[i1,a2] = 0.0 
+
+           DO a
+           where (int)SwMOA_frag[(index)a] == ifrag
+           DO i
+           where (int)SwMOA_frag[(index)i] == ifrag
+           DO a1 
+           where (int)SwMOA_frag[(index)a1] == ifrag
+
+               GET Vaibj[a,i,a1,i1] 
+               GET Vaibj[a,i1,a1,i] 
+               GET Vaaai[a1,a2,a,i] 
+
+               taiai[a,i,a1,i1]  = Vaibj[a,i,a1,i1] 
+               t1aiai[a,i,a1,i1] = Vaibj[a,i1,a1,i] 
+
+               taiai[a,i,a1,i1] *= 4.0  
+               t1aiai[a,i,a1,i1]*= 2.0 
+               taiai[a,i,a1,i1] -= t1aiai[a,i,a1,i1] 
+               execute energy_denominator_rhf taiai[a,i,a1,i1] fock_a 
+
+               t1pp[i1,a2] = taiai[a,i,a1,i1]*Vaaai[a1,a2,a,i] 
+               tpp[i1,a2] += t1pp[i1,a2] 
+
+           ENDDO a1 
+           ENDDO i 
+           ENDDO a 
+
+           GET           t1old[a2,i1] 
+           t2pp[a2,i1] = t1old[a2,i1] 
+
+           etemp  = tpp[i1,a2]*t2pp[a2,i1] 
+           print etemp 
+           esum  += etemp 
+
+      ENDPARDO ifrag, a2,i1
+
+      PARDO ifrag, i2,a1 "Frag{i}{pp}{}"
+
+           tpp[i2,a1] = 0.0 
+
+           DO a
+           where (int)SwMOA_frag[(index)a] == ifrag
+           DO i
+           where (int)SwMOA_frag[(index)i] == ifrag
+           DO i1 
+           where (int)SwMOA_frag[(index)i1] == ifrag
+
+               GET Vaibj[a,i,a1,i1] 
+               GET Vaibj[a,i1,a1,i] 
+               GET Viaii[i,a,i1,i2] 
+
+               taiai[a,i,a1,i1]  = Vaibj[a,i,a1,i1] 
+               t1aiai[a,i,a1,i1] = Vaibj[a,i1,a1,i] 
+
+               taiai[a,i,a1,i1] *= 4.0  
+               t1aiai[a,i,a1,i1]*= 2.0 
+               taiai[a,i,a1,i1] -= t1aiai[a,i,a1,i1] 
+               execute energy_denominator_rhf taiai[a,i,a1,i1] fock_a 
+
+               t1pp[i2,a1] = taiai[a,i,a1,i1]*Viaii[i,a,i1,i2] 
+               tpp[i2,a1] += t1pp[i2,a1] 
+
+           ENDDO i1 
+           ENDDO i 
+           ENDDO a 
+
+           GET           t1old[a1,i2] 
+           t2pp[a1,i2] = t1old[a1,i2] 
+
+           etemp = tpp[i2,a1]*t2pp[a1,i2] 
+           etemp *= -1.0 
+           esum += etemp 
+
+      ENDPARDO ifrag, i2,a1 
+
+      PARDO ifrag, i2,a1 "Frag{i}{pp}{}"
+
+           tpp[i2,a1] = 0.0 
+
+           DO a
+           where (int)SwMOA_frag[(index)a] == ifrag
+           DO i
+           where (int)SwMOA_frag[(index)i] == ifrag
+           DO i1 
+           where (int)SwMOA_frag[(index)i1] == ifrag
+
+               GET T2old_mono[a,i,a1,i1] 
+               GET T2old_mono[a,i1,a1,i] 
+               GET Viaii[i,a,i1,i2] 
+               taiai[a,i,a1,i1]  = T2old_mono[a,i,a1,i1] 
+               t1aiai[a,i,a1,i1] = T2old_mono[a,i1,a1,i] 
+
+               taiai[a,i,a1,i1] *= 4.0  
+               t1aiai[a,i,a1,i1]*= 2.0 
+               taiai[a,i,a1,i1] -= t1aiai[a,i,a1,i1] 
+
+               t1pp[i2,a1] = taiai[a,i,a1,i1]*Viaii[i,a,i1,i2] 
+               tpp[i2,a1] += t1pp[i2,a1] 
+
+           ENDDO i1 
+           ENDDO i 
+           ENDDO a 
+
+           GET          wC[a1,i2] 
+           t2pp[a1,i2] = wC[a1,i2] 
+           execute energy_denominator_rhf t2pp[a1,i2] fock_a 
+
+           etemp = tpp[i2,a1]*t2pp[a1,i2] 
+           etemp *= -1.0 
+           print etemp 
+           esum += etemp 
+
+      ENDPARDO ifrag,  i2,a1
+      sip_barrier
+#
+# ###################################################################################### 
+#                               D2 Contribution 
+# ###################################################################################### 
+#
+#
+      PARDO ifrag, a2,a1 "Frag{i}{pp}{}"
+
+           tpp[a1,a2] = 0.0 
+
+           DO a
+           where (int)SwMOA_frag[(index)a] == ifrag
+           DO i
+           where (int)SwMOA_frag[(index)i] == ifrag
+           DO i1 
+           where (int)SwMOA_frag[(index)i1] == ifrag
+
+               GET T2old_mono[a,i,a1,i1] 
+               GET T2old_mono[a,i1,a1,i] 
+               GET Vaibj[a,i,a2,i1]  
+
+               taiai[a,i,a1,i1]  = T2old_mono[a,i,a1,i1] 
+               t1aiai[a,i,a1,i1] = T2old_mono[a,i1,a1,i] 
+
+               taiai[a,i,a1,i1] *= 4.0  
+               t1aiai[a,i,a1,i1]*= 2.0 
+               taiai[a,i,a1,i1] -= t1aiai[a,i,a1,i1] 
+
+               t2aiai[a,i,a2,i1] = Vaibj[a,i,a2,i1] 
+               execute energy_denominator_rhf t2aiai[a,i,a2,i1] fock_a 
+
+               t1pp[a1,a2] = taiai[a,i,a1,i1]*t2aiai[a,i,a2,i1] 
+               tpp[a1,a2] += t1pp[a1,a2] 
+
+           ENDDO i1 
+           ENDDO i 
+           ENDDO a 
+
+           GET      wC[a2,a1] 
+           etemp = tpp[a1,a2]*wC[a2,a1] 
+           esum += etemp 
+
+      ENDPARDO ifrag, a2,a1 
+
+      PARDO ifrag, i2,i1 "Frag{i}{pp}{}"
+
+           tpp[i2,i1] = 0.0 
+
+           DO a
+           where (int)SwMOA_frag[(index)a] == ifrag
+           DO i
+           where (int)SwMOA_frag[(index)i] == ifrag
+           DO a1 
+           where (int)SwMOA_frag[(index)a1] == ifrag
+
+               GET T2old_mono[a,i,a1,i1] 
+               GET T2old_mono[a,i1,a1,i] 
+               GET Vaibj[a,i,a1,i2]  
+
+               taiai[a,i,a1,i1]  = T2old_mono[a,i,a1,i1] 
+               t1aiai[a,i,a1,i1] = T2old_mono[a,i1,a1,i] 
+
+               taiai[a,i,a1,i1] *= 4.0  
+               t1aiai[a,i,a1,i1]*= 2.0 
+               taiai[a,i,a1,i1] -= t1aiai[a,i,a1,i1] 
+
+               t2aiai[a,i,a1,i2] = Vaibj[a,i,a1,i2] 
+               execute energy_denominator_rhf t2aiai[a,i,a1,i2] fock_a  
+
+               t1pp[i2,i1] = taiai[a,i,a1,i1]*t2aiai[a,i,a1,i2] 
+               tpp[i2,i1] += t1pp[i2,i1] 
+
+           ENDDO a1 
+           ENDDO i 
+           ENDDO a 
+
+           GET          wC[i1,i2] 
+           etemp = tpp[i2,i1]*wC[i1,i2] 
+           etemp *= -1.0 
+           esum += etemp 
+
+      ENDPARDO ifrag, i2,i1
+      sip_barrier
+      collective eps1_pol += esum  
+      sip_barrier
+      print " " 
+      print eps1_pol 
+      e1n_int_tot = eint_tot
+      e1n_int_tot += eps1_pol
+      print e1n_int_tot
+      print " " 
+      sip_barrier 
+# 
+      ENDPROC POL1_EPS 
+#
 # ----------------------------------------------------------------------------
 #
       PROC DOUBLES_MANAGER

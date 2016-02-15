@@ -447,6 +447,7 @@ print " "
     print "starting additional transformations"
     call ADDITIONAL_FRAG_TRAN
     print "Finished additional transformations"
+    call POL1_EPS
 
     call FORM_T1_SECONDORDER
     sip_barrier
