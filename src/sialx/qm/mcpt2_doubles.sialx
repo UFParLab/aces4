@@ -802,7 +802,7 @@ SIAL mcpt2_doubles
       endif
 
 # Form backtransformed amplitudes 
-      PARDO ifrag, jfrag, a, i, mu, j "Frag{NRij}{pp}{pp}"
+      PARDO ifrag, jfrag, a, i, mu, j "Frag{NRij}{vo}{ao}"
 
          GET     d2error[ifrag,jfrag] 
          etemp = d2error[ifrag,jfrag]

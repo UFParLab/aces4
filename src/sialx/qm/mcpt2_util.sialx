@@ -86,6 +86,7 @@ SIAL mcpt2_util
 
       print elst_dist
       print rcut_dist
+      print SwAO_frag
       print SwMOA_frag
 
       sip_barrier
@@ -118,12 +119,12 @@ SIAL mcpt2_util
          DO mu
          where (int)SwAO_frag[(index)mu] == ifrag
             DO a 
-            where (int)SwVirtA_frag[(index)a] == ifrag
+            where (int)SwMOA_frag[(index)a] == ifrag
                   GET        Dca[mu,a] 
                   ca[mu,a] = Dca[mu,a] 
             ENDDO a 
             DO i 
-            where (int)SwOccA_frag[(index)i] == ifrag
+            where (int)SwMOA_frag[(index)i] == ifrag
                   GET        Dca[mu,i] 
                   ca[mu,i] = Dca[mu,i] 
             ENDDO i 
