@@ -255,7 +255,7 @@ bool FragmentPardoLoopManager::fragment_special_where_clause(int typ, int index,
 		break;
 
 	case 6: // check SwMOA_frag[ifrag] == ifrag
-		where_clause = swmoa_frag[index_values_[index] - lower_seg_[index]]
+		where_clause = swmoa_frag[index_values_[index] - 1]
 				== index_values_[frag];
 		break;
 
@@ -4461,6 +4461,7 @@ bool Fragment_ij_ap_pp_PardoLoopManager::where_clause(int index) {
 		break;
 	case 4:
 		where_ = fragment_special_where_clause(mo, index, jfrag);
+	//std::cout << "index " << index_values_[index] << " lowerseg " << lower_seg_[index] << " swmo_frag " << swmoa_frag[index_values_[index] - 1] << " where " << where_ << std::endl ;
 		break;
 	case 5:
 		where_ = fragment_special_where_clause(mo, index, jfrag);
@@ -4625,7 +4626,7 @@ bool Fragment_ij_pp_pp_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(elst, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(ao, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
 		where_ = fragment_special_where_clause(mo, index, ifrag);

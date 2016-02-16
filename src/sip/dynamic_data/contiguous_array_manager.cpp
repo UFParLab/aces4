@@ -136,8 +136,8 @@ Block::BlockPtr ContiguousArrayManager::insert_contiguous_array(int array_id,
 Block::BlockPtr ContiguousArrayManager::create_contiguous_array(int array_id) {
 	BlockShape shape = sip_tables_.contiguous_array_shape(array_id);
 
-			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape <<
-					" num_elems " << shape.num_elems() << "  and array id :" << array_id << std::endl;
+//			std::cout<< "creating contiguous array " << sip_tables_.array_name(array_id) << " with shape " << shape <<
+//					" num_elems " << shape.num_elems() << "  and array id :" << array_id << std::endl;
 	double* data = block_map_.allocate_data(shape.num_elems(), true);
 	Block::BlockPtr block_ptr = new Block(shape, data);
 //	block_ptr->fill(0.0);

@@ -6,6 +6,7 @@ sial frag_vars
 index   kiter  = 1: 10 # monomer microiterations 
 index   diter  = 1: 5 # dimer microiterations 
 index   jiter  = 1: cc_iter # macroiterations 
+index   frag1  = 1: 1 # Nsolute   
 index   ifrag  = 1: nfrags # Nsolute   
 index  iifrag  = 1: nfrags # Nsolute    
 index   katom  = 1: nfrags # Nfrags  
@@ -23,6 +24,7 @@ index      ii  = 1: 1  # 1
 index smu = 1:norb
 index si = baocc: eaocc
 index sa = bavirt: eavirt
+index sp = baocc: eavirt
 index kstate   = 1: eom_roots
 index kstate1  = 1: eom_roots
 index jstate   = 1: eom_roots
@@ -80,9 +82,19 @@ moaindex fp1=  frag1_baocc: frag1_eavirt
 int rmaster
 int do_nonhf
 int do_secondorder
+int kstart
 # ---------------
 # Declare scalars
 # ---------------
+scalar rmsconv
+scalar overlap1
+scalar overlap2
+scalar overlapT
+scalar normS
+scalar normT
+scalar norm1
+scalar norm2
+scalar overlapS
 scalar etemp 
 scalar etemp1
 scalar etemp2
@@ -138,6 +150,7 @@ scalar mono_lccd
 scalar mcpt_corr
 scalar elccd
 scalar singles 
+scalar emp2
 scalar MOI_dimer_doubles 
 scalar dimer_doubles 
 scalar fragment_doubles 
@@ -167,7 +180,7 @@ scalar second_order_singles
 # ---------------
 # Declare served
 # ---------------
-
+distributed DRNai[a,i]
 distributed Dca[mu,p] 
 distributed Dfock_a[p,p1] 
 distributed oed_ovl[mu,nu]  
@@ -306,13 +319,13 @@ static ao_start[ifrag]
 static ao_end[ifrag]
 static occ_start[ifrag]
 static occ_end[ifrag]
-static fock_a[p] 
+static fock_a[p,p1] 
 static Sx3[p] 
 static SwAO_frag[smu] 
+static SwMOA_frag[sp]
+static SwMOB_frag[sp]
 static SwOccA_frag[si]
-static SwOccB_frag[si]
 static SwVirtA_frag[sa]
-static SwVirtB_frag[sa]
 static elst_dist[jfrag,kfrag]
 static rcut_dist[jfrag,kfrag]
 contiguous local macro_e20[ifrag] 
@@ -338,6 +351,8 @@ contiguous local scr_5[ao_scratch,ao_scratch]
 contiguous local SHDiag[a,i]
 contiguous local C1_a[ksub,a,i]
 contiguous local CIS_EE_Energy[ksub]
+contiguous local CIS_EE_eV[kstate]
+contiguous local CLRB1_a[ksub,a,i]
 # ---------------
 # Declare local
 # ---------------
@@ -348,7 +363,6 @@ local ca[mu,p]
 local LVxxxq[mu,nu,lambda,j] 
 local LVxxqq[mu,nu,j,j1] 
 local LDaixj[a,i,nu,j]
-local sp[ifrag] 
 local LwC[p,p1]  
 local wAO_frag[mu] 
 local wOccA_frag[i] 
@@ -435,10 +449,13 @@ temp tkk[ksub,ksub1]
 temp Tkai[ksub,a,i]
 temp T1kai[ksub,a,i]
 temp T2kai[ksub,a,i]
+temp T3kai[ksub,a,i]
+temp T4kai[ksub,a,i]
 temp Taaii[a,a1,i,i1]
 temp Tia[i,a]
 temp Taa[a,a1]
 temp Tii[i,i1]
 temp T2ai[a,i]
+temp T1k[ksub]
 # ---------------
 endsial frag_vars

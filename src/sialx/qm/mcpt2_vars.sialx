@@ -133,6 +133,7 @@ scalar dimer_doubles
 scalar fragment_doubles 
 scalar eint_tot 
 scalar eps1_pol 
+scalar e1n_int_tot
 scalar e2x_at 
 scalar e1old 
 scalar e1new  
