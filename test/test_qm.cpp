@@ -887,6 +887,7 @@ int main(int argc, char **argv) {
 	sip::SIPMPIUtils::set_error_handler();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
+	TestControllerParallel::sleep_between_tests = 5;  //delay between tests to deal with duplicate job numbers
 #endif
 	barrier();
 

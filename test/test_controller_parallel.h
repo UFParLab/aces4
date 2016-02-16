@@ -101,6 +101,15 @@ public:
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
 
+	/**
+	 * Indicates the number of seconds to pause between tests.  This is a hack to
+	 * deal with the situation where consecutive tests get the same jobid due to the course
+	 * resolution of the timestamp used to generate the id.
+	 *
+	 * Default is 0.
+	 */
+	static unsigned int sleep_between_tests;
+
 	bool runServer();
 	bool runWorker();
 
