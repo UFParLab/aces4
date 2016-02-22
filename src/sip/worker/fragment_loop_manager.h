@@ -513,6 +513,27 @@ private:
 	Interpreter* interpreter_;
 };
 
+    class Fragment_i_ap__PardoLoopManager: public FragmentPardoLoopManager {
+    public:
+        Fragment_i_ap__PardoLoopManager(int num_indices,
+                                        const int (&index_ids)[MAX_RANK], DataManager & data_manager,
+                                        const SipTables & sip_tables, SIPMPIAttr& sip_mpi_attr,
+                                        int num_where_clauses, Interpreter* interpreter, long& iteration);
+        virtual ~Fragment_i_ap__PardoLoopManager();
+    private:
+        virtual bool do_update();
+        bool where_clause(int index);
+        
+        bool first_time_;
+        long& iteration_;
+        int num_where_clauses_;
+        
+        SIPMPIAttr & sip_mpi_attr_;
+        int company_rank_;
+        int num_workers_;
+        Interpreter* interpreter_;
+    };
+
     class Fragment_i_pp__PardoLoopManager: public FragmentPardoLoopManager {
     public:
         Fragment_i_pp__PardoLoopManager(int num_indices,

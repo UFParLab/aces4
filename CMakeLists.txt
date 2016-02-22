@@ -592,6 +592,7 @@ set(SIAL_FILES
     src/sialx/qm/mcpt2_util.sialx;
     src/sialx/qm/MOI_rhf.sialx;
     src/sialx/qm/MOI_rhf_defs.sialx;
+    src/sialx/qm/frag_rhf.sialx
     src/sialx/qm/MOI_reom_defs.sialx;
     src/sialx/qm/MOI_reom_vars.sialx;
     src/sialx/qm/MOI_rcis.sialx;
