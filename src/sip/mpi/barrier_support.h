@@ -18,7 +18,13 @@
  * MPI barrier.
  *
  * The server updates its section number each time it receives a message, and checks that the sequence
- * of section numbers is monotone.
+ * of section numbers is monotone.  (It is possible that any given server will not receive any messages
+ * in a particular section.)
+ *
+ * Because of limitations on the size of the tag, the section number is sent in the message itself.
+ * It is only needed in the first message of multi-message operations (like put).
+ *
+ * Transaction numbers wrap around.
  *
  *
  *
@@ -27,7 +33,7 @@
  * It is useful for each "transaction" initiated by a worker to have a unique identifier. To
  * accomplish this, a transaction counter is also maintained.  Each message belonging to a transaction--
  * for example the put and corresponding put_data messages--has the same transaction number.
- * The section number, transaction number, and message type are combined to form the message tag.
+ * The transaction number and message type are combined to form the message tag.
  *
  * Because this class is entirely small inlined functions, it does not have a corresponding .cpp file.
  *
@@ -123,7 +129,6 @@ public:
 	 * Called by the server loop for each message it receives.  Extracts message_type and transaction_number,
 	 * @param tag
 	 * @param message_type
-	 * @param section_number
 	 * @param transaction_number
 	 * @return
 	 */

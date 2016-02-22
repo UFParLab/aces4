@@ -1536,6 +1536,11 @@ bool Interpreter::interpret_where(int num_where_clauses) {
 				++pc;
 			}
 				break;
+			case int_load_value_op: {
+				control_stack_.push(int_value(arg0()));
+				++pc;
+			}
+				break;
 			case int_equal_op: {
 				int i1 = control_stack_.top();
 				control_stack_.pop();
