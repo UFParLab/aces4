@@ -1474,6 +1474,19 @@ int main(int argc, char **argv) {
     sip::SIPMPIUtils::set_error_handler();
     sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
     attr = &sip_mpi_attr;
+
+//    int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
+//             void *attribute_val, int *flag)
+
+
+
+    int error, flag = 0;
+    MPI_Aint mpi_tag_ub = 0;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &mpi_tag_ub, &flag);
+    if (error == MPI_SUCCESS && flag) std::cerr << "Upper bound on MPI tags at rank " << rank << "=" << *(int*)mpi_tag_ub << std::endl << std::flush;
+    else std::cerr << "MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &mpi_tag_ub, &flag); failed at rank " << rank << std::endl << std::flush;
 #endif
     barrier();
 
