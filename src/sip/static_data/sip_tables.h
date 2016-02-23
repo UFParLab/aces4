@@ -175,10 +175,13 @@ public:
 		//the worker sends the server an end_program instruction with pc = 1 + last pc, which is the op_table_.size()
 		return std::string("END_PROGRAM");
 	}
-    void print() const;
+	std::ostream& print(std::ostream&) const;
+	std::ostream& print_array_info(std::ostream&) const;
 	friend std::ostream& operator<<(std::ostream&, const SipTables &);
 
 	setup::SetupReader& setup_reader() const { return setup_reader_; }
+
+
 
 
 private:
@@ -217,6 +220,7 @@ private:
 	friend class ::TestController;
 	friend class Tracer;
 	friend class ::TestControllerParallel;
+
 
 	DISALLOW_COPY_AND_ASSIGN(SipTables);
 };

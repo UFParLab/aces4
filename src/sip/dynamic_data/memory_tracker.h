@@ -13,7 +13,6 @@
 
 namespace sip {
 
-class CachedBlockMap;
 
 class MemoryTracker {
 public:

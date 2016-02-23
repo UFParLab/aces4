@@ -1,8 +1,7 @@
 /*
- * print_siptables.cpp
+ * print_array_info.cpp
  *
- *  Created on: Jul 8, 2014
- *      Author: njindal
+ *  Derived from print_siptables.cpp
  */
 
 #include "config.h"
@@ -25,12 +24,6 @@
 
 
 int main(int argc, char* argv[]) {
-
-#ifdef HAVE_MPI
-	/* MPI Initialization */
-	MPI_Init(&argc, &argv);
-#endif
-
 
 	// Default initialization file is data.dat
 	char *init_file = "data.dat";
@@ -85,15 +78,11 @@ int main(int argc, char* argv[]) {
 
 		// Print the sipTables instance
 		std::cout << "Sial File : " << sialfpath << std::endl;
-		std::cout << sipTables << std::endl;
+		sipTables.print_array_info(std::cout) << std::endl;
 	}
 
-	std::cout << "Memory used for predefined arrays" <<
+	std::cout << "Memory used for predefined arrays\n" <<
 			*sip::MemoryTracker::global << std::endl <<std::flush;
-
-#ifdef HAVE_MPI
-	MPI_Finalize();
-#endif
 
 	return 0;
 }
