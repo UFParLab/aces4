@@ -34,7 +34,6 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 #ifdef HAVE_MPI
 ("StaticTaskAllocParallelPardoLoop",PardoLoopFactory::StaticTaskAllocParallelPardoLoop)
 ("BalancedTaskAllocParallelPardoLoop",PardoLoopFactory::BalancedTaskAllocParallelPardoLoop)
-("Frag{i}{aa}{}", PardoLoopFactory::Fragment_i_aa__PardoLoopManager)
 ("Frag{Nij}{aa}{}", PardoLoopFactory::Fragment_Nij_aa__PardoLoopManager)
 ("Frag{Nij}{a}{a}", PardoLoopFactory::Fragment_Nij_a_a_PardoLoopManager)
 ("Frag{Nij}{o}{o}", PardoLoopFactory::Fragment_Nij_o_o_PardoLoopManager)
@@ -54,6 +53,8 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 ("Frag{NRij}{vo}{ao}",PardoLoopFactory::Fragment_NRij_vo_ao_PardoLoopManager)
 ("Frag{NRij}{aa}{aa}",PardoLoopFactory::Fragment_NRij_aa_aa_PardoLoopManager)
 ("Frag{NRij}{o}{ao}",PardoLoopFactory::Fragment_NRij_o_ao_PardoLoopManager)
+("Frag{i}{aa}{}", PardoLoopFactory::Fragment_i_aa__PardoLoopManager)
+("Frag{i}{ap}{}", PardoLoopFactory::Fragment_i_ap__PardoLoopManager)
 ("Frag{i}{pppp}{}",PardoLoopFactory::Fragment_i_pppp__PardoLoopManager)
 ("Frag{i}{pp}{}",PardoLoopFactory::Fragment_i_pp__PardoLoopManager)
 ("Frag{ij}{ap}{pp}",PardoLoopFactory::Fragment_ij_ap_pp_PardoLoopManager)
@@ -119,10 +120,6 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 			return  new sip::BalancedTaskAllocParallelPardoLoop(
 				num_indices, index_ids, data_manager, sip_tables,
 				sip_mpi_attr, num_where_clauses, interpreter, iteration);
-		case Fragment_i_aa__PardoLoopManager:
-			return new sip::Fragment_i_aa__PardoLoopManager(
-					num_indices, index_ids, data_manager, sip_tables,
-					sip_mpi_attr, num_where_clauses, interpreter, iteration);
 		case Fragment_Nij_aa__PardoLoopManager:
 			return new sip::Fragment_Nij_aa__PardoLoopManager(
 			num_indices, index_ids, data_manager, sip_tables,
@@ -187,6 +184,13 @@ std::map<std::string, enum PardoLoopFactory::Loop_t> PardoLoopFactory::pardo_var
 		case Fragment_NRij_o_ao_PardoLoopManager:
 			return new sip::Fragment_NRij_o_ao_PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,
 			sip_mpi_attr, num_where_clauses, interpreter, iteration);
+		case Fragment_i_aa__PardoLoopManager:
+			return new sip::Fragment_i_aa__PardoLoopManager(
+					num_indices, index_ids, data_manager, sip_tables,
+					sip_mpi_attr, num_where_clauses, interpreter, iteration);
+        case Fragment_i_ap__PardoLoopManager:
+            return new sip::Fragment_i_ap__PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,
+                sip_mpi_attr, num_where_clauses, interpreter, iteration);
         case Fragment_i_pp__PardoLoopManager:
             return new sip::Fragment_i_pp__PardoLoopManager(num_indices, index_ids, data_manager, sip_tables,
                 sip_mpi_attr, num_where_clauses, interpreter, iteration);

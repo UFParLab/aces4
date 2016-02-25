@@ -489,7 +489,6 @@ private:
 	friend class Fragment_Nij_a_a_PardoLoopManager;
 	friend class Fragment_Nij_oo__PardoLoopManager;
 	friend class Fragment_Nij_o_o_PardoLoopManager;
-	friend class Fragment_i_aa__PardoLoopManager;
 	friend class Fragment_i_aaoo__PardoLoopManager;
 	friend class Fragment_i_aovo__PardoLoopManager;
 	friend class Fragment_i_aaaa__PardoLoopManager;
@@ -506,13 +505,15 @@ private:
 	friend class Fragment_NRij_vo_ao_PardoLoopManager;
 	friend class Fragment_NRij_aa_aa_PardoLoopManager;
 	friend class Fragment_NRij_o_ao_PardoLoopManager;
-    friend class Fragment_i_pp__PardoLoopManager;
-    friend class Fragment_i_pppp__PardoLoopManager;
-    friend class Fragment_ij_ap_pp_PardoLoopManager;
-    friend class Fragment_ij_pp_pp_PardoLoopManager;
-    friend class Fragment_Nij_pp_pp_PardoLoopManager;
-    friend class Fragment_Rij_pp_pp_PardoLoopManager;
-    friend class Fragment_NRij_pp_pp_PardoLoopManager;
+	friend class Fragment_i_aa__PardoLoopManager;
+	friend class Fragment_i_ap__PardoLoopManager;
+	friend class Fragment_i_pp__PardoLoopManager;
+	friend class Fragment_i_pppp__PardoLoopManager;
+	friend class Fragment_ij_ap_pp_PardoLoopManager;
+	friend class Fragment_ij_pp_pp_PardoLoopManager;
+	friend class Fragment_Nij_pp_pp_PardoLoopManager;
+	friend class Fragment_Rij_pp_pp_PardoLoopManager;
+	friend class Fragment_NRij_pp_pp_PardoLoopManager;
 	friend void ::list_blocks_with_number();
 	friend void ::check_block_number_calculation(int& array_slot, int& rank,
             int* index_values, int& size, int* extents,  double* data, int& ierr);

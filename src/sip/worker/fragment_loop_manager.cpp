@@ -4295,6 +4295,142 @@ Fragment_i_pppp__PardoLoopManager::~Fragment_i_pppp__PardoLoopManager() {
 
 /*!
  -------------------------------------------
+ _i_ap__
+ -------------------------------------------
+
+ PARDO ifrag, mu,....#GETLINE: Fragment_i_ap__
+ where (int)SwAO_frag[(index)mu] == ifrag
+ .
+ .
+ .
+ */
+
+/*
+ for each new special fragment where clause pattern, this should be the only thing realy changed.
+ see comment above for fragment_special_where_clause syntax
+ */
+bool Fragment_i_ap__PardoLoopManager::where_clause(int index) {
+	bool where_;
+	int ifrag = 0;
+	int jfrag = 1;
+	int ao = 1;
+	int occ = 2;
+	int virt = 3;
+	int elst = 4;
+	int rcut = 5;
+	int mo = 6;
+
+	switch (index) {
+	case 0:
+		where_ = true;
+		break;
+	case 1:
+		where_ = fragment_special_where_clause(ao, index, ifrag);
+		break;
+	case 2:
+		where_ = fragment_special_where_clause(mo, index, ifrag);
+		break;
+	case 3:
+	case 4:
+	case 5:
+		break;
+	default:
+		where_ = false;
+	}
+	return where_;
+}
+
+bool Fragment_i_ap__PardoLoopManager::do_update() {
+	if (to_exit_)
+		return false;
+	bool more_iters;
+	bool where_clauses_value;
+
+	interpreter_->skip_where_clauses(num_where_clauses_);
+
+	if (first_time_) {
+		first_time_ = false;
+		more_iters = initialize_indices();
+
+		where_clauses_value = true;
+		for (int i = 1; i < num_indices_; ++i) {
+			where_clauses_value = where_clauses_value && where_clause(i);
+		}
+		if (where_clauses_value) {
+			iteration_++;
+			if ((iteration_ - 1) % num_workers_ == company_rank_) {
+				return true;
+			}
+		}
+	}
+
+	int index_restart[MAX_RANK];
+
+	for (int i = 0; i < num_indices_; ++i) {
+		index_restart[i] = index_values_[i];
+	}
+
+	int loop_count = iteration_;
+	for (int index_i = index_restart[0]; index_i < upper_bound_[0]; ++index_i) {
+		index_values_[0] = index_i;
+		data_manager_.set_index_value(index_id_[0], index_i);
+
+		for (int index_1 = index_restart[1]; index_1 < upper_bound_[1];
+				++index_1) {
+			index_values_[1] = index_1;
+			data_manager_.set_index_value(index_id_[1], index_1);
+
+			if (where_clause(1)) {
+				for (int index_2 = index_restart[2]; index_2 < upper_bound_[2];
+						++index_2) {
+					index_values_[2] = index_2;
+					data_manager_.set_index_value(index_id_[2], index_2);
+
+					if (where_clause(2)) {
+						if (loop_count > iteration_) {
+							iteration_++;
+							if ((iteration_ - 1) % num_workers_
+									== company_rank_) {
+								return true;
+							}
+						}
+						++loop_count;
+					} // where 2
+				} // index_2
+				for (int i = 2; i < num_indices_; ++i) {
+					index_restart[i] = lower_seg_[i];
+				}
+			} // where 1
+		} // index_1
+		for (int i = 1; i < num_indices_; ++i) {
+			index_restart[i] = lower_seg_[i];
+		}
+	} // index_i
+
+	return false; //this should be false here
+}
+
+Fragment_i_ap__PardoLoopManager::Fragment_i_ap__PardoLoopManager(
+		int num_indices, const int (&index_id)[MAX_RANK],
+		DataManager & data_manager, const SipTables & sip_tables,
+		SIPMPIAttr & sip_mpi_attr, int num_where_clauses,
+		Interpreter* interpreter, long& iteration) :
+		FragmentPardoLoopManager(num_indices, index_id, data_manager,
+				sip_tables), first_time_(true), iteration_(iteration), sip_mpi_attr_(
+				sip_mpi_attr), num_where_clauses_(num_where_clauses), company_rank_(
+				sip_mpi_attr.company_rank()), num_workers_(
+				sip_mpi_attr_.num_workers()), interpreter_(interpreter) {
+
+	form_swao_frag();
+	form_swmoa_frag();
+}
+
+Fragment_i_ap__PardoLoopManager::~Fragment_i_ap__PardoLoopManager() {
+}
+
+
+/*!
+ -------------------------------------------
  _i_pp__
  -------------------------------------------
 
