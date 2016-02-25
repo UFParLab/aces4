@@ -878,7 +878,7 @@ endif
     ENDDO ifrag 
     sip_barrier 
 
-#	print second_order_singles
+	print second_order_singles
 ##
     ENDPROC form_t1_secondorder
 
