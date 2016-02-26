@@ -332,6 +332,7 @@ test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
+test/frag_scf_333_test.dat\
 test/mcpt2_water_test.dat\
 test/mcpt2_222_test.dat\
 test/eom_test.dat\
