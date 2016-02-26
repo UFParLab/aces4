@@ -2,11 +2,10 @@ import "frag_rhf_defs.sialx"
 #
                            SIAL SCF_RHF
 #
+#------------------------------------------------------------------------------
 #
-# BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 #
 # Declare indices 
-# --------------- 
 #
 index   kiter  = 1: scf_iter  
 index   kbeg   = 1: scf_beg
@@ -37,42 +36,34 @@ index   ao_scratch    = 1: max_aoseg    # maximum ao segment size
 index   ao_scratch1   = 1: max_aoseg    # maximum ao segment size 
 index   alpha_scratch = 1: max_alphaseg # maximum alpha segment size 
 index   beta_scratch  = 1: max_betaseg  # maximum beta segment size 
-#
 aoindex mu     = 1: norb
 aoindex nu     = 1: norb
 aoindex lambda = 1: norb
 aoindex sigma  = 1: norb
-#
 moaindex i = 1: eaocc
 moaindex i1= 1: eaocc
 moaindex i2= 1: eaocc
 moaindex i3= 1: eaocc
-#
 moaindex a = bavirt: eavirt
 moaindex a1= bavirt: eavirt
 moaindex a2= bavirt: eavirt
 moaindex a3= bavirt: eavirt
-#
 moaindex j = 1: eaocc
 moaindex j1= 1: eaocc
 moaindex j2= 1: eaocc
 moaindex j3= 1: eaocc
-#
 moaindex b = bavirt: eavirt
 moaindex b1= bavirt: eavirt
 moaindex b2= bavirt: eavirt
 moaindex b3= bavirt: eavirt
-#
 moaindex p = 1: eavirt
 moaindex p1= 1: eavirt
 moaindex p2= 1: eavirt
 moaindex p3= 1: eavirt
-#
 moaindex q = 1: eavirt
 moaindex q1= 1: eavirt
 moaindex q2= 1: eavirt
 moaindex q3= 1: eavirt
-
 moaindex fi = frag1_baocc: frag1_eaocc
 moaindex fi1= frag1_baocc: frag1_eaocc
 moaindex fi2= frag1_baocc: frag1_eaocc
@@ -85,349 +76,52 @@ aoindex  flambda= 1: frag1_norb
 aoindex  fsigma= 1: frag1_norb
 moaindex fp =  frag1_baocc: frag1_eavirt
 moaindex fp1=  frag1_baocc: frag1_eavirt
-# 
-# The distributed arrays.
-# -----------------------
 #
-distributed MOI_ca[fmu,fp]
-distributed MOI_focka[fp,fp1]
-distributed DHFa[mu,nu] 
-distributed DHFb[mu,nu] 
-distributed DHFa_old[mu,nu] 
-distributed DHFb_old[mu,nu] 
-distributed IDHFa[mu,nu] 
-distributed IDHFb[mu,nu] 
-distributed Fpq_a[mu,nu] 
-distributed Fpq_b[mu,nu] 
-distributed FTpq_a[mu,nu] 
-distributed FTpq_b[mu,nu] 
-distributed CBT_a[mu,p] 
-distributed CBT_b[mu,q] 
-distributed Pnew_a[mu,nu]
-distributed Pnew_b[mu,nu]
-distributed Pold_a[mu,nu]
-distributed Pold_b[mu,nu]
-DISTRIBUTED FpqA_NEW[mu,nu]
-DISTRIBUTED FpqB_NEW[mu,nu]
-DISTRIBUTED DHFa_Prev[mu,nu]
-DISTRIBUTED DHFb_Prev[mu,nu]
-DISTRIBUTED FpqA_Prev[mu,nu]
-DISTRIBUTED FpqB_Prev[mu,nu]
-DISTRIBUTED Fpqa_DMP[mu,nu]
-DISTRIBUTED Fpqb_DMP[mu,nu]
-DISTRIBUTED Dpqa_DMP[mu,nu]
-DISTRIBUTED Dpqb_DMP[mu,nu]
-DISTRIBUTED Fpqa_MO[p,p1]
-DISTRIBUTED Fpqb_MO[q,q1]
-DISTRIBUTED SCa[mu,p]
-DISTRIBUTED SCb[mu,q]
-DISTRIBUTED OVLP_INV[mu,nu]
-DISTRIBUTED OCA[mu,p]
-DISTRIBUTED BCA[mu,p]
-DISTRIBUTED OVLP_TMP_A[p,i]
-DISTRIBUTED OVLP_TMP_B[q,j]
-DISTRIBUTED INTM_A[nu,i]
-DISTRIBUTED INTM_B[nu,j]
-distributed Qxx[mu,nu] 
-distributed FTa[p,p1] 
-distributed FTb[q,q1] 
-distributed FFai[a,i] 
-distributed FFbj[b,j] 
-distributed OVC_T[p,mu]
-distributed OVC[p,p1]
-distributed fpqa_dbg[mu,nu]
-distributed fpqb_dbg[mu,nu]
-distributed Fa[mu,nu,kdiis] 
-distributed Fb[mu,nu,kdiis] 
-distributed Fbj[b,j,kdiis] 
-distributed Fai[a,i,kdiis] 
-DISTRIBUTED CA_TEMP_0[mu,p]
-DISTRIBUTED CB_TEMP_0[mu,q]
-DISTRIBUTED CA_TEMP[mu,p]
-DISTRIBUTED CB_TEMP[mu,q]
-
-# The static and local arrays 
-
-distributed Dfrag_energy[ifrag]
-distributed Dfrag_energy_old[ifrag]
-distributed Dfrag_error[ifrag]
-distributed Dfrag_density_difference[ifrag]
-contiguous local frag_energy[ifrag]
-contiguous local frag_scf_energy[ifrag]
-contiguous local frag_density_difference[ifrag]
-contiguous local frag_energy_difference[ifrag]
-static frag_repul[ifrag]
-static Spp[p,p1]
-static OVLP[mu,nu]
-static CA_Prev[mu,p]
-static CB_Prev[mu,q]
-static ORB_OVLP_A[p,i]
-static ORB_OVLP_B[q,j]
-static Fpqa_MO_VSHIFT[p,p1]
-static Fpqb_MO_VSHIFT[q,q1]
-static A_OCC_NUMS[NbfnsA]
-static B_OCC_NUMS[NbfnsB]
-static DAMP_PARMS[Ithree]
-static FSpq_a[mu,nu] 
-static FSpq_b[mu,nu] 
-static X1[mu,nu] 
-static pinf[kiter,kptr1]
-static BB[kdiis,kdiis] 
-#
-# The temporary arrays 
-# ------------------------ 
-#
-temp Tss[ao_scratch,ao_scratch1]
-temp T1ss[ao_scratch,ao_scratch1]
-temp Ixi[mu,i] 
-temp I1xi[mu,i] 
-temp Ixj[mu,j] 
-temp I1xj[mu,j] 
-temp Tpq[mu,nu] 
-temp T1pq[mu,nu] 
-temp Txi[mu,i] 
-temp Txi_t[mu,i] 
-temp T1xi[mu,i] 
-temp Txj[mu,j] 
-temp Txj_t[mu,j] 
-temp T1xj[mu,j] 
-temp Txx[mu,nu] 
-temp TAxx[mu,nu] 
-temp TBxx[mu,nu] 
-temp T1xx[mu,nu] 
-temp T2xx[mu,nu] 
-temp T3xx[mu,nu] 
-temp T4xx[mu,nu] 
-temp T5xx[mu,nu] 
-temp T6xx[mu,nu] 
-temp T7xx[mu,nu] 
-temp T8xx[mu,nu] 
-temp T9xx[mu,nu] 
-temp T10xx[mu,nu] 
-temp T11xx[mu,nu] 
-temp T12xx[mu,nu] 
-temp T13xx[mu,nu] 
-temp T14xx[mu,nu] 
-temp T15xx[mu,nu] 
-temp T16xx[mu,nu] 
-temp T17xx[mu,nu] 
-temp T18xx[mu,nu] 
-temp T19xx[mu,nu] 
-temp T20xx[mu,nu] 
-temp T21xx[mu,nu] 
-temp T22xx[mu,nu] 
-temp Tii[i,i1] 
-temp T1ii[i,i1] 
-temp Tjj[j,j1] 
-temp T1jj[j,j1] 
-temp Txp[mu,p] 
-temp T1xp[mu,p] 
-temp Tpp[p,p1] 
-temp T1pp[p,p1] 
-temp Txq[mu,q] 
-temp T1xq[mu,q] 
-temp Tqq[q,q1] 
-temp T1qq[q,q1] 
-temp aoint[mu,nu,lambda,sigma]
-temp tpinf[kiter,kptr1]
-temp tpx[p,mu]
-temp tpxt[p,mu]
-temp Tppt[p,p1]
-temp Tpp1[p,p1]
-Temp TXX_a[mu,nu]
-Temp TXX_b[mu,nu]
-Temp ToccA[nbfnsA]
-temp tai[a,i] 
-temp t1ai[a,i] 
-temp tbj[b,j] 
-temp t1bj[b,j] 
-temp Tpi[p,i]
-temp Tqj[q,j]
-temp tpqx[mu,nu,d2]   
-temp taix[a,i,d2]   
-temp tbjx[b,j,d2]   
-temp tdd[d1,d2] 
-temp t1dd[d1,d2] 
-temp Ixp[mu,p]
-temp Jxq[mu,q]
-temp Ixx[mu,nu]
-#
-# Scalars 
+# Declare ints 
 #
 int worder
 int temp_order
 int diis_count 
 int diis_start
 int diis_order
+INT diis_end
+INT iter_count
+INT prnt_count
+INT target
+INT init_guess
+INT lShift_a1
+INT lShift_b1
+INT damping
+INT dynamic_damp
+INT kill_damp
+INT lock_orbs
+INT lock_occs
+INT level_shift
+INT Can_damp
+INT coreh
+INT atomic
+INT david_dynamic
+INT karls_dynamic
+INT constant_damping
+INT N1
+INT N2
+INT ICHECK
+INT Start_History
+INT IZERO
+INT master 
+INT ECPS
+int astart
+int aend
+int pstart
+int pend
+#
+# Declare scalars 
+#
 scalar total_scf_energy
 scalar repulsion
 scalar num_lindep
 scalar shifta
 scalar shiftb
-scalar b11
-scalar b12
-scalar b13
-scalar b14
-scalar b15
-scalar b16
-scalar b17
-scalar b18
-scalar b19
-scalar b110 
-scalar b22
-scalar b23
-scalar b24
-scalar b25
-scalar b26
-scalar b27
-scalar b28
-scalar b29
-scalar b210 
-scalar b33
-scalar b34
-scalar b35
-scalar b36
-scalar b37
-scalar b38
-scalar b39
-scalar b310 
-scalar b44
-scalar b45
-scalar b46
-scalar b47
-scalar b48
-scalar b49
-scalar b410 
-scalar b56
-scalar b57
-scalar b58
-scalar b59
-scalar b510 
-scalar b66 
-scalar b67 
-scalar b68 
-scalar b69 
-scalar b610  
-scalar b77 
-scalar b78 
-scalar b79 
-scalar b710  
-scalar b88 
-scalar b89 
-scalar b810  
-scalar b99 
-scalar b910  
-scalar b1010 
-scalar c1
-scalar c2
-scalar c3
-scalar c4
-scalar c5
-scalar c6
-scalar c7
-scalar c8
-scalar c9
-scalar c10 
-scalar Tb11
-scalar Tb12
-scalar Tb13
-scalar Tb14
-scalar Tb15
-scalar Tb16
-scalar Tb17
-scalar Tb18
-scalar Tb19
-scalar Tb110 
-scalar Tb21
-scalar Tb22
-scalar Tb23
-scalar Tb24
-scalar Tb25
-scalar Tb26
-scalar Tb27
-scalar Tb28
-scalar Tb29
-scalar Tb210 
-scalar Tb31
-scalar Tb32
-scalar Tb33
-scalar Tb34
-scalar Tb35
-scalar Tb36
-scalar Tb37
-scalar Tb38
-scalar Tb39
-scalar Tb310 
-scalar Tb41
-scalar Tb42
-scalar Tb43
-scalar Tb44
-scalar Tb45
-scalar Tb46
-scalar Tb47
-scalar Tb48
-scalar Tb49
-scalar Tb410 
-scalar Tb51
-scalar Tb52
-scalar Tb53
-scalar Tb54
-scalar Tb55
-scalar Tb56
-scalar Tb57
-scalar Tb58
-scalar Tb59
-scalar Tb510 
-scalar Tb61 
-scalar Tb62 
-scalar Tb63 
-scalar Tb64 
-scalar Tb65 
-scalar Tb66 
-scalar Tb67 
-scalar Tb68 
-scalar Tb69 
-scalar Tb610  
-scalar Tb71 
-scalar Tb72 
-scalar Tb73 
-scalar Tb74 
-scalar Tb75 
-scalar Tb76 
-scalar Tb77 
-scalar Tb78 
-scalar Tb79 
-scalar Tb710  
-scalar Tb81 
-scalar Tb82 
-scalar Tb83 
-scalar Tb84 
-scalar Tb85 
-scalar Tb86 
-scalar Tb87 
-scalar Tb88 
-scalar Tb89 
-scalar Tb810  
-scalar Tb91 
-scalar Tb92 
-scalar Tb93 
-scalar Tb94 
-scalar Tb95 
-scalar Tb96 
-scalar Tb97 
-scalar Tb98 
-scalar Tb99 
-scalar Tb910  
-scalar Tb101 
-scalar Tb102 
-scalar Tb103 
-scalar Tb104 
-scalar Tb105 
-scalar Tb106 
-scalar Tb107 
-scalar Tb108 
-scalar Tb109 
-scalar Tb1010 
 scalar e_b     
 scalar escf_a 
 scalar escf_b 
@@ -497,75 +191,13 @@ scalar damp_constant
 scalar rank
 scalar zmax
 scalar imax
-
-INT diis_end
-INT iter_count
-INT prnt_count
-INT target
-INT init_guess
-INT lShift_a1
-INT lShift_b1
-INT damping
-INT dynamic_damp
-INT kill_damp
-INT lock_orbs
-INT lock_occs
-INT level_shift
-INT Can_damp
-INT coreh
-INT atomic
-INT david_dynamic
-INT karls_dynamic
-INT constant_damping
-INT N1
-INT N2
-INT ICHECK
 scalar icount
 scalar jcount
-INT Start_History
-INT IZERO
-INT master 
-INT ECPS
-
 scalar pair_flag
-
-temp DAOINT[mu,nu]
-static dipole[ixyz]
-static NucDip[ixyz]
-static Dip02[ixyz]
-served Dxx_scf[mu,nu]
 scalar dsum
 scalar AbsDip
 scalar ncount2
-
-static SwAO_frag[smu]
-static SwMOA_frag[sp]
-static SwMOB_frag[sp]
-static elst_dist[jfrag,kfrag]
-static rcut_dist[jfrag,kfrag]
-
-distributed Doed_ovl[mu,nu]
-contiguous local CLoed_ovl[mu,nu]
-contiguous local CLX1[mu,nu]
-contiguous local CLFTpq_a[mu,nu]
-contiguous local CLFpq_a[mu,nu]
-contiguous local clca[ao_scratch,ao_scratch1]
-distributed DCa[mu,p]
-local LDHFa[mu,nu]
-local LDHFb[mu,nu]
-local LFpq_a[mu,nu]
-local LFpq_b[mu,nu]
-
 scalar stype
-
-int astart
-int aend
-int pstart
-int pend
-static ao_start[ifrag]
-static ao_end[ifrag]
-static mo_start[ifrag]
-static mo_end[ifrag]
 scalar i_aostart  
 scalar i_aoend   
 scalar j_aostart  
@@ -580,10 +212,98 @@ scalar b_vstart
 scalar b_vend  
 scalar a_start
 scalar a_end
-
 scalar m
 scalar n
-
+#
+# Declare distributed 
+#
+# The distributed arrays.
+distributed MOI_ca[fmu,fp]
+distributed MOI_focka[fp,fp1]
+distributed DHFa[mu,nu] 
+distributed DHFb[mu,nu] 
+distributed DHFa_old[mu,nu] 
+distributed DHFb_old[mu,nu] 
+distributed Fpq_a[mu,nu] 
+distributed Fpq_b[mu,nu] 
+distributed FTpq_a[mu,nu] 
+distributed FTpq_b[mu,nu] 
+distributed CBT_a[mu,p] 
+distributed Qxx[mu,nu] 
+distributed FTa[p,p1] 
+distributed FFai[a,i] 
+distributed FFbj[b,j] 
+distributed Fa[mu,nu,kdiis] 
+distributed Fb[mu,nu,kdiis] 
+distributed Fbj[b,j,kdiis] 
+distributed Fai[a,i,kdiis] 
+distributed Dfrag_energy[ifrag]
+distributed Dfrag_energy_old[ifrag]
+distributed Dfrag_error[ifrag]
+distributed Dfrag_density_difference[ifrag]
+distributed DCa[mu,p]
+#
+# Declare contiguous 
+#
+# The static and local arrays 
+static frag_repul[ifrag]
+static BB[kdiis,kdiis] 
+static SwAO_frag[smu]
+static SwMOA_frag[sp]
+static elst_dist[jfrag,kfrag]
+static ao_start[ifrag]
+static ao_end[ifrag]
+#
+# Declare local 
+#
+# The static and local arrays 
+contiguous local frag_energy[ifrag]
+contiguous local frag_scf_energy[ifrag]
+contiguous local CLoed_ovl[mu,nu]
+contiguous local CLX1[mu,nu]
+contiguous local CLFTpq_a[mu,nu]
+contiguous local CLFpq_a[mu,nu]
+#contiguous local clca[ao_scratch,ao_scratch1]
+contiguous local clca[mu,nu]
+local LDHFa[mu,nu]
+local LDHFb[mu,nu]
+local LFpq_a[mu,nu]
+local LFpq_b[mu,nu]
+#
+# Declare Temp 
+#
+temp Tpq[mu,nu] 
+temp T1pq[mu,nu] 
+temp Txi[mu,i] 
+temp T1xi[mu,i] 
+temp Txj[mu,j] 
+temp Txx[mu,nu] 
+temp TAxx[mu,nu] 
+temp TBxx[mu,nu] 
+temp T1xx[mu,nu] 
+temp T2xx[mu,nu] 
+temp T3xx[mu,nu] 
+temp T4xx[mu,nu] 
+temp T5xx[mu,nu] 
+temp T6xx[mu,nu] 
+temp T7xx[mu,nu] 
+temp T8xx[mu,nu] 
+temp T9xx[mu,nu] 
+temp T10xx[mu,nu] 
+temp T11xx[mu,nu] 
+temp T12xx[mu,nu] 
+temp T13xx[mu,nu] 
+temp T14xx[mu,nu] 
+temp Txp[mu,p] 
+temp T1xp[mu,p] 
+temp Tpp[p,p1] 
+temp aoint[mu,nu,lambda,sigma]
+temp tai[a,i] 
+temp t1ai[a,i] 
+temp tbj[b,j] 
+temp t1bj[b,j] 
+temp tdd[d1,d2] 
+temp t1dd[d1,d2] 
 #
 #------------------------------------------------------------------------------
 #
@@ -656,6 +376,8 @@ enddo jfrag
 sip_barrier
 
 print elst_dist
+print ao_start
+print ao_end
 
 sip_barrier
 ENDPROC SET_FRAG_PARMS    
@@ -818,7 +540,8 @@ pardo ifrag
     aend = (int)ao_end[ifrag]
 
     allocate contiguous CLFpq_a[astart:aend,astart:aend]
-    allocate contiguous clca[1:max_aoseg,1:max_aoseg]
+    allocate contiguous clca[astart:aend,astart:aend]
+    #allocate contiguous clca[1:max_aoseg,1:max_aoseg]
 
     do mu
     where (int)SwAO_frag[(index)mu] == ifrag
@@ -831,7 +554,9 @@ pardo ifrag
     enddo nu
     enddo mu
 
-    execute eigen_calc CLFpq_a[astart:aend,astart:aend] clca[1:max_aoseg,1:max_aoseg]
+    execute eigen_calc CLFpq_a[astart:aend,astart:aend] clca[astart:aend,astart:aend]
+    #execute eigen_calc CLFpq_a[astart:aend,astart:aend] clca[1:max_aoseg,1:max_aoseg]
+
 
     stype = 1.0
     etemp = (scalar)ifrag
@@ -840,19 +565,22 @@ pardo ifrag
     do a
     where (int)SwMOA_frag[(index)a] == ifrag
        Txp[mu,a] = 0.0
-       execute place_scratch txp[mu,a] clca[1:max_aoseg,1:max_aoseg] stype etemp
+       execute place_scratch txp[mu,a] clca[astart:aend,astart:aend] stype etemp
+       #execute place_scratch txp[mu,a] clca[1:max_aoseg,1:max_aoseg] stype etemp
        put DCa[mu,a] += txp[mu,a]
     enddo a
     do i
     where (int)SwMOA_frag[(index)i] == ifrag
        T1xp[mu,i] = 0.0
-       execute place_scratch t1xp[mu,i] clca[1:max_aoseg,1:max_aoseg] stype etemp
+       execute place_scratch t1xp[mu,i] clca[astart:aend,astart:aend] stype etemp
+       #execute place_scratch t1xp[mu,i] clca[1:max_aoseg,1:max_aoseg] stype etemp
        put DCa[mu,i] += t1xp[mu,i]
     enddo i
     enddo mu
 
     deallocate contiguous CLFpq_a[astart:aend,astart:aend]
-    deallocate contiguous clca[1:max_aoseg,1:max_aoseg]
+    deallocate contiguous clca[astart:aend,astart:aend]
+    #deallocate contiguous clca[1:max_aoseg,1:max_aoseg]
 
 endpardo ifrag
 sip_barrier
@@ -1677,7 +1405,7 @@ do ifrag
 	T1xx[mu,nu] = LFpq_a[mu,nu]
 	etemp = Txx[mu,nu]*T1xx[mu,nu]
 
- #       if etemp >= 0.0000000000001
+#       if etemp >= 0.0000000000001
 	PUT Fpq_a[mu,nu] += LFpq_a[mu,nu] 
 	PUT Fpq_b[mu,nu] += Txx[mu,nu] 
 	deallocate LDHFa[mu,nu]
@@ -2170,14 +1898,18 @@ do ifrag
 	T1xx[mu,nu] = LFpq_a[mu,nu]
 	etemp = Txx[mu,nu]*T1xx[mu,nu]
 
-        if etemp >= 0.0000000000001
+# this measure ensures that in the global n**2 loop we do not perform any data
+# transfer, hopefully saving a bit of server effort.
+# 1e-13 is near enough the GAMESS schwartz/density screening value.
+
+        if etemp >= 0.0000000000001 
 	    PUT Fpq_a[mu,nu] += LFpq_a[mu,nu] 
 	    PUT Fpq_b[mu,nu] += Txx[mu,nu] 
-	    deallocate LDHFa[mu,nu]
-	    deallocate LDHFb[mu,nu]
-	    deallocate LFpq_a[mu,nu]
-	    #deallocate LFpq_b[mu,nu]
 	endif
+
+	deallocate LDHFa[mu,nu]
+	deallocate LDHFb[mu,nu]
+	deallocate LFpq_a[mu,nu]
 
     ENDDO nu   
     ENDDO mu    
@@ -2425,6 +2157,7 @@ sip_barrier
 #      Contributions from Fai histories. 
 #      --------------------------------- 
 
+execute enable_all_rank_print
 pardo ifrag
 
 # compute diis per fragment
@@ -2518,6 +2251,7 @@ pardo ifrag
     ENDDO nu
     ENDDO mu
 endpardo ifrag
+execute disable_all_rank_print
 sip_barrier 
 #
 ENDPROC DIISN   

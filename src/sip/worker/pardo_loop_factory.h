@@ -80,6 +80,7 @@ public:
 		Fragment_NRij_o_ao_PardoLoopManager,
 		WhereFragment_i_aaa__PardoLoopManager,
 		WhereFragment_i_aaaa__PardoLoopManager,
+		Fragment_Nij_aa_aa_PardoLoopManager,
 		Fragment_i_aa__PardoLoopManager,
 		Fragment_i_ap__PardoLoopManager,
 		Fragment_i_pp__PardoLoopManager,
