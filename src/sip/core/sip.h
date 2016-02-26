@@ -82,7 +82,7 @@ extern const int SIOX_MAGIC;
 extern const int SIOX_VERSION;
 extern const int SIOX_RELEASE;
 
-/*! Debug printintg control, default:true */
+/*! Debug printing control, default:true */
 extern bool _sip_debug_print;
 
 /*! Whether to print from all workers or just master, default:false

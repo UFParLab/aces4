@@ -50,18 +50,22 @@ public:
 	 */
 	SetupReader(InputStream &);
 
+#ifdef HAVE_JSON
 	/**
 	 * Construct SetupReader from JSON file.
 	 * @param
 	 */
 	SetupReader(std::istream&);
+#endif
 
 	virtual ~SetupReader();
 
 	void dump_data();  	//for debugging;
 	void dump_data(std::ostream&);  //for debugging;
 
+#ifdef HAVE_JSON
 	std::string get_json_string();
+#endif
 
 	typedef std::map<std::string, int> PredefIntMap;
 	typedef std::map<std::string, double> PredefScalarMap;
@@ -132,7 +136,9 @@ private:
 	void dump_predefined_map(std::ostream&);
 
 	InputStream* binary_stream_;
+#ifdef HAVE_JSON
 	std::istream* json_stream_;
+#endif
 
 	friend std::ostream& operator<<(std::ostream&, const SetupReader &);
 

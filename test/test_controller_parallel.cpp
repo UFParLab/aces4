@@ -60,7 +60,7 @@ TestControllerParallel::TestControllerParallel(std::string job,
 				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
 				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
-	sleep(5);
+	sleep(sleep_between_tests);
 	barrier();
 	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id()));
 	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
@@ -408,4 +408,4 @@ bool TestControllerParallel::runWorker() {
 	return this_test_enabled_;
 }
 
-
+unsigned int TestControllerParallel::sleep_between_tests = 0;

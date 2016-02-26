@@ -155,7 +155,7 @@ static void print_usage(const std::string& program_name) {
 
     std::cerr << "Usage : " << program_name << " -d <init_data_file> -j <init_json_file> -s <sialx_files_directory> -m <max_memory_in_gigabytes>" << std::endl;
     std::cerr << "\t -d : binary initialization data file " << std::endl;
-    std::cerr << "\t -j : json initialization file, use EITHER -d or -j " << std::endl;
+    std::cerr << "\t -j : json initialization file, use EITHER -d or -j.  Requires build with HAVE_JSON defined" << std::endl;
     std::cerr << "\t -s : directory of compiled sialx files  " << std::endl;
 	std::cerr << "\t -m : approx. memory to use for workers and servers. Actual usage will be more." << std::endl;
 	std::cerr << "\t -w : approx. memory for workers. Actual usage will be more." << std::endl;
@@ -264,11 +264,23 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
     	if (!parameters.server_memory_specified)
     		parameters.server_memory = parameters.memory;
     }
-
-    if (parameters.init_json_specified)
+#ifdef HAVE_JSON
+    if (parameters.init_json_specified){
         parameters.job = parameters.init_json_file;
-    else
+    }
+    else{
         parameters.job = parameters.init_binary_file;
+    }
+
+#else
+    if (parameters.init_json_specified){
+    	sip::fail("JSON not included in this build.  Rebuild with HAVE_JSON.");
+    }
+    else{
+        parameters.job = parameters.init_binary_file;
+    }
+#endif
+
 
     // If number of workers & servers not specified, use the default 2:1 ratio for workers:servers
     const int default_worker_server_ratio = 2; // 2:1
@@ -300,6 +312,7 @@ Aces4Parameters parse_command_line_parameters(int argc, char* argv[]) {
  * @param parameters
  * @return
  */
+#ifdef HAVE_JSON
 setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
     setup::SetupReader *setup_reader = NULL;
     if (parameters.init_json_specified) {
@@ -316,6 +329,18 @@ setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
     setup_reader->aces_validate();
     return setup_reader;
 }
+#else
+setup::SetupReader* read_init_file(const Aces4Parameters& parameters) {
+    setup::SetupReader *setup_reader = NULL;
+        //create setup_file
+        SIP_MASTER_LOG(
+                std::cout << "Initializing data from " << parameters.job << std::endl);
+        setup::BinaryInputFile setup_file(parameters.job); //initialize setup data
+        setup_reader = new setup::SetupReader(setup_file);
+    setup_reader->aces_validate();
+    return setup_reader;
+}
+#endif
 
 /**
  * Sets the rank distribution from a given set of Aces4Parameters.

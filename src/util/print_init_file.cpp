@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
 
 	setup::SetupReader *setup_reader = NULL;
 
+#ifdef HAVE_JSON
 	if (json_specified){
 		std::ifstream json_ifstream(json_file, std::ifstream::in);
 		setup_reader = new setup::SetupReader(json_ifstream);
@@ -99,12 +100,22 @@ int main(int argc, char* argv[]) {
 		setup::BinaryInputFile setup_file(job); //initialize setup data
 		setup_reader = new setup::SetupReader(setup_file);
 	}
+#else
+	//create setup_file
+	std::string job(init_file);
+	SIP_MASTER_LOG(std::cout << "Initializing data from " << job << std::endl);
+	setup::BinaryInputFile setup_file(job); //initialize setup data
+	setup_reader = new setup::SetupReader(setup_file);
+#endif
 
-
+#ifdef HAVE_JSON
 	if (print_json)
 		std::cout << setup_reader->get_json_string();
 	else
 		std::cout << "SetupReader::" <<std::endl << *setup_reader << std::endl;
+#else
+	std::cout << "SetupReader::" <<std::endl << *setup_reader << std::endl;
+#endif  //HAVE_JSON
 
 	delete setup_reader;
 

@@ -345,8 +345,15 @@ int SipTables::num_subsegments(int index_slot, int parent_segment_value) const {
 bool SipTables::is_subindex(int index_table_slot) const {return index_table_.is_subindex(index_table_slot);}
 int SipTables::parent_index(int subindex_slot) const {return index_table_.parent(subindex_slot);}
 
-void SipTables::print() const {
-	std::cout << *this << std::endl;
+std::ostream& SipTables::print(std::ostream& os) const {
+	os << *this << std::endl;
+	return os;
+}
+
+std::ostream& SipTables::print_array_info(std::ostream& os) const {
+	os << this->index_table_ << std::endl;
+	os << this->array_table_ << std::endl;
+	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const SipTables& obj) {

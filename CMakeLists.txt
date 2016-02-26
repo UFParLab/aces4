@@ -128,6 +128,17 @@ else ()
     set(ACES_CUDA_FILES "")
 endif()
 
+if (HAVE_JSON)
+    set(ACES_JSON_DIR
+       ${CMAKE_SOURCE_DIR}/jsoncpp)
+    set(JSON_LIBRARIES
+       jasoncpp)
+else ()
+    set(ACES_JSON_FILES "")
+endif()
+    
+    
+
 set(ACES_DATA_FILES
     src/sip/static_data/array_table.h;
     src/sip/static_data/array_table.cpp;
@@ -219,13 +230,13 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
-    ${CMAKE_SOURCE_DIR}/jsoncpp;
+    ${ACES_JASON_DIR};
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
-    jsoncpp;
+    ${JSON_LIBRARIES};
     ${MPI_LIBRARIES};
     superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
@@ -330,10 +341,12 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
 add_subdirectory(src/sip/super_instructions)
 
 # Add Jsoncpp library
+if(HAVE_JSON)
 add_library(jsoncpp;
     jsoncpp/jsoncpp.cpp;
     jsoncpp/json/json.h;
     jsoncpp/json/json-forwards.h)
+endif()
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
@@ -344,8 +357,10 @@ add_executable(aces4 src/aces_main/main.cpp)
 
 # executables for tools in the util directory
 add_executable(print_siptables src/util/print_siptables.cpp)
+add_executable(print_array_info src/util/print_array_info.cpp)
 add_executable(print_init_file src/util/print_init_file.cpp)
 add_executable(print_worker_checkpoint src/util/print_worker_checkpoint.cpp)
+add_executable(check_system src/util/check_system.cpp)
 
 ## dump_array_file executable
 #add_executable(dump_array_file src/util/dump_array_file.cpp)
@@ -358,30 +373,43 @@ set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(print_array_info PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_array_info PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
+
 set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
 set_target_properties(print_worker_checkpoint PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(check_system PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
+target_link_libraries(print_array_info ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
 target_link_libraries(print_worker_checkpoint ${TOLINK_LIBRARIES})
+target_link_libraries(check_system ${TOLINK_LIBRARIES})
 
 # Dependencies
 if(HAVE_CUDA)
 	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_array_info tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_worker_checkpoint tensordil superinstructions cudasuperinstructions)
+	add_dependencies(check_system tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
+	add_dependencies(print_array_info tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
 	add_dependencies(print_worker_checkpoint tensordil superinstructions)
+	add_dependencies(check_system tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_sip tensordil)

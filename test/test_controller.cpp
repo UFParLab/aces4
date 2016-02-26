@@ -62,6 +62,7 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 //	}
 
 	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id()));
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
 
 	std::cout << "job_id" << sip::JobControl::global->get_job_id() << std::endl << std::flush;
 	if (has_dot_dat_file) {
