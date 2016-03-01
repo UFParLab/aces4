@@ -39,24 +39,6 @@ PROC FORM_JFRAG_HBAR
     where (int)SwOccA_frag[(index)fi1] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get Viaii[j,b,fi,fi1]
-	get t1old[b,j]
-
-	tpp[fi,fi1]  = t1old[b,j]*Viaii[j,b,fi,fi1]
-# 2 for alpha + beta jfrag
-	tpp[fi,fi1] *= 2.0
-
-	put HBAR_ii[fi,fi1] += tpp[fi,fi1]
-
-    ENDPARDO ifrag, jfrag, fi, fi1, b, j
-
-    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{pp}{pp}"
-    where ifrag != jfrag
-    where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwOccA_frag[(index)fi] == ifrag
-    where (int)SwOccA_frag[(index)fi1] == ifrag
-    where (int)SwVirtA_frag[(index)b] == jfrag
-    where (int)SwOccA_frag[(index)j] == jfrag
 	do fa1
 	    where (int)SwVirtA_frag[(index)fa1] == ifrag
 
@@ -80,24 +62,6 @@ PROC FORM_JFRAG_HBAR
     where (int)SwVirtA_frag[(index)fa1] == ifrag
     where (int)SwVirtA_frag[(index)b] == jfrag
     where (int)SwOccA_frag[(index)j] == jfrag
-	get Vaaai[fa,fa1,b,j]
-	get t1old[b,j]
-
-	tpp[fa,fa1]  = Vaaai[fa,fa1,b,j]*t1old[b,j]
-# 2 for alpha + beta jfrag
-	tpp[fa,fa1] *= 2.0
-
-	put HBAR_aa[fa,fa1] += tpp[fa,fa1]
-
-    ENDPARDO ifrag, jfrag, fa, fa1, b, j
-
-    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{pp}{pp}"
-    where ifrag != jfrag
-    where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)fa] == ifrag
-    where (int)SwVirtA_frag[(index)fa1] == ifrag
-    where (int)SwVirtA_frag[(index)b] == jfrag
-    where (int)SwOccA_frag[(index)j] == jfrag
 	do fi
 	where (int)SwOccA_frag[(index)fi] == ifrag
 
@@ -114,23 +78,6 @@ PROC FORM_JFRAG_HBAR
 
     ENDPARDO ifrag, jfrag, fa, fa1, b, j
 #-----------
-    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
-    where ifrag != jfrag
-    where (int)rcut_dist[ifrag,jfrag] == ifrag
-    where (int)SwVirtA_frag[(index)fa] == ifrag
-    where (int)SwOccA_frag[(index)fi] == ifrag
-    where (int)SwVirtA_frag[(index)b] == jfrag
-    where (int)SwOccA_frag[(index)j] == jfrag
-	get Vaibj[fa,fi,b,j]
-	get t1old[b,j]
-
-	tpp[fi,fa]  = Vaibj[fa,fi,b,j]*t1old[b,j]
-# 2 for alpha + beta jfrag
-	tpp[fi,fa] *= 2.0
-
-	put HBAR_ia[fi,fa] += tpp[fi,fa]
-
-    ENDPARDO ifrag, jfrag, fa, fi, b, j
 #-----------
     PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
     where ifrag != jfrag
@@ -228,29 +175,22 @@ print "done forming HBAR elements"
 
 server_barrier
     pardo fa,fa1
-        get wC[fa,fa1]
-	put FwC[fa,fa1] = wC[fa,fa1]
+	put FwC[fa,fa1] = 0.0
     endpardo fa,fa1
     pardo fa, fi
-	get wC[fa,fi]
-	t1ai[fa,fi] = wC[fa,fi]
-	t1ia[fi,fa] = wC[fa,fi]
-	put FwC[fa,fi] = t1ai[fa,fi]
-	put FwC[fi,fa] = t1ia[fi,fa]
+	put FwC[fa,fi] = 0.0
+	put FwC[fi,fa] = 0.0
     endpardo fa, fi
     pardo fi,fi1
-        get wC[fi,fi1]
-	put FwC[fi,fi1] = wC[fi,fi1]
+	put FwC[fi,fi1] = 0.0
     endpardo fi,fi1
 
     pardo fa, fi
-        get t1old[fa,fi]
-	put FT1old[fa,fi] = t1old[fa,fi]
+	put FT1old[fa,fi] = 0.0
     endpardo fa, fi
 
     pardo fa, fi
-        get p2t1old[fa,fi]
-	put FP2T1old[fa,fi] = p2t1old[fa,fi]
+	put FP2T1old[fa,fi] = 0.0
     endpardo fa, fi
 
     pardo fa, fi, fa1, fi1
@@ -286,19 +226,6 @@ esum4 = 0.0
 
       ENDPARDO fa, fi, fa1, fi1
 
-      PARDO fa, fi
-
-               GET        FT1old[fa,fi] 
-               GET        FwC[fa,fi] 
-               tai[fa,fi] = FT1old[fa,fi] 
-
-               etemp = tai[fa,fi]*FwC[fa,fi]  
-               etemp*= 2.0  
-
-	       esum1 += etemp
-
-      ENDPARDO fa, fi
-
     esum3 = 0.0
     do ifrag
     where ifrag == 1
@@ -313,32 +240,15 @@ esum4 = 0.0
 	endpardo jfrag
     enddo ifrag
 
-      PARDO fa, fi
-
-               GET        FP2T1old[fa,fi] 
-               GET        FwC[fa,fi] 
-               tai[fa,fi] = FP2T1old[fa,fi] 
-
-               etemp = tai[fa,fi]*FwC[fa,fi]  
-               etemp*= 2.0  
-
-	       esum4 += etemp
-
-      ENDPARDO fa, fi
-
 server_barrier
 e1new = 0.0
 e2new = 0.0
 e3new = 0.0
 e4new = 0.0
-collective e1new += esum1
 collective e2new += esum2
 collective e3new += esum3
-collective e4new += esum4
-print e1new
 print e2new
 print e3new
-print e4new
 
 server_barrier
 set_persistent FwC "MOI_wC"
@@ -374,9 +284,6 @@ print " "
       restore_persistent Dca "ca" 
       restore_persistent DFock_a "fock_a"
       rmaster = 0
-      #print "**** Performing full non-HF flavor"
-      #do_nonhf = 1
-      #print "**** Performing perturbing wc(a,i) flavor"
       do_nonhf = 0
       zero = 0.0 
       one  = 1.0 
@@ -391,32 +298,13 @@ print " "
       print "Done setting fragment parameters" 
       call set_fock_mos
       sip_barrier 
-#     Compute the NN repusion between fragments  
-#     ----------------------------------------- 
-      nn_rep = 0.0 
-      execute compute_nn_repulsion nn_rep
-      print nn_rep 
-#
-#     Perform 2-el integral transformation and calculate second order energies   
-#     ------------------------------------------------------------------------ 
-#
-
-      pardo ifrag,a,i "Frag{i}{pp}{}"
-	  put t1old[a,i] = 0.0
-	  put wC[a,i] = 0.0
-	  put wC[i,a] = 0.0
-      endpardo ifrag,a,i 
-      pardo ifrag,i,i1 "Frag{i}{pp}{}"
-	  put wC[i,i1] = 0.0
-      endpardo ifrag,i,i1 
-      pardo ifrag,a,a1 "Frag{i}{pp}{}"
-	  put wC[a,a1] = 0.0
-      endpardo ifrag,a,a1 
-
-      sip_barrier 
-      CALL FRAG_TRAN_NOWC
+      CALL FRAG_TRAN_NO_WC
       sip_barrier 
       print "Done two-electron integral transformation" 
+      sip_barrier 
+      pardo ifrag, a,i "Frag{i}{pp}{}"
+          put wC[a,i] = 0.0
+      endpardo ifrag, a,i
       sip_barrier 
       call DOUBLES_MANAGER
       sip_barrier
@@ -428,25 +316,13 @@ print " "
     call ADDITIONAL_FRAG_TRAN
     print "Finished additional transformations"
 
-      pardo ifrag,a,i "Frag{i}{pp}{}"
-	  put p2t1old[a,i] = 0.0
-      endpardo ifrag,a,i 
+    call form_t1_secondorder
+
     sip_barrier
 
     call MOI_MANAGER
 
          sip_barrier 
-set_persistent wC "frag_wC"
-set_persistent t1old "frag_t1old"
-set_persistent p2t1old "frag_p2t1old"
-set_persistent T2old "frag_t2old"
-set_persistent Vaibj "frag_vaibj"
-set_persistent Viabj "frag_viabj"
-set_persistent Vaajj "frag_vaajj"
-set_persistent Viijj "frag_viijj"
-set_persistent Vjiij "frag_vjiij"
-set_persistent Viiij "frag_viiij"
-
 
                            ENDSIAL FRAG_2ORDER_CORR 
 ##

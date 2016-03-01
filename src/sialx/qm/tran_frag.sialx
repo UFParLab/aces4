@@ -648,7 +648,7 @@ ENDPARDO ifrag, jfrag, mu, nu, lambda
 #
 # ---------------------------------------------------------------------------- 
 #
-      PROC FRAG_TRAN_NOWC
+      PROC FRAG_TRAN_NO_WC
 #     -------------- 
 
       sip_barrier
@@ -1081,7 +1081,7 @@ ENDPARDO ifrag, jfrag, mu, nu, lambda
 
       sip_barrier 
 #
-      ENDPROC FRAG_TRAN_NOWC
+      ENDPROC FRAG_TRAN_NO_WC
 #
 # ---------------------------------------------------------------------------- 
 #

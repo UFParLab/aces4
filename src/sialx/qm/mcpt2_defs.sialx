@@ -71,9 +71,10 @@ special disable_debug_print
 special scf_atom_lowmem rwwww 
 special place_scratch urrr
 special compute_pair_nn rrw
-special enable_all_rank_print
 special remove_diagonal u
 special eigen_calc uu
+special enable_all_rank_print
+special disable_all_rank_print
 
 endsial trans_frag_defs
 

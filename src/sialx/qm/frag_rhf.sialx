@@ -2427,6 +2427,126 @@ ENDPROC HFENERGY_CONV
 #
 #------------------------------------------------------------------------------
 # 
+PROC SCF_DIIS_ITERATIONS
+#
+print " "
+print " Starting Restricted Hartree-Fock Iterations"
+do kiter
+
+    print " " 
+    print "-----------"
+    print kiter
+
+    diis_count = kiter
+
+    if diis_start == kiter
+	print "Starting DIIS extrapolation"
+    endif
+
+# form the fock matrix
+     call FOCK_MATRIX_SCALE
+    pardo ifrag
+        get Dfrag_energy[ifrag]
+	put Dfrag_energy_old[ifrag] = Dfrag_energy[ifrag]
+    endpardo ifrag
+    sip_barrier
+    call HF_ENERGY
+
+         if diis_count < diis_end
+
+         etemp  = (scalar)diis_start
+         etemp -= 1.0
+         etemp += (scalar)diis_order
+
+         worder = 0
+         if diis_count >= (diis_start - 1)
+         if diis_count < (int)etemp
+            worder  = diis_count
+            worder += 1
+         endif
+         endif
+
+         if diis_count >= (int)etemp
+            worder = (int)etemp
+         endif
+#
+         if worder > 0
+            CALL GEN_HISTORY
+         endif
+         sip_barrier
+#
+
+         if diis_count >= diis_start
+             damp   = 0.0
+             etemp  = 1.0
+             etemp += damp
+             damp1  = 1.0/etemp         # 1/(1+damp)
+         if diis_count <= diis_end
+            worder -= diis_start
+            worder += 1
+            damp  = 0.0
+            damp1 = 1.0
+            CALL DIISN
+            etemp = (scalar)diis_start
+            etemp-= 1.0
+            etemp+= (scalar)diis_order
+            if diis_count >= (int)etemp
+               CALL MOVE
+            endif
+         endif
+         endif
+    endif #diis_end
+
+# Transpose new fock matrix
+    call FOCK_TRANSPOSE
+
+# Diagonalize updated fock matrix
+    call DIAG_FOCK
+
+# Back transform MO vector
+    call C_BTRAN
+
+#        Check on convergence --> largest HF density difference.
+#        -------------------------------------------------------
+
+    if kiter > 1
+
+    call HFDENS_CONV
+    call HFENERGY_CONV
+
+
+	if max_density_difference < density_threshold
+	    print " "
+	    print "-----------"
+	    print " "
+	    print "SCF iterations converged"
+	    print " "
+	    exit
+        endif
+	if max_energy_difference < 0.000000001
+	if max_density_difference < 0.0000001
+	    print " "
+	    print "-----------"
+	    print " "
+	    print "-Energy difference is very small"
+	    print "-However density has not met the requested convergence."
+	    print "-FORCING COMPLETION"
+	    print " "
+	    print "-----------"
+	    exit
+        endif
+        endif
+    endif #kiter > 1
+
+    call HFDENS_REPLACE
+
+    call HFDENS
+
+enddo kiter
+ENDPROC SCF_DIIS_ITERATIONS
+#
+#------------------------------------------------------------------------------
+# 
 #  MAIN
 #
 #------------------------------------------------------------------------------
@@ -2534,122 +2654,7 @@ call HF_ENERGY
 ### copy old density to array
 call HFDENS_REPLACE
 
-do kiter
-
-    print " " 
-    print "-----------"
-    print kiter
-
-    diis_count = kiter
-    if diis_start == kiter
-	print "Starting DIIS extrapolation"
-    endif
-
-# form the fock matrix
-#    call FOCK_MATRIX
-     call FOCK_MATRIX_SCALE
-    pardo ifrag
-        get Dfrag_energy[ifrag]
-	put Dfrag_energy_old[ifrag] = Dfrag_energy[ifrag]
-    endpardo ifrag
-    sip_barrier
-    call HF_ENERGY
-
-         if diis_count < diis_end
-
-         etemp  = (scalar)diis_start
-         etemp -= 1.0
-         etemp += (scalar)diis_order
-
-         worder = 0
-         if diis_count >= (diis_start - 1)
-         if diis_count < (int)etemp
-            worder  = diis_count
-            worder += 1
-         endif
-         endif
-
-         if diis_count >= (int)etemp
-            worder = (int)etemp
-         endif
-#
-         if worder > 0
-            CALL GEN_HISTORY
-         endif
-         sip_barrier
-#
-
-         if diis_count >= diis_start
-             damp   = 0.0
-             etemp  = 1.0
-             etemp += damp
-             damp1  = 1.0/etemp         # 1/(1+damp)
-         if diis_count <= diis_end
-            worder -= diis_start
-            worder += 1
-            damp  = 0.0
-            damp1 = 1.0
-            CALL DIISN
-            etemp = (scalar)diis_start
-            etemp-= 1.0
-            etemp+= (scalar)diis_order
-            if diis_count >= (int)etemp
-               CALL MOVE
-            endif
-         endif
-         endif
-    endif #diis_end
-
-# Transpose new fock matrix
-    call FOCK_TRANSPOSE
-
-# Diagonalize updated fock matrix
-    call DIAG_FOCK
-
-# Back transform MO vector
-    call C_BTRAN
-
-#        Check on convergence --> largest HF density difference.
-#        -------------------------------------------------------
-
-    if kiter > 1
-
-    call HFDENS_CONV
-    call HFENERGY_CONV
-
-#    execute get_my_rank rank
-#    if rank == 0.0
-
-	if max_density_difference < density_threshold
-	    print " "
-	    print "-----------"
-	    print " "
-	    print "SCF iterations converged"
-	    print " "
-	    exit
-        endif
-	if max_energy_difference < 0.000000001
-	if max_density_difference < 0.0000001
-	    print " "
-	    print "-----------"
-	    print " "
-	    print "-Energy difference is very small"
-	    print "-However density has not met the requested convergence."
-	    print "-FORCING COMPLETION"
-	    print " "
-	    print "-----------"
-	    exit
-        endif
-        endif
-#    endif #rank = 0
-    endif #kiter > 1
-
-    call HFDENS_REPLACE
-
-    call HFDENS
-
-enddo kiter
-
+call SCF_DIIS_ITERATIONS
 
 total_scf_energy = 0.0
 esum = 0.0
