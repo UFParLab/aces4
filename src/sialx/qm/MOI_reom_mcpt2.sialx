@@ -11,21 +11,62 @@ PROC READ_AMP
 print "Reading persistent arrays"
 #     -------------
 server_barrier
+#print "MOI_ca"
 restore_persistent Dca      "MOI_ca"
+
+#server_barrier
+#print "MOI_focka"
 restore_persistent DFock_a  "MOI_focka"
+
+#server_barrier
+#print "MOI_C1_a"
 restore_persistent R1k1_a   "MOI_C1_a"
+
+#server_barrier
+#print "MOI_B1_a"
 restore_persistent TB1_a    "MOI_B1_a"
+
+#server_barrier
+#print "MOI_T1"
 restore_persistent t1a      "MOI_T1"
+
+#server_barrier
+#print "MOI_T2ab"
 restore_persistent T2ab     "MOI_T2ab"
+
+#server_barrier
+#print "MOI_wC"
 restore_persistent FwC      "MOI_wC"
+
+#server_barrier
+#print "MOI_p2T1"
 restore_persistent t1a_old  "MOI_p2T1"
 
+#server_barrier
+#print "MOI_HBAR_ii"
 restore_persistent MOI_HBAR_ii "MOI_HBAR_ii"
+
+#server_barrier
+#print "MOI_HBAR_aa"
 restore_persistent MOI_HBAR_aa "MOI_HBAR_aa"
+
+#server_barrier
+#print "MOI_HBAR_ia"
 restore_persistent MOI_HBAR_ia "MOI_HBAR_ia"
+
+#server_barrier
+#print "MOI_HBAR_ajib"
 restore_persistent MOI_HBAR_AJIB_aabb "MOI_HBAR_ajib"
+
+#server_barrier
+#print "MOI_HBAR_iajk"
 restore_persistent MOI_HBAR_IAJK_aabb "MOI_HBAR_iajk"
+
+#server_barrier
+#print "MOI_HBAR_abci"
 restore_persistent MOI_HBAR_ABCI_aabb "MOI_HBAR_abci"
+server_barrier
+print "Done restoring persistent"
 
 #pardo i,i1
 #put MOI_HBAR_ii[i,i1] = 0.0

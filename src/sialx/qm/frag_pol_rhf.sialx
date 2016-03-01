@@ -1321,6 +1321,7 @@ do ifrag
     deallocate contiguous frag_energy[ifrag:ifrag]
 enddo ifrag
 print " "
+total_scf_energy += inter_fragment_nn_rep
 print total_scf_energy
 endif
 sip_barrier
@@ -1854,7 +1855,7 @@ do kiter
 	call HFENERGY_CONV
 
         if do_shielding < 2
-	if max_density_difference < 0.005
+	if max_density_difference < 0.5
 	    do_shielding = 2
 
 	    print " " 
@@ -1914,7 +1915,7 @@ diis_count = 0
 diis_start = scf_beg
 diis_order = scf_hist
 diis_end = scf_iter
-do_shielding = 2
+do_shielding = 0
 
 print density_threshold
 print damp
@@ -1934,6 +1935,9 @@ enddo ifrag
 print " "
 print "The nuclear repulson energy"
 print frag_repul
+inter_fragment_nn_rep = 0.0 
+execute compute_nn_repulsion inter_fragment_nn_rep
+print inter_fragment_nn_rep
 
 #execute enable_all_rank_print
 
@@ -2002,6 +2006,8 @@ call HF_ENERGY
 ### copy old density to array
 call HFDENS_REPLACE
 
+do_shielding = 2
+
 call SCF_DIIS_ITERATIONS
 
 total_scf_energy = 0.0
@@ -2009,9 +2015,6 @@ esum = 0.0
 execute get_my_rank rank
 if rank == 0.0
 
-      inter_fragment_nn_rep = 0.0 
-      execute compute_nn_repulsion inter_fragment_nn_rep
-      print inter_fragment_nn_rep
 
 do ifrag
     allocate contiguous frag_energy[ifrag:ifrag]
@@ -2025,6 +2028,7 @@ enddo ifrag
 endif
 server_barrier
 collective total_scf_energy += esum
+total_scf_energy += inter_fragment_nn_rep
 print " "
 print total_scf_energy
 print " "

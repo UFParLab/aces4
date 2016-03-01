@@ -332,7 +332,6 @@ test/ccsdpt_test.dat\
 test/second_ccsdpt_test.dat\
 test/cis_test.dat\
 test/mcpt2_test.dat\
-test/frag_scf_333_test.dat\
 test/mcpt2_water_test.dat\
 test/mcpt2_222_test.dat\
 test/eom_test.dat\
@@ -537,8 +536,6 @@ SIOX_FILES=\
 ./src/sialx/qm/scf_defs.siox\
 ./src/sialx/qm/scf_rhf_coreh.siox\
 ./src/sialx/qm/scf_frag_lowmem.siox\
-./src/sialx/qm/frag_rhf.siox\
-./src/sialx/qm/frag_rhf_defs.siox\
 ./src/sialx/qm/drop_core_in_sial.siox\
 ./src/sialx/qm/mcpt2_corr_lowmem.siox\
 ./src/sialx/qm/mcpt2_corr.siox\
@@ -559,9 +556,11 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_rhf.siox\
 ./src/sialx/qm/rcis_d_rhf.siox\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
+./src/sialx/qm/frag_rhf.siox\
+./src/sialx/qm/frag_pol_rhf.siox\
+./src/sialx/qm/mef_corr.siox\
 ./src/sialx/qm/lr_eom_ccsd_rhf.siox\
 ./src/sialx/qm/lr_eom_linccsd_rhf.siox\
-./src/sialx/qm/lr_eom_ccpt2_rhf.siox\
 ./src/sialx/qm/reom_rhf_defs.siox\
 ./src/sialx/qm/reom_hbar.siox\
 ./src/sialx/qm/reom_vars.siox\
@@ -696,8 +695,6 @@ EXTRA_DIST += \
 ./src/sialx/qm/scf_rhf_coreh.sialx\
 ./src/sialx/qm/scf_defs.sialx\
 ./src/sialx/qm/scf_frag_lowmem.sialx\
-./src/sialx/qm/frag_rhf.sialx\
-./src/sialx/qm/frag_rhf_defs.sialx\
 ./src/sialx/qm/drop_core_in_sial.sialx\
 ./src/sialx/qm/mcpt2_corr_lowmem.sialx\
 ./src/sialx/qm/mcpt2_corr.sialx\
@@ -719,12 +716,14 @@ EXTRA_DIST += \
 ./src/sialx/qm/rcis_rhf.sialx\
 ./src/sialx/qm/rcis_d_rhf.sialx\
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
+./src/sialx/qm/frag_rhf.sialx\
+./src/sialx/qm/frag_pol_rhf.sialx\
+./src/sialx/qm/mef_corr.sialx\
 ./src/sialx/qm/reom_rhf_defs.sialx\
 ./src/sialx/qm/reom_hbar.sialx\
 ./src/sialx/qm/reom_vars.sialx\
 ./src/sialx/qm/lr_eom_ccsd_rhf.sialx\
 ./src/sialx/qm/lr_eom_linccsd_rhf.sialx\
-./src/sialx/qm/lr_eom_ccpt2_rhf.sialx\
 ./src/sialx/qm/rlccd_rhf.sialx\
 ./src/sialx/qm/rlccsd_rhf.sialx\
 ./src/sialx/qm/tran_rhf_no4v.sialx\

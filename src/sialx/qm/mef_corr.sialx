@@ -184,28 +184,31 @@ server_barrier
     pardo fi,fi1
 	put FwC[fi,fi1] = 0.0
     endpardo fi,fi1
-
     pardo fa, fi
 	put FT1old[fa,fi] = 0.0
     endpardo fa, fi
-
     pardo fa, fi
 	put FP2T1old[fa,fi] = 0.0
     endpardo fa, fi
+    pardo fa, fi, fa1, fi1
+	put FT2old[fa,fi,fa1,fi1] = 0.0
+    endpardo fa, fi, fa1, fi1
+server_barrier
+
+    pardo fa, fi
+        get p2t1old[fa,fi]
+	put FP2T1old[fa,fi] = p2t1old[fa,fi]
+    endpardo fa, fi
 
     pardo fa, fi, fa1, fi1
-
         get T2old[fa,fi,fa1,fi1]
-
 	t1ppqq[fa,fi,fa1,fi1] = T2old[fa,fi,fa1,fi1]
-
 	put FT2old[fa,fi,fa1,fi1] = t1ppqq[fa,fi,fa1,fi1]
-	
     endpardo fa, fi, fa1, fi1
 
-esum1 = 0.0
-esum2 = 0.0
-esum4 = 0.0
+    esum1 = 0.0
+    esum2 = 0.0
+    esum4 = 0.0
     server_barrier
 
       PARDO fa, fi, fa1, fi1 
@@ -301,6 +304,10 @@ print " "
       CALL FRAG_TRAN_NO_WC
       sip_barrier 
       print "Done two-electron integral transformation" 
+      sip_barrier 
+      call FORM_ELSTPOT
+      sip_barrier 
+      call OVERLAP_EXCHANGE
       sip_barrier 
       pardo ifrag, a,i "Frag{i}{pp}{}"
           put wC[a,i] = 0.0
