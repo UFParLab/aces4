@@ -1683,18 +1683,6 @@ import "scf_defs.sialx"
       set_persistent dipole "scf_dipole"
       set_persistent NucDip "nuclear_dipole"
       sip_barrier
-      do p
-	  sx3[p] = 0.0
-	  t3[p] = 0.0
-	  do p1
-	      where p == p1
-	      t4[p1] = 1.0
-	      t5[p] = fock_a[p,p1]*t4[p1]
-	      t3[p] += t5[p]
-          enddo p1
-	  sx3[p] = t3[p]
-          enddo p
-	  print sx3
 #                         
 #
                            ENDSIAL SCF_RHF_COREH          
