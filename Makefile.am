@@ -523,6 +523,7 @@ SIOX_FILES=\
 ./src/sialx/test/return_sval_test.siox\
 ./src/sialx/test/broadcast_static.siox\
 ./src/sialx/test/cached_block_map_test.siox\
+./src/sialx/test/cached_block_map_test_no_dangling_get.siox\
 ./src/sialx/test/read_block_test.siox\
 ./src/sialx/test/pardo_with_where.siox\
 ./src/sialx/test/pardo_load_balance_test.siox\
@@ -682,6 +683,7 @@ EXTRA_DIST += \
 ./src/sialx/test/return_sval_test.sialx\
 ./src/sialx/test/broadcast_static.sialx\
 ./src/sialx/test/cached_block_map_test.sialx\
+./src/sialx/test/cached_block_map_test_no_dangling_get.sialx\
 ./src/sialx/test/read_block_test.sialx\
 ./src/sialx/test/pardo_with_where.sialx\
 ./src/sialx/test/pardo_load_balance_test.sialx\
