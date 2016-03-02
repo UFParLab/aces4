@@ -100,7 +100,7 @@ Block::~Block() {
 
 	if (data_ != NULL) {
 		delete[] data_;
-		MemoryTracker::global->inc_allocated(shape_.num_elems());
+		MemoryTracker::global->dec_allocated(shape_.num_elems());
 		data_ = NULL;
 	}
 
@@ -354,6 +354,7 @@ bool Block::operator==(const Block& rhs) const{
 void Block::free_host_data(){
 	if (data_){
 		delete [] data_;
+		MemoryTracker::global->dec_allocated(size_);
 	}
 	data_ = NULL;
 	status_[Block::onHost] = false;
