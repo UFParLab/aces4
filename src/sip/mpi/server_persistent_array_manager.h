@@ -10,6 +10,7 @@
 
 #include "server_block.h"
 #include "id_block_map.h"
+#include "timer.h"
 
 namespace sip {
 
@@ -83,7 +84,7 @@ private:
 	ArrayIdLabelMap persistent_array_map_;
 
 
-    /**	/** Invoked by restore_persistent to implement restore_persistent command in
+    /**	Invoked by restore_persistent to implement restore_persistent command in
 	 * SIAl when the argument is a distributed/served array.  The block map associated
 	 * with the string literal is MOVED into the distributed array table and the
 	 * entry removed (which does not delete the map) from the persistent_array_manager.

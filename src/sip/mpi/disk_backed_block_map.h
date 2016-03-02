@@ -10,7 +10,7 @@
 
 #include "id_block_map.h"
 #include "lru_array_policy.h"
-
+#include "timer.h"
 #include "counter.h"
 #include "array_file.h"
 #include "chunk_manager.h"

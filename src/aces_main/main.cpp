@@ -12,7 +12,7 @@
 #include "block.h"
 #include "job_control.h"
 #include "tracer.h"
-#include "counter.h"
+#include "timer.h"
 #include "aces_log.h"
 
 #include <vector>

@@ -12,6 +12,7 @@
 #include "opcode.h"
 #include "sip_tables.h"
 #include "counter.h"
+#include "timer.h"
 
 #ifdef HAVE_MPI
 #include "sip_mpi_attr.h"

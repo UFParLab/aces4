@@ -90,7 +90,7 @@ ACES_DATA_FILES=\
 ./src/sip/dynamic_data/lru_array_policy.h\
 ./src/sip/dynamic_data/cached_block_map.h\
 ./src/sip/dynamic_data/cached_block_map.cpp
-#need only header files for templates--these include .cpp
+#need only header files for templates
 
 ACES_SOURCEFILES=\
 ./src/sip/worker/loop_manager.cpp\
@@ -119,6 +119,8 @@ ACES_SOURCEFILES=\
 ./src/sip/mpi/sip_mpi_attr.cpp\
 ./src/sip/mpi/rank_distribution.h \
 ./src/sip/mpi/rank_distribution.cpp \
+./src/sip/mpi/counter.h\
+./src/sip/mpi/timer.h\
 $(ACES_SETUPFILES)\
 $(ACES_CORE_FILES)\
 $(ACES_DATA_FILES)
@@ -150,7 +152,6 @@ ACES_SOURCEFILES +=\
 ./src/sip/dynamic_data/distributed_block_consistency.h\
 ./src/sip/mpi/async_ops.cpp\
 ./src/sip/mpi/async_ops.h\
-./src/sip/mpi/counter.cpp\
 ./src/sip/mpi/array_file.h\
 ./src/sip/mpi/array_file.cpp\
 ./src/sip/mpi/chunk_manager.h\
