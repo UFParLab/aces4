@@ -319,6 +319,8 @@ imax = 0.0
 zmax = 0.0
 execute compute_int_scratchmem_lowmem zmax imax
 
+print elst_thresh
+
 do kfrag
 do jfrag
 where jfrag <= kfrag
@@ -377,11 +379,6 @@ do jfrag
 enddo jfrag
 sip_barrier
 
-print elst_dist
-print ao_start
-print ao_end
-
-sip_barrier
 ENDPROC SET_FRAG_PARMS    
 #
 #------------------------------------------------------------------------------
@@ -2111,6 +2108,8 @@ set_persistent FTa "fock_a"
 
 set_persistent MOI_ca "MOI_ca"
 set_persistent MOI_focka "MOI_focka"
+
+set_persistent total_scf_energy "frag_pol_scf_energy"
 sip_barrier
 
 	       ENDSIAL SCF_RHF

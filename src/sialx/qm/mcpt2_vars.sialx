@@ -73,6 +73,9 @@ int do_secondorder
 # ---------------
 # Declare scalars
 # ---------------
+scalar total_scf_energy
+scalar pol_scf_energy
+scalar gas_scf_energy
 scalar etemp 
 scalar etemp1
 scalar etemp2

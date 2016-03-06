@@ -558,7 +558,8 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/frag_rhf.siox\
 ./src/sialx/qm/frag_pol_rhf.siox\
-./src/sialx/qm/mef_corr.siox\
+./src/sialx/qm/fef_ccpt2.siox\
+./src/sialx/qm/fef_cis_ccpt2.siox\
 ./src/sialx/qm/lr_eom_ccsd_rhf.siox\
 ./src/sialx/qm/lr_eom_linccsd_rhf.siox\
 ./src/sialx/qm/lr_eom_ccpt2_rhf.siox\
@@ -719,7 +720,8 @@ EXTRA_DIST += \
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
 ./src/sialx/qm/frag_rhf.sialx\
 ./src/sialx/qm/frag_pol_rhf.sialx\
-./src/sialx/qm/mef_corr.sialx\
+./src/sialx/qm/fef_ccpt2.sialx\
+./src/sialx/qm/fef_cis_ccpt2.sialx\
 ./src/sialx/qm/reom_rhf_defs.sialx\
 ./src/sialx/qm/reom_hbar.sialx\
 ./src/sialx/qm/reom_vars.sialx\

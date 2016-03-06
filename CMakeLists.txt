@@ -299,6 +299,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ CO
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/frag_scf_333_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/fef_ccpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_222_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -622,7 +623,7 @@ set(SIAL_FILES
     src/sialx/qm/frag_rhf.sialx
     src/sialx/qm/frag_pol_rhf.sialx;
     src/sialx/qm/frag_rcis_rhf.sialx;
-    src/sialx/qm/mef_corr.sialx;
+    src/sialx/qm/fef_ccpt2.sialx;
     src/sialx/qm/mcpt2_corr.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
     src/sialx/qm/mcpt2_vars.sialx;

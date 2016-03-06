@@ -202,6 +202,9 @@ print " "
       print singles  
       sip_barrier 
       call DOUBLES_MANAGER
+# Compute the LCCD amplitudes for each monomer
+      sip_barrier 
+            CALL FORM_T2_MONOMER
       sip_barrier
       call END_PRINT
 #

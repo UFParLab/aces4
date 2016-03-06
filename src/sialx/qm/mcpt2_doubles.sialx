@@ -1953,12 +1953,6 @@ SIAL mcpt2_doubles
       ENDDO jiter 
       sip_barrier
 #
-# Compute the LCCD amplitudes for each monomer
-
-      CALL FORM_T2_MONOMER  
-
-      sip_barrier
-
       ENDPROC DOUBLES_MANAGER
 #
 # ----------------------------------------------------------------------------

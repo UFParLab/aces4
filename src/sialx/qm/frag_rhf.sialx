@@ -2748,12 +2748,9 @@ pardo f1a,f1a1
 endpardo f1a,f1a1
 sip_barrier
 
-print "Setting persistent"
-set_persistent DCa "ca"
-set_persistent FTa "fock_a"
-
-set_persistent MOI_ca "MOI_ca"
-set_persistent MOI_focka "MOI_focka"
+set_persistent DCa "ca_g"
+set_persistent FTa "fock_a_g"
+set_persistent total_scf_energy "total_gas_scf_energy"
 sip_barrier
 
 	       ENDSIAL SCF_RHF

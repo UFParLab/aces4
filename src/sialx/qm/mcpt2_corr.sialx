@@ -371,8 +371,8 @@ print " "
 #     ----------------------- 
 #
       sip_barrier
-      restore_persistent Dca "ca" 
-      restore_persistent DFock_a "fock_a"
+      restore_persistent Dca "ca_g" 
+      restore_persistent DFock_a "fock_a_g"
       rmaster = 0
       #print "**** Performing full non-HF flavor"
       #do_nonhf = 1
@@ -439,6 +439,9 @@ print " "
       print singles  
       sip_barrier 
       call DOUBLES_MANAGER
+      sip_barrier
+# Compute the LCCD amplitudes for each monomer
+      CALL FORM_T2_MONOMER
       sip_barrier
 #
       call END_PRINT
