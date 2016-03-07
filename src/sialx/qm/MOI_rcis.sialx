@@ -982,8 +982,9 @@ enddo kstate
 server_barrier
 
 #
-set_persistent R0k1_a   "MOI_C1_a"
-set_persistent RB1_a    "MOI_B1_a"
+set_persistent R0k1_a   "MOI_CIS_C1_a"
+set_persistent RB1_a    "MOI_CIS_B1_a"
+set_persistent SEk0      "MOI_CIS_E"
 server_barrier
 #
 #

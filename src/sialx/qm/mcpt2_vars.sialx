@@ -129,6 +129,7 @@ scalar e1exc_at
 scalar e10pol_at 
 scalar mono_lccd  
 scalar mcpt_corr
+scalar fef_ccpt_corr
 scalar elccd
 scalar singles 
 scalar MOI_dimer_doubles 

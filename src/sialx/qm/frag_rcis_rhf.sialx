@@ -453,10 +453,8 @@ print "Forming H_ab"
 pardo ifrag, a, a1 "Frag{i}{pp}{}"
 
     get DFock_a[a,a1]
-#    get wC[a,a1]
 
     Tpp[a,a1]  = DFock_a[a,a1]
-#    Tpp[a,a1] += wC[a,a1]
 
     put HBAR_aa[a,a1] += Tpp[a,a1]
 
@@ -465,10 +463,8 @@ print "Forming H_ij"
 pardo ifrag, i, i1 "Frag{i}{pp}{}"
 
     get DFock_a[i,i1]
-#    get wC[i,i1]
 
     Tpp[i,i1]  = DFock_a[i,i1]
-#    Tpp[i,i1] += wC[i,i1]
 
     put HBAR_ii[i,i1] += Tpp[i,i1]
 
@@ -659,55 +655,66 @@ server_barrier
 
 do ksub
 
-    pardo ifrag,a,i,a1,i1 "Frag{i}{pppp}{}"
+    pardo fa,fi, fa1,fi1
 
-        get HBAR_AJIB_aaaa[i1,a1,a,i]
-	get RB1_a[ksub,a,i]
+        get HBAR_AJIB_aaaa[fi1,fa1,fa,fi]
+	get RB1_a[ksub,fa,fi]
 
-	Tkai[ksub,a1,i1] = HBAR_AJIB_aaaa[i1,a1,a,i]*RB1_a[ksub,a,i]
+	Tkai[ksub,fa1,fi1] = HBAR_AJIB_aaaa[fi1,fa1,fa,fi]*RB1_a[ksub,fa,fi]
 
-	put HB1_a[ksub,a1,i1] += Tkai[ksub,a1,i1]
+	put HB1_a[ksub,fa1,fi1] += Tkai[ksub,fa1,fi1]
 
-    endpardo ifrag,a,i,a1,i1
+    endpardo fa,fi, fa1,fi1
 
-    pardo ifrag,jfrag, a,i, b,j "Frag{ij}{pp}{pp}"
+    pardo fa,fi, fb,fj 
 
-	get HBAR_AJIB_aabb[i,a,b,j]
+	get HBAR_AJIB_aabb[fi,fa,fb,fj]
+        get RB1_a[ksub,fb,fj]
+
+        Tkai[ksub,fa,fi] = HBAR_AJIB_aabb[fi,fa,fb,fj]*RB1_a[ksub,fb,fj]
+        put HB1_a[ksub,fa,fi] += Tkai[ksub,fa,fi] 
+
+    endpardo fa,fi, fb,fj 
+
+# add in cross terms
+    pardo ifrag,jfrag, fa,fi, b,j "Frag{Nij}{pp}{pp}"
+
+	get HBAR_AJIB_aabb[fi,fa,b,j]
         get RB1_a[ksub,b,j]
 
-        Tkai[ksub,a,i] = HBAR_AJIB_aabb[i,a,b,j]*RB1_a[ksub,b,j]
-        put HB1_a[ksub,a,i] += Tkai[ksub,a,i] 
+        Tkai[ksub,fa,fi]  = HBAR_AJIB_aabb[fi,fa,b,j]*RB1_a[ksub,b,j]
+# forcing upper triangle.
+	Tkai[ksub,fa,fi] *= 2.0
+        put HB1_a[ksub,fa,fi] += Tkai[ksub,fa,fi] 
 
-    endpardo ifrag,jfrag, a,i, b,j 
+    endpardo ifrag,jfrag, fa,fi, b,j 
 
-    pardo ifrag, a,i "Frag{i}{pp}{}"
+    pardo fa,fi 
 
-        Tkai[ksub,a,i] = 0.0
+        Tkai[ksub,fa,fi] = 0.0
 
-	do i1
-	where (int)SwMOA_frag[(index)i1] == ifrag
+	do fi1
 
-	    get RB1_a[ksub,a,i1]
-	    get HBAR_ii[i,i1]
+	    get RB1_a[ksub,fa,fi1]
+	    get HBAR_ii[fi,fi1]
 
-	    T1kai[ksub,a,i]  = RB1_a[ksub,a,i1]*HBAR_ii[i,i1]
-	    T1kai[ksub,a,i] *= -1.0
-	    Tkai[ksub,a,i]  += T1kai[ksub,a,i]
-	enddo i1
+	    T1kai[ksub,fa,fi]  = RB1_a[ksub,fa,fi1]*HBAR_ii[fi,fi1]
+	    T1kai[ksub,fa,fi] *= -1.0
+	    Tkai[ksub,fa,fi]  += T1kai[ksub,fa,fi]
+	enddo fi1
 
-        do a1
-	where (int)SwMOA_frag[(index)a1] == ifrag
+        do fa1
 
-	    get RB1_a[ksub,a1,i]
-	    get HBAR_aa[a,a1]
+	    get RB1_a[ksub,fa1,fi]
+	    get HBAR_aa[fa,fa1]
 
-	    T2kai[ksub,a,i] = RB1_a[ksub,a1,i]*HBAR_aa[a,a1]
-	    Tkai[ksub,a,i] += T2kai[ksub,a,i]
-        enddo a1
+	    T2kai[ksub,fa,fi] = RB1_a[ksub,fa1,fi]*HBAR_aa[fa,fa1]
+	    Tkai[ksub,fa,fi] += T2kai[ksub,fa,fi]
+        enddo fa1
 
-	put HB1_a[ksub,a,i] += Tkai[ksub,a,i]
+	put HB1_a[ksub,fa,fi] += Tkai[ksub,fa,fi]
 
-    endpardo ifrag, a,i
+    endpardo fa,fi
 enddo ksub
 server_barrier
 ENDPROC form_HB
@@ -724,22 +731,20 @@ endpardo ksub,ksub1
 server_barrier
 
 
-pardo ifrag, a,i "Frag{i}{pp}{}"
-where (int)SwMOA_frag[(index)a] == ifrag
-where (int)SwMOA_frag[(index)i] == ifrag
+pardo fa,fi 
 
     do ksub
     do ksub1
-	get RB1_a[ksub,a,i]
-	get HB1_a[ksub1,a,i]
+	get RB1_a[ksub,fa,fi]
+	get HB1_a[ksub1,fa,fi]
 
-	Tkk[ksub,ksub1] = RB1_a[ksub,a,i]*HB1_a[ksub1,a,i]
+	Tkk[ksub,ksub1] = RB1_a[ksub,fa,fi]*HB1_a[ksub1,fa,fi]
 
 	put Gmat[ksub,ksub1] += Tkk[ksub,ksub1]
     enddo ksub1
     enddo ksub
 
-endpardo ifrag, a,i
+endpardo fa,fi
 
 server_barrier
 ENDPROC form_BHB
@@ -1102,6 +1107,8 @@ do kstate
     deallocate contiguous CIS_EE_eV[kstate:kstate]
 enddo kstate
 
+set_persistent R0k1_a   "CIS_C1_a"
+set_persistent SEk0     "CIS_E"
 
 #
 ENDSIAL RCIS_RHF

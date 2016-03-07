@@ -624,6 +624,7 @@ set(SIAL_FILES
     src/sialx/qm/frag_pol_rhf.sialx;
     src/sialx/qm/frag_rcis_rhf.sialx;
     src/sialx/qm/fef_ccpt2.sialx;
+    src/sialx/qm/fef_cis_ccpt2.sialx;
     src/sialx/qm/mcpt2_corr.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
     src/sialx/qm/mcpt2_vars.sialx;

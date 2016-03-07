@@ -447,6 +447,7 @@
 #
        served e5aiai[a,i,b,j] 
        contiguous local CISCCPT2_EE_Energy[kstate]
+       contiguous local CISCCPT2_EE_Ev[kstate]
        int master
 #
 #    ------------------------------------------------------------------------ 
@@ -479,6 +480,7 @@
       enddo a
       endif
       server_barrier
+      broadcast_from 0 SCai
 
       server_barrier
       endproc setroot
@@ -669,14 +671,6 @@
          T1aiai[a,i,b,j] = Ctau[b,j,a,i]
          Taiai[a,i,b,j] += T1aiai[a,i,b,j]
          prepare CT_ab[a,i,b,j] = Taiai[a,i,b,j]
-     endpardo a,i,b,j
-     server_barrier
-     pardo a,i,b,j
-         request CT_ab[a,i,b,j] 
-         Taibj[a,i,b,j] = CT_ab[a,i,b,j]
-         execute energy_denominator_rhf Taibj[a,i,b,j] fock_a
-         prepare T2old_ab[a,i,b,j] += Taibj[a,i,b,j]
-         prepare D0aibj[a,i,b,j] += Taibj[a,i,b,j]
      endpardo a,i,b,j
      server_barrier
 #
@@ -872,8 +866,6 @@
      server_barrier
      ecisccpt2  = edoubles
      ecisccpt2 += etriples
-     print edoubles
-     print etriples
 #
      endproc cisd_energy
 #    ------------------------------------------------------------------------ 
@@ -1200,6 +1192,9 @@
       if niter >= diis_order
          worder = diis_order
       endif
+      parDO jdiis, j1diis
+            put DIST_BB[jdiis,j1diis] = 0.0
+      endparDO jdiis, j1diis
       server_barrier
       PARDO a, i, b, j
          kcount = 0.0
@@ -1456,6 +1451,8 @@ execute compute_int_scratchmem oed_ovl zmax imax
       do kstate
           server_barrier
           print " "
+          print "#############"
+          print " "
           print kroot
 #
           server_barrier
@@ -1514,25 +1511,43 @@ execute compute_int_scratchmem oed_ovl zmax imax
 	    eold = ecorrT
 #
 	enddo kiter
+
+      print " "
+     print edoubles
+     print etriples
+      print " "
 #
 	call clear_diis
-#
-	server_barrier
 
-      enddo kstate
-#
-      print " "
-      print "CIS-CCPT(2) complete"
-      print "FINAL Excitation energies"
-      do kstate
   	allocate contiguous CISCCPT2_EE_Energy[kstate:kstate]
+  	allocate contiguous CISCCPT2_EE_Ev[kstate:kstate]
 	etemp = Ekd[kstate]
 	esum2 = Ek[kstate]
 	etemp += esum2
 	etemp -= lccd_energy
   	CISCCPT2_EE_Energy[kstate:kstate] = etemp
 	print CISCCPT2_EE_Energy[kstate:kstate]
-	deallocate contiguous CISCCPT2_EE_Energy[kstate:kstate]
+      print " "
+        etemp *= 27.2113961
+        CISCCPT2_EE_Ev[kstate:kstate] = etemp
+        print CISCCPT2_EE_Ev[kstate:kstate]
+#
+	server_barrier
+
+      enddo kstate
+#
+      print " "
+          print "#############"
+      print " "
+      print "CIS-CCPT(2) complete"
+      print "FINAL Excitation energies"
+      print  " "
+      do kstate
+	print CISCCPT2_EE_Energy[kstate:kstate]
+      enddo kstate
+      print  " "
+      do kstate
+	print CISCCPT2_EE_Energy[kstate:kstate]
       enddo kstate
 #
       server_barrier

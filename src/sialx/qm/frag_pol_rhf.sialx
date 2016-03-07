@@ -244,6 +244,7 @@ distributed Dfrag_energy_old[ifrag]
 distributed Dfrag_error[ifrag]
 distributed Dfrag_density_difference[ifrag]
 distributed DCa[mu,p]
+distributed DCa_g[mu,p]
 #
 # Declare contiguous 
 #
@@ -698,6 +699,7 @@ PROC HFIDENS
 #     Procedure which computes the HF density without Davidson damping.
 #     -----------------------------------------------------------------
 #
+restore_persistent DCa_g "ca_g"
 sip_barrier
 PARDO ifrag, mu, nu "Frag{i}{aa}{}"
 #
@@ -710,11 +712,12 @@ PARDO ifrag, mu, nu "Frag{i}{aa}{}"
     where (int)SwMOA_frag[(index)i] == ifrag
 
 #
-       get DCa[nu,i]
-       get DCa[mu,i]
-       Txi[nu,i]   = DCa[nu,i]
-       T1pq[mu,nu] = Txi[nu,i]*DCa[mu,i]
+       get DCa_g[nu,i]
+       get DCa_g[mu,i]
+       Txi[nu,i]   = DCa_g[nu,i]
+       T1pq[mu,nu] = Txi[nu,i]*DCa_g[mu,i]
        Tpq[mu,nu] += T1pq[mu,nu]
+
 #
     ENDDO i
 #
@@ -723,6 +726,15 @@ PARDO ifrag, mu, nu "Frag{i}{aa}{}"
     PUT DHFb[mu,nu] = Tpq[mu,nu]
 #
 ENDPARDO ifrag, mu, nu
+sip_barrier
+pardo ifrag,mu,i "Frag{i}{ap}{}"
+    get DCa_g[mu,i]
+    put DCa[mu,i] = DCa_g[mu,i]
+endpardo ifrag,mu,i
+pardo ifrag,mu,a "Frag{i}{ap}{}"
+    get DCa_g[mu,a]
+    put DCa[mu,a] = DCa_g[mu,a]
+endpardo ifrag,mu,a
 sip_barrier
 #
 ENDPROC HFIDENS
@@ -1974,31 +1986,31 @@ endpardo ifrag
 sip_barrier
 
 ### core guess
-call IGUESS
+#call IGUESS
 
 ### form Q
 call OVER_HALF
 
 ### form the fock matrix
-call FOCK_MATRIX_SCALE
+#call FOCK_MATRIX_SCALE
 
 ### transpose
-call FOCK_TRANSPOSE
+#call FOCK_TRANSPOSE
 
 ### diagonalize and store new MO coefficients
-call DIAG_FOCK
+#call DIAG_FOCK
 
 ### backtransform MO coefficients
-call C_BTRAN
+#call C_BTRAN
 
 ### zero out the old density
-call HFDENS_ZERO
+#call HFDENS_ZERO
 
 ### form the new density
 call HFIDENS
 
 ### compute SCF energy
-call HF_ENERGY
+#call HF_ENERGY
 
 ### copy old density to array
 call HFDENS_REPLACE

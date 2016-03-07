@@ -609,6 +609,9 @@ if niter >= diis_order
     worder = diis_order 
 endif 
 Iorder = (int)worder
+pardo jdiis, j1diis 
+	put DIST_BB[jdiis,j1diis] = 0.0
+endpardo jdiis, j1diis 
 sip_barrier 
 pardo a, i, b, j 
     do jdiis 

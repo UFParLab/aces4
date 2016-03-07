@@ -753,8 +753,8 @@ print "Done fourth stage of transformation"
       eint_tot += fragment_doubles  
       eint_tot += mono_lccd   
 
-      mcpt_corr  = dimer_doubles  
-      mcpt_corr += fragment_doubles  
+      fef_ccpt_corr  = dimer_doubles  
+      fef_ccpt_corr += fragment_doubles  
 
       print pol_scf_energy
       print e1exc_at
@@ -763,7 +763,7 @@ print "Done fourth stage of transformation"
 
       print dimer_doubles
       print fragment_doubles
-      print mcpt_corr
+      print fef_ccpt_corr
       print " "
 
       mono_lccd *= -1.0
@@ -820,7 +820,9 @@ print " "
       call FEF_END_PRINT
       sip_barrier
 
-         sip_barrier 
+      set_persistent T2old "fef_t2old"
+      set_persistent T2old_mono "fef_t2old_monomer"
+      set_persistent fef_ccpt_corr "fef_ccpt_corr"
 
                            ENDSIAL FRAG_2ORDER_CORR 
 ##
