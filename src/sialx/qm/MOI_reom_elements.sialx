@@ -972,9 +972,6 @@ pardo i, a
     enddo j 
     enddo b 
 
-    get MOI_HBAR_ia[i,a]
-    tpp[i,a] += MOI_HBAR_ia[i,a]
-
     put HBAR_ia[i,a] = tpp[i,a] 
 
 endpardo i, a 

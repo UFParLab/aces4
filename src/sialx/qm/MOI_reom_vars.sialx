@@ -662,6 +662,7 @@ scalar  R0_THRESH
 scalar  LOGRIGHT
 scalar  GROUNDSTATE
 scalar  EXCITESTATE
+scalar max_e_conv
 scalar rms_e_conv
 scalar rms_orb_conv
 scalar  etemp

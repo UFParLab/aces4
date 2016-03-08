@@ -611,18 +611,16 @@ set(SIAL_FILES
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/drop_core_in_sial.sialx;
-    src/sialx/qm/MOI_rhf.sialx;
-    src/sialx/qm/MOI_rhf_defs.sialx;
-    src/sialx/qm/MOI_reom_defs.sialx;
-    src/sialx/qm/MOI_reom_vars.sialx;
-    src/sialx/qm/MOI_rcis.sialx;
-    src/sialx/qm/MOI_reom_mcpt2.sialx;
-    src/sialx/qm/MOI_reom_elements.sialx;
-    src/sialx/qm/tran_frag.sialx;
-    src/sialx/qm/scf_frag_lowmem.sialx;
-    src/sialx/qm/frag_rhf.sialx
+    src/sialx/qm/frag_rhf.sialx;
     src/sialx/qm/frag_pol_rhf.sialx;
     src/sialx/qm/frag_rcis_rhf.sialx;
+    src/sialx/qm/tran_frag.sialx;
+    src/sialx/qm/MOI_reom_defs.sialx;
+    src/sialx/qm/MOI_reom_vars.sialx;
+    src/sialx/qm/MOI_cis_guess.sialx;
+    src/sialx/qm/MOI_rcis.sialx;
+    src/sialx/qm/MOI_reom_elements.sialx;
+    src/sialx/qm/MOI_reom_fefccpt2.sialx;
     src/sialx/qm/fef_ccpt2.sialx;
     src/sialx/qm/fef_cis_ccpt2.sialx;
     src/sialx/qm/mcpt2_corr.sialx;

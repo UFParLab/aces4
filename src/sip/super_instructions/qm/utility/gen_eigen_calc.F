@@ -155,6 +155,7 @@ C     *                   scr1,scr2,scr3,scr4,scr5,nscr5,ierr)
 
       double precision small, zero, Lval, Rval
       double precision norm, tmp, val1, val2
+      double precision loverlap, roverlap
       integer i,j,k
 *  =======
 *
@@ -298,6 +299,68 @@ C sort eigenvalues
 	      eigval(i) = 0.d0
 	  endif
       enddo
+
+      
+C      do k = 1,nn
+C      do i = 1,nn
+C	  tmp = 0.d0
+C	  do j = 1,nn
+C	      tmp = tmp + Lvec(i,j)*Rvec(k,j)
+C	  enddo
+C	  print *, i, k, tmp
+C      enddo 
+C      enddo 
+
+      norm = 0.d0
+      do j = 1,nn
+	  norm = norm + Lvec(1,j)*Rvec(1,j)
+      enddo
+      do j = 1,nn
+	  tmp = Lvec(1,j)/dsqrt(abs(norm))
+	  Lvec(1,j) = tmp
+	  tmp = Rvec(1,j)/dsqrt(abs(norm))
+	  Rvec(1,j) = tmp
+      enddo 
+      do k = 2,nn
+	  do i = 1,k-1
+	      loverlap = 0.d0
+	      roverlap = 0.d0
+
+	      do j = 1,nn
+		  loverlap = loverlap + Lvec(k,j)*Rvec(i,j)
+		  roverlap = roverlap + Lvec(i,j)*Rvec(k,j)
+	      enddo
+	      do j = 1,nn
+		  tmp = Lvec(k,j) - loverlap*Lvec(i,j)
+		  Lvec(k,j) = tmp
+
+		  tmp = Rvec(k,j) - roverlap*Rvec(i,j)
+		  Rvec(k,j) = tmp
+	      enddo
+	  enddo 
+	  norm = 0.d0
+	  do j = 1,nn
+	      norm = norm + Lvec(k,j)*Rvec(k,j)
+	  enddo
+	  do j = 1,nn
+	      tmp = Lvec(k,j)/dsqrt(abs(norm))
+	      Lvec(k,j) = tmp
+
+	      tmp = Rvec(k,j)/dsqrt(abs(norm))
+	      Rvec(k,j) = tmp
+	  enddo 
+      enddo 
+C      print *, "post biorth"
+C      do k = 1,nn
+C      do i = 1,nn
+C	  tmp = 0.d0
+C	  do j = 1,nn
+C	      tmp = tmp + Lvec(i,j)*Rvec(k,j)
+C	  enddo
+C	  print *, i, k, tmp
+C      enddo 
+C      enddo 
+
 
       return
       end
