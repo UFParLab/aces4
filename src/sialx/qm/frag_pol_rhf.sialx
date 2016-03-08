@@ -1213,7 +1213,6 @@ if do_shielding >= 2
 	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
 
 	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
-#	T2xx[mu,nu]          *= 2.0
 
 	LFpq_a[mu,nu]        += T2xx[mu,nu]
 

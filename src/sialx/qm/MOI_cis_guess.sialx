@@ -119,10 +119,8 @@ PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
-#restore_persistent FwC      "MOI_wC"
-restore_persistent guess_RB1_a   "MOI_CIS_B1_a_g"
-restore_persistent Dca "MOI_ca" 
-restore_persistent DFock_a "MOI_focka" 
+restore_persistent Dca "MOI_ca_g" 
+restore_persistent DFock_a "MOI_focka_g" 
 server_barrier
 do a
     do a1
@@ -148,52 +146,6 @@ do i
 	Fock_a[i,i1] = DFock_a[i,i1]
     enddo i1
 enddo i
-#do a
-#    do a1
-#        allocate Fock_a[a,a1]
-#        get DFock_a[a,a1]
-#	get FwC[a,a1]
-#	Taa[a,a1]  = FwC[a,a1]
-#
-#        if a==a1
-#	T1aa[a,a1] = 0.014699
-#	execute return_diagonal_elements T1aa[a,a1]
-#	Taa[a,a1] += T1aa[a,a1]
-#	endif
-#
-#        Fock_a[a,a1]  = DFock_a[a,a1]
-#        Fock_a[a,a1] += Taa[a,a1]
-#    enddo a1
-#    do i1
-#        allocate Fock_a[a,i1]
-#        get DFock_a[a,i1]
-#	get FwC[a,i1]
-#
-#        Fock_a[a,i1]  = DFock_a[a,i1]
-#    enddo i1
-#enddo a
-#do i
-#    do a1
-#        allocate Fock_a[i,a1]
-#        get DFock_a[i,a1]
-#	get FwC[i,a1]
-#
-#	Tqq[i,a1] = FwC[i,a1]
-#
-#        Fock_a[i,a1]  = DFock_a[i,a1]
-#        Fock_a[i,a1] += Tqq[i,a1]
-#    enddo a1
-#    do i1
-#        allocate Fock_a[i,i1]
-#        get DFock_a[i,i1]
-#	get FwC[i,i1]
-#
-#	Tii1[i,i1]  = FwC[i,i1]
-#
-#        Fock_a[i,i1]  = DFock_a[i,i1]
-#        Fock_a[i,i1] += Tii1[i,i1]
-#    enddo i1
-#enddo i
 do mu
     do a
 	get DCa[mu,a]
@@ -212,34 +164,30 @@ ENDPROC READ_AMP
 #
 PROC form_guess
 #
-#print "Using the Hamiltonian diagonal for guess"
-#server_barrier
-##
-#execute get_my_rank rank
-#if rank == 0.0
-##
-#    do a
-#	do i
-#        get VCONV1A[a,i]
-#	SHDiag[a,i] = VCONV1A[a,i]
-#	enddo i
-#    enddo a
-##
-#    execute cis_unit_guess C1_a SHDiag
-##
-#    do ksub
-#	do a
-#	    do i
-#		prepare RB1_a[ksub,a,i] = C1_a[ksub,a,i]
-#	    enddo i
-#	enddo a
-#    enddo ksub
-##
-#endif
-pardo ksub,a,i
-    request guess_RB1_a[ksub,a,i]
-    prepare RB1_a[ksub,a,i] = guess_RB1_a[ksub,a,i]
-endpardo ksub,a,i
+print "Using the Hamiltonian diagonal for guess"
+server_barrier
+#
+execute get_my_rank rank
+if rank == 0.0
+#
+    do a
+	do i
+        get VCONV1A[a,i]
+	SHDiag[a,i] = VCONV1A[a,i]
+	enddo i
+    enddo a
+#
+    execute cis_unit_guess C1_a SHDiag
+#
+    do ksub
+	do a
+	    do i
+		prepare RB1_a[ksub,a,i] = C1_a[ksub,a,i]
+	    enddo i
+	enddo a
+    enddo ksub
+#
+endif
 #
 server_barrier
 pardo a,i
@@ -908,14 +856,13 @@ execute compute_int_scratchmem_lowmem oed_ovl zmax imax
 #
 print " "
 print "-- Parallel RHF-CIS program v2"
-print "-- Modified to runfor MOI fragment"
 print "-- J. Phys. Chem. 1992, 96, 135-149."
 print "-- Subspace collapse symmetric davidson update"
 print "-- J. Comp. Phys. 1992, 103, 382-389 | J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
-print "-- Modified to run for MOI fragment 2015"
-print "-- This version uses the wC correction to compute the perturbed CIS energy"
+print " "
+print "-- Modified 2016 to perform an unperturbed, monomer of interest calculation"
 print " "
 server_barrier
 CALL READ_AMP
@@ -987,9 +934,9 @@ enddo kstate
 server_barrier
 
 #
-set_persistent R0k1_a   "MOI_CIS_C1_a"
-set_persistent RB1_a    "MOI_CIS_B1_a"
-set_persistent SEk0      "MOI_CIS_E"
+set_persistent R0k1_a  "MOI_CIS_C1_a_g"
+set_persistent RB1_a   "MOI_CIS_B1_a_g"
+set_persistent SEk0    "MOI_CIS_E_g"
 server_barrier
 #
 #

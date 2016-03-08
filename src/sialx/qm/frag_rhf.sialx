@@ -2750,6 +2750,8 @@ sip_barrier
 
 set_persistent DCa "ca_g"
 set_persistent FTa "fock_a_g"
+set_persistent MOI_ca "MOI_ca_g"
+set_persistent MOI_focka "MOI_focka_g"
 set_persistent total_scf_energy "total_gas_scf_energy"
 sip_barrier
 

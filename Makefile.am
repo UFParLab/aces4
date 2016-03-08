@@ -550,6 +550,7 @@ SIOX_FILES=\
 ./src/sialx/qm/MOI_reom_defs.siox\
 ./src/sialx/qm/MOI_reom_vars.siox\
 ./src/sialx/qm/MOI_rcis.siox\
+./src/sialx/qm/MOI_cis_guess.siox\
 ./src/sialx/qm/MOI_reom_mcpt2.siox\
 ./src/sialx/qm/MOI_reom_elements.siox\
 ./src/sialx/qm/mp2_rhf_disc.siox\
@@ -558,6 +559,7 @@ SIOX_FILES=\
 ./src/sialx/qm/rcis_ccpt2_rhf.siox\
 ./src/sialx/qm/frag_rhf.siox\
 ./src/sialx/qm/frag_pol_rhf.siox\
+./src/sialx/qm/frag_rcis_rhf.siox\
 ./src/sialx/qm/fef_ccpt2.siox\
 ./src/sialx/qm/fef_cis_ccpt2.siox\
 ./src/sialx/qm/lr_eom_ccsd_rhf.siox\
@@ -710,6 +712,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/MOI_reom_defs.sialx\
 ./src/sialx/qm/MOI_reom_vars.sialx\
 ./src/sialx/qm/MOI_rcis.sialx\
+./src/sialx/qm/MOI_cis_guess.sialx\
 ./src/sialx/qm/MOI_reom_mcpt2.sialx\
 ./src/sialx/qm/MOI_reom_elements.sialx\
 ./src/sialx/qm/mp2_rhf_disc.sialx\
@@ -720,6 +723,7 @@ EXTRA_DIST += \
 ./src/sialx/qm/rcis_ccpt2_rhf.sialx\
 ./src/sialx/qm/frag_rhf.sialx\
 ./src/sialx/qm/frag_pol_rhf.sialx\
+./src/sialx/qm/frag_rcis_rhf.sialx\
 ./src/sialx/qm/fef_ccpt2.sialx\
 ./src/sialx/qm/fef_cis_ccpt2.sialx\
 ./src/sialx/qm/reom_rhf_defs.sialx\

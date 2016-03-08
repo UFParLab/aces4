@@ -746,12 +746,13 @@ print "Done fourth stage of transformation"
       total_scf_energy  = pol_scf_energy
       total_scf_energy += e1exc_at
 
-      eint_tot  = gas_scf_energy
-      eint_tot *= -1.0
-      eint_tot += total_scf_energy
-      eint_tot += dimer_doubles  
-      eint_tot += fragment_doubles  
-      eint_tot += mono_lccd   
+# with the polarization SCF reference, there cannot be any GAS phase lccd result computed in this code.
+#      eint_tot  = gas_scf_energy
+#      eint_tot *= -1.0
+#      eint_tot += total_scf_energy
+#      eint_tot += dimer_doubles  
+#      eint_tot += fragment_doubles  
+#      eint_tot += mono_lccd   
 
       fef_ccpt_corr  = dimer_doubles  
       fef_ccpt_corr += fragment_doubles  
@@ -766,11 +767,11 @@ print "Done fourth stage of transformation"
       print fef_ccpt_corr
       print " "
 
-      mono_lccd *= -1.0
-      print mono_lccd  
-      print " "
+#      mono_lccd *= -1.0
+#      print mono_lccd  
+#      print " "
 
-      print eint_tot 
+#      print eint_tot 
       sip_barrier
 
       ENDPROC FEF_END_PRINT
@@ -814,8 +815,9 @@ print " "
       sip_barrier 
 # compute the fef-ccpt2 amplitudes
       call DOUBLES_MANAGER
+# with the polarization SCF reference, there cannot be any GAS phase lccd result computed in this code.
 # Compute the LCCD amplitudes for each monomer
-      CALL FORM_T2_MONOMER  
+#      CALL FORM_T2_MONOMER  
 #
       call FEF_END_PRINT
       sip_barrier
