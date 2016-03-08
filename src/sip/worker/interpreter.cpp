@@ -1147,8 +1147,8 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank4 = sip_tables_.array_rank(array_id4);
 	sip::Block::BlockPtr block4 = get_block_from_selector_stack(intent4,
 			block_id4);
-	if (intent3 == 'w')
-		block3->fill(0.0);
+	if (intent4 == 'w')
+		block4->fill(0.0);
 	int block4_size = block4->size();
 	segment_size_array_t& seg_sizes4 =
 			const_cast<segment_size_array_t&>(block4->shape().segment_sizes_);
