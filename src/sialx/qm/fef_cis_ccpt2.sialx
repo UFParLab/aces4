@@ -2835,6 +2835,9 @@ do kstate
      print kstate
      print " "
 
+     etemp = Ek[kstate]
+      if etemp > 0.0001
+
       #call setroot_MOI
       call setroot
       call form_Caibj
@@ -2857,6 +2860,8 @@ do kstate
 	FEF_CIS_CCPT_EE_Ev[kstate:kstate] = etemp
 	print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
 
+      endif
+
 enddo kstate
 print " "
 print "######################################################"
@@ -2864,11 +2869,17 @@ print "FEF-CIS-CCPT(2) complete"
 print "FINAL Excitation energies"
 print " "
       do kstate
-	print FEF_CIS_CCPT_EE_Energy[kstate:kstate]
+	     etemp = Ek[kstate]
+	     if etemp > 0.0001
+		print FEF_CIS_CCPT_EE_Energy[kstate:kstate]
+             endif
       enddo kstate
       print " "
       do kstate
-	print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
+	     etemp = Ek[kstate]
+	     if etemp > 0.0001
+		print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
+             endif
       enddo kstate
 
 
