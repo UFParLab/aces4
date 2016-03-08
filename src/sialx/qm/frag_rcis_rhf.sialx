@@ -594,46 +594,34 @@ endpardo ifrag, a,i
 enddo kstate
 
 server_barrier
+execute get_my_rank rank
+if rank == 0.0
 
-pardo ksub,fa,fi
-    get guess_RB1_a[ksub,fa,fi]
-    put RB1_a[ksub,fa,fi] = guess_RB1_a[ksub,fa,fi]
-endpardo ksub,fa,fi
+    allocate contiguous SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
+    allocate contiguous C1_a[1:eom_subspc,frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
 
-#server_barrier
-#execute get_my_rank rank
-#if rank == 0.0
-#
-#    allocate contiguous SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
-#    allocate contiguous C1_a[1:eom_subspc,frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
-#
-#    do fa
-#	do fi
-#	    get VCONV1A[fa,fi]
-#	    SHDiag[fa:fa,fi:fi] = VCONV1A[fa,fi]
-#	enddo fi
-#    enddo fa
-#
-##    print SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
-#    execute cis_unit_guess C1_a[1:eom_subspc,frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc] SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
-#
-#    do ksub
-#	do fa
-#	    do fi
-#		Tkai[ksub,fa,fi] = C1_a[ksub:ksub,fa:fa,fi:fi]
-#		put RB1_a[ksub,fa,fi] = Tkai[ksub,fa,fi]
-##		print ksub
-##		print fa
-##		print fi
-##		print C1_a[ksub:ksub,fa:fa,fi:fi]
-#	    enddo fi
-#	enddo fa
-#    enddo ksub
-#
-#    deallocate contiguous SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
-#    deallocate contiguous C1_a[1:eom_subspc,frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
-#endif
-#server_barrier
+    do fa
+	do fi
+	    get VCONV1A[fa,fi]
+	    SHDiag[fa:fa,fi:fi] = VCONV1A[fa,fi]
+	enddo fi
+    enddo fa
+
+    execute cis_unit_guess C1_a[1:eom_subspc,frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc] SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
+
+    do ksub
+	do fa
+	    do fi
+		Tkai[ksub,fa,fi] = C1_a[ksub:ksub,fa:fa,fi:fi]
+		put RB1_a[ksub,fa,fi] = Tkai[ksub,fa,fi]
+	    enddo fi
+	enddo fa
+    enddo ksub
+
+    deallocate contiguous SHDiag[frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
+    deallocate contiguous C1_a[1:eom_subspc,frag1_bavirt:frag1_eavirt,frag1_baocc:frag1_eaocc]
+endif
+server_barrier
 
 do kstate
 pardo ifrag, a,i "Frag{i}{pp}{}"
@@ -1038,7 +1026,7 @@ root = 0
 server_barrier
 restore_persistent Dca "ca"
 restore_persistent DFock_a "fock_a"
-restore_persistent guess_RB1_a "MOI_CIS_B1_a_g"
+#restore_persistent guess_RB1_a "MOI_CIS_B1_a_g"
 server_barrier
 print "set frag"
 call SET_FRAG_PARMS

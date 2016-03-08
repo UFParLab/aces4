@@ -302,6 +302,8 @@ contiguous local scr_4[ao_scratch,ao_scratch]
 contiguous local scr_5[ao_scratch,ao_scratch] 
 contiguous local FEF_CIS_CCPT_EE_Energy[kstate]
 contiguous local FEF_CIS_CCPT_EE_Ev[kstate]
+contiguous local CIS_EE_Energy[kstate]
+contiguous local CIS_EE_Ev[kstate]
 # ---------------
 # Declare local
 # ---------------
@@ -2803,10 +2805,10 @@ print " "
       restore_persistent DFock_a "fock_a"
       #restore_persistent MOI_ck0 "MOI_CIS_C1_a_g"
       #restore_persistent Ek "MOI_CIS_E_g"
-      restore_persistent MOI_ck0 "MOI_CIS_C1_a"
-      restore_persistent Ek "MOI_CIS_E"
-      #restore_persistent ck0 "CIS_C1_a"
-      #restore_persistent Ek "CIS_E"
+      #restore_persistent MOI_ck0 "MOI_CIS_C1_a"
+      #restore_persistent Ek "MOI_CIS_E"
+      restore_persistent ck0 "CIS_C1_a"
+      restore_persistent Ek "CIS_E"
       restore_persistent fef_ccpt_corr "fef_ccpt_corr"
 
 
@@ -2829,6 +2831,8 @@ print " "
 
 allocate contiguous FEF_CIS_CCPT_EE_Energy[1:eom_roots]
 allocate contiguous FEF_CIS_CCPT_EE_Ev[1:eom_roots]
+allocate contiguous CIS_EE_Energy[1:eom_roots]
+allocate contiguous CIS_EE_Ev[1:eom_roots]
 
 do kstate
      print " "
@@ -2840,8 +2844,8 @@ do kstate
      etemp = Ek[kstate]
       if etemp > 0.0001
 
-      call setroot_MOI
-      #call setroot
+      #call setroot_MOI
+      call setroot
       call form_Caibj
 
 # compute the fef-ccpt2 amplitudes
@@ -2851,13 +2855,19 @@ do kstate
       call cis_ccpt_energy
 
       print " "
+        etemp = Ek[kstate]
+        CIS_EE_Energy[kstate:kstate] = etemp
+        print CIS_EE_Energy[kstate:kstate]
+        etemp *=27.2113961
+	CIS_EE_Ev[kstate:kstate] = etemp
+	print CIS_EE_Ev[kstate:kstate]
+      print " "
         etemp = Ek_ccpt[kstate]
         esum2 = Ek[kstate]
         etemp += esum2
         etemp -= fef_ccpt_corr
 	FEF_CIS_CCPT_EE_Energy[kstate:kstate] = etemp
 	print FEF_CIS_CCPT_EE_Energy[kstate:kstate]
-      print " "
         etemp *=27.2113961
 	FEF_CIS_CCPT_EE_Ev[kstate:kstate] = etemp
 	print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
@@ -2871,17 +2881,19 @@ print "FEF-CIS-CCPT(2) complete"
 print "FINAL Excitation energies"
 print " "
       do kstate
-	     etemp = Ek[kstate]
-	     if etemp > 0.0001
-		print FEF_CIS_CCPT_EE_Energy[kstate:kstate]
-             endif
+	  print CIS_EE_Energy[kstate:kstate]
       enddo kstate
       print " "
       do kstate
-	     etemp = Ek[kstate]
-	     if etemp > 0.0001
+	  print FEF_CIS_CCPT_EE_Energy[kstate:kstate]
+      enddo kstate
+      print "---"
+      do kstate
+	  print CIS_EE_Ev[kstate:kstate]
+      enddo kstate
+      print " "
+      do kstate
 		print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
-             endif
       enddo kstate
 
 
