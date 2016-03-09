@@ -183,7 +183,7 @@ PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
 ENDPARDO ifrag, jfrag, mu, nu, lambda
 
 sip_barrier 
-print "Done second stageof two-electron integral transformation" 
+print "Done second stage of two-electron integral transformation" 
 
 # ---------------------------------------------------------------------------- 
 #     Third stage --> form Vxibj (1122) 

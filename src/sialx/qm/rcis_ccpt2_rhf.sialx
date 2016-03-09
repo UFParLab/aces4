@@ -1547,7 +1547,7 @@ execute compute_int_scratchmem oed_ovl zmax imax
       enddo kstate
       print  " "
       do kstate
-	print CISCCPT2_EE_Energy[kstate:kstate]
+	print CISCCPT2_EE_Ev[kstate:kstate]
       enddo kstate
 #
       server_barrier

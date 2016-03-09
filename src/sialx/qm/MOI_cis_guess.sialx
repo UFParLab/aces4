@@ -884,23 +884,30 @@ do kiter
 #
     etemp = 0.0
     etemp2 = 0.0
+    max_e_conv = 0.0
     do kstate
-	etemp1 = SEk0[kstate]
-	etemp2 = SEkold[kstate]
-	etemp1 -= etemp2
-	etemp2 = etemp1**2.0
-	etemp += etemp2
-	etemp3 += 1.0
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+        etemp += etemp2
+        if max_e_conv < (etemp)**(0.5)
+            max_e_conv = (etemp)**(0.5)
+        endif
     enddo kstate
-    rmsconv = (etemp/etemp3)**0.5
+    etemp3 = (scalar)eom_roots
+    rms_e_conv = (etemp/etemp3)**0.5
     do kstate
 	SEkold[kstate] = SEk0[kstate]
     enddo kstate
-    print rmsconv
+    print max_e_conv
+    print rms_e_conv
+    print rms_orb_conv
     server_barrier
-    assert_same rmsconv
-    if rmsconv < eom_tol
-	exit
+    assert_same rms_e_conv
+    assert_same max_e_conv
+    if max_e_conv < eom_tol
+        exit
     endif
 #
 enddo kiter

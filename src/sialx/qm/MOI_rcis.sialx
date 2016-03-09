@@ -212,34 +212,35 @@ ENDPROC READ_AMP
 #
 PROC form_guess
 #
-#print "Using the Hamiltonian diagonal for guess"
-#server_barrier
-##
-#execute get_my_rank rank
-#if rank == 0.0
-##
-#    do a
-#	do i
-#        get VCONV1A[a,i]
-#	SHDiag[a,i] = VCONV1A[a,i]
-#	enddo i
-#    enddo a
-##
-#    execute cis_unit_guess C1_a SHDiag
-##
-#    do ksub
-#	do a
-#	    do i
-#		prepare RB1_a[ksub,a,i] = C1_a[ksub,a,i]
-#	    enddo i
-#	enddo a
-#    enddo ksub
-##
-#endif
-pardo ksub,a,i
-    request guess_RB1_a[ksub,a,i]
-    prepare RB1_a[ksub,a,i] = guess_RB1_a[ksub,a,i]
-endpardo ksub,a,i
+print "Using the Hamiltonian diagonal for guess"
+server_barrier
+#
+execute get_my_rank rank
+if rank == 0.0
+#
+    do a
+	do i
+        get VCONV1A[a,i]
+	SHDiag[a,i] = VCONV1A[a,i]
+	enddo i
+    enddo a
+#
+    execute cis_unit_guess C1_a SHDiag
+#
+    do ksub
+	do a
+	    do i
+		prepare RB1_a[ksub,a,i] = C1_a[ksub,a,i]
+	    enddo i
+	enddo a
+    enddo ksub
+#
+endif
+#print "Using gas phase CIS as guess"
+#pardo ksub,a,i
+#    request guess_RB1_a[ksub,a,i]
+#    prepare RB1_a[ksub,a,i] = guess_RB1_a[ksub,a,i]
+#endpardo ksub,a,i
 #
 server_barrier
 pardo a,i
@@ -890,6 +891,9 @@ enddo qstate
 server_barrier
 #
 ENDPROC GS_R1k1
+
+PROC form_dens
+endproc
 #------------------------------------------------------------------------
 #
 # -----------------
@@ -937,23 +941,30 @@ do kiter
 #
     etemp = 0.0
     etemp2 = 0.0
+    max_e_conv = 0.0
     do kstate
-	etemp1 = SEk0[kstate]
-	etemp2 = SEkold[kstate]
-	etemp1 -= etemp2
-	etemp2 = etemp1**2.0
-	etemp += etemp2
-	etemp3 += 1.0
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+        etemp += etemp2
+        if max_e_conv < (etemp)**(0.5)
+            max_e_conv = (etemp)**(0.5)
+        endif
     enddo kstate
-    rmsconv = (etemp/etemp3)**0.5
+    etemp3 = (scalar)eom_roots
+    rms_e_conv = (etemp/etemp3)**0.5
     do kstate
 	SEkold[kstate] = SEk0[kstate]
     enddo kstate
-    print rmsconv
+    print max_e_conv
+    print rms_e_conv
+    print rms_orb_conv
     server_barrier
-    assert_same rmsconv
-    if rmsconv < eom_tol
-	exit
+    assert_same rms_e_conv
+    assert_same max_e_conv
+    if max_e_conv < eom_tol
+        exit
     endif
 #
 enddo kiter
@@ -984,6 +995,46 @@ pardo a,i
     prepare R0k1_a[kstate,a,i] = RB1_a[kstate,a,i]
 endpardo a,i
 enddo kstate
+server_barrier
+
+
+server_barrier
+
+do kstate
+	has_overlap=0
+	server_barrier
+
+	do kstate1
+		normS = 0.0
+		server_barrier
+		pardo a,i
+		    request guess_RB1_a[kstate1,a,i]
+		    request RB1_a[kstate,a,i]
+
+		    Tk[kstate]   = 1.0
+		    T1k[kstate1] = 1.0
+		 
+		    Tai[a,i]  = Tk[kstate]*RB1_a[kstate,a,i]
+		    T1ai[a,i] = T1k[kstate1]*guess_RB1_a[kstate1,a,i]
+
+		    normT  = Tai[a,i]*T1ai[a,i]
+		    normS += normT
+
+		endpardo a,i
+		server_barrier
+		norm1 = 0.0
+		collective norm1 += normS
+
+                Soverlap[kstate,kstate1] = norm1
+
+
+	enddo kstate1
+	server_barrier
+
+enddo kstate
+
+print Soverlap
+
 server_barrier
 
 #

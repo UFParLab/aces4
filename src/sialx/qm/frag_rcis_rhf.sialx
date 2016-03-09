@@ -1098,6 +1098,9 @@ do kstate
     deallocate contiguous CIS_EE_eV[kstate:kstate]
 enddo kstate
 
+set_persistent R0k1_a   "CIS_C1_a"
+set_persistent RB1_a    "CIS_B1_a"
+set_persistent SEk0      "CIS_E"
 
 #
 ENDSIAL RCIS_RHF

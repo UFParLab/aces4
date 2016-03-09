@@ -2197,7 +2197,7 @@ PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
 ENDPARDO ifrag, jfrag, mu, nu, lambda
 
 sip_barrier 
-print "Done second stageof two-electron integral transformation" 
+print "Done second stage of two-electron integral transformation" 
 
 # ---------------------------------------------------------------------------- 
 #     Third stage --> form Vxibj (1122) 
@@ -2805,10 +2805,10 @@ print " "
       restore_persistent DFock_a "fock_a"
       #restore_persistent MOI_ck0 "MOI_CIS_C1_a_g"
       #restore_persistent Ek "MOI_CIS_E_g"
-      #restore_persistent MOI_ck0 "MOI_CIS_C1_a"
-      #restore_persistent Ek "MOI_CIS_E"
-      restore_persistent ck0 "CIS_C1_a"
-      restore_persistent Ek "CIS_E"
+      restore_persistent MOI_ck0 "MOI_CIS_C1_a"
+      restore_persistent Ek "MOI_CIS_E"
+      #restore_persistent ck0 "CIS_C1_a"
+      #restore_persistent Ek "CIS_E"
       restore_persistent fef_ccpt_corr "fef_ccpt_corr"
 
 
@@ -2844,8 +2844,8 @@ do kstate
      etemp = Ek[kstate]
       if etemp > 0.0001
 
-      #call setroot_MOI
-      call setroot
+      call setroot_MOI
+      #call setroot
       call form_Caibj
 
 # compute the fef-ccpt2 amplitudes
@@ -2893,7 +2893,7 @@ print " "
       enddo kstate
       print " "
       do kstate
-		print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
+  	  print FEF_CIS_CCPT_EE_Ev[kstate:kstate]
       enddo kstate
 
 
