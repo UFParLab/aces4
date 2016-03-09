@@ -912,22 +912,96 @@ do kiter
 #
 enddo kiter
 
+allocate contiguous CIS_EE_Energy[1:eom_roots]
+allocate contiguous CIS_EE_eV[1:eom_roots]
+allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
+allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
+allocate contiguous Dipole_Transition_Moment[1:eom_roots,1:3]
+allocate contiguous Dipole_Transition_Norm[1:eom_roots]
+
 print " "
-print "CIS has converged"
+print "MOI unperturbed CIS has converged"
 print "FINAL RHF-CIS excitation energies"
+print " " 
 do kstate
-    allocate contiguous CIS_EE_Energy[kstate:kstate]
-    CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
-    print CIS_EE_Energy[kstate:kstate]
-    deallocate contiguous CIS_EE_Energy[kstate:kstate]
-enddo kstate
-do kstate
-    allocate contiguous CIS_EE_eV[kstate:kstate]
     etemp = SEk0[kstate]
     etemp *=27.2113961
     CIS_EE_eV[kstate:kstate] = etemp
     print CIS_EE_eV[kstate:kstate]
-    deallocate contiguous CIS_EE_eV[kstate:kstate]
+enddo kstate
+
+do kstate
+    print " " 
+    print "-------"
+    print kstate
+
+    r0 = SR0[kstate]
+    omega = SEk0[kstate]
+    etemp = SEk0[kstate]
+    etemp *=27.2113961
+
+    CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
+    CIS_EE_eV[kstate:kstate] = etemp
+
+    print CIS_EE_Energy[kstate:kstate]
+    print CIS_EE_eV[kstate:kstate]
+    print " "
+    pardo mu,nu
+        put AO_DENS[mu,nu] = 0.0
+    endpardo mu,nu
+    do ixyz
+	RDipole[ixyz] = 0.0
+    enddo ixyz
+    server_barrier
+
+    pardo mu,nu
+	Txx[mu,nu] = 0.0
+	do a
+	    Tax[a,nu] = 0.0
+	    do i
+		request R0k1_a[kstate,a,i]
+                Tk[kstate] = 1.0
+		Tai[a,i] = Tk[kstate]*R0k1_a[kstate,a,i]
+		T1ax[a,nu] = Tai[a,i]*Ca[nu,i]
+		Tax[a,nu] += T1ax[a,nu]
+	    enddo i
+	    T1xx[mu,nu] = Tax[a,nu]*Ca[mu,a]
+            T1xx[mu,nu] *= 2.0
+	    Txx[mu,nu] += T1xx[mu,nu]
+	enddo a
+	put AO_DENS[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+    do ixyz
+	ncount2 = (scalar)ixyz
+	dsum = 0.0
+	esum = 0.0
+	pardo mu,nu
+	    get ao_dens[mu,nu]
+	    ncount1 = 0.0
+	    execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+	    Txx[mu,nu] = ao_dens[mu,nu]
+	    etemp = Txx[mu,nu]*DAOINT[mu,nu]
+	    esum += etemp
+	endpardo mu,nu
+	server_barrier
+	collective dsum += esum
+	server_barrier
+	Rdipole[ixyz] = dsum
+    enddo ixyz
+    dsum = 0.0
+    do ixyz
+        sum1 = RDipole[ixyz]
+        sum2 = RDipole[ixyz]
+        etemp = sum1*sum2
+        Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = sum1
+        print Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+        dsum += etemp
+    enddo ixyz
+    dsum *= 0.5
+    Dipole_Transition_Norm[kstate:kstate] = (dsum)**(0.5)
+    print Dipole_Transition_Norm[kstate:kstate]
+
 enddo kstate
 
 # store vector
