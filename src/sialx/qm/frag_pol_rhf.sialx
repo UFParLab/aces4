@@ -260,6 +260,8 @@ static ao_end[ifrag]
 # Declare local 
 #
 # The static and local arrays 
+local LVxxxq[mu,nu,lambda,j]
+local LVxxqq[mu,nu,j1,j]
 contiguous local frag_energy[ifrag]
 contiguous local frag_scf_energy[ifrag]
 contiguous local CLoed_ovl[mu,nu]
@@ -280,6 +282,8 @@ temp T1pq[mu,nu]
 temp Txi[mu,i] 
 temp T1xi[mu,i] 
 temp Txj[mu,j] 
+temp Txxqq[mu,nu,j,j1]
+temp Txxxq[mu,nu,lambda,j1]
 temp Txx[mu,nu] 
 temp TAxx[mu,nu] 
 temp TBxx[mu,nu] 
@@ -1205,18 +1209,90 @@ sip_barrier
     ENDPARDO ifrag, mu, nu, sigma
 
 if do_shielding >= 2
-    pardo ifrag,jfrag, mu,nu, lambda,sigma "Frag{Nij}{aa}{aa}"
+#    pardo ifrag,jfrag, mu,nu, lambda,sigma "Frag{Nij}{aa}{aa}"
+#
+#        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+#
+#	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
+#	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+#
+#	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+#
+#	LFpq_a[mu,nu]        += T2xx[mu,nu]
+#
+#    endpardo ifrag,jfrag, mu,nu, lambda,sigma
+      PARDO ifrag, jfrag, mu, nu "Frag{Nij}{aa}{}"
 
-        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+	  T2xx[mu,nu] = 0.0 
 
-	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
-	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+	  DO j
+	  where (int)SwMOA_frag[(index)j] == jfrag
+	      allocate LVxxqq[mu,nu,j,j]
+	  ENDDO j
 
-	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+	  DO lambda
+          where (int)SwAO_frag[(index)lambda] == jfrag
 
-	LFpq_a[mu,nu]        += T2xx[mu,nu]
+	      DO j
+	      where (int)SwMOA_frag[(index)j] == jfrag
+		  allocate LVxxxq[mu,nu,lambda,j]
+	      ENDDO j
 
-    endpardo ifrag,jfrag, mu,nu, lambda,sigma
+	      DO sigma
+	      where (int)SwAO_frag[(index)sigma] == jfrag
+
+		  aoint[mu,nu,lambda,sigma]  = 0.0
+		  execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
+
+		  DO j
+		  where (int)SwMOA_frag[(index)j] == jfrag
+                      get DCa[sigma,j]
+		      txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*DCa[sigma,j]
+		      LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j]
+		  ENDDO j
+
+	      ENDDO sigma
+
+	      DO j
+	      where (int)SwMOA_frag[(index)j] == jfrag
+
+	      DO j1
+	      where j == j1
+                  get DCa[lambda,j1]
+		  txxqq[mu,nu,j1,j]   = LVxxxq[mu,nu,lambda,j]*DCa[lambda,j1]
+		  LVxxqq[mu,nu,j1,j] += txxqq[mu,nu,j1,j] 
+	      ENDDO j1
+	      ENDDO j
+
+	      DO j
+	      where (int)SwMOA_frag[(index)j] == jfrag
+		  deallocate LVxxxq[mu,nu,lambda,j]
+	      ENDDO j
+
+	  ENDDO lambda
+
+	  DO j
+	  where (int)SwMOA_frag[(index)j] == jfrag
+
+	      DO j1
+	      where j == j1 
+		  txxqq[mu,nu,j1,j] = LVxxqq[mu,nu,j1,j] 
+		  txx[mu,nu]    = 0.0  
+		  execute return_vpq txxqq[mu,nu,j1,j] txx[mu,nu] 
+		  txx[mu,nu]   *= 2.0  
+		  T2xx[mu,nu] += txx[mu,nu]
+	      ENDDO j1
+
+	  ENDDO j
+
+	  LFpq_a[mu,nu] += T2xx[mu,nu]
+
+	  DO j
+	  where (int)SwMOA_frag[(index)j] == jfrag
+	      deallocate LVxxqq[mu,nu,j,j]
+	  ENDDO j
+
+      ENDPARDO ifrag, jfrag, mu, nu
 endif
 
 sip_barrier
