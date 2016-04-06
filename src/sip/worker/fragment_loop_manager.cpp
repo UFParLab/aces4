@@ -474,8 +474,6 @@ Fragment_Nij_aa__PardoLoopManager::Fragment_Nij_aa__PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_Nij_aa__PardoLoopManager::~Fragment_Nij_aa__PardoLoopManager() {
@@ -655,8 +653,6 @@ Fragment_Nij_a_a_PardoLoopManager::Fragment_Nij_a_a_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_Nij_a_a_PardoLoopManager::~Fragment_Nij_a_a_PardoLoopManager() {
@@ -682,6 +678,7 @@ bool Fragment_Nij_oo__PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 	int NE = 0;
 
 	switch (index) {
@@ -691,10 +688,10 @@ bool Fragment_Nij_oo__PardoLoopManager::where_clause(int index) {
 				&& fragment_special_where_clause(NE, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	default:
 		where_ = false;
@@ -837,8 +834,7 @@ Fragment_Nij_oo__PardoLoopManager::Fragment_Nij_oo__PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	//form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_Nij_oo__PardoLoopManager::~Fragment_Nij_oo__PardoLoopManager() {
@@ -864,6 +860,7 @@ bool Fragment_Nij_o_o_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 	int NE = 0;
 
 	switch (index) {
@@ -873,10 +870,10 @@ bool Fragment_Nij_o_o_PardoLoopManager::where_clause(int index) {
 				&& fragment_special_where_clause(NE, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -1019,8 +1016,7 @@ Fragment_Nij_o_o_PardoLoopManager::Fragment_Nij_o_o_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	//form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_Nij_o_o_PardoLoopManager::~Fragment_Nij_o_o_PardoLoopManager() {
@@ -1332,6 +1328,178 @@ WhereFragment_i_aaaa__PardoLoopManager::~WhereFragment_i_aaaa__PardoLoopManager(
 
 /*!
  -------------------------------------------
+ _ij_aa_oo_
+ -------------------------------------------
+ */
+
+/*
+ for each new special fragment where clause pattern, this should be the only thing realy changed.
+ see comment above for fragment_special_where_clause syntax
+ */
+bool Fragment_ij_aa_oo_PardoLoopManager::where_clause(int index) {
+	bool where_;
+	int ifrag = 0;
+	int jfrag = 1;
+	int ao = 1;
+	int occ = 2;
+	int virt = 3;
+	int elst = 4;
+	int rcut = 5;
+	int mo = 6;
+
+	switch (index) {
+	case 0:
+	case 1:
+		where_ = fragment_special_where_clause(elst, jfrag, ifrag);
+		break;
+	case 2:
+		where_ = fragment_special_where_clause(ao, index, ifrag);
+		break;
+	case 3:
+		where_ = fragment_special_where_clause(ao, index, ifrag);
+		break;
+	case 4:
+		where_ = fragment_special_where_clause(mo, index, jfrag);
+		break;
+	case 5:
+		where_ = fragment_special_where_clause(mo, index, jfrag);
+		break;
+	default:
+		where_ = false;
+	}
+	return where_;
+}
+
+bool Fragment_ij_aa_oo_PardoLoopManager::do_update() {
+	if (to_exit_)
+		return false;
+	bool more_iters;
+	bool where_clauses_value;
+
+	interpreter_->skip_where_clauses(num_where_clauses_);
+
+	if (first_time_) {
+		first_time_ = false;
+		more_iters = initialize_indices();
+
+		where_clauses_value = true;
+		for (int i = 1; i < num_indices_; ++i) {
+			where_clauses_value = where_clauses_value && where_clause(i);
+		}
+		if (where_clauses_value) {
+			iteration_++;
+			if ((iteration_ - 1) % num_workers_ == company_rank_) {
+				return true;
+			}
+		}
+	}
+
+	int index_restart[MAX_RANK];
+
+	for (int i = 0; i < num_indices_; ++i) {
+		index_restart[i] = index_values_[i];
+	}
+
+	int loop_count = iteration_;
+	for (int index_i = index_restart[0]; index_i < upper_bound_[0]; ++index_i) {
+		index_values_[0] = index_i;
+		data_manager_.set_index_value(index_id_[0], index_i);
+
+		for (int index_j = index_restart[1]; index_j < upper_bound_[1];
+				++index_j) {
+			index_values_[1] = index_j;
+			data_manager_.set_index_value(index_id_[1], index_j);
+
+			if (where_clause(1)) {
+				for (int index_2 = index_restart[2]; index_2 < upper_bound_[2];
+						++index_2) {
+					index_values_[2] = index_2;
+					data_manager_.set_index_value(index_id_[2], index_2);
+
+					if (where_clause(2)) {
+						for (int index_3 = index_restart[3];
+								index_3 < upper_bound_[3]; ++index_3) {
+							index_values_[3] = index_3;
+							data_manager_.set_index_value(index_id_[3],
+									index_3);
+
+							if (where_clause(3)) {
+								for (int index_4 = index_restart[4];
+										index_4 < upper_bound_[4]; ++index_4) {
+									index_values_[4] = index_4;
+									data_manager_.set_index_value(index_id_[4],
+											index_4);
+
+									if (where_clause(4)) {
+										for (int index_5 = index_restart[5];
+												index_5 < upper_bound_[5];
+												++index_5) {
+											index_values_[5] = index_5;
+											data_manager_.set_index_value(
+													index_id_[5], index_5);
+
+											if (where_clause(5)) {
+												if (loop_count > iteration_) {
+													iteration_++;
+													if ((iteration_ - 1)
+															% num_workers_
+															== company_rank_) {
+														return true;
+													}
+												}
+												++loop_count;
+											} // where 5
+										} // index_5
+										for (int i = 5; i < num_indices_; ++i) {
+											index_restart[i] = lower_seg_[i];
+										}
+									} // where 4
+								} // index_4
+								for (int i = 4; i < num_indices_; ++i) {
+									index_restart[i] = lower_seg_[i];
+								}
+							} // where 3
+						} // index_3
+						for (int i = 3; i < num_indices_; ++i) {
+							index_restart[i] = lower_seg_[i];
+						}
+					} // where 2
+				} // index_2
+				for (int i = 2; i < num_indices_; ++i) {
+					index_restart[i] = lower_seg_[i];
+				}
+			} // where 1
+		} // index_j
+		for (int i = 1; i < num_indices_; ++i) {
+			index_restart[i] = lower_seg_[i];
+		}
+	} // index_i
+
+	return false; //this should be false here
+}
+
+Fragment_ij_aa_oo_PardoLoopManager::Fragment_ij_aa_oo_PardoLoopManager(
+		int num_indices, const int (&index_id)[MAX_RANK],
+		DataManager & data_manager, const SipTables & sip_tables,
+		SIPMPIAttr & sip_mpi_attr, int num_where_clauses,
+		Interpreter* interpreter, long& iteration) :
+		FragmentPardoLoopManager(num_indices, index_id, data_manager,
+				sip_tables), first_time_(true), iteration_(iteration), sip_mpi_attr_(
+				sip_mpi_attr), num_where_clauses_(num_where_clauses), company_rank_(
+				sip_mpi_attr.company_rank()), num_workers_(
+				sip_mpi_attr_.num_workers()), interpreter_(interpreter) {
+
+	form_elst_dist();
+	//form_rcut_dist();
+	form_swao_frag();
+	form_swmoa_frag();
+}
+
+Fragment_ij_aa_oo_PardoLoopManager::~Fragment_ij_aa_oo_PardoLoopManager() {
+}
+
+/*!
+ -------------------------------------------
  _i_aa__
  -------------------------------------------
 
@@ -1457,8 +1625,6 @@ Fragment_i_aa__PardoLoopManager::Fragment_i_aa__PardoLoopManager(
 	//form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_i_aa__PardoLoopManager::~Fragment_i_aa__PardoLoopManager() {}
@@ -1612,8 +1778,6 @@ Fragment_ij_aaa__PardoLoopManager::Fragment_ij_aaa__PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_ij_aaa__PardoLoopManager::~Fragment_ij_aaa__PardoLoopManager() {
@@ -1766,8 +1930,6 @@ Fragment_ij_aa_a_PardoLoopManager::Fragment_ij_aa_a_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_ij_aa_a_PardoLoopManager::~Fragment_ij_aa_a_PardoLoopManager() {
@@ -1792,6 +1954,7 @@ bool Fragment_ij_ao_ao_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -1802,13 +1965,13 @@ bool Fragment_ij_ao_ao_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
 		where_ = fragment_special_where_clause(ao, index, jfrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -1938,8 +2101,7 @@ Fragment_ij_ao_ao_PardoLoopManager::Fragment_ij_ao_ao_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_ij_ao_ao_PardoLoopManager::~Fragment_ij_ao_ao_PardoLoopManager() {
@@ -1955,7 +2117,7 @@ Fragment_ij_ao_ao_PardoLoopManager::~Fragment_ij_ao_ao_PardoLoopManager() {
  for each new special fragment where clause pattern, this should be the only thing realy changed.
  see comment above for fragment_special_where_clause syntax
  */
-bool Fragment_ij_aa_oo_PardoLoopManager::where_clause(int index) {
+bool WhereFragment_ij_aa_aa_PardoLoopManager::where_clause(int index) {
 	bool where_;
 	int ifrag = 0;
 	int jfrag = 1;
@@ -1977,10 +2139,10 @@ bool Fragment_ij_aa_oo_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(ao, index, jfrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(ao, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -1988,13 +2150,13 @@ bool Fragment_ij_aa_oo_PardoLoopManager::where_clause(int index) {
 	return where_;
 }
 
-bool Fragment_ij_aa_oo_PardoLoopManager::do_update() {
+bool WhereFragment_ij_aa_aa_PardoLoopManager::do_update() {
 	if (to_exit_)
 		return false;
 	bool more_iters;
 	bool where_clauses_value;
 
-	interpreter_->skip_where_clauses(num_where_clauses_);
+//	interpreter_->skip_where_clauses(num_where_clauses_);
 
 	if (first_time_) {
 		first_time_ = false;
@@ -2057,13 +2219,15 @@ bool Fragment_ij_aa_oo_PardoLoopManager::do_update() {
 													index_id_[5], index_5);
 
 											if (where_clause(5)) {
-												if (loop_count > iteration_) {
-													iteration_++;
-													if ((iteration_ - 1)
-															% num_workers_
-															== company_rank_) {
-														return true;
-													}
+												bool where_clauses_value = interpreter_->interpret_where(num_where_clauses_);
+												if (where_clauses_value) {
+												    if (loop_count > iteration_) {
+													    iteration_++;
+													    if ((iteration_ - 1) % num_workers_
+															    == company_rank_) {
+														    return true;
+													    }
+												    }
 												}
 												++loop_count;
 											} // where 5
@@ -2096,7 +2260,7 @@ bool Fragment_ij_aa_oo_PardoLoopManager::do_update() {
 	return false; //this should be false here
 }
 
-Fragment_ij_aa_oo_PardoLoopManager::Fragment_ij_aa_oo_PardoLoopManager(
+WhereFragment_ij_aa_aa_PardoLoopManager::WhereFragment_ij_aa_aa_PardoLoopManager(
 		int num_indices, const int (&index_id)[MAX_RANK],
 		DataManager & data_manager, const SipTables & sip_tables,
 		SIPMPIAttr & sip_mpi_attr, int num_where_clauses,
@@ -2108,13 +2272,10 @@ Fragment_ij_aa_oo_PardoLoopManager::Fragment_ij_aa_oo_PardoLoopManager(
 				sip_mpi_attr_.num_workers()), interpreter_(interpreter) {
 
 	form_elst_dist();
-	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
 }
 
-Fragment_ij_aa_oo_PardoLoopManager::~Fragment_ij_aa_oo_PardoLoopManager() {
+WhereFragment_ij_aa_aa_PardoLoopManager::~WhereFragment_ij_aa_aa_PardoLoopManager() {
 }
 
 
@@ -2137,6 +2298,7 @@ bool Fragment_ij_aoa_o_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -2147,13 +2309,13 @@ bool Fragment_ij_aoa_o_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -2283,8 +2445,7 @@ Fragment_ij_aoa_o_PardoLoopManager::Fragment_ij_aoa_o_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_ij_aoa_o_PardoLoopManager::~Fragment_ij_aoa_o_PardoLoopManager() {
@@ -2309,6 +2470,7 @@ bool Fragment_ij_aoo_o_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -2319,13 +2481,13 @@ bool Fragment_ij_aoo_o_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -2455,8 +2617,7 @@ Fragment_ij_aoo_o_PardoLoopManager::Fragment_ij_aoo_o_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_ij_aoo_o_PardoLoopManager::~Fragment_ij_aoo_o_PardoLoopManager() {
@@ -2485,6 +2646,7 @@ bool Fragment_i_aaoo__PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -2497,10 +2659,10 @@ bool Fragment_i_aaoo__PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 5:
 		break;
@@ -2619,8 +2781,7 @@ Fragment_i_aaoo__PardoLoopManager::Fragment_i_aaoo__PardoLoopManager(
 	//form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_i_aaoo__PardoLoopManager::~Fragment_i_aaoo__PardoLoopManager() {
@@ -2645,6 +2806,7 @@ bool Fragment_i_aovo__PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -2654,13 +2816,13 @@ bool Fragment_i_aovo__PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(virt, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 5:
 		break;
@@ -2778,8 +2940,7 @@ Fragment_i_aovo__PardoLoopManager::Fragment_i_aovo__PardoLoopManager(
 	//form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_i_aovo__PardoLoopManager::~Fragment_i_aovo__PardoLoopManager() {
@@ -2937,8 +3098,6 @@ Fragment_i_aaaa__PardoLoopManager::Fragment_i_aaaa__PardoLoopManager(
 	//form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_i_aaaa__PardoLoopManager::~Fragment_i_aaaa__PardoLoopManager() {
@@ -2963,6 +3122,7 @@ bool Fragment_i_aoo__PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -2972,10 +3132,10 @@ bool Fragment_i_aoo__PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
 		break;
@@ -3083,8 +3243,7 @@ Fragment_i_aoo__PardoLoopManager::Fragment_i_aoo__PardoLoopManager(
 	//form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_i_aoo__PardoLoopManager::~Fragment_i_aoo__PardoLoopManager() {
@@ -3109,6 +3268,7 @@ bool Fragment_NRij_vovo__PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 	int NE = 0;
 
 	switch (index) {
@@ -3118,16 +3278,16 @@ bool Fragment_NRij_vovo__PardoLoopManager::where_clause(int index) {
 				&& fragment_special_where_clause(NE, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(virt, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(virt, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	default:
 		where_ = false;
@@ -3325,8 +3485,7 @@ Fragment_NRij_vovo__PardoLoopManager::Fragment_NRij_vovo__PardoLoopManager(
 	//form_elst_dist();
 	form_rcut_dist();
 	//form_swao_frag();
-	form_swocca_frag();
-	form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_NRij_vovo__PardoLoopManager::~Fragment_NRij_vovo__PardoLoopManager() {
@@ -3351,6 +3510,7 @@ bool Fragment_NRij_ao_ao_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 	int NE = 0;
 
 	switch (index) {
@@ -3363,13 +3523,13 @@ bool Fragment_NRij_ao_ao_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
 		where_ = fragment_special_where_clause(ao, index, jfrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -3567,8 +3727,7 @@ Fragment_NRij_ao_ao_PardoLoopManager::Fragment_NRij_ao_ao_PardoLoopManager(
 	//form_elst_dist();
 	form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_NRij_ao_ao_PardoLoopManager::~Fragment_NRij_ao_ao_PardoLoopManager() {
@@ -3593,6 +3752,7 @@ bool Fragment_NRij_vo_ao_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 	int NE = 0;
 
 	switch (index) {
@@ -3602,16 +3762,16 @@ bool Fragment_NRij_vo_ao_PardoLoopManager::where_clause(int index) {
 				&& fragment_special_where_clause(NE, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(virt, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 4:
 		where_ = fragment_special_where_clause(ao, index, jfrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -3809,8 +3969,7 @@ Fragment_NRij_vo_ao_PardoLoopManager::Fragment_NRij_vo_ao_PardoLoopManager(
 	//form_elst_dist();
 	form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_NRij_vo_ao_PardoLoopManager::~Fragment_NRij_vo_ao_PardoLoopManager() {
@@ -4051,8 +4210,6 @@ Fragment_NRij_aa_aa_PardoLoopManager::Fragment_NRij_aa_aa_PardoLoopManager(
 	//form_elst_dist();
 	form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_NRij_aa_aa_PardoLoopManager::~Fragment_NRij_aa_aa_PardoLoopManager() {
@@ -4293,8 +4450,6 @@ Fragment_Nij_aa_aa_PardoLoopManager::Fragment_Nij_aa_aa_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	//form_swocca_frag();
-	//form_swvirta_frag();
 }
 
 Fragment_Nij_aa_aa_PardoLoopManager::~Fragment_Nij_aa_aa_PardoLoopManager() {
@@ -4320,6 +4475,7 @@ bool Fragment_NRij_o_ao_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 	int NE = 0;
 
 	switch (index) {
@@ -4329,13 +4485,13 @@ bool Fragment_NRij_o_ao_PardoLoopManager::where_clause(int index) {
 				&& fragment_special_where_clause(NE, jfrag, ifrag);
 		break;
 	case 2:
-		where_ = fragment_special_where_clause(occ, index, ifrag);
+		where_ = fragment_special_where_clause(mo, index, ifrag);
 		break;
 	case 3:
 		where_ = fragment_special_where_clause(ao, index, jfrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	case 5:
 		break;
@@ -4505,8 +4661,7 @@ Fragment_NRij_o_ao_PardoLoopManager::Fragment_NRij_o_ao_PardoLoopManager(
 	//form_elst_dist();
 	form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	//form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_NRij_o_ao_PardoLoopManager::~Fragment_NRij_o_ao_PardoLoopManager() {
@@ -4531,6 +4686,7 @@ bool Fragment_ij_aa_vo_PardoLoopManager::where_clause(int index) {
 	int virt = 3;
 	int elst = 4;
 	int rcut = 5;
+	int mo = 6;
 
 	switch (index) {
 	case 0:
@@ -4544,10 +4700,10 @@ bool Fragment_ij_aa_vo_PardoLoopManager::where_clause(int index) {
 		where_ = fragment_special_where_clause(ao, index, ifrag);
 		break;
 	case 4:
-		where_ = fragment_special_where_clause(virt, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	case 5:
-		where_ = fragment_special_where_clause(occ, index, jfrag);
+		where_ = fragment_special_where_clause(mo, index, jfrag);
 		break;
 	default:
 		where_ = false;
@@ -4677,8 +4833,7 @@ Fragment_ij_aa_vo_PardoLoopManager::Fragment_ij_aa_vo_PardoLoopManager(
 	form_elst_dist();
 	//form_rcut_dist();
 	form_swao_frag();
-	form_swocca_frag();
-	form_swvirta_frag();
+	form_swmoa_frag();
 }
 
 Fragment_ij_aa_vo_PardoLoopManager::~Fragment_ij_aa_vo_PardoLoopManager() {

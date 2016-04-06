@@ -52,6 +52,7 @@ special return_h1 w
 special return_1el_ecpints w
 special return_ovl w
 special eigen_calc_sqr_inv uuu
+special eigen_calc_s_inv uuu
 special eigen_calc uu
 special compute_diis u 
 special check_dconf rw
@@ -89,6 +90,10 @@ special enable_all_rank_print
 special disable_all_rank_print
 special return_h1frag wr
 special return_vpq rw
+special diagonalize_pair_density rur
+special orth_virt_occ urrr
+special form_diagonal_unit_matrix ur
+special return_diagonal uu
 
 endsial scf_rhf_defs
 

@@ -507,6 +507,7 @@ private:
 	friend class Fragment_NRij_o_ao_PardoLoopManager;
 	friend class WhereFragment_i_aaa__PardoLoopManager;
 	friend class WhereFragment_i_aaaa__PardoLoopManager;
+	friend class WhereFragment_ij_aa_aa_PardoLoopManager;
 	friend class Fragment_Nij_aa_aa_PardoLoopManager;
 	friend class Fragment_i_aa__PardoLoopManager;
 	friend class Fragment_i_ap__PardoLoopManager;

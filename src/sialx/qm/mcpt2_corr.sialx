@@ -393,8 +393,16 @@ print " "
       sip_barrier 
 #     Compute the NN repusion between fragments  
 #     ----------------------------------------- 
+      esum = 0.0
+	do ifrag
+	    etemp = (scalar)ifrag
+	    nn_rep = 0.0 
+	    execute moi_nn_repulsion nn_rep etemp
+	    esum += nn_rep
+	enddo ifrag
       nn_rep = 0.0 
       execute compute_nn_repulsion nn_rep
+      nn_rep -= esum
       print nn_rep 
 #
 #     Perform 2-el integral transformation and calculate second order energies   

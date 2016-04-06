@@ -126,10 +126,12 @@ scalar esum4
 scalar ediff
 scalar escr
 scalar e1exc_at 
+scalar total_scf_exchange
 scalar e10pol_at 
 scalar mono_lccd  
 scalar mcpt_corr
 scalar fef_ccpt_corr
+scalar fef_total_energy
 scalar elccd
 scalar singles 
 scalar MOI_dimer_doubles 
