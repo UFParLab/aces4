@@ -611,25 +611,6 @@ set(SIAL_FILES
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
     src/sialx/qm/drop_core_in_sial.sialx;
-    src/sialx/qm/frag_rhf.sialx;
-    src/sialx/qm/frag_pol_rhf.sialx;
-    src/sialx/qm/frag_rcis_rhf.sialx;
-    src/sialx/qm/tran_frag.sialx;
-    src/sialx/qm/MOI_reom_defs.sialx;
-    src/sialx/qm/MOI_reom_vars.sialx;
-    src/sialx/qm/MOI_cis_guess.sialx;
-    src/sialx/qm/MOI_rcis.sialx;
-    src/sialx/qm/MOI_reom_elements.sialx;
-    src/sialx/qm/MOI_reom_fefccpt2.sialx;
-    src/sialx/qm/fef_ccpt2.sialx;
-    src/sialx/qm/fef_cis_ccpt2.sialx;
-    src/sialx/qm/mcpt2_corr.sialx;
-    src/sialx/qm/mcpt2_corr_lowmem.sialx;
-    src/sialx/qm/mcpt2_vars.sialx;
-    src/sialx/qm/mcpt2_defs.sialx;
-    src/sialx/qm/mcpt2_singles.sialx;
-    src/sialx/qm/mcpt2_doubles.sialx;
-    src/sialx/qm/mcpt2_util.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;
@@ -658,7 +639,26 @@ set(SIAL_FILES
     src/sialx/qm/scf_uhf.sialx;
     src/sialx/qm/scf_uhf_defs.sialx;
     src/sialx/qm/scf_rhf.sialx; 
-    src/sialx/qm/scf_rhf_defs.sialx)
+    src/sialx/qm/scf_rhf_defs.sialx;
+    src/sialx/qm/fef-cc/frag_rhf.sialx;
+    src/sialx/qm/fef-cc/frag_pol_rhf.sialx;
+    src/sialx/qm/fef-cc/frag_rcis_rhf.sialx;
+    src/sialx/qm/fef-cc/tran_frag.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_defs.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_vars.sialx;
+    src/sialx/qm/fef-cc/MOI_cis_guess.sialx;
+    src/sialx/qm/fef-cc/MOI_rcis.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_elements.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_fefccpt2.sialx;
+    src/sialx/qm/fef-cc/fef_ccpt2.sialx;
+    src/sialx/qm/fef-cc/fef_cis_ccpt2.sialx;
+    src/sialx/qm/fef-cc/mcpt2_corr.sialx;
+    src/sialx/qm/fef-cc/mcpt2_corr_lowmem.sialx;
+    src/sialx/qm/fef-cc/mcpt2_vars.sialx;
+    src/sialx/qm/fef-cc/mcpt2_defs.sialx;
+    src/sialx/qm/fef-cc/mcpt2_singles.sialx;
+    src/sialx/qm/fef-cc/mcpt2_doubles.sialx;
+    src/sialx/qm/fef-cc/mcpt2_util.sialx)
     
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
@@ -667,9 +667,10 @@ set (SIAL_COMPILED_FILES "")
 foreach(F ${SIAL_FILES})
     get_filename_component(F_WE ${CMAKE_SOURCE_DIR}/${F} NAME_WE)
     get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
-    get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
+#    get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 
-    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
+    #set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
+    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx")
     add_custom_command(
         OUTPUT ${SIAL_COMPILE_DIR}/${F_WE}.siox
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}
