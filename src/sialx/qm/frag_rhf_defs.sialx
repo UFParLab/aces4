@@ -88,6 +88,7 @@ special compute_integral_batch w
 special enable_all_rank_print
 special disable_all_rank_print
 special return_h1frag wr
+special return_vpq rw
 
 endsial scf_rhf_defs
 

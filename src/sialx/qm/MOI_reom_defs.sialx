@@ -53,6 +53,8 @@ special compute_dipole_integrals wur
 special print_block_and_index r
 special compute_int_scratchmem_lowmem uuu
 special remove_diagonal u
+special enable_all_rank_print
+special disable_all_rank_print
 #     NOT PORTED 
 
 endsial reom_rhf_defs

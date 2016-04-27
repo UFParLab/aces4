@@ -1,0 +1,1286 @@
+import "mcpt2_defs.sialx" 
+import "mcpt2_vars.sialx"
+import "mcpt2_util.sialx"
+import "mcpt2_doubles.sialx"
+#
+                           SIAL FRAG_2ORDER_CORR 
+#
+# -----------------------------------------------------------------------------
+# 
+PROC FRAG_TRAN_NO_WC
+#     -------------- 
+
+sip_barrier
+
+# ---------------------------------------------------------------------------- 
+#     First stage --> form Vxxxj (1122) 
+# ---------------------------------------------------------------------------- 
+
+PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	  allocate LVxxxq[mu,nu,lambda,j] 
+    ENDDO j 
+
+    DO sigma 
+    where (int)SwAO_frag[(index)sigma] == jfrag
+
+	  aoint[mu,nu,lambda,sigma]  = 0.0 
+	  execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
+
+	  DO j 
+	  where (int)SwMOA_frag[(index)j] == jfrag
+	      txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*ca[sigma,j] 
+	      LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j] 
+	  ENDDO j 
+    ENDDO sigma 
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+
+        put Vxxxq[mu,nu,lambda,j] = LVxxxq[mu,nu,lambda,j]
+
+    ENDDO j 
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	  deallocate LVxxxq[mu,nu,lambda,j] 
+    ENDDO j 
+
+ENDPARDO ifrag, jfrag, mu, nu, lambda
+
+# Exchange integrals 
+
+PARDO ifrag, jfrag, nu, lambda, mu "Frag{ij}{aa}{a}"
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	allocate LVxxxq[mu,nu,lambda,j] 
+    ENDDO j 
+
+    DO sigma 
+    where (int)SwAO_frag[(index)sigma] == jfrag
+
+	aoint[mu,nu,lambda,sigma]  = 0.0 
+	execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
+
+	DO j 
+	where (int)SwMOA_frag[(index)j] == jfrag
+	    txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*ca[sigma,j] 
+	    LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j] 
+	ENDDO j 
+
+    ENDDO sigma 
+
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+
+	DO i 
+	where (int)SwMOA_frag[(index)i] == ifrag
+	    txxqq[mu,nu,i,j]      = LVxxxq[mu,nu,lambda,j]*ca[lambda,i] 
+	    PUT Vxxqq_x[mu,nu,i,j] += txxqq[mu,nu,i,j] 
+	ENDDO i  
+    ENDDO j 
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	deallocate LVxxxq[mu,nu,lambda,j] 
+    ENDDO j 
+
+ENDPARDO ifrag, jfrag, nu, lambda, mu
+#
+PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aaa}{}"
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	allocate LVxxxq[mu,nu,lambda,j] 
+    ENDDO j 
+
+    DO sigma 
+    where (int)SwAO_frag[(index)sigma] == jfrag
+
+	aoint[mu,nu,lambda,sigma]  = 0.0 
+	execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
+
+	DO j 
+	where (int)SwMOA_frag[(index)j] == jfrag
+	    txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*ca[sigma,j] 
+	    LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j] 
+	ENDDO j 
+
+    ENDDO sigma 
+
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+
+	DO i 
+	where (int)SwMOA_frag[(index)i] == ifrag
+	    txxqq[mu,nu,i,j]      = LVxxxq[mu,nu,lambda,j]*ca[lambda,i] 
+	    PUT Vxxqq_x[mu,nu,i,j] += txxqq[mu,nu,i,j] 
+	ENDDO i  
+
+    ENDDO j 
+
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	deallocate LVxxxq[mu,nu,lambda,j] 
+    ENDDO j 
+
+ENDPARDO ifrag, jfrag, mu, nu, lambda
+
+print "Done first stage of two-electron integral transformation" 
+sip_barrier
+
+PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+          get Vxxxq[mu,nu,lambda,j]
+	  DO i1 
+	  where (int)SwMOA_frag[(index)i1] == ifrag
+	      txpxq[mu,i1,lambda,j]      = Vxxxq[mu,nu,lambda,j]*ca[nu,i1] 
+	      PUT Vxpxq[mu,i1,lambda,j] += txpxq[mu,i1,lambda,j] 
+	  ENDDO i1 
+    ENDDO j 
+ENDPARDO ifrag, jfrag, mu, nu, lambda
+
+PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+          get Vxxxq[mu,nu,lambda,j]
+	  DO i1 
+	  where (int)SwMOA_frag[(index)i1] == ifrag
+	      tpxxq[i1,nu,lambda,j]      = Vxxxq[mu,nu,lambda,j]*ca[mu,i1] 
+	      PUT Vpxxq[i1,nu,lambda,j] += tpxxq[i1,nu,lambda,j] 
+	  ENDDO i1 
+    ENDDO j 
+ENDPARDO ifrag, jfrag, mu, nu, lambda
+
+PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+          get Vxxxq[mu,nu,lambda,j]
+	  DO j1  
+	  where (int)SwMOA_frag[(index)j1] == jfrag
+	      txxqq[mu,nu,j1,j]      = Vxxxq[mu,nu,lambda,j]*ca[lambda,j1] 
+	      PUT Vxxqq[mu,nu,j1,j] += txxqq[mu,nu,j1,j] 
+	  ENDDO j1  
+    ENDDO j 
+ENDPARDO ifrag, jfrag, mu, nu, lambda
+
+PARDO ifrag, jfrag, mu, nu, lambda "Frag{ij}{aa}{a}"
+    DO j 
+    where (int)SwMOA_frag[(index)j] == jfrag
+	get Vxxxq[mu,nu,lambda,j]
+	DO a1
+	where (int)SwMOA_frag[(index)a1] == jfrag
+	    txxqq[mu,nu,a1,j]= Vxxxq[mu,nu,lambda,j]*ca[lambda,a1] 
+	    PUT Vxxai[mu,nu,a1,j] += txxqq[mu,nu,a1,j] 
+	ENDDO a1
+    ENDDO j 
+ENDPARDO ifrag, jfrag, mu, nu, lambda
+
+sip_barrier 
+print "Done second stage of two-electron integral transformation" 
+
+# ---------------------------------------------------------------------------- 
+#     Third stage --> form Vxibj (1122) 
+# ---------------------------------------------------------------------------- 
+
+PARDO ifrag, jfrag, mu, i, lambda, j "Frag{ij}{ao}{ao}"
+
+    GET                    Vxpxq[mu,i,lambda,j] 
+    DO b 
+    where (int)SwMOA_frag[(index)b] == jfrag
+	txpqq[mu,i,b,j]      = Vxpxq[mu,i,lambda,j]*ca[lambda,b] 
+	PUT Vxpbq[mu,i,b,j] += txpqq[mu,i,b,j] 
+    ENDDO b 
+
+ENDPARDO ifrag,jfrag, mu, i, lambda, j
+
+# ---------------------------------------------------------------------------- 
+#     Third stage --> form Vixbj (1122) 
+# ---------------------------------------------------------------------------- 
+#
+PARDO ifrag, jfrag, nu, i, lambda, j "Frag{ij}{ao}{ao}"
+
+    GET                    Vpxxq[i,nu,lambda,j] 
+
+    DO b 
+    where (int)SwMOA_frag[(index)b] == jfrag
+	tpxqq[i,nu,b,j]      = Vpxxq[i,nu,lambda,j]*ca[lambda,b] 
+	PUT Vixbj[i,nu,b,j] += tpxqq[i,nu,b,j] 
+    ENDDO b 
+
+    DO j1 
+    where (int)SwMOA_frag[(index)j1] == jfrag
+	tpxqq[i,nu,j1,j]      = Vpxxq[i,nu,lambda,j]*ca[lambda,j1] 
+	PUT Vixjj[i,nu,j1,j] += tpxqq[i,nu,j1,j] 
+    ENDDO j1  
+ENDPARDO ifrag,jfrag, nu, i, lambda, j
+#
+PARDO ifrag, jfrag, nu, mu, j, j1 "Frag{ij}{aa}{oo}"
+
+    GET                 Vxxqq[mu,nu,j1,j] 
+
+    DO a 
+    where (int)SwMOA_frag[(index)a] == ifrag
+	tpxqq[a,nu,j1,j]      = Vxxqq[mu,nu,j1,j]*ca[mu,a] 
+	PUT Vaxjj[a,nu,j1,j] += tpxqq[a,nu,j1,j] 
+    ENDDO a 
+
+ENDPARDO ifrag,jfrag, nu, mu, j, j1
+#
+PARDO ifrag, jfrag,nu,i,mu,j "Frag{ij}{ao}{ao}"
+
+    GET                 Vxxqq_x[mu,nu,i,j] 
+
+    DO i1 
+    where (int)SwMOA_frag[(index)i1] == ifrag
+	txpqq[mu,i1,i,j]      = Vxxqq_x[mu,nu,i,j]*ca[nu,i1] 
+	PUT Vxiij[mu,i1,i,j] += txpqq[mu,i1,i,j] 
+    ENDDO i1  
+
+ENDPARDO ifrag, jfrag,nu,i,mu,j
+
+PARDO ifrag, jfrag,nu,i,mu,j "Frag{ij}{aoa}{o}" ####line 407
+
+    GET                 Vxxqq_x[mu,nu,i,j] 
+
+    DO i1 
+    where (int)SwMOA_frag[(index)i1] == ifrag
+	txpqq[mu,i1,i,j]      = Vxxqq_x[mu,nu,i,j]*ca[nu,i1] 
+	pUT Vxiij[mu,i1,i,j] += txpqq[mu,i1,i,j] 
+    ENDDO i1  
+
+ENDPARDO ifrag, jfrag,nu,i,mu,j
+
+PARDO ifrag, jfrag, mu, nu, b, j "Frag{ij}{aa}{vo}"
+
+    get Vxxai[mu,nu,b,j]
+
+    do a1
+    where (int)SwMOA_frag[(index)a1] == ifrag
+	tpxqq[a1,nu,b,j]= Vxxai[mu,nu,b,j]*ca[mu,a1]
+	PUT Vaxaj[a1,nu,b,j] += tpxqq[a1,nu,b,j]
+    enddo a1
+
+ENDPARDO ifrag, jfrag, mu, nu, b, j
+
+print "Done third stage of two-electron integral transformation" 
+sip_barrier 
+
+# ---------------------------------------------------------------------------- 
+#     Fourth stage --> form Vaibj (1122) 
+# ---------------------------------------------------------------------------- 
+
+PARDO ifrag, jfrag, mu, i, b, j "Frag{ij}{ap}{pp}"
+
+GET               Vxpbq[mu,i,b,j] 
+
+DO a 
+where (int)SwMOA_frag[(index)a] == ifrag
+tppqq[a,i,b,j]      = Vxpbq[mu,i,b,j]*ca[mu,a] 
+PUT Vaibj[a,i,b,j] += tppqq[a,i,b,j] 
+ENDDO a 
+
+ENDPARDO ifrag, jfrag, mu, i, b, j
+
+# ---------------------------------------------------------------------------- 
+#     Fourth stage --> form Viabj (1122) 
+# ---------------------------------------------------------------------------- 
+PARDO ifrag, jfrag, nu, i, b, j  "Frag{ij}{ap}{pp}"
+
+    GET               Vixbj[i,nu,b,j]  
+
+    DO a 
+    where (int)SwMOA_frag[(index)a] == ifrag
+	tppqq[i,a,b,j]      = Vixbj[i,nu,b,j]*ca[nu,a] 
+	PUT Viabj[i,a,b,j] += tppqq[i,a,b,j] 
+    ENDDO a 
+
+ENDPARDO ifrag,jfrag, nu, i, b, j
+
+PARDO ifrag, jfrag, nu, a, j, j1 "Frag{ij}{ap}{pp}"
+
+    GET                Vaxjj[a,nu,j1,j] 
+
+    DO a1 
+    where (int)SwMOA_frag[(index)a1] == ifrag
+	tppqq[a,a1,j1,j]      = Vaxjj[a,nu,j1,j]*ca[nu,a1] 
+	PUT Vaajj[a,a1,j1,j] += tppqq[a,a1,j1,j] 
+    ENDDO a1 
+
+ENDPARDO ifrag,jfrag, nu, a, j, j1
+
+# ---------------------------------------------------------------------------- 
+#     Fourth stage --> form Viijj (1122) 
+# ---------------------------------------------------------------------------- 
+#
+PARDO ifrag, jfrag, nu, i, j, j1  "Frag{ij}{ap}{pp}"
+
+    GET                Vixjj[i,nu,j1,j] 
+
+    DO i1 
+    where (int)SwMOA_frag[(index)i1] == ifrag
+	tppqq[i,i1,j1,j]      = Vixjj[i,nu,j1,j]*ca[nu,i1] 
+	PUT Viijj[i,i1,j1,j] += tppqq[i,i1,j1,j] 
+    ENDDO i1 
+
+ENDPARDO ifrag, jfrag, nu, i, j, j1
+
+PARDO jfrag, ifrag, mu, j, i, i1  "Frag{ij}{ap}{pp}"
+
+    GET                 Vxiij[mu,i1,i,j] 
+
+    DO j1 
+    where (int)SwMOA_frag[(index)j1] == jfrag
+	tppqq[j1,i1,i,j]      = Vxiij[mu,i1,i,j]*ca[mu,j1] 
+	PUT Vjiij[j1,i1,i,j] += tppqq[j1,i1,i,j] 
+    ENDDO j1  
+
+ENDPARDO jfrag, ifrag, mu, j, i, i1
+
+PARDO ifrag, jfrag, mu, i, i1, j "Frag{ij}{aoo}{o}" ######## line 532
+
+    GET                 Vxiij[mu,i1,i,j] 
+
+    DO j1 
+    where (int)SwMOA_frag[(index)j1] == ifrag
+	tppqq[j1,i1,i,j]      = Vxiij[mu,i1,i,j]*ca[mu,j1] 
+	PUT Viiij[j1,i1,i,j] += tppqq[j1,i1,i,j] 
+    ENDDO j1  
+
+ENDPARDO ifrag, jfrag, mu, i, i1, j
+
+PARDO ifrag, jfrag, nu, i, j, j1  "Frag{ij}{ap}{pp}"
+
+    GET          Vixjj[i,nu,j1,j] 
+
+    DO a1 
+    where (int)SwMOA_frag[(index)a1] == ifrag
+	tppqq[i,a1,j1,j]= Vixjj[i,nu,j1,j]*ca[nu,a1] 
+	PUT Viaii[i,a1,j1,j] += tppqq[i,a1,j1,j] 
+    ENDDO a1 
+
+ENDPARDO ifrag, jfrag, nu, i, j, j1
+
+PARDO ifrag, jfrag, nu, a, b, j "Frag{ij}{ap}{pp}"
+
+    get Vaxaj[a,nu,b,j]
+
+    do a1
+    where (int)SwMOA_frag[(index)a1] == ifrag
+	tppqq[a,a1,b,j]= Vaxaj[a,nu,b,j]*ca[nu,a1]
+	PUT Vaaai[a,a1,b,j] += tppqq[a,a1,b,j]
+    enddo a1
+
+ENDPARDO ifrag, jfrag, nu, a, b, j
+
+print "Done fourth stage of transformation" 
+
+      sip_barrier 
+#
+      ENDPROC FRAG_TRAN_NO_WC
+#
+# -----------------------------------------------------------------------------
+# 
+      PROC OVERLAP_EXCHANGE 
+#     ----------------- 
+#
+#     Form the contribution /sum_C V(a,i,C,C) 
+#
+      sip_barrier 
+#
+# Form the contribution from /sum_C Hai(C) 
+#
+
+      PARDO ifrag, mu, nu "Frag{i}{aa}{}"
+
+         icount = (scalar)ifrag
+
+               txx[mu,nu] = 0.0 
+               execute return_h1frag txx[mu,nu] icount  
+
+               do i 
+	       where (int)SwMOA_frag[(index)i] == ifrag
+
+                     tpx[i,nu] = txx[mu,nu]*ca[mu,i] 
+
+                     do j 
+		     where (int)SwMOA_frag[(index)j] == ifrag
+                           t1pp[i,j] = tpx[i,nu]*ca[nu,j] 
+                           PUT VE[i,j] += t1pp[i,j] 
+                     enddo j 
+
+               enddo i 
+
+      ENDPARDO ifrag, mu, nu
+
+      PARDO ifrag,jfrag, mu, nu "Frag{Nij}{a}{a}" #line 713
+
+         icount = (scalar)ifrag
+         jcount = (scalar)jfrag
+
+                  txx[mu,nu] = 0.0 
+                  execute return_h1frag txx[mu,nu] icount  
+
+               do i 
+	       where (int)SwMOA_frag[(index)i] == ifrag
+
+                     tpx[i,nu] = txx[mu,nu]*ca[mu,i] 
+
+                     do j 
+	             where (int)SwMOA_frag[(index)j] == jfrag
+                           t1pp[i,j] = tpx[i,nu]*ca[nu,j] 
+                           PUT VE_x[i,j] += t1pp[i,j] 
+                     enddo j 
+
+               enddo i 
+
+      ENDPARDO ifrag,jfrag, mu, nu
+
+      sip_barrier 
+
+      PARDO ifrag,jfrag
+      where ifrag != jfrag
+	 icount = (scalar)ifrag
+	 jcount = (scalar)jfrag
+#
+         DO mu
+	 where (int)SwAO_frag[(index)mu] == ifrag
+         DO nu
+	 where (int)SwAO_frag[(index)nu] == jfrag
+
+	      execute return_ovl txx[mu,nu]  
+	      PUT oed_ovl[mu,nu] = txx[mu,nu] 
+
+         ENDDO nu
+         ENDDO mu
+
+      ENDPARDO ifrag,jfrag
+      sip_barrier 
+# 
+      PARDO ifrag,jfrag
+      where ifrag != jfrag
+	 icount = (scalar)ifrag
+	 jcount = (scalar)jfrag
+#
+         DO mu
+	 where (int)SwAO_frag[(index)mu] == ifrag
+         DO nu
+	 where (int)SwAO_frag[(index)nu] == jfrag
+
+	      GET oed_ovl[mu,nu] 
+
+              DO a
+	      where (int)SwMOA_frag[(index)a] == jfrag
+              DO i
+	      where (int)SwMOA_frag[(index)i] ==ifrag
+
+                    txp[mu,a] = oed_ovl[mu,nu]*ca[nu,a]  
+                    tpp[i,a]  = txp[mu,a]*ca[mu,i] 
+                    PUT SOVL[i,a] += tpp[i,a] 
+
+              ENDDO i
+              ENDDO a
+
+              DO i1  
+	      where (int)SwMOA_frag[(index)i1] == jfrag
+              DO i
+	      where (int)SwMOA_frag[(index)i] == ifrag
+
+                    txp[mu,i1] = oed_ovl[mu,nu]*ca[nu,i1]  
+                    tpp[i,i1]  = txp[mu,i1]*ca[mu,i] 
+                    PUT SOVL[i,i1] += tpp[i,i1] 
+
+              ENDDO i
+              ENDDO i1  
+
+              DO a1  
+	      where (int)SwMOA_frag[(index)a1] == jfrag
+              DO a
+	      where (int)SwMOA_frag[(index)a] == ifrag
+
+                    txp[mu,a1] = oed_ovl[mu,nu]*ca[nu,a1]  
+                    tpp[a,a1]  = txp[mu,a1]*ca[mu,a] 
+                    PUT SOVL[a,a1] += tpp[a,a1] 
+
+              ENDDO a
+              ENDDO a1  
+
+         ENDDO nu
+         ENDDO mu
+
+      ENDPARDO ifrag,jfrag
+      sip_barrier
+
+# 
+      PARDO ifrag,jfrag
+      where ifrag != jfrag
+	 icount = (scalar)ifrag
+	 jcount = (scalar)jfrag
+#
+         esum = 0.0 
+
+         if (int)elst_dist[ifrag,jfrag] == ifrag
+#
+         DO a
+	 where (int)SwMOA_frag[(index)a] == ifrag
+         DO i
+	 where (int)SwMOA_frag[(index)i] == ifrag
+
+               DO b
+	       where (int)SwMOA_frag[(index)b] == jfrag
+               DO j
+	       where (int)SwMOA_frag[(index)i] == jfrag
+                     GET Vaibj[a,i,b,j] 
+                     GET SOVL[j,a] 
+                     GET SOVL[i,b] 
+                     tpp[a,j] = Vaibj[a,i,b,j]*SOVL[i,b]  
+                     etemp = SOVL[j,a]*tpp[a,j] 
+
+                     etemp*= -1.0  # Not 2 to avoid overcounting ??? 
+                     esum += etemp 
+               ENDDO j
+               ENDDO b
+         ENDDO i
+         ENDDO a
+         endif # pair_flag > zero  
+
+         t20disp[ifrag,jfrag]      = esum   
+         PUT e10exch[ifrag,jfrag] += t20disp[ifrag,jfrag] 
+
+      ENDPARDO ifrag,jfrag
+
+      sip_barrier
+
+      sip_barrier
+      e1exc_at = 0.0  
+      esum = 0.0 
+
+      PARDO ifrag, jfrag  
+	  put e10exch[ifrag,jfrag] = 0.0
+      endPARDO ifrag, jfrag  
+      sip_barrier 
+
+# 1st-term 
+      PARDO ifrag, jfrag, i, j "Frag{Nij}{o}{o}"
+
+         DO i1 
+	 where i==i1
+         DO j1 
+         where j == j1 
+                  GET                Vjiij[j1,i1,i,j] 
+                  tpppp[i,i1,j,j1] = Vjiij[j1,i1,i,j] 
+                  etemp = 0.0 
+                  execute return_diagonal tpppp[i,i1,j,j1] etemp
+                  etemp *= -1.0 
+                  esum += etemp 
+         ENDDO j1 
+
+         ENDDO i1 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, i, j
+
+# second-term 
+      PARDO ifrag, jfrag, i2, j "Frag{Nij}{o}{o}"
+
+	      GET SOVL[j,i2] 
+	      tpp[i2,j] = 0.0 
+
+	     DO i
+	     where (int)SwMOA_frag[(index)i] == ifrag
+	     DO i1 
+	     where i == i1 
+		  GET                 Viiij[i,i1,i2,j] 
+		  GET                 Viiij[i2,i1,i,j] 
+		  tpppp[i2,j,i,i1]  = Viiij[i,i1,i2,j] 
+		  tpppp[i2,j,i,i1] *= 2.0  
+		  t1pppp[i2,j,i,i1] = Viiij[i2,i1,i,j]   
+		  tpppp[i2,j,i,i1] -= t1pppp[i2,j,i,i1] 
+
+		  Ipp[i,i1] = 1.0 
+		  execute return_diagonal Ipp[i,i1] etemp  
+
+		  t1pp[i2,j] = tpppp[i2,j,i,i1] * Ipp[i,i1] 
+		  tpp[i2,j] += t1pp[i2,j] 
+
+	     ENDDO i1 
+	     ENDDO i 
+
+	      GET          VE_x[j,i2] 
+	      GET          VE_x[i2,j] 
+	      t1pp[i2,j] = VE_x[j,i2] 
+	      t1pp[i2,j]+= VE_x[i2,j] 
+	      t1pp[i2,j]*= 0.5  
+	      tpp[i2,j] += t1pp[i2,j] 
+	      etemp = SOVL[j,i2]*tpp[i2,j] 
+	      etemp *= -2.0 
+	      esum += etemp 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, i2, j
+
+# Third-term 
+      PARDO ifrag, jfrag, j, j1 "Frag{Nij}{oo}{}"
+
+	      tpp[j1,j] = 0.0 
+	      t3pp[j,j1] = 0.0 
+
+	     DO i
+	     where (int)SwMOA_frag[(index)i] == jfrag
+	     DO i1 
+	     where i == i1 
+		      GET Viijj[j1,j,i,i1] 
+		      tpp[i,i1] = 2.0 
+		      execute return_diagonal tpp[i,i1] etemp  
+		      t2pp[j1,j] = Viijj[j1,j,i,i1]*tpp[i,i1] 
+		      tpp[j1,j] += t2pp[j1,j] 
+	     ENDDO i1 
+	     ENDDO i 
+
+	     DO i2 
+	     where (int)SwMOA_frag[(index)i2] == jfrag
+
+                  GET SOVL[j,i2] 
+                  GET SOVL[i2,j1] 
+
+                  t1pp[j,j1] = SOVL[j,i2]*SOVL[i2,j1] 
+                  t3pp[j,j1] += t1pp[j,j1] 
+
+	     ENDDO i2 
+
+	      etemp = t3pp[j,j1]*tpp[j1,j] 
+	      etemp *= 2.0 
+	      esum += etemp 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, j, j1
+
+
+# Fourth-term 
+      PARDO ifrag, jfrag, i1, j "Frag{Nij}{o}{o}"
+
+                  tpp[i1,j] = 0.0 
+                  GET         SOVL[j,i1] 
+
+               DO i
+	       where (int)SwMOA_frag[(index)i] == ifrag
+
+                     DO j1  
+	             where (int)SwMOA_frag[(index)j1] == jfrag
+                           GET         Viijj[i1,i,j1,j] 
+                           GET         SOVL[i,j1] 
+                           t1pp[i1,j] = Viijj[i1,i,j1,j]*SOVL[i,j1] 
+                           tpp[i1,j] += t1pp[i1,j] 
+                     ENDDO j1 
+               ENDDO i 
+
+               etemp     = tpp[i1,j]*SOVL[j,i1]
+               etemp    *= -1.0 
+               esum     += etemp 
+
+	 put e10exch[ifrag,jfrag] += esum
+
+      ENDPARDO ifrag, jfrag, i1, j 
+
+
+      PARDO ifrag, jfrag, i, i1 "Frag{Nij}{oo}{}"
+
+               DO j
+	       where (int)SwMOA_frag[(index)j] == jfrag
+		       GET         VE[i1,i] 
+		       GET         SOVL[j,i1] 
+		       GET         SOVL[i,j] 
+		       tpp[i1,j] = VE[i1,i]*SOVL[i,j] 
+		       etemp     = tpp[i1,j]*SOVL[j,i1]
+		       etemp    *=  2.0  
+		       esum     += etemp 
+               ENDDO j 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, i, i1
+
+      sip_barrier
+      collective e1exc_at += esum   
+      print e1exc_at 
+# 
+      execute get_my_rank rank
+      if rank == 0.0
+	 do ifrag
+         do jfrag
+	 where ifrag != jfrag
+         where (int)elst_dist[ifrag,jfrag] == ifrag
+	     icount = (scalar)ifrag
+	     jcount = (scalar)jfrag
+
+	     allocate contiguous final_e10exch[ifrag:ifrag,jfrag:jfrag]
+	     get e10exch[ifrag,jfrag]
+	     final_e10exch[ifrag:ifrag,jfrag:jfrag] = e10exch[ifrag,jfrag]
+	     print final_e10exch[ifrag:ifrag,jfrag:jfrag]
+	     deallocate contiguous final_e10exch[ifrag:ifrag,jfrag:jfrag]
+
+	 enddo jfrag
+	 enddo ifrag
+      endif
+#
+      ENDPROC OVERLAP_EXCHANGE 
+#
+# Form guess to second-order singles from T2 contributions
+#
+    PROC form_t1_secondorder_guess
+
+    print "forming guess to second-order T1 amplitudes"
+    server_barrier
+
+#
+# 3v monomer
+#
+    pardo ifrag, a, a1, a2, i1 "Frag{i}{pppp}{}"
+    
+	get Vaaai[a1,a,a2,i1]
+
+	do i
+	where (int)SwMOA_frag[(index)i] == ifrag
+	    get T2old[a1,i,a2,i1]
+	    get T2old[a2,i,a1,i1]
+
+	    Taibj[a1,i,a2,i1]  = T2old[a1,i,a2,i1]
+	    Taibj[a1,i,a2,i1] *= 2.0
+	    T1aibj[a1,i,a2,i1] = T2old[a2,i,a1,i1]
+	    Taibj[a1,i,a2,i1] -= T1aibj[a1,i,a2,i1]
+
+	    Tai[a,i] = Vaaai[a1,a,a2,i1]*Taibj[a1,i,a2,i1]
+
+	    put Mck_a[a,i] += Tai[a,i]
+	enddo i
+    endpardo ifrag, a, a1, a2, i1
+#
+# 3o monomer 
+#
+    pardo ifrag, a2,i2,i,i1 "Frag{i}{pppp}{}"
+
+        get Viaii[i2,a2,i,i1]
+
+	do a1
+	where (int)SwMOA_frag[(index)a1] == ifrag
+
+	    get T2old[a1,i1,a2,i2]
+	    get T2old[a1,i2,a2,i1]
+
+	    Taibj[a1,i1,a2,i2]  = T2old[a1,i1,a2,i2]
+	    Taibj[a1,i1,a2,i2] *= 2.0
+	    T1aibj[a1,i1,a2,i2] = T2old[a1,i2,a2,i1]
+	    Taibj[a1,i1,a2,i2] -= T1aibj[a1,i1,a2,i2]
+
+	    Tai[a1,i] = Viaii[i2,a2,i,i1]*Taibj[a1,i1,a2,i2]
+	    Tai[a1,i] *= -1.0
+	    
+	    put Mck_a[a1,i] += Tai[a1,i]
+	enddo a1
+    endpardo ifrag, a2,i2,i,i1
+#
+# 3v dimer
+#
+    pardo ifrag,jfrag, a, a1, a2, i1 "Frag{NRij}{pp}{pp}"
+    
+	get Vaaai[a1,a,a2,i1]
+
+	do i
+	where (int)SwMOA_frag[(index)i] == ifrag
+	    get T2old[a1,i,a2,i1]
+
+	    Tai[a,i] = Vaaai[a1,a,a2,i1]*T2old[a1,i,a2,i1]
+	    Tai[a,i] *= 2.0
+
+	    put Mck_a[a,i] += Tai[a,i]
+	enddo i
+    endpardo ifrag,jfrag, a, a1, a2, i1
+#
+# 3o dimer
+#
+    pardo ifrag,jfrag, i,i1,a2,i2 "Frag{NRij}{pp}{pp}"
+
+        get Viaii[i2,a2,i,i1]
+
+	do a1
+	where (int)SwMOA_frag[(index)a1] == ifrag
+
+	    get T2old[a1,i1,a2,i2]
+
+	    Tai[a1,i] = Viaii[i2,a2,i,i1]*T2old[a1,i1,a2,i2]
+	    Tai[a1,i] *= -2.0
+	    
+	    put Mck_a[a1,i] += Tai[a1,i]
+	enddo a1
+    endpardo ifrag,jfrag, i,i1,a2,i2
+
+    server_barrier
+    pardo ifrag
+        put p2t1_norm[ifrag] = 0.0
+        put p2t1_norm_old[ifrag] = 0.0
+        put p2t1_norm_delta[ifrag] = 0.0
+    endpardo ifrag
+
+    server_barrier
+# t1(2) guess
+    esum = 0.0
+    pardo ifrag,a,i "Frag{i}{pp}{}"
+
+	get Mck_a[a,i]
+	Tai[a,i] = Mck_a[a,i]
+	execute energy_denominator_rhf Tai[a,i] fock_a
+	T1ai[a,i] = tai[a,i]
+	put p2t1old[a,i] = Tai[a,i]
+
+	etemp2 = tai[a,i]*t1ai[a,i]
+
+	put p2t1_norm[ifrag] += etemp2
+	put p2t1_norm_old[ifrag] += etemp2
+	put p2t1_norm_delta[ifrag] += etemp2
+    endpardo ifrag,a,i
+    server_barrier
+
+    PARDO ifrag, a, i "Frag{i}{pp}{}"
+	    PUT p2t1new[a,i] = 0.0
+    ENDPARDO ifrag, a, i
+
+    server_barrier
+    ENDPROC form_t1_secondorder_guess
+
+    PROC form_t1_secondorder
+
+    call form_t1_secondorder_guess
+
+    print "Starting second-order t1 iterations"
+    sip_barrier 
+
+    DO jiter
+    print jiter
+    server_barrier
+
+    PARDO ifrag, a, i "Frag{i}{pp}{}"
+
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
+	if etemp < zero  
+	    etemp *= -1.0 
+	endif 
+
+	IF etemp > cc_conv 
+	    PUT p2t1new[a,i] = 0.0
+	endif
+
+    ENDPARDO ifrag, a, i
+
+    server_barrier
+
+#
+# monomer ring term
+#
+    PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
+
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
+	if etemp < zero  
+	    etemp *= -1.0 
+	endif 
+
+	IF etemp > cc_conv 
+
+	t1ai[a,i] = 0.0 
+
+	GET Viabj[i,a,a1,i1]  
+	GET Vaajj[a,a1,i,i1] 
+	GET     p2t1old[a1,i1] 
+
+	tppqq[i,a,a1,i1]  = Viabj[i,a,a1,i1] 
+
+	t2ppqq[a,a1,i,i1] = Vaajj[a,a1,i,i1] 
+	t1ppqq[i,a,a1,i1] = t2ppqq[a,a1,i,i1] 
+
+	tppqq[i,a,a1,i1] *= 2.0  
+	tppqq[i,a,a1,i1] -= t1ppqq[i,a,a1,i1]
+
+	tai[a,i] = tppqq[i,a,a1,i1]*p2t1old[a1,i1]
+	t1ai[a,i] += tai[a,i]  
+
+	PUT p2t1new[a,i] += t1ai[a,i] 
+
+	ENDIF # etemp > cc_conv 
+
+    ENDPARDO ifrag, a, i, a1, i1
+#
+# dimer ring term
+#
+    PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
+
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
+	if etemp < zero  
+	    etemp *= -1.0 
+	endif 
+
+	IF etemp > cc_conv 
+
+
+	    GET Viabj[i,a,a1,i1]  
+	    GET p2t1old[a1,i1] 
+
+	    tppqq[i,a,a1,i1]  = Viabj[i,a,a1,i1] 
+	    tppqq[i,a,a1,i1] *= 2.0  
+	    tai[a,i] = tppqq[i,a,a1,i1]*p2t1old[a1,i1]
+
+	    PUT p2t1new[a,i] += tai[a,i] 
+
+	ENDIF # etemp > cc_conv 
+
+    ENDPARDO ifrag, jfrag, a, i, a1, i1
+#
+# done with forming new second-order singles amplitude
+#
+    sip_barrier 
+    pardo ifrag
+	put e3m1[ifrag] = 0.0
+	put p2t1_norm[ifrag] = 0.0
+    endpardo ifrag
+    sip_barrier 
+
+    PARDO ifrag, a, i "Frag{i}{pp}{}"
+
+	GET        p2t1new[a,i] 
+	tai[a,i] = p2t1new[a,i] 
+	execute energy_denominator_rhf tai[a,i] fock_a  
+	t1ai[a,i] = tai[a,i]
+	PUT p2t1old[a,i] = tai[a,i] 
+
+	etemp2 = tai[a,i]*t1ai[a,i]
+
+	put p2t1_norm[ifrag] += etemp2
+
+    ENDPARDO ifrag, a, i
+    sip_barrier 
+    esum2 = 0.0
+    PARDO ifrag 
+	GET                   p2t1_norm[ifrag] 
+	GET                   p2t1_norm_old[ifrag] 
+	etemp2              = p2t1_norm_old[ifrag]  
+	etemp2             -= p2t1_norm[ifrag]  
+	PUT p2t1_norm_delta[ifrag]  = etemp2
+	esum2 += (etemp2**2.0)**0.5
+    ENDPARDO ifrag 
+    sip_barrier 
+    PARDO ifrag 
+	get p2t1_norm[ifrag]
+	put p2t1_norm_old[ifrag] = p2t1_norm[ifrag]
+    ENDPARDO ifrag 
+    sip_barrier 
+    ediff = 0.0
+    collective ediff += esum2
+    print ediff
+    if ediff < cc_conv
+	exit
+    endif
+#
+    ENDDO jiter
+    print "Done second-order singles T1" 
+    sip_barrier 
+
+##
+    ENDPROC form_t1_secondorder
+#
+# -----------------------------------------------------------------------------
+# 
+      PROC FEF_END_PRINT
+      server_barrier
+      print " "
+      print "------------------------------------------------------"
+      print " "
+      restore_persistent gas_scf_energy "total_gas_scf_energy"
+      restore_persistent pol_scf_energy "frag_pol_scf_energy"
+      total_scf_energy  = pol_scf_energy
+      total_scf_energy += e1exc_at
+
+# with the polarization SCF reference, there cannot be any GAS phase lccd result computed in this code.
+#      eint_tot  = gas_scf_energy
+#      eint_tot *= -1.0
+#      eint_tot += total_scf_energy
+#      eint_tot += dimer_doubles  
+#      eint_tot += fragment_doubles  
+#      eint_tot += mono_lccd   
+
+      fef_ccpt_corr  = dimer_doubles  
+      fef_ccpt_corr += fragment_doubles  
+
+      print pol_scf_energy
+      print e1exc_at
+      print total_scf_energy
+      print " "
+
+      print dimer_doubles
+      print fragment_doubles
+      print fef_ccpt_corr
+      print " "
+
+#      mono_lccd *= -1.0
+#      print mono_lccd  
+#      print " "
+
+#      print eint_tot 
+      sip_barrier
+
+      ENDPROC FEF_END_PRINT
+
+PROC FORM_JFRAG_HBAR
+    server_barrier
+    pardo fi,fi1
+	put HBAR_ii[fi,fi1] = 0.0
+    endpardo fi,fi1
+    PARDO fa, fa1
+	put HBAR_aa[fa,fa1] = 0.0
+    ENDPARDO fa, fa1
+    PARDO fi1,fa1,fa,fi
+	    put HBAR_AJIB[fi1,fa1,fa,fi] = 0.0
+    ENDPARDO fi1,fa1,fa,fi
+    PARDO fi1,fi2,fa,fi
+	put HBAR_IAJK[fi1,fi2,fa,fi] = 0.0
+    ENDPARDO fi1,fi2,fa,fi
+    PARDO fa1,fa2,fa,fi
+	put HBAR_ABCI[fa1,fa2,fa,fi] = 0.0
+    ENDPARDO fa1,fa2,fa,fi
+    server_barrier
+
+#-----------
+    PARDO ifrag, jfrag, fi, fi1, b, j "Frag{NRij}{pp}{pp}"
+    where ifrag != jfrag
+    where (int)rcut_dist[ifrag,jfrag] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
+    where (int)SwOccA_frag[(index)fi1] == ifrag
+    where (int)SwVirtA_frag[(index)b] == jfrag
+    where (int)SwOccA_frag[(index)j] == jfrag
+	do fa1
+	    where (int)SwVirtA_frag[(index)fa1] == ifrag
+
+	    get Vaibj[fa1,fi1,b,j]
+	    get T2old[fa1,fi,b,j]
+
+	    tpp[fi,fi1] = T2old[fa1,fi,b,j]*Vaibj[fa1,fi1,b,j]
+# 2 for alpha + beta jfrag
+	    tpp[fi,fi1] *= 2.0
+
+	    put HBAR_ii[fi,fi1] += tpp[fi,fi1]
+
+	enddo fa1
+
+    ENDPARDO ifrag, jfrag, fi, fi1, b, j
+#-----------
+    PARDO ifrag, jfrag, fa, fa1, b, j "Frag{NRij}{pp}{pp}"
+    where ifrag != jfrag
+    where (int)rcut_dist[ifrag,jfrag] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwVirtA_frag[(index)fa1] == ifrag
+    where (int)SwVirtA_frag[(index)b] == jfrag
+    where (int)SwOccA_frag[(index)j] == jfrag
+	do fi
+	where (int)SwOccA_frag[(index)fi] == ifrag
+
+	    get Vaibj[fa1,fi,b,j]
+	    get T2old[fa,fi,b,j]
+
+	    tpp[fa,fa1] = T2old[fa,fi,b,j]*Vaibj[fa1,fi,b,j] 
+# 2 for alpha + beta jfrag
+	    tpp[fa,fa1]  *= -2.0
+
+	    put HBAR_aa[fa,fa1] += tpp[fa,fa1]
+
+	enddo fi
+
+    ENDPARDO ifrag, jfrag, fa, fa1, b, j
+#-----------
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
+    where ifrag != jfrag
+    where (int)rcut_dist[ifrag,jfrag] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
+    where (int)SwVirtA_frag[(index)b] == jfrag
+    where (int)SwOccA_frag[(index)j] == jfrag
+
+	get Vaibj[fa,fi,b,j]
+
+	do fa1
+	where (int)SwVirtA_frag[(index)fa1] == ifrag
+	do fi1
+	where (int)SwOccA_frag[(index)fi1] == ifrag
+
+	    get T2old[fa1,fi1,b,j]
+
+	    Tppqq[fi1,fa1,fa,fi] = T2old[fa1,fi1,b,j]*Vaibj[fa,fi,b,j]
+# 2 for alpha + beta jfrag
+	    Tppqq[fi1,fa1,fa,fi] *= 2.0
+
+	    put HBAR_AJIB[fi1,fa1,fa,fi] += Tppqq[fi1,fa1,fa,fi]
+
+	enddo fi1
+	enddo fa1
+
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
+#-----------
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
+    where ifrag != jfrag
+    where (int)rcut_dist[ifrag,jfrag] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
+    where (int)SwVirtA_frag[(index)b] == jfrag
+    where (int)SwOccA_frag[(index)j] == jfrag
+	get T2old[fa,fi,b,j]
+
+	do fi1
+	where (int)SwOccA_frag[(index)fi1] == ifrag
+	do fi2
+	where (int)SwOccA_frag[(index)fi2] == ifrag
+
+	get Viaii[j,b,fi1,fi2]
+	T1ppqq[fi1,fi2,b,j] = Viaii[j,b,fi1,fi2]
+
+	Tppqq[fi1,fi2,fa,fi]  = T1ppqq[fi1,fi2,b,j]*T2old[fa,fi,b,j]
+# 2 for alpha + beta jfrag
+	Tppqq[fi1,fi2,fa,fi] *= 2.0
+
+	put HBAR_IAJK[fi1,fi2,fa,fi] += Tppqq[fi1,fi2,fa,fi]
+
+	enddo fi2
+	enddo fi1
+
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
+#-----------
+    PARDO ifrag, jfrag, fa, fi, b, j "Frag{NRij}{pp}{pp}"
+    where ifrag != jfrag
+    where (int)rcut_dist[ifrag,jfrag] == ifrag
+    where (int)SwVirtA_frag[(index)fa] == ifrag
+    where (int)SwOccA_frag[(index)fi] == ifrag
+    where (int)SwVirtA_frag[(index)b] == jfrag
+    where (int)SwOccA_frag[(index)j] == jfrag
+
+	get T2old[fa,fi,b,j]
+
+	do fa1
+	where (int)SwVirtA_frag[(index)fa1] == ifrag
+	do fa2
+	where (int)SwVirtA_frag[(index)fa2] == ifrag
+
+	get Vaaai[fa1,fa2,b,j]
+
+	Tppqq[fa1,fa2,fa,fi] = Vaaai[fa1,fa2,b,j]*T2old[fa,fi,b,j]
+# 2 for alpha + beta jfrag
+	Tppqq[fa1,fa2,fa,fi] *= -2.0
+
+	put HBAR_ABCI[fa1,fa2,fa,fi] += Tppqq[fa1,fa2,fa,fi]
+
+	enddo fa2
+	enddo fa1
+
+    ENDPARDO ifrag, jfrag, fa, fi, b, j
+
+###
+
+    server_barrier
+ENDPROC FORM_JFRAG_HBAR
+
+PROC MOI_MANAGER
+print "Forming HBAR elements"
+call FORM_JFRAG_HBAR
+
+call form_t1_secondorder
+
+server_barrier
+
+    pardo fa, fi
+        get p2t1old[fa,fi]
+	put FP2T1old[fa,fi] = p2t1old[fa,fi]
+    endpardo fa, fi
+
+    pardo fa, fi, fa1, fi1
+
+        get T2old[fa,fi,fa1,fi1]
+
+	t1ppqq[fa,fi,fa1,fi1] = T2old[fa,fi,fa1,fi1]
+
+	put FT2old[fa,fi,fa1,fi1] = t1ppqq[fa,fi,fa1,fi1]
+	
+    endpardo fa, fi, fa1, fi1
+
+server_barrier
+set_persistent FP2T1old "MOI_p2T1"
+set_persistent FT2old "MOI_T2ab"
+set_persistent HBAR_ii "MOI_HBAR_ii"
+set_persistent HBAR_aa "MOI_HBAR_aa"
+set_persistent HBAR_AJIB "MOI_HBAR_ajib"
+set_persistent HBAR_IAJK "MOI_HBAR_iajk"
+set_persistent HBAR_ABCI "MOI_HBAR_abci"
+server_barrier
+ENDPROC MOI_MANAGER
+#
+# -----------------------------------------------------------------------------
+# 
+#     START OF MAIN PROGRAM  
+#
+# -----------------------------------------------------------------------------
+
+print " "
+print "-- Fragment Effective Field Coupled-Cluster Perturbation Theory"
+print "-- Written by Jason N. Byrd, 2016"
+print " "
+
+# 
+#     Set fragment parameters   
+#     ----------------------- 
+#
+      sip_barrier
+      restore_persistent Dca "ca" 
+      restore_persistent DFock_a "fock_a"
+      rmaster = 0
+      do_nonhf = 0
+      zero = 0.0 
+      one  = 1.0 
+      print r_thresh 
+      print elst_thresh 
+      mone = -1.0 
+      print cc_conv 
+      sip_barrier
+#
+      CALL SET_FRAG_PARMS   
+      sip_barrier 
+      print "Done setting fragment parameters" 
+      call set_fock_mos
+      sip_barrier 
+      CALL FRAG_TRAN_NO_WC
+      sip_barrier 
+      call OVERLAP_EXCHANGE
+      sip_barrier 
+# compute the fef-ccpt2 amplitudes
+      call DOUBLES_MANAGER
+# with the polarization SCF reference, there cannot be any GAS phase lccd result computed in this code.
+# Compute the LCCD amplitudes for each monomer
+#      CALL FORM_T2_MONOMER  
+#
+      call MOI_MANAGER
+      sip_barrier
+      call FEF_END_PRINT
+      sip_barrier
+
+      set_persistent T2old "fef_t2old"
+      set_persistent T2old_mono "fef_t2old_monomer"
+      set_persistent fef_ccpt_corr "fef_ccpt_corr"
+      sip_barrier
+
+                           ENDSIAL FRAG_2ORDER_CORR 
+##
+###############################################################################

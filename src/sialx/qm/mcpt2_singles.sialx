@@ -59,7 +59,7 @@ SIAL mcpt2_singles
                enddo i 
 
       ENDPARDO ifrag,jfrag, mu, nu
-      print "Done form_e1pol" 
+#      print "Done form_e1pol" 
 
       sip_barrier 
 #
@@ -249,6 +249,264 @@ SIAL mcpt2_singles
       endif
    
       ENDPROC EXCHANGE_ALT
+#
+# -----------------------------------------------------------------------------
+# 
+      PROC OVERLAP_EXCHANGE
+#     ----------------- 
+      print "Forming S matrix"
+      server_barrier
+      PARDO ifrag,jfrag
+      where ifrag != jfrag
+	 icount = (scalar)ifrag
+	 jcount = (scalar)jfrag
+#
+         DO mu
+	 where (int)SwAO_frag[(index)mu] == ifrag
+         DO nu
+	 where (int)SwAO_frag[(index)nu] == jfrag
+
+	      execute return_ovl txx[mu,nu]  
+	      PUT oed_ovl[mu,nu] = txx[mu,nu] 
+
+         ENDDO nu
+         ENDDO mu
+
+      ENDPARDO ifrag,jfrag
+      sip_barrier 
+# 
+      PARDO ifrag,jfrag
+      where ifrag != jfrag
+	 icount = (scalar)ifrag
+	 jcount = (scalar)jfrag
+#
+         DO mu
+	 where (int)SwAO_frag[(index)mu] == ifrag
+         DO nu
+	 where (int)SwAO_frag[(index)nu] == jfrag
+
+	      GET oed_ovl[mu,nu] 
+
+              DO a
+	      where (int)SwMOA_frag[(index)a] == jfrag
+              DO i
+	      where (int)SwMOA_frag[(index)i] ==ifrag
+
+                    txp[mu,a] = oed_ovl[mu,nu]*ca[nu,a]  
+                    tpp[i,a]  = txp[mu,a]*ca[mu,i] 
+                    PUT SOVL[i,a] += tpp[i,a] 
+
+              ENDDO i
+              ENDDO a
+
+              DO i1  
+	      where (int)SwMOA_frag[(index)i1] == jfrag
+              DO i
+	      where (int)SwMOA_frag[(index)i] == ifrag
+
+                    txp[mu,i1] = oed_ovl[mu,nu]*ca[nu,i1]  
+                    tpp[i,i1]  = txp[mu,i1]*ca[mu,i] 
+                    PUT SOVL[i,i1] += tpp[i,i1] 
+
+              ENDDO i
+              ENDDO i1  
+
+              DO a1  
+	      where (int)SwMOA_frag[(index)a1] == jfrag
+              DO a
+	      where (int)SwMOA_frag[(index)a] == ifrag
+
+                    txp[mu,a1] = oed_ovl[mu,nu]*ca[nu,a1]  
+                    tpp[a,a1]  = txp[mu,a1]*ca[mu,a] 
+                    PUT SOVL[a,a1] += tpp[a,a1] 
+
+              ENDDO a
+              ENDDO a1  
+
+         ENDDO nu
+         ENDDO mu
+
+      ENDPARDO ifrag,jfrag
+      sip_barrier
+
+      e1exc_at = 0.0  
+      esum = 0.0 
+
+      print "Computing first order exchange"
+
+      PARDO ifrag, jfrag  
+	  put e10exch[ifrag,jfrag] = 0.0
+      endPARDO ifrag, jfrag  
+      sip_barrier 
+
+
+# 1st-term 
+      PARDO ifrag, jfrag, i, j "Frag{Nij}{o}{o}"
+
+         DO i1 
+	 where i==i1
+         DO j1 
+         where j == j1 
+                  GET                Vjiij[j1,i1,i,j] 
+                  tpppp[i,i1,j,j1] = Vjiij[j1,i1,i,j] 
+                  etemp = 0.0 
+                  execute return_diagonal tpppp[i,i1,j,j1] etemp
+                  etemp *= -1.0 
+                  esum += etemp 
+         ENDDO j1 
+
+         ENDDO i1 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, i, j
+
+# second-term 
+      PARDO ifrag, jfrag, i2, j "Frag{Nij}{o}{o}"
+
+	      GET SOVL[j,i2] 
+	      tpp[i2,j] = 0.0 
+
+	     DO i
+	     where (int)SwMOA_frag[(index)i] == ifrag
+	     DO i1 
+	     where i == i1 
+		  GET                 Viiij[i,i1,i2,j] 
+		  GET                 Viiij[i2,i1,i,j] 
+		  tpppp[i2,j,i,i1]  = Viiij[i,i1,i2,j] 
+		  tpppp[i2,j,i,i1] *= 2.0  
+		  t1pppp[i2,j,i,i1] = Viiij[i2,i1,i,j]   
+		  tpppp[i2,j,i,i1] -= t1pppp[i2,j,i,i1] 
+
+		  Ipp[i,i1] = 1.0 
+		  execute return_diagonal Ipp[i,i1] etemp  
+
+		  t1pp[i2,j] = tpppp[i2,j,i,i1] * Ipp[i,i1] 
+		  tpp[i2,j] += t1pp[i2,j] 
+
+	     ENDDO i1 
+	     ENDDO i 
+
+	      GET          VE_x[j,i2] 
+	      GET          VE_x[i2,j] 
+	      t1pp[i2,j] = VE_x[j,i2] 
+	      t1pp[i2,j]+= VE_x[i2,j] 
+	      t1pp[i2,j]*= 0.5  
+	      tpp[i2,j] += t1pp[i2,j] 
+	      etemp = SOVL[j,i2]*tpp[i2,j] 
+	      etemp *= -2.0 
+	      esum += etemp 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, i2, j
+
+# Third-term 
+      PARDO ifrag, jfrag, j, j1 "Frag{Nij}{oo}{}"
+
+	      tpp[j1,j] = 0.0 
+	      t3pp[j,j1] = 0.0 
+
+	     DO i
+	     where (int)SwMOA_frag[(index)i] == jfrag
+	     DO i1 
+	     where i == i1 
+		      GET Viijj[j1,j,i,i1] 
+		      tpp[i,i1] = 2.0 
+		      execute return_diagonal tpp[i,i1] etemp  
+		      t2pp[j1,j] = Viijj[j1,j,i,i1]*tpp[i,i1] 
+		      tpp[j1,j] += t2pp[j1,j] 
+	     ENDDO i1 
+	     ENDDO i 
+
+	     DO i2 
+	     where (int)SwMOA_frag[(index)i2] == jfrag
+
+                  GET SOVL[j,i2] 
+                  GET SOVL[i2,j1] 
+
+                  t1pp[j,j1] = SOVL[j,i2]*SOVL[i2,j1] 
+                  t3pp[j,j1] += t1pp[j,j1] 
+
+	     ENDDO i2 
+
+	      etemp = t3pp[j,j1]*tpp[j1,j] 
+	      etemp *= 2.0 
+	      esum += etemp 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, j, j1
+
+
+# Fourth-term 
+      PARDO ifrag, jfrag, i1, j "Frag{Nij}{o}{o}"
+
+                  tpp[i1,j] = 0.0 
+                  GET         SOVL[j,i1] 
+
+               DO i
+	       where (int)SwMOA_frag[(index)i] == ifrag
+
+                     DO j1  
+	             where (int)SwMOA_frag[(index)j1] == jfrag
+                           GET         Viijj[i1,i,j1,j] 
+                           GET         SOVL[i,j1] 
+                           t1pp[i1,j] = Viijj[i1,i,j1,j]*SOVL[i,j1] 
+                           tpp[i1,j] += t1pp[i1,j] 
+                     ENDDO j1 
+               ENDDO i 
+
+               etemp     = tpp[i1,j]*SOVL[j,i1]
+               etemp    *= -1.0 
+               esum     += etemp 
+
+	 put e10exch[ifrag,jfrag] += esum
+
+      ENDPARDO ifrag, jfrag, i1, j 
+
+
+      PARDO ifrag, jfrag, i, i1 "Frag{Nij}{oo}{}"
+
+               DO j
+	       where (int)SwMOA_frag[(index)j] == jfrag
+		       GET         VE[i1,i] 
+		       GET         SOVL[j,i1] 
+		       GET         SOVL[i,j] 
+		       tpp[i1,j] = VE[i1,i]*SOVL[i,j] 
+		       etemp     = tpp[i1,j]*SOVL[j,i1]
+		       etemp    *=  2.0  
+		       esum     += etemp 
+               ENDDO j 
+
+	 put e10exch[ifrag,jfrag] += esum
+# 
+      ENDPARDO ifrag, jfrag, i, i1
+
+      sip_barrier
+      collective e1exc_at += esum   
+      print e1exc_at 
+# 
+      execute get_my_rank rank
+      if rank == 0.0
+	 do ifrag
+         do jfrag
+	 where ifrag != jfrag
+         where (int)elst_dist[ifrag,jfrag] == ifrag
+	     icount = (scalar)ifrag
+	     jcount = (scalar)jfrag
+
+	     allocate contiguous final_e10exch[ifrag:ifrag,jfrag:jfrag]
+	     get e10exch[ifrag,jfrag]
+	     final_e10exch[ifrag:ifrag,jfrag:jfrag] = e10exch[ifrag,jfrag]
+	     print final_e10exch[ifrag:ifrag,jfrag:jfrag]
+	     deallocate contiguous final_e10exch[ifrag:ifrag,jfrag:jfrag]
+
+	 enddo jfrag
+	 enddo ifrag
+      endif
+   
+      ENDPROC OVERLAP_EXCHANGE
 #
 # -----------------------------------------------------------------------------
 # 
@@ -637,6 +895,9 @@ endif
         put e3m1[ifrag] = 0.0
         put e3m1_old[ifrag] = 0.0
         put e3m1_error[ifrag] = 0.0
+        put p2t1_norm[ifrag] = 0.0
+        put p2t1_norm_old[ifrag] = 0.0
+        put p2t1_norm_delta[ifrag] = 0.0
     endpardo ifrag
 
     server_barrier
@@ -648,13 +909,21 @@ endif
 	get wC[a,i]
 	Tai[a,i] = Mck_a[a,i]
 	execute energy_denominator_rhf Tai[a,i] fock_a
+	T1ai[a,i] = tai[a,i]
+
 	put p2t1old[a,i] = Tai[a,i]
 	etemp = wC[a,i]*tai[a,i]
 	esum += etemp
 
+	etemp2 = tai[a,i]*t1ai[a,i]
+
 	put e3m1[ifrag] += etemp
 	put e3m1_old[ifrag] += etemp
 	put e3m1_error[ifrag] += etemp
+
+	put p2t1_norm[ifrag] += etemp2
+	put p2t1_norm_old[ifrag] += etemp2
+	put p2t1_norm_delta[ifrag] += etemp2
     endpardo ifrag,a,i
     server_barrier
 
@@ -692,8 +961,8 @@ endif
 
     PARDO ifrag, a, i "Frag{i}{pp}{}"
 
-	GET     e3m1_error[ifrag] 
-	etemp = e3m1_error[ifrag] 
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
 	if etemp < zero  
 	    etemp *= -1.0 
 	endif 
@@ -712,8 +981,8 @@ endif
 #
     PARDO ifrag, a, i "Frag{i}{pp}{}"
 
-	GET     e3m1_error[ifrag] 
-	etemp = e3m1_error[ifrag] 
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
 	if etemp < zero  
 	    etemp *= -1.0 
 	endif 
@@ -760,8 +1029,8 @@ endif
 #
     PARDO ifrag, a, i, a1, i1 "Frag{i}{pppp}{}"
 
-	GET     e3m1_error[ifrag] 
-	etemp = e3m1_error[ifrag] 
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
 	if etemp < zero  
 	    etemp *= -1.0 
 	endif 
@@ -795,8 +1064,8 @@ endif
 #
     PARDO ifrag, jfrag, a, i, a1, i1 "Frag{NRij}{pp}{pp}"
 
-	GET     e3m1_error[ifrag] 
-	etemp = e3m1_error[ifrag] 
+	GET     p2t1_norm_delta[ifrag] 
+	etemp = p2t1_norm_delta[ifrag] 
 	if etemp < zero  
 	    etemp *= -1.0 
 	endif 
@@ -822,6 +1091,7 @@ endif
     sip_barrier 
     pardo ifrag
 	put e3m1[ifrag] = 0.0
+	put p2t1_norm[ifrag] = 0.0
     endpardo ifrag
     sip_barrier 
 
@@ -831,12 +1101,17 @@ endif
 	GET        wC[a,i] 
 	tai[a,i] = p2t1new[a,i] 
 	execute energy_denominator_rhf tai[a,i] fock_a  
+	t1ai[a,i] = tai[a,i]
 	PUT p2t1old[a,i] = tai[a,i] 
 
 	etemp = tai[a,i]*wC[a,i]  
 	etemp*= 2.0  
 
 	PUT e3m1[ifrag] += etemp
+
+	etemp2 = tai[a,i]*t1ai[a,i]
+
+	put p2t1_norm[ifrag] += etemp2
 
     ENDPARDO ifrag, a, i
     sip_barrier 
@@ -848,9 +1123,24 @@ endif
 	etemp2              = e3m1_old[ifrag]  
 	etemp2             -= e3m1[ifrag]  
 	PUT e3m1_error[ifrag]  = etemp2
-	PUT e3m1_old[ifrag] = e3m1[ifrag] 
 	esum1 += e3m1[ifrag]
+#	esum2 += (etemp2**2.0)**0.5
+    ENDPARDO ifrag 
+    PARDO ifrag 
+	GET                   p2t1_norm[ifrag] 
+	GET                   p2t1_norm_old[ifrag] 
+	etemp2              = p2t1_norm_old[ifrag]  
+	etemp2             -= p2t1_norm[ifrag]  
+	PUT p2t1_norm_delta[ifrag]  = etemp2
 	esum2 += (etemp2**2.0)**0.5
+    ENDPARDO ifrag 
+    sip_barrier 
+    PARDO ifrag 
+        get e3m1[ifrag]
+	get p2t1_norm[ifrag]
+
+	put e3m1_old[ifrag] = e3m1[ifrag]
+	put p2t1_norm_old[ifrag] = p2t1_norm[ifrag]
     ENDPARDO ifrag 
     sip_barrier 
     second_order_singles = 0.0
@@ -878,7 +1168,7 @@ endif
     ENDDO ifrag 
     sip_barrier 
 
-	print second_order_singles
+    print second_order_singles
 ##
     ENDPROC form_t1_secondorder
 

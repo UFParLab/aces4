@@ -127,34 +127,6 @@ SIAL mcpt2_doubles
 
       server_barrier
 
-#      PARDO ifrag    #: Fragment_i_vovo__
-#	  where (int)SwMOA_frag[(index)a] == ifrag
-#	  where (int)SwMOA_frag[(index)i] == ifrag
-#	  where (int)SwMOA_frag[(index)a1] == ifrag
-#	  where (int)SwMOA_frag[(index)i1] == ifrag
-#
-#	  esum = 0.0 
-#
-#
-#               GET                T20aiai[a,i,a1,i1] 
-#               GET                Vaibj[a,i,a1,i1]  
-#               GET                Vaibj[a,i1,a1,i]  
-#
-#               tppqq[a,i,a1,i1] = T20aiai[a,i,a1,i1] 
-#
-#               execute energy_denominator_rhf tppqq[a,i,a1,i1] fock_a  
-#
-#               t1ppqq[a,i,a1,i1] = Vaibj[a,i,a1,i1]  
-#               t3ppqq[a,i1,a1,i] = Vaibj[a,i1,a1,i]  
-#               t2ppqq[a,i,a1,i1]   = t3ppqq[a,i1,a1,i] 
-#               t1ppqq[a,i,a1,i1]*= 2.0  
-#               t1ppqq[a,i,a1,i1]-= t2ppqq[a,i,a1,i1] 
-#
-#               etemp = tppqq[a,i,a1,i1]*t1ppqq[a,i,a1,i1] 
-#               esum += etemp 
-#
-# 
-#      ENDPARDO ifrag 
 
 # -----------------------------------------------------------------------------
 # Now form the initial guess to Taibj 
@@ -1953,12 +1925,6 @@ SIAL mcpt2_doubles
       ENDDO jiter 
       sip_barrier
 #
-# Compute the LCCD amplitudes for each monomer
-
-      CALL FORM_T2_MONOMER  
-
-      sip_barrier
-
       ENDPROC DOUBLES_MANAGER
 #
 # ----------------------------------------------------------------------------

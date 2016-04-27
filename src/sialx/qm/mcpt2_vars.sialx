@@ -73,6 +73,9 @@ int do_secondorder
 # ---------------
 # Declare scalars
 # ---------------
+scalar total_scf_energy
+scalar pol_scf_energy
+scalar gas_scf_energy
 scalar etemp 
 scalar etemp1
 scalar etemp2
@@ -126,6 +129,7 @@ scalar e1exc_at
 scalar e10pol_at 
 scalar mono_lccd  
 scalar mcpt_corr
+scalar fef_ccpt_corr
 scalar elccd
 scalar singles 
 scalar MOI_dimer_doubles 
@@ -244,14 +248,17 @@ distributed Fca_v[fmu,fa]
 distributed e3m1[ifrag]
 distributed e3m1_old[ifrag]
 distributed e3m1_error[ifrag]
+distributed p2t1_norm[ifrag]
+distributed p2t1_norm_old[ifrag]
+distributed p2t1_norm_delta[ifrag]
 distributed Mck_a[a,i]
 distributed MOI_RB1_a[ksub,fa,fi]
 distributed MOI_RB2_aa[ksub,fa,fi,fa1,fi1]
 distributed MOI_RB2_ab[ksub,fa,fi,fa1,fi1]
 #
-distributed HBAR_ii[i,i1]
-distributed HBAR_aa[a,a1]
-distributed HBAR_ia[i,a]
+distributed HBAR_ii[fi,fi1]
+distributed HBAR_aa[fa,fa1]
+distributed HBAR_ia[fi,fa]
 distributed HBAR_ajib[fi,fa,fa1,fi1]
 distributed HBAR_iajk[fi,fi1,fa,fi2]
 distributed HBAR_abci[fa,fa1,fa2,fi]

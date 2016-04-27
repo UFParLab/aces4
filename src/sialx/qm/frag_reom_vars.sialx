@@ -63,9 +63,11 @@ moaindex q = baocc: eavirt
 moaindex q1= baocc: eavirt
 
 moaindex fi = frag1_baocc: frag1_eaocc
+moaindex fj = frag1_baocc: frag1_eaocc
 moaindex fi1= frag1_baocc: frag1_eaocc
 moaindex fi2= frag1_baocc: frag1_eaocc
 moaindex fa = frag1_bavirt: frag1_eavirt
+moaindex fb = frag1_bavirt: frag1_eavirt
 moaindex fa1= frag1_bavirt: frag1_eavirt
 moaindex fa2= frag1_bavirt: frag1_eavirt
 aoindex  fmu= 1: frag1_norb
@@ -286,6 +288,7 @@ distributed HB1_a[ksub,a,i]
 distributed RB2_aa[ksub,a,i,a1,i1]
 distributed RB2_ab[ksub,a,i,b,j]
 distributed RB1_a[ksub,a,i]
+distributed guess_RB1_a[ksub,a,i]
 distributed LB2_aa[ksub,a,i,a1,i1]
 distributed LB2_ab[ksub,a,i,b,j]
 distributed LB1_a[ksub,a,i]

@@ -299,6 +299,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ CO
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/frag_scf_333_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/fef_ccpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_222_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -609,27 +610,26 @@ set(SIAL_FILES
     src/sialx/test/check_block_number_calc.sialx;
     src/sialx/qm/scf_rhf_coreh.sialx;
     src/sialx/qm/scf_defs.sialx;
-    src/sialx/qm/scf_frag_lowmem.sialx;
     src/sialx/qm/drop_core_in_sial.sialx;
+    src/sialx/qm/frag_rhf.sialx;
+    src/sialx/qm/frag_pol_rhf.sialx;
+    src/sialx/qm/frag_rcis_rhf.sialx;
+    src/sialx/qm/tran_frag.sialx;
+    src/sialx/qm/MOI_reom_defs.sialx;
+    src/sialx/qm/MOI_reom_vars.sialx;
+    src/sialx/qm/MOI_cis_guess.sialx;
+    src/sialx/qm/MOI_rcis.sialx;
+    src/sialx/qm/MOI_reom_elements.sialx;
+    src/sialx/qm/MOI_reom_fefccpt2.sialx;
+    src/sialx/qm/fef_ccpt2.sialx;
+    src/sialx/qm/fef_cis_ccpt2.sialx;
     src/sialx/qm/mcpt2_corr.sialx;
     src/sialx/qm/mcpt2_corr_lowmem.sialx;
-    src/sialx/qm/tran_frag.sialx;
     src/sialx/qm/mcpt2_vars.sialx;
     src/sialx/qm/mcpt2_defs.sialx;
     src/sialx/qm/mcpt2_singles.sialx;
     src/sialx/qm/mcpt2_doubles.sialx;
     src/sialx/qm/mcpt2_util.sialx;
-    src/sialx/qm/MOI_rhf.sialx;
-    src/sialx/qm/MOI_rhf_defs.sialx;
-    src/sialx/qm/frag_rhf.sialx
-    src/sialx/qm/MOI_reom_defs.sialx;
-    src/sialx/qm/MOI_reom_vars.sialx;
-    src/sialx/qm/MOI_rcis.sialx;
-    src/sialx/qm/MOI_reom_mcpt2.sialx;
-    src/sialx/qm/MOI_reom_elements.sialx;
-    src/sialx/qm/frag_rcis_rhf.sialx;
-    src/sialx/qm/frag_wc.sialx;
-    src/sialx/qm/frag_rcis_rhf.sialx;
     src/sialx/qm/mp2_rhf_disc.sialx;
     src/sialx/qm/tran_rhf_no4v.sialx;
     src/sialx/qm/tran_uhf_no4v.sialx;

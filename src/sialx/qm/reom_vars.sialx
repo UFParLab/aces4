@@ -385,6 +385,8 @@ contiguous local Right_Dipole_Transition_Moment[kstate,ixyz]
 contiguous local Left_Dipole_Transition_Moment[kstate,ixyz]
 contiguous local Dipole_Oscillator_Strength[kstate,ixyz]
 contiguous local Dipole_Oscillator_Norm[kstate]
+contiguous local Dipole_Transition_Moment[kstate,ixyz]
+contiguous local Dipole_Transition_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
 contiguous local EOM_EE_Energy[kstate]
 contiguous local CIS_EE_eV[kstate]
@@ -393,6 +395,8 @@ contiguous local EOM_EE_eV[kstate]
 # Declare temp 
 # --------------- 
 #
+temp Tax[a,mu]
+temp T1ax[a,mu]
 temp Raiai[a,i,a1,i1]
 temp R2aiai[a,i,a1,i1]
 temp R3aiai[a,i,a1,i1]

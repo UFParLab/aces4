@@ -120,11 +120,13 @@ SIAL mcpt2_util
          where (int)SwAO_frag[(index)mu] == ifrag
             DO a 
             where (int)SwMOA_frag[(index)a] == ifrag
+	          allocate ca[mu,a]
                   GET        Dca[mu,a] 
                   ca[mu,a] = Dca[mu,a] 
             ENDDO a 
             DO i 
             where (int)SwMOA_frag[(index)i] == ifrag
+	          allocate ca[mu,i]
                   GET        Dca[mu,i] 
                   ca[mu,i] = Dca[mu,i] 
             ENDDO i 

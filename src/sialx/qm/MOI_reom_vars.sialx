@@ -62,6 +62,7 @@ int roots
 int subspc
 int kstart
 int kend
+int has_overlap
 #
 # Declare static
 # --------------- 
@@ -75,6 +76,7 @@ static GSmat[ksub,ksub1]
 static SAlphaL[ksub,ksub1]
 static SAlphaR[ksub,ksub1]
 static SR0[ksub]
+static Soverlap[kstate,kstate1]
 static NucDip[ixyz]
 static Dipole[ixyz]
 static RDipole[ixyz]
@@ -231,6 +233,7 @@ served HB1_a[ksub,a,i]
 served RB2_aa[ksub,a,i,a1,i1]
 served RB2_ab[ksub,a,i,b,j]
 served RB1_a[ksub,a,i]
+served guess_RB1_a[ksub,a,i]
 served TB1_a[ksub,a,i]
 served LB2_aa[ksub,a,i,a1,i1]
 served LB2_ab[ksub,a,i,b,j]
@@ -396,6 +399,8 @@ contiguous local Right_Dipole_Transition_Moment[kstate,ixyz]
 contiguous local Left_Dipole_Transition_Moment[kstate,ixyz]
 contiguous local Dipole_Oscillator_Strength[kstate,ixyz]
 contiguous local Dipole_Oscillator_Norm[kstate]
+contiguous local Dipole_Transition_Moment[kstate,ixyz]
+contiguous local Dipole_Transition_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
 contiguous local CIS_EE_eV[kstate]
 contiguous local EOM_EE_Energy[kstate]
@@ -408,6 +413,8 @@ static SFock_a[p,p1]
 # Declare temp 
 # --------------- 
 #
+temp Tax[a,mu]
+temp T1ax[a,mu]
 temp Raiai[a,i,a1,i1]
 temp R2aiai[a,i,a1,i1]
 temp R3aiai[a,i,a1,i1]
@@ -661,6 +668,7 @@ scalar  R0_THRESH
 scalar  LOGRIGHT
 scalar  GROUNDSTATE
 scalar  EXCITESTATE
+scalar max_e_conv
 scalar rms_e_conv
 scalar rms_orb_conv
 scalar  etemp

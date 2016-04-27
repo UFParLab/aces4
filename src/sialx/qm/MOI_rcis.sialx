@@ -119,80 +119,81 @@ PROC READ_AMP
 #     -------------
 print "reading persistent arrays"
 #     -------------
-restore_persistent FwC      "MOI_wC"
+#restore_persistent FwC      "MOI_wC"
+restore_persistent guess_RB1_a   "MOI_CIS_B1_a_g"
 restore_persistent Dca "MOI_ca" 
 restore_persistent DFock_a "MOI_focka" 
 server_barrier
-#do a
-#    do a1
-#	get DFock_a[a,a1]
-#	allocate Fock_a[a,a1]
-#	Fock_a[a,a1] = DFock_a[a,a1]
-#    enddo a1
-#    do i1
-#	get DFock_a[a,i1]
-#	allocate Fock_a[a,i1]
-#	Fock_a[a,i1] = DFock_a[a,i1]
-#    enddo i1
-#enddo a
-#do i
-#    do a1
-#	get DFock_a[i,a1]
-#	allocate Fock_a[i,a1]
-#	Fock_a[i,a1] = DFock_a[i,a1]
-#    enddo a1
-#    do i1
-#	get DFock_a[i,i1]
-#	allocate Fock_a[i,i1]
-#	Fock_a[i,i1] = DFock_a[i,i1]
-#    enddo i1
-#enddo i
 do a
     do a1
-        allocate Fock_a[a,a1]
-        get DFock_a[a,a1]
-	get FwC[a,a1]
-	Taa[a,a1]  = FwC[a,a1]
-
-        if a==a1
-	T1aa[a,a1] = 0.014699
-	execute return_diagonal_elements T1aa[a,a1]
-	Taa[a,a1] += T1aa[a,a1]
-	endif
-
-        Fock_a[a,a1]  = DFock_a[a,a1]
-        Fock_a[a,a1] += Taa[a,a1]
+	get DFock_a[a,a1]
+	allocate Fock_a[a,a1]
+	Fock_a[a,a1] = DFock_a[a,a1]
     enddo a1
     do i1
-        allocate Fock_a[a,i1]
-        get DFock_a[a,i1]
-	get FwC[a,i1]
-
-        Fock_a[a,i1]  = DFock_a[a,i1]
+	get DFock_a[a,i1]
+	allocate Fock_a[a,i1]
+	Fock_a[a,i1] = DFock_a[a,i1]
     enddo i1
 enddo a
 do i
     do a1
-        allocate Fock_a[i,a1]
-        get DFock_a[i,a1]
-	get FwC[i,a1]
-
-	Tqq[i,a1] = FwC[i,a1]
-
-        Fock_a[i,a1]  = DFock_a[i,a1]
-        Fock_a[i,a1] += Tqq[i,a1]
+	get DFock_a[i,a1]
+	allocate Fock_a[i,a1]
+	Fock_a[i,a1] = DFock_a[i,a1]
     enddo a1
     do i1
-        allocate Fock_a[i,i1]
-        get DFock_a[i,i1]
-	get FwC[i,i1]
-
-	Tii1[i,i1]  = FwC[i,i1]
-
-        Fock_a[i,i1]  = DFock_a[i,i1]
-        Fock_a[i,i1] += Tii1[i,i1]
+	get DFock_a[i,i1]
+	allocate Fock_a[i,i1]
+	Fock_a[i,i1] = DFock_a[i,i1]
     enddo i1
 enddo i
+#do a
+#    do a1
+#        allocate Fock_a[a,a1]
+#        get DFock_a[a,a1]
+#	get FwC[a,a1]
+#	Taa[a,a1]  = FwC[a,a1]
+#
+#        if a==a1
+#	T1aa[a,a1] = 0.014699
+#	execute return_diagonal_elements T1aa[a,a1]
+#	Taa[a,a1] += T1aa[a,a1]
+#	endif
+#
+#        Fock_a[a,a1]  = DFock_a[a,a1]
+#        Fock_a[a,a1] += Taa[a,a1]
+#    enddo a1
+#    do i1
+#        allocate Fock_a[a,i1]
+#        get DFock_a[a,i1]
+#	get FwC[a,i1]
+#
+#        Fock_a[a,i1]  = DFock_a[a,i1]
+#    enddo i1
+#enddo a
+#do i
+#    do a1
+#        allocate Fock_a[i,a1]
+#        get DFock_a[i,a1]
+#	get FwC[i,a1]
+#
+#	Tqq[i,a1] = FwC[i,a1]
+#
+#        Fock_a[i,a1]  = DFock_a[i,a1]
+#        Fock_a[i,a1] += Tqq[i,a1]
+#    enddo a1
+#    do i1
+#        allocate Fock_a[i,i1]
+#        get DFock_a[i,i1]
+#	get FwC[i,i1]
+#
+#	Tii1[i,i1]  = FwC[i,i1]
+#
+#        Fock_a[i,i1]  = DFock_a[i,i1]
+#        Fock_a[i,i1] += Tii1[i,i1]
+#    enddo i1
+#enddo i
 do mu
     do a
 	get DCa[mu,a]
@@ -224,7 +225,6 @@ if rank == 0.0
 	enddo i
     enddo a
 #
-    print SHDiag
     execute cis_unit_guess C1_a SHDiag
 #
     do ksub
@@ -236,6 +236,11 @@ if rank == 0.0
     enddo ksub
 #
 endif
+#print "Using gas phase CIS as guess"
+#pardo ksub,a,i
+#    request guess_RB1_a[ksub,a,i]
+#    prepare RB1_a[ksub,a,i] = guess_RB1_a[ksub,a,i]
+#endpardo ksub,a,i
 #
 server_barrier
 pardo a,i
@@ -904,14 +909,12 @@ execute compute_int_scratchmem_lowmem oed_ovl zmax imax
 #
 print " "
 print "-- Parallel RHF-CIS program v2"
-print "-- Modified to runfor MOI fragment"
 print "-- J. Phys. Chem. 1992, 96, 135-149."
 print "-- Subspace collapse symmetric davidson update"
 print "-- J. Comp. Phys. 1992, 103, 382-389 | J. Comp. Chem. 2001, 22, 1574-1589"
 print "-- Written by Jason N. Byrd, 2015"
 print " "
-print "-- Modified to run for MOI fragment 2015"
-print "-- This version uses the wC correction to compute the perturbed CIS energy"
+print "-- Modified to run for MOI FEF mean field 2016"
 print " "
 server_barrier
 CALL READ_AMP
@@ -933,43 +936,124 @@ do kiter
 #
     etemp = 0.0
     etemp2 = 0.0
+    max_e_conv = 0.0
     do kstate
-	etemp1 = SEk0[kstate]
-	etemp2 = SEkold[kstate]
-	etemp1 -= etemp2
-	etemp2 = etemp1**2.0
-	etemp += etemp2
-	etemp3 += 1.0
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+        etemp += etemp2
+        if max_e_conv < (etemp)**(0.5)
+            max_e_conv = (etemp)**(0.5)
+        endif
     enddo kstate
-    rmsconv = (etemp/etemp3)**0.5
+    etemp3 = (scalar)eom_roots
+    rms_e_conv = (etemp/etemp3)**0.5
     do kstate
 	SEkold[kstate] = SEk0[kstate]
     enddo kstate
-    print rmsconv
+    print max_e_conv
+    print rms_e_conv
+    print rms_orb_conv
     server_barrier
-    assert_same rmsconv
-    if rmsconv < eom_tol
-	exit
+    assert_same rms_e_conv
+    assert_same max_e_conv
+    if max_e_conv < eom_tol
+        exit
     endif
 #
 enddo kiter
 
+allocate contiguous CIS_EE_Energy[1:eom_roots]
+allocate contiguous CIS_EE_eV[1:eom_roots]
+allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
+allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
+allocate contiguous Dipole_Transition_Moment[1:eom_roots,1:3]
+allocate contiguous Dipole_Transition_Norm[1:eom_roots]
+
 print " "
-print "CIS has converged"
+print "MOI FEF CIS has converged"
 print "FINAL RHF-CIS excitation energies"
+print " " 
 do kstate
-    allocate contiguous CIS_EE_Energy[kstate:kstate]
-    CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
-    print CIS_EE_Energy[kstate:kstate]
-    deallocate contiguous CIS_EE_Energy[kstate:kstate]
-enddo kstate
-do kstate
-    allocate contiguous CIS_EE_eV[kstate:kstate]
     etemp = SEk0[kstate]
     etemp *=27.2113961
     CIS_EE_eV[kstate:kstate] = etemp
     print CIS_EE_eV[kstate:kstate]
-    deallocate contiguous CIS_EE_eV[kstate:kstate]
+enddo kstate
+
+do kstate
+    print " " 
+    print "-------"
+    print kstate
+
+    r0 = SR0[kstate]
+    omega = SEk0[kstate]
+    etemp = SEk0[kstate]
+    etemp *=27.2113961
+
+    CIS_EE_Energy[kstate:kstate] = SEk0[kstate] 
+    CIS_EE_eV[kstate:kstate] = etemp
+
+    print CIS_EE_Energy[kstate:kstate]
+    print CIS_EE_eV[kstate:kstate]
+    print " "
+    pardo mu,nu
+        put AO_DENS[mu,nu] = 0.0
+    endpardo mu,nu
+    do ixyz
+	RDipole[ixyz] = 0.0
+    enddo ixyz
+    server_barrier
+
+    pardo mu,nu
+	Txx[mu,nu] = 0.0
+	do a
+	    Tax[a,nu] = 0.0
+	    do i
+		request R0k1_a[kstate,a,i]
+                Tk[kstate] = 1.0
+		Tai[a,i] = Tk[kstate]*R0k1_a[kstate,a,i]
+		T1ax[a,nu] = Tai[a,i]*Ca[nu,i]
+		Tax[a,nu] += T1ax[a,nu]
+	    enddo i
+	    T1xx[mu,nu] = Tax[a,nu]*Ca[mu,a]
+            T1xx[mu,nu] *= 2.0
+	    Txx[mu,nu] += T1xx[mu,nu]
+	enddo a
+	put AO_DENS[mu,nu] += Txx[mu,nu]
+    endpardo mu,nu
+    server_barrier
+    do ixyz
+	ncount2 = (scalar)ixyz
+	dsum = 0.0
+	esum = 0.0
+	pardo mu,nu
+	    get ao_dens[mu,nu]
+	    ncount1 = 0.0
+	    execute compute_dipole_integrals DAOINT[mu,nu] ncount1 ncount2
+	    Txx[mu,nu] = ao_dens[mu,nu]
+	    etemp = Txx[mu,nu]*DAOINT[mu,nu]
+	    esum += etemp
+	endpardo mu,nu
+	server_barrier
+	collective dsum += esum
+	server_barrier
+	Rdipole[ixyz] = dsum
+    enddo ixyz
+    dsum = 0.0
+    do ixyz
+        sum1 = RDipole[ixyz]
+        sum2 = RDipole[ixyz]
+        etemp = sum1*sum2
+        Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = sum1
+        print Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+        dsum += etemp
+    enddo ixyz
+    dsum *= 0.5
+    Dipole_Transition_Norm[kstate:kstate] = (dsum)**(0.5)
+    print Dipole_Transition_Norm[kstate:kstate]
+
 enddo kstate
 
 # store vector
@@ -982,9 +1066,51 @@ endpardo a,i
 enddo kstate
 server_barrier
 
+
+server_barrier
+
+do kstate
+	has_overlap=0
+	server_barrier
+
+	do kstate1
+		normS = 0.0
+		server_barrier
+		pardo a,i
+		    request guess_RB1_a[kstate1,a,i]
+		    request RB1_a[kstate,a,i]
+
+		    Tk[kstate]   = 1.0
+		    T1k[kstate1] = 1.0
+		 
+		    Tai[a,i]  = Tk[kstate]*RB1_a[kstate,a,i]
+		    T1ai[a,i] = T1k[kstate1]*guess_RB1_a[kstate1,a,i]
+
+		    normT  = Tai[a,i]*T1ai[a,i]
+		    normS += normT
+
+		endpardo a,i
+		server_barrier
+		norm1 = 0.0
+		collective norm1 += normS
+
+                Soverlap[kstate,kstate1] = norm1
+
+
+	enddo kstate1
+	server_barrier
+
+enddo kstate
+
+print "overlap matrix with gas phase CIS vector"
+print Soverlap
+
+server_barrier
+
 #
-set_persistent R0k1_a   "MOI_C1_a"
-set_persistent RB1_a    "MOI_B1_a"
+set_persistent R0k1_a   "MOI_CIS_C1_a"
+set_persistent RB1_a    "MOI_CIS_B1_a"
+set_persistent SEk0      "MOI_CIS_E"
 server_barrier
 #
 #
