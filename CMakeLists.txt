@@ -626,15 +626,23 @@ set(SIAL_FILES
     src/sialx/qm/rlamccsdpt_aaa.sialx;
     src/sialx/qm/rlamccsdpt_aab.sialx;
     src/sialx/qm/rccpt1p2_prop.sialx;
-    src/sialx/qm/rcis_rhf.sialx;
-    src/sialx/qm/rcis_d_rhf.sialx;
-    src/sialx/qm/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/lr_eom_ccsd_rhf.sialx;
     src/sialx/qm/lr_eom_linccsd_rhf.sialx;
     src/sialx/qm/lr_eom_ccpt2_rhf.sialx;
     src/sialx/qm/reom_rhf_defs.sialx;
     src/sialx/qm/reom_hbar.sialx;
     src/sialx/qm/reom_vars.sialx;
+    src/sialx/qm/eom/eom_rhf_defs.sialx  
+    src/sialx/qm/eom/eom_rhf_hbar.sialx;
+    src/sialx/qm/eom/eom_rhf_tran.sialx;
+    src/sialx/qm/eom/eom_rhf_vars.sialx;
+    src/sialx/qm/eom/eom_ccsd_rhf_right.sialx;
+    src/sialx/qm/eom/eom_ccsd_rhf_left.sialx;
+    src/sialx/qm/eom/rcis_rhf_defs.sialx;
+    src/sialx/qm/eom/rcis_rhf_vars.sialx;
+    src/sialx/qm/eom/rcis_rhf.sialx;
+    src/sialx/qm/eom/rcis_d_rhf.sialx;
+    src/sialx/qm/eom/rcis_ccpt2_rhf.sialx;
     src/sialx/qm/rccsd_rhf_defs.sialx;
     src/sialx/qm/scf_uhf.sialx;
     src/sialx/qm/scf_uhf_defs.sialx;
