@@ -75,6 +75,7 @@ special remove_diagonal u
 special eigen_calc uu
 special enable_all_rank_print
 special disable_all_rank_print
+special moi_nn_repulsion ur
 
 endsial trans_frag_defs
 

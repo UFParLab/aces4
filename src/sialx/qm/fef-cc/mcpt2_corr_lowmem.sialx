@@ -15,10 +15,10 @@ import "mcpt2_util.sialx"
 #
 #     Get memory requirements from integral calculation 
 #     ------------------------------------------------- 
-      print "Starting scratch memory calculation" 
-      imax = 0.0  
-      zmax = 0.0  
-      execute compute_int_scratchmem_lowmem zmax imax 
+#      print "Starting scratch memory calculation" 
+#      imax = 0.0  
+#      zmax = 0.0  
+#      execute compute_int_scratchmem_lowmem zmax imax 
       sip_barrier 
       print "Done computing scratch memory" 
 #

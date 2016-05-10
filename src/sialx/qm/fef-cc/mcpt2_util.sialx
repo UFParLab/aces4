@@ -7,6 +7,10 @@ SIAL mcpt2_util
 # 
       PROC SET_FRAG_PARMS    
 #     ------------------- 
+      print "Starting scratch memory calculation"
+      imax = 0.0
+      zmax = 0.0
+      execute compute_int_scratchmem_lowmem zmax imax
 #
 #     Determine the number of fragments  
 #     --------------------------------- 

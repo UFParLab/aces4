@@ -7,6 +7,7 @@
 
 #include <mpi.h>
 #include "barrier_support.h"
+#include <iostream>
 
 
 

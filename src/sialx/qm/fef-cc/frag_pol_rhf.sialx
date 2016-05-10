@@ -112,14 +112,21 @@ INT master
 INT ECPS
 int astart
 int aend
+int bstart
+int bend
 int pstart
 int pend
 int do_shielding
 #
 # Declare scalars 
 #
+scalar scf_exchange
 scalar inter_fragment_nn_rep
+scalar total_nn_repulsion
 scalar total_scf_energy
+scalar scf_exchange_energy
+scalar gas_scf_energy
+scalar scf_polarization
 scalar repulsion
 scalar num_lindep
 scalar shifta
@@ -220,10 +227,24 @@ scalar n
 # Declare distributed 
 #
 # The distributed arrays.
+distributed Vxxxq[mu,nu,lambda,j]
+distributed Vpxxq[i,nu,lambda,j]
+distributed Vixjj[i,nu,j1,j]
+distributed Viijj[i,i1,j,j1]
+distributed e10exch[ifrag,jfrag] 
+distributed VE[p,p1]  
+distributed VE_x[p,p1]  
+distributed SOVL[i,j]
+distributed Viiij[j1,i,i1,j] 
+distributed Vjiij[j1,i,i1,j] 
+distributed Vxiij[mu,i,i1,j] 
+distributed Vxxxq_x[mu,nu,lambda,j]
+distributed Vxxqq_x[mu,nu,j1,j] 
 distributed MOI_ca[fmu,fp]
 distributed MOI_focka[fp,fp1]
 distributed DHFa[mu,nu] 
 distributed DHFb[mu,nu] 
+distributed MDHFa[i,j]
 distributed DHFa_old[mu,nu] 
 distributed DHFb_old[mu,nu] 
 distributed Fpq_a[mu,nu] 
@@ -245,6 +266,7 @@ distributed Dfrag_error[ifrag]
 distributed Dfrag_density_difference[ifrag]
 distributed DCa[mu,p]
 distributed DCa_g[mu,p]
+distributed S_OVL[p,q]
 #
 # Declare contiguous 
 #
@@ -260,8 +282,6 @@ static ao_end[ifrag]
 # Declare local 
 #
 # The static and local arrays 
-local LVxxxq[mu,nu,lambda,j]
-local LVxxqq[mu,nu,j1,j]
 contiguous local frag_energy[ifrag]
 contiguous local frag_scf_energy[ifrag]
 contiguous local CLoed_ovl[mu,nu]
@@ -274,9 +294,24 @@ local LDHFa[mu,nu]
 local LDHFb[mu,nu]
 local LFpq_a[mu,nu]
 local LFpq_b[mu,nu]
+local LVxxxq[mu,nu,lambda,j] 
+local LVxxqq[mu,nu,j,j1] 
+local LCa[mu,p]
 #
 # Declare Temp 
 #
+temp Ipp[p,p1] 
+temp tpppp[p,p1,q,q1]   
+temp t1pppp[p,p1,q,q1]   
+temp t1pp[p,p1]   
+temp t2pp[p,p1]   
+temp t3pp[p,p1]   
+temp tpx[p,nu]
+temp tppqq[p,p1,q,q1]   
+temp tppqqS[p,p1,q,q1]   
+temp tpxxq[p,mu,nu,q]
+temp tpxqq[p,nu,q,q1] 
+temp txpqq[mu,p,q,j]   
 temp Tpq[mu,nu] 
 temp T1pq[mu,nu] 
 temp Txi[mu,i] 
@@ -703,6 +738,9 @@ PROC HFIDENS
 #     Procedure which computes the HF density without Davidson damping.
 #     -----------------------------------------------------------------
 #
+print " " 
+print "Using non-interacting SCF density as guess"
+print " " 
 restore_persistent DCa_g "ca_g"
 sip_barrier
 PARDO ifrag, mu, nu "Frag{i}{aa}{}"
@@ -1209,90 +1247,147 @@ sip_barrier
     ENDPARDO ifrag, mu, nu, sigma
 
 if do_shielding >= 2
-#    pardo ifrag,jfrag, mu,nu, lambda,sigma "Frag{Nij}{aa}{aa}"
+    pardo ifrag,jfrag, mu,nu, lambda,sigma "WhereFrag{ij}{aa}{aa}"
+    where ifrag != jfrag
+    where lambda < sigma
+    where mu < nu
+
+        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+
+	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
+	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+	T1xx[lambda,sigma]   += LDHFa[sigma,lambda]
+	T1xx[lambda,sigma]   += LDHFb[sigma,lambda]
+
+	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+	T3xx[nu,mu]           = T2xx[mu,nu]
+
+	LFpq_a[mu,nu]        += T2xx[mu,nu]
+	LFpq_a[nu,mu]        += T3xx[nu,mu]
+
+    endpardo ifrag,jfrag, mu,nu, lambda,sigma
+    pardo ifrag,jfrag, mu,nu, lambda,sigma "WhereFrag{ij}{aa}{aa}"
+    where ifrag != jfrag
+    where lambda < sigma
+    where mu == nu
+
+        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+
+	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
+	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+	T1xx[lambda,sigma]   += LDHFa[sigma,lambda]
+	T1xx[lambda,sigma]   += LDHFb[sigma,lambda]
+
+	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+
+	LFpq_a[mu,nu]        += T2xx[mu,nu]
+
+    endpardo ifrag,jfrag, mu,nu, lambda,sigma
+
+    pardo ifrag,jfrag, mu,nu, lambda,sigma "WhereFrag{ij}{aa}{aa}"
+    where ifrag != jfrag
+    where lambda == sigma
+    where mu < nu
+
+        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+
+	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
+	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+
+	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+	T3xx[nu,mu]           = T2xx[mu,nu]
+
+	LFpq_a[mu,nu]        += T2xx[mu,nu]
+	LFpq_a[nu,mu]        += T3xx[nu,mu]
+
+    endpardo ifrag,jfrag, mu,nu, lambda,sigma
+    pardo ifrag,jfrag, mu,nu, lambda,sigma "WhereFrag{ij}{aa}{aa}"
+    where ifrag != jfrag
+    where lambda == sigma
+    where mu == nu
+
+        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+
+	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
+	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+
+	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+
+	LFpq_a[mu,nu]        += T2xx[mu,nu]
+
+    endpardo ifrag,jfrag, mu,nu, lambda,sigma
+#      PARDO ifrag, jfrag, mu, nu "Frag{Nij}{aa}{}"
 #
-#        execute compute_integral_batch aoint[mu,nu,lambda,sigma]
+#	  T2xx[mu,nu] = 0.0 
 #
-#	T1xx[lambda,sigma]    = LDHFa[lambda,sigma]
-#	T1xx[lambda,sigma]   += LDHFb[lambda,sigma]
+#	  DO j
+#	  where (int)SwMOA_frag[(index)j] == jfrag
+#	      allocate LVxxqq[mu,nu,j,j]
+#	  ENDDO j
 #
-#	T2xx[mu,nu]           = aoint[mu,nu,lambda,sigma]*T1xx[lambda,sigma]
+#	  DO lambda
+#          where (int)SwAO_frag[(index)lambda] == jfrag
 #
-#	LFpq_a[mu,nu]        += T2xx[mu,nu]
+#	      DO j
+#	      where (int)SwMOA_frag[(index)j] == jfrag
+#		  allocate LVxxxq[mu,nu,lambda,j]
+#	      ENDDO j
 #
-#    endpardo ifrag,jfrag, mu,nu, lambda,sigma
-      PARDO ifrag, jfrag, mu, nu "Frag{Nij}{aa}{}"
-
-	  T2xx[mu,nu] = 0.0 
-
-	  DO j
-	  where (int)SwMOA_frag[(index)j] == jfrag
-	      allocate LVxxqq[mu,nu,j,j]
-	  ENDDO j
-
-	  DO lambda
-          where (int)SwAO_frag[(index)lambda] == jfrag
-
-	      DO j
-	      where (int)SwMOA_frag[(index)j] == jfrag
-		  allocate LVxxxq[mu,nu,lambda,j]
-	      ENDDO j
-
-	      DO sigma
-	      where (int)SwAO_frag[(index)sigma] == jfrag
-
-		  aoint[mu,nu,lambda,sigma]  = 0.0
-		  execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
-
-		  DO j
-		  where (int)SwMOA_frag[(index)j] == jfrag
-                      get DCa[sigma,j]
-		      txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*DCa[sigma,j]
-		      LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j]
-		  ENDDO j
-
-	      ENDDO sigma
-
-	      DO j
-	      where (int)SwMOA_frag[(index)j] == jfrag
-
-	      DO j1
-	      where j == j1
-                  get DCa[lambda,j1]
-		  txxqq[mu,nu,j1,j]   = LVxxxq[mu,nu,lambda,j]*DCa[lambda,j1]
-		  LVxxqq[mu,nu,j1,j] += txxqq[mu,nu,j1,j] 
-	      ENDDO j1
-	      ENDDO j
-
-	      DO j
-	      where (int)SwMOA_frag[(index)j] == jfrag
-		  deallocate LVxxxq[mu,nu,lambda,j]
-	      ENDDO j
-
-	  ENDDO lambda
-
-	  DO j
-	  where (int)SwMOA_frag[(index)j] == jfrag
-
-	      DO j1
-	      where j == j1 
-		  txxqq[mu,nu,j1,j] = LVxxqq[mu,nu,j1,j] 
-		  txx[mu,nu]    = 0.0  
-		  execute return_vpq txxqq[mu,nu,j1,j] txx[mu,nu] 
-		  txx[mu,nu]   *= 2.0  
-		  T2xx[mu,nu] += txx[mu,nu]
-	      ENDDO j1
-
-	  ENDDO j
-
-	  LFpq_a[mu,nu] += T2xx[mu,nu]
-
-	  DO j
-	  where (int)SwMOA_frag[(index)j] == jfrag
-	      deallocate LVxxqq[mu,nu,j,j]
-	  ENDDO j
-
-      ENDPARDO ifrag, jfrag, mu, nu
+#	      DO sigma
+#	      where (int)SwAO_frag[(index)sigma] == jfrag
+#
+#		  aoint[mu,nu,lambda,sigma]  = 0.0
+#		  execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
+#
+#		  DO j
+#		  where (int)SwMOA_frag[(index)j] == jfrag
+#                      get DCa[sigma,j]
+#		      txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*DCa[sigma,j]
+#		      LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j]
+#		  ENDDO j
+#
+#	      ENDDO sigma
+#
+#	      DO j
+#	      where (int)SwMOA_frag[(index)j] == jfrag
+#
+#	      DO j1
+#	      where j == j1
+#                  get DCa[lambda,j1]
+#		  txxqq[mu,nu,j1,j]   = LVxxxq[mu,nu,lambda,j]*DCa[lambda,j1]
+#		  LVxxqq[mu,nu,j1,j] += txxqq[mu,nu,j1,j] 
+#	      ENDDO j1
+#	      ENDDO j
+#
+#	      DO j
+#	      where (int)SwMOA_frag[(index)j] == jfrag
+#		  deallocate LVxxxq[mu,nu,lambda,j]
+#	      ENDDO j
+#
+#	  ENDDO lambda
+#
+#	  DO j
+#	  where (int)SwMOA_frag[(index)j] == jfrag
+#
+#	      DO j1
+#	      where j == j1 
+#		  txxqq[mu,nu,j1,j] = LVxxqq[mu,nu,j1,j] 
+#		  txx[mu,nu]    = 0.0  
+#		  execute return_vpq txxqq[mu,nu,j1,j] txx[mu,nu] 
+#		  txx[mu,nu]   *= 2.0  
+#		  T2xx[mu,nu] += txx[mu,nu]
+#	      ENDDO j1
+#
+#	  ENDDO j
+#
+#	  LFpq_a[mu,nu] += T2xx[mu,nu]
+#
+#	  DO j
+#	  where (int)SwMOA_frag[(index)j] == jfrag
+#	      deallocate LVxxqq[mu,nu,j,j]
+#	  ENDDO j
+#
+#      ENDPARDO ifrag, jfrag, mu, nu
 endif
 
 sip_barrier
@@ -1367,7 +1462,7 @@ where (int)SwAO_frag[(index)nu] == ifrag
     if do_shielding >= 1
         etemp = (scalar)ifrag
         T2xx[mu,nu] = 0.0
-	execute return_h1frag T2xx[mu,nu] tmp
+	execute return_h1frag T2xx[mu,nu] etemp
 	Txx[mu,nu] += T2xx[mu,nu]
     endif
 #
@@ -1388,7 +1483,6 @@ enddo mu
 
 esum *= 0.5
 energy  = esum
-energy += frag_repul[ifrag]
 put Dfrag_energy[ifrag] = energy
 
 endpardo ifrag
@@ -1397,15 +1491,17 @@ execute get_my_rank rank
 if rank == 0.0
     total_scf_energy = 0.0
 do ifrag
-    allocate contiguous frag_energy[ifrag:ifrag]
+#    allocate contiguous frag_energy[ifrag:ifrag]
     get Dfrag_energy[ifrag]
-    frag_energy[ifrag:ifrag] = Dfrag_energy[ifrag]
+#    etemp = Dfrag_energy[ifrag]
+#    etemp += frag_repul[ifrag]
+#    frag_energy[ifrag:ifrag] = etemp
     total_scf_energy += Dfrag_energy[ifrag]
-    print frag_energy[ifrag:ifrag]
-    deallocate contiguous frag_energy[ifrag:ifrag]
+#    print frag_energy[ifrag:ifrag]
+#    deallocate contiguous frag_energy[ifrag:ifrag]
 enddo ifrag
-print " "
-total_scf_energy += inter_fragment_nn_rep
+#print " "
+total_scf_energy += total_nn_repulsion
 print total_scf_energy
 endif
 sip_barrier
@@ -1980,6 +2076,9 @@ ENDPROC SCF_DIIS_ITERATIONS
 #
 #------------------------------------------------------------------------------
 #
+#
+#------------------------------------------------------------------------------
+#
 #  MAIN
 #
 #------------------------------------------------------------------------------
@@ -2011,17 +2110,19 @@ print diis_end
 call SET_FRAG_PARMS
 
 # Compute the nuclear repulsion energy
+inter_fragment_nn_rep = 0.0 
 do ifrag
     etemp = (scalar)ifrag
     execute moi_nn_repulsion repulsion etemp
     frag_repul[ifrag] = repulsion
+    inter_fragment_nn_rep += repulsion
 enddo ifrag
 print " "
 print "The nuclear repulson energy"
-print frag_repul
-inter_fragment_nn_rep = 0.0 
-execute compute_nn_repulsion inter_fragment_nn_rep
-print inter_fragment_nn_rep
+#print frag_repul
+total_nn_repulsion = 0.0
+execute compute_nn_repulsion total_nn_repulsion
+print total_nn_repulsion
 
 #execute enable_all_rank_print
 
@@ -2098,25 +2199,29 @@ total_scf_energy = 0.0
 esum = 0.0
 execute get_my_rank rank
 if rank == 0.0
-
-
+total_scf_energy = 0.0
 do ifrag
-    allocate contiguous frag_energy[ifrag:ifrag]
+#    allocate contiguous frag_energy[ifrag:ifrag]
     get Dfrag_energy[ifrag]
-    frag_energy[ifrag:ifrag] = Dfrag_energy[ifrag]
-    etemp = Dfrag_energy[ifrag]
-    esum += etemp
-    print frag_energy[ifrag:ifrag]
-    deallocate contiguous frag_energy[ifrag:ifrag]
+#    etemp = Dfrag_energy[ifrag]
+#    etemp += frag_repul[ifrag]
+#    frag_energy[ifrag:ifrag] = etemp
+    total_scf_energy += Dfrag_energy[ifrag]
+#    print frag_energy[ifrag:ifrag]
+#    deallocate contiguous frag_energy[ifrag:ifrag]
 enddo ifrag
-endif
-server_barrier
-collective total_scf_energy += esum
-total_scf_energy += inter_fragment_nn_rep
+#print " "
+total_scf_energy += total_nn_repulsion
 print " "
 print total_scf_energy
 print " "
+#restore_persistent gas_scf_energy "total_gas_scf_energy"
+#scf_polarization  = total_scf_energy
+#scf_polarization -= gas_scf_energy
+#print scf_polarization
+#print " "
 print "-----------"
+endif
 
 pardo ifrag,i,i1 "Frag{i}{pp}{}"
     put FTa[i,i1] = 0.0
@@ -2189,7 +2294,6 @@ pardo f1a,f1a1
 endpardo f1a,f1a1
 sip_barrier
 
-print "Setting persistent"
 set_persistent DCa "ca"
 set_persistent FTa "fock_a"
 
@@ -2197,6 +2301,7 @@ set_persistent MOI_ca "MOI_ca"
 set_persistent MOI_focka "MOI_focka"
 
 set_persistent total_scf_energy "frag_pol_scf_energy"
+#set_persistent gas_scf_energy "total_gas_scf_energy"
 sip_barrier
 
 	       ENDSIAL SCF_RHF
