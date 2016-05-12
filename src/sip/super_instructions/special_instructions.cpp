@@ -145,12 +145,6 @@ void eigen_calc_sqr_inv(
         int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
 	int& ierr);
 
-void eigen_calc_s_inv(
-        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
-	int& ierr);
-
 void eigen_calc(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
@@ -358,13 +352,6 @@ void return_ovl_moi(
 void remove_diagonal(
 	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
 	int& ierr);
-
-void orth_virt_occ(
-        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
-        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
-        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
-        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
-         int& ierr);
 
 //##############################
 }
@@ -577,7 +564,6 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["anti_symm_o"]=(fp0)&anti_symm_o;
 	procmap_["anti_symm_v"]=(fp0)&anti_symm_v;
 	procmap_["eigen_calc_sqr_inv"]=(fp0)&eigen_calc_sqr_inv;
-	procmap_["eigen_calc_s_inv"]=(fp0)&eigen_calc_s_inv;
 	procmap_["eigen_calc"]=(fp0)&eigen_calc;
 	procmap_["gen_eigen_calc"]=(fp0)&gen_eigen_calc;
     procmap_["set_flags2"]=(fp0)&set_flags2;
@@ -627,7 +613,6 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["return_h1_moi"]=(fp0)&return_h1_moi;
     procmap_["return_ovl_moi"]=(fp0)&return_ovl_moi;
     procmap_["remove_diagonal"]=(fp0)&remove_diagonal;
-    procmap_["orth_virt_occ"]=(fp0)&orth_virt_occ;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

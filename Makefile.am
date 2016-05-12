@@ -564,6 +564,7 @@ SIOX_FILES=\
 ./src/sialx/qm/cc/rlamccsdpt_aaa.siox\
 ./src/sialx/qm/cc/rlamccsdpt_aab.siox\
 ./src/sialx/qm/eom/eom_ccsd_rhf_right.siox\
+./src/sialx/qm/eom/eom_ccsd_rhf_left.siox\
 ./src/sialx/qm/eom/eom_rhf_defs.siox\
 ./src/sialx/qm/eom/eom_rhf_hbar.siox\
 ./src/sialx/qm/eom/eom_rhf_tran.siox\
