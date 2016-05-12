@@ -558,7 +558,7 @@ print "Done fourth stage"
       print " "
 
       fef_total_energy  = total_scf_energy
-      fef_total_energy + fef_ccpt_corr
+      fef_total_energy += fef_ccpt_corr
       print fef_total_energy
       print " "
       print "-----------"
