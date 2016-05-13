@@ -1,5 +1,5 @@
 import "rcis_rhf_defs.sialx" 
-sial eom_vars
+sial cis_vars
 
 #
 # Declare indeces 
@@ -740,4 +740,4 @@ scalar rmsconv
 scalar second_order_singles
 scalar norm
 
-endsial eom_vars
+endsial cis_vars

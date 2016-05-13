@@ -93,6 +93,63 @@ ENDPROC PLACE_GUESS
 #
 #-------------------------------------------------------------------------
 #
+PROC PLACE_RGUESS
+server_barrier
+# grab CIS vector, place in Rk slot, zero out R2 vectors
+
+pardo a,i
+    request C1_a[kstate,a,i]
+    Tkai[kstate,a,i]  = C1_a[kstate,a,i]
+    Tkai[kstate,a,i] *= (0.5)**(0.5)
+    prepare R1_a[kstate,a,i] = Tkai[kstate,a,i]
+endpardo a,i
+
+pardo a,i,a1,i1
+    prepare R2_aa[kstate,a,i,a1,i1] = 0.0
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    prepare R2_ab[kstate,a,i,b,j] = 0.0
+endpardo a,i,b,j
+
+server_barrier
+ENDPROC PLACE_RGUESS
+#
+#-------------------------------------------------------------------------
+#
+PROC PLACE_R
+server_barrier
+# grab R^\dag vector as guess
+
+pardo a,i,ksub
+where ksub == 1
+    request R1_a[kstate,a,i]
+    Tkk[ksub,kstate] = 1.0
+    Tkai[ksub,a,i] = Tkk[ksub,kstate]*R1_a[kstate,a,i]
+    prepare RB1_a[ksub,a,i] = Tkai[ksub,a,i]
+endpardo a,i,ksub
+
+pardo a,i,a1,i1,ksub
+where ksub == 1
+    request R2_aa[kstate,a,i,a1,i1] 
+    Tkk[ksub,kstate] = 1.0
+    Tkaiai[ksub,a,i,a1,i1] = Tkk[ksub,kstate]*R2_aa[kstate,a,i,a1,i1]
+    prepare RB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+endpardo a,i,a1,i1,ksub
+
+pardo a,i,b,j,ksub
+where ksub == 1
+    request R2_ab[kstate,a,i,b,j] 
+    Tkk[ksub,kstate] = 1.0
+    Tkaibj[ksub,a,i,b,j] = Tkk[ksub,kstate]*R2_ab[kstate,a,i,b,j]
+    prepare RB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+endpardo a,i,b,j,ksub
+
+server_barrier
+ENDPROC PLACE_R
+#
+#-------------------------------------------------------------------------
+#
 PROC VCHACT_ZERO
 pardo a,i
     put VCHACT1A[a,i] = 0.0
@@ -245,7 +302,7 @@ PROC HR_mult
 # JNB verified A3
 #
 #------------------------------------------------------------------------
-print "Starting \bar{H} * R(k)"
+#print "Starting \bar{H} * R(k)"
 server_barrier
 
 allocate LFmi_a[*,*]
@@ -289,7 +346,7 @@ ENDPROC HR_mult
 PROC RHR_mult
 #
 allocate LGmat[*,*]
-print "Starting R(k)^\dag * \bar{H} * R(k)"
+#print "Starting R(k)^\dag * \bar{H} * R(k)"
 server_barrier
 do ksub
 do ksub1
@@ -687,33 +744,6 @@ pardo a,i,b,j
 endpardo a,i,b,j
 
 server_barrier
-sum1 = 0.0
-pardo a,i
-    request RB1_a[davidson,a,i]
-    etemp  = RB1_a[davidson,a,i]*RB1_a[davidson,a,i]
-    etemp *= 2.0
-    sum1  += etemp
-endpardo a,i
-
-pardo a,i,a1,i1
-    request RB2_aa[davidson,a,i,a1,i1]
-    etemp  = RB2_aa[davidson,a,i,a1,i1]*RB2_aa[davidson,a,i,a1,i1]
-    etemp *= 0.5
-    sum1  += etemp
-endpardo a,i,a1,i1
-
-pardo a,i,b,j
-    request RB2_ab[davidson,a,i,b,j]
-    etemp = RB2_ab[davidson,a,i,b,j]*RB2_ab[davidson,a,i,b,j]
-    sum1 += etemp
-endpardo a,i,b,j
-server_barrier
-sum2 = 0.0
-collective sum2 += sum1
-orb_conv = (sum2)**(0.5)
-server_barrier
-assert_same orb_conv
-server_barrier
 ENDPROC form_residual
 #
 #-------------------------------------------------------------------------
@@ -769,6 +799,90 @@ PROC GS_all
 #   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
 #   with update done via numerically stable in place update
 # -----------------------------
+
+### we do orth to other roots
+#### now do orth to old residuals
+do ksub
+where ksub < kstate
+
+    server_barrier
+    overlapS = 0.0
+    normS = 0.0
+    Tk[davidson] = 1.0
+    T1k[ksub] = 1.0
+    server_barrier
+    pardo a,i
+        request RB1_a[davidson,a,i]
+        request R1_a[ksub,a,i]
+
+	T1ai[a,i] = Tk[davidson]*RB1_a[davidson,a,i]
+	T2ai[a,i] = T1k[ksub]*R1_a[ksub,a,i]
+
+	overlapT  = T1ai[a,i]*T2ai[a,i]
+	overlapT *= 2.0
+	overlapS += overlapT
+
+	normT  = T2ai[a,i]*T2ai[a,i]
+	normT *= 2.0
+	normS += normT
+	
+    endpardo a,i
+    pardo a,i,a1,i1
+        request RB2_aa[davidson,a,i,a1,i1]
+        request R2_aa[ksub,a,i,a1,i1]
+
+	T1aiai[a,i,a1,i1] = Tk[davidson]*RB2_aa[davidson,a,i,a1,i1]
+	T2aiai[a,i,a1,i1] = T1k[ksub]*R2_aa[ksub,a,i,a1,i1]
+
+	overlapT  = T1aiai[a,i,a1,i1]*T2aiai[a,i,a1,i1]
+	overlapT *= 0.5
+	overlapS += overlapT
+
+	normT  = T2aiai[a,i,a1,i1]*T2aiai[a,i,a1,i1]
+	normT *= 0.5
+	normS += normS
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        request RB2_ab[davidson,a,i,b,j]
+        request R2_ab[ksub,a,i,b,j]
+
+	T1aiai[a,i,b,j] = Tk[davidson]*RB2_ab[davidson,a,i,b,j]
+	T2aiai[a,i,b,j] = T1k[ksub]*R2_ab[ksub,a,i,b,j]
+
+	overlapT  = T1aiai[a,i,b,j]*T2aiai[a,i,b,j]
+	overlapS += overlapT
+
+	normT  = T2aiai[a,i,b,j]*T2aiai[a,i,b,j]
+	normS += normS
+    endpardo a,i,b,j
+    server_barrier
+    norm1 = 0.0
+    overlap1 = 0.0
+    collective norm1 += normS
+    collective overlap1 += overlapS
+
+    etemp  = overlap1
+    etemp *= -1.0
+    Tkk[davidson,ksub] = etemp
+    server_barrier
+    pardo a,i
+        request R1_a[ksub,a,i]
+	Tkai[davidson,a,i] = Tkk[davidson,ksub]*R1_a[ksub,a,i]
+        prepare RB1_a[davidson,a,i] += Tkai[davidson,a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+        request R2_aa[ksub,a,i,a1,i1]
+	Tkaiai[davidson,a,i,a1,i1] = Tkk[davidson,ksub]*R2_aa[ksub,a,i,a1,i1]
+        prepare RB2_aa[davidson,a,i,a1,i1] += Tkaiai[davidson,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        request R2_ab[ksub,a,i,b,j]
+	Tkaibj[davidson,a,i,b,j] = Tkk[davidson,ksub]*R2_ab[ksub,a,i,b,j]
+        prepare RB2_ab[davidson,a,i,b,j] += Tkaibj[davidson,a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+
+enddo ksub
 server_barrier
 do ksub
 where ksub < davidson
@@ -851,6 +965,36 @@ where ksub < davidson
     server_barrier
 
 enddo ksub
+server_barrier
+#
+# compute residual norm post orthogonalization
+#
+sum1 = 0.0
+pardo a,i
+    request RB1_a[davidson,a,i]
+    etemp  = RB1_a[davidson,a,i]*RB1_a[davidson,a,i]
+    etemp *= 2.0
+    sum1  += etemp
+endpardo a,i
+
+pardo a,i,a1,i1
+    request RB2_aa[davidson,a,i,a1,i1]
+    etemp  = RB2_aa[davidson,a,i,a1,i1]*RB2_aa[davidson,a,i,a1,i1]
+    etemp *= 0.5
+    sum1  += etemp
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    request RB2_ab[davidson,a,i,b,j]
+    etemp = RB2_ab[davidson,a,i,b,j]*RB2_ab[davidson,a,i,b,j]
+    sum1 += etemp
+endpardo a,i,b,j
+server_barrier
+sum2 = 0.0
+collective sum2 += sum1
+orb_conv = (sum2)**(0.5)
+server_barrier
+assert_same orb_conv
 server_barrier
 ENDPROC GS_all
 #
@@ -2781,6 +2925,133 @@ ENDPROC copy_R_into_L
 #
 #-------------------------------------------------------------------------
 #
+PROC standard_davidson
+# standard davidson solver
+    server_barrier
+    SEkold[kstate] = 0.0
+    SEk0[kstate]   = 0.0
+
+    call place_guess
+
+    maxdav = 0
+    orb_conv = 1.0
+
+    do davidson
+	print ""
+	print davidson
+	server_barrier
+
+	if davidson > 1
+	    call zero_davidson_iteration
+	    call form_residual
+#	    call normalize_all
+	    call GS_all
+	    call normalize_all
+        endif
+	
+	call HR_mult
+	call RHR_mult
+	call diag_G
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+	etemp3 = (scalar)eom_roots
+	ee_conv = (etemp2/etemp3)**0.5
+        SEkold[kstate] = SEk0[kstate]
+	print ee_conv
+	print orb_conv
+	server_barrier
+	assert_same ee_conv
+	maxdav = davidson
+	#if ee_conv < eom_tol
+	if orb_conv < eom_tol
+	    exit
+	endif
+
+	server_barrier
+    enddo davidson
+    call form_new_Rvec
+#
+#
+ENDPROC standard_davidson
+#
+#-------------------------------------------------------------------------
+#
+PROC collapse_davidson
+# collapse davidson solver
+    server_barrier
+    SEk0[kstate]   = 0.0
+
+    call place_Rguess
+
+    do macro_iteration
+	print " "
+	print "----"
+	print macro_iteration
+
+	SEkold[kstate] = 0.0
+	maxdav = 0
+	orb_conv = 1.0
+
+	call place_R
+
+	do davidson
+	    print ""
+	    print davidson
+	    server_barrier
+
+	    if davidson == 1
+	    if macro_iteration > 1
+		call normalize_all
+            endif
+            endif
+	    if davidson > 1
+		call zero_davidson_iteration
+		call form_residual
+#	    call normalize_all
+		call GS_all
+		call normalize_all
+	    endif
+	    
+	    call HR_mult
+	    call RHR_mult
+	    call diag_G
+	    etemp1 = SEk0[kstate]
+	    etemp2 = SEkold[kstate]
+	    etemp1 -= etemp2
+	    etemp2 = etemp1**2.0
+	    etemp3 = (scalar)eom_roots
+	    ee_conv = (etemp2/etemp3)**0.5
+	    SEkold[kstate] = SEk0[kstate]
+	    print ee_conv
+	    print orb_conv
+	    server_barrier
+	    assert_same ee_conv
+	    maxdav = davidson
+	    #if ee_conv < eom_tol
+	    if orb_conv < eom_tol
+		exit
+	    endif
+	    if davidson >= 5
+		if orb_conv > 10.0*eom_tol
+		    call form_new_Rvec
+		    exit
+		endif
+	    endif
+
+	    server_barrier
+	enddo davidson
+
+	    #if ee_conv < eom_tol
+	    if orb_conv < eom_tol
+		exit
+	    endif
+    enddo macro_iteration
+ENDPROC collapse_davidson
+#
+#-------------------------------------------------------------------------
+#
 # -----------------
 #  MAIN
 # -----------------
@@ -2827,51 +3098,12 @@ do kstate
     print " "
 
 
-    SEkold[kstate] = 0.0
-    SEk0[kstate]   = 0.0
+    #call standard_davidson
 
-    call place_guess
-
-    maxdav = 0
-
-    do davidson
-	print "--"
-	print davidson
-	server_barrier
-
-	if davidson > 1
-	    call zero_davidson_iteration
-	    call form_residual
-	    call normalize_all
-	    call GS_all
-	    call normalize_all
-        endif
-	
-	call HR_mult
-	call RHR_mult
-	call diag_G
-        etemp1 = SEk0[kstate]
-        etemp2 = SEkold[kstate]
-        etemp1 -= etemp2
-        etemp2 = etemp1**2.0
-	etemp3 = (scalar)eom_roots
-	ee_conv = (etemp2/etemp3)**0.5
-        SEkold[kstate] = SEk0[kstate]
-	print ee_conv
-	#print orb_conv
-	server_barrier
-	assert_same ee_conv
-	maxdav = davidson
-	if ee_conv < eom_tol
-	    exit
-	endif
-
-	server_barrier
-    enddo davidson
+    call collapse_davidson
 
     print " "
     print "-- EOM-CCSD excited state energy --"
-    call form_new_Rvec
     call copy_R_into_L
     call norm_lr_vec
     call form_r0
@@ -2897,37 +3129,39 @@ do kstate
 #    print Rdipole
 
     print r0
+    esum = 0.0
     do ixyz
 	etemp = RDipole[ixyz]
 	Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
-        print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+	etemp2 = (etemp)**(2.0)
+	esum += etemp2
+#        print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
     enddo ixyz
+    print RDipole
+    Rdipmom[kstate] = (esum)**(0.5)
 
 enddo kstate
+#print Rdipmom
 
 print " "
 print "-----------------------------------"
 print " RIGHT EOM SUMMARY OUTPUT"
 print "-----------------------------------"
 do kstate
-    print " "
-    print "-- EOM-CCSD excited state energy --"
-    print kstate
-    print "----"
-    r0 = SR0[kstate]
-    omega = SEk0[kstate]
+    print FINAL_EOM_EE_Energy[kstate:kstate]
+enddo kstate
+print " "
+do kstate
     etemp = SEk0[kstate]
     etemp *=27.2113961
     FINAL_EOM_EE_eV[kstate:kstate] = etemp
-    print FINAL_EOM_EE_Energy[kstate:kstate]
     print FINAL_EOM_EE_eV[kstate:kstate]
+enddo kstate
+do kstate
     print " "
-
-#    print r0
-#    do ixyz
-#        print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
-#    enddo ixyz
-
+    do ixyz
+        print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+    enddo ixyz
 enddo kstate
 
 server_barrier

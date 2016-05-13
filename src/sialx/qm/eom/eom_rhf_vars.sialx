@@ -13,7 +13,8 @@ index jsub     = 1: cc_iter
 index ksub     = 1: cc_iter
 index ksub1    = 1: cc_iter
 index qsub     = 2: cc_iter
-index davidson = 1: 10 #cc_iter
+index davidson = 1: cc_iter
+index macro_iteration = 1: cc_iter
 index ixyz     = 1: 3
 
 aoindex mu     = 1: norb
@@ -83,6 +84,7 @@ static LDipole[ixyz]
 static SHDiag[a,i]
 static SR1_a[kstate,a,i]
 static lr_ovl[kstate,jstate]
+static Rdipmom[kstate]
 #
 # Declare distributed
 # --------------- 

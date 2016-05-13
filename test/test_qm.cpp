@@ -224,7 +224,7 @@ SIAL_PROGRAM = rcis_rhf.siox
 SIAL_PROGRAM = lr_eom_ccsd_rhf.siox
 
 */
-TEST(Sial_QM,eom_test){
+TEST(Sial_QM,DISABLED_eom_test){
 	std::string job("eom_test");
 
 	std::stringstream output;
@@ -555,7 +555,7 @@ SIAL_PROGRAM = rlccsd_rhf.siox
 SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 
 */
-TEST(Sial_QM,eom_lccsd_test){
+TEST(Sial_QM,DISABLED_eom_lccsd_test){
 	std::string job("eom_lccsd_test");
 
 	std::stringstream output;
@@ -717,7 +717,7 @@ SIAL_PROGRAM = mp2_rhf_disc.siox
 SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 
 */
-TEST(Sial_QM,eom_mp2_test){
+TEST(Sial_QM,DISABLED_eom_mp2_test){
 	std::string job("eom_mp2_test");
 
 	std::stringstream output;
@@ -852,6 +852,88 @@ TEST(Sial_QM,lamccsdpt_test){
 		ASSERT_NEAR(-99.584524718131, ccsdpt_energy, 1e-10);
 	}
 
+}
+/*
+eom-ccsd right test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=8
+cc_conv=8
+spherical=off
+excite=eomee
+estate_sym=4
+estate_tol=5
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rlambda_rhf.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = eom_ccsd_rhf_right.siox
+
+ */
+TEST(Sial_QM,eom_ccsd_water_right_test){
+	std::string job("eom_ccsd_water_right_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274033, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ccsd_energy = controller.scalar_value("ccsd_energy");
+		ASSERT_NEAR(-75.71251002936883, ccsd_energy, 1e-10);
+	}
+//
+// lambda 
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// eom
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double Eexpected[] = {0.32850657002707, 0.41193399006592, 0.42288344162832, 0.51159731180444};
+		int i = 0;
+		for (i; i < 4; i++){
+		    ASSERT_NEAR(sek0[i], Eexpected[i], 1e-8);
+		}
+		double *  Rdipmom= controller.static_array("rdipmom");
+		double Rexpected[] = {0.17558771, 0.0, 0.56188382, 0.56905669};
+		i = 0;
+		for (i; i < 4; i++){
+		    ASSERT_NEAR(Rdipmom[i], Rexpected[i], 1e-4);
+		}
+	}
 }
 
 //****************************************************************************************************************
