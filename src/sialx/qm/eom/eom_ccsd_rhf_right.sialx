@@ -3070,7 +3070,7 @@ execute compute_int_scratchmem oed_ovl zmax imax
 
 print " "
 print "-- Parallel right EE-EOM-CCSD program"
-print "-- J. Comp. Phys. 1992, 103, 382-389 | J Chem Phys 2009, 130, 124122."
+print "-- J Chem Phys 1993, 98 (9), 7029 | Theoret. Chim. Acta 1995, 91, 267"
 print "-- Written by Jason N. Byrd, 2016"
 print " "
 server_barrier

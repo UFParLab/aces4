@@ -1,4 +1,4 @@
-import "scf_defs.sialx"
+import "tran_rhf_no4v_defs.sialx"
 SIAL drop_core_in_sial
       aoindex mu     = 1: norb
       moaindex i = 1: eaocc

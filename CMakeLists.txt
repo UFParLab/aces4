@@ -296,6 +296,7 @@ configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYON
 #configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 #configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 #configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_ccsd_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/eom_ccsd_water_right_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/frag_scf_333_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -609,24 +610,17 @@ set(SIAL_FILES
     src/sialx/test/disk_backing_put_acc_stress.sialx;
     src/sialx/test/decreasing_segs.sialx;
     src/sialx/test/check_block_number_calc.sialx;
-    src/sialx/qm/scf_rhf_coreh.sialx;
-    src/sialx/qm/scf_defs.sialx;
-    src/sialx/qm/drop_core_in_sial.sialx;
-    src/sialx/qm/tran_rhf_no4v.sialx;
-    src/sialx/qm/tran_uhf_no4v.sialx;
-    src/sialx/qm/tran_rhf_no4v_defs.sialx;
-    src/sialx/qm/tran_rhf_no3v.sialx;
-    src/sialx/qm/tran_eom.sialx;
-    src/sialx/qm/lr_eom_ccsd_rhf.sialx;
-    src/sialx/qm/lr_eom_linccsd_rhf.sialx;
-    src/sialx/qm/lr_eom_ccpt2_rhf.sialx;
-    src/sialx/qm/reom_rhf_defs.sialx;
-    src/sialx/qm/reom_hbar.sialx;
-    src/sialx/qm/reom_vars.sialx;
-    src/sialx/qm/scf_uhf.sialx;
-    src/sialx/qm/scf_uhf_defs.sialx;
-    src/sialx/qm/scf_rhf.sialx; 
-    src/sialx/qm/scf_rhf_defs.sialx;
+    src/sialx/qm/utility/drop_core_in_sial.sialx;
+    src/sialx/qm/utility/tran_rhf_no4v.sialx;
+    src/sialx/qm/utility/tran_uhf_no4v.sialx;
+    src/sialx/qm/utility/tran_rhf_no4v_defs.sialx;
+    src/sialx/qm/utility/tran_rhf_no3v.sialx;
+    src/sialx/qm/scf/scf_rhf_coreh.sialx;
+    src/sialx/qm/scf/scf_defs.sialx;
+    src/sialx/qm/scf/scf_uhf.sialx;
+    src/sialx/qm/scf/scf_uhf_defs.sialx;
+    src/sialx/qm/scf/scf_rhf.sialx; 
+    src/sialx/qm/scf/scf_rhf_defs.sialx;
     src/sialx/qm/cc/mp2_rhf_disc.sialx;
     src/sialx/qm/cc/rccsd_rhf.sialx;
     src/sialx/qm/cc/rlambda_rhf.sialx;

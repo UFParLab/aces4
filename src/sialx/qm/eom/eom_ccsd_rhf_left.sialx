@@ -105,6 +105,63 @@ ENDPROC PLACE_GUESS
 #
 #-------------------------------------------------------------------------
 #
+PROC PLACE_LGUESS
+server_barrier
+# grab R^\dag vector as guess
+
+pardo a,i
+    request R1_a[kstate,a,i]
+    prepare L1_a[kstate,a,i] = R1_a[kstate,a,i]
+endpardo a,i
+
+pardo a,i,a1,i1
+    request R2_aa[kstate,a,i,a1,i1] 
+    prepare L2_aa[kstate,a,i,a1,i1] = R2_aa[kstate,a,i,a1,i1]
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    request R2_ab[kstate,a,i,b,j] 
+    prepare L2_ab[kstate,a,i,b,j] = R2_ab[kstate,a,i,b,j]
+endpardo a,i,b,j
+
+server_barrier
+ENDPROC PLACE_LGUESS
+#
+#-------------------------------------------------------------------------
+#
+PROC PLACE_L
+server_barrier
+# grab L^\dag vector as guess
+
+pardo a,i,ksub
+where ksub == 1
+    request L1_a[kstate,a,i]
+    Tkk[ksub,kstate] = 1.0
+    Tkai[ksub,a,i] = Tkk[ksub,kstate]*L1_a[kstate,a,i]
+    prepare LB1_a[ksub,a,i] = Tkai[ksub,a,i]
+endpardo a,i,ksub
+
+pardo a,i,a1,i1,ksub
+where ksub == 1
+    request L2_aa[kstate,a,i,a1,i1] 
+    Tkk[ksub,kstate] = 1.0
+    Tkaiai[ksub,a,i,a1,i1] = Tkk[ksub,kstate]*L2_aa[kstate,a,i,a1,i1]
+    prepare LB2_aa[ksub,a,i,a1,i1] = Tkaiai[ksub,a,i,a1,i1]
+endpardo a,i,a1,i1,ksub
+
+pardo a,i,b,j,ksub
+where ksub == 1
+    request L2_ab[kstate,a,i,b,j] 
+    Tkk[ksub,kstate] = 1.0
+    Tkaibj[ksub,a,i,b,j] = Tkk[ksub,kstate]*L2_ab[kstate,a,i,b,j]
+    prepare LB2_ab[ksub,a,i,b,j] = Tkaibj[ksub,a,i,b,j]
+endpardo a,i,b,j,ksub
+
+server_barrier
+ENDPROC PLACE_L
+#
+#-------------------------------------------------------------------------
+#
 PROC VCHACT_ZERO
 pardo a,i
     put VCHACT1A[a,i] = 0.0
@@ -252,7 +309,7 @@ ENDPROC place_LH
 #
 PROC LH_mult
 
-print "Starting L(k) * \bar{H} multiplication"
+#print "Starting L(k) * \bar{H} multiplication"
 server_barrier
 
 allocate LFmi_a[*,*]
@@ -297,7 +354,7 @@ ENDPROC LH_mult
 PROC LHL_mult
 #
 allocate LGmat[*,*]
-print "Starting L(k) * \bar{H} * L(k)^\dag"
+#print "Starting L(k) * \bar{H} * L(k)^\dag"
 do ksub
 do ksub1
     LGmat[ksub,ksub1] = 0.0
@@ -694,33 +751,6 @@ pardo a,i,b,j
 endpardo a,i,b,j
 
 server_barrier
-sum1 = 0.0
-pardo a,i
-    request LB1_a[davidson,a,i]
-    etemp  = LB1_a[davidson,a,i]*LB1_a[davidson,a,i]
-    etemp *= 2.0
-    sum1  += etemp
-endpardo a,i
-
-pardo a,i,a1,i1
-    request LB2_aa[davidson,a,i,a1,i1]
-    etemp  = LB2_aa[davidson,a,i,a1,i1]*LB2_aa[davidson,a,i,a1,i1]
-    etemp *= 0.5
-    sum1  += etemp
-endpardo a,i,a1,i1
-
-pardo a,i,b,j
-    request LB2_ab[davidson,a,i,b,j]
-    etemp = LB2_ab[davidson,a,i,b,j]*LB2_ab[davidson,a,i,b,j]
-    sum1 += etemp
-endpardo a,i,b,j
-server_barrier
-sum2 = 0.0
-collective sum2 += sum1
-orb_conv = (sum2)**(0.5)
-server_barrier
-assert_same orb_conv
-server_barrier
 ENDPROC form_residual
 #
 #-------------------------------------------------------------------------
@@ -751,13 +781,13 @@ PROC normalize_all
     overlap1 = 0.0
     collective overlap1 += overlapS
 
-    etemp = 1.0
-    if overlap1 > (10.0)**(-12.0)
+#    etemp = 1.0
+#    if overlap1 > (10.0)**(-16.0)
 	etemp  = (overlap1)**(-0.5)
-    endif
-    if overlap1 < (10.0)**(-12.0)
-	print overlap1
-    endif
+#    endif
+#    if overlap1 < (10.0)**(-16.0)
+#	print overlap1
+#    endif
 
     server_barrier
     pardo a,i
@@ -782,6 +812,88 @@ PROC GS_all
 #   x(q) = x(q) - x(j)*<x(q)|x(k)>/<x(k)|x(k)>
 #   with update done via numerically stable in place update
 # -----------------------------
+server_barrier
+do ksub
+where ksub < kstate
+
+    server_barrier
+    overlapS = 0.0
+    normS = 0.0
+    Tk[davidson] = 1.0
+    T1k[ksub] = 1.0
+    server_barrier
+    pardo a,i
+        request LB1_a[davidson,a,i]
+        request R1_a[ksub,a,i]
+
+	T1ai[a,i] = Tk[davidson]*LB1_a[davidson,a,i]
+	T2ai[a,i] = T1k[ksub]*R1_a[ksub,a,i]
+
+	overlapT  = T1ai[a,i]*T2ai[a,i]
+	overlapT *= 2.0
+	overlapS += overlapT
+
+	normT  = T2ai[a,i]*T2ai[a,i]
+	normT *= 2.0
+	normS += normT
+	
+    endpardo a,i
+    pardo a,i,a1,i1
+        request LB2_aa[davidson,a,i,a1,i1]
+        request R2_aa[ksub,a,i,a1,i1]
+
+	T1aiai[a,i,a1,i1] = Tk[davidson]*LB2_aa[davidson,a,i,a1,i1]
+	T2aiai[a,i,a1,i1] = T1k[ksub]*R2_aa[ksub,a,i,a1,i1]
+
+	overlapT  = T1aiai[a,i,a1,i1]*T2aiai[a,i,a1,i1]
+	overlapT *= 0.5
+	overlapS += overlapT
+
+	normT  = T2aiai[a,i,a1,i1]*T2aiai[a,i,a1,i1]
+	normT *= 0.5
+	normS += normS
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        request LB2_ab[davidson,a,i,b,j]
+        request R2_ab[ksub,a,i,b,j]
+
+	T1aiai[a,i,b,j] = Tk[davidson]*LB2_ab[davidson,a,i,b,j]
+	T2aiai[a,i,b,j] = T1k[ksub]*R2_ab[ksub,a,i,b,j]
+
+	overlapT  = T1aiai[a,i,b,j]*T2aiai[a,i,b,j]
+	overlapS += overlapT
+
+	normT  = T2aiai[a,i,b,j]*T2aiai[a,i,b,j]
+	normS += normS
+    endpardo a,i,b,j
+    server_barrier
+    norm1 = 0.0
+    overlap1 = 0.0
+    collective norm1 += normS
+    collective overlap1 += overlapS
+
+    etemp  = overlap1
+    etemp *= -1.0
+    Tkk[davidson,ksub] = etemp
+    server_barrier
+    pardo a,i
+        request R1_a[ksub,a,i]
+	Tkai[davidson,a,i] = Tkk[davidson,ksub]*R1_a[ksub,a,i]
+        prepare LB1_a[davidson,a,i] += Tkai[davidson,a,i]
+    endpardo a,i
+    pardo a,i,a1,i1
+        request R2_aa[ksub,a,i,a1,i1]
+	Tkaiai[davidson,a,i,a1,i1] = Tkk[davidson,ksub]*R2_aa[ksub,a,i,a1,i1]
+        prepare LB2_aa[davidson,a,i,a1,i1] += Tkaiai[davidson,a,i,a1,i1]
+    endpardo a,i,a1,i1
+    pardo a,i,b,j
+        request R2_ab[ksub,a,i,b,j]
+	Tkaibj[davidson,a,i,b,j] = Tkk[davidson,ksub]*R2_ab[ksub,a,i,b,j]
+        prepare LB2_ab[davidson,a,i,b,j] += Tkaibj[davidson,a,i,b,j]
+    endpardo a,i,b,j
+    server_barrier
+
+enddo ksub
 server_barrier
 do ksub
 where ksub < davidson
@@ -864,6 +976,33 @@ where ksub < davidson
     server_barrier
 
 enddo ksub
+server_barrier
+sum1 = 0.0
+pardo a,i
+    request LB1_a[davidson,a,i]
+    etemp  = LB1_a[davidson,a,i]*LB1_a[davidson,a,i]
+    etemp *= 2.0
+    sum1  += etemp
+endpardo a,i
+
+pardo a,i,a1,i1
+    request LB2_aa[davidson,a,i,a1,i1]
+    etemp  = LB2_aa[davidson,a,i,a1,i1]*LB2_aa[davidson,a,i,a1,i1]
+    etemp *= 0.5
+    sum1  += etemp
+endpardo a,i,a1,i1
+
+pardo a,i,b,j
+    request LB2_ab[davidson,a,i,b,j]
+    etemp = LB2_ab[davidson,a,i,b,j]*LB2_ab[davidson,a,i,b,j]
+    sum1 += etemp
+endpardo a,i,b,j
+server_barrier
+sum2 = 0.0
+collective sum2 += sum1
+orb_conv = (sum2)**(0.5)
+server_barrier
+assert_same orb_conv
 server_barrier
 ENDPROC GS_all
 #
@@ -2931,6 +3070,133 @@ ENDPROC back_transform_dipole
 #
 #-------------------------------------------------------------------------
 #
+PROC standard_davidson
+# standard davidson solver
+    server_barrier
+    SEkold[kstate] = 0.0
+    SEk0[kstate]   = 0.0
+
+    call place_guess
+
+    maxdav = 0
+    orb_conv = 1.0
+
+    do davidson
+	print ""
+	print davidson
+	server_barrier
+
+	if davidson > 1
+	    call zero_davidson_iteration
+	    call form_residual
+#	    call normalize_all
+	    call GS_all
+	    call normalize_all
+        endif
+	
+	call LH_mult
+	call LHL_mult
+	call diag_G
+        etemp1 = SEk0[kstate]
+        etemp2 = SEkold[kstate]
+        etemp1 -= etemp2
+        etemp2 = etemp1**2.0
+	etemp3 = (scalar)eom_roots
+	ee_conv = (etemp2/etemp3)**0.5
+        SEkold[kstate] = SEk0[kstate]
+	print ee_conv
+	print orb_conv
+	server_barrier
+	assert_same ee_conv
+	maxdav = davidson
+	#if ee_conv < eom_tol
+	if orb_conv < eom_tol
+	    exit
+	endif
+
+	server_barrier
+    enddo davidson
+    call form_new_Lvec
+#
+#
+ENDPROC standard_davidson
+#
+#-------------------------------------------------------------------------
+#
+PROC collapse_davidson
+# collapse davidson solver
+    server_barrier
+    SEk0[kstate]   = 0.0
+
+    call place_Lguess
+
+    do macro_iteration
+	print " "
+	print "----"
+	print macro_iteration
+
+	SEkold[kstate] = 0.0
+	maxdav = 0
+	orb_conv = 1.0
+
+	call place_L
+
+	do davidson
+	    print ""
+	    print davidson
+	    server_barrier
+
+	    if davidson == 1
+	    if macro_iteration > 1
+		call normalize_all
+            endif
+            endif
+	    if davidson > 1
+		call zero_davidson_iteration
+		call form_residual
+#	    call normalize_all
+		call GS_all
+		call normalize_all
+	    endif
+	    
+	    call LH_mult
+	    call LHL_mult
+	    call diag_G
+	    etemp1 = SEk0[kstate]
+	    etemp2 = SEkold[kstate]
+	    etemp1 -= etemp2
+	    etemp2 = etemp1**2.0
+	    etemp3 = (scalar)eom_roots
+	    ee_conv = (etemp2/etemp3)**0.5
+	    SEkold[kstate] = SEk0[kstate]
+	    #print ee_conv
+	    print orb_conv
+	    server_barrier
+	    assert_same ee_conv
+	    maxdav = davidson
+	    #if ee_conv < eom_tol
+	    if orb_conv < eom_tol
+		exit
+	    endif
+	    if davidson >= 5
+		if orb_conv > 10.0*eom_tol
+		    call form_new_Lvec
+		    exit
+		endif
+	    endif
+
+	    server_barrier
+	enddo davidson
+
+	    #if ee_conv < eom_tol
+	    if orb_conv < eom_tol
+		exit
+	    endif
+    enddo macro_iteration
+ENDPROC collapse_davidson
+#
+#-------------------------------------------------------------------------
+#
 # -----------------
 #  MAIN
 # -----------------
@@ -2949,7 +3215,7 @@ execute compute_int_scratchmem oed_ovl zmax imax
 
 print " "
 print "-- Parallel left EE-EOM-CCSD program"
-print "-- J. Comp. Phys. 1992, 103, 382-389 | J Chem Phys 2009, 130, 124122."
+print "-- J Chem Phys 1993, 98 (9), 7029 | Theoret. Chim. Acta 1995, 91, 267"
 print "-- Written by Jason N. Byrd, 2016"
 print " "
 server_barrier
@@ -2964,6 +3230,7 @@ server_barrier
 
 allocate contiguous Dipole_Oscillator_Strength[1:eom_roots,1:3]
 allocate contiguous Dipole_Oscillator_norm[1:eom_roots]
+allocate contiguous Right_Dipole_Transition_Moment[1:eom_roots,1:3]
 allocate contiguous Left_Dipole_Transition_Moment[1:eom_roots,1:3]
 allocate contiguous EOM_EE_Energy[1:eom_roots]
 allocate contiguous FINAL_EOM_EE_Energy[1:eom_roots]
@@ -2976,63 +3243,19 @@ do kstate
     print kstate
     print " "
 
-
-    SEkold[kstate] = 0.0
-    SEk0[kstate]   = 0.0
-
-    call place_guess
-
-    maxdav = 0
-
-    do davidson
-	print "--"
-	print davidson
-	server_barrier
-
-	if davidson > 1
-	    call zero_davidson_iteration
-	    call form_residual
-	    call normalize_all
-	    call GS_all
-	    call normalize_all
-        endif
-	
-	call LH_mult
-	call LHL_mult
-	call diag_G
-        etemp1 = SEk0[kstate]
-        etemp2 = SEkold[kstate]
-        etemp1 -= etemp2
-        etemp2 = etemp1**2.0
-	etemp3 = (scalar)eom_roots
-	ee_conv = (etemp2/etemp3)**0.5
-        SEkold[kstate] = SEk0[kstate]
-	print ee_conv
-	#print orb_conv
-	server_barrier
-	assert_same ee_conv
-	maxdav = davidson
-# left vector is converged a bit extra to ensure a clean convergence
-	if ee_conv < eom_tol*0.5
-	    exit
-	endif
-
-	server_barrier
-    enddo davidson
+    #call standard_davidson
+    call collapse_davidson
 
     print " "
-    print "-- EOM-CCSD excited state energy --"
-    call form_new_Lvec
+    print "-- EOM-CCSD properties --"
     call biorth
     call norm_lr_vec
     call form_r0
     r0 = SR0[kstate]
     omega = REk[kstate]
     etemp = SEk0[kstate]
-    etemp *=27.2113961
-    FINAL_EOM_EE_eV[kstate:kstate] = etemp
+    FINAL_EOM_EE_Energy[kstate:kstate] = omega
     print FINAL_EOM_EE_Energy[kstate:kstate]
-#    print FINAL_EOM_EE_eV[kstate:kstate]
     print " "
 
     do ixyz
@@ -3054,10 +3277,16 @@ do kstate
     call back_transform_dipole
 
     do ixyz
+	etemp = RDipole[ixyz]
+	Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
+        print Right_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
+    enddo ixyz
+    print " "
+
+    do ixyz
 	etemp = LDipole[ixyz]
 	Left_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz] = etemp
         print Left_Dipole_Transition_Moment[kstate:kstate,ixyz:ixyz]
-	dsum += etemp
     enddo ixyz
     print " "
     dsum = 0.0
@@ -3070,6 +3299,7 @@ do kstate
 	dsum += etemp
     enddo ixyz
     Dipole_Oscillator_Norm[kstate:kstate] = dsum
+    oscnorm[kstate] = dsum
     print Dipole_Oscillator_Norm[kstate:kstate]
 
 enddo kstate
@@ -3081,40 +3311,41 @@ print " "
 print "-----------------------------------"
 print " EOM SUMMARY OUTPUT"
 print "-----------------------------------"
+print " " 
 do kstate
-    print " "
-    print "-- EOM-CCSD excited state energy --"
-    print kstate
-    print "----"
-    r0 = SR0[kstate]
     omega = REk[kstate]
-    etemp = REk[kstate]
-    etemp *=27.2113961
     FINAL_EOM_EE_Energy[kstate:kstate] = omega
-    FINAL_EOM_EE_eV[kstate:kstate] = etemp
     print FINAL_EOM_EE_Energy[kstate:kstate]
-    print FINAL_EOM_EE_eV[kstate:kstate]
-    print " "
-
     etemp  = SEk0[kstate]
     etemp2 = (etemp - omega)**2.0
     ediff = (etemp2)**(0.5)
     if ediff > cc_conv*10.0
 	if ediff > (10.0)**(-6.0)
+	print " " 
 	print "*****WARNING: possible root mismatch"
+	print "left"
 	print SEk0[kstate]
+	print "right"
 	print REk[kstate]
 	print "*****WARNING: possible root mismatch"
 	print " " 
 	endif
     endif
-
-    print R0
-    do ixyz
-        print Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz]
-    enddo ixyz
+enddo kstate
+print " "
+do kstate
+    etemp = REk[kstate]
+    etemp *=27.2113961
+    FINAL_EOM_EE_eV[kstate:kstate] = etemp
+    print FINAL_EOM_EE_eV[kstate:kstate]
+enddo kstate
+    print " "
+do kstate
+#    print " "
+#    do ixyz
+#        print Dipole_Oscillator_Strength[kstate:kstate,ixyz:ixyz]
+#    enddo ixyz
     print Dipole_Oscillator_Norm[kstate:kstate]
-
 enddo kstate
 
 server_barrier

@@ -50,5 +50,7 @@ special get_my_rank w
 special scf_atom u
 special print_block r
 special compute_int_scratchmem uuu
+special drop_core_in_sip uu
+
 
 endsial tran_rhf_no4v_defs

@@ -63,6 +63,7 @@ int subspc
 int kstart
 int kend
 int maxdav
+int davtype
 #
 # Declare static
 # --------------- 
@@ -85,6 +86,7 @@ static SHDiag[a,i]
 static SR1_a[kstate,a,i]
 static lr_ovl[kstate,jstate]
 static Rdipmom[kstate]
+static oscnorm[kstate]
 #
 # Declare distributed
 # --------------- 
