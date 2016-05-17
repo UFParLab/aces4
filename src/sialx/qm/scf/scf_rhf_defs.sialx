@@ -15,6 +15,9 @@ predefined  int bavirtorb # used as a simple index, begining alpha virtual
 predefined  int bbvirtorb # used as a simple index, begining end virtual
 predefined  int eavirtorb # used as a simple index, end alpha virtual
 predefined  int ebvirtorb # used as a simple index, end beta virtual
+predefined int nbasis_funcs
+predefined int nalpha_occupied
+predefined int nalpha_virtual
 
 #
 predefined  int scf_iter

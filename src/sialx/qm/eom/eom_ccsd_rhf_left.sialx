@@ -3101,19 +3101,18 @@ PROC standard_davidson
         etemp2 = SEkold[kstate]
         etemp1 -= etemp2
         etemp2 = etemp1**2.0
-	etemp3 = (scalar)eom_roots
-	ee_conv = (etemp2/etemp3)**0.5
+	ee_conv = (etemp2)**0.5
         SEkold[kstate] = SEk0[kstate]
-	print ee_conv
+	#print ee_conv
 	print orb_conv
 	server_barrier
 	assert_same ee_conv
 	maxdav = davidson
-	#if ee_conv < eom_tol
-	if orb_conv < eom_tol
-	    exit
-	endif
-
+        if ee_conv < eom_tol
+        if orb_conv < eom_tol*100.0
+            exit
+        endif
+        endif
 	server_barrier
     enddo davidson
     call form_new_Lvec
@@ -3166,32 +3165,34 @@ PROC collapse_davidson
 	    etemp2 = SEkold[kstate]
 	    etemp1 -= etemp2
 	    etemp2 = etemp1**2.0
-	    etemp3 = (scalar)eom_roots
-	    ee_conv = (etemp2/etemp3)**0.5
+	    ee_conv = (etemp2)**0.5
 	    SEkold[kstate] = SEk0[kstate]
 	    #print ee_conv
 	    print orb_conv
 	    server_barrier
 	    assert_same ee_conv
 	    maxdav = davidson
-	    #if ee_conv < eom_tol
-	    if orb_conv < eom_tol
+	    if ee_conv < eom_tol
+	    if orb_conv < eom_tol*100.0
 		exit
 	    endif
+	    endif
 	    if davidson >= 5
-		if orb_conv > 10.0*eom_tol
+#		if ee_conv > eom_tol*10.0
 		    call form_new_Lvec
 		    exit
-		endif
+#		endif
 	    endif
 
 	    server_barrier
 	enddo davidson
 
-	    #if ee_conv < eom_tol
-	    if orb_conv < eom_tol
-		exit
-	    endif
+        if ee_conv < eom_tol
+        if orb_conv < eom_tol*100.0
+            exit
+        endif
+        endif
+
     enddo macro_iteration
 ENDPROC collapse_davidson
 #
@@ -3243,8 +3244,8 @@ do kstate
     print kstate
     print " "
 
-    #call standard_davidson
-    call collapse_davidson
+    call standard_davidson
+    #call collapse_davidson
 
     print " "
     print "-- EOM-CCSD properties --"

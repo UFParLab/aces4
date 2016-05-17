@@ -2713,6 +2713,14 @@ import "scf_rhf_defs.sialx"
 # Initilize the vaiable to zmax and imax (memory of ERD and OED). Need
 # to be in a aces4_init instruction and do all the initilizations in 
 # a one place. 04/1015, Ajith Perera.
+print " "
+print "-- Parallel Restricted Hartree-Fock program"
+print "-- Written by Ajith Perera, 2015"
+print " "
+print nbasis_funcs
+print nalpha_occupied
+print nalpha_virtual
+print " "
 # 
       zmax = 0.0
       imax = 0.0
@@ -2837,50 +2845,6 @@ import "scf_rhf_defs.sialx"
          level_shift = 1
       Endif 
 #
-#     Create the distributed arrays assigned for various purposes.
-#     ---------------------------------------------------------- 
-#
-      CREATE Fpq_a  
-      CREATE Fpq_b  
-      CREATE IDHFa   
-      CREATE IDHFb   
-      CREATE DHFa   
-      CREATE DHFb   
-      CREATE DHFa_Prev
-      CREATE DHFb_Prev
-      CREATE Fpqa_DMP
-      CREATE Fpqb_DMP
-      CREATE Dpqa_DMP
-      CREATE Dpqb_DMP
-      CREATE Fpqa_Prev
-      CREATE Fpqb_Prev
-      CREATE FTpq_a
-      CREATE FTpq_b
-      CREATE CBT_a
-      CREATE CBT_b
-      CREATE PNEW_A
-      CREATE PNEW_B
-      CREATE POLD_A
-      CREATE POLD_B
-
-#
-#     DIIS vectors 
-#     ------------ 
-#
-      create Fa 
-      create Fb 
-      create Fai  
-      create Fbj  
-      CREATE FFai
-      CREATE FFbj
-#
-#     Orthonormalizing transformation coefficient
-#     ------------------------------------------- 
-#
-      CREATE Qxx 
-      CREATE OVLP_INV
-      CREATE OCA
-      CREATE BCA
       sip_barrier 
 #
 # Initialize the static arrays of SCF vectors and occupation numbers

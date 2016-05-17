@@ -540,6 +540,24 @@ do kstate
 enddo kstate
 endpardo a,i
 server_barrier
+max_orb_conv = 0.0
+do kstate
+    normS = 0.0
+    pardo a,i
+        request cRk1_a[kstate,a,i]
+	normT  = cRk1_a[kstate,a,i]*cRk1_a[kstate,a,i]
+	normS += normT
+    endpardo a,i
+    server_barrier
+    norm1 = 0.0
+    collective norm1 += normS
+    norm2 = (norm1)**(0.5)
+    if norm2 > max_orb_conv
+	max_orb_conv = norm2
+    endif
+    server_barrier
+enddo kstate
+assert_same max_orb_conv
 #
 ENDPROC form_residual_R1
 #
@@ -850,22 +868,25 @@ do kiter
 #
     etemp = 0.0
     etemp2 = 0.0
+    max_e_conv = 0.0
     do kstate
 	etemp1 = SEk0[kstate]
 	etemp2 = SEkold[kstate]
 	etemp1 -= etemp2
 	etemp2 = etemp1**2.0
-	etemp += etemp2
-	etemp3 += 1.0
+	etemp  = (etemp2)**(0.5)
+	if etemp > max_e_conv
+	    max_e_conv = etemp
+	endif
     enddo kstate
-    rmsconv = (etemp/etemp3)**0.5
     do kstate
 	SEkold[kstate] = SEk0[kstate]
     enddo kstate
-    print rmsconv
+    print max_e_conv
+    print max_orb_conv
     server_barrier
-    assert_same rmsconv
-    if rmsconv < eom_tol
+    assert_same max_e_conv
+    if max_orb_conv < eom_tol
 	exit
     endif
 #

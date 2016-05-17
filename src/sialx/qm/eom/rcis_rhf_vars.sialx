@@ -67,6 +67,7 @@ int kend
 # --------------- 
 #
 static SEk[ksub]
+static Ekd[kstate]
 static SEkold[kstate]
 static SEk0[kstate]
 static St1a[a,i]
@@ -81,6 +82,8 @@ static RDipole[ixyz]
 static LDipole[ixyz]
 static SHDiag[a,i]
 static C1_a[ksub2,a,i]
+static SCai[a,i]
+static reorder[kstate,jstate]
 #
 # Declare distributed
 # --------------- 
@@ -91,11 +94,6 @@ distributed Lam1A[i,a]
 distributed Lam1B[i,a]
 distributed Mxj[sigma,j]
 distributed Mxi[sigma,i]
-distributed HBAR_ia[i,a]
-distributed HBAR_jb[j,b]
-distributed HBAR_aa[a,a1]
-distributed HBAR_ii[i1,i]
-distributed HBAR_jj[j1,j]
 distributed D2aa[a,i,a1,i1]
 distributed DRNai[a,i]
 distributed DLNai[a,i]
@@ -150,10 +148,20 @@ distributed Dca[mu,p]
 distributed DFock_a[p,p1]
 distributed wC[p,p1]
 
+distributed HBAR_aa[a,b]
+distributed HBAR_ii[i,j]
+
 #
 # Declare served 
 # --------------- 
 #
+served SFai[a,i]
+served Fai[a,i]
+served Fii[i,j]
+served CT_ab[a,i,b,j]
+served Cai_ao[mu,i]
+served Ctau_ao[mu,i,nu,j]
+served CTau[a,i,b,j]
 served T2AA[a,i,a1,i1]
 served T2AB[a,i,b,j]
 served T2BB[b,j,b1,j1]
@@ -294,6 +302,7 @@ served Mck_a[a,i]
 # Declare local 
 # --------------- 
 #
+local LDaixj[a,i,nu,j]
 local liaia[i,a,i1,a1]
 local laiai[a,i,a1,i1]
 local laiai2[a,i,a1,i1]
@@ -324,11 +333,6 @@ local Laaai[a2,a1,a,i]
 local Lxbbj[mu,b1,b,j]
 local Lbbbj[b2,b1,b,j]
 local Xbbbj[b,b2,b1,j] 
-local LHBAR_ii[i1,i]
-local LHBAR_jj[j,j1]
-local LHBAR_ia[i,a]
-local LHBAR_jb[j,b]
-local LHBAR_aa[a,a1]
 local  LGmat[ksub,ksub1]
 local LLaa[a,i,nu,i1]
 local LLab[a,i,nu,j]
@@ -388,6 +392,7 @@ contiguous local Dipole_Oscillator_Norm[kstate]
 contiguous local Dipole_Transition_Moment[kstate,ixyz]
 contiguous local Dipole_Transition_Norm[kstate]
 contiguous local CIS_EE_Energy[kstate]
+contiguous local CIS_D_EE_Energy[kstate]
 contiguous local EOM_EE_Energy[kstate]
 contiguous local CIS_EE_eV[kstate]
 contiguous local EOM_EE_eV[kstate]
@@ -630,6 +635,13 @@ temp T1ixxi[i1,mu,nu,i]
 # Declare scalar 
 # --------------- 
 #
+scalar ecorr2
+scalar shift
+scalar ecis_d
+scalar etriples
+scalar edoubles
+scalar esum2
+scalar esum3
 scalar ncount1
 scalar ncount2
 scalar dsum
@@ -650,7 +662,9 @@ scalar  LOGRIGHT
 scalar  GROUNDSTATE
 scalar  EXCITESTATE
 scalar rms_e_conv
+scalar max_e_conv
 scalar rms_orb_conv
+scalar max_orb_conv
 scalar  etemp
 scalar  etemp1
 scalar  etemp2

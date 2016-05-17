@@ -357,11 +357,12 @@ test/expected_output/static_array_test2.txt\
 test/expected_output/tmp_arrays_2.txt\
 test/expected_output/tmp_arrays.txt\
 test/expected_output/test_1el_ecp_ints.dat
-#test/eom_test.dat\
-#test/eom_water_dimer_test.dat\
-#test/eom_lccsd_test.dat\
-#test/eom_lccd_test.dat\
-#test/eom_mp2_test.dat\
+
+#test/eom_test.dat
+#test/eom_water_dimer_test.dat
+#test/eom_lccsd_test.dat
+#test/eom_lccd_test.dat
+#test/eom_mp2_test.dat
 
 
 EXTRA_DIST+= $(TEST_SUPPORT_FILES)

@@ -13,8 +13,8 @@ index jsub     = 1: cc_iter
 index ksub     = 1: cc_iter
 index ksub1    = 1: cc_iter
 index qsub     = 2: cc_iter
-index davidson = 1: cc_iter
-index macro_iteration = 1: cc_iter
+index davidson = 1: 60
+index macro_iteration = 1: 15
 index ixyz     = 1: 3
 
 aoindex mu     = 1: norb
