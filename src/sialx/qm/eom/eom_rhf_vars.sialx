@@ -64,6 +64,9 @@ int kstart
 int kend
 int maxdav
 int davtype
+int rootlock
+int close_conv_counter
+int converged
 #
 # Declare static
 # --------------- 
@@ -77,6 +80,7 @@ static St1b[b,j]
 static GSmat[ksub,ksub1]
 static SAlphaL[ksub,ksub1]
 static SAlphaR[ksub,ksub1]
+static Salpha[ksub]
 static SR0[ksub]
 static NucDip[ixyz]
 static Dipole[ixyz]
@@ -657,6 +661,7 @@ temp T1ixxi[i1,mu,nu,i]
 # Declare scalar 
 # --------------- 
 #
+scalar locked_root_energy
 scalar ncount1
 scalar ncount2
 scalar dsum

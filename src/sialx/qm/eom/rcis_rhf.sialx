@@ -889,6 +889,10 @@ do kiter
     if max_orb_conv < eom_tol
 	exit
     endif
+    if max_e_conv < (10.0)**(-10.0)
+	print "forcing convergence on energy"
+	exit
+    endif
 #
 enddo kiter
 

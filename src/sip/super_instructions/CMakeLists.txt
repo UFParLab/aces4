@@ -34,7 +34,6 @@ set(QM_SOURCE_FILES
     qm/utility/invert_diagonal_asym.F;
     qm/utility/eigen_calc.F;
     qm/utility/eigen_calc_sqr_inv.F;
-    qm/utility/eigen_calc_s_inv.F;
     qm/utility/gen_eigen_calc.F;
     qm/utility/form_R.F ;
     qm/utility/stripi.F;
@@ -54,7 +53,6 @@ set(QM_SOURCE_FILES
     qm/mcpt-fragment/compute_moi_nn_repulsion.F;
     qm/mcpt-fragment/compute_h1_moi.F;
     qm/mcpt-fragment/compute_ovl_moi.F;
-    qm/mcpt-fragment/orth_virt_occ.F;
     qm/direct_integral/uintegrals.F;
     qm/direct_integral/move_integrals.f;
     qm/direct_integral/pack_coeffs.f;

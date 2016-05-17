@@ -930,7 +930,7 @@ TEST(Sial_QM,eom_ccsd_water_right_test){
 		double *  Rdipmom= controller.static_array("rdipmom");
 		double Rexpected[] = {0.17558771, 0.0, 0.56188382, 0.56905669};
 		i = 0;
-		for (i; i < 4; i++){
+		for (i; i < 2; i++){
 		    ASSERT_NEAR(Rdipmom[i], Rexpected[i], 1e-4);
 		}
 	}
