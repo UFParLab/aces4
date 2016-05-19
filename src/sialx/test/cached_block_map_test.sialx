@@ -42,6 +42,7 @@ sial cached_block_map_test
         
         pardo i, j, k, l
             get c[i, j, k, l]
+
         endpardo i,j,k,l
         
         print "done getting c"

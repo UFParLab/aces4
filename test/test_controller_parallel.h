@@ -7,8 +7,6 @@
 #include <iostream>
 #include "setup_reader.h"
 #include "test_constants.h"
-#include "sialx_timer.h"
-#include "server_timer.h"
 
 
 
@@ -53,6 +51,23 @@ class TestControllerParallel {
 public:
 	TestControllerParallel(std::string job, bool has_dot_dat_file, bool verbose, std::string comment, std::ostream& sial_output,
 			bool expect_success=true);
+
+	/** adds a restart id
+	 *
+	 * use JobControl::global->get_job_id to get the job id of the preceding job, then
+	 * use that as the value to pass here to test restart.
+	 *
+	 * @param job
+	 * @param has_dot_dat_file
+	 * @param verbose
+	 * @param comment
+	 * @param sial_output
+	 * @param restart_id
+	 * @param expect_success
+	 */
+	TestControllerParallel(std::string job,
+			bool has_dot_dat_file, bool verbose, std::string comment,
+			std::ostream& sial_output, std::string restart_id, int restart_prognum, bool expect_success=true);
 	~TestControllerParallel() ;
 
 	void initSipTables(const std::string& sial_dir_name = dir_name);
@@ -80,13 +95,20 @@ public:
 	sip::Interpreter* worker_;
 	std::ostream& sial_output_;
 	sip::SialPrinterForTests* printer_;
-	sip::SialxTimer* sialx_timers_;
-	sip::ServerTimer* server_timer_;
 	bool this_test_enabled_;
 	bool expect_success_;
 	int prog_number_;
 	std::string prog_name_;
 	setup::SetupReader::SialProgList *progs_;
+
+	/**
+	 * Indicates the number of seconds to pause between tests.  This is a hack to
+	 * deal with the situation where consecutive tests get the same jobid due to the course
+	 * resolution of the timestamp used to generate the id.
+	 *
+	 * Default is 0.
+	 */
+	static unsigned int sleep_between_tests;
 
 	bool runServer();
 	bool runWorker();

@@ -10,7 +10,6 @@
 #include "io_utils.h"
 #include "setup_reader.h"
 #include "assert.h"
-#include "sialx_timer.h"
 #include "sip_tables.h"
 #include "setup_interface.h"
 
@@ -62,6 +61,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
 	//create setup_file
 	std::string job(init_file);
 
@@ -87,6 +87,9 @@ int main(int argc, char* argv[]) {
 		std::cout << "Sial File : " << sialfpath << std::endl;
 		std::cout << sipTables << std::endl;
 	}
+
+	std::cout << "Memory used for predefined arrays" <<
+			*sip::MemoryTracker::global << std::endl <<std::flush;
 
 #ifdef HAVE_MPI
 	MPI_Finalize();

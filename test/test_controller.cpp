@@ -16,7 +16,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
@@ -30,13 +30,14 @@
 #ifdef HAVE_MPI
 //#include "sip_server.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_mpi_attr.h"
 #endif
 
 #include "test_constants.h"
+#include "job_control.h"
 
 TestController::TestController(std::string job, bool has_dot_dat_file,
 		bool verbose, std::string comment, std::ostream& sial_output,
@@ -59,6 +60,11 @@ TestController::TestController(std::string job, bool has_dot_dat_file,
 //		siox_path = dir_name + prog_name;
 //		std::cout << "siox_path: " << siox_path << std::endl << std::flush;
 //	}
+
+	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id()));
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
+
+	std::cout << "job_id" << sip::JobControl::global->get_job_id() << std::endl << std::flush;
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file);
@@ -115,9 +121,11 @@ void TestController::initSipTables(const std::string& sial_dir_name) {
 //	printer_ = new sip::SialPrinterForTests(sial_output_, attr->global_rank(),
 //			*sip_tables_);
 //	barrier();
-	prog_name_ = progs_->at(prog_number_++);
-	sip::GlobalState::set_program_name(prog_name_);
-	sip::GlobalState::increment_program();
+//	prog_name_ = progs_->at(prog_number_++);
+	prog_number_ = sip::JobControl::global->get_program_num();
+	prog_name_ = progs_->at(prog_number_);
+	sip::JobControl::global->set_program_name(prog_name_);
+//	sip::JobControl::global->increment_program();
 	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
 	if (!sip_tables_) delete sip_tables_;
@@ -207,8 +215,8 @@ void TestController::runWorker() {
 	// Clear previous worker_ to avoid leak
 	if (worker_ != NULL)
 		delete worker_;
-	sip::SialxTimer sialx_timers(sip_tables_->max_timer_slots());
-	worker_ = new sip::Interpreter(*sip_tables_, &sialx_timers, printer_, wpam_);
+//	sip::SialxTimer sialx_timers(sip_tables_->op_table_size());
+	worker_ = new sip::Interpreter(*sip_tables_,  printer_, wpam_);
 //	barrier();
 	if (verbose_)
 		std::cout << "Rank " << attr->global_rank() << " SIAL PROGRAM " << job_
@@ -232,6 +240,10 @@ void TestController::runWorker() {
 	}
 //	barrier();
 	wpam_->save_marked_arrays(worker_);
+	std::stringstream tt;
+	tt << sip::JobControl::global->get_job_id() << "." << sip::JobControl::global->get_program_num() << "." << "worker_checkpoint";
+	std::string worker_checkpoint_filename = tt.str();
+	wpam_->checkpoint_persistent(worker_checkpoint_filename);
 
 }
 

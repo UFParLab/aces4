@@ -85,8 +85,10 @@ c ----------------------------------------------------------------------
       ifrag = data_1(1)  
       jfrag = data_2(1)  
 
-      call return_pair_nn_repulsion(ifrag,jfrag,data_3, 
+      energy = 0.0
+      call return_pair_nn_repulsion(ifrag,jfrag,energy, 
      *                              ncenters, pcoords, pcharge) 
+      data_3(1) = energy
       ierr = 0
 
       return

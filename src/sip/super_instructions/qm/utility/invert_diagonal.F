@@ -1,3 +1,15 @@
+
+! --------------------------------------------------------------------------
+!> @author Jason N Byrd QTP.
+!> @brief
+!> returns element by element t1= t1/t2
+!>
+!> @details
+!>  define: special invert_diagonal uu
+!>
+!>  Usage: execute invert_diagonal T1 T2
+! --------------------------------------------------------------------------
+
       subroutine invert_diagonal(
      * array_0, rank_0, index_values_0, size_0, extents_0, data_0,
      * array_1, rank_1, index_values_1, size_1, extents_1, data_1,
@@ -5,11 +17,6 @@
       use, intrinsic :: ISO_C_BINDING
       implicit none
 
-c--------------------------------------------------------------------------
-c Usage: execute invert_diagonal T1 T2
-C returns element by element t1= t1/t2
-c
-c--------------------------------------------------------------------------
       include 'sip_interface.f'
 
 ! output array --> array_0
@@ -75,15 +82,10 @@ c--------------------------------------------------------------------------
       do b = b1,b2
       do a = a1,a2
           div = array2(a,b,c)
-	  if (div .eq. 0.d0) then
-	      write(*,*) "--ZERO denominator in invert diagonal"
-	      write(*,100) a,b,c,div
-	      ierr = 1
-	      return
-          endif
-	  val = array1(a,b,c)/div
-          array1(a,b,c) = val
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
+          if (div .ne. 0.d0) then
+	      val = array1(a,b,c)/div
+	      array1(a,b,c) = val
+	  endif
       enddo 
       enddo 
       enddo 
@@ -113,15 +115,10 @@ C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
       do b = b1,b2
       do a = a1,a2
           div = array2(a,b,c,d,e)
-	  if (div .eq. 0.d0) then
-	      write(*,*) "--ZERO denominator in invert diagonal"
-	      write(*,100) a,b,c,d,e,div
-	      ierr = 1
-	      return
-          endif
-          val = array1(a,b,c,d,e)/div
-          array1(a,b,c,d,e) = val
-C          write(6,100) a,b,c,array1(a,b,c),array2(a,b,c),val
+          if (div .ne. 0.d0) then
+	      val = array1(a,b,c,d,e)/div
+	      array1(a,b,c,d,e) = val
+	  endif
       enddo 
       enddo 
       enddo 

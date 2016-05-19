@@ -8,6 +8,9 @@
 
 
 #include "setup_writer.h"
+#ifdef HAVE_JSON
+#include "json/json.h"
+#endif
 #include <algorithm>
 #include <assert.h>
 #include <cctype>
@@ -282,7 +285,117 @@ void SetupWriter::write_data_file() {
 	}
 }
 
+#ifdef HAVE_JSON
+// TODO Test
+std::string SetupWriter::get_json_string(){
+	Json::Value root;
 
+	// Sial Programs
+	{
+		Json::Value& sial_programs_root = root["SialPrograms"];
+		SialProg::const_iterator it = sial_programs_.begin();
+		for (; it != sial_programs_.end(); ++it)
+			sial_programs_root.append(*it);
+	}
+
+
+	// Predefined Integers
+	{
+		Json::Value& predef_int_root = root["PredefinedIntegers"];
+		PredefInt::const_iterator it = data_constants_.begin();
+		for(; it != data_constants_.end(); ++it)
+			predef_int_root[it->first] = it->second;
+	}
+
+	// Predefined Scalars
+	{
+		Json::Value& predef_scalar_root = root["PredefinedScalars"];
+		PredefScalar::const_iterator it = scalars_.begin();
+		for(; it != scalars_.end(); ++it)
+			predef_scalar_root[it->first] = it->second;
+	}
+
+	// Segments sizes
+	{
+		Json::Value& segsize_root = root["SegmentSizeArrays"];
+		SegSizeArray::const_iterator it = segments_.begin();
+		for (; it != segments_.end(); ++it){
+			std::string index_type_name = sip::index_type_name(sip::intToIndexType_t(it->first));
+			Json::Value& seg_root = segsize_root[index_type_name];
+			int count = it->second.first;
+			int *array = it->second.second;
+			for (int i=0; i<count; i++)
+				seg_root.append(array[i]);
+		}
+	}
+	
+	// Predefined Contiguous Arrays
+	{
+		Json::Value& predefined_scalar_arrays_root = root["PredefinedScalarArrays"];
+		PredefArrMap::const_iterator it = predef_arr_.begin();
+		for (; it != predef_arr_.end(); ++it){
+			Json::Value& array_root = predefined_scalar_arrays_root[it->first];
+			const std::pair<int, std::pair<int*, double*> > &array_info = it->second;
+			int rank = array_info.first;
+			int *dims = array_info.second.first;
+			double *data = array_info.second.second;
+			int num_data_elems = 1;
+			for (int i=0; i<rank; i++){
+				num_data_elems *= dims[i];
+			}
+			array_root["Rank"] = rank;
+			Json::Value& dims_root = array_root["Dims"];
+			for (int i=0; i<rank; i++)
+				dims_root.append(dims[i]);
+			Json::Value& data_root = array_root["Data"];
+			for (int i=0; i<num_data_elems; i++)
+				data_root.append(data[i]);
+		}
+	}
+
+
+	// Predefined Integer Arrays
+	{
+		Json::Value& predefined_integer_arrays_root = root["PredefinedScalarArrays"];
+		PredefIntArrMap::const_iterator it = predef_int_arr_.begin();
+		for (; it != predef_int_arr_.end(); ++it){
+			Json::Value& array_root = predefined_integer_arrays_root[it->first];
+			const std::pair<int, std::pair<int*, int*> > &array_info = it->second;
+			int rank = array_info.first;
+			int *dims = array_info.second.first;
+			int *data = array_info.second.second;
+			int num_data_elems = 1;
+			for (int i=0; i<rank; i++){
+				num_data_elems *= dims[i];
+			}
+			array_root["Rank"] = rank;
+			Json::Value& dims_root = array_root["Dims"];
+			for (int i=0; i<rank; i++)
+				dims_root.append(dims[i]);
+			Json::Value& data_root = array_root["Data"];
+			for (int i=0; i<num_data_elems; i++)
+				data_root.append(data[i]);
+		}
+	}
+
+
+	// Sial Configuration per file
+	{
+		Json::Value& sial_config_root = root["SialConfiguration"];
+		FileConfigMap::iterator it = configs_.begin();
+		for (; it != configs_.end(); ++it){
+			Json::Value& sial_file_root = sial_config_root[it->first];
+			KeyValueMap::const_iterator kv_it = it->second.begin();
+			for (; kv_it != it->second.end(); ++kv_it){
+				sial_file_root[kv_it->first] = kv_it->second;
+			}
+		}
+	}
+
+	Json::StyledWriter writer;
+	return writer.write(root);
+}
+#endif //HAVE_JSON
 
 }/* namespace setup */
 

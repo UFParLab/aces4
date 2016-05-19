@@ -1,0 +1,170 @@
+import "mcpt2_defs.sialx" 
+import "mcpt2_vars.sialx"
+#
+SIAL mcpt2_util
+# 
+# -----------------------------------------------------------------------------
+# 
+      PROC SET_FRAG_PARMS    
+#     ------------------- 
+      print "Starting scratch memory calculation"
+      imax = 0.0
+      zmax = 0.0
+      execute compute_int_scratchmem_lowmem zmax imax
+#
+#     Determine the number of fragments  
+#     --------------------------------- 
+      execute set_frag n_frags
+
+      do kfrag
+      do jfrag
+	  where jfrag <= kfrag
+	  icount = (scalar)kfrag
+	  jcount = (scalar)jfrag
+
+          execute return_pairs icount jcount elst_thresh pair_flag 
+	  elst_dist[kfrag,jfrag] = 0.0
+	  elst_dist[jfrag,kfrag] = 0.0
+
+          if pair_flag > zero
+	  elst_dist[kfrag,jfrag] = (scalar)kfrag
+	  elst_dist[jfrag,kfrag] = (scalar)jfrag
+	  endif
+
+          execute return_pairs icount jcount r_thresh pair_flag 
+	  rcut_dist[kfrag,jfrag] = 0.0
+	  rcut_dist[jfrag,kfrag] = 0.0
+
+          if pair_flag > zero
+	  rcut_dist[kfrag,jfrag] = (scalar)kfrag
+	  rcut_dist[jfrag,kfrag] = (scalar)jfrag
+	  endif
+
+      enddo jfrag
+      enddo kfrag
+
+      do jfrag
+#
+	  icount = (scalar)jfrag
+          i_aostart = icount
+          i_aoend   = 1.0
+          execute frag_index_range i_aostart i_aoend
+          i_vstart  = icount
+          i_vend    = 6.0
+          execute frag_index_range i_vstart i_vend
+
+          m  = icount
+          n    = 7.0
+          execute frag_index_range m n
+
+          a_vstart  = m + (scalar)bavirt - 1.0
+          a_vend    = n + (scalar)bavirt - 1.0
+
+	  ao_start[jfrag] = i_aostart
+	  ao_end[jfrag] = i_aoend
+
+	  occ_start[jfrag] = i_vstart
+	  occ_end[jfrag] = i_vend
+
+          do mu
+          where mu >= (int)i_aostart
+          where mu <= (int)i_aoend
+              SwAO_frag[(index)mu] = (scalar)jfrag
+          enddo mu
+
+          DO i
+          where i >= (int)i_vstart
+          where i <= (int)i_vend
+               SwOccA_frag[(index)i] = (scalar)jfrag
+               SwMOA_frag[(index)i] = (scalar)jfrag
+          ENDDO i
+          DO a
+          where a >= (int)a_vstart 
+          where a <= (int)a_vend 
+               SwVirtA_frag[(index)a] = (scalar)jfrag
+               SwMOA_frag[(index)a] = (scalar)jfrag
+          ENDDO a
+
+      enddo jfrag
+      server_barrier
+
+      print elst_dist
+      print rcut_dist
+      print SwAO_frag
+      print SwMOA_frag
+
+      sip_barrier
+      ENDPROC SET_FRAG_PARMS    
+
+      PROC set_fock_mos
+      sip_barrier
+
+      print "Placing HF coefficients on nodes"
+      DO p 
+         Sx3[p] = 1.0 
+      ENDDO p  
+
+      DO p 
+         t3[p] = 0.0 
+      DO p1 
+      where p == p1
+            GET Dfock_a[p,p1] 
+            t3_1[p] = Dfock_a[p,p1]*Sx3[p1] 
+            t3[p] += t3_1[p] 
+      ENDDO p1 
+         fock_a[p] = t3[p] 
+      ENDDO p 
+
+      DO p 
+         t3[p] = fock_a[p] 
+      ENDDO p 
+
+      DO ifrag
+         DO mu
+         where (int)SwAO_frag[(index)mu] == ifrag
+            DO a 
+            where (int)SwMOA_frag[(index)a] == ifrag
+	          allocate ca[mu,a]
+                  GET        Dca[mu,a] 
+                  ca[mu,a] = Dca[mu,a] 
+            ENDDO a 
+            DO i 
+            where (int)SwMOA_frag[(index)i] == ifrag
+	          allocate ca[mu,i]
+                  GET        Dca[mu,i] 
+                  ca[mu,i] = Dca[mu,i] 
+            ENDDO i 
+         ENDDO mu  
+      ENDDO ifrag
+      sip_barrier
+      ENDPROC set_fock_mos
+
+      PROC END_PRINT
+      eint_tot  = 0.0 
+      eint_tot += e1exc_at  
+      eint_tot += e10pol_at  
+      eint_tot += eps1_pol   
+      eint_tot += singles  
+      eint_tot += dimer_doubles  
+      eint_tot += fragment_doubles  
+      eint_tot += mono_lccd   
+
+      mcpt_corr = singles  
+      mcpt_corr += dimer_doubles  
+      mcpt_corr += fragment_doubles  
+
+      print " "
+      print e1exc_at 
+      print e10pol_at 
+      print eps1_pol  
+      print singles  
+      print dimer_doubles
+      print fragment_doubles
+      print mcpt_corr
+      print mono_lccd  
+
+      print eint_tot 
+      ENDPROC END_PRINT
+#
+ENDSIAL mcpt2_util
+################################################################################

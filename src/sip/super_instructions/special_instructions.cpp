@@ -73,6 +73,9 @@ void return_h1(
 void return_ovl(
         int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
 
+void return_1el_ecpints(
+        int & array_slot, int& rank, int * index_values, int& size, int * extents, double * block_data, int& ierr);
+
 void scf_atom_lowmem(
 	int & array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1,
 	int & array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * block_data_2,
@@ -237,6 +240,11 @@ void compute_nn_repulsion(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
 	int& ierr);
 
+void drop_core_in_sip(
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2, 
+	int& ierr);
+
 void set_frag(
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
 	int& ierr);
@@ -288,13 +296,77 @@ void anti_symm_o(
 
 void anti_symm_v(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void a4_david_damp_factor(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_get_init_occupation(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_return_occupation(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+	int& ierr);
+
+void a4_scf_atom(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+        int& array_slot_3, int& rank_3, int * index_values_3, int& size_3, int * extents_3, double * data_3,
+        int& array_slot_4, int& rank_4, int * index_values_4, int& size_4, int * extents_4, double * data_4,
+        int& array_slot_5, int& rank_5, int * index_values_5, int& size_5, int * extents_5, double * data_5,
+         int& ierr);
+
+void a4_dscale(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1,
+        int& array_slot_2, int& rank_2, int * index_values_2, int& size_2, int * extents_2, double * data_2,
+	int& ierr);
+
+void print_block_and_index(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+
+void form_diagonal_unit_matrix(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void moi_nn_repulsion(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void return_h1_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void return_ovl_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void remove_diagonal(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
+
+//##############################
 }
+
+//ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
+ //the extern C block)
 
 //ADD PROTOTYPE FOR SPECIAL INSTRUCTIONS WRITTEN IN C++ HERE (i.e. not inside
  //the extern C block)
 void print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void read_block_from_text_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 //void test_print_block(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void write_block_to_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void read_block_from_file(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 void print_static_array(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void get_my_rank(int& array_slot, int& rank, int* index_values, int& size, int* extents, double* data, int& ierr);
 void list_block_map();
@@ -311,12 +383,15 @@ void get_first_block_element(int& array_slot_0, int& rank_0, int * index_values_
 // Special Super Instructions Just For Testing
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
+void one_arg_no_op(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void list_blocks_with_number();
+void check_block_number_calculation(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 namespace sip{
 
 SpecialInstructionManager::SpecialInstructionManager(){
 //	std::cout << "in SpecialInstructionManager constructor";
-//    sip::check(procmap_.empty(), "attempting to initialize non-empty procmap");
+//    CHECK(procmap_.empty(), "attempting to initialize non-empty procmap");
 	init_procmap();
 }
 
@@ -354,7 +429,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 	try{
 		std::map<std::string, fp0>::iterator it = procmap_.find(name);
 		if (it == procmap_.end()){
-			SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+			SIP_LOG(WARN(false, std::string("Special instruction ") + name + " not found"));
 			procvec_.push_back(procvec_entry_t(NULL, sig));
 		} else {
 			fp0 func = it->second;
@@ -363,7 +438,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 		}
 	}
 	catch (const std::out_of_range& oor) {
-        sial_warn(false, std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
+        warn(std::string("Special instruction " + name + " declared in SIAL program, but no implementation was found"));
         procvec_.push_back(procvec_entry_t(NULL, sig));
     };
 	return index;
@@ -397,7 +472,7 @@ SpecialInstructionManager::fp0 SpecialInstructionManager::get_instruction_ptr(in
 		std::cout << oor.what() << std::endl;
 		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
 		std::cout << "special instruction " << it->second << " at slot " << function_slot << " not installed" << std::endl;
-		sip::check(false, std::string(" terminating get_instruction_ptr "));
+		CHECK(false, std::string(" terminating get_instruction_ptr "));
 		return NULL;
 	}
 }
@@ -433,7 +508,7 @@ const std::string SpecialInstructionManager::get_signature(int function_slot) co
 		proc_index_name_map_t::const_iterator it = proc_index_name_map_.find(function_slot);
 		std::cout << "special instruction " << it->second << ", at slot " << function_slot << " not installed" << std::endl;
 		std::cout << *this << std::endl;
-		sip::check(false, std::string(" terminating get_signature"));
+		CHECK(false, std::string(" terminating get_signature"));
 		return std::string("should not get here");
 	}
 }
@@ -463,6 +538,8 @@ void SpecialInstructionManager::init_procmap(){
 //	procmap_["test_print_block"]=(fp0)&test_print_block;
 
 	procmap_["print_block"]=(fp0)&print_block;
+	procmap_["write_block_to_file"]=(fp0)&write_block_to_file;
+	procmap_["read_block_from_file"]=(fp0)&read_block_from_file;
 	procmap_["read_block_from_text_file"]=(fp0)&read_block_from_text_file;
 	procmap_["print_static_array"]=(fp0)&print_static_array;
 	procmap_["list_block_map"]=(fp0)&list_block_map;
@@ -473,6 +550,7 @@ void SpecialInstructionManager::init_procmap(){
 	procmap_["compute_diis"]=(fp0)&compute_diis;
 	procmap_["return_h1"]=(fp0)&return_h1;
 	procmap_["return_ovl"]=(fp0)&return_ovl;
+	procmap_["return_1el_ecpints"]=(fp0)&return_1el_ecpints;
 	procmap_["scf_atom_lowmem"]=(fp0)&scf_atom_lowmem;
 	procmap_["place_scratch"]=(fp0)&place_scratch;
 	procmap_["return_pairs"]=(fp0)&return_pairs;
@@ -506,6 +584,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["compute_dipole_integrals"]=(fp0)&compute_dipole_integrals;
     procmap_["aoladder_contraction"]=(fp0)&aoladder_contraction;
     procmap_["compute_nn_repulsion"]=(fp0)&compute_nn_repulsion;
+    procmap_["drop_core_in_sip"]=(fp0)&drop_core_in_sip;
     procmap_["set_frag"]=(fp0)&set_frag;
     procmap_["frag_index_range"]=(fp0)&frag_index_range;
     procmap_["stripi"]=(fp0)&stripi;
@@ -522,7 +601,20 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
     procmap_["get_and_print_mpi_rank"]=(fp0)&get_and_print_mpi_rank;
-
+    procmap_["one_arg_no_op"]=(fp0)&one_arg_no_op;
+    procmap_["list_blocks_with_number"]=(fp0)&list_blocks_with_number;
+    procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
+    procmap_["a4_david_damp_factor"]=(fp0)&a4_david_damp_factor;
+    procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
+    procmap_["a4_scf_atom"]=(fp0)&a4_scf_atom;
+    procmap_["a4_dscale"]=(fp0)&a4_dscale;
+    procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
+    procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
+    procmap_["check_block_number_calculation"]=(fp0)&check_block_number_calculation;
+    procmap_["moi_nn_repulsion"]=(fp0)&moi_nn_repulsion;
+    procmap_["return_h1_moi"]=(fp0)&return_h1_moi;
+    procmap_["return_ovl_moi"]=(fp0)&return_ovl_moi;
+    procmap_["remove_diagonal"]=(fp0)&remove_diagonal;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

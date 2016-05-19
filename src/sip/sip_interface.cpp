@@ -122,7 +122,7 @@ void predefined_scalar_array(const char*aname, int& num_dims, int **dims,
 		*values = block->get_data();
 		return;
 	} catch (const std::out_of_range& oor) {
-		sip::check(false,
+		CHECK(false,
 				"predefined array " + std::string(aname)
 						+ " not in predefined array map\n");
 		return;
@@ -134,7 +134,7 @@ void scratch_array(int& num_elements, double **array){
         double * scratch = new double[num_elements]();  //initialize to zero
         *array = scratch;
     } catch (const std::bad_alloc& ba) {
-        std::cerr << "Got bad alloc ! Memory being requestd : " << num_elements << std::endl;
+        std::cerr << "Not enough memory for scratch array.  Memory being requested : " << num_elements << std::endl;
         throw ba;
     }
 }
@@ -182,7 +182,7 @@ void predefined_int_array(const char*aname, int& num_dims, int **dims,
         */
 		return;
 	} catch (const std::out_of_range& oor) {
-		sip::check(false,
+		CHECK(false,
 				"predefined array " + std::string(aname)
 						+ " not in predefined array map\n");
 		return;
@@ -218,19 +218,26 @@ std::string array_name_value(int array_table_slot) {
 int get_line_number() {
 #ifdef HAVE_MPI
 	sip::Interpreter *interpreter = sip::Interpreter::global_interpreter;
-	sip::SIPServer * server = sip::SIPServer::global_sipserver;
+//	sip::SIPServer * server = sip::SIPServer::global_sipserver;
 	sip::SIPMPIAttr &mpiattr = sip::SIPMPIAttr::get_instance();
-	if (mpiattr.is_worker()){
-		if (interpreter != NULL)
-			return interpreter->line_number();
-		else
-			return 0;
-	} else {
-		if (server != NULL)
-			return server->last_seen_line();
-		else
-			return 0;
-	}
+//	if (mpiattr.is_worker()){
+//		if (interpreter != NULL)
+//			return interpreter->line_number();
+//		else
+//			return 0;
+//	} else {
+////		if (server != NULL)
+////			return server->last_seen_line();
+////		else
+////			return 0;
+//		CHECK(false, "get_line_number only defined for workers");
+//		return 0;
+//	}
+	if (interpreter != NULL)
+		return interpreter->line_number();
+	else
+		return 0;
+
 
 #else	// HAVE_MPI
 	if (sip::Interpreter::global_interpreter != NULL) {

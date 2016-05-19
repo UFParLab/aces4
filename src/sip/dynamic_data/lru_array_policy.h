@@ -12,9 +12,9 @@
 #include "id_block_map.h"
 #include "block_id.h"
 
-#ifdef HAVE_MPI
-#include "server_block.h"
-#endif 
+//#ifdef HAVE_MPI
+//#include "server_block.h"
+//#endif
 
 #include <list>
 #include <stdexcept>
@@ -75,7 +75,7 @@ public:
     }
 
     /*! Get the next block for removal */
-	BlockId get_next_block_for_removal(){
+	BlockId get_next_block_for_removal(BLOCK_TYPE*& block){
 		/** Return an arbitrary block from the least recently used array  */
 		if(lru_list_.empty())
 			throw std::out_of_range("No blocks have been touched, yet block requested for flushing");
@@ -86,8 +86,10 @@ public:
                         
 			if (it == array_map->end())
 				lru_list_.pop_back();
-			else
+			else{
+				block = it->second;
 				return it->first;
+			}
 		}
 		throw std::out_of_range("No blocks to remove !");
 		//sip::fail("No blocks to remove !", current_line());
@@ -108,14 +110,15 @@ public:
 	}
 
 private:
-	std::list<int> lru_list_; /*! List of least recently ysed arrays  */
+	std::list<int> lru_list_; /*! List of least recently used arrays  */
     IdBlockMap<BLOCK_TYPE>& block_map_;
 
 };
 
 #ifdef HAVE_MPI
+class ServerBlock;
 // Template Specialization for ServerBlocks. Implementation in disk_backed_block_map.cpp
-template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal();
+template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(ServerBlock*& block);
 #endif // HAVE_MPI
 
 } /* namespace sip */

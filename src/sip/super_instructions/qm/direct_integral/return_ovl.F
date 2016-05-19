@@ -39,8 +39,10 @@ c     real(C_DOUBLE) scr(10000000)  !!! NEED TO MALLOC VFL
 
       real(C_DOUBLE), pointer :: scr(:)
       real(C_DOUBLE), pointer :: iscr(:)
+      real(C_DOUBLE), pointer :: zscr(:)
       TYPE(C_PTR) :: cscr 
       TYPE(C_PTR) :: ciscr
+      TYPE(C_PTR) :: czscr
 
 c Nuclear coordinates 
 c --------------------------------------------------------------------------- 
@@ -62,7 +64,7 @@ c     integer(C_INT) n_ao_segs(1), aosegs(6)
       integer, pointer :: pn_ao_segs(:), paosegs(:)
 
       integer(C_INT) norb, one, two, offset_1, offset_2 
-      integer(C_INT) i, nscr, niscr   
+      integer(C_INT) i, nscr, niscr, nzscr
 
 c--------------------------------------------------------------------------
 !>
@@ -76,6 +78,11 @@ c--------------------------------------------------------------------------
 c-------------------------------------------------------------------------
 c   Get the data needed to do the computation.  
 c--------------------------------------------------------------------------
+
+      if (rank .ne. 2) then
+	  write(*,*) "Error in return_ovl, rank must be 2, is:", rank
+	  call abort()
+      endif
 
 c                     Nuclear coordinates 
       call predefined_scalar_array("coords"//C_NULL_CHAR,
@@ -111,6 +118,10 @@ c   Set scratch space
       call scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr, [niscr])
 
+      nzscr = size
+      call scratch_array(nzscr, czscr)
+      call c_f_pointer(czscr, zscr, [nzscr])
+
 c---------------------------------------------------------------------------
 c   Compute data block of integrals.
 c---------------------------------------------------------------------------
@@ -121,17 +132,19 @@ c Find the offset index ranges
       if (index_values(1) .gt. 1) offset_1 = paosegs(index_values(1)-1) 
       if (index_values(2) .gt. 1) offset_2 = paosegs(index_values(2)-1) 
 
+
 c     write(6,*) ' OFFSET1:', index_values(1), 1+offset_1,
 c    &                         extents(1)+offset_1 
 c     write(6,*) ' OFFSET2:', index_values(2), 1+offset_2, 
 c    &                         extents(2)+offset_2 
       call comp_return_ovl(data, 1+offset_1, extents(1)+offset_1,
      *           1+offset_2, extents(2)+offset_2, ncenters,
-     *           tcoords, scr, iscr)
+     *           zscr, tcoords, scr, iscr)
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
       call delete_scratch_array(ciscr)
+      call delete_scratch_array(czscr)
 
       return
       end

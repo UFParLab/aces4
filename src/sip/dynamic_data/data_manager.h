@@ -88,13 +88,14 @@ public:
 	void enter_scope();
 	void leave_scope();
 
-
 	//immutable data for convenience
 	const BlockManager& block_manager() const { return block_manager_; }	// For printing
 
+	ContiguousArrayManager& contiguous_array_manager() { return contiguous_array_manager_; }
 
 private:
 
+	const SipTables& sip_tables_;
 
 	//dynamic state
 	std::vector<int> index_values_; //maps index_table id's into current value of the represented index.  undefined_index_value if not defined.
@@ -106,8 +107,7 @@ private:
 	ContiguousArrayManager contiguous_array_manager_;
 	ContiguousLocalArrayManager contiguous_local_array_manager_;  //this shares the map with block_manager_
 
-	//immutable data for convenience
-	const SipTables& sip_tables_;
+
 
 	friend class Interpreter;
 	friend class SialOpsParallel;

@@ -33,6 +33,7 @@
 #include <stack>
 #include "block_id.h"
 #include "block.h"
+#include "cached_block_map.h"
 
 namespace sip {
 class SipTables;
@@ -84,7 +85,7 @@ public:
 	 *
 	 * @param sipTables
 	 */
-	ContiguousArrayManager(const sip::SipTables&, setup::SetupReader&);
+	ContiguousArrayManager(const sip::SipTables&, setup::SetupReader&, CachedBlockMap& block_map_);
 	~ContiguousArrayManager();
 
 
@@ -204,6 +205,7 @@ private:
 
 	/** map from array slot number to block containing contiguous array */
 	ContiguousArrayMap contiguous_array_map_;
+	CachedBlockMap& block_map_; //used only for allocating and deallocating block data
 	const sip::SipTables & sip_tables_;
 	setup::SetupReader & setup_reader_;
 

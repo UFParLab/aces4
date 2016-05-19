@@ -14,6 +14,7 @@
 #include <iostream>
 #include "block_id.h"
 #include "sip_interface.h"
+#include "sip_tables.h" 
 
 
 namespace sip {
@@ -21,7 +22,8 @@ template <typename BLOCK_TYPE> class IdBlockMap;
 template <typename BLOCK_TYPE> std::ostream& operator<<( std::ostream&, const IdBlockMap<BLOCK_TYPE>& );
 template <typename BLOCK_TYPE> std::ostream& operator<<(std::ostream&, const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap*);
 
-
+template <typename BLOCK_TYPE>
+void list_blocks(const SipTables&, const IdBlockMap<BLOCK_TYPE>&, std::vector<std::pair<BlockId,size_t > >& );
 
 template <typename BLOCK_TYPE>
 class IdBlockMap {
@@ -109,7 +111,7 @@ public:
 	 */
 	void insert_block(const BlockId& block_id, BLOCK_TYPE* block_ptr) {
 		if (block_id.is_contiguous_local()){
-			sial_check(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " +
+			SIAL_CHECK(is_disjoint(block_id), "attempting to insert overlapping local contiguous into block map " ,
 					     current_line());
 		}
 		int array_id = block_id.array_id();
@@ -123,7 +125,7 @@ public:
 		std::pair<BlockId, BLOCK_TYPE*> bid_pair (block_id, block_ptr);
 		std::pair<typename PerArrayMap::iterator, bool> ret;
 		ret = map_ptr->insert(bid_pair);
-		sial_check(ret.second,
+		SIAL_CHECK(ret.second,
 		std::string("attempting to insert block that already exists into the block_map. Probable cause: sial program allocating block that exists"), current_line());
 	}
 
@@ -142,7 +144,7 @@ public:
 //		BLOCK_TYPE* block_ptr = (it != map_ptr->end() ? it->second : NULL);
 //		map_ptr->erase(it);
 //		return block_ptr;
-		sial_check(it != map_ptr->end(),
+		SIAL_CHECK(it != map_ptr->end(),
 				"attempting to remove a non-existent block ",
 				current_line() );
 		BLOCK_TYPE* block_ptr = it->second;
@@ -157,6 +159,7 @@ public:
 	 */
 	void delete_block(const BlockId& id){
 		BLOCK_TYPE* block_ptr = get_and_remove_block(id);
+		free_data(block_ptr->data_, block_ptr->size());
 		delete(block_ptr);
 	}
 
@@ -179,6 +182,9 @@ public:
 		return map_ptr;
 	}
 
+	PerArrayMap* per_array_map_or_null(int array_id){
+		return block_map_.at(array_id);
+	}
 	/**
 	 * Public utility method to get the total bytes in all the blocks (block data_) in a PerArrayMap
 	 * @param map_ptr
@@ -256,9 +262,10 @@ public:
 		std::size_t tot_byes_inserted = 0;
 		//get current map and warn if it contains blocks.  Delete any map that exists
 	    PerArrayMap* current_map = block_map_.at(array_id);
-	    if (!check_and_warn(current_map == NULL || current_map->empty(),"replacing non-empty array in insert_per_array_map"));
-	    delete_per_array_map_and_blocks(array_id);
-
+	    if (current_map != NULL){
+	        delete_per_array_map_and_blocks(array_id);
+	        warn("replacing an existing array in block_map");
+	    }
 	    //create a new map with Ids updated to new array_id
 	    PerArrayMap* new_map = new PerArrayMap();
 	    typename PerArrayMap::iterator it;
@@ -271,6 +278,20 @@ public:
 		delete map_ptr;
 		return tot_byes_inserted;
 	}
+
+
+	/**
+	 * Simply inserts the given PerArrayMap, replacing the reference to the previous (if any) map.
+	 * It is the callers responsibility to handle resources owned by the replaced map.
+	 *
+	 */
+	PerArrayMap* update_per_array_map(int array_id, PerArrayMap* new_map){
+		PerArrayMap* old_map = block_map_.at(array_id);
+		block_map_.at(array_id) = new_map;
+		return old_map;
+	}
+
+
 
 
 	/**
@@ -296,7 +317,7 @@ public:
 
     friend class Interpreter;
 	friend std::ostream& operator<< <> (std::ostream&, const IdBlockMap<BLOCK_TYPE>&);
-
+	friend void list_blocks <> (const SipTables& , const IdBlockMap<BLOCK_TYPE>& , std::vector<std::pair<BlockId,size_t > > &);
 private:
 
 	BlockMapVector block_map_;
@@ -304,6 +325,21 @@ private:
 	DISALLOW_COPY_AND_ASSIGN(IdBlockMap<BLOCK_TYPE>);
 };
 
+template <typename BLOCK_TYPE>
+void list_blocks(const SipTables& sip_tables, const IdBlockMap<BLOCK_TYPE>& obj, std::vector<std::pair<BlockId,size_t > >& vec) {
+	typename IdBlockMap<BLOCK_TYPE>::size_type size = obj.size();
+	for (unsigned i = 0; i < size; ++i){
+		const typename IdBlockMap<BLOCK_TYPE>::PerArrayMap* map_ptr = obj.block_map_.at(i);
+		if (map_ptr != NULL && !map_ptr->empty()){
+			typename IdBlockMap<BLOCK_TYPE>::PerArrayMap::const_iterator it;
+			for (it = map_ptr->begin(); it != map_ptr->end(); ++it){
+				BlockId id = it->first;
+				size_t block_num = sip_tables.block_number(id);
+				vec.push_back(std::pair<BlockId,size_t>(id,block_num));
+			}
+		}
+	}
+}
 
 /**
  * returns an os stream with the block contained in the id_block_map

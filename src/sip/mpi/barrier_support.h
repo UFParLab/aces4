@@ -18,7 +18,13 @@
  * MPI barrier.
  *
  * The server updates its section number each time it receives a message, and checks that the sequence
- * of section numbers is monotone.
+ * of section numbers is monotone.  (It is possible that any given server will not receive any messages
+ * in a particular section.)
+ *
+ * Because of limitations on the size of the tag, the section number is sent in the message itself.
+ * It is only needed in the first message of multi-message operations (like put).
+ *
+ * Transaction numbers wrap around.
  *
  *
  *
@@ -27,10 +33,12 @@
  * It is useful for each "transaction" initiated by a worker to have a unique identifier. To
  * accomplish this, a transaction counter is also maintained.  Each message belonging to a transaction--
  * for example the put and corresponding put_data messages--has the same transaction number.
- * The section number, transaction number, and message type are combined to form the message tag.
+ * The transaction number and message type are combined to form the message tag.
  *
  * Because this class is entirely small inlined functions, it does not have a corresponding .cpp file.
  *
+ * The static method check_tag should be called on every machine to ensure that assumptions
+ * about endian-ness, etc. are met.
  */
 
 #ifndef BARRIER_SUPPORT_H_
@@ -38,15 +46,32 @@
 
 #include <sstream>
 #include "sip_mpi_constants.h"
+#include "sip_interface.h"
+#include "sip.h"
 
 namespace sip {
-
+class SIPServer;
 class BarrierSupport {
 public:
 
+
+
+	//The MPI standard guarantees that  MPI_TAG_UB, the maximum tag value
+	//is at least 32767.  In our scheme for generating tags, this allow 10
+	//bits for the transaction number.  In OpenMPI MPI_TAG_UB is 2147483647,
+	//allowing 26.  For the time being, we will simply conform to the standard.
+
+//	const static int NUM_MESSAGE_TYPE_BITS = 4;
+//	const static int NUM_TRANSACTION_NUMBER_BITS = 26;
+//	const static int LEADING_PADDING_BITS = 1;
+//	const static int TRAILING_PADDING_BITS = 1;
+
+//portable values
 	const static int NUM_MESSAGE_TYPE_BITS = 4;
-	const static int NUM_TRANSACTION_NUMBER_BITS = 26;
-	const static int NUM_PADDING_BITS = 1;
+	const static int NUM_TRANSACTION_NUMBER_BITS = 10;
+	const static int LEADING_PADDING_BITS = 1;
+	const static int TRAILING_PADDING_BITS = 17;
+
 
 	BarrierSupport():
 		section_number_(0),
@@ -61,10 +86,10 @@ public:
 	 * Each tag (a 32 bit integer) contains these fields
 	 */
 	typedef struct {
-        unsigned int :						NUM_PADDING_BITS;
+        unsigned int :						LEADING_PADDING_BITS;
 		unsigned int message_type : 		NUM_MESSAGE_TYPE_BITS;
 		unsigned int transaction_number : 	NUM_TRANSACTION_NUMBER_BITS;
-        unsigned int :						NUM_PADDING_BITS;
+        unsigned int :						TRAILING_PADDING_BITS;
 	} SIPMPITagBitField;
 
 	/**
@@ -102,7 +127,6 @@ public:
 	/**
 	 * Constructs a tag from its constituent parts
 	 * @param message_type
-	 * @param section_number
 	 * @param transaction_number
 	 * @return
 	 */
@@ -122,11 +146,10 @@ public:
 	 * Called by the server loop for each message it receives.  Extracts message_type and transaction_number,
 	 * @param tag
 	 * @param message_type
-	 * @param section_number
 	 * @param transaction_number
 	 * @return
 	 */
-	void decode_tag(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& transaction_number){
+	static void decode_tag(int mpi_tag, SIPMPIConstants::MessageType_t& message_type, int& transaction_number){
 		message_type = extract_message_type(mpi_tag);
 		transaction_number = extract_transaction_number(mpi_tag);
 	}
@@ -136,11 +159,16 @@ public:
 	 * Returns true if the section number was updated.
 	 * @param section_number
 	 * @return true if section number was different that this->section_number_.
+	 *
+	 * TODO  reconcile this with sip_server.cpp.  Some of the methods already do the check.
+	 * Getting rid of it here would allow eliminating the dependency on
+	 * sip_interface.h, which isn't really defined at servers anyway.
 	 */
 	bool check_section_number_invariant(int section_number) {
 		bool section_number_changed = false;
-		check(section_number >= this->section_number_,
-				"Section number invariant violated. Received request from an older section !");
+		CHECK_WITH_LINE(section_number >= this->section_number_,
+				"Section number invariant violated. Received request from an older section !",
+				    current_line());
 		if (section_number > this->section_number_) {
 			this->section_number_ = section_number;
 			section_number_changed = true;
@@ -149,7 +177,7 @@ public:
 	}
 
 	/**
-	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and session number as the given tag
+	 * Constructs a PUT_ACCUMULATE DATA tag with the same section number and transaction number as the given tag
 	 * Called by the server
 	 *
 	 * Requires:  the given tag is a PUT_ACCUMULATE tag.
@@ -163,7 +191,7 @@ public:
 	}
 
 	/**
-	 * Constructs a PUT_DATA tag with the same section number and session number as the given tag
+	 * Constructs a PUT_DATA tag with the same section number and transaction number as the given tag
 	 * Called by the server
 	 *
 	 * Requires:  the given tag is a PUT tag.
@@ -309,6 +337,28 @@ public:
 		return tag;
 	}
 
+	/**
+	 * Create and return a tag with maximal value.
+	 * The caller can compare with MPI_TAG_UP and check that the returned tag is legal
+	 * according to the MPI standard.  If not, the tag structure probably needs
+	 * to be modified for a different endianess.
+	 * @return
+	 */
+	int get_max_tag(){
+	int tag = 0;
+	SIPMPITagBitFieldConverter bc;
+    bc.i = 0;
+    int mt = 1;
+    for (int i = 0; i < NUM_MESSAGE_TYPE_BITS; ++i) mt*=2;
+	bc.bf.message_type = mt-1;
+	int tn = 1;
+	for (int i = 0; i < NUM_TRANSACTION_NUMBER_BITS; ++i) tn*=2;
+	bc.bf.transaction_number = tn-1;
+	tag = bc.i;
+	return tag;
+}
+
+//	}
 
 	/**
 	 * Called by worker at barrier to increment section_number_ and reset transaction_number_;
@@ -351,6 +401,7 @@ private:
 	 */
 	unsigned int transaction_number_;
 
+	friend class SIPServer;
 	DISALLOW_COPY_AND_ASSIGN(BarrierSupport);
 
 };

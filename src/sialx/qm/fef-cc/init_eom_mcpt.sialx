@@ -1,0 +1,131 @@
+import "reom_rhf_defs.sialx" 
+import "reom_vars.sialx"
+
+SIAL init_mcpt
+
+
+print "restoring mcpt fock and monomer mo vectors"
+restore_persistent FFock_oo "MOI_Fock_oo"
+restore_persistent FFock_vv "MOI_Fock_vv"
+restore_persistent Fca_o "MOI_Ca_o"
+restore_persistent Fca_v "MOI_Ca_v"
+restore_persistent T2ab "MOI_T2ab"
+restore_persistent T1A "MOI_T1"
+restore_persistent FwC "MOI_wC"
+
+server_barrier
+execute get_my_rank rank
+myrank = (int)rank
+if myrank == root
+do p
+    do q
+	Fock_a[p,q] = 0.0
+    enddo q
+enddo p
+do p
+    do mu
+	ca[mu,p] = 0.0
+    enddo mu
+enddo p
+print "placing Fock"
+do i
+    do i1
+	get FFock_oo[i,i1]
+	fock_a[i,i1] = FFock_oo[i,i1]
+    enddo i1
+enddo i
+#
+do a
+    do a1
+	get FFock_vv[a,a1]
+	fock_a[a,a1] = FFock_vv[a,a1]
+    enddo a1
+enddo a
+#
+print "placing MO coefficients"
+do mu
+    do i
+	get Fca_o[mu,i]
+	ca[mu,i] = Fca_o[mu,i]
+    enddo i
+#
+    do a
+	get Fca_v[mu,a]
+	ca[mu,a] = Fca_v[mu,a]
+    enddo a
+enddo mu
+#
+print "placing wC into Fai fock"
+do a
+    do i
+	get FwC[a,i]
+	Tai[a,i] = FwC[a,i]
+	Tia[i,a] = FwC[a,i]
+	fock_a[a,i] = Tai[a,i]
+	fock_a[i,a] = Tia[i,a]
+    enddo i
+enddo a
+server_barrier
+endif
+broadcast_from root fock_a
+broadcast_from root ca
+
+
+print "futz with amplitudes"
+# form aa t2 amp
+PARDO a, i, b, j 
+   REQUEST                     T2ab[a,i,b,j]  
+   REQUEST                     T2ab[a,j,b,i]  
+   taiai[a,i,b,j]            = T2ab[a,i,b,j] 
+   t1aiai[a,i,b,j]           = T2ab[a,j,b,i] 
+   taiai[a,i,b,j]           -= t1aiai[a,i,b,j] 
+   PREPARE T2aa[a,i,b,j] = taiai[a,i,b,j] 
+ENDPARDO a, i, b, j 
+
+server_barrier
+# copy t2 into lambda
+PARDO a, b, i, j 
+#
+    request T2ab[a,i,b,j]
+    request T2aa[a,i,b,j]
+    Tiajb[i,a,j,b] = T2ab[a,i,b,j]
+    Tiaia[i,a,j,b] = T2aa[a,i,b,j]
+    prepare Lam2ab[i,a,j,b] = Tiajb[i,a,j,b]
+    prepare Lam2aa[i,a,j,b] = Tiaia[i,a,j,b]
+#
+ENDPARDO a, b, i, j 
+# copy t1 into lambda
+pardo a,i
+    get T1A[a,i]
+    Tia[i,a] = T1A[a,i]
+    put Lam1A[i,a] = Tia[i,a]
+endpardo a,i
+
+server_barrier
+do p
+    do q
+	print Fock_a[p,q] 
+    enddo q
+enddo p
+#do p
+#    do mu
+#	print ca[mu,p] 
+#    enddo mu
+#enddo p
+
+server_barrier
+has_singles = 1.0
+is_ccpt = 6.0 # mcpt job
+set_persistent has_singles "has_singles"
+set_persistent is_ccpt "is_ccpt"
+set_persistent scf_energy "scf_energy"
+set_persistent fock_a "fock_a"
+set_persistent ca "ca"
+set_persistent T2aa "T2old_aa"
+set_persistent T2ab "T2old_ab"
+set_persistent Lam2aa "L2old_aa"
+set_persistent Lam2ab "L2old_ab"
+set_persistent t1a "t1a_old"
+set_persistent Lam1a  "l1a_old"
+server_barrier
+endSIAL init_mcpt

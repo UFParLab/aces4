@@ -1,0 +1,67 @@
+sial rccsd_rhf_defs
+
+#
+predefined  int norb   #total number of atomic orbital segments 
+###predefined  int bocc   # begin of occupied orbital segment range (no spin)
+predefined  int naocc  # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc  # number of occupied molecular orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc   # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+###predefined  int bvirtorb
+###predefined  int evirtorb
+predefined  int bavirtorb
+predefined  int bbvirtorb
+predefined  int eavirtorb
+predefined  int ebvirtorb
+predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
+predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
+predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+
+predefined  scalar cc_conv
+
+scalar has_singles
+scalar is_ccpt
+
+aoindex aces_defs_mu = 1: norb  
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC.
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC.
+static fock_a[aces_defs_pa, aces_defs_pa]
+static fock_b[aces_defs_pb, aces_defs_pb]
+static fockrohf_a[aces_defs_mu,aces_defs_mu]
+static fockrohf_b[aces_defs_mu,aces_defs_mu]
+
+scalar scf_energy  
+scalar ccsd_energy  
+scalar ccsdpt_energy  
+scalar totenerg
+
+static oed_nai[aces_defs_mu,aces_defs_mu]
+static oed_kin[aces_defs_mu,aces_defs_mu]
+static oed_ovl[aces_defs_mu,aces_defs_mu]
+
+special compute_int_scratchmem uuu
+special compute_ubatch6 wrruu
+special compute_integral_batch w
+special energy_denominator_rhf ur 
+special return_sval rw
+special compute_diis u
+special print_static_array r
+special aoladder_contraction rru
+special get_my_rank w
+special stripi ru
+special set_ijk_aaa w
+special set_ijk_aab w
+special compute_dipole_integrals wur
+
+endsial rccsd_rhf_defs
+
+

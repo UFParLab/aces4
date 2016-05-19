@@ -1,0 +1,521 @@
+                           SIAL CCSD_RHF_SV1
+predefined  int norb
+predefined  int naocc
+predefined  int nbocc
+predefined  int baocc
+predefined  int bbocc
+predefined  int eaocc
+predefined  int ebocc
+predefined  int bavirt
+predefined  int bbvirt
+predefined  int eavirt
+predefined  int ebvirt
+predefined  int bavirtorb
+predefined  int bbvirtorb
+predefined  int eavirtorb
+predefined  int ebvirtorb
+special compute_integral_batch w
+#
+#-------------------------------------------------------------------------------
+#
+# Declare indeces 
+# --------------- 
+#
+#
+      aoindex mu     = 1: norb 
+      aoindex nu     = 1: norb
+      aoindex lambda = 1: norb
+      aoindex sigma  = 1: norb
+#
+      moaindex i = baocc: eaocc
+      moaindex i1= baocc: eaocc
+      moaindex i2= baocc: eaocc
+      moaindex i3= baocc: eaocc
+#
+      moaindex a = bavirt: eavirt
+      moaindex a1= bavirt: eavirt
+      moaindex a2= bavirt: eavirt
+      moaindex a3= bavirt: eavirt
+#
+      moaindex j = baocc: eaocc
+      moaindex j1= baocc: eaocc
+      moaindex j2= baocc: eaocc
+      moaindex j3= baocc: eaocc
+#
+      moaindex b = bavirt: eavirt
+      moaindex b1= bavirt: eavirt
+      moaindex b2= bavirt: eavirt
+      moaindex b3= bavirt: eavirt
+#
+      moaindex p = baocc: eavirt
+      moaindex p1= baocc: eavirt
+      moaindex p2= baocc: eavirt
+      moaindex p3= baocc: eavirt
+#
+      moaindex q = baocc: eavirt
+      moaindex q1= baocc: eavirt
+      moaindex q2= baocc: eavirt
+      moaindex q3= baocc: eavirt
+
+special compute_int_scratchmem uuu
+      static oed_ovl[mu,nu]
+      scalar imax
+      scalar zmax
+# 
+# Declare static arrays 
+# --------------------- 
+#
+      distributed t1a_old[a,i] 
+      distributed t1a_new[a,i] 
+#
+      distributed Fae_a[a,a1] 
+      distributed Fme_a[i,a] 
+      distributed Fmi_a[i,i1] 
+      distributed DCa[mu,p] 
+      distributed FTa[p,p1] 
+
+      static zz[mu,nu] 
+      static ca[mu,p] 
+      static fock_a[p,p1] 
+#
+#
+# Arrays used in transformation for AO2 algorithm
+# -----------------------------------------------
+#
+      temp Txixi[mu,i1,lambda,i]
+      temp Txxii[mu,nu,i1,i]
+      temp Tixxi[i1,nu,lambda,i]
+      temp Txipi[mu,i,p,i1]
+      temp Tpipi[p1,i,p,i1]
+      temp T1pipi[p1,i,p,i1]
+      temp Tixai[i,mu,a,i1]
+      temp Txaii[mu,a,i,i1]
+      temp Tiaai[i,a1,a,i1]
+      temp Taaii[a,a1,i,i1]
+      temp Txaai[mu,a1,a,i]
+      temp Taaai[a2,a,a1,i]
+      temp Txxai[mu,nu,a,i]
+#
+      served VSpipi[p1,i,p,i1]
+      served Viaai[i,a1,a,i1] 
+      served Vaaii[a,a1,i,i1]
+      served Vaaai[a2,a,a1,i]
+#
+      temp Txixj[mu,i,nu,j]
+      served Vpiqj[p,i,q,j]
+#
+# End Arrays used in transformation for AO2 algorithm
+# --------------------------------------------------- 
+#
+# Declare temporary arrays 
+# ------------------------ 
+#
+      temp Txxxi[mu,nu,lambda,i]
+      temp T1xixi[mu,i,nu,i1]
+      temp Txiix[mu,i,i1,nu]
+      temp Txjjx[mu,j,j1,nu]
+      temp Txijx[mu,i,j,nu]
+      temp Txpii[mu,p,i,i1]
+      temp Txqii[mu,q,i,i1]
+      temp Tppii[p,p1,i,i1]
+      temp Tqqii[q,q1,i,i1]
+      temp Txpjj[mu,p,j,j1]
+      temp Txqjj[mu,q,j,j1]
+      temp Tppjj[p,p1,j,j1]
+      temp Tqqjj[q,q1,j,j1]
+      temp Tixpi[i,mu,p,i1]
+      temp Tippi[i,p,p1,i1]
+      temp Tjxqj[j,mu,q,j1]
+      temp Tjqqj[j,q,q1,j1]
+      temp Tixqj[i,mu,q,j]
+      temp Tipqj[i,p,q,j]
+#
+      temp Taiai[p,i,p1,i1]
+      temp T1aiai[p,i,p1,i1]
+      temp T2aiai[p,i,p1,i1]
+      temp T3aiai[p,i,p1,i1]
+      temp Tbjbj[q,j,q1,j1]
+      temp T1bjbj[q,j,q1,j1]
+      temp T2bjbj[q,j,q1,j1]
+      temp T3bjbj[q,j,q1,j1]
+      temp Taibj[p,i,q,j]
+      temp T1aibj[p,i,q,j]
+      temp T2aibj[p,i,q,j]
+      temp T3aibj[p,i,q,j]
+      temp T4aibj[p,i,q,j]
+      temp T5aibj[p,i,q,j]
+#
+      temp Txxxp[mu,nu,lambda,i]
+      temp Txxxq[mu,nu,lambda,j]
+      temp Txxpp[mu,nu,p1,i]
+      temp Txxqq[mu,nu,q1,j]
+      temp Txppp[mu,p2,p1,i]
+      temp Txqpp[mu,q,p1,i]
+      temp Txqqq[mu,q2,q1,j]
+      temp Txpqq[mu,p,q1,j]
+      temp Tpppp[p3,p2,p1,p]
+      temp Tqqqq[q3,q2,q1,q]
+      temp Tppqq[p1,p,q1,j]
+      temp Tqqpp[q1,q,p1,i]
+      temp Tixxx[i,mu,nu,sigma] 
+      temp Tipxx[i,p,nu,sigma] 
+      temp Tipqx[i,p,q,sigma] 
+      temp Tipqq[i,p,q,q1] 
+      temp Txiai[lambda,i,a1,i1] 
+      temp Txjbj[lambda,j,b1,j1] 
+      temp Txibj[lambda,i,b1,j1] 
+#
+      temp tmp1_aiai[a,i,a1,i1] 
+      temp tmp2_aiai[a,i,a1,i1] 
+      temp tmp3_aiai[a,i,a1,i1] 
+      temp tmp1_aibj[a,i,b,j] 
+      temp tmp2_aibj[a,i,b,j] 
+#
+      temp Tai[a,i] 
+      temp T1ai[a,i] 
+      temp T2ai[a,i] 
+      temp T3ai[a,i] 
+      temp Tbj[b,j] 
+      temp T1bj[b,j] 
+      temp T2bj[b,j] 
+#
+      temp Taa[a,a1] 
+      temp T1aa[a,a1] 
+      temp T1bb[b,b1] 
+      temp Tae_a[a,a1] 
+      temp Tae_b[b,b1] 
+#
+      temp Tia[i,a] 
+      temp T1ia[i,a] 
+      temp Tjb[j,b] 
+      temp T1jb[j,b] 
+      temp Tme_a[i,a] 
+      temp Tme_b[j,b] 
+#
+      temp Tii[i,i1] 
+      temp T1ii[i,i1] 
+      temp Tjj[j,j1] 
+      temp T1jj[j,j1] 
+      temp Tmi_a[i,i1] 
+      temp Tmi_b[j,j1] 
+#
+      temp T1pppp[p,p1,p2,p3] 
+      temp T1qqqq[q,q1,q2,q3] 
+      temp Taiii[a,i,i1,i2] 
+      temp T1aiii[a,i,i1,i2] 
+#
+      temp  Tiiii[i,i1,i2,i3] 
+      temp T1iiii[i,i1,i2,i3] 
+#
+      temp  Tjjjj[j,j1,j2,j3] 
+      temp T1jjjj[j,j1,j2,j3] 
+      temp  Tbjjj[b,j,j1,j2] 
+      temp T1bjjj[b,j,j1,j2] 
+#
+      temp  Tiijj[i,i1,j2,j3] 
+      temp T1iijj[i,i1,j2,j3] 
+#
+      temp  tmp_aa[a,a1] 
+      temp tmp1_aa[a,a1] 
+      temp  tmp_ii[i,i1] 
+      temp tmp1_ii[i,i1] 
+#
+      temp  Tiiai[i,i1,a,i2] 
+      temp T1iiai[i,i1,a,i2] 
+#
+      temp  tmp_bb[b,b1] 
+      temp tmp1_bb[b,b1] 
+      temp  tmp_jj[j,j1] 
+      temp tmp1_jj[j,j1] 
+#
+      temp  Tjjbj[j,j1,b,j2] 
+      temp T1jjbj[j,j1,b,j2] 
+# 
+      temp T1aaai[a,a1,a2,i]  
+      temp T2aaai[a,a1,a2,i]  
+      temp Taaaa[a,a1,a2,a3]  
+      temp T1aaaa[a,a1,a2,a3]  
+#
+      temp T1bbbj[b,b1,b2,j]  
+      temp T2bbbj[b,b1,b2,j]  
+      temp Tbbbb[b,b1,b2,b3]  
+      temp T1bbbb[b,b1,b2,b3]  
+#
+      temp Taabb[a,a1,b,b1]  
+      temp T1aabb[a,a1,b,b1]  
+#
+      temp R1aiai[a,i,a1,i1] 
+      temp R2aiai[a,i,a1,i1] 
+      temp R3aiai[a,i,a1,i1] 
+      temp R4aiai[a,i,a1,i1] 
+      temp R1bjbj[b,j,b1,j1] 
+      temp R2bjbj[b,j,b1,j1] 
+      temp R3bjbj[b,j,b1,j1] 
+      temp R4bjbj[b,j,b1,j1] 
+      temp R1aibj[a,i,b,j] 
+      temp R2aibj[a,i,b,j] 
+      temp R3aibj[a,i,b,j] 
+      temp R4aibj[a,i,b,j] 
+#
+      temp T1iaai[i,a,a1,i1] 
+      temp T2iaai[i,a,a1,i1] 
+      temp T1jbbj[j,b,b1,j1] 
+      temp T2jbbj[j,b,b1,j1] 
+      temp T1iabj[i,a,b,j] 
+      temp T2iabj[i,a,b,j] 
+      temp Tjjpp[j,j1,p,p1] 
+      temp T1jjpp[j,j1,p,p1] 
+      temp T2jjpp[j,j1,p,p1] 
+      temp  Tiiqq[i,i1,q,q1] 
+      temp T1iiqq[i,i1,q,q1] 
+      temp T2iiqq[i,i1,q,q1] 
+      temp  Tjjai[j,j1,a,i] 
+      temp T1jjai[j,j1,a,i] 
+      temp T2jjai[j,j1,a,i] 
+      temp  Tiibj[i,i1,b,j] 
+      temp T1iibj[i,i1,b,j] 
+      temp T2iibj[i,i1,b,j] 
+      temp  Tjbai[j,b,a,i]  
+      temp T1jbai[j,b,a,i]  
+      temp T2jbai[j,b,a,i]  
+      temp  Taijj[a,i,j,j1] 
+      temp T1aijj[a,i,j,j1] 
+      temp Tqqip[a,i,b,b1]  
+#
+      temp tpx[p,mu] 
+      temp t1px[p,mu] 
+      temp tqx[q,mu] 
+      temp t1qx[q,mu] 
+      temp txi[mu,i] 
+      temp t1xi[mu,i] 
+      temp txj[mu,j] 
+      temp t1xj[mu,j] 
+#
+# Declare distributed arrays 
+# -------------------------- 
+#
+      served T2new_ab[a,i,b,j]
+      served T2old_aa[a,i,a1,i1]
+      served T2old_ab[a,i,b,j]
+#
+      served Tau_ab[a,i,b,j]
+      served Taup_aa[a,i,a1,i1]
+      served Taup_ab[a,i,b,j]
+#
+      served Wiibb[i1,i,b,b1]    
+      served Wjjaa[j1,j,a,a1]      
+#
+# Declare served arrays 
+# --------------------- 
+#
+      temp AOINT[mu,nu,lambda,sigma] 
+      local LTAO_ab[lambda,i,sigma,i1] 
+      scalar ncount1
+      scalar ncount2
+      scalar jcount 
+      scalar kcount 
+      scalar niter 
+      scalar temp_order  
+      scalar zero
+      scalar one
+      scalar two
+      scalar five
+      scalar six
+      scalar seven
+      scalar energy 
+#
+# Arrays needed for AOLADDER contribution
+# ---------------------------------------
+#
+     temp Zab[lambda,i,b,j]
+     temp Yab[lambda,i,mu,j]
+     temp Y1ab[lambda,i,mu,j]
+#
+     temp TXaiai[a,i,nu,i1]
+     temp Taixi[a,i,nu,i1]   
+     temp TYaiai[a,i,a1,i1]
+     temp TY1aiai[a,i,a1,i1]
+     temp TXbjbj[b,j,nu,j1]
+     temp Tbjxj[b,j,nu,j1]
+     temp TYbjbj[b,j,b1,j1]
+     temp TY1bjbj[b,j,b1,j1]
+     temp TXaibj[a,i,nu,j]
+     temp TZaibj[a,i,nu,j]
+     temp Taixj[a,i,nu,j]
+     temp TYaibj[a,i,b,j]
+#
+     served TAO_ab[lambda,i,sigma,j]
+     served T2AO_ab[lambda,i,sigma,j]
+     distributed t1a_ax[a,mu] 
+     distributed t1a_xi[mu,i] 
+     distributed t1b_xj[mu,j] 
+     served TDaixj[a,i,nu,j]
+     local LDaixj[a,i,nu,j] 
+#
+# local arrays used for data storage
+# ---------------------------------- 
+#
+     local Liiai[i2,i,a,i1] 
+     local L1iiai[i,i1,a2,i2] 
+     local L2iiai[i2,i1,a2,i]  
+     local L3iiai[i,i1,a,i2]  
+     local L4iiai[i2,i1,a,i]  
+     local Laiai[a,i,a2,i1] 
+     local L1aiai[a,i,a1,i2] 
+     local L2aiai[a1,i1,a2,i] 
+     local L3aiai[a2,i1,a,i2] 
+     local L4aiai[a1,i,a2,i1] 
+     local Laaai[a,a2,a1,i] 
+#
+     local Ljjbj[j2,j,b,j1] 
+     local Lbjbj[b,j,b2,j1] 
+     local L1bjbj[b,j,b1,j2] 
+     local L2bjbj[b1,j1,b2,j] 
+     local L3bjbj[b2,j1,b,j2] 
+     local L4bjbj[b1,j,b2,j1] 
+     local Lbbbj[b,b2,b1,j] 
+#
+     local Laijj[a,i,j1,j] 
+     local Laibj[a,i,b1,j] 
+     local L1aibj[a1,i,b,j] 
+     local L2aibj[a,i,b,j2] 
+     local L3aibj[a,i1,b,j] 
+     local L4aibj[a,i,b1,j] 
+     local Liibj[i1,i,b,j] 
+     local L1iibj[i,i1,b,j] 
+     local Lbbai[b,b1,a,i] 
+     local Laabj[a,a1,b,j] 
+     local LLaiai[a,i,a1,i1] 
+     local Lxiai[lambda,i,a1,i1] 
+     local LLbjbj[b,j,b1,j1] 
+     local Lxjbj[lambda,j,b1,j1] 
+     local LLaibj[a,i,b,j] 
+     local Lxibj[lambda,i,b,j] 
+     local L1xixi[mu,i,nu,i1]  
+     local L2xixi[nu,i1,mu,i]  
+     local L1xjxj[mu,j,nu,j1]  
+     local L2xjxj[nu,j1,mu,j]  
+     local L1xixj[mu,i,nu,j]  
+     local Laiii[a,i,i2,i1] 
+     local L1aiii[a1,i2,i,i1] 
+     local Lbjjj[b,j,j2,j1] 
+     local L1bjjj[b1,j2,j,j1] 
+     local Ljjai[a,i,j,j1] 
+#
+     local LWaaai[a2,a,a1,i1] 
+     local LWbbbj[b2,b,b1,j1] 
+     local LWbbai[b1,b,a,i] 
+     local LWaabj[a1,a,b,j] 
+     local LXbbai[b1,b,a1,i1] 
+     local LXaabj[a1,a,b1,j1] 
+     local LWaiai[a2,i,a,i1] 
+     local LWbjbj[b2,j,b,j1] 
+     local LWaibj[a,i,b,j] 
+     local LWiaai[i1,a,a2,i]
+     local LWjbai[j,b,a,i]
+#
+# Distributed two-particle arrays 
+# ------------------------------- 
+#
+     distributed Wminj_aa[i2,i,i3,i1] 
+     distributed Wminj_bb[j2,j,j3,j1] 
+     distributed Wminj_ab[i2,i,j3,j1] 
+#
+# Declare scalars 
+# --------------- 
+#
+      scalar ccsd_correlation
+      scalar ccsd_energy
+      scalar mp2_correlation
+      scalar etemp
+      scalar esum
+      scalar esuma
+      scalar esumb
+      scalar esumab
+      scalar ecorraa
+      scalar ecorrbb
+      scalar ecorrab
+      scalar ecorrT
+      scalar enew 
+      scalar eold 
+      scalar ecrit 
+      scalar ediff 
+#
+# Arrays/Scalars used exclusively in DIIS procedure. 
+# -------------------------------------------------- 
+#
+       served e1aibj[a,i,b,j]  
+       served e2aibj[a,i,b,j]  
+       served e3aibj[a,i,b,j]  
+       served e4aibj[a,i,b,j]  
+       served e5aibj[a,i,b,j]  
+       served e6aibj[a,i,b,j]  
+#
+       served e5aiai[a,i,b,j] 
+#
+
+     PROC AOLADDER  
+#
+#    ------------------------------------------------------------------------ 
+#
+#    First create and zero-out intermediate arrays
+#    ---------------------------------------------
+#
+     PARDO mu, nu, i, j
+           Txixi[mu,i,nu,j] = 1.0
+           PREPARE TAO_ab[mu,i,nu,j]  = Txixi[mu,i,nu,j]
+           T1xixi[mu,i,nu,j] = 0.0
+           PREPARE T2AO_ab[mu,i,nu,j]  = T1xixi[mu,i,nu,j]
+     ENDPARDO mu, nu, i, j
+#
+     server_barrier 
+
+#
+#    Contract AOINT with half back transformed Amplitudes 
+#    ----------------------------------------------------    
+#
+     etemp = 0.0
+     PARDO mu, nu, lambda, sigma
+     where mu < nu
+#
+           execute compute_integral_batch aoint[lambda,mu,sigma,nu] 
+#
+           DO i
+           DO j
+#
+              REQUEST                       TAO_ab[lambda,i,sigma,j] 
+              Yab[mu,i,nu,j]              = aoint[lambda,mu,sigma,nu]*TAO_ab[lambda,i,sigma,j]
+              Y1ab[nu,j,mu,i]             = Yab[mu,i,nu,j]
+#
+              PREPARE T2AO_ab[mu,i,nu,j] += Yab[mu,i,nu,j]
+              PREPARE T2AO_ab[nu,j,mu,i] += Y1ab[nu,j,mu,i]
+
+           esum = Y1ab[nu,j,mu,i] * Yab[mu,i,nu,j]
+	   etemp += esum
+#
+           ENDDO j
+           ENDDO i
+#
+     ENDPARDO mu, nu, lambda, sigma
+#
+     enew = 0.0
+     server_barrier  
+     collective enew += etemp
+     server_barrier
+     print enew
+#
+#    ------------------------------------------------------------------------ 
+#
+     ENDPROC AOLADDER  
+#
+#    ------------------------------------------------------------------------ 
+#
+      imax = 0.0 
+      zmax = 0.0 
+         execute compute_int_scratchmem oed_ovl zmax imax 
+     call AOLADDER
+                           ENDSIAL CCSD_RHF_SV1    
+#
+# EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE 
+#
+#

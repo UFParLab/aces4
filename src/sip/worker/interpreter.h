@@ -24,10 +24,12 @@
 #include "block_manager.h"
 #include "contiguous_array_manager.h"
 #include "data_manager.h"
-#include "sialx_timer.h"
 #include "config.h"
 #include "worker_persistent_array_manager.h"
 #include "sial_math.h"
+#include "tracer.h"
+#include "counter.h"
+#include "sip_mpi_attr.h"
 
 
 #ifdef HAVE_MPI
@@ -39,25 +41,25 @@
 class TestControllerParallel;
 class TestController;
 
+
 namespace sip {
 
 class LoopManager;
 class SialPrinter;
 class Tracer;
-
 class Interpreter {
 public:
 
 
-	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer, WorkerPersistentArrayManager* wpm);
-	Interpreter(const SipTables&, SialxTimer* timers, WorkerPersistentArrayManager* wpm = NULL);
-	Interpreter(const SipTables&, SialxTimer* timers, SialPrinter* printer);
+	Interpreter(const SipTables&,  SialPrinter* printer, WorkerPersistentArrayManager* wpm);
+	Interpreter(const SipTables&,  WorkerPersistentArrayManager* wpm = NULL);
+	Interpreter(const SipTables&,  SialPrinter* printer);
 	~Interpreter();
 
 
 	/** Static pointer to the current Interpreter.  This is
 	 * initialized in the Interpreter constructor and reset to NULL
-	 * in its destructor.  There should be at most on Interpreter instance
+	 * in its destructor.  There should be at most one Interpreter instance
 	 * at any given time.
 	 */
 	static Interpreter* global_interpreter;
@@ -176,6 +178,18 @@ public:
 	 */
 	void post_sial_program();
 
+	void gather_and_print_statistics(std::ostream& os){
+	    tracer_->gather();
+	    sial_ops_.reduce();
+	    if (SIPMPIAttr::get_instance().is_company_master()){
+	    	os << "Worker Statistics"<<std::endl << std::endl;
+	    	os << *tracer_;
+	    	os << std::endl;
+	    	os << "Worker wait_time_" << std::endl;
+	    	sial_ops_.print_op_table_stats(os, sip_tables_);
+	    	os << std::endl << std::flush;
+	    }
+	}
 
 
 	int arg0(){ return op_table_.arg0(pc); }
@@ -193,11 +207,9 @@ public:
 	 *
 	 */
 	int line_number() {
-		if (pc < op_table_.size())
 			return op_table_.line_number(pc);
-		else
-			return -1;// Past the end of the program. Probably being called by a test.
 	}
+
 	int get_pc(){
 		return pc;
 	}
@@ -262,8 +274,8 @@ private:
 
 	/** auxillary field needed by sialx timers.
 	 * If value is positive, then the timer corresponding to the line is on.
-	 * Should be initialized to value <= 0 **/
-	int timer_line_;
+	 * Should be initialized to  0  and timer 0 should be started right before the loop**/
+	int timer_pc_;
 
 	/** Manages per-line timers.
 	 *
@@ -275,9 +287,9 @@ private:
 
 	const OpTable & op_table_;  //owned by sipTables_, pointer copied for convenience
 
-	/** Data structure to hold timers.  Owned by
-	 * calling program.  May be NULL */
-	SialxTimer* sialx_timers_;
+//	/** Data structure to hold timers.  Owned by
+//	 * calling program.  May be NULL */
+//	SialxTimer* sialx_timers_;
 
 	/**
 	 * Owned by main program
@@ -363,24 +375,17 @@ private:
 
 	/**The next set of routines are helper routines in the interpreter whose function should be obvious from the name */
 	void handle_user_sub_op(int pc);
-//	void handle_assignment_op(int pc);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, Block::BlockPtr dblock);
 	void handle_contraction(int drank, const index_selector_t& dselected_index_ids, double* ddata, segment_size_array_t& dshapeget);
 	void handle_contraction_op(int pc);
-//	void handle_where_op(int pc);
-//	bool evaluate_where_clause(int pc);
-//	bool evaluate_double_relational_expr(int pc);
-//	bool evaluate_int_relational_expr(int pc);
-//	void handle_collective_sum_op(int source_array_slot, int dest_array_slot);
-//	void handle_sum_op(int pc, double factor);
 	void handle_block_add(int pc);
 	void handle_block_subtract(int pc);
-//	void handle_self_multiply_op(int pc);
 	void handle_slice_op(int pc);
 	void handle_insert_op(int pc);
 
 
 	bool interpret_where(int num_where_clauses);
+	void skip_where_clauses(int num_where_clauses);
 
 	void loop_start(LoopManager * loop);
 	void loop_end();
@@ -476,11 +481,51 @@ private:
 
 	Tracer* tracer_;
 
+
 	friend class ::TestControllerParallel;
 	friend class ::TestController;
 	friend class BalancedTaskAllocParallelPardoLoop; //for interpret_where
+	friend class Fragment_Nij_aa__PardoLoopManager;
+	friend class Fragment_Nij_a_a_PardoLoopManager;
+	friend class Fragment_Nij_oo__PardoLoopManager;
+	friend class Fragment_Nij_o_o_PardoLoopManager;
+	friend class Fragment_i_aaoo__PardoLoopManager;
+	friend class Fragment_i_aovo__PardoLoopManager;
+	friend class Fragment_i_aaaa__PardoLoopManager;
+	friend class Fragment_i_aoo__PardoLoopManager;
+	friend class Fragment_ij_aaa__PardoLoopManager;
+	friend class Fragment_ij_aa_a_PardoLoopManager;
+	friend class Fragment_ij_ao_ao_PardoLoopManager;
+	friend class Fragment_ij_aa_oo_PardoLoopManager;
+	friend class Fragment_ij_aa_vo_PardoLoopManager;
+	friend class Fragment_ij_aoa_o_PardoLoopManager;
+	friend class Fragment_ij_aoo_o_PardoLoopManager;
+	friend class Fragment_NRij_vovo__PardoLoopManager;
+	friend class Fragment_NRij_ao_ao_PardoLoopManager;
+	friend class Fragment_NRij_vo_ao_PardoLoopManager;
+	friend class Fragment_NRij_aa_aa_PardoLoopManager;
+	friend class Fragment_NRij_o_ao_PardoLoopManager;
+	friend class WhereFragment_i_aaa__PardoLoopManager;
+	friend class WhereFragment_i_aaaa__PardoLoopManager;
+	friend class WhereFragment_ij_aa_aa_PardoLoopManager;
+	friend class Fragment_Nij_aa_aa_PardoLoopManager;
+	friend class Fragment_i_aa__PardoLoopManager;
+	friend class Fragment_i_ap__PardoLoopManager;
+	friend class Fragment_i_pp__PardoLoopManager;
+	friend class Fragment_i_pppp__PardoLoopManager;
+	friend class Fragment_ij_ap_pp_PardoLoopManager;
+	friend class Fragment_ij_pp_pp_PardoLoopManager;
+	friend class Fragment_Nij_pp_pp_PardoLoopManager;
+	friend class Fragment_Rij_pp_pp_PardoLoopManager;
+	friend class Fragment_NRij_pp_pp_PardoLoopManager;
+	friend void ::list_blocks_with_number();
+	friend void ::check_block_number_calculation(int& array_slot, int& rank,
+            int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
+	void permute_rhs_to_lhs(const BlockSelector& lhs_selector,
+			const BlockSelector& rhs_selector, sip::Block::BlockPtr lhs_block,
+			sip::Block::BlockPtr rhs_block, bool extra_check);
 };
 /* class Interpreter */
 

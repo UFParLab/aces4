@@ -16,7 +16,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include "sip_interface.h"
-#include "global_state.h"
+#include "job_control.h"
 
 #include <mpi.h>
 #include <execinfo.h>
@@ -45,16 +45,13 @@ public:
 		return flag;
 	}
 
-//	void wait(int expected_count){
-//		MPI_Status status;
-//		MPI_Wait(&mpi_request_, &status);
-//		int received_count;
-//		MPI_Get_count(&status, MPI_DOUBLE, &received_count);
-//			check(received_count == expected_count,
-//					"message's double count different than expected");
-//	}
-
-
+//	// currently, it should never happen that a block has more than one outstanding request
+//	// This may change if workers send put_data messages asynchronously in another thread.
+//	// For the time being, do nothing and return false if request is not null.
+//    MPI_Request* set_request(){
+//    	if(mpi_request_!= MPI_REQUEST_NULL) {check_and_warn(false, "replacing pending MPI request");}
+//    	return &mpi_request_;
+//    }
 private:
 
 
@@ -63,6 +60,7 @@ private:
 	MPI_Request mpi_request_;
 
 	friend class Block;
+	friend class ServerBlock;
 	DISALLOW_COPY_AND_ASSIGN(MPIState);
 };
 

@@ -1,17 +1,17 @@
 noinst_LTLIBRARIES=libinstr.la
 
 #libinstr_la_CPPFLAGS=\
-	#-I$(top_srcdir)/src/special_instruction_f/erd  			\
+	#-I$(top_srcdir)/src/special_instruction_f/erd  		\
 	#-I$(top_srcdir)/src/special_instruction_f/oed 			\
+	#-I$(top_srcdir)/src/special_instruction_f/ecp 			\
 	#-I$(top_srcdir)/src/special_instruction_f/direct_integral	\
 	#-I$(top_srcdir)/src/sip/
 	
 libinstr_la_CPPFLAGS=\
- $(PAPI_INCLUDE)\
- $(TAU_CPP)\
 -I$(srcdir)/qm\
 -I$(srcdir)/qm/erd\
 -I$(srcdir)/qm/oed\
+-I$(srcdir)/qm/ecp\
 -I$(srcdir)/qm/direct_integral\
 -I${top_srcdir}/src/sip\
 -I${top_srcdir}/src/sip/tensor_algebra\
@@ -31,16 +31,25 @@ QM_SOURCE_FILES=\
 ./qm/sip_interface.hf\
 ./qm/check_dconf.F\
 ./qm/imemory.h\
-./qm/energy_denominator_rhf.F\
-./qm/energy_numerator_rhf.F\
-./qm/return_diagonal.F\
 ./qm/set_flags2.f\
-./qm/uintegrals.F\
 ./qm/instructions_for_testing.f\
-./qm/set_ijk_aaa.F\
-./qm/set_ijk_aab.F\
-./qm/cis_unit_guess.F\
-./qm/energy_ty_denominator_rhf.F\
+./qm/drop_core_in_sip.F\
+./qm/excited/cis_unit_guess.F\
+./qm/scf/a4_david_damp_factor.F\
+./qm/scf/a4_get_init_occupation.F\
+./qm/scf/a4_return_occupation.F\
+./qm/scf/a4_scf_atom.F\
+./qm/scf/a4_dscale.F\
+./qm/qm-generic/set_ijk_aaa.F\
+./qm/qm-generic/set_ijk_aab.F\
+./qm/qm-generic/energy_ty_denominator_rhf.F\
+./qm/qm-generic/energy_denominator_rhf.F\
+./qm/qm-generic/energy_numerator_rhf.F\
+./qm/utility/form_diagonal_unit_matrix.F\
+./qm/utility/return_diagonal.F\
+./qm/utility/print_block_and_index.F\
+./qm/utility/inverse_lu_decomposition.F\
+./qm/utility/lu_decomposition.F\
 ./qm/utility/invert_diagonal.F\
 ./qm/utility/invert_diagonal_asym.F\
 ./qm/utility/return_diagonal_elements.F\
@@ -53,17 +62,21 @@ QM_SOURCE_FILES=\
 ./qm/utility/compute_diis.F\
 ./qm/utility/stripi.F\
 ./qm/utility/return_sval.F\
+./qm/utility/remove_diagonal_elements.F\
 ./qm/mcpt-fragment/set_frag.F\
 ./qm/mcpt-fragment/scf_atom_lowmem.F\
 ./qm/mcpt-fragment/compute_int_scratchmem_lowmem.F\
 ./qm/mcpt-fragment/compute_xyz_batch.F\
-./qm/mcpt-fragment/comp_return_frag_h0.F\
 ./qm/mcpt-fragment/frag_index_range.F\
 ./qm/mcpt-fragment/place_scratch.F\
 ./qm/mcpt-fragment/compute_return_h1_frag.F\
 ./qm/mcpt-fragment/return_pairs.F\
 ./qm/mcpt-fragment/compute_pair_nn.F\
 ./qm/mcpt-fragment/return_vpq.F\
+./qm/mcpt-fragment/compute_moi_nn_repulsion.F\
+./qm/mcpt-fragment/compute_h1_moi.F\
+./qm/mcpt-fragment/compute_ovl_moi.F\
+./qm/direct_integral/uintegrals.F\
 ./qm/direct_integral/return_h1.F\
 ./qm/direct_integral/move_integrals.f\
 ./qm/direct_integral/pack_coeffs.f\
@@ -72,6 +85,10 @@ QM_SOURCE_FILES=\
 ./qm/direct_integral/return_ovl.F\
 ./qm/direct_integral/compute_return_h1.F\
 ./qm/direct_integral/compute_return_ovl.F\
+./qm/direct_integral/return_1el_ecp_ints.F\
+./qm/direct_integral/compute_return_1el_ecp_ints.F\
+./qm/direct_integral/return_1el_ecp_grdints.F\
+./qm/direct_integral/compute_return_1el_ecp_grdints.F\
 ./qm/direct_integral/erd_scratch_mem_calc.F\
 ./qm/direct_integral/compute_dipole_integrals.F\
 ./qm/direct_integral/compute_int_scratchmem.F\
@@ -310,17 +327,69 @@ QM_SOURCE_FILES=\
 ./qm/oed/oed__xyz_to_ry_abc.f\
 ./qm/oed/oed__xyz_to_ry_ab.f\
 ./qm/oed/oed__xyz_to_ry_matrix.f\
+./qm/ecp/izero.F\
+./qm/ecp/dzero.F\
+./qm/ecp/a4_ecp_basis_init.F\
+./qm/ecp/a4_ecp_init.F\
+./qm/ecp/a4_ecp_main.F\
+./qm/ecp/a4_ecp_grdint_main.F\
+./qm/ecp/a4_ecpgrd_int.F\
+./qm/ecp/factorial.F\
+./qm/ecp/factorialo.F\
+./qm/ecp/factorialo.F\
+./qm/ecp/dfactorial.F\
+./qm/ecp/make_ztab.F\
+./qm/ecp/make_xyz.F\
+./qm/ecp/make_ftab.F\
+./qm/ecp/binomial_coefs.F\
+./qm/ecp/a4_ecp_int_driver.F\
+./qm/ecp/a4_ecp_grdint_driver.F\
+./qm/ecp/ecp_int_4prim.F\
+./qm/ecp/ecp_grdint_4prim.F\
+./qm/ecp/get_center.F\
+./qm/ecp/ecp_int_typ1.F\
+./qm/ecp/ecp_int_typ2.F\
+./qm/ecp/ecp_rad_int_typ1.F\
+./qm/ecp/ecp_ang_int_typ1.F\
+./qm/ecp/radint_recur.F\
+./qm/ecp/make_bc_cacb_xyz.F\
+./qm/ecp/screen_ang_typ1.F\
+./qm/ecp/make_res.F\
+./qm/ecp/ang_int.F\
+./qm/ecp/ecp_rad_int_typ2.F\
+./qm/ecp/ecp_ang_int_typ2.F\
+./qm/ecp/sps.F\
+./qm/ecp/gpwm.F\
+./qm/ecp/bess.F\
+./qm/ecp/ecp_ang_int2.F\
+./qm/ecp/make_bc_pq_xyz.F\
+./qm/ecp/screen_ang_typ2.F\
+./qm/ecp/ecp_int_4shell.F\
+./qm/ecp/ecp_int.F\
+./qm/ecp/ecp_grdint.F\
+./qm/ecp/oedecp__xyz_to_ry_ab.F\
+./qm/ecp/oedecp__xyz_to_ry_matrix.F\
+./qm/ecp/qcomp_38D.F\
+./qm/ecp/qcomp_38D_odd.F\
+./qm/ecp/qcomp.F\
+./qm/ecp/qcomp_sps.F\
+./qm/ecp/qpasy.F\
+./qm/ecp/transp.F\
+./qm/ecp/dcopy.F\
 ./qm/tests/get_and_print_int_array_dummy.F\
 ./qm/tests/get_and_print_scalar_array_dummy.F\
 ./qm/tests/get_scratch_array_dummy.F\
 ./qm/tests/fill_block_sequential.f\
 ./qm/tests/fill_block_cyclic.f
+./qm/tests/get_and_print_mpi_rank.F\
 
 # General Super Instructions
 GENERAL_SOURCE_FILES=\
 ./general/get_first_block_element.cpp\
 ./general/list_block_map.cpp\
 ./general/print_block.cpp\
+./general/read_block_from_file.cpp\
+./general/write_block_to_file.cpp\
 ./general/print_static_array.cpp\
 ./general/get_my_rank.cpp\
 ./general/swap_blocks.cpp\
@@ -329,7 +398,10 @@ GENERAL_SOURCE_FILES=\
 ./general/enable_all_rank_print.cpp\
 ./general/disable_all_rank_print.cpp\
 ./general/read_block_from_text_file.cpp\
-./general/abort_job.F
+./general/abort_job.F\
+./general/one_arg_no_op.cpp\
+./general/list_blocks_with_number.cpp\
+./general/check_block_number_calculation.cpp
 
 
 libinstr_la_SOURCES=\

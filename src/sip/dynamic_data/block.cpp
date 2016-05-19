@@ -33,13 +33,20 @@ Block::Block(BlockShape shape) :
 	//c++ feature:parens cause allocated memory to be initialized to zero
 	// but is also expensive. This is being removed and the block is being zeroed out
 	// wherever it needs to be.
+	try{
 	data_ = new double[size_];
+	MemoryTracker::global->inc_allocated(size_);
 
 	gpu_data_ = NULL;
 	status_[Block::onHost] = true;
 	status_[Block::onGPU] = false;
 	status_[Block::dirtyOnHost] = false;
 	status_[Block::dirtyOnGPU] = false;
+	}
+	catch (const std::bad_alloc& ba){
+		std::cerr << "Not enough memory in Block::Block(BlockShape shape)" << std::endl << std::flush;
+		throw ba;
+	}
 
 }
 
@@ -77,7 +84,7 @@ Block::Block(dataPtr data):
  * We do not need to check this here. It is important that
  */
 Block::~Block() {
-	SIP_LOG(sip::check_and_warn((data_), std::string("in ~Block with NULL data_")));
+	SIP_LOG(WARN((data_), std::string("in ~Block with NULL data_")));
 
 #ifdef HAVE_MPI
 	//ensure that pending communications using this block are complete
@@ -93,6 +100,7 @@ Block::~Block() {
 
 	if (data_ != NULL) {
 		delete[] data_;
+		MemoryTracker::global->dec_allocated(shape_.num_elems());
 		data_ = NULL;
 	}
 
@@ -103,10 +111,10 @@ Block::~Block() {
 		gpu_data_ = NULL;
 	}
 #endif //HAVE_CUDA
-	status_[Block::onGPU] = false;
-	status_[Block::onHost] = false;
-	status_[Block::dirtyOnHost] = false;
-	status_[Block::dirtyOnGPU] = false;
+//	status_[Block::onGPU] = false;
+//	status_[Block::onHost] = false;
+//	status_[Block::dirtyOnHost] = false;
+//	status_[Block::dirtyOnGPU] = false;
 }
 
 int Block::size() {
@@ -128,8 +136,8 @@ Block::dataPtr Block::copy_data_(BlockPtr source_block, int offset) {
 					//less than in source_block.  This requires, and should be checked
 					//by compiler that for, say, a[i,j] = a[i,j,k] that k is a simple index.
 					//the caller needs to calculate and pass in the offset.
-	sip::check(target != NULL, "Cannot copy data, target is NULL", current_line());
-	sip::check(source != NULL, "Cannot copy data, source is NULL", current_line());
+	CHECK_WITH_LINE(target != NULL, "Cannot copy data, target is NULL", current_line());
+	CHECK_WITH_LINE(source != NULL, "Cannot copy data, source is NULL", current_line());
 	std::copy(source+ offset, source + offset + n, target);
 	return target;
 }
@@ -162,7 +170,7 @@ Block::dataPtr Block::fill(double value) {
 //	int nthreads = sip::MAX_OMP_THREADS;
 //	tensor_block_init__(nthreads, data_, rank, shape_.segment_sizes_, value,
 //			ierr);
-//	sip::check(ierr == 0, "error returned from tensor_block_init_");
+//	sip::CHECK(ierr == 0, "error returned from tensor_block_init_");
 	std::fill(data_+0, data_+size(), value);
 	return data_;
 }
@@ -185,8 +193,8 @@ Block::dataPtr Block::scale_and_copy(BlockPtr source_block, double factor){
 					//less than in source_block.  This requires, and should be checked
 					//by compiler that for, say, a[i,j] = a[i,j,k] that k is a simple index.
 					//the caller needs to calculate and pass in the offset.
-	sip::check(target != NULL, "Cannot copy data, target is NULL", current_line());
-	sip::check(source != NULL, "Cannot copy data, source is NULL", current_line());
+	CHECK_WITH_LINE(target != NULL, "Cannot copy data, target is NULL", current_line());
+	CHECK_WITH_LINE(source != NULL, "Cannot copy data, source is NULL", current_line());
 	for (int i = 0; i < n; ++i){
 		target[i] = source[i]*factor;
 	}
@@ -241,7 +249,7 @@ Block::dataPtr Block::transpose_copy(BlockPtr source, int rank,
 	int nthreads = sip::MAX_OMP_THREADS;
 	tensor_block_copy__(nthreads, rank, source->shape_.segment_sizes_,
 			dmitry_permute, source_data, data, ierr);
-	sip::check(ierr == 0,
+	CHECK(ierr == 0,
 			"error returned from tensor_block_copy_ on transpose");
 	return data;
 }
@@ -249,7 +257,7 @@ Block::dataPtr Block::transpose_copy(BlockPtr source, int rank,
 
 //TODO use Dimitry's routine
 Block::dataPtr Block::accumulate_data(BlockPtr source) {
-	sip::check(this->shape_ == source->shape_,
+	CHECK(this->shape_ == source->shape_,
 			" += applied to blocks with different shapes");
 	dataPtr source_data =  source->data_;
 	int n = size();
@@ -280,13 +288,13 @@ Block::dataPtr Block::extract_slice(int rank, offset_array_t& offsets,
 	int nthreads = sip::MAX_OMP_THREADS;
 	int ierr = 0;
 
-	sip::check(destination->data_ != NULL, "when trying to extract slice of a block, destination is NULL");
-	sip::check(data_ != NULL, "when trying to extract slice of a block, source is NULL");
+	CHECK(destination->data_ != NULL, "when trying to extract slice of a block, destination is NULL");
+	CHECK(data_ != NULL, "when trying to extract slice of a block, source is NULL");
 
 	tensor_block_slice__(nthreads, rank, data_, shape_.segment_sizes_,
 			destination->data_, destination->shape_.segment_sizes_, offsets,
 			ierr);
-	sip::check(ierr == 0, "error value returned from tensor_block_slice__");
+	CHECK(ierr == 0, "error value returned from tensor_block_slice__");
 	return destination->data_;
 }
 
@@ -311,7 +319,7 @@ void Block::insert_slice(int rank, offset_array_t& offsets, BlockPtr source){
 	int ierr = 0;
 	tensor_block_insert__(nthreads, rank, data_, shape_.segment_sizes_,
 			source->data_, source->shape_.segment_sizes_, offsets, ierr);
-	sip::check(ierr==0, "error value returned from tensor_block_insert__");
+	CHECK(ierr==0, "error value returned from tensor_block_insert__");
 }
 
 std::ostream& operator<<(std::ostream& os, const Block& block) {
@@ -346,6 +354,7 @@ bool Block::operator==(const Block& rhs) const{
 void Block::free_host_data(){
 	if (data_){
 		delete [] data_;
+		MemoryTracker::global->dec_allocated(size_);
 	}
 	data_ = NULL;
 	status_[Block::onHost] = false;
@@ -353,8 +362,9 @@ void Block::free_host_data(){
 }
 
 void Block::allocate_host_data(){
-	sip::check_and_warn(data_ == NULL, "Potentially causing a memory leak on host");
+	WARN(data_ == NULL, "Potentially causing a memory leak on host");
 	data_ = new double[size_]();
+	MemoryTracker::global->inc_allocated(size_);
 	status_[Block::onHost] = true;
 	status_[Block::dirtyOnHost] = false;
 }
@@ -394,7 +404,7 @@ void Block::free_gpu_data(){
 }
 
 void Block::allocate_gpu_data(){
-	sip::check_and_warn(gpu_data_ == NULL, "Potentially causing a memory leak on GPU");
+	WARN(gpu_data_ == NULL, "Potentially causing a memory leak on GPU");
 	gpu_data_ = _gpu_allocate(size_);
 	status_[Block::onGPU] = true;
 	status_[Block::dirtyOnGPU] = false;

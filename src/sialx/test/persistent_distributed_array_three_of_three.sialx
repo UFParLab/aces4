@@ -1,0 +1,52 @@
+sial persistent_distributed_array_three_of_three
+	special list_block_map
+	special print_block r
+	predefined int norb
+	aoindex i = 1:norb
+	aoindex j = 1:norb
+	local a[i,j]
+	distributed b[i,j]
+	distributed c[i,j]
+	temp t[i,j]
+	
+	local lb[i,j]
+	
+	println "$$$$$$$$$$$$$$ start of third prog $$$$$$$$$"
+	allocate lb[*,*]
+	allocate a[*,*]
+	
+	restore_persistent b "savedb"
+	sip_barrier
+	
+	restore_persistent c "savedc"
+	sip_barrier
+	
+	println "???????????????????????after the restores"	
+	do i
+	  print i
+	   do j
+	   	  print j
+	      get b[i,j]
+	      get c[i,j]
+          a[i,j] = b[i,j] + c[i,j] 
+          print b[i,j]
+          print c[i,j]
+	      print a[i,j]
+	   enddo j
+	enddo i
+		
+	do i
+		do j
+			get b[i, j]
+			lb [i, j] = b[i, j]
+		enddo j
+	enddo i
+	
+	sip_barrier
+#	delete b
+#	delete c
+	
+	sip_barrier
+	println "!!!!!!!!!! end of second prog!!!!!!!!!!!!!"
+	
+endsial persistent_distributed_array_three_of_three

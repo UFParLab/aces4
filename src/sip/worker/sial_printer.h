@@ -53,6 +53,26 @@ protected:
 	virtual void do_print_contiguous(int array_slot, Block::BlockPtr block, int line_number)=0;
 };
 
+class SialPrinterForProduction: public SialPrinter {
+public:
+	SialPrinterForProduction(std::ostream& out, int my_mpi_rank, const SipTables& sip_tables);
+	virtual ~SialPrinterForProduction();
+private:
+	const SipTables& sip_tables_;
+
+	std::string BlockId2String(const BlockId& id);
+	void do_print_string(std::string s);
+	void do_print_int(std::string name, int value, int line_number);
+	void do_print_int_value(int value) ;
+	void do_print_scalar(std::string name, double value, int line_number);
+	void do_print_scalar_value(double value) ;
+	void do_print_index(std::string name, int value, int line_number);
+	void do_print_block(const BlockId& id, Block::BlockPtr block, int line_number);
+	void do_print_contiguous(int array_slot, Block::BlockPtr block, int line_number);
+	friend class Interpreter;
+
+};
+
 /** DO NOT CHANGE THIS CLASS!!!  T
  *  Some of the tests in the test suite compare expected output with
  *  output from this object, and changing the formatting will break
@@ -82,7 +102,6 @@ private:
 	friend class Interpreter;
 
 };
-
 
 
 

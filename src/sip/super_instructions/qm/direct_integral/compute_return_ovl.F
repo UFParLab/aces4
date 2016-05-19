@@ -13,7 +13,7 @@ C  GNU General Public License for more details.
 C  The GNU General Public License is included in this distribution
 C  in the file COPYRIGHT.
       subroutine comp_return_ovl(z, da1, da2, db1, db2, ncenters, 
-     *                           tcoords, zz, iscr) 
+     *                           zsum, tcoords, zz, iscr)
 c---------------------------------------------------------------------------
 !>  special return_ovl w
 !>  Computes the set of overlap OED integrals of types  
@@ -277,7 +277,6 @@ c     write(6,*) ' N1 N2', n1, n2, db1, db2
 c-------------------------------------------------------------------------
 c   Calculate the integrals over the necessary shell blocks.
 c-------------------------------------------------------------------------
-
        do m = m1, m2
             x1 = tcoords(1,m)  
             y1 = tcoords(2,m)  

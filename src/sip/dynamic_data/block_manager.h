@@ -19,12 +19,16 @@
 #include "block.h"
 #include "cached_block_map.h"
 
+void list_blocks_with_number();
+void check_block_number_calculation(int& array_slot, int& rank,
+			int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 namespace sip {
 class SipTables;
 class SialOpsParallel;
 class ContiguousLocalArrayManager;
 class SialOpsSequential;
+
 
 
 class BlockManager {
@@ -100,6 +104,14 @@ public:
 		return block_map_.total_blocks();
 	}
 
+	void free_blocks(){
+		for (int i = 0; i < sip_tables_.num_arrays(); ++i){
+			if (sip_tables_.is_distributed(i)){
+			block_map_.delete_per_array_map_and_blocks(i);
+			}
+		}
+	}
+
 #ifdef HAVE_CUDA
 	// GPU
 	Block::BlockPtr get_gpu_block_for_writing(const BlockId& id, bool is_scope_extent=false);
@@ -153,6 +165,7 @@ public:
 
 #endif
 
+	const CachedBlockMap& block_map() const {return block_map_;}
 
 	friend std::ostream& operator<<(std::ostream&, const BlockManager&);
 
@@ -182,7 +195,7 @@ private:
 	 *
 	 * @param BlockId of block to remove
 	 */
-	void cached_delete_block(const BlockId& id){block_map_.delete_block(id);}
+	void cached_delete_block(const BlockId& id){block_map_.cached_delete_block(id);}
 
 
 	/**
@@ -261,7 +274,9 @@ private:
 	friend class SialOpsParallel;
 	friend class ContiguousLocalArrayManager;
 
-
+	friend void ::list_blocks_with_number();
+	friend void ::check_block_number_calculation(int& array_slot, int& rank,
+			int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 	DISALLOW_COPY_AND_ASSIGN(BlockManager);
 

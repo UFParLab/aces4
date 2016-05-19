@@ -116,6 +116,21 @@ public:
 	 */
 	void restore_persistent(Interpreter* runner, int array_id, int string_slot);
 
+	/** Initializes the persistent data structures from the checkpoint file.
+	 *
+	 */
+	void init_from_checkpoint(const std::string& filename);
+
+	/** Called AFTER save_marked_arrays to checkpoint
+	 *   contiguous_array_map_, distributed_array_map_, and scalar_valued_map
+	 *
+	 *   TODO:  since distributed_array_map will only have contents in serial build,
+	 *   we'll save that for later.
+	 *
+	 *   Master writes file.  On retart, each worker opens and reads the file.
+	 *
+	 */
+	void checkpoint_persistent(const std::string& filename);
 
 	friend std::ostream& operator<< (std::ostream&, const WorkerPersistentArrayManager&);
 
@@ -191,6 +206,10 @@ private:
 	 * Fatal error if map is null
 	 */
 	void save_distributed(const std::string label, IdBlockMap<Block>::PerArrayMap* map) ;
+
+
+
+
 
 
 	friend class ::TestControllerParallel;

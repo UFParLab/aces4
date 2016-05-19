@@ -15,6 +15,7 @@
 
 #include "aces_defs.h"
 #include "loop_manager.h"
+#include "fragment_loop_manager.h"
 #include "special_instructions.h"
 #include "block.h"
 #include "tensor_ops_c_prototypes.h"
@@ -24,6 +25,7 @@
 #include "sial_math.h"
 #include "config.h"
 #include "sial_math.h"
+#include "pardo_loop_factory.h"
 
 // For CUDA Super Instructions
 #ifdef HAVE_CUDA
@@ -34,30 +36,31 @@ namespace sip {
 
 Interpreter* Interpreter::global_interpreter = NULL;
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		SialPrinter* printer) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 		NULL), sial_ops_(data_manager_,
-		NULL, sialx_timer, sipTables) {
+		NULL,  sipTables)
+{
 	_init(sipTables);
 }
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		SialPrinter* printer,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(printer), data_manager_(
+		sip_tables_(sipTables),  printer_(printer), data_manager_(
 				sipTables), op_table_(sipTables.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sialx_timer, sipTables) {
+				persistent_array_manager,  sipTables){
 	_init(sipTables);
 }
 
-Interpreter::Interpreter(const SipTables& sipTables, SialxTimer* sialx_timer,
+Interpreter::Interpreter(const SipTables& sipTables,
 		WorkerPersistentArrayManager* persistent_array_manager) :
-		sip_tables_(sipTables), sialx_timers_(sialx_timer), printer_(NULL), data_manager_(
+		sip_tables_(sipTables),  printer_(NULL), data_manager_(
 				sipTables), op_table_(sip_tables_.op_table_), persistent_array_manager_(
 				persistent_array_manager), sial_ops_(data_manager_,
-				persistent_array_manager, sialx_timer, sipTables) {
+				persistent_array_manager,  sipTables){
 	_init(sipTables);
 }
 
@@ -71,9 +74,12 @@ void Interpreter::_init(const SipTables& sip_tables) {
 	pc = 0;
 	global_interpreter = this;
 	gpu_enabled_ = false;
-	tracer_ = new Tracer(this, sip_tables, std::cout);
-	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
-	timer_line_=0;
+	tracer_ = new Tracer(sip_tables);
+
+
+//	if (printer_ == NULL) printer_ = new SialPrinterForTests(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+	if (printer_ == NULL) printer_ = new SialPrinterForProduction(std::cout, sip::SIPMPIAttr::get_instance().global_rank(), sip_tables);
+	timer_pc_ = 0;
 	iteration_=0;
 #ifdef HAVE_CUDA
 	int devid;
@@ -87,15 +93,22 @@ void Interpreter::interpret() {
 	interpret(0, nops);
 }
 
+
+
 void Interpreter::interpret(int pc_start, int pc_end) {
 	pc = pc_start;
+	tracer_->init_trace();
+	bool have_pragma = false;
+	int  pragma_slot = -1;
 	while (pc < pc_end) {
 		opcode_t opcode = op_table_.opcode(pc);
-		sip::check(write_back_list_.empty() && read_block_list_.empty(),
+		CHECK(write_back_list_.empty() && read_block_list_.empty(),
 				"SIP bug:  write_back_list  or read_block_list not empty at top of interpreter loop");
 
-		tracer_->trace(pc, opcode);
-		timer_trace(pc, opcode, current_line());
+//		tracer_->trace(pc, opcode);
+//		sialx_timers_->start_timer(pc_start, SialxTimer::TOTALTIME);
+//		timer_pc_ = pc_start;
+
 
 		SIP_LOG(
 				std::cout<< "W " << sip::SIPMPIAttr::get_instance().global_rank() << " : Line "<<current_line() << ", type: " << opcodeToName(opcode)<<std::endl);
@@ -160,22 +173,28 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 				pc = control_stack_.top(); //note that this clause must be in a loop and the enddo (or other endloop instruction will pop the value
 		}
 			break;
+		case pardo_pragma_op: {
+			have_pragma = true;
+			pragma_slot = arg0();
+			++pc;
+		}
+		break;
 		case pardo_op: { //TODO refactor to get rid of the ifdefs
 			int num_indices = arg1();
-#ifdef HAVE_MPI
-//			LoopManager* loop = new StaticTaskAllocParallelPardoLoop(num_indices,
-//					index_selectors(), data_manager_, sip_tables_,
-//					SIPMPIAttr::get_instance());
 			int num_where_clauses = arg2();
-			SIP_LOG(
-					std::cout << "num_where_clauses "<< num_where_clauses << std::endl << std::flush);
-			LoopManager* loop = new BalancedTaskAllocParallelPardoLoop(
-					num_indices, index_selectors(), data_manager_, sip_tables_,
-					SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_);
-#else
-			LoopManager* loop = new SequentialPardoLoop(num_indices,
-					index_selectors(), data_manager_, sip_tables_);
-#endif
+			LoopManager* loop = NULL;
+
+			if (have_pragma){
+				have_pragma = false;
+            	loop = PardoLoopFactory::make_loop_manager(sip_tables_.string_literal(pragma_slot),
+						num_indices, index_selectors(), data_manager_, sip_tables_,
+						SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_	);
+			} else {
+				//creates default loop manager
+	          	loop = PardoLoopFactory::make_loop_manager("default_loop_manager",
+							num_indices, index_selectors(), data_manager_, sip_tables_,
+							SIPMPIAttr::get_instance(), num_where_clauses, this, iteration_	);
+			}
 			loop_start(loop);
 		}
 			break;
@@ -184,7 +203,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 		}
 			break;
 		case sip_barrier_op: {
-			sial_ops_.sip_barrier();
+			sial_ops_.sip_barrier(pc);
 			iteration_ = 0;
 			++pc;
 		}
@@ -239,7 +258,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			break;
 		case get_op: { //TODO  check this.  Have compiler put block info in instruction?
 			sip::BlockId id = get_block_id_from_selector_stack();
-			sial_ops_.get(id);
+			sial_ops_.get(id, pc);
 			++pc;
 		}
 			break;
@@ -247,7 +266,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_accumulate(lhs_id, rhs_block);
+			sial_ops_.put_accumulate(lhs_id, rhs_block, pc);
 			++pc;
 		}
 			break;
@@ -255,7 +274,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::Block::BlockPtr rhs_block = get_block_from_selector_stack('r',
 					true);
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
-			sial_ops_.put_replace(lhs_id, rhs_block);
+			sial_ops_.put_replace(lhs_id, rhs_block, pc);
 			++pc;
 		}
 			break;
@@ -263,7 +282,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			BlockId lhs_id = get_block_id_from_selector_stack();
 			double rhs_value = expression_stack_.top();
 			expression_stack_.pop();
-			sial_ops_.put_initialize(lhs_id, rhs_value);
+			sial_ops_.put_initialize(lhs_id, rhs_value, pc);
 			++pc;
 		}
 			break;
@@ -271,7 +290,7 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			double rhs_value = expression_stack_.top();
 			expression_stack_.pop();
-			sial_ops_.put_increment(lhs_id, rhs_value);
+			sial_ops_.put_increment(lhs_id, rhs_value, pc);
 			++pc;
 		}
 			break;
@@ -279,17 +298,17 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			sip::BlockId lhs_id = get_block_id_from_selector_stack();
 			double rhs_value = expression_stack_.top();
 			expression_stack_.pop();
-			sial_ops_.put_scale(lhs_id, rhs_value);
+			sial_ops_.put_scale(lhs_id, rhs_value, pc);
 			++pc;
 		}
 			break;
 		case create_op: {
-			sial_ops_.create_distributed(arg0());
+			sial_ops_.create_distributed(arg0(), pc);
 			++pc;
 		}
 			break;
 		case delete_op: {
-			sial_ops_.delete_distributed(arg0());
+			sial_ops_.delete_distributed(arg0(), pc);
 			++pc;
 		}
 			break;
@@ -645,36 +664,8 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 					true);  //TODO, check contiguous allowed.
 			//permutation vector is in the instructions' index_selector array.
 
-			//Calculate permutation and compare with compiler's.
-			//when confident about the compiler, can remove this code.
-			int lhs_rank = lhs_selector.rank_;
-			int permutation[MAX_RANK];
-			std::fill(permutation + 0, permutation + MAX_RANK, 0);
 
-			for (int i = 0; i < lhs_rank; ++i) {
-				int lhs_index = lhs_selector.index_ids_[i];
-				int j;
-				for (j = 0;
-						j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index;
-						++j) {/* keep looking until matching index found */
-				}
-				sip::check(j < lhs_rank, "illegal transpose");
-				permutation[j] = i;
-			}
-			for (int i = lhs_rank; i < MAX_RANK; ++i) {
-				//fill in unused dims with -1 to cause failure if accessed
-				permutation[i] = -1;
-			}
-			//compare caluculated here and compiler generated
-			bool OK = true;
-			for (int i = 0; i < MAX_RANK && OK; ++i) {
-				OK &= (permutation[i] == index_selectors()[i]);
-			}
-			check(OK, "permutation vector from compiler differs from sip's",
-					line_number());
-
-			//do the transpose
-			lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
+			permute_rhs_to_lhs(lhs_selector, rhs_selector, lhs_block, rhs_block, true);
 
 			//#ifdef HAVE_CUDA
 			//				if (gpu_enabled_) {
@@ -865,14 +856,14 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 			int array_slot = arg1();
 			int string_slot = arg0();
 			;
-			sial_ops_.set_persistent(this, array_slot, string_slot);
+			sial_ops_.set_persistent(this, array_slot, string_slot, pc);
 			++pc;
 		}
 			break;
 		case restore_persistent_op: {
 			int array_slot = arg1();
 			int string_slot = arg0();
-			sial_ops_.restore_persistent(this, array_slot, string_slot);
+			sial_ops_.restore_persistent(this, array_slot, string_slot, pc);
 			++pc;
 		}
 			break;
@@ -909,9 +900,13 @@ void Interpreter::interpret(int pc_start, int pc_end) {
 
 		//TODO  only call where necessary
 		contiguous_blocks_post_op();
+		tracer_->trace_op(pc, opcode);
+		timer_trace(pc, opcode, current_line());
 	}			// while
 				//interpreter loop finished.  Ensure all timers turned off.
-	timer_trace(pc, invalid_op, -99);
+//	timer_trace(pc, invalid_op, -99);
+	tracer_->stop_trace();
+
 } //interpret
 
 void Interpreter::post_sial_program() {
@@ -967,47 +962,50 @@ void Interpreter::post_sial_program() {
 //
 //}
 
+
 void Interpreter::timer_trace(int pc, opcode_t opcode, int line) {
-	if (sialx_timers_ == NULL)
-		return;
-	if (timer_line_ > 0) { //a timer is on
-		if (timer_line_ == line) { //still on same line, no change to timer
-			return;
-		}
-		sialx_timers_->pause_timer(timer_line_, SialxTimer::TOTALTIME); //have moved to different line, so pause the current timer
-	}
-	//only start a timer for the interesting op_codes.
-	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
-	switch (opcode) {  //everything falls through
-	case execute_op:
-	case sip_barrier_op:
-	case broadcast_static_op:
-	case allocate_op:
-	case deallocate_op:
-	case get_op:
-	case put_accumulate_op:
-	case put_replace_op:
-	case create_op:
-	case delete_op:
-	case collective_sum_op:
-	case assert_same_op:
-	case block_copy_op:
-	case block_permute_op:
-	case block_fill_op:
-	case block_scale_op:
-	case block_accumulate_scalar_op:
-	case block_add_op:
-	case block_subtract_op:
-	case block_contract_op:
-	case block_contract_to_scalar_op:
-	case set_persistent_op:
-	case restore_persistent_op:
-		sialx_timers_->start_timer(line, SialxTimer::TOTALTIME);
-		timer_line_ = line;
-		break;
-	default:
-		timer_line_ = 0;
-	}
+//	if (sialx_timers_ == NULL)
+//		return;
+////	if (timer_line_ > 0) { //a timer is on
+////		if (timer_line_ == line) { //still on same line, no change to timer
+////			return;
+////		}
+//		sialx_timers_->pause_timer(timer_pc_, SialxTimer::TOTALTIME);
+//		sialx_timers_->start_timer(pc, SialxTimer::TOTALTIME);
+//		timer_pc_ = pc;
+//	}
+//	//only start a timer for the interesting op_codes.
+//	//TODO revisit in light of new instruction set.  Perhaps should include push_block_on_selector_stack.
+//	switch (opcode) {  //everything falls through
+//	case execute_op:
+//	case sip_barrier_op:
+//	case broadcast_static_op:
+//	case allocate_op:
+//	case deallocate_op:
+//	case get_op:
+//	case put_accumulate_op:
+//	case put_replace_op:
+//	case create_op:
+//	case delete_op:
+//	case collective_sum_op:
+//	case assert_same_op:
+//	case block_copy_op:
+//	case block_permute_op:
+//	case block_fill_op:
+//	case block_scale_op:
+//	case block_accumulate_scalar_op:
+//	case block_add_op:
+//	case block_subtract_op:
+//	case block_contract_op:
+//	case block_contract_to_scalar_op:
+//	case set_persistent_op:
+//	case restore_persistent_op:
+//		sialx_timers_->start_timer(line, SialxTimer::TOTALTIME);
+//		timer_line_ = line;
+//		break;
+//	default:
+//		timer_line_ = 0;
+//	}
 }
 
 void Interpreter::handle_user_sub_op(int pc) {
@@ -1149,8 +1147,8 @@ void Interpreter::handle_user_sub_op(int pc) {
 	int rank4 = sip_tables_.array_rank(array_id4);
 	sip::Block::BlockPtr block4 = get_block_from_selector_stack(intent4,
 			block_id4);
-	if (intent3 == 'w')
-		block3->fill(0.0);
+	if (intent4 == 'w')
+		block4->fill(0.0);
 	int block4_size = block4->size();
 	segment_size_array_t& seg_sizes4 =
 			const_cast<segment_size_array_t&>(block4->shape().segment_sizes_);
@@ -1205,7 +1203,7 @@ void Interpreter::handle_user_sub_op(int pc) {
 		return;
 	}
 
-	sip::check(false,
+	CHECK(false,
 			"Implementation restriction:  At most 6 arguments to a super instruction supported.  This can be increased if necessary");
 }
 
@@ -1242,7 +1240,7 @@ void Interpreter::handle_contraction(int drank,
 
 	get_contraction_ptrn_(drank, lrank, rrank, &aces_pattern[0],
 			contraction_pattern, ierr);
-	check(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
+	CHECK_WITH_LINE(ierr == 0, std::string("error returned from get_contraction_ptrn_"),
 			line_number());
 //    INPUT:
 //    ! - nthreads - number of threads requested;
@@ -1494,6 +1492,20 @@ void Interpreter::handle_contraction(int drank,
 //
 //}
 
+
+void Interpreter::skip_where_clauses(int num_where_clauses){
+	int loop_end_pc = control_stack_.top();
+	control_stack_.pop();
+	int loop_body_pc = control_stack_.top();
+	control_stack_.push(loop_end_pc);
+	pc = loop_body_pc;
+
+	for (int i = num_where_clauses; i > 0; --i) {
+		while (op_table_.opcode(++pc) != where_op);
+		++pc;
+	}
+}
+
 bool Interpreter::interpret_where(int num_where_clauses) {
 //	std::cout << "entering interpret_where " << std::endl << std::flush; //DEBUG
 //	std::cout << "control_stack_.size() = " << control_stack_.size()<< std::endl << std::flush; //DEBUG
@@ -1521,6 +1533,11 @@ bool Interpreter::interpret_where(int num_where_clauses) {
 				break;
 			case index_load_value_op: {
 				control_stack_.push(index_value(arg0()));
+				++pc;
+			}
+				break;
+			case int_load_value_op: {
+				control_stack_.push(int_value(arg0()));
 				++pc;
 			}
 				break;
@@ -1712,7 +1729,7 @@ sip::BlockId Interpreter::get_block_id_from_selector_stack() {
 	int array_id = selector.array_id_;
 	int rank = sip_tables_.array_rank(array_id);
 	if (sip_tables_.is_contiguous_local(array_id)) {
-		check(selector.rank_ == rank,
+		CHECK_WITH_LINE(selector.rank_ == rank,
 				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",
 				line_number());
 		int upper[MAX_RANK];
@@ -1753,7 +1770,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 	Block::BlockPtr block;
 	if (sip_tables_.is_contiguous_local(array_id)) {
 		int rank = sip_tables_.array_rank(selector.array_id_);
-		check(selector.rank_ == rank,
+		CHECK_WITH_LINE(selector.rank_ == rank,
 				"SIP or Compiler bug: inconsistent ranks in sipTable and selector for contiguous local",
 				line_number());
 		int upper[MAX_RANK];
@@ -1816,7 +1833,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 			"SIP or Compiler bug: inconsistent ranks in sipTable and selector");
 	id = block_id(selector);
 	bool is_contiguous = sip_tables_.is_contiguous(selector.array_id_);
-	sial_check(!is_contiguous || contiguous_allowed,
+	SIAL_CHECK(!is_contiguous || contiguous_allowed,
 			"using contiguous block in a context that doesn't support it",
 			line_number());
 	switch (intent) {
@@ -1825,7 +1842,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 				data_manager_.contiguous_array_manager_.get_block_for_reading(
 						id, read_block_list_) :
 //				sial_ops_.get_block_for_reading(id);
-				sial_ops_.get_block_for_reading(id, current_line());
+				sial_ops_.get_block_for_reading(id, pc);
 	}
 		break;
 	case 'w': {
@@ -1833,7 +1850,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_updating( //w and u are treated identically for contiguous arrays
 						id, write_back_list_) :
-				sial_ops_.get_block_for_writing(id, is_scope_extent);
+				sial_ops_.get_block_for_writing(id, is_scope_extent, pc);
 	}
 		break;
 	case 'u': {
@@ -1841,7 +1858,7 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 		block = is_contiguous ?
 				data_manager_.contiguous_array_manager_.get_block_for_updating(
 						id, write_back_list_) :
-				sial_ops_.get_block_for_updating(id);
+				sial_ops_.get_block_for_updating(id, pc);
 	}
 		break;
 	default:
@@ -1857,29 +1874,126 @@ sip::Block::BlockPtr Interpreter::get_block(char intent,
 void Interpreter::handle_block_add(int pc) {
 	//d = l + r
 	BlockId did, lid, rid;
-	Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
-	double *rdata = rblock->get_data();
+	BlockSelector l_selector = block_selector_stack_.top();
 	Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
-	double *ldata = lblock->get_data();
+	BlockSelector r_selector = block_selector_stack_.top();
+	Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
+	BlockSelector d_selector(arg0(), arg1(), index_selectors());
 	Block::BlockPtr dblock = get_block_from_instruction('w', true);
+
+	double *rdata = rblock->get_data();
+	double *ldata = lblock->get_data();
 	double *ddata = dblock->get_data();
+
+	// Make sure selectors are the same for l & r;
+	CHECK_WITH_LINE(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
+	CHECK_WITH_LINE(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
+
+	bool compatible_l_r_indices = true;
+	for (int i=0; i<l_selector.rank_; ++i){
+		if (l_selector.index_ids_[i] != r_selector.index_ids_[i]){
+			compatible_l_r_indices = false;
+			break;
+		}
+	}
+
+	// If d & l are not the same, operation is  c = a + b
+	// If d & l are the same, operation is a += b
+	// In that case, check if r & d have the same selector indices
+	// If not, create a temp block with the permuted block and do the operation
+
+	Block *tempblock = NULL;
+	bool no_permute_d_r = true;
+	for(int i=0; i<r_selector.rank_; ++i){
+		if (r_selector.index_ids_[i] != d_selector.index_ids_[i]){
+			no_permute_d_r = false;
+			break;
+		}
+	}
+
+	if (lblock != dblock){
+		if (!compatible_l_r_indices)
+					fail("Incompatible indices for l & r on RHS", line_number());
+		if(!no_permute_d_r)
+			fail("Incompatible indices for LHS & RHS", line_number());
+	} else {
+		// Created a transposed temporary block.
+		// This will become the new rdata.
+//		Block::dataPtr tempdata = new double[rblock->size()];
+		double * tempdata = data_manager_.block_manager_.block_map_.allocate_data(rblock->size(),false);
+		tempblock = new Block(rblock->shape(), tempdata);
+		permute_rhs_to_lhs(d_selector, r_selector, tempblock, rblock, false);
+		rdata = tempblock->get_data();
+	}
+
 	size_t size = dblock->size();
 	for (size_t i = 0; i != size; ++i) {
 		*(ddata++) = *(ldata++) + *(rdata++);
 	}
+
+	delete tempblock;
 }
 
 void Interpreter::handle_block_subtract(int pc) {
-	Block::BlockPtr rblock = get_block_from_selector_stack('r', true);
-	double *rdata = rblock->get_data();
-	Block::BlockPtr lblock = get_block_from_selector_stack('r', true);
-	double *ldata = lblock->get_data();
+	BlockId did, lid, rid;
+	BlockSelector r_selector = block_selector_stack_.top();
+	Block::BlockPtr rblock = get_block_from_selector_stack('r', rid, true);
+	BlockSelector l_selector = block_selector_stack_.top();
+	Block::BlockPtr lblock = get_block_from_selector_stack('r', lid, true);
+	BlockSelector d_selector(arg0(), arg1(), index_selectors());
 	Block::BlockPtr dblock = get_block_from_instruction('w', true);
+
+	double *rdata = rblock->get_data();
+	double *ldata = lblock->get_data();
 	double *ddata = dblock->get_data();
+
+	// Make sure selectors are the same for l & r;
+	CHECK_WITH_LINE(r_selector.rank_ == d_selector.rank_, "Incompatible number of indices for left & right operands on RHS", line_number());
+	CHECK_WITH_LINE(l_selector.rank_ == r_selector.rank_, "Incompatible number of indices for RHS and LHS", line_number());
+
+	bool compatible_l_r_indices = true;
+	for (int i=0; i<l_selector.rank_; ++i){
+		if (l_selector.index_ids_[i] != r_selector.index_ids_[i]){
+			compatible_l_r_indices = false;
+			break;
+		}
+	}
+
+	// If d & l are not the same, operation is  c = a - b
+	// If d & l are the same, operation is a -= b
+	// In that case, check if r & d have the same selector indices
+	// If not, create a temp block with the permuted block and do the operation
+
+	Block *tempblock = NULL;
+	bool no_permute_d_r = true;
+	for(int i=0; i<r_selector.rank_; ++i){
+		if (r_selector.index_ids_[i] != d_selector.index_ids_[i]){
+			no_permute_d_r = false;
+			break;
+		}
+	}
+
+	if (lblock != dblock){
+		if (!compatible_l_r_indices)
+					fail("Incompatible indices for l & r on RHS", line_number());
+		if(!no_permute_d_r)
+			fail("Incompatible indices for LHS & RHS", line_number());
+	} else {
+		// Created a transposed temporary block.
+		// This will become the new rdata.
+//		Block::dataPtr tempdata = new double[rblock->size()];
+		double * tempdata = data_manager_.block_manager_.block_map_.allocate_data(rblock->size(), false);
+		tempblock = new Block(rblock->shape(), tempdata);
+		permute_rhs_to_lhs(d_selector, r_selector, tempblock, rblock, false);
+		rdata = tempblock->get_data();
+	}
+
 	size_t size = dblock->size();
 	for (size_t i = 0; i != size; ++i) {
 		*(ddata++) = *(ldata++) - *(rdata++);
 	}
+
+	delete tempblock;
 }
 
 void Interpreter::contiguous_blocks_post_op() {
@@ -1930,6 +2044,43 @@ void Interpreter::contiguous_blocks_post_op() {
 	}
 	read_block_list_.clear();
 
+}
+
+void Interpreter::permute_rhs_to_lhs(const BlockSelector& lhs_selector,
+		const BlockSelector& rhs_selector, sip::Block::BlockPtr lhs_block,
+		sip::Block::BlockPtr rhs_block, bool extra_check) {
+
+	//permutation vector is in the instructions' index_selector array.
+	//Calculate permutation and compare with compiler's.
+	//when confident about the compiler, can remove this code.
+	int lhs_rank = lhs_selector.rank_;
+	int permutation[MAX_RANK];
+	std::fill(permutation + 0, permutation + MAX_RANK, 0);
+	for (int i = 0; i < lhs_rank; ++i) {
+		int lhs_index = lhs_selector.index_ids_[i];
+		int j;
+		for (j = 0; j < MAX_RANK && rhs_selector.index_ids_[j] != lhs_index;
+				++j) {
+			/* keep looking until matching index found */
+		}
+		CHECK(j < lhs_rank, "illegal transpose");
+		permutation[j] = i;
+	}
+	for (int i = lhs_rank; i < MAX_RANK; ++i) {
+		//fill in unused dims with -1 to cause failure if accessed
+		permutation[i] = -1;
+	}
+	//compare calculated here and compiler generated
+	if (extra_check){
+		bool OK = true;
+		for (int i = 0; i < MAX_RANK && OK; ++i) {
+			OK &= (permutation[i] == index_selectors()[i]);
+		}
+		check(OK, "permutation vector from compiler differs from sip's",
+				line_number());
+	}
+	//do the transpose
+	lhs_block->transpose_copy(rhs_block, lhs_rank, permutation);
 }
 
 }/* namespace sip */

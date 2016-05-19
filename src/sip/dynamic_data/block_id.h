@@ -15,6 +15,7 @@ using namespace std::rel_ops;
 
 namespace sip {
 class SipTables;
+class DataMessageInfo;
 
 /** A BlockId concretely identifies a block.
  *
@@ -237,6 +238,7 @@ private:
 	friend class ContiguousLocalArrayManager;
 #ifdef HAVE_MPI
 	friend class SialOpsParallel;
+	friend class DataMessageInfo;
 #endif
 
 };

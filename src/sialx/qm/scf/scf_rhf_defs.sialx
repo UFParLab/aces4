@@ -1,0 +1,101 @@
+sial scf_rhf_defs
+#
+predefined  int norb   #total number of atomic orbital segments
+predefined  int naocc  # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc  # number of occupied molecular orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc  # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+predefined  int bavirtorb # used as a simple index, begining alpha virtual
+predefined  int bbvirtorb # used as a simple index, begining end virtual
+predefined  int eavirtorb # used as a simple index, end alpha virtual
+predefined  int ebvirtorb # used as a simple index, end beta virtual
+predefined int nbasis_funcs
+predefined int nalpha_occupied
+predefined int nalpha_virtual
+
+#
+predefined  int scf_iter
+predefined  int scf_hist
+predefined  int scf_beg
+predefined  int diis_start
+predefined  int diis_order
+predefined  int guess
+predefined  int lshft_a1
+predefined  int lshft_b1
+predefined  int damp_type
+predefined  int damp_tol
+predefined  int damp_end
+predefined  int lock_orbitals
+predefined  int lock_orbocc
+predefined  int Natoms
+predefined  int iecp_on
+
+predefined scalar scf_conv  # value of SCF_CONV from ZMAT
+predefined scalar damp
+
+#these are predefined in the index table         
+aoindex aces_defs_mu = 1: norb  
+
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC.
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC.
+static fock_a[aces_defs_pa, aces_defs_pa]
+static fock_b[aces_defs_pb, aces_defs_pb]
+static fockrohf_a[aces_defs_mu,aces_defs_mu]
+static fockrohf_b[aces_defs_mu,aces_defs_mu]
+
+scalar scf_energy
+scalar totenerg 
+          
+predefined static e[aces_defs_mu]  # Restricted spin orbital energies from the SCF, read in from JOBARC. 
+predefined static ea[aces_defs_mu]  # Alpha spin orbital energies matrix from the SCF, read in from JOBARC. 
+predefined static eb[aces_defs_mu]  # Restricted spin orbital energies matrix from the SCF, read in from JOBARC. 
+
+static oed_nai[aces_defs_mu,aces_defs_mu]
+static oed_kin[aces_defs_mu,aces_defs_mu]
+static oed_ovl[aces_defs_mu,aces_defs_mu]
+
+special return_h1 w
+special return_1el_ecpints w
+special return_ovl w
+special eigen_calc_sqr_inv uuu
+special eigen_calc uu
+special compute_diis u 
+special check_dconf rw
+special compute_ubatch1 wrruu
+special compute_ubatch2 wrruu
+#special compute_ubatch3 wrruu
+special compute_ubatch4 wrruu
+#special compute_ubatch5 wrruu
+special compute_ubatch6 wrruu
+special compute_ubatch7 wrruu
+special compute_ubatch8 wrruu
+special compute_int_scratchmem uuu
+special compute_nn_repulsion u 
+special a4_david_damp_factor ru
+special a4_get_init_occupation wr
+special a4_return_occupation rw
+special a4_scf_atom wwrrrr
+special a4_dscale urr
+
+#     NOT PORTED 
+#special blocks_to_list r
+#special diis_setup w
+special set_flags2 r
+special return_sval rw
+special compute_aabb_batch ww
+special get_my_rank w
+#special scf_atom u
+#special print_rel_info rr
+special compute_dipole_integrals wur
+
+endsial scf_rhf_defs
+
+

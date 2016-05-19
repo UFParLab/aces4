@@ -8,12 +8,16 @@
 #ifndef CACHED_BLOCK_MAP_H_
 #define CACHED_BLOCK_MAP_H_
 
+#include <cstddef>
 #include "id_block_map.h"
 #include "lru_array_policy.h"
 #include "block.h"
 
+
+
 namespace sip {
 
+//void list_blocks(const SipTables& sip_tables, const IdBlockMap<Block>& obj, std::vector<std::pair<BlockId,size_t> > vec);
 class BlockId;
 /**
  * Block Map that caches blocks with a LRU array block replacement policy.
@@ -97,7 +101,14 @@ public:
 
 	/** Sets max_allocatable_bytes_ */
     void set_max_allocatable_bytes(std::size_t size);
-	void free_up_bytes_in_cache(std::size_t block_size);
+
+	//size is given in number of doubles
+	double* allocate_data(std::size_t size, bool initialize);
+
+
+
+//	//size is in number of doubles
+//	void    free_data(double* data, size_t size);
 
 	/**
 	 * Returns total number of blocks in the active map + cached map.  Used for testing.
@@ -109,23 +120,26 @@ public:
 
 	/**
 	 * Deletes no-longer-pending blocks in the pending_delete_ list
-     * @return true if any blocks were cleared
+     * @return number of bytes freed
 	 */
-	bool test_and_clean_pending();
+	size_t test_and_clean_pending();
     /**
      * Waits for pending-delete  blocks and deletes them.
      * Postcondition of this method is that the pending_delete_ list is empty.
+     * returns number of byted freed
      */
 
-	void wait_and_clean_pending();
+	size_t wait_and_clean_pending();
 
 	/**
 	 * Waits for any pending-delete blocks and deletes them.
-     * @return true if memory used by a block was freed up.
+     * @returns number of bytes freed
 	 */
-    bool wait_and_clean_any_pending();
+    size_t wait_and_clean_any_pending();
 
-
+    void c_list_blocks(const SipTables& sip_tables, std::vector<std::pair<BlockId,size_t > >& vec) const{
+    	list_blocks(sip_tables,block_map_, vec);
+    }
 private:
 
 	/* A block can be in at most one data structure:  block_map_, cache_, or pending_delete_*/
@@ -138,12 +152,15 @@ private:
 	/** Maximum number of bytes before deleting blocks from the cache_ */
 	std::size_t max_allocatable_bytes_;
 
-	/** Allocated bytes in blocks */
-	std::size_t allocated_bytes_;
-
 	/** Bytes in blocks that can be deleted when a pending mpi request is resolved.  (These are often temp blocks used as the source for put) */
-	std::size_t pending_delete_bytes_;
+//	std::size_t pending_delete_bytes_;
 
+	/** Whether the memory limit has been set once by set_max_allocatable_bytes */
+	bool set_mem_limit_once_;
+
+	size_t free_up_bytes_in_cache(std::size_t block_size);
+
+	friend class DataManager;
 	friend class TestControllerParallel;
 
 	DISALLOW_COPY_AND_ASSIGN(CachedBlockMap);

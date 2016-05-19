@@ -76,9 +76,13 @@ c Interface added BUT should be include NOT added in the future
       integer(C_INT), pointer :: iscr(:)
       TYPE(C_PTR) :: cscr
       TYPE(C_PTR) :: ciscr
+      TYPE(C_PTR) :: cptr_int
+      real(C_DOUBLE), pointer :: fptr_int(:)
 
 !     offsets of atomic indeces  
       integer(C_INT) offset_1, offset_2, offset_3, offset_4
+      integer(C_INT) int_length1, int_length2
+      integer(C_INT) int_length
       integer(C_INT) i, j, one, two
 
 c aosegments 
@@ -140,14 +144,22 @@ c---------------------------------------------------------------------------
       niscr = imax 
       call scratch_array(nscr, cscr)
       call c_f_pointer(cscr, scr, [nscr])
-      call scratch_array(niscr, ciscr)
+      call integer_scratch_array(niscr, ciscr)
       call c_f_pointer(ciscr, iscr, [niscr])
+
+      int_length = size_0
+      
+      call scratch_array(int_length, cptr_int)
+      call c_f_pointer(cptr_int, fptr_int, [int_length])
 
       call comp_dipole_int(data_0, ix2, ncenters, dnuc, npcoeffs, 
 C     *                        nalphas,
      *                        1+offset_1, extents_0(1)+offset_1, 
      *                        1+offset_2, extents_0(2)+offset_2, 
-     *                        scr, iscr) 
+     *                        scr, iscr,
+     * 
+     *                        fptr_int)
+    
 
 C for nuclear dipole moment incoming scalar is altered to contain the
 C corresponding nuclear moment
@@ -155,14 +167,16 @@ C corresponding nuclear moment
 
 c  Remove scratch space  
       call delete_scratch_array(cscr)
-      call delete_scratch_array(ciscr)
+      call delete_integer_scratch_array(ciscr)
+      call delete_scratch_array(cptr_int)
 
       return
       end
 
       subroutine comp_dipole_int(z, ixyz, natoms, dnuc, npcoeffs,
-     *        da1, da2, db1, db2, zz, iscr) 
-C     *        nalpha, da1, da2, db1, db2, zz, iscr) 
+     *        da1, da2, db1, db2, zz, iscr, 
+     * 
+     *        zsum)
     
 c---------------------------------------------------------------------------
 c Interface added but should be included instead 

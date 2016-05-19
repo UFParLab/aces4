@@ -1,0 +1,81 @@
+sial reom_rhf_defs
+
+#
+predefined  int norb   #total number of atomic orbital segments 
+###predefined  int bocc   # begin of occupied orbital segment range (no spin)
+predefined  int naocc  # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc  # number of occupied molecular orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc   # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+###predefined  int bvirtorb
+###predefined  int evirtorb
+predefined  int bavirtorb
+predefined  int bbvirtorb
+predefined  int eavirtorb
+predefined  int ebvirtorb
+predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
+predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
+predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+
+
+#these are predefined in the index table         
+aoindex aces_defs_mu = 1: norb  
+
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+static ca[aces_defs_mu,aces_defs_pa]  # Alpha spin orbital transformation matrix from the SCF, read in from JOBARC.
+static cb[aces_defs_mu,aces_defs_pb]  # Restricted spin orbital transformation matrix from the SCF, read in from JOBARC.
+static fock_a[aces_defs_pa, aces_defs_pa]
+static fock_b[aces_defs_pb, aces_defs_pb]
+static fockrohf_a[aces_defs_mu,aces_defs_mu]
+static fockrohf_b[aces_defs_mu,aces_defs_mu]
+
+scalar has_singles
+scalar is_ccpt
+scalar is_mcpt
+
+predefined scalar cc_conv
+scalar scf_energy  # ???? 
+scalar totenerg  #Total energy read in from JOBARC.
+predefined scalar eom_tol
+predefined int eom_roots
+predefined int eom_subspc
+
+static oed_nai[aces_defs_mu,aces_defs_mu]
+static oed_kin[aces_defs_mu,aces_defs_mu]
+static oed_ovl[aces_defs_mu,aces_defs_mu]
+
+#     PORTED 
+special compute_ubatch6 wrruu
+special compute_integral_batch w
+special energy_denominator_rhf ur 
+special energy_ty_denominator_rhf urr
+special gen_eigen_calc uuuu
+special compute_diis u
+special eigen_calc uu
+special return_diagonal_elements u
+special invert_diagonal ur
+special invert_diagonal_asym ur
+special get_my_rank u
+special anti_symm_v u
+special anti_symm_o u
+#special lanti_symm_v u
+#special lanti_symm_o u
+special cis_unit_guess ur
+special return_sval ru
+special read_block_from_text_file w
+special compute_dipole_integrals wur
+special print_block_and_index r
+special compute_int_scratchmem uuu
+#     NOT PORTED 
+
+endsial reom_rhf_defs
+
+
