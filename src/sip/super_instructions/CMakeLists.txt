@@ -357,7 +357,8 @@ set(QM_SOURCE_FILES
     qm/tests/get_and_print_scalar_array_dummy.F;
     qm/tests/get_scratch_array_dummy.F;
     qm/tests/fill_block_sequential.f;
-    qm/tests/fill_block_cyclic.f)
+    qm/tests/fill_block_cyclic.f;
+    qm/tests/get_and_print_mpi_rank.F)
 
 # General Super Instructions
 set(GENERAL_SOURCE_FILES

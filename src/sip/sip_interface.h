@@ -30,7 +30,7 @@ double scalar_value(const char *);
 
 int current_line();
 void get_config_info(const char* sialfile, const char* key, const char* value);
-
+int mpi_rank();
 
 
 #ifdef __cplusplus
@@ -45,7 +45,7 @@ std::string index_name_value(int index_table_slot);
 std::string array_name_value(int array_table_slot);
 int get_line_number();
 //array::Block::BlockPtr block(std::string name);
-
+int get_mpi_rank();
 
 } /* namespace sip */
 

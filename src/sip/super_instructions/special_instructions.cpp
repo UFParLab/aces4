@@ -37,6 +37,7 @@ extern "C"{
 //void dadd(double, double, double*);
 //void dsub(double, double, double*);
 void print_something();
+void get_and_print_mpi_rank();
 //the following super instructions are real
 //ADD C PROTOTYPE FOR SPECIAL SUPERINSTRUCTION WRITTEN IN C OR FORTRAN HERE
 //THESE MUST BE INSIDE THE extern "C" block
@@ -599,6 +600,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["disable_debug_print"]=(fp0)&disable_debug_print;
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
+    procmap_["get_and_print_mpi_rank"]=(fp0)&get_and_print_mpi_rank;
     procmap_["one_arg_no_op"]=(fp0)&one_arg_no_op;
     procmap_["list_blocks_with_number"]=(fp0)&list_blocks_with_number;
     procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
