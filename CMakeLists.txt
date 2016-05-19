@@ -230,7 +230,7 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
-    ${ACES_JASON_DIR};
+    ${ACES_JSON_DIR};
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
