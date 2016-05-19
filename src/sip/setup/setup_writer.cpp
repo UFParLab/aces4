@@ -8,7 +8,9 @@
 
 
 #include "setup_writer.h"
+#ifdef HAVE_JSON
 #include "json/json.h"
+#endif
 #include <algorithm>
 #include <assert.h>
 #include <cctype>
@@ -283,7 +285,7 @@ void SetupWriter::write_data_file() {
 	}
 }
 
-
+#ifdef HAVE_JSON
 // TODO Test
 std::string SetupWriter::get_json_string(){
 	Json::Value root;
@@ -393,7 +395,7 @@ std::string SetupWriter::get_json_string(){
 	Json::StyledWriter writer;
 	return writer.write(root);
 }
-
+#endif //HAVE_JSON
 
 }/* namespace setup */
 

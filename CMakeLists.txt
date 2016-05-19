@@ -73,7 +73,11 @@ set(ACES_CORE_FILES
     src/sip/core/array_constants.cpp;
     src/sip/core/sip.h;
     src/sip/core/sip.cpp;
-    src/sip/core/aces_defs.h)
+    src/sip/core/aces_defs.h;
+    src/sip/core/aces_log.h;
+    src/sip/core/aces_log.cpp;
+    src/sip/core/job_control.h;
+    src/sip/core/job_control.cpp)
 
 # MPI - Conditional compile for MPI files
 if (HAVE_MPI AND MPI_CXX_FOUND)
@@ -91,8 +95,6 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/sip_server.cpp;
         src/sip/worker/sial_ops_parallel.h;
         src/sip/worker/sial_ops_parallel.cpp;
-        src/sip/mpi/disk_backed_arrays_io.h;
-        src/sip/mpi/disk_backed_arrays_io.cpp;
         src/sip/mpi/server_block.h;
         src/sip/mpi/server_block.cpp;
         src/sip/mpi/disk_backed_block_map.h;
@@ -102,7 +104,13 @@ if (HAVE_MPI AND MPI_CXX_FOUND)
         src/sip/mpi/async_ops.h;
         src/sip/mpi/async_ops.cpp; 
         src/sip/mpi/counter.h;
-        src/sip/mpi/counter.cpp;      
+        src/sip/mpi/counter.cpp;   
+        src/sip/mpi/array_file.h;
+        src/sip/mpi/array_file.cpp;
+        src/sip/mpi/chunk_manager.h;
+        src/sip/mpi/chunk_manager.cpp;  
+        src/sip/mpi/chunk.h;
+        src/sip/mpi/chunk.cpp;          
         src/sip/dynamic_data/mpi_state.h;
         src/sip/dynamic_data/distributed_block_consistency.h;
         src/sip/dynamic_data/distributed_block_consistency.cpp      
@@ -119,6 +127,17 @@ if (HAVE_CUDA AND CUDA_FOUND)
 else ()
     set(ACES_CUDA_FILES "")
 endif()
+
+if (HAVE_JSON)
+    set(ACES_JSON_DIR
+       ${CMAKE_SOURCE_DIR}/jsoncpp)
+    set(JSON_LIBRARIES
+       jasoncpp)
+else ()
+    set(ACES_JSON_FILES "")
+endif()
+    
+    
 
 set(ACES_DATA_FILES
     src/sip/static_data/array_table.h;
@@ -155,7 +174,9 @@ set(ACES_DATA_FILES
     src/sip/dynamic_data/cached_block_map.h;
     src/sip/dynamic_data/cached_block_map.cpp;
     src/sip/dynamic_data/contiguous_local_array_manager.h;
-    src/sip/dynamic_data/contiguous_local_array_manager.cpp;)
+    src/sip/dynamic_data/contiguous_local_array_manager.cpp;
+    src/sip/dynamic_data/memory_tracker.h;
+    src/sip/dynamic_data/memory_tracker.cpp;)
 #need only header files for templates--these include .cpp
 
 set(ACES_WORKER_FILES
@@ -167,8 +188,6 @@ set(ACES_WORKER_FILES
     src/sip/worker/pardo_loop_factory.h;
     src/sip/worker/interpreter.cpp;
     src/sip/worker/interpreter.h;
-    src/sip/worker/global_state.h;
-    src/sip/worker/global_state.cpp;
     src/sip/worker/siox_reader.h;
     src/sip/worker/siox_reader.cpp;
     src/sip/worker/sial_ops_sequential.h;
@@ -211,13 +230,13 @@ set(INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/src/sip/dynamic_data;
     ${CMAKE_SOURCE_DIR}/src/sip/mpi;
     ${CMAKE_SOURCE_DIR}/src/sip/cuda;
-    ${CMAKE_SOURCE_DIR}/jsoncpp;
+    ${ACES_JSON_DIR};
     ${CMAKE_SOURCE_DIR}/test)
 
 set (TOLINK_LIBRARIES
     ${TOLINK_LIBRARIES}
     tensordil;
-    jsoncpp;
+    ${JSON_LIBRARIES};
     ${MPI_LIBRARIES};
     superinstructions # Points to : ${CMAKE_BINARY_DIR}/src/sip/super_instructions/libsuperinstructions.a;
     ${LAPACK_LIBRARIES})
@@ -272,13 +291,18 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
 configure_file(${CMAKE_SOURCE_DIR}/test/ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/second_ccsdpt_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/cis_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_water_dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/test/eom_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/test/eom_water_dimer_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccsd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/test/eom_lccd_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+#configure_file(${CMAKE_SOURCE_DIR}/test/eom_mp2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_ccsd_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/eom_ccsd_water_right_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/frag_scf_333_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/fef_ccpt2_water_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/test/mcpt2_222_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/lindep_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/scf_rhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/test/scf_uhfrhf_aguess_test.dat ${CMAKE_BINARY_DIR}/ COPYONLY)
@@ -320,23 +344,30 @@ set(TOLINK_LIBRARIES aces4_sip ${TOLINK_LIBRARIES})
 add_subdirectory(src/sip/super_instructions)
 
 # Add Jsoncpp library
+if(HAVE_JSON)
 add_library(jsoncpp;
     jsoncpp/jsoncpp.cpp;
     jsoncpp/json/json.h;
     jsoncpp/json/json-forwards.h)
+endif()
 
 # The tensor library is added separately
 add_library(tensordil ${tensordil_SRCS})
 set_target_properties(tensordil PROPERTIES COMPILE_DEFINITIONS "${LIBTENSORDIL_DEFINITIONS}")
 
-# aces4 executable
+# executable for main program
 add_executable(aces4 src/aces_main/main.cpp)
 
-# print_siptables executable
+# executables for tools in the util directory
 add_executable(print_siptables src/util/print_siptables.cpp)
-
-# print_init_file executable
+add_executable(print_array_info src/util/print_array_info.cpp)
 add_executable(print_init_file src/util/print_init_file.cpp)
+add_executable(print_worker_checkpoint src/util/print_worker_checkpoint.cpp)
+add_executable(check_system src/util/check_system.cpp)
+
+## dump_array_file executable
+#add_executable(dump_array_file src/util/dump_array_file.cpp)
+
 
 # Setting Compile & link flags
 set_target_properties(aces4 PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
@@ -345,23 +376,43 @@ set_target_properties(aces4 PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 set_target_properties(print_siptables PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
+set_target_properties(print_array_info PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_array_info PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
+
 set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
+set_target_properties(print_worker_checkpoint PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
+set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+set_target_properties(check_system PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 
 # Libraries to link
 target_link_libraries(aces4 ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_siptables ${TOLINK_LIBRARIES}) 
+target_link_libraries(print_array_info ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
+target_link_libraries(print_worker_checkpoint ${TOLINK_LIBRARIES})
+target_link_libraries(check_system ${TOLINK_LIBRARIES})
 
 # Dependencies
 if(HAVE_CUDA)
 	add_dependencies(aces4 tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_siptables tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_array_info tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
+	add_dependencies(print_worker_checkpoint tensordil superinstructions cudasuperinstructions)
+	add_dependencies(check_system tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
+	add_dependencies(print_array_info tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
+	add_dependencies(print_worker_checkpoint tensordil superinstructions)
+	add_dependencies(check_system tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_sip tensordil)
@@ -385,9 +436,10 @@ add_executable(test_basic_sial      test/test_basic_sial.cpp;
                                     test/test_transpose4d_op.F;
                                     test/test_contraction_small2.F)
 add_executable(test_sial  	    test/test_sial.cpp)
-add_executable(test_basic_qm              test/test_basic_qm.cpp)
+add_executable(test_basic_qm        test/test_basic_qm.cpp)
 add_executable(test_qm              test/test_qm.cpp)
 add_executable(test_qm_aux          test/test_qm_aux.cpp)
+add_executable(test_qm_frag         test/test_qm_frag.cpp)
 add_executable(test_unit            test/test_unit.cpp)
 
 # Link test executable against gtest & gtest_main
@@ -396,6 +448,7 @@ set_target_properties(test_sial         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPI
 set_target_properties(test_basic_qm     PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_qm           PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_qm_aux       PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
+set_target_properties(test_qm_frag      PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 set_target_properties(test_unit         PROPERTIES COMPILE_FLAGS  "${ACES4_COMPILE_FLAGS}")
 
 target_link_libraries(test_basic_sial   test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
@@ -403,6 +456,7 @@ target_link_libraries(test_sial         test_controllers gtest gtest_main  ${TOL
 target_link_libraries(test_basic_qm     test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_qm           test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_qm_aux       test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
+target_link_libraries(test_qm_frag      test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 target_link_libraries(test_unit         test_controllers gtest gtest_main  ${TOLINK_LIBRARIES})
 
 set_target_properties(test_basic_sial   PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
@@ -410,14 +464,16 @@ set_target_properties(test_sial         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLA
 set_target_properties(test_basic_qm     PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_qm           PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_qm_aux       PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
+set_target_properties(test_qm_frag      PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 set_target_properties(test_unit         PROPERTIES LINK_FLAGS  "${ACES4_LINK_FLAGS}")
 
 
 add_dependencies(test_basic_sial   gtest gtest_main test_controllers)
 add_dependencies(test_sial         gtest gtest_main test_controllers)
-add_dependencies(test_basic_qm           gtest gtest_main test_controllers)
+add_dependencies(test_basic_qm     gtest gtest_main test_controllers)
 add_dependencies(test_qm           gtest gtest_main test_controllers)
 add_dependencies(test_qm_aux       gtest gtest_main test_controllers)
+add_dependencies(test_qm_frag      gtest gtest_main test_controllers)
 add_dependencies(test_unit         gtest gtest_main test_controllers)
 
 
@@ -425,13 +481,14 @@ if (HAVE_MPI) # Multi Node Version Tests
     add_test(NAME test_unit         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_unit)
     add_test(NAME test_basic_sial   COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_sial)
     add_test(NAME test_sial         COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_sial)
-    add_test(NAME test_basic_qm           COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_qm)
+    add_test(NAME test_basic_qm     COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_basic_qm)
     add_test(NAME test_qm           COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_qm)
+    add_test(NAME test_qm_frag      COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS} test_qm)
 else() # Single Node Version Tests
     add_test(NAME test_unit         COMMAND test_unit)
     add_test(NAME test_basic_sial   COMMAND test_basic_sial)
     add_test(NAME test_sial         COMMAND test_sial)
-    add_test(NAME test_basic_qm           COMMAND test_basic_qm)
+    add_test(NAME test_basic_qm     COMMAND test_basic_qm)
     add_test(NAME test_qm           COMMAND test_qm)
 endif()
 
@@ -452,6 +509,7 @@ set(SIAL_FILES
     src/sialx/test/index_decs.sialx;
     src/sialx/test/predef_scalars.sialx;
     src/sialx/test/print_block_test.sialx;
+    src/sialx/test/pardo_loop_with_pragma.sialx;
     src/sialx/test/tmp_arrays.sialx;
     src/sialx/test/scalars.sialx;
     src/sialx/test/insert_slice_test.sialx;
@@ -514,6 +572,9 @@ set(SIAL_FILES
     src/sialx/test/get_mpi.sialx;
     src/sialx/test/persistent_distributed_array_mpi1.sialx;
     src/sialx/test/persistent_distributed_array_mpi2.sialx;
+    src/sialx/test/persistent_distributed_array_one_of_three.sialx;
+    src/sialx/test/persistent_distributed_array_two_of_three.sialx;
+    src/sialx/test/persistent_distributed_array_three_of_three.sialx;
     src/sialx/test/persistent_empty_mpi1.sialx;
     src/sialx/test/persistent_empty_mpi2.sialx;
     src/sialx/test/persistent_scalars_1.sialx;
@@ -547,43 +608,60 @@ set(SIAL_FILES
     src/sialx/test/put_accumulate_stress.sialx;
     src/sialx/test/disk_backing_test.sialx;
     src/sialx/test/disk_backing_put_acc_stress.sialx;
-    src/sialx/qm/scf_rhf_coreh.sialx;
-    src/sialx/qm/scf_defs.sialx;
-    src/sialx/qm/scf_frag_lowmem.sialx;
-    src/sialx/qm/drop_core_in_sial.sialx;
-    src/sialx/qm/mcpt2_corr_lowmem.sialx;
-    src/sialx/qm/tran_frag.sialx;
-    src/sialx/qm/mcpt2_vars.sialx;
-    src/sialx/qm/mcpt2_defs.sialx;
-    src/sialx/qm/mcpt2_singles.sialx;
-    src/sialx/qm/mcpt2_doubles.sialx;
-    src/sialx/qm/mcpt2_util.sialx;
-    src/sialx/qm/mp2_rhf_disc.sialx;
-    src/sialx/qm/tran_rhf_no4v.sialx;
-    src/sialx/qm/tran_uhf_no4v.sialx;
-    src/sialx/qm/tran_rhf_no4v_defs.sialx;
-    src/sialx/qm/tran_rhf_no3v.sialx;
-    src/sialx/qm/tran_eom.sialx;
-    src/sialx/qm/rccsd_rhf.sialx;
-    src/sialx/qm/rlambda_rhf.sialx;
-    src/sialx/qm/rlccd_rhf.sialx;
-    src/sialx/qm/rlccsd_rhf.sialx;
-    src/sialx/qm/rccsdpt_aaa.sialx;
-    src/sialx/qm/rccsdpt_aab.sialx;
-    src/sialx/qm/rlamccsdpt_aaa.sialx;
-    src/sialx/qm/rlamccsdpt_aab.sialx;
-    src/sialx/qm/rccpt1p2_prop.sialx;
-    src/sialx/qm/rcis_rhf.sialx;
-    src/sialx/qm/rcis_d_rhf.sialx;
-    src/sialx/qm/rcis_ccpt2_rhf.sialx;
-    src/sialx/qm/lr_eom_ccsd_rhf.sialx;
-    src/sialx/qm/lr_eom_linccsd_rhf.sialx;
-    src/sialx/qm/reom_rhf_defs.sialx;
-    src/sialx/qm/rccsd_rhf_defs.sialx;
-    src/sialx/qm/scf_uhf.sialx;
-    src/sialx/qm/scf_uhf_defs.sialx;
-    src/sialx/qm/scf_rhf.sialx; 
-    src/sialx/qm/scf_rhf_defs.sialx)
+    src/sialx/test/decreasing_segs.sialx;
+    src/sialx/test/check_block_number_calc.sialx;
+    src/sialx/qm/utility/drop_core_in_sial.sialx;
+    src/sialx/qm/utility/tran_rhf_no4v.sialx;
+    src/sialx/qm/utility/tran_uhf_no4v.sialx;
+    src/sialx/qm/utility/tran_rhf_no4v_defs.sialx;
+    src/sialx/qm/utility/tran_rhf_no3v.sialx;
+    src/sialx/qm/scf/scf_rhf_coreh.sialx;
+    src/sialx/qm/scf/scf_defs.sialx;
+    src/sialx/qm/scf/scf_uhf.sialx;
+    src/sialx/qm/scf/scf_uhf_defs.sialx;
+    src/sialx/qm/scf/scf_rhf.sialx; 
+    src/sialx/qm/scf/scf_rhf_defs.sialx;
+    src/sialx/qm/cc/mp2_rhf_disc.sialx;
+    src/sialx/qm/cc/rccsd_rhf.sialx;
+    src/sialx/qm/cc/rlambda_rhf.sialx;
+    src/sialx/qm/cc/rlccd_rhf.sialx;
+    src/sialx/qm/cc/rlccsd_rhf.sialx;
+    src/sialx/qm/cc/rccsd_rhf_defs.sialx;
+    src/sialx/qm/cc/rccsdpt_aaa.sialx;
+    src/sialx/qm/cc/rccsdpt_aab.sialx;
+    src/sialx/qm/cc/rlamccsdpt_aaa.sialx;
+    src/sialx/qm/cc/rlamccsdpt_aab.sialx;
+    src/sialx/qm/cc/rccpt1p2_prop.sialx;
+    src/sialx/qm/eom/eom_rhf_defs.sialx  
+    src/sialx/qm/eom/eom_rhf_hbar.sialx;
+    src/sialx/qm/eom/eom_rhf_tran.sialx;
+    src/sialx/qm/eom/eom_rhf_vars.sialx;
+    src/sialx/qm/eom/eom_ccsd_rhf_right.sialx;
+    src/sialx/qm/eom/eom_ccsd_rhf_left.sialx;
+    src/sialx/qm/eom/rcis_rhf_defs.sialx;
+    src/sialx/qm/eom/rcis_rhf_vars.sialx;
+    src/sialx/qm/eom/rcis_rhf.sialx;
+    src/sialx/qm/eom/rcis_d_rhf.sialx;
+    src/sialx/qm/eom/rcis_ccpt2_rhf.sialx;
+    src/sialx/qm/fef-cc/frag_rhf.sialx;
+    src/sialx/qm/fef-cc/frag_pol_rhf.sialx;
+    src/sialx/qm/fef-cc/frag_rcis_rhf.sialx;
+    src/sialx/qm/fef-cc/tran_frag.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_defs.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_vars.sialx;
+    src/sialx/qm/fef-cc/MOI_cis_guess.sialx;
+    src/sialx/qm/fef-cc/MOI_rcis.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_elements.sialx;
+    src/sialx/qm/fef-cc/MOI_reom_fefccpt2.sialx;
+    src/sialx/qm/fef-cc/fef_ccpt2.sialx;
+    src/sialx/qm/fef-cc/fef_cis_ccpt2.sialx;
+    src/sialx/qm/fef-cc/mcpt2_corr.sialx;
+    src/sialx/qm/fef-cc/mcpt2_corr_lowmem.sialx;
+    src/sialx/qm/fef-cc/mcpt2_vars.sialx;
+    src/sialx/qm/fef-cc/mcpt2_defs.sialx;
+    src/sialx/qm/fef-cc/mcpt2_singles.sialx;
+    src/sialx/qm/fef-cc/mcpt2_doubles.sialx;
+    src/sialx/qm/fef-cc/mcpt2_util.sialx)
     
 
 set(SIAL_COMPILER_JAR ${CMAKE_SOURCE_DIR}/compiler/SialCompiler.jar)
@@ -592,9 +670,10 @@ set (SIAL_COMPILED_FILES "")
 foreach(F ${SIAL_FILES})
     get_filename_component(F_WE ${CMAKE_SOURCE_DIR}/${F} NAME_WE)
     get_filename_component(SIALX_FILE_PATH ${CMAKE_SOURCE_DIR}/${F} PATH)
-    get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
+#    get_filename_component(SIALX_FILE_LAST_PATH ${SIALX_FILE_PATH} NAME)
 
-    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
+    #set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx/${SIALX_FILE_LAST_PATH}")
+    set(SIAL_COMPILE_DIR "${CMAKE_BINARY_DIR}/src/sialx")
     add_custom_command(
         OUTPUT ${SIAL_COMPILE_DIR}/${F_WE}.siox
         COMMAND ${SIAL_COMPILER} -sp ${SIALX_FILE_PATH} ${CMAKE_SOURCE_DIR}/${F}

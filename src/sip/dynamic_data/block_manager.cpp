@@ -47,8 +47,7 @@ block_map_(sip_tables.num_arrays()){
  * Delete blocks being managed by the block manager.
  */
 BlockManager::~BlockManager() {
-	check_and_warn(temp_block_list_stack_.size() == 0,
-			"temp_block_list_stack not empty when destroying block manager!");
+	WARN(temp_block_list_stack_.size() == 0,"temp_block_list_stack not empty when destroying block manager!");
 	// Free up all blocks managed by this block manager.
 	for (int i = 0; i < sip_tables_.num_arrays(); ++i)
 		delete_per_array_map_and_blocks(i);
@@ -141,7 +140,7 @@ Block::BlockPtr BlockManager::get_block_for_writing(const BlockId& id,
 //TODO TEMPORARY FIX WHILE SEMANTICS BEING WORKED OUT
 Block::BlockPtr BlockManager::get_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	sial_check(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
+	SIAL_CHECK(blk != NULL, "Attempting to read non-existent block " + id.str(sip_tables_), current_line());
 	////
 	//#ifdef HAVE_CUDA
 	//	// Lazy copying of data from gpu to host if needed.
@@ -161,7 +160,7 @@ Block::BlockPtr BlockManager::get_block_for_updating(const BlockId& id) {
 	if (blk==NULL){
 		std::cout << *this;
 	}
-	sial_check(blk != NULL, "Attempting to update non-existent block " + id.str(sip_tables_), current_line());
+	SIAL_CHECK(blk != NULL, "Attempting to update non-existent block " + id.str(sip_tables_), current_line());
 #ifdef HAVE_CUDA
 	// Lazy copying of data from gpu to host if needed.
 	lazy_gpu_update_on_host(blk);
@@ -239,7 +238,9 @@ Block::BlockPtr BlockManager::block(const BlockId& id){
 Block::BlockPtr BlockManager::create_block(const BlockId& block_id,
 		const BlockShape& shape) {
 	try {
-		Block::BlockPtr block_ptr = new Block(shape);
+//		Block::BlockPtr block_ptr = new Block(shape);
+		double* data = block_map_.allocate_data(shape.num_elems(), false);
+		Block::BlockPtr block_ptr = new Block(shape, data);
 		insert_into_blockmap(block_id, block_ptr);
 		return block_ptr;
 	} catch (const std::out_of_range& oor){
@@ -303,7 +304,7 @@ Block::BlockPtr BlockManager::get_gpu_block_for_writing(const BlockId& id, bool 
 }
 Block::BlockPtr BlockManager::get_gpu_block_for_updating(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	check(blk != NULL, "attempting to update non-existent block");
+	CHECK(blk != NULL, "attempting to update non-existent block");
 
 	// Lazy copying of data from host to gpu if needed.
 	lazy_gpu_update_on_device(blk);
@@ -312,7 +313,7 @@ Block::BlockPtr BlockManager::get_gpu_block_for_updating(const BlockId& id) {
 }
 Block::BlockPtr BlockManager::get_gpu_block_for_reading(const BlockId& id) {
 	Block::BlockPtr blk = block(id);
-	check(blk != NULL, "attempting to read non-existent gpu block", current_line());
+	CHECK(blk != NULL, "attempting to read non-existent gpu block", current_line());
 
 	// Lazy copying of data from host to gpu if needed.
 	lazy_gpu_read_on_device(blk);

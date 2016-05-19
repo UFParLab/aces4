@@ -15,7 +15,9 @@
 #include "aces_defs.h"
 #include "array_constants.h"
 #include "io_utils.h"
+#include "block_id.h"
 //#include "blocks.h"
+
 
 //namespace master{
 //class SioxReader;
@@ -24,8 +26,8 @@ namespace sip{
   class SioxReader;
   class SipTables;
   class DataManager;
-}
-namespace sip {
+  class IndexTable;
+
 
 
 /**  An ArrayTableEntry describes an array declared in a SIAL program and contains its name, rank, type
@@ -52,11 +54,25 @@ public:
 	 */
 	ArrayTableEntry();
 
+	size_t block_number(const BlockId& id) const;
+
+
+	BlockId num2id(int array_id, size_t block_number) const;
+
 private:
 	/** initializes this ArrayTableEntry with values read from the given InputStream, which should be an .siox file
 	 * at the appropriate position.  This is called by the ArrayTable init method */
 	void init(setup::InputStream &);
 
+	/**
+	 * initializes values that are calculated using values in
+	 * various tables read during input.  This requires that
+	 * the sip_tables_ have already been read and partially
+	 * initialized.
+	 *
+	 * @param sip_tables
+	 */
+	void init_calculated_values(const IndexTable& index_table);
 
 
 	/** number of dimensions of the array */
@@ -76,19 +92,25 @@ private:
 	 */
 	int scalar_selector_;
 
-	/** this value is calculated using setup-reader info.  It is
+	/** these values are calculated using setup-reader info.  It is
 	 * not read directly from the .siox file
 	 */
-	//int num_blocks_;
+	size_t num_blocks_;
+	size_t max_block_size_;
+	size_t min_block_size_;
+	std::vector<long> slice_sizes_;
+	std::vector<long> lower_; //could be negative for simple indices, so use long instead of size_t
 
 	/** the name of the array in the SIAL program */
 	std::string name_;
 
-	friend std::ostream& operator<<(std::ostream&, const ArrayTableEntry &);
+	friend std::ostream& operator<<(std::ostream&,  const ArrayTableEntry &);
 	friend class ArrayTable;
 	friend class sip::SioxReader;
 	friend class sip::SipTables;
 	friend class sip::DataManager;
+
+//	DISALLOW_COPY_AND_ASSIGN(ArrayTableEntry);
 };
 
 
@@ -138,6 +160,16 @@ public:
 	 */
 	int scalar_selector(int array_slot) const {return entries_.at(array_slot).scalar_selector_;}
 
+	size_t id2number(const BlockId& id) const{
+		return entries_[id.array_id()].block_number(id);
+	}
+
+	size_t num_blocks(int array_id) const {return entries_.at(array_id).num_blocks_;}
+
+	BlockId number2id(int array_id, size_t num) const{
+		return entries_[array_id].num2id(array_id, num);
+	}
+
 	friend std::ostream& operator<<(std::ostream&, const ArrayTable &);
 
 
@@ -150,17 +182,28 @@ private:
 	 */
 	void init(setup::InputStream &);
 
-	/** Initializes the num_blocks_ field in all the ArrayTable entries.
-	 * This is called by the siptable constructor after other required
-	 * tables have been initialized.
+	/** Initializes the num_blocks_ field and max_block
+	 * size field in all the ArrayTable entries.  It
+	 * also initializes the values used to linearize BlockIds
+	 * This method must be called after other required
+	 * tables have been initialized since these values are calculated
+	 * rather then being directly read from the input files
 	 */
-	void init_num_blocks();
+	void init_calculated_values(const IndexTable& index_table){
+		std::vector<ArrayTableEntry>::iterator it= entries_.begin();
+		for (; it != entries_.end(); ++it){
+			it->init_calculated_values(index_table);
+		}
+	}
+
 
 	/** Vector containing the ArrayTableEntries describing the arrays in the SIAL program */
 	std::vector<ArrayTableEntry> entries_;
 
 	/** A map from array name to corresponding slot in the array table*/
 	std::map<std::string, int> array_name_slot_map_;  //maps name to selector in array table
+
+
 
     friend class sip::SioxReader;
     friend class sip::SipTables;

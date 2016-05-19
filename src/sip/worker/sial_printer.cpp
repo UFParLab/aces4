@@ -70,6 +70,119 @@ std::ostream& SialPrinter::get_ostream(){
 	return out_;
 }
 
+SialPrinterForProduction::SialPrinterForProduction(std::ostream& out, int my_mpi_rank, const SipTables& sip_tables) :
+	SialPrinter(out, my_mpi_rank),
+	sip_tables_(sip_tables){
+}
+SialPrinterForProduction::~SialPrinterForProduction() {}
+
+
+std::string SialPrinterForProduction::BlockId2String(const BlockId& id){
+
+		std::stringstream ss;
+		bool contiguous_local = sip_tables_.is_contiguous_local(id.array_id());
+		int rank = sip_tables_.array_rank(id.array_id());
+		ss << sip_tables_.array_name(id.array_id()) ;
+		ss << '[';
+		int i;
+		for (i = 0; i < rank; ++i) {
+			ss << (i == 0 ? "" : ",") << id.index_values(i);
+			if (contiguous_local) {
+			    if (id.index_values(i) != id.upper_index_values(i)) {
+				ss << ":" << id.upper_index_values(i);
+			    }
+			}
+		}
+		ss << ']';
+		return ss.str();
+	}
+
+
+void SialPrinterForProduction::do_print_string(std::string s) {
+	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_)
+		out_ << s << std::endl << std::flush;
+}
+void SialPrinterForProduction::do_print_int(std::string name, int value, int line_number) {
+	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
+		out_ << line_number << ":  " << name << " = " << value << std::endl
+				<< std::flush;
+	}
+}
+void SialPrinterForProduction::do_print_int_value(int value) {
+	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
+		out_ << value << std::flush;
+	}
+}
+void SialPrinterForProduction::do_print_scalar(std::string name, double value, int line_number) {
+	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
+		out_ << line_number << ":  " << name << " = ";
+		out_.precision(14);
+		out_.setf(std::ios_base::fixed);
+		out_<< value << std::endl
+				<< std::flush;
+	}
+}
+void SialPrinterForProduction::do_print_scalar_value(double value) {
+	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
+		out_.precision(14);
+		out_.setf(std::ios_base::fixed);
+		out_<< value << std::endl
+				<< std::flush;
+	}
+}
+void SialPrinterForProduction::do_print_index(std::string name, int value, int line_number) {
+	if (my_mpi_rank_ == 0 || print_all_mpi_ranks_) {
+		out_ << line_number << ":  " << name << " = " << value << std::endl
+				<< std::flush;
+	}
+}
+void SialPrinterForProduction::do_print_block(const BlockId& id, Block::BlockPtr block, int line_number){
+		int MAX_TO_PRINT = 1000000;
+		int size = block->size();
+		int OUTPUT_ROW_SIZE = block->shape().segment_sizes_[0];
+		double* data = block->get_data();
+	        out_.precision(14);
+		out_.setf(std::ios_base::fixed);
+		out_ << line_number << ":  ";
+		if (size == 1) {
+		    out_ << id.str(sip_tables_) << " = ";
+		    out_ << *(data);
+		} else {
+		    out_ << "printing " << (size < MAX_TO_PRINT?size:MAX_TO_PRINT);
+		    out_ << " of " <<size << " elements of block " <<  id.str(sip_tables_);//BlockId2String(id);
+		    out_ << " in the order stored in memory ";
+		    int i;
+		    for (i = 0; i < size && i < MAX_TO_PRINT; ++i){
+			if (i%OUTPUT_ROW_SIZE == 0) out_ << std::endl;
+			out_ << *(data+i) << " ";
+		    }
+		    if (i == MAX_TO_PRINT){
+			out_ << "....";
+		    }
+		}
+		out_ << std::endl;
+	}
+
+void SialPrinterForProduction::do_print_contiguous(int array_slot, Block::BlockPtr block, int line_number){
+	int MAX_TO_PRINT = 1000000;
+	int size = block->size();
+	int OUTPUT_ROW_SIZE = block->shape().segment_sizes_[0];
+	double* data = block->get_data();
+	out_ << line_number << ":  ";
+	out_ << "printing " << (size < MAX_TO_PRINT?size:MAX_TO_PRINT);
+	out_ << " of " <<size << " elements of contiguous array " <<  sip_tables_.array_name(array_slot);
+	out_ << " in the order stored in memory ";
+	int i;
+    for (i = 0; i < size && i < MAX_TO_PRINT; ++i){
+    	if (i%OUTPUT_ROW_SIZE == 0) out_ << std::endl;
+    	out_.width(14);
+    	out_ << *(data+i) << " ";
+    }
+    if (i == MAX_TO_PRINT){
+    	out_ << "....";
+    }
+    out_ << std::endl;
+}
 
 /** DO NOT CHANGE THIS CLASS!!!  T
  *  Some of the tests in the test suite compare expected output with
@@ -191,10 +304,5 @@ void SialPrinterForTests::do_print_contiguous(int array_slot, Block::BlockPtr bl
     }
     out_ << std::endl;
 }
-
-
-
-}/* namespace sip */
-
-
+}
 

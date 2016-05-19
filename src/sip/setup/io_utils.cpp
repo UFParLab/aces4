@@ -97,8 +97,8 @@ BinaryInputFile::BinaryInputFile(const std::string& name):file_name_(name){
 	file_stream_ = new std::ifstream(name.c_str(), std::ifstream::binary);
 	stream_ = file_stream_;
 	if (!file_stream_->is_open()){
-		std::cout << stream_->eof() << "\t" << stream_->fail() << "\t" << stream_->bad();
-		std :: cerr << "File "<< name  <<" could not be opened !";
+		std::cerr << stream_->eof() << "\t" << stream_->fail() << "\t" << stream_->bad();
+		std :: cerr << "File "<< name  <<" could not be opened!";
 		exit(-1);
 	}
 	//assert (file->is_open());  //TODO  better error handling

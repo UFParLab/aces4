@@ -23,7 +23,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
@@ -40,7 +40,7 @@
 
 #ifdef HAVE_MPI
 #include "sip_server.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sip_mpi_utils.h"
 #include "server_persistent_array_manager.h"
 #endif
@@ -60,8 +60,13 @@ TestControllerParallel::TestControllerParallel(std::string job,
 				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
 				true), expect_success_(expect_success), prog_number_(0), spam_(
 				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
+	sleep(sleep_between_tests);
 	barrier();
-//	sip::GlobalState::reinitialize();
+	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id()));
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
+
+	std::cout << "allocated_ " << sip::MemoryTracker::global->get_allocated_bytes() << std::endl << std::flush;
+	std::cout << "job_id" << sip::JobControl::global->get_job_id() << std::endl << std::flush;
 	if (has_dot_dat_file) {
 		setup::BinaryInputFile setup_file(job + ".dat");
 		setup_reader_ = new setup::SetupReader(setup_file); 
@@ -84,6 +89,56 @@ TestControllerParallel::TestControllerParallel(std::string job,
 				<< " *********!!!\n" << std::flush;
 	}
 	barrier();
+
+}
+
+TestControllerParallel::TestControllerParallel(std::string job,
+		bool has_dot_dat_file, bool verbose, std::string comment,
+		std::ostream& sial_output, std::string restart_id, int restart_prognum, bool expect_success) :
+		job_(job), verbose_(verbose), comment_(comment), sial_output_(
+				sial_output), sip_tables_(NULL), wpam_(NULL), this_test_enabled_(
+				true), expect_success_(expect_success), prog_number_(0), spam_(
+				NULL), server_(NULL), worker_(NULL), printer_(NULL) {
+	barrier();
+	sip::JobControl::set_global_job_control(new sip::JobControl(sip::JobControl::make_job_id(),
+			restart_id, restart_prognum));
+	sip::MemoryTracker::set_global_memory_tracker(new sip::MemoryTracker());
+
+
+	std::cout << "job_id: " << sip::JobControl::global->get_job_id() << ", restart_id: "<< restart_id << std::endl << std::flush;
+	std::cout << "allocated_ " << sip::MemoryTracker::global->get_allocated_bytes() << std::endl << std::flush;
+	if (has_dot_dat_file) {
+		setup::BinaryInputFile setup_file(job + ".dat");
+		setup_reader_ = new setup::SetupReader(setup_file);
+		progs_ = &setup_reader_->sial_prog_list();
+	} else {
+		setup_reader_ = setup::SetupReader::get_empty_reader();
+		progs_ = new std::vector<std::string>();
+		progs_->push_back(job + ".siox");
+	}
+	if (attr->is_worker()){
+		wpam_ = new sip::WorkerPersistentArrayManager();
+		if (restart_prognum>0){
+		//get restart filename
+		std::stringstream ss;
+		ss << sip::JobControl::global->get_restart_id() << '.' << restart_prognum-1 << '.' << "worker_checkpoint";
+		std::string restart_file = ss.str();
+		wpam_->init_from_checkpoint(restart_file);
+		}
+	}
+
+#ifdef HAVE_MPI
+	if (attr->is_server())
+		spam_ = new sip::ServerPersistentArrayManager();
+#endif
+
+	if (verbose) {
+		std::cout << "****** Creating controller for test " << job_
+				<< " *********!!!\n" << std::flush;
+	}
+
+	barrier();
+
 }
 
 TestControllerParallel::~TestControllerParallel() {
@@ -113,9 +168,12 @@ TestControllerParallel::~TestControllerParallel() {
 
 void TestControllerParallel::initSipTables(const std::string& sial_dir_name) {
 	barrier();
-	prog_name_ = progs_->at(prog_number_++);
-	sip::GlobalState::set_program_name(prog_name_);
-	sip::GlobalState::increment_program();
+	prog_number_ = sip::JobControl::global->get_program_num();
+	prog_name_ = progs_->at(prog_number_);
+	sip::JobControl::global->set_program_name(prog_name_);
+//	std::cerr << "initSipTables  prog_number_ "
+//			<< prog_number_ << ", prog_name = " << prog_name_ << std::endl << std::flush;
+
 	std::string siox_path = sial_dir_name + prog_name_;
 	setup::BinaryInputFile siox_file(siox_path);
 	//remove objects left from previous sial programs to avoid memory leaks
@@ -222,7 +280,9 @@ void TestControllerParallel::run() {
 	if (attr->is_server())
 		runServer();
 #endif
-
+	barrier();
+//	std::cerr << "incrementing program number after run" << std::endl << std::flush;
+	sip::JobControl::global->increment_program();
 	barrier();
 }
 
@@ -294,7 +354,7 @@ bool TestControllerParallel::runServer() {
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< prog_name_ << "TERMINATED SERVER" << std::endl << std::flush;
 		}
-		spam_->save_marked_arrays(server_);
+		spam_->save_marked_arrays(server_, NULL);
 	}
 	sial_output_ << std::flush;
 	return this_test_enabled_;
@@ -336,12 +396,16 @@ bool TestControllerParallel::runWorker() {
 					<< std::flush;
 		}
 
-//		std::cout << "\nRank " << attr->global_rank() << " after post_sial_program" << std::endl << std::flush;
+//		std::cerr << "\nRank " << attr->global_rank() << " after post_sial_program" << std::endl << std::flush;
 		wpam_->save_marked_arrays(worker_);
+		std::stringstream tt;
+		tt << sip::JobControl::global->get_job_id() << "." << sip::JobControl::global->get_program_num() << "." << "worker_checkpoint";
+		std::string worker_checkpoint_filename = tt.str();
+		wpam_->checkpoint_persistent(worker_checkpoint_filename);
 //		std::cout << "\nRank " << attr->global_rank() << " after sae_marked_arrays" << std::endl << std::flush;
 	}
 	sial_output_ << std::flush;
 	return this_test_enabled_;
 }
 
-
+unsigned int TestControllerParallel::sleep_between_tests = 0;

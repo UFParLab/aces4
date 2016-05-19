@@ -330,7 +330,28 @@ void print_block_and_index(
         int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
 
 void form_diagonal_unit_matrix(
-        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, int& ierr);
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void moi_nn_repulsion(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, 
+	int& ierr);
+
+void return_h1_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void return_ovl_moi(
+        int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * block_data_0, 
+        int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * block_data_1, 
+        int& ierr);
+
+void remove_diagonal(
+	int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0, 
+	int& ierr);
 
 //##############################
 }
@@ -362,12 +383,14 @@ void get_first_block_element(int& array_slot_0, int& rank_0, int * index_values_
 void swap_blocks(int& array_slot_0, int& rank_0, int * index_values_0, int& size_0, int * extents_0, double * data_0,
         int& array_slot_1, int& rank_1, int * index_values_1, int& size_1, int * extents_1, double * data_1, int& ierr);
 void one_arg_no_op(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
+void list_blocks_with_number();
+void check_block_number_calculation(int& array_slot, int& rank, int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 namespace sip{
 
 SpecialInstructionManager::SpecialInstructionManager(){
 //	std::cout << "in SpecialInstructionManager constructor";
-//    sip::check(procmap_.empty(), "attempting to initialize non-empty procmap");
+//    CHECK(procmap_.empty(), "attempting to initialize non-empty procmap");
 	init_procmap();
 }
 
@@ -405,7 +428,7 @@ int SpecialInstructionManager::add_special(const std::string name_with_sig){
 	try{
 		std::map<std::string, fp0>::iterator it = procmap_.find(name);
 		if (it == procmap_.end()){
-			SIP_LOG(check_and_warn(false, std::string("Special instruction ") + name + " not found"));
+			SIP_LOG(WARN(false, std::string("Special instruction ") + name + " not found"));
 			procvec_.push_back(procvec_entry_t(NULL, sig));
 		} else {
 			fp0 func = it->second;
@@ -577,6 +600,7 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["enable_all_rank_print"]=(fp0)&enable_all_rank_print;
     procmap_["disable_all_rank_print"]=(fp0)&disable_all_rank_print;
     procmap_["one_arg_no_op"]=(fp0)&one_arg_no_op;
+    procmap_["list_blocks_with_number"]=(fp0)&list_blocks_with_number;
     procmap_["a4_get_init_occupation"]=(fp0)&a4_get_init_occupation;
     procmap_["a4_david_damp_factor"]=(fp0)&a4_david_damp_factor;
     procmap_["a4_return_occupation"]=(fp0)&a4_return_occupation;
@@ -584,6 +608,11 @@ void SpecialInstructionManager::init_procmap(){
     procmap_["a4_dscale"]=(fp0)&a4_dscale;
     procmap_["print_block_and_index"]=(fp0)&print_block_and_index;
     procmap_["form_diagonal_unit_matrix"]=(fp0)&form_diagonal_unit_matrix;
+    procmap_["check_block_number_calculation"]=(fp0)&check_block_number_calculation;
+    procmap_["moi_nn_repulsion"]=(fp0)&moi_nn_repulsion;
+    procmap_["return_h1_moi"]=(fp0)&return_h1_moi;
+    procmap_["return_ovl_moi"]=(fp0)&return_ovl_moi;
+    procmap_["remove_diagonal"]=(fp0)&remove_diagonal;
 
 	//ADD STATEMENT TO ADD SPECIAL SUPERINSTRUCTION TO MAP HERE.  COPY ONE OF THE ABOVE LINES AND REPLACE THE
 	//CHARACTERS IN QUOTES WITH THE (CASE SENSITIVE NAME USED IN SIAL PROGRAMS.  REPLACE THE CHARACTERS FOLLOWING

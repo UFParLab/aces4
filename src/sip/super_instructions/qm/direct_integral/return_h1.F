@@ -130,10 +130,7 @@ c Find the offset index ranges
       if (index_values(1) .gt. 1) offset_1 = paosegs(index_values(1)-1) 
       if (index_values(2) .gt. 1) offset_2 = paosegs(index_values(2)-1) 
 
-
-      zsum_length1 = (extents(1)+offset_1) 
-      zsum_length2 = (extents(2)+offset_2)
-      zsum_length  = zsum_length1 * zsum_length2
+      zsum_length = size
 
       call scratch_array(zsum_length, cptr_zsum) 
       call c_f_pointer(cptr_zsum, fptr_zsum, [zsum_length]) 

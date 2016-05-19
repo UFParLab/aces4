@@ -12,9 +12,9 @@
 #include "id_block_map.h"
 #include "block_id.h"
 
-#ifdef HAVE_MPI
-#include "server_block.h"
-#endif 
+//#ifdef HAVE_MPI
+//#include "server_block.h"
+//#endif
 
 #include <list>
 #include <stdexcept>
@@ -116,6 +116,7 @@ private:
 };
 
 #ifdef HAVE_MPI
+class ServerBlock;
 // Template Specialization for ServerBlocks. Implementation in disk_backed_block_map.cpp
 template<> BlockId LRUArrayPolicy<ServerBlock>::get_next_block_for_removal(ServerBlock*& block);
 #endif // HAVE_MPI

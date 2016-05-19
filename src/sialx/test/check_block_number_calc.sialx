@@ -1,0 +1,20 @@
+
+
+sial check_block_number_calc
+
+special check_block_number_calculation w
+predefined int norb # = 1100
+predefined int baocc # = 1
+predefined int eaocc # = 550
+aoindex mu = 1:norb
+moaindex i = baocc:eaocc
+aoindex lambda = 1:norb
+moaindex j = baocc:eaocc
+distributed vxpxq[mu, i, lambda, j]
+
+pardo mu, i, lambda, j
+   execute check_block_number_calculation vxpxq[mu, i, lambda, j]
+endpardo mu, i, lambda, j
+
+
+endsial check_block_number_calc

@@ -13,7 +13,7 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
 
 #include "worker_persistent_array_manager.h"
@@ -28,7 +28,7 @@
 //#ifdef HAVE_MPI
 //#include "sip_server.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"
@@ -1451,9 +1451,9 @@ TAU_PROFILE_SET_NODE(0);
 TAU_STATIC_PHASE_START("SIP Main");
 #endif
 
-//	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-//	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-//	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+//	CHECK(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+//	CHECK(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+//	CHECK(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
 //
 //	int num_procs;
 //	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));

@@ -12,6 +12,7 @@
 #include <utility>
 #include <iomanip>
 #include <ios>
+#include <string>
 
 #include "sip_tables.h"
 #include "server_block.h"
@@ -21,6 +22,7 @@
 #include "disk_backed_block_map.h"
 //#include "server_timer.h"
 #include "counter.h"
+#include "timer.h"
 
 
 
@@ -62,7 +64,7 @@ public:
 	, pending_counter_(SIPMPIAttr::get_instance().company_communicator())
 {}
 	~PendingAsyncManager(){
-		check(pending_.empty(),"destructing non-empty PendingDataRequestManager");
+		CHECK(pending_.empty(),"destructing non-empty PendingDataRequestManager");
 	}
 
 	void add_put_data_request(int mpi_source, int put_data_tag, BlockId id, ServerBlock* block, int pc){
@@ -130,12 +132,12 @@ public:
 	//leaves next_block_iter_ pointing to a valid
 	//iterator (possibly end) for pending_
 	//next_block_iter_ is unchanged if nothing was deleted
-	void remove_all_entries_for_array(int array_id){
+	void remove_all_entries_for_array(int array_id, const SipTables& sip_tables){
 		std::list<std::pair<BlockId,ServerBlock*> >::iterator iter = pending_.begin();
 		while (iter != pending_.end()){
 			if(iter->first.array_id() == array_id){
 				bool block_complete = iter->second->async_state_.try_handle_test_none_pending();
-				check(block_complete, "attempting to delete array with pending async ops");
+				CHECK(block_complete,(std::string("attempting to delete array with pending async ops ")+ sip_tables.array_name(array_id)).c_str());
 				iter = pending_.erase(iter);
 				next_block_iter_ = iter;
 			}
@@ -269,59 +271,34 @@ public:
 		return sip_tables_.line_number(pc);
 	}
 
-	void gather_and_print_statistics(std::ostream& os){
-//		op_timer_.gather();
-		op_timer_.reduce();
-//		get_block_timer_.gather(); //indexed by pc
-		get_block_timer_.reduce();
-//		idle_timer_.gather();
-		idle_timer_.reduce();
-//		total_timer_.gather();
-		total_timer_.reduce();
-		pending_timer_.gather();
-		pending_timer_.reduce();
-		handle_op_timer_.reduce();
-		num_ops_.gather();
-		async_ops_.pending_counter_.gather();
-		disk_backed_block_map_.allocated_doubles_.gather();
-		disk_backed_block_map_.blocks_to_disk_.gather();
-//
-		if (sip_mpi_attr_.is_company_master()){
-			os << "\n\nServer statistics"<< std::endl << std::endl;
-			std::ios saved_format(NULL);
-			saved_format.copyfmt(os);
-			os << "Server Utilization Summary (approximate percent time)" << std::endl;
-			os << "directly processing ops,"<< std::setiosflags(std::ios::fixed) << std::setprecision(0) <<(handle_op_timer_.get_mean()/total_timer_.get_mean())*100  << std::endl;
-			os << "handling async ops,"<< std::setiosflags(std::ios::fixed) << std::setprecision(0)  << (pending_timer_.get_mean()/total_timer_.get_mean())*100 << std::endl;
-			os << "idle," << std::setiosflags(std::ios::fixed) << std::setprecision(0) << (idle_timer_.get_mean()/total_timer_.get_mean())*100 <<  std::endl;
-			os.copyfmt(saved_format);
-			os << std::endl;
-			os << "Server op_timer_" << std::endl;
-			//os << op_timer_ << std::endl;
-			op_timer_.print_op_table_stats(os, sip_tables_);
-			os << std::endl << "Server get_block_timer_" << std::endl;
-			//os << get_block_timer_ << std::endl;
-			get_block_timer_.print_op_table_stats(os, sip_tables_);
-			os << std::endl << "total_timer_" << std::endl;
-			os << total_timer_ ;
-			os << std::endl << "handle_op_timer_" << std::endl;
-			os << handle_op_timer_;
-			os << std::endl << "idle_timer_" << std::endl;
-			os << idle_timer_ ;
-			os << std::endl << "pending_timer_" << std::endl;
-			os << pending_timer_ ;
-			os << std::endl << "num_ops_" << std::endl;
-			os << num_ops_ ;
-			os << std::endl << "async_ops_pending_" << std::endl;
-			os << async_ops_.pending_counter_ ;
-			os << std::endl << "allocated_doubles_" << std::endl;
-			os << disk_backed_block_map_.allocated_doubles_ ;
-			os << std::endl << "blocks_to_disk_" << std::endl;
-			os << disk_backed_block_map_.blocks_to_disk_ ;
-     		os << std::endl << std::flush;
-		}
 
+
+	struct Stats{
+			MPITimerList op_timer_;  //indexed by pc
+			MPITimerList get_block_timer_; //indexed by pc
+			MPITimer idle_timer_;
+			MPITimer pending_timer_;
+			MPITimer total_timer_;
+			MPICounter num_ops_;
+			MPITimer handle_op_timer_;
+			std::ostream& gather_and_print_statistics(std::ostream& os, SIPServer* server);
+			Stats(const MPI_Comm& comm, size_t list_size):
+			op_timer_(comm, list_size),
+			get_block_timer_(comm, list_size),
+			idle_timer_(comm),
+			pending_timer_(comm),
+			total_timer_(comm),
+			num_ops_(comm),
+			handle_op_timer_(comm){
+			}
+	};
+
+	std::ostream& gather_and_print_statistics(std::ostream& os){
+		stats_.gather_and_print_statistics(os, this);
+		disk_backed_block_map_.stats_.gather_and_print_statistics(os, &disk_backed_block_map_);
+		return os;
 	}
+
 
 	friend std::ostream& operator<<(std::ostream& os, const SIPServer& obj);
 
@@ -365,16 +342,10 @@ private:
 	DiskBackedBlockMap disk_backed_block_map_;
 	PendingAsyncManager async_ops_;
 
-//	/** Timers and counters */
-	MPITimerList op_timer_;  //indexed by pc
-	MPITimerList get_block_timer_; //indexed by pc
-//  NoopTimerList<double> op_timer_;
-//	NoopTimerList<double> get_block_timer_;
-	MPITimer idle_timer_;
-	MPITimer pending_timer_;
-	MPITimer total_timer_;
-	MPICounter num_ops_;
-	MPITimer handle_op_timer_;
+
+	Stats stats_;
+
+
 
 
 	/**

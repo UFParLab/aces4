@@ -33,6 +33,7 @@
 #include "sip_interface.h"
 #include "block_shape.h"
 #include <iostream>
+#include "memory_tracker.h"
 
 #ifdef HAVE_MPI
 #include "mpi_state.h"
@@ -70,11 +71,15 @@ public:
 	typedef double * dataPtr;
 	typedef int permute_t[MAX_RANK];
 
-
     /** Constructs a new Block with the given shape and allocates memory for its data
      * @param shape of new Block
+     *
+     * This constructor updates MemoryTracker::global, but will throw an exception
+     * if there is not enough memory available.  Thus the caller should generally
+     * catch the exception, or alternatively, allocate memory and pass it to the 2 param constructor.
      */
 	explicit Block(BlockShape);
+
 
     /** Constructs a new Block with the given shape and data
      *
@@ -88,11 +93,12 @@ public:
 	 *
 	 * @param pointer to scalar
 	 */
-	Block(dataPtr);
+	explicit Block(dataPtr);
 
 	/**
 	 * Deletes data in block if any.  If an MPI request associated with this
 	 * block is pending, it waits until it has been satisfied and issues a warning.
+	 * Updates the global MemoryTracker
 	 */
 	~Block();
 
@@ -200,6 +206,7 @@ private:
 	// No one should be using the compare operator.
 	// TODO Figure out what to do with the GPU pointer.
 	bool operator==(const Block& rhs) const;
+
 
 
 	/** encapsulates MPI related state info.

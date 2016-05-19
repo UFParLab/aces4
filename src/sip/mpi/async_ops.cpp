@@ -49,7 +49,7 @@ PutAccumulateDataAsync::PutAccumulateDataAsync(int mpi_source,
 }
 
 PutAccumulateDataAsync::~PutAccumulateDataAsync() {
-	check(temp_ != NULL,
+	CHECK(temp_ != NULL,
 			"destructor of PutAccumulateDataAsync invoked with null data_");
 	//delete[] temp_;
 	SIPServer::global_sipserver->disk_backed_block_map_.free_data(temp_, block_->size());
@@ -63,7 +63,7 @@ bool PutAccumulateDataAsync::do_test() {
 		//check that received message was expected size
 		int count;
 		MPI_Get_count(&status, MPI_DOUBLE, &count);
-		check(count == block_->size(), "count != block_->size()");
+		CHECK(count == block_->size(), "count != block_->size()");
 	}
 	return flag;
 }
@@ -83,7 +83,7 @@ void PutAccumulateDataAsync::do_wait() {
 	//check that received message was expected size
 	int count;
 	MPI_Get_count(&status, MPI_DOUBLE, &count);
-	check(count == block_->size(), "count != block_->size()");
+	CHECK(count == block_->size(), "count != block_->size()");
 }
 
 std::string PutAccumulateDataAsync::to_string() const {
@@ -122,7 +122,7 @@ bool PutDataAsync::do_test() {
 	if (flag) {
 		int count;
 		MPI_Get_count(&status, MPI_DOUBLE, &count);
-		check(count == block_->size(), "count != block->size()");
+		CHECK(count == block_->size(), "count != block->size()");
 	}
 	return flag;
 }
@@ -133,7 +133,7 @@ void PutDataAsync::do_wait() {
 	//check that received message was expected size
 	int count;
 	MPI_Get_count(&status, MPI_DOUBLE, &count);
-	check(count == block_->size(), "count != block_->size()");
+	CHECK(count == block_->size(), "count != block_->size()");
 }
 
 void PutDataAsync::do_handle() {

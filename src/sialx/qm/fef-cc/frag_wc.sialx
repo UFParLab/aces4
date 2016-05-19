@@ -1,0 +1,418 @@
+import "mcpt2_defs.sialx" 
+import "mcpt2_vars.sialx"
+import "tran_frag.sialx"
+import "mcpt2_singles.sialx"
+import "mcpt2_doubles.sialx"
+import "mcpt2_util.sialx"
+#
+                           SIAL FRAG_2ORDER_CORR 
+
+PROC form_wC
+server_barrier
+#
+#     Perform 2-el integral transformation and calculate second order energies   
+#     ------------------------------------------------------------------------ 
+#
+      pardo p,p1
+	  put wC[p,p1] = 0.0
+      endpardo p,p1
+      sip_barrier 
+      print "Computing wC_ao"
+
+# ----------------------------------------------------------------------------
+#     zero wC_ao
+# ----------------------------------------------------------------------------
+      PARDO kfrag,mu,nu "Frag{i}{aa}{}"
+      where (int)SwAO_frag[(index)mu] == kfrag
+      where (int)SwAO_frag[(index)nu] == kfrag
+
+	  PUT wC_ao[mu,nu] = 0.0
+
+      ENDPARDO kfrag,mu,nu
+
+      server_barrier
+
+# ---------------------------------------------------------------------------- 
+#     Form wC_ao  
+# ---------------------------------------------------------------------------- 
+
+      PARDO ifrag, jfrag, mu, nu "Frag{Nij}{aa}{}"
+      WHERE jfrag != ifrag
+      where (int)elst_dist[ifrag,jfrag] == ifrag
+      where (int)SwAO_frag[(index)mu] == ifrag
+      where (int)SwAO_frag[(index)nu] == ifrag      
+
+	  LwC_ao[mu,nu] = 0.0 
+
+	  DO j
+	  where (int)SwOccA_frag[(index)j] == jfrag
+	      allocate LVxxqq[mu,nu,j,j]
+	  ENDDO j
+
+	  DO lambda
+          where (int)SwAO_frag[(index)lambda] == jfrag
+
+	      DO j
+	      where (int)SwOccA_frag[(index)j] == jfrag
+		  allocate LVxxxq[mu,nu,lambda,j]
+	      ENDDO j
+
+	      DO sigma
+	      where (int)SwAO_frag[(index)sigma] == jfrag
+
+		  aoint[mu,nu,lambda,sigma]  = 0.0
+		  execute compute_integral_batch aoint[mu,nu,lambda,sigma] #  1 1 2 2  
+
+		  DO j
+		  where (int)SwOccA_frag[(index)j] == jfrag
+		      txxxq[mu,nu,lambda,j]   = aoint[mu,nu,lambda,sigma]*ca[sigma,j]
+		      LVxxxq[mu,nu,lambda,j] += txxxq[mu,nu,lambda,j]
+		  ENDDO j
+
+	      ENDDO sigma
+
+	      DO j
+	      where (int)SwOccA_frag[(index)j] == jfrag
+
+	      DO j1
+	      where j == j1
+	      where (int)SwOccA_frag[(index)j1] == jfrag
+		  txxqq[mu,nu,j1,j]   = LVxxxq[mu,nu,lambda,j]*ca[lambda,j1]
+		  LVxxqq[mu,nu,j1,j] += txxqq[mu,nu,j1,j] 
+	      ENDDO j1
+	      ENDDO j
+
+	      DO j
+	      where (int)SwOccA_frag[(index)j] == jfrag
+		  deallocate LVxxxq[mu,nu,lambda,j]
+	      ENDDO j
+
+	  ENDDO lambda
+
+	  DO j
+	  where (int)SwOccA_frag[(index)j] == jfrag
+
+	      DO j1
+	      where j == j1 
+	      where (int)SwOccA_frag[(index)j1] == jfrag
+		  txxqq[mu,nu,j1,j] = LVxxqq[mu,nu,j1,j] 
+		  txx[mu,nu]    = 0.0  
+		  execute return_vpq txxqq[mu,nu,j1,j] txx[mu,nu] 
+		  txx[mu,nu]   *= 2.0  
+		  LwC_ao[mu,nu] += txx[mu,nu]
+	      ENDDO j1
+
+	  ENDDO j
+
+	  PUT wC_ao[mu,nu] += LwC_ao[mu,nu]
+
+	  DO j
+	  where (int)SwOccA_frag[(index)j] == jfrag
+	      deallocate LVxxqq[mu,nu,j,j]
+	  ENDDO j
+
+      ENDPARDO ifrag, jfrag, mu, nu
+
+      sip_barrier
+      print "Done initial formation of wC(AO)"
+
+      PARDO ifrag, mu, nu "Frag{i}{aa}{}"
+	 where (int)SwAO_frag[(index)mu] == ifrag
+         where (int)SwAO_frag[(index)nu] == ifrag
+
+             GET             wC_ao[mu,nu]
+   
+	     DO a
+	     where (int)SwVirtA_frag[(index)a] == ifrag
+		 DO i
+		 where (int)SwOccA_frag[(index)i] == ifrag
+		     txp[mu,i]     = wC_ao[mu,nu]*ca[nu,i]
+		     tpp[a,i]     = txp[mu,i]*ca[mu,a]
+		     PUT wC[a,i] += tpp[a,i]
+		     t1pp[i,a]    = tpp[a,i]
+		     PUT wC[i,a] += t1pp[i,a]
+		 ENDDO i
+	      ENDDO a
+       
+	      DO a
+	      where (int)SwVirtA_frag[(index)a] == ifrag
+		  DO a1
+		  where (int)SwVirtA_frag[(index)a1] == ifrag
+		      txp[mu,a1] = wC_ao[mu,nu]*ca[nu,a1]
+		      tpp[a,a1]  = txp[mu,a1]*ca[mu,a]
+		      t1pp[a,a1] = tpp[a,a1]
+		      PUT wC[a,a1] += tpp[a,a1]
+		  ENDDO a1
+	      ENDDO a
+       
+       
+	      DO i1
+	      where (int)SwOccA_frag[(index)i1] == ifrag
+		  DO i
+		  where (int)SwOccA_frag[(index)i] == ifrag
+		      txp[mu,i] = wC_ao[mu,nu]*ca[nu,i]
+		      tpp[i1,i]  = txp[mu,i]*ca[mu,i1]
+		      t1pp[i1,i] = tpp[i1,i]
+		      PUT wC[i1,i] += tpp[i1,i]
+		  ENDDO i
+	      ENDDO i1
+
+      ENDPARDO ifrag, mu, nu
+
+      sip_barrier 
+
+      print "Done Final formation of wC(MO)"
+      server_barrier
+      PARDO ifrag, mu, nu "Frag{i}{aa}{}"
+	 where (int)SwAO_frag[(index)mu] == ifrag
+	 where (int)SwAO_frag[(index)nu] == ifrag
+
+         icount = (scalar)ifrag
+
+               txx[mu,nu] = 0.0 
+               execute return_h1frag txx[mu,nu] icount  
+# Reform wC_ao for use in alternative exchange energy 
+               PUT wC_ao[mu,nu]  = txx[mu,nu] 
+
+               do b 
+	       where (int)SwVirtA_frag[(index)b] == ifrag
+                     tbx[b,nu] = txx[mu,nu]*ca[mu,b] 
+
+                     do j 
+	             where (int)SwOccA_frag[(index)j] == ifrag
+                           tbj[b,j]     = tbx[b,nu]*ca[nu,j] 
+                           PUT wC[b,j] += tbj[b,j] 
+                           tpp[j,b]     = tbj[b,j] 
+                           PUT wC[j,b] += tpp[j,b] 
+                     enddo j 
+
+                     do b1  
+		     where (int)SwVirtA_frag[(index)b1] == ifrag
+                           tpp[b,b1] = tbx[b,nu]*ca[nu,b1] 
+                           t1pp[b,b1] = tpp[b,b1] 
+                           PUT wC[b,b1] += tpp[b,b1] 
+                     enddo b1  
+
+               enddo b 
+
+               do i 
+	       where (int)SwOccA_frag[(index)i] == ifrag
+
+                     tpx[i,nu] = txx[mu,nu]*ca[mu,i] 
+
+                     do j 
+		     where (int)SwOccA_frag[(index)j] == ifrag
+                           t1pp[i,j] = tpx[i,nu]*ca[nu,j] 
+                           tpp[i,j] = t1pp[i,j] 
+                           PUT wC[i,j] += tpp[i,j] 
+                     enddo j 
+
+               enddo i 
+
+      ENDPARDO ifrag, mu, nu
+server_barrier
+ENDPROC form_wC
+proc relax_wc
+server_barrier
+    execute get_my_rank rank
+    if rank == 0.0
+    do ifrag
+
+        istart = (int)occ_start[ifrag]
+        iend   = (int)occ_end[ifrag]
+
+	allocate contiguous SPij[istart:iend,istart:iend]
+	allocate contiguous SVij[istart:iend,istart:iend]
+	allocate contiguous SFij[istart:iend,istart:iend]
+	allocate contiguous SFTij[istart:iend,istart:iend]
+	allocate contiguous SOij[istart:iend,istart:iend]
+	allocate contiguous SVOij[istart:iend,istart:iend]
+
+         DO mu
+         where (int)SwAO_frag[(index)mu] == ifrag
+            DO i
+            where (int)SwOccA_frag[(index)i] == ifrag
+                  SCAij[mu,i] = Ca[mu,i]
+            ENDDO i
+         ENDDO mu
+
+	do i
+        where (int)SwOccA_frag[(index)i] == ifrag
+	do i1
+        where (int)SwOccA_frag[(index)i1] == ifrag
+	    get wC[i,i1]
+	    SPij[i:i,i1:i1] = wC[i,i1]
+
+	enddo i1
+	enddo i
+
+	execute eigen_calc SPij[istart:iend,istart:iend] SVij[istart:iend,istart:iend]
+
+	do i
+        where (int)SwOccA_frag[(index)i] == ifrag
+	do j
+        where (int)SwOccA_frag[(index)j] == ifrag
+	T2pp[j,i] = 0.0
+	do j1
+        where (int)SwOccA_frag[(index)j1] == ifrag
+	    get DFock_a[j,j1]
+	    Tpp[j1,i] = SVij[j1:j1,i:i]
+	    T1pp[j,i] = DFock_a[j,j1]*Tpp[j1,i]
+	    T2pp[j,i] += T1pp[j,i]
+	enddo j1
+	    SFij[j:j,i:i] = T2pp[j,i]
+	enddo j
+	enddo i
+
+	do i
+        where (int)SwOccA_frag[(index)i] == ifrag
+	do i1
+        where (int)SwOccA_frag[(index)i1] == ifrag
+	 T3pp[i,i1] = 0.0
+	do j
+        where (int)SwOccA_frag[(index)j] == ifrag
+	    Tpp[j,i1] = SFij[j:j,i1:i1]
+	    T1pp[j,i] = SFij[j:j,i:i]
+	    T2pp[i,i1] = T1pp[j,i]*Tpp[j,i1]
+	    T3pp[i,i1] += T2pp[i,i1]
+	enddo j
+	    SFTij[i:i,i1:i1] = T3pp[i,i1]
+	enddo i1
+	enddo i
+
+	print SFTij[istart:iend,istart:iend]
+
+	execute eigen_calc SFTij[istart:iend,istart:iend] SOij[istart:iend,istart:iend]
+
+	print SFTij[istart:iend,istart:iend]
+
+	do i
+        where (int)SwOccA_frag[(index)i] == ifrag
+	do i1
+        where (int)SwOccA_frag[(index)i1] == ifrag
+	T3pp[i,i1] = 0.0
+	do j
+        where (int)SwOccA_frag[(index)j] == ifrag
+	    Tpp[i,j] = SVij[i:i,j:j]
+	    T1pp[j,i1] = SOij[j:j,i1:i1]
+	    T2pp[i,i1] = Tpp[i,j]*T1pp[j,i1]
+	    T3pp[i,i1] += T2pp[i,i1]
+	enddo j
+	    SVOij[i:i,i1:i1] = T3pp[i,i1]
+	enddo i1
+	enddo i
+
+         DO mu
+         where (int)SwAO_frag[(index)mu] == ifrag
+            DO i
+            where (int)SwOccA_frag[(index)i] == ifrag
+                Ca[mu,i] = 0.0
+	    do j
+	    where (int)SwOccA_frag[(index)j] == ifrag
+                Tpp[j,i] = SVOij[j:j,i:i]
+                Txi[mu,i] = SCAij[mu,j]*Tpp[j,i]
+                Ca[mu,i] +=  Txi[mu,i]
+	    enddo j
+            ENDDO i
+         ENDDO mu
+
+        DO i
+        where (int)SwOccA_frag[(index)i] == ifrag
+	DO mu
+	 where (int)SwAO_frag[(index)mu] == ifrag
+                  put DCa[mu,i] = Ca[mu,i]
+        ENDDO mu
+	do i1
+        where (int)SwOccA_frag[(index)i1] == ifrag
+	    Tpp[i,i1] = SFTij[i:i,i1:i1]
+	    put DFock_a[i,i1] = Tpp[i,i1]
+	enddo i1
+        ENDDO i
+
+	deallocate contiguous SPij[istart:iend,istart:iend]
+	deallocate contiguous SVij[istart:iend,istart:iend]
+	deallocate contiguous SFij[istart:iend,istart:iend]
+	deallocate contiguous SFTij[istart:iend,istart:iend]
+	deallocate contiguous SOij[istart:iend,istart:iend]
+	deallocate contiguous SVOij[istart:iend,istart:iend]
+
+    enddo ifrag
+    endif
+server_barrier
+endproc relax_wc
+# -----------------------------------------------------------------------------
+# 
+#     START OF MAIN PROGRAM  
+#
+# -----------------------------------------------------------------------------
+
+      sip_barrier
+      restore_persistent Dca "ca" 
+      restore_persistent DFock_a "fock_a"
+      rmaster = 0
+      zero = 0.0 
+      one  = 1.0 
+      print r_thresh 
+      print elst_thresh 
+      mone = -1.0 
+      print cc_conv 
+      sip_barrier
+#
+      CALL SET_FRAG_PARMS   
+      sip_barrier 
+      print "Done setting fragment parameters" 
+      call set_fock_mos
+      sip_barrier 
+      print fock_a
+#     Compute the NN repusion between fragments  
+#     ----------------------------------------- 
+      nn_rep = 0.0 
+      execute compute_nn_repulsion nn_rep
+      print nn_rep 
+    server_barrier
+    call form_wC
+#    server_barrier
+#      call relax_wc
+    server_barrier
+
+    pardo fa,fa1
+        get wC[fa,fa1]
+	put FwC[fa,fa1] = wC[fa,fa1]
+    endpardo fa,fa1
+    pardo fa, fi
+	get wC[fa,fi]
+	t1ai[fa,fi] = wC[fa,fi]
+	t1ia[fi,fa] = wC[fa,fi]
+	put FwC[fa,fi] = t1ai[fa,fi]
+	put FwC[fi,fa] = t1ia[fi,fa]
+    endpardo fa, fi
+    pardo fi,fi1
+        get wC[fi,fi1]
+	put FwC[fi,fi1] = wC[fi,fi1]
+    endpardo fi,fi1
+      server_barrier
+      set_persistent wC "wC"
+      set_persistent FwC "MOI_wC"
+
+      do p
+	  sx3[p] = 0.0
+	  t3[p] = 0.0
+      do p1
+      where p==p1
+	  get wC[p,p1]
+	  Tpp[p,p1] = wC[p,p1]
+	  execute return_diagonal Tpp[p,p1] etemp
+	  Sx3[p1] = 1.0
+	  t3_1[p] = Tpp[p,p1]*Sx3[p1]
+	  t3[p] += t3_1[p]
+      enddo p1
+      sx3[p] = Fock_a[p]
+      sx3[p] += t3[p]
+      enddo p
+      print sx3
+      server_barrier
+
+
+                           ENDSIAL FRAG_2ORDER_CORR 
+##
+################################################################################

@@ -1,0 +1,216 @@
+import "mcpt2_defs.sialx" 
+import "mcpt2_vars.sialx"
+import "tran_frag.sialx"
+import "mcpt2_singles.sialx"
+import "mcpt2_doubles.sialx"
+import "mcpt2_util.sialx"
+#
+                           SIAL FRAG_2ORDER_CORR 
+# 
+# -----------------------------------------------------------------------------
+# 
+#
+      PROC IGUESS   
+#     ----------- 
+#
+#     Get memory requirements from integral calculation 
+#     ------------------------------------------------- 
+#      print "Starting scratch memory calculation" 
+#      imax = 0.0  
+#      zmax = 0.0  
+#      execute compute_int_scratchmem_lowmem zmax imax 
+      sip_barrier 
+      print "Done computing scratch memory" 
+#
+      sip_barrier 
+      allocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      allocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
+
+    PARDO katom  
+	icount = (scalar)katom
+
+#	print icount # etemp 
+
+	print "Starting computing fragment scf" 
+	execute scf_atom_lowmem icount scr_1[1:max_aoseg,1:max_aoseg] scr_2[1:max_aoseg,1:max_aoseg] scr_3[1:max_aoseg,1:max_aoseg] scr_4[1:max_aoseg,1:max_aoseg]
+	print "Done computing fragment scf" 
+#
+# Nowput the coefficients and fock matrices into the full distributed arrays 
+
+	stype = 1.0 # HF coefficients  
+	DO mu
+	where (int)SwAO_frag[(index)mu] == katom
+	    DO a
+	    where (int)SwVirtA_frag[(index)a] == katom
+		txp[mu,a]      = 0.0  
+		execute place_scratch txp[mu,a]  scr_1[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT DCa[mu,a] += txp[mu,a]
+	    ENDDO a
+	    DO i
+	    where (int)SwOccA_frag[(index)i] == katom
+		txp[mu,i]      = 0.0  
+		execute place_scratch txp[mu,i]  scr_1[1:max_aoseg,1:max_aoseg] stype icount  
+		PUT DCa[mu,i] += txp[mu,i]
+	    ENDDO i
+	ENDDO mu
+	print "Done placing coefficients"
+
+	stype = 2.0 # Fock matrix  
+	DO a   
+	where (int)SwVirtA_frag[(index)a] == katom
+	    DO a1
+	    where (int)SwVirtA_frag[(index)a1] == katom
+		tpp[a,a1]          = 0.0  
+		execute place_scratch tpp[a,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[a,a1] += tpp[a,a1] 
+	    ENDDO a1
+	    DO i1
+	    where (int)SwOccA_frag[(index)i1] == katom
+		tpp[a,i1]          = 0.0  
+		execute place_scratch tpp[a,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[a,i1] += tpp[a,i1] 
+	    ENDDO i1
+	ENDDO a   
+
+	DO i   
+	where (int)SwOccA_frag[(index)i] == katom
+	    DO i1
+	    where (int)SwOccA_frag[(index)i1] == katom
+		tpp[i,i1]          = 0.0  
+		execute place_scratch tpp[i,i1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[i,i1] += tpp[i,i1]
+	    ENDDO i1
+	    DO a1
+	    where (int)SwVirtA_frag[(index)a1] == katom
+		tpp[i,a1]          = 0.0  
+		execute place_scratch tpp[i,a1]  scr_3[1:max_aoseg,1:max_aoseg] stype icount 
+		PUT Dfock_a[i,a1] += tpp[i,a1]
+	    ENDDO a1
+	ENDDO i
+
+	print "Done placing fock_matrix"
+
+    ENDPARDO katom   
+      sip_barrier 
+      deallocate contiguous scr_1[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_2[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_3[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_4[1:max_aoseg,1:max_aoseg]
+      deallocate contiguous scr_5[1:max_aoseg,1:max_aoseg]
+      sip_barrier 
+#
+      ENDPROC IGUESS   
+
+#
+# ---------------------------------------------------------------------------- 
+#
+#
+# -----------------------------------------------------------------------------
+# 
+#     START OF MAIN PROGRAM  
+#
+# -----------------------------------------------------------------------------
+
+print " "
+print "-- Second-Order Molecular Cluster Perturbation Theory"
+print "-- J. Comp. Chem. 2001, 22, 1574-1589"
+print "-- Written by Victor Lotrich and Jason N. Byrd"
+print " "
+
+# 
+#     Set fragment parameters   
+#     ----------------------- 
+#
+# Restore the persistent arrays. 
+     #create DCa 
+     #create DFock_a
+     #execute enable_all_rank_print
+      sip_barrier
+#      restore_persistent Dca "ca" 
+#      set_persistent Dca "ca" 
+#      restore_persistent DFock_a "fock_a"
+#      set_persistent DFock_a "fock_a"
+      rmaster = 0
+      print "**** Performing perturbing wc(a,i) flavor"
+      do_nonhf = 0
+      zero = 0.0 
+      one  = 1.0 
+      print r_thresh 
+      print elst_thresh 
+      mone = -1.0 
+      print cc_conv 
+      sip_barrier
+#
+      CALL SET_FRAG_PARMS   
+      sip_barrier 
+      print "Done setting fragment parameters" 
+      print "Performing monomer SCF"
+      call IGUESS
+      call set_fock_mos
+      sip_barrier 
+
+
+#     Compute the NN repusion between fragments  
+#     ----------------------------------------- 
+      nn_rep = 0.0 
+      execute compute_nn_repulsion nn_rep
+      print nn_rep 
+#
+#     Perform 2-el integral transformation and calculate second order energies   
+#     ------------------------------------------------------------------------ 
+#
+      sip_barrier 
+      CALL FRAG_TRAN 
+      sip_barrier 
+      print "Done two-electron integral transformation" 
+#
+#     Form the electrostatic potential(complete) of all fragments  
+#     ----------------------------------------------------------- 
+#
+      CALL REFORM_WC
+      CALL FORM_ELSTPOT 
+      sip_barrier 
+      print "Done forming electrostatic potential" 
+# Now we will compute the Hartree-Fock exchange energy 
+# Compute the exchange and polarization energies 
+      CALL OVERLAP_TRANS 
+      print "Done transforming overlap" 
+#
+#     Form the density based exchange energy  
+#     -------------------------------------- 
+#
+      CALL EXCHANGE_ALT
+      print "Done forming density based exchange energy" 
+#
+#     Compute the CCPT(2) dimer_doubles amplitudes for Fragment 1.  
+#     ------------------------------------------------------ 
+#
+      print " "
+      CALL FORM_T10
+      sip_barrier 
+      print " "
+      CALL FORM_T1
+      sip_barrier 
+      print "Completely Done singles formation" 
+      print e1exc_at 
+      print e10pol_at 
+      print eps1_pol  
+      print singles  
+      sip_barrier 
+      call DOUBLES_MANAGER
+# Compute the LCCD amplitudes for each monomer
+      sip_barrier 
+            CALL FORM_T2_MONOMER
+      sip_barrier
+      call END_PRINT
+#
+
+
+         sip_barrier 
+                           ENDSIAL FRAG_2ORDER_CORR 
+##
+################################################################################

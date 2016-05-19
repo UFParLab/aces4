@@ -1,0 +1,100 @@
+sial scf_rhf_defs
+#
+predefined  int norb   #total number of atomic orbital segments
+predefined  int naocc  # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc  # number of occupied molecular orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc  # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+predefined  int bavirtorb # used as a simple index, begining alpha virtual
+predefined  int bbvirtorb # used as a simple index, begining end virtual
+predefined  int eavirtorb # used as a simple index, end alpha virtual
+predefined  int ebvirtorb # used as a simple index, end beta virtual
+predefined  int nfrags  # Number of fragments from ZMAT 
+
+#
+predefined  int scf_iter
+predefined  int scf_hist
+predefined  int scf_beg
+
+predefined  int frag1_baocc
+predefined  int frag1_bavirt
+predefined  int frag1_eaocc
+predefined  int frag1_eavirt
+predefined  int frag1_norb
+
+predefined scalar scf_conv  # value of SCF_CONV from ZMAT
+predefined scalar damp
+
+predefined  int max_aoseg # maximum ao segment size 
+predefined  int max_alphaseg # maximum alpha segment size 
+predefined  int max_betaseg # maximum beta segment size 
+
+
+predefined scalar r_thresh  #Threshold for pair calculation 
+predefined scalar elst_thresh  #Threshold for wC calculation 
+
+#these are predefined in the index table         
+aoindex aces_defs_mu = 1: norb  
+
+moaindex aces_defs_pa = 1: eavirt
+mobindex aces_defs_pb = 1: ebvirt
+
+scalar scf_energy
+scalar totenerg 
+          
+special return_h1 w
+special return_1el_ecpints w
+special return_ovl w
+special eigen_calc_sqr_inv uuu
+special eigen_calc_s_inv uuu
+special eigen_calc uu
+special compute_diis u 
+special check_dconf rw
+special compute_ubatch1 wrruu
+special compute_ubatch2 wrruu
+#special compute_ubatch3 wrruu
+special compute_ubatch4 wrruu
+#special compute_ubatch5 wrruu
+special compute_ubatch6 wrruu
+special compute_ubatch7 wrruu
+special compute_ubatch8 wrruu
+special compute_int_scratchmem uuu
+special compute_nn_repulsion u 
+special a4_david_damp_factor ru
+special a4_get_init_occupation wr
+special a4_return_occupation rw
+special a4_scf_atom wwrrrr
+special a4_dscale urr
+special return_pairs rrrw
+
+#     NOT PORTED 
+special set_flags2 r
+special return_sval rw
+special compute_aabb_batch ww
+special get_my_rank w
+special compute_dipole_integrals wur
+special return_h1_moi wr
+special return_ovl_moi wr
+special moi_nn_repulsion ur
+special compute_int_scratchmem_lowmem rr
+special frag_index_range uu
+special place_scratch uuuu
+special compute_integral_batch w
+special enable_all_rank_print
+special disable_all_rank_print
+special return_h1frag wr
+special return_vpq rw
+special diagonalize_pair_density rur
+special orth_virt_occ urrr
+special form_diagonal_unit_matrix ur
+special return_diagonal uu
+
+endsial scf_rhf_defs
+
+

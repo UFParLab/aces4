@@ -224,7 +224,7 @@ SIAL_PROGRAM = rcis_rhf.siox
 SIAL_PROGRAM = lr_eom_ccsd_rhf.siox
 
 */
-TEST(Sial_QM,eom_test){
+TEST(Sial_QM,DISABLED_eom_test){
 	std::string job("eom_test");
 
 	std::stringstream output;
@@ -281,94 +281,6 @@ TEST(Sial_QM,eom_test){
 		for (i; i < 2; i++){
 		    ASSERT_NEAR(sek0[i], expected[i], 1e-8);
 		}
-	}
-
-}
-
-
-TEST(Sial_QM,DISABLED_mcpt2_test){
-	std::string job("mcpt2_test");
-
-	std::stringstream output;
-
-	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-//
-// mcpt
-	controller.initSipTables(qm_dir_name);
-	controller.run();
-
-	if (attr->global_rank() == 0) {
-		double e1x_at = controller.scalar_value("e1x_at");
-		ASSERT_NEAR(0.01026999465441, e1x_at, 1e-10);
-		double e10pol_at = controller.scalar_value("e10pol_at");
-		ASSERT_NEAR(-0.01868181159399, e10pol_at, 1e-10);
-		double singles = controller.scalar_value("singles");
-		ASSERT_NEAR(-0.00106726385203, singles, 1e-10);
-		double dimer_doubles = controller.scalar_value("dimer_doubles");
-		ASSERT_NEAR(-0.00055251119550, dimer_doubles, 1e-10);
-		double fragment_doubles = controller.scalar_value("fragment_doubles");
-		ASSERT_NEAR(-0.25081012125402, fragment_doubles, 1e-10);
-		double mono_lccd = controller.scalar_value("mono_lccd");
-		ASSERT_NEAR(0.25084388836779, mono_lccd, 1e-10);
-	}
-
-}
-
-
-/*
- water dimer
- O -0.00000007     0.06307336     0.00000000
- H -0.75198755    -0.50051034     0.00000000
- H  0.75198873    -0.50050946     0.00000000
- O -0.00000007     0.06307336   5.00000000
- H -0.75198755    -0.50051034   5.00000000
- H  0.75198873    -0.50050946   5.00000000
-
- *ACES2(BASIS=3-21G
- scf_conv=12
- cc_conv=12
- estate_tol=8
- estate_sym=4
- spherical=off
- excite=eomee
- symmetry=off
- NOREORI=ON
- CALC=ccsd)
-
- *SIP
- MAXMEM=120000
- SIAL_PROGRAM = mcpt2_corr_lowmem.siox
-
- *FRAGLIST
- 2 10.0 10.0
- 3 3
- 1 2 3
- 4 5 6
-*/
-TEST(Sial_QM,mcpt2_water_test){
-	std::string job("mcpt2_water_test");
-
-	std::stringstream output;
-
-	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-//
-// mcpt
-	controller.initSipTables(qm_dir_name);
-	controller.run();
-
-	if (attr->global_rank() == 0) {
-		double e1x_at = controller.scalar_value("e1x_at");
-		ASSERT_NEAR(-0.00002319025225, e1x_at, 1e-10);
-		double e10pol_at = controller.scalar_value("e10pol_at");
-		ASSERT_NEAR(0.00590428495666, e10pol_at, 1e-10);
-		double singles = controller.scalar_value("singles");
-		ASSERT_NEAR(-0.00012759140498, singles, 1e-10);
-		double dimer_doubles = controller.scalar_value("dimer_doubles");
-		ASSERT_NEAR(-0.00013637010071, dimer_doubles, 1e-10);
-		double fragment_doubles = controller.scalar_value("fragment_doubles");
-		ASSERT_NEAR(-0.25554107195002, fragment_doubles, 1e-10);
-		double mono_lccd = controller.scalar_value("mono_lccd");
-		ASSERT_NEAR(0.255547494689395, mono_lccd, 1e-10);
 	}
 
 }
@@ -643,7 +555,7 @@ SIAL_PROGRAM = rlccsd_rhf.siox
 SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 
 */
-TEST(Sial_QM,eom_lccsd_test){
+TEST(Sial_QM,DISABLED_eom_lccsd_test){
 	std::string job("eom_lccsd_test");
 
 	std::stringstream output;
@@ -805,7 +717,7 @@ SIAL_PROGRAM = mp2_rhf_disc.siox
 SIAL_PROGRAM = lr_eom_linccsd_rhf.siox
 
 */
-TEST(Sial_QM,eom_mp2_test){
+TEST(Sial_QM,DISABLED_eom_mp2_test){
 	std::string job("eom_mp2_test");
 
 	std::stringstream output;
@@ -941,6 +853,184 @@ TEST(Sial_QM,lamccsdpt_test){
 	}
 
 }
+/*
+eom-ccsd right test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=10
+cc_conv=10
+spherical=off
+excite=eomee
+estate_sym=4
+estate_tol=6
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rlambda_rhf.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = eom_ccsd_rhf_right.siox
+
+ */
+TEST(Sial_QM,eom_ccsd_water_right_test){
+	std::string job("eom_ccsd_water_right_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274033, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ccsd_energy = controller.scalar_value("ccsd_energy");
+		ASSERT_NEAR(-75.71251002936883, ccsd_energy, 1e-10);
+	}
+//
+// lambda 
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// eom
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double Eexpected[] = {0.32850657002707, 0.41193399006592, 0.42288344162832, 0.51159731180444};
+		int i = 0;
+		for (i; i < 4; i++){
+		    ASSERT_NEAR(sek0[i], Eexpected[i], 1e-8);
+		}
+		double *  Rdipmom= controller.static_array("rdipmom");
+		double Rexpected[] = {0.17558771, 0.0, 0.56188382, 0.56905669};
+		i = 0;
+		for (i; i < 2; i++){
+		    ASSERT_NEAR(Rdipmom[i], Rexpected[i], 1e-4);
+		}
+	}
+}
+/*
+eom-ccsd left right test
+O -0.00000007     0.06307336     0.00000000
+H -0.75198755    -0.50051034    -0.00000000
+H  0.75198873    -0.50050946    -0.00000000
+
+*ACES2(BASIS=3-21G
+scf_conv=10
+cc_conv=10
+spherical=off
+excite=eomee
+estate_sym=4
+estate_tol=6
+symmetry=off
+CALC=ccsd)
+
+*SIP
+MAXMEM=1500
+SIAL_PROGRAM = scf_rhf.siox
+SIAL_PROGRAM = tran_rhf_no4v.siox
+SIAL_PROGRAM = rccsd_rhf.siox
+SIAL_PROGRAM = rlambda_rhf.siox
+SIAL_PROGRAM = rcis_rhf.siox
+SIAL_PROGRAM = eom_ccsd_rhf_right.siox
+SIAL_PROGRAM = eom_ccsd_rhf_left.siox
+
+ */
+TEST(Sial_QM,eom_ccsd_water_test){
+	std::string job("eom_ccsd_water_test");
+
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//
+// SCF
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double scf_energy = controller.scalar_value("scf_energy");
+		ASSERT_NEAR(-75.58432674274033, scf_energy, 1e-10);
+	}
+//
+// TRAN
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// ccsd
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double ccsd_energy = controller.scalar_value("ccsd_energy");
+		ASSERT_NEAR(-75.71251002936883, ccsd_energy, 1e-10);
+	}
+//
+// lambda 
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// CIS
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+//
+// eom right
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double Eexpected[] = {0.32850657002707, 0.41193399006592, 0.42288344162832, 0.51159731180444};
+		int i = 0;
+		for (i; i < 4; i++){
+		    ASSERT_NEAR(sek0[i], Eexpected[i], 1e-8);
+		}
+	}
+//
+// eom left
+	controller.initSipTables(qm_dir_name);
+	controller.run();
+
+	if (attr->global_rank() == 0) {
+		double * sek0 = controller.static_array("sek0");
+		double Eexpected[] = {0.32850657002707, 0.41193399006592, 0.42288344162832, 0.51159731180444};
+		int i = 0;
+		for (i; i < 4; i++){
+		    ASSERT_NEAR(sek0[i], Eexpected[i], 1e-8);
+		}
+		double *  oscnorm= controller.static_array("oscnorm");
+		double Oexpected[] = {0.00680956, 0.0, 0.09037060, 0.11312310};
+		i = 0;
+		for (i; i < 4; i++){
+		    ASSERT_NEAR(oscnorm[i], Oexpected[i], 1e-4);
+		}
+	}
+}
 
 //****************************************************************************************************************
 
@@ -975,6 +1065,7 @@ int main(int argc, char **argv) {
 	sip::SIPMPIUtils::set_error_handler();
 	sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
 	attr = &sip_mpi_attr;
+	TestControllerParallel::sleep_between_tests = 5;  //delay between tests to deal with duplicate jobids due to low resolution of the timestamp used to construct them
 #endif
 	barrier();
 

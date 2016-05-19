@@ -255,7 +255,6 @@ c     call TAU_START("start scratch_array")
 
 c     call TAU_STOP("start scratch_array")   
 
-      Write(6,*) "Entering uints1"
       offset_1 = 0 
       offset_2 = 0 
       offset_3 = 0 
@@ -267,12 +266,7 @@ c     call TAU_STOP("start scratch_array")
 
 c     call TAU_START("start compute_uintegrals1")   
 
-      int_length1 = extents_0(1)+offset_1 
-      int_length2 = extents_0(2)+offset_2 
-      int_length3 = extents_0(3)+offset_3 
-      int_length4 = extents_0(4)+offset_4
-      int_length  = int_length1 * int_length2 * int_length3 *
-     +              int_length4
+      int_length = size_0
 
       call scratch_array(int_length, cptr_int)
       call c_f_pointer(cptr_int, fptr_int, [int_length])

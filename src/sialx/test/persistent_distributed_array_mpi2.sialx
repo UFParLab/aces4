@@ -29,6 +29,8 @@ sial persistent_distributed_array_mpi2
 	      get b[i,j]
 	      get c[i,j]
           a[i,j] = b[i,j] + c[i,j] 
+          print b[i,j]
+          print c[i,j]
 	      print a[i,j]
 	   enddo j
 	enddo i
@@ -41,8 +43,8 @@ sial persistent_distributed_array_mpi2
 	enddo i
 	
 	sip_barrier
-	delete b
-	delete c
+#	delete b
+#	delete c
 	
 	sip_barrier
 	println "!!!!!!!!!! end of second prog!!!!!!!!!!!!!"

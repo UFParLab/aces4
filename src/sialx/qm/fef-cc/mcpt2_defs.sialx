@@ -1,0 +1,82 @@
+sial trans_frag_defs
+
+#
+predefined  int norb   #total number of atomic orbital segments 
+predefined  int naocc  # number of occupied molecular orbital segments (alpha)
+predefined  int nbocc  # number of occupied molecular orbital segments (beta)
+predefined  int baocc  # begin of occupied orbital segment range (alpha)
+predefined  int bbocc  # begin of occupied orbital segment range (beta)
+predefined  int eaocc  # end occupied orbital segment range (alpha)
+predefined  int ebocc   # end occupied orbital segment range (beta)
+predefined  int bavirt  # begin of virtual orbital segment range (alpha)
+predefined  int bbvirt  # begin of virtual orbital segment range (beta)
+predefined  int eavirt  # end of virtual orbital segment range (alpha)
+predefined  int ebvirt  # end of virtual orbital segment range (beta)
+predefined  int bavirtorb
+predefined  int bbvirtorb
+predefined  int eavirtorb
+predefined  int ebvirtorb
+predefined  int cc_iter  # value of CC_MAXCYC from ZMAT.  Index = 38
+predefined  int scf_iter #value of SCF_MAXCYC from ZMAT.
+predefined  int scf_hist #value of SCF_EXPORDE from ZMAT.
+predefined  int scf_beg #value of SCF_EXPSTAR from ZMAT      
+predefined  int nfrags  # Number of fragments from ZMAT 
+
+predefined  int frag1_baocc
+predefined  int frag1_bavirt
+predefined  int frag1_eaocc
+predefined  int frag1_eavirt
+predefined  int frag1_norb
+
+predefined int eom_roots
+predefined int eom_subspc
+
+moaindex aces_defs_pa = baocc: eavirt  
+moaindex aces_defs_pb = bbocc: ebvirt   
+aoindex aces_defs_mu = 1: norb  
+
+predefined  int max_aoseg # maximum ao segment size 
+predefined  int max_alphaseg # maximum alpha segment size 
+predefined  int max_betaseg # maximum beta segment size 
+
+
+predefined scalar r_thresh  #Threshold for pair calculation 
+predefined scalar elst_thresh  #Threshold for wC calculation 
+          
+
+predefined scalar damp #value of DAMPSCF from ZMAT
+predefined scalar cc_conv  # value of CC_CONV from ZMAT.
+predefined scalar scf_conv  # value of SCF_CONV from ZMAT
+
+#     PORTED 
+special return_h1 w
+special return_ovl w
+special return_sval rw
+special get_my_rank w
+special frag_index_range uu  
+special set_frag u  
+special compute_integral_batch w  
+special energy_denominator_rhf ur   
+special energy_numerator_rhf ur   
+special compute_int_scratchmem uuu
+special compute_int_scratchmem_lowmem uu
+special return_h1frag wr   
+special return_diagonal uu 
+special return_vpq uu 
+special compute_nn_repulsion u
+special return_pairs rrrw
+special compute_xyz_batch uru 
+special enable_debug_print
+special disable_debug_print  
+special scf_atom_lowmem rwwww 
+special place_scratch urrr
+special compute_pair_nn rrw
+special remove_diagonal u
+special eigen_calc uu
+special enable_all_rank_print
+special disable_all_rank_print
+special moi_nn_repulsion ur
+
+endsial trans_frag_defs
+
+

@@ -18,7 +18,7 @@ DistributedBlockConsistency::DistributedBlockConsistency():
 }
 
 void DistributedBlockConsistency::reset_consistency_status (){
-	check(mode_ != INVALID_MODE &&
+	CHECK(mode_ != INVALID_MODE &&
 			worker_ != INVALID_WORKER,
 			"Inconsistent block status !");
 	mode_ = NONE;

@@ -25,13 +25,13 @@ int DataManager::scope_count = 0;
 
 DataManager::DataManager(const SipTables &sipTables):
      sip_tables_(sipTables),
-     scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
-     int_table_(sipTables.int_table_), /* initialize integers from sipTables */
 	 index_values_(sipTables.index_table_.num_indices(), undefined_index_value), /*initialize all index values to be undefined */
-     block_manager_(sipTables),
-     contiguous_local_array_manager_(sipTables, block_manager_),
+     scalar_values_(sipTables.scalar_table_), /*initialize scalars from sipTables*/
      scalar_blocks_(sipTables.array_table_.entries_.size(),NULL),
-     contiguous_array_manager_(sipTables, sipTables.setup_reader_)
+     int_table_(sipTables.int_table_), /* initialize integers from sipTables */
+     block_manager_(sipTables),
+     contiguous_array_manager_(sipTables, sipTables.setup_reader_, block_manager_.block_map_),
+     contiguous_local_array_manager_(sipTables, block_manager_)
         {
 		for (int i = 0; i < sipTables.array_table_.entries_.size(); ++i) {
 			if (sipTables.is_scalar(i)) {
@@ -44,7 +44,8 @@ DataManager::DataManager(const SipTables &sipTables):
 DataManager::~DataManager() {
     for (int i = 0; i < sip_tables_.array_table_.entries_.size(); ++i){
     	if (sip_tables_.is_scalar(i) ){
-    		scalar_blocks_[i]->data_ = NULL;	// So that scalar that is pointed to is not freed.
+    		scalar_blocks_[i]->data_ = NULL;	//So that scalar that is pointed to is not freed
+    		                                    //in destructor for wrapper Block
     		delete scalar_blocks_[i];
     		scalar_blocks_[i] = NULL;
     	}
@@ -83,7 +84,7 @@ void DataManager::set_scalar_value(const std::string& name, double value) {
 
 Block::BlockPtr DataManager::get_scalar_block(int array_table_slot){
 	Block::BlockPtr b = scalar_blocks_.at(array_table_slot);
-	check(b != NULL, "scalar in block wrapper not found");
+	CHECK(b != NULL, "scalar in block wrapper not found");
 	return b;
 }
 
@@ -190,7 +191,7 @@ BlockId DataManager::super_block_id(const BlockSelector& subblock_selector) cons
 			}
 			else{  //this is a subindex, look up the parent index's current value
 				int parent_index_slot = sip_tables_.index_table_.parent(index_slot);
-				check(sip_tables_.index_table_.index_type(parent_index_slot) != subindex, "current implementation only supports one level of subindices");
+				CHECK(sip_tables_.index_table_.index_type(parent_index_slot) != subindex, "current implementation only supports one level of subindices");
 				index_values[i] = index_values_[parent_index_slot];
 		     }
 	}

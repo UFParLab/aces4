@@ -125,10 +125,10 @@ C checking
             dtmp = dtmp + dabs(Amat(j,i)-Amat(i,j))
          end do
       end do
-      if (dtmp.gt.1.d-8) then
-         print *, '@EIG: WARNING - the matrix is not symmetric'
-         print *, '      sum of differences is ',dtmp
-      endif
+C      if (dtmp.gt.1.d-8) then
+C         print *, '@EIG: WARNING - the matrix is not symmetric'
+C         print *, '      sum of differences is ',dtmp
+C      endif
 
 *
 *  Arguments

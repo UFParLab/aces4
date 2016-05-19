@@ -12,6 +12,7 @@
 #include "opcode.h"
 #include "sip_tables.h"
 #include "counter.h"
+#include "timer.h"
 
 #ifdef HAVE_MPI
 #include "sip_mpi_attr.h"
@@ -48,9 +49,11 @@ public:
 		last_opcode_ = opcode;
 	}
 
-	void gather() {
+
+	void gather(){
 //		pc_histogram_.gather();
 //		opcode_histogram_.gather();
+
 		run_loop_timer_.gather();
 		run_loop_timer_.reduce();
 		opcode_timer_.gather();
@@ -72,10 +75,12 @@ public:
 
 private:
 
-	MPICounterList opcode_histogram_; //this records the number of times each opcode has been executed
-									  //can be used to evaluate test coverage of the sial interpreter.
-	MPICounterList pc_histogram_; //this records the number of times each line (or optable entry) in the sial program has been executed.
-								  //can be used to find dead code in a sial program.
+
+	MPICounterList opcode_histogram_;  //this records the number of times each opcode has been executed
+	                                     //can be used to evaluate test coverage of the sial interpreter.
+	MPICounterList pc_histogram_;      //this records the number of times each line (or optable entry) in the sial program has been executed.
+	                                     //can be used to find dead code in a sial program.
+
 	MPITimer run_loop_timer_;
 	MPITimerList opcode_timer_;
 	size_t last_pc_;

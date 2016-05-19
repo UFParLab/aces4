@@ -17,8 +17,10 @@
 #include "setup_interface.h"
 #include "sip_interface.h"
 #include "data_manager.h"
-#include "global_state.h"
+#include "job_control.h"
 #include "sial_printer.h"
+#include "array_file.h"
+#include "aces_log.h"
 
 #include "worker_persistent_array_manager.h"
 
@@ -28,7 +30,7 @@
 #include "sip_server.h"
 #include "server_persistent_array_manager.h"
 //#include "sip_mpi_attr.h"
-//#include "global_state.h"
+//#include "job_control.h"
 //#include "sip_mpi_utils.h"
 //#else
 //#include "sip_attr.h"
@@ -215,58 +217,72 @@ TEST(Sial,pardo_loop_corner_case) {
 //}
 
 TEST(Sial,broadcast_static){
-    std::string job("broadcast_static");
-    int norb = 3;
-    int segs[] = {2,3,2};
-    int root = 0;
-    if (attr->global_rank() == 0) {
-        init_setup(job.c_str());
-        set_constant("norb", norb);
-        set_constant("root", root);
-        std::string tmp = job + ".siox";
-        const char* nm = tmp.c_str();
-        add_sial_program(nm);
-        set_aoindex_info(3, segs);
-        finalize_setup();
-    }
-    std::stringstream output;
 
-    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
-    controller.initSipTables();
-    controller.run();
-    if (attr->is_worker()) {
-        double * a = controller.static_array("a");
-        int expected[] = {1, 2, 1, 2, 3, 1, 2,
-            3, 4, 4, 5, 6, 3, 4,
-            1, 2, 1, 2, 3, 1, 2,
-            3, 4, 4, 5, 6, 3, 4,
-            5, 6, 7, 8, 9, 5, 6,
-            1, 2, 1, 2, 3, 1, 2,
-            3, 4, 4, 5, 6, 3, 4};
-        int side = 2+3+2; //size of one side, from seg sizes in segs array above
-        int size = side*side;
-        int i = 0;
-        for (i; i < size; ++i){
-            ASSERT_DOUBLE_EQ(expected[i], a[i]);
-        }
-    }
-    barrier();
-    if (attr->is_worker()){
-        std::cerr << "done with worker" << std::endl << std::flush;
-        barrier();
-    }
-    else {
-        barrier();
-        std::cerr << "done with server" << std::endl << std::flush;
-    }
+	{
+	std::string job("broadcast_static");
+	int norb = 3;
+	int segs[] = {2,3,2};
+	int root = 0;
+	if (attr->global_rank() == 0) {
+		init_setup(job.c_str());
+		set_constant("norb", norb);
+		set_constant("root", root);
+		std::string tmp = job + ".siox";
+		const char* nm = tmp.c_str();
+		add_sial_program(nm);
+		set_aoindex_info(3, segs);
+		finalize_setup();
+	}
+	std::stringstream output;
+
+	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+	    double * a = controller.static_array("a");
+	    int expected[] = {1, 2, 1, 2, 3, 1, 2,
+		3, 4, 4, 5, 6, 3, 4,
+		1, 2, 1, 2, 3, 1, 2,
+		3, 4, 4, 5, 6, 3, 4,
+		5, 6, 7, 8, 9, 5, 6,
+		1, 2, 1, 2, 3, 1, 2,
+		3, 4, 4, 5, 6, 3, 4};
+	    int side = 2+3+2; //size of one side, from seg sizes in segs array above
+	    int size = side*side;
+	    int i = 0;
+	    for (i; i < size; ++i){
+		ASSERT_DOUBLE_EQ(expected[i], a[i]);
+	    }
+	}
+	if (attr-> is_worker()){
+	    controller.worker_->gather_and_print_statistics(std::cerr);
+	    barrier();
+	}
+#ifdef HAVE_MPI
+	if (attr->is_server()){
+	    barrier();
+	    controller.server_->gather_and_print_statistics(std::cerr);
+	}
+#endif
+
+	}
+	barrier();
+	if (attr->is_worker()){
+	    std::cerr << "done with worker" << std::endl << std::flush;
+	    barrier();
+	}
+	else {
+	    barrier();
+	    std::cerr << "done with server" << std::endl << std::flush;
+	}
 
 }
 
 
 TEST(Sial,put_test) {
-	std::string job("put_test");
-	int norb = 3;
-	int segs[] = { 2, 3, 2 };
+    std::string job("put_test");
+    int norb = 3;
+    int segs[] = { 2, 3, 2 };
 	if (attr->global_rank() == 0) {
 		init_setup(job.c_str());
 		set_constant("norb", norb);
@@ -381,7 +397,7 @@ TEST(Sial,put_increment) {
 //TODO  restore functionality for single node version.  Was lost when PersistentArrayManager.h was refactored into
 //worker and server versions.
 
-TEST(Sial,persistent_scalars) {
+TEST(Sial,persistent_scalars_with_restart) {
 	std::string job("persistent_scalars");
 	double x = 3.456;
 	double y = -0.1;
@@ -399,9 +415,16 @@ TEST(Sial,persistent_scalars) {
 		finalize_setup();
 	}
 
+	std::string jobid;
+
+
 	std::stringstream output;
+
+
+	{
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
 	controller.initSipTables();
+	jobid = sip::JobControl::global->get_job_id();
 	controller.run();
 	if (attr->is_worker()) {
 		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
@@ -410,12 +433,48 @@ TEST(Sial,persistent_scalars) {
 
 		std::cout << "wpam:" << std::endl << *controller.wpam_ << std::endl
 				<< "%%%%%%%%%%%%" << std::endl;
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+	}
+	sip::AcesLog current_log(jobid, false);
+	current_log.write_prog_num(sip::JobControl::global->get_program_num());
+
 	}
 
+	sleep(5); //to ensure different job id in second program
+    int restart_prognum=0;
+    {sip::AcesLog restart_log(jobid, true);
+		if(restart_log.is_open()){
+			restart_prognum = restart_log.read_prog_num();
+			SIP_MASTER(
+			std::cout << "RESTARTING JOB at program number " << restart_prognum
+					<< " with persistent data from job " << jobid << std::endl << std::flush;
+			);
+		} else {
+			std::cerr << "restart log file is not open." << std::endl << std::flush;
+		}
+		SIP_MASTER(
+				std::cerr << "RESTARTING JOB at program number " << restart_prognum
+						<< " with persistent data from job " << jobid << std::endl << std::flush;
+				);
+    }
+	//now do the second program with a restart.  This requires a new controller.
+	TestControllerParallel restart_controller(job, true, VERBOSE_TEST, "", output, jobid,
+			restart_prognum);
 	//Now do the second program
 	//get siox name from setup, load and print the sip tables
-	controller.initSipTables();
-	controller.run();
+	restart_controller.initSipTables();
+	std::cerr << "jobid, retstart_jobid, prognum" << sip::JobControl::global->get_job_id() << ","
+			<< sip::JobControl::global->get_restart_id() << "," << sip::JobControl::global->get_program_num()
+	        << std::endl << std::flush;
+	restart_controller.run();
 	if (attr->is_worker()) {
 		ASSERT_DOUBLE_EQ(x + 1, scalar_value("x"));
 		ASSERT_DOUBLE_EQ(y, scalar_value("y"));
@@ -464,6 +523,11 @@ TEST(Sial,get_mpi){
 				ASSERT_DOUBLE_EQ(42*3, a_data_1[i*segs[0] + j]);
 			}
 		}
+	}
+	if(attr->is_worker()){
+		std::vector<std::pair<sip::BlockId,size_t> > vec;
+		controller.worker_->data_manager().block_manager().block_map().c_list_blocks(controller.worker_->sip_tables(),vec);
+
 	}
 }
 
@@ -673,7 +737,27 @@ TEST(Sial,persistent_distributed_array_mpi){
 		add_sial_program(nm1);
 		set_aoindex_info(2,segs);
 		finalize_setup();
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
 	}
+//	else if (attr->is_server())
+//			{//for gdb
+//			    int i = 0;
+//			    char hostname[256];
+//			    gethostname(hostname, sizeof(hostname));
+//			    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//			    fflush(stdout);
+//			    while (0 == i)
+//			        sleep(5);
+//			}
+
 
 
 	std::stringstream output;
@@ -682,9 +766,20 @@ TEST(Sial,persistent_distributed_array_mpi){
 	//run first program
 	controller.initSipTables();
 	controller.run();
+//	{//for gdb
+//	    int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
 	controller.print_timers(std::cout);
-	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
 
+	barrier();
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array_mpi starting second program" << std::endl << std::flush;
+	barrier();
 	//run second program
 	controller.initSipTables();
 	controller.run();
@@ -705,12 +800,152 @@ TEST(Sial,persistent_distributed_array_mpi){
 			}
 		}
 	}
+
 //	controller.print_timers(std::cout);
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+#ifdef HAVE_MPI
+    if (attr->is_server()){
+        barrier();
+        controller.server_->gather_and_print_statistics(std::cerr);
+    }
+#endif
     barrier();
+
 
 }
 
-TEST(Sial,DISABLED_cached_block_map_test) {
+
+TEST(Sial,persistent_distributed_array_n_of_three){
+	sip::ArrayFile::clean_directory();
+	std::string job("persistent_distributed_array");
+	double x = 3.456;
+	int norb = 2;
+	int segs[]  = {2,3};
+
+	if (attr->global_rank() == 0){
+		init_setup(job.c_str());
+		set_scalar("x",x);
+		set_constant("norb",norb);
+		std::string tmp = job + "_one_of_three.siox";
+		const char* nm= tmp.c_str();
+		add_sial_program(nm);
+		std::string tmp1 = job + "_two_of_three.siox";
+		const char* nm1= tmp1.c_str();
+		add_sial_program(nm1);
+		std::string tmp2 = job + "_three_of_three.siox";
+		const char* nm2= tmp2.c_str();
+		add_sial_program(nm2);
+		set_aoindex_info(2,segs);
+		finalize_setup();
+//		{//for gdb
+//		    int i = 0;
+//		    char hostname[256];
+//		    gethostname(hostname, sizeof(hostname));
+//		    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//		    fflush(stdout);
+//		    while (0 == i)
+//		        sleep(5);
+//		}
+	}
+//	else
+//	if (attr->is_server())
+//			{//for gdb
+//			    int i = 0;
+//			    char hostname[256];
+//			    gethostname(hostname, sizeof(hostname));
+//			    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//			    fflush(stdout);
+//			    while (0 == i)
+//			        sleep(5);
+//			}
+
+
+
+	std::stringstream output;
+	TestControllerParallel controller(job, true, true, "", output);
+
+	//run first program
+	controller.initSipTables();
+	controller.run();
+//	{//for gdb
+//	    int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
+	controller.print_timers(std::cout);
+
+	barrier();
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array starting second program" << std::endl << std::flush;
+	barrier();
+	//run second program
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		int i,j;
+		for (i=1; i <= norb ; ++i ){
+			for (j = 1; j <= norb; ++j){
+			    double firstval = (i-1)*norb + j;
+			    std::vector<int> indices;
+			    indices.push_back(i);
+			    indices.push_back(j);
+			    double * block_data = controller.local_block(std::string("a"),indices);
+			    size_t block_size = segs[i-1] * segs[j-1];
+			    for (size_t count = 0; count < block_size; ++count){
+			    	ASSERT_DOUBLE_EQ(3*firstval, block_data[count]);
+			    	firstval++;
+			    }
+			}
+		}
+	}
+
+	barrier();
+	std::cout << "Rank " << attr->global_rank() << " in persistent_distributed_array starting third program" << std::endl << std::flush;
+	barrier();
+	//run second program
+	controller.initSipTables();
+	controller.run();
+	if (attr->is_worker()) {
+		int i,j;
+		for (i=1; i <= norb ; ++i ){
+			for (j = 1; j <= norb; ++j){
+			    double firstval = (i-1)*norb + j;
+			    std::vector<int> indices;
+			    indices.push_back(i);
+			    indices.push_back(j);
+			    double * block_data = controller.local_block(std::string("a"),indices);
+			    size_t block_size = segs[i-1] * segs[j-1];
+			    for (size_t count = 0; count < block_size; ++count){
+			    	ASSERT_DOUBLE_EQ(3*firstval, block_data[count]);
+			    	firstval++;
+			    }
+			}
+		}
+	}
+
+//	controller.print_timers(std::cout);
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+#ifdef HAVE_MPI
+    if (attr->is_server()){
+        barrier();
+        controller.server_->gather_and_print_statistics(std::cerr);
+    }
+#endif
+    barrier();
+
+
+}
+
+TEST(Sial,cached_block_map_test) {
     std::string job("cached_block_map_test");
     int norb = 4;
     int iterations = 3;
@@ -728,19 +963,27 @@ TEST(Sial,DISABLED_cached_block_map_test) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
-    sip::GlobalState::set_max_worker_data_memory_usage(limit_size);
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_worker_data_memory_usage(limit_size);
     controller.initSipTables();
+//	if (attr->global_rank()==0){//for gdb
+//	    volatile int i = 0;
+//	    char hostname[256];
+//	    gethostname(hostname, sizeof(hostname));
+//	    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	    fflush(stdout);
+//	    while (0 == i)
+//	        sleep(5);
+//	}
     controller.run();
     if (attr->is_worker()) {
         EXPECT_TRUE(controller.worker_->all_stacks_empty());
     }
-    sip::GlobalState::reinitialize();
 }
 
 
-TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
+TEST(Sial,cached_block_map_test_no_dangling_get) {
     std::string job("cached_block_map_test_no_dangling_get");
     int norb = 4;
     int iterations = 3;
@@ -758,15 +1001,14 @@ TEST(Sial,DISABLED_cached_block_map_test_no_dangling_get) {
     std::stringstream output;
 
     std::size_t limit_size = 80 * 1024 * 1024; // 100 MB
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
-    sip::GlobalState::set_max_worker_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
+    sip::JobControl::global->set_max_worker_data_memory_usage(limit_size);
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
     if (attr->is_worker()) {
         EXPECT_TRUE(controller.worker_->all_stacks_empty());
     }
-    sip::GlobalState::reinitialize();
 }
 
 
@@ -814,7 +1056,19 @@ TEST(Sial,pardo_with_where){
     TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
     controller.initSipTables();
     controller.run();
+
+    if (attr-> is_worker()){
+    	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+#ifdef HAVE_MPI
+    if (attr->is_server()){
+        barrier();
+        controller.server_->gather_and_print_statistics(std::cerr);
+    }
+#endif
     barrier();
+
 }
 
 TEST(Sial,put_accumulate_stress){
@@ -859,8 +1113,111 @@ TEST(Sial,put_accumulate_stress){
 			}
 		}
 	}
+
+    if (attr-> is_worker()){
+     	controller.worker_->gather_and_print_statistics(std::cerr);
+    	barrier();
+    }
+#ifdef HAVE_MPI
+    if (attr->is_server()){
+        barrier();
+        controller.server_->gather_and_print_statistics(std::cerr);
+    }
+#endif
+
     barrier();
+
 }
+
+TEST(Sip,decreasing_segs){
+
+	    std::string job("decreasing_segs");
+	    int segs[] = {3,3,18,22,22,22};
+	    if (attr->global_rank() == 0) {
+	        init_setup(job.c_str());
+	        std::string tmp = job + ".siox";
+	        const char* nm = tmp.c_str();
+	        add_sial_program(nm);
+	        set_aoindex_info(6, segs);
+	        finalize_setup();
+	    }
+	    std::stringstream output;
+
+	    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//	    {
+//	        int i = 0;
+//	        char hostname[256];
+//	        gethostname(hostname, sizeof(hostname));
+//	        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	        fflush(stdout);
+//	        while (0 == i)
+//	            sleep(5);
+//	    }
+	    controller.initSipTables();
+
+
+	    controller.run();
+}
+
+TEST(Sip,check_block_number_calc){
+    std::string job("check_block_number_calc");
+
+    int norb = 10;
+    int baocc = 1;
+    int eaocc = 5;
+    int aosegs[]  = {4,3,4,3,4,3,4,3,4,3};
+    int moasegs[] = {2,2,2,2,2,2,2,2,2,2};
+
+    /*
+     * This is the configuration that exhibited a previous bug.  It is commented out because it is
+     * too large to run as part of the normal test suite.
+     */
+//    int norb = 1100;
+//    int baocc = 1;
+//    int eaocc = 550;
+//
+//    int aosegs[] = {26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15,26,15};
+//    int moasegs[] = { 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36,36};
+
+    if (attr->global_rank() == 0) {
+        init_setup(job.c_str());
+        std::string tmp = job + ".siox";
+        const char* nm = tmp.c_str();
+        add_sial_program(nm);
+        set_constant("norb", norb);
+        set_constant("baocc",baocc);
+        set_constant("eaocc",eaocc);
+        set_aoindex_info(norb, aosegs);
+        set_moaindex_info(norb, moasegs);
+        finalize_setup();
+    }
+    std::stringstream output;
+
+    TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+//	    {
+//	        int i = 0;
+//	        char hostname[256];
+//	        gethostname(hostname, sizeof(hostname));
+//	        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//	        fflush(stdout);
+//	        while (0 == i)
+//	            sleep(5);
+//	    }
+    controller.initSipTables();
+//    {
+//        int i = 0;
+//        char hostname[256];
+//        gethostname(hostname, sizeof(hostname));
+//        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+//        fflush(stdout);
+//        while (0 == i)
+//            sleep(5);
+//    }
+
+    controller.run();
+    //no checks needed, they are done in the sial program
+}
+
 
 /* This test sets a very low limit for memory usage at the server
  * and sends enough blocks to require disk backing.
@@ -874,10 +1231,10 @@ TEST(Sial,put_accumulate_stress){
 TEST(Sip,disk_backing_test) {
 	std::string job("disk_backing_test");
 	size_t limit_size = 70000000;
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+
     if ( attr->global_rank() == 0){
-    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
-    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
     }
     barrier();
     int norb = 9;
@@ -895,31 +1252,46 @@ TEST(Sip,disk_backing_test) {
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
 	controller.initSipTables();
 	controller.run();
-//	if (attr->is_worker()) {
-//		EXPECT_TRUE(controller.worker_->all_stacks_empty());
-//		std::vector<int> index_vec;
-//		for (int i = 0; i < norb; ++i) {
-//			for (int j = 0; j < norb; ++j) {
-//				int k = (i * norb + j) + 1;
-//				index_vec.push_back(k);
-//				double * local_block = controller.local_block("result0",
-//						index_vec);
-//				double value = local_block[0];
-//				double expected = k * k * segs[i] * segs[j];
-//				std::cout << "k,value= " << k << " " << value << std::endl;
-//				ASSERT_DOUBLE_EQ(expected, value);
-//				index_vec.clear();
-//			}
-//		}
-//	}
+	if (attr->is_worker()) {
+		EXPECT_TRUE(controller.worker_->all_stacks_empty());
+		std::vector<int> index_vec;
+		for (int i = 0; i < norb; ++i) {
+			for (int j = 0; j < norb; ++j) {
+				for (int k = 1; k <= norb; ++k){
+
+				if ( k == (i * norb + j) + 1 ){
+
+				index_vec.push_back(k);
+				double * local_block = controller.local_block("result0",
+						index_vec);
+				double value = local_block[0];
+				double expected = k * k * segs[i] * segs[j];
+				std::cout << "k,value= " << k << " " << value << std::endl;
+				ASSERT_DOUBLE_EQ(expected, value);
+				index_vec.clear();
+				}
+			}
+		}
+	}
+	}
 
 	barrier();
 	std::cout << "global rank " << attr->global_rank() << "attr->is_worker()" << attr->is_worker();
 	std::cout << std::endl << std::flush;
+	if (attr->is_worker()) {
+		controller.worker_->gather_and_print_statistics(std::cout);
+		barrier();
+	} 
+#ifdef HAVE_MPI
+    if (attr->is_server()){
+        barrier();
+        controller.server_->gather_and_print_statistics(std::cerr);
+    }
+#endif
 	barrier();
-    sip::GlobalState::reinitialize();
 }
 
 /* This test sets a very low limit for memory usage at the server
@@ -931,10 +1303,10 @@ TEST(Sip,disk_backing_test) {
 TEST(Sip,disk_backing_put_acc_stress) {
 	std::string job("disk_backing_test");
 	size_t limit_size = 70000000;
-    sip::GlobalState::set_max_server_data_memory_usage(limit_size);
+
     if ( attr->global_rank() == 0){
-    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
-    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
     }
     barrier();
     int norb = 9;
@@ -952,6 +1324,7 @@ TEST(Sip,disk_backing_put_acc_stress) {
 	std::stringstream output;
 
 	TestControllerParallel controller(job, true, VERBOSE_TEST, "", output);
+    sip::JobControl::global->set_max_server_data_memory_usage(limit_size);
 	controller.initSipTables();
 	controller.run();
 //	if (attr->is_worker()) {
@@ -975,8 +1348,17 @@ TEST(Sip,disk_backing_put_acc_stress) {
 	barrier();
 	std::cout << "global rank " << attr->global_rank() << "attr->is_worker()" << attr->is_worker();
 	std::cout << std::endl << std::flush;
+	if (attr->is_worker()) {
+	    controller.worker_->gather_and_print_statistics(std::cerr);
+	    barrier();
+	} 
+#ifdef HAVE_MPI
+	if (attr->is_server()){
+	    barrier();
+	    controller.server_->gather_and_print_statistics(std::cerr);
+	}
+#endif
 	barrier();
-    sip::GlobalState::reinitialize();
 	std::cerr << "at end of disk_backing_put_acc_stress" << std::endl << std::flush;
 }
 
@@ -996,8 +1378,8 @@ TEST(Sip,disk_backing_test_default_limit) {
 //		std::cout << "I am a server with global rank " << attr->global_rank() << std::endl << std::flush;
 //	}
     if ( attr->global_rank() == 0){
-    std::cout << "worker memory limit " << sip::GlobalState::get_max_worker_data_memory_usage() << std::endl;
-    std::cout << "server memory limit " << sip::GlobalState::get_max_server_data_memory_usage() << std::endl << std::flush;
+    std::cout << "worker memory limit " << sip::JobControl::global->get_max_worker_data_memory_usage() << std::endl;
+    std::cout << "server memory limit " << sip::JobControl::global->get_max_server_data_memory_usage() << std::endl << std::flush;
     }
     barrier();
     int norb = 9;
@@ -1044,9 +1426,21 @@ TEST(Sip,disk_backing_test_default_limit) {
 	std::cout << "global rank " << attr->global_rank() << " attr->is_worker() "
 			<< attr->is_worker();
 	std::cout << std::endl << std::flush;
+#ifdef HAVE_MPI
+	if (attr->is_server()) {
+		controller.server_->gather_and_print_statistics(std::cout);
+		std::cout << std::flush;
+		barrier();
+	} 
+#endif
+        if (attr->is_worker()){
+		barrier();
+		controller.worker_->gather_and_print_statistics(std::cout);
+		std::cout << std::flush;
+	}
 	barrier();
-	sip::GlobalState::reinitialize();
 }
+
 //****************************************************************************************************************
 
 void bt_sighandler(int signum) {
@@ -1080,12 +1474,21 @@ int main(int argc, char **argv) {
     sip::SIPMPIUtils::set_error_handler();
     sip::SIPMPIAttr &sip_mpi_attr = sip::SIPMPIAttr::get_instance();
     attr = &sip_mpi_attr;
+
+
+    int error, flag = 0;
+    MPI_Aint mpi_tag_ub = 0;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    error = MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &mpi_tag_ub, &flag);
+    if (error == MPI_SUCCESS && flag) std::cerr << "Upper bound on MPI tags at rank " << rank << "=" << *(int*)mpi_tag_ub << std::endl << std::flush;
+    else std::cerr << "MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &mpi_tag_ub, &flag); failed at rank " << rank << std::endl << std::flush;
 #endif
     barrier();
 
-    //	sip::check(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
-    //	sip::check(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
-    //	sip::check(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
+    //	CHECK(sizeof(int) >= 4, "Size of integer should be 4 bytes or more");
+    //	CHECK(sizeof(double) >= 8, "Size of double should be 8 bytes or more");
+    //	CHECK(sizeof(long long) >= 8, "Size of long long should be 8 bytes or more");
     //
     //	int num_procs;
     //	sip::SIPMPIUtils::check_err(MPI_Comm_size(MPI_COMM_WORLD, &num_procs));

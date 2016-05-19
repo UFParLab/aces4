@@ -62,17 +62,20 @@ QM_SOURCE_FILES=\
 ./qm/utility/compute_diis.F\
 ./qm/utility/stripi.F\
 ./qm/utility/return_sval.F\
+./qm/utility/remove_diagonal_elements.F\
 ./qm/mcpt-fragment/set_frag.F\
 ./qm/mcpt-fragment/scf_atom_lowmem.F\
 ./qm/mcpt-fragment/compute_int_scratchmem_lowmem.F\
 ./qm/mcpt-fragment/compute_xyz_batch.F\
-./qm/mcpt-fragment/comp_return_frag_h0.F\
 ./qm/mcpt-fragment/frag_index_range.F\
 ./qm/mcpt-fragment/place_scratch.F\
 ./qm/mcpt-fragment/compute_return_h1_frag.F\
 ./qm/mcpt-fragment/return_pairs.F\
 ./qm/mcpt-fragment/compute_pair_nn.F\
 ./qm/mcpt-fragment/return_vpq.F\
+./qm/mcpt-fragment/compute_moi_nn_repulsion.F\
+./qm/mcpt-fragment/compute_h1_moi.F\
+./qm/mcpt-fragment/compute_ovl_moi.F\
 ./qm/direct_integral/uintegrals.F\
 ./qm/direct_integral/return_h1.F\
 ./qm/direct_integral/move_integrals.f\
@@ -395,7 +398,9 @@ GENERAL_SOURCE_FILES=\
 ./general/disable_all_rank_print.cpp\
 ./general/read_block_from_text_file.cpp\
 ./general/abort_job.F\
-./general/one_arg_no_op.cpp
+./general/one_arg_no_op.cpp\
+./general/list_blocks_with_number.cpp\
+./general/check_block_number_calculation.cpp
 
 
 libinstr_la_SOURCES=\

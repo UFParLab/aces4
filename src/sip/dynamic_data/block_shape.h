@@ -31,6 +31,13 @@ public:
 	bool operator<(const BlockShape& rhs) const;
 	int num_elems() const;
 
+	/**
+	 * this counts the number of "trailing" ones and subtracts that from
+	 * the MAX dim to guess the rank.
+	 * @return
+	 */
+	int get_inferred_rank() const;
+
 	friend std::ostream& operator<<(std::ostream&, const BlockShape &);
 	friend class Block;
 //	friend class Interpreter;

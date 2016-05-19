@@ -489,9 +489,6 @@ private:
 	friend class Fragment_Nij_a_a_PardoLoopManager;
 	friend class Fragment_Nij_oo__PardoLoopManager;
 	friend class Fragment_Nij_o_o_PardoLoopManager;
-	friend class Fragment_i_aa__PardoLoopManager;
-	friend class Fragment_i_vo__PardoLoopManager;
-	friend class Fragment_i_vovo__PardoLoopManager;
 	friend class Fragment_i_aaoo__PardoLoopManager;
 	friend class Fragment_i_aovo__PardoLoopManager;
 	friend class Fragment_i_aaaa__PardoLoopManager;
@@ -502,25 +499,28 @@ private:
 	friend class Fragment_ij_aa_oo_PardoLoopManager;
 	friend class Fragment_ij_aa_vo_PardoLoopManager;
 	friend class Fragment_ij_aoa_o_PardoLoopManager;
-	friend class Fragment_ij_ao_vo_PardoLoopManager;
-	friend class Fragment_ij_av_oo_PardoLoopManager;
-	friend class Fragment_ij_av_vo_PardoLoopManager;
-	friend class Fragment_ij_ao_oo_PardoLoopManager;
-	friend class Fragment_ij_oo_ao_PardoLoopManager;
 	friend class Fragment_ij_aoo_o_PardoLoopManager;
-	friend class Fragment_ij_vo_vo_PardoLoopManager;
-	friend class Fragment_Nij_vo_vo_PardoLoopManager;
-	friend class Fragment_Rij_vo_vo_PardoLoopManager;
-	friend class Fragment_NRij_vo_vo_PardoLoopManager;
-	friend class Fragment_NRij_vv_oo_PardoLoopManager;
 	friend class Fragment_NRij_vovo__PardoLoopManager;
 	friend class Fragment_NRij_ao_ao_PardoLoopManager;
 	friend class Fragment_NRij_vo_ao_PardoLoopManager;
 	friend class Fragment_NRij_aa_aa_PardoLoopManager;
 	friend class Fragment_NRij_o_ao_PardoLoopManager;
-	friend class Fragment_NR1ij_vo_vo_PardoLoopManager;
-	friend class Fragment_NR1ij_oo_vo_PardoLoopManager;
-	friend class Fragment_NR1ij_vv_vo_PardoLoopManager;
+	friend class WhereFragment_i_aaa__PardoLoopManager;
+	friend class WhereFragment_i_aaaa__PardoLoopManager;
+	friend class WhereFragment_ij_aa_aa_PardoLoopManager;
+	friend class Fragment_Nij_aa_aa_PardoLoopManager;
+	friend class Fragment_i_aa__PardoLoopManager;
+	friend class Fragment_i_ap__PardoLoopManager;
+	friend class Fragment_i_pp__PardoLoopManager;
+	friend class Fragment_i_pppp__PardoLoopManager;
+	friend class Fragment_ij_ap_pp_PardoLoopManager;
+	friend class Fragment_ij_pp_pp_PardoLoopManager;
+	friend class Fragment_Nij_pp_pp_PardoLoopManager;
+	friend class Fragment_Rij_pp_pp_PardoLoopManager;
+	friend class Fragment_NRij_pp_pp_PardoLoopManager;
+	friend void ::list_blocks_with_number();
+	friend void ::check_block_number_calculation(int& array_slot, int& rank,
+            int* index_values, int& size, int* extents,  double* data, int& ierr);
 
 	DISALLOW_COPY_AND_ASSIGN(Interpreter);
 	void permute_rhs_to_lhs(const BlockSelector& lhs_selector,

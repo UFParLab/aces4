@@ -15,6 +15,8 @@
 #include "block_manager.h"
 #include "data_distribution.h"
 #include "counter.h"
+#include "timer.h"
+#include "sip_mpi_utils.h"
 //#include "data_manager.h"
 //#include "worker_persistent_array_manager.h"
 
@@ -84,7 +86,7 @@ public:
 	 * races due to missing barrier and implements the wait for blocks of
 	 * distributed and served arrays.
 	 *
-	 * Get block for reading may block, the current line is passed in for the block wait timer.
+	 * Get block for reading may block, the current pc is passed in for the block wait timer.
 	 *
 	 * @param id
 	 * @return
@@ -103,6 +105,7 @@ public:
 						const SipTables& sip_tables) const {
 		wait_time_.print_op_table_stats_impl(os, sip_tables);
 	}
+
 
 	/** mpi related types and variable */
 	//TODOD is this the right place for this?
@@ -164,7 +167,7 @@ private:
 	 * @param pc  current index in optable. Used to index the wait_time_ timer list.
 	 * @return  the input parameter--for convenience
 	 */
-	Block::BlockPtr wait_and_check(Block::BlockPtr b, int pc);
+	Block::BlockPtr wait_and_CHECK(Block::BlockPtr b, int pc);
 
 	/**
 	 * returns true if the mode associated with an array is compatible with
@@ -193,7 +196,7 @@ private:
 
 	bool nearlyEqual(double a, double  b, double epsilon);
 
-
+	friend void ::list_blocks_with_number();
 
 	DISALLOW_COPY_AND_ASSIGN(SialOpsParallel);
 

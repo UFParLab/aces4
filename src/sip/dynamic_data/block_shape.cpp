@@ -66,4 +66,14 @@ bool BlockShape::operator<(const BlockShape& rhs) const {
 	return (is_leq && !is_eq);
 }
 
+int BlockShape::get_inferred_rank() const{
+	int rank = MAX_RANK;
+	for (int i = MAX_RANK-1; i >=0 ; --i){
+		if (segment_sizes_[i] == 1){
+			rank--;
+		}
+		else return rank;
+	}
+}
+
 } /* namespace sip */

@@ -547,7 +547,7 @@ c   Set scratch space
       call integer_scratch_array(niscr, ciscr) 
       call c_f_pointer(ciscr, iscr, [niscr])
 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       Write(6,"(a)") "----------------------------------------"
       Write(6,"(a)") " Printing from return_1el_ecpints BGNS"
       Write(6,"(a,i4)") " The number of atoms: ", ncenters
@@ -686,7 +686,7 @@ C#ifdef _DEBUG_LVL0
       write(*,*)
       Write(6,"(a)") " Printing from return_1el_ecpints ENDS"
       Write(6,"(a)") "----------------------------------------"
-C#endif
+#endif
 C
 C Based on the records in .dat file, lets get the maximum dimensions
 C of certain arrays. The ncenters, nshells remains the same. 
@@ -739,7 +739,7 @@ C
       enddo 
 
 C 
-C#ifdef _DEBUG_LVL0
+#ifdef _DEBUG_LVL0
       Write(6,"(a,a)") " The values of max_nshells, max_nsubshells",
      *                 " max_necp_functns"
       write(6,"(a)")" kfls_ecp_length,max_prims_shell,max_conts_shell:"
@@ -748,7 +748,7 @@ C#ifdef _DEBUG_LVL0
       Write(6,*) 
       Write(6,"(4I4)") max_nshells, max_nsubshells, max_necp_functns,
      *                 kfls_ecp_length,max_prims_shell,max_conts_shell
-C#endif 
+#endif 
 C Scratch arrays 
 
       max_nprims   = nalphas
@@ -932,8 +932,8 @@ c
 
 c  Remove scratch space  
 
-      write(6,"(a)")" Cleanning up scratch space"
-      write(6,"(a)")" --------------------------"
+C      write(6,"(a)")" Cleanning up scratch space"
+C      write(6,"(a)")" --------------------------"
       call delete_scratch_array(cscr)
       call delete_scratch_array(cptr_zsum)
       call delete_integer_scratch_array(ciscr)
@@ -965,8 +965,8 @@ c  Remove scratch space
       call delete_scratch_array(cptr_work20)
       call delete_scratch_array(cptr_work21)
 
-      write(6,"(a)")" Everything is done"
-      write(6,"(a)")" ------------------"
+C      write(6,"(a)")" Everything is done"
+C      write(6,"(a)")" ------------------"
 
       return
       end

@@ -105,14 +105,14 @@ SIPMPIAttr::SIPMPIAttr(RankDistribution& rank_distribution):
 	num_servers_ = s;
 
 	if (global_rank_ == 0){
-		std::cout<<"There will be " << s << " servers :" << std::endl << std::flush;
+		std::cerr<<"There will be " << s << " servers :" << std::endl << std::flush;
 		for(int i=0; i<s; i++)
-			std::cout<<server_ranks[i]<<" ";
-		std::cout<<std::endl;
-		std::cout<<"There will be " << w << " workers : " << std::endl << std::flush;
+			std::cerr<<server_ranks[i]<<" ";
+		std::cerr<<std::endl;
+		std::cerr<<"There will be " << w << " workers : " << std::endl << std::flush;
 		for(int i=0; i<w; i++)
-			std::cout<<worker_ranks[i]<<" ";
-		std::cout<<std::endl;
+			std::cerr<<worker_ranks[i]<<" ";
+		std::cerr<<std::endl;
 	}
 
 	if (s >= 1){
