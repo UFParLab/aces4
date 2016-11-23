@@ -979,9 +979,9 @@
 	  select case(ker1)
 	  case(0)
 !SCHEME 0:
-	   cr=min(dr,max(core_slope*nthr,min_distr_seg_size))
-	   cc=min(dc,max(arg_cache_size*cdim_stretch/cr,1_8))
-	   cl=min(dl,min(max(arg_cache_size/cc,1_8),max(arg_cache_size/cr,1_8)))
+	   cr=min(dr,int(max(core_slope*nthr,min_distr_seg_size),int8_kind))
+	   cc=min(dc,max(arg_cache_size*int(cdim_stretch,int8_kind)/cr,1_int8_kind))
+	   cl=min(dl,min(max(arg_cache_size/cc,1_int8_kind),max(arg_cache_size/cr,1_int8_kind)))
 !	   write(*,'("DEBUG(tensor_algebra_dil::tensor_block_pcontract): cl,cr,cc,dl,dr,dc:",6(1x,i9))') cl,cr,cc,dl,dr,dc !debug
 !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(b0,b1,b2,e0,e1,e2,l0,l1,l2,ll,lr,ld,val) NUM_THREADS(nthreads)
 	   do b0=0_8,dc-1_8,cc
