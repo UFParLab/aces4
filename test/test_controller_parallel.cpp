@@ -349,7 +349,7 @@ bool TestControllerParallel::runServer() {
 		}
 
 		if (verbose_) {
-			if (std::cout != sial_output_)
+			if (&std::cout != &sial_output_)
 				std::cout << sial_output_.rdbuf();
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 					<< prog_name_ << "TERMINATED SERVER" << std::endl << std::flush;
@@ -388,7 +388,7 @@ bool TestControllerParallel::runWorker() {
 		}
 		worker_->post_sial_program();
 		if (verbose_) {
-			if (std::cout != sial_output_){
+			if (&std::cout != &sial_output_){
 				std::cout << sial_output_.rdbuf();
 			}
 			std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "

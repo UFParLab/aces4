@@ -4,6 +4,7 @@ project(aces4)
 
 enable_language(Fortran)
 
+
 #----------------------------------------------------------------------
 # Options, Settings, Libraries, Packages
 #----------------------------------------------------------------------
@@ -283,7 +284,7 @@ endif()
 # Setup Tests
 ##############
 set(gtest_disable_pthreads ON CACHE BOOL "Disable uses of pthreads in gtest.") 
-add_subdirectory (test/gtest-1.7.0)
+add_subdirectory (test/googletest-release-1.7.0)
 enable_testing()
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
@@ -379,7 +380,6 @@ set_target_properties(print_siptables PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}
 set_target_properties(print_array_info PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_array_info PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
-
 set_target_properties(print_init_file PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
@@ -388,6 +388,7 @@ set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${ACES4_LIN
 
 set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(check_system PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+
 
 
 # Libraries to link
