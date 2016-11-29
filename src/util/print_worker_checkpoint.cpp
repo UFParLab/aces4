@@ -6,6 +6,7 @@
  */
 
 
+#include <unistd.h>
 #include "io_utils.h"
 #include "setup_interface.h"
 #ifdef HAVE_MPI

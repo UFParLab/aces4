@@ -19,7 +19,6 @@
 #include "data_manager.h"
 #include "job_control.h"
 #include "sial_printer.h"
-#include "array_file.h"
 #include "aces_log.h"
 
 #include "worker_persistent_array_manager.h"
@@ -27,6 +26,7 @@
 #include "block.h"
 
 #ifdef HAVE_MPI
+#include "array_file.h"
 #include "sip_server.h"
 #include "server_persistent_array_manager.h"
 //#include "sip_mpi_attr.h"
@@ -818,6 +818,7 @@ TEST(Sial,persistent_distributed_array_mpi){
 }
 
 
+#ifdef HAVE_MPI
 TEST(Sial,persistent_distributed_array_n_of_three){
 	sip::ArrayFile::clean_directory();
 	std::string job("persistent_distributed_array");
@@ -934,16 +935,13 @@ TEST(Sial,persistent_distributed_array_n_of_three){
     	controller.worker_->gather_and_print_statistics(std::cerr);
     	barrier();
     }
-#ifdef HAVE_MPI
     if (attr->is_server()){
         barrier();
         controller.server_->gather_and_print_statistics(std::cerr);
     }
-#endif
     barrier();
-
-
 }
+#endif // HAVE_MPI
 
 TEST(Sial,cached_block_map_test) {
     std::string job("cached_block_map_test");

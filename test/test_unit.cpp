@@ -8,13 +8,13 @@
 #include <cstdio>
 #include <algorithm>
 
-#include "mpi.h"
 #include "gtest/gtest.h"
 
 
 #ifdef HAVE_MPI
 #include "array_file.h"
 #include "chunk_manager.h"
+#include "mpi.h"
 #include "chunk.h"
 #endif
 
