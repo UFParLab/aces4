@@ -233,7 +233,7 @@ void TestController::runWorker() {
 	}
 
 	if (verbose_) {
-		if (std::cout != sial_output_)
+		if (&std::cout != &sial_output_)
 			std::cout << sial_output_.rdbuf();
 		std::cout << "\nRank " << attr->global_rank() << " SIAL PROGRAM "
 				<< job_ << " TERMINATED" << std::endl << std::flush;

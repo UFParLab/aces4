@@ -97,7 +97,7 @@ std::string PutAccumulateDataAsync::to_string() const {
 	ss << " message type="
 			<< SIPMPIConstants::messageTypeToName(
 					SIPMPIConstants::intToMessageType(message_type))
-			<< " transaction=" << transaction << std::cout;
+			<< " transaction=" << transaction << std::endl;
 	return ss.str();
 }
 
@@ -154,7 +154,7 @@ std::string PutDataAsync::to_string() const {
 	ss << " message type="
 			<< SIPMPIConstants::messageTypeToName(
 					SIPMPIConstants::intToMessageType(message_type))
-			<< " transaction=" << transaction << std::cout;
+			<< " transaction=" << transaction << std::endl;
 	return ss.str();
 }
 
