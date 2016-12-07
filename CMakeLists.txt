@@ -364,7 +364,10 @@ add_executable(print_siptables src/util/print_siptables.cpp)
 add_executable(print_array_info src/util/print_array_info.cpp)
 add_executable(print_init_file src/util/print_init_file.cpp)
 add_executable(print_worker_checkpoint src/util/print_worker_checkpoint.cpp)
-add_executable(check_system src/util/check_system.cpp)
+
+if(HAVE_MPI)
+	add_executable(check_system src/util/check_system.cpp)
+endif()
 
 ## dump_array_file executable
 #add_executable(dump_array_file src/util/dump_array_file.cpp)
@@ -386,8 +389,10 @@ set_target_properties(print_init_file PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}
 set_target_properties(print_worker_checkpoint PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
 set_target_properties(print_worker_checkpoint PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
 
-set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
-set_target_properties(check_system PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+if (HAVE_MPI)
+	set_target_properties(check_system PROPERTIES COMPILE_FLAGS "${ACES4_COMPILE_FLAGS}")
+	set_target_properties(check_system PROPERTIES LINK_FLAGS "${ACES4_LINK_FLAGS}")
+endif()
 
 
 
@@ -397,7 +402,10 @@ target_link_libraries(print_siptables ${TOLINK_LIBRARIES})
 target_link_libraries(print_array_info ${TOLINK_LIBRARIES}) 
 target_link_libraries(print_init_file ${TOLINK_LIBRARIES})
 target_link_libraries(print_worker_checkpoint ${TOLINK_LIBRARIES})
-target_link_libraries(check_system ${TOLINK_LIBRARIES})
+
+if (HAVE_MPI)
+	target_link_libraries(check_system ${TOLINK_LIBRARIES})
+endif()
 
 # Dependencies
 if(HAVE_CUDA)
@@ -406,14 +414,12 @@ if(HAVE_CUDA)
 	add_dependencies(print_array_info tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_init_file tensordil superinstructions cudasuperinstructions)
 	add_dependencies(print_worker_checkpoint tensordil superinstructions cudasuperinstructions)
-	add_dependencies(check_system tensordil superinstructions cudasuperinstructions)
 else()
 	add_dependencies(aces4 tensordil superinstructions)
 	add_dependencies(print_siptables tensordil superinstructions)
 	add_dependencies(print_array_info tensordil superinstructions)
 	add_dependencies(print_init_file tensordil superinstructions)
 	add_dependencies(print_worker_checkpoint tensordil superinstructions)
-	add_dependencies(check_system tensordil superinstructions)
 endif()
 
 add_dependencies(superinstructions aces4_sip tensordil)

@@ -5,6 +5,7 @@
  *      Author: njindal
  */
 
+#include <sstream>
 #include <cached_block_map.h>
 #include "job_control.h"
 #include "sip_mpi_attr.h"
