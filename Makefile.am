@@ -219,7 +219,7 @@ ACES4_CPP_FLAGS = \
 -I${top_srcdir}/src/sip/cuda\
 -I${top_srcdir}/jsoncpp\
 -I${top_srcdir}/test\
--I${top_srcdir}/test/gtest-1.7.0/include
+-I${top_srcdir}/test/googletest-release-1.7.0/include
 
 AM_CPPFLAGS = \
     $(ACES4_CPP_FLAGS)
@@ -387,12 +387,12 @@ copy-data-files.stamp:
 # Google TESTS
 check_LTLIBRARIES = test/libgtest.la test/libgtest_main.la
 
-nodist_test_libgtest_la_SOURCES = test/gtest-1.7.0/src/gtest-all.cc
+nodist_test_libgtest_la_SOURCES = test/googletest-release-1.7.0/src/gtest-all.cc
 
-nodist_test_libgtest_main_la_SOURCES = test/gtest-1.7.0/src/gtest_main.cc
+nodist_test_libgtest_main_la_SOURCES = test/googletest-release-1.7.0/src/gtest_main.cc
 test_libgtest_main_la_LIBADD = test/libgtest.la
 
-GTEST_CPP_FLAG_VARS = -I$(top_srcdir)/test/gtest-1.7.0/include  -I$(top_srcdir)/test/gtest-1.7.0/ -I$(top_srcdir)/test/gtest-1.7.0/src
+GTEST_CPP_FLAG_VARS = -I$(top_srcdir)/test/googletest-release-1.7.0/include  -I$(top_srcdir)/test/googletest-release-1.7.0/ -I$(top_srcdir)/test/googletest-release-1.7.0/src
 test_libgtest_la_CPPFLAGS = $(GTEST_CPP_FLAG_VARS)
 test_libgtest_main_la_CPPFLAGS = $(GTEST_CPP_FLAG_VARS)
 
