@@ -1,15 +1,15 @@
-aces4
+aces4:  Parallel Computational Chemistry Application
 =====
 
-Parallel Computational Chemistry Application
+This is not the latest version of Aces4.  
+========================================
+Until this repository is updated, please contact us if you want to use Aces4.
 
-Built in C, C++ & Fortran & Java.
 
-Successor to ACESIII [http://www.qtp.ufl.edu/]. 
 
-The ACESIII system is described in the paper titled "A Block-Oriented Language and Runtime System for Tensor Algebra with Very Large Arrays" [http://dx.doi.org/10.1109/SC.2010.3]
+Successor to ACESIII [http://www.qtp.ufl.edu/], [http://dx.doi.org/10.1109/SC.2010.3]. 
 
-See the Wiki (https://github.com/UFParLab/aces4/wiki) for more information
+Ace4 is described in "Aces4: A Platform for Computational Chemistry Calculations with Extremely Large Block-Sparse Arrays" Beverly A. Sanders, Jason N. Byrd, Nakul Jindal, Victor F. Lotrich, Dmitry Lyakh, Ajith Perera and Rodney J. Bartlett. IPDPS17.
 
 Executables Built
 -----------------
